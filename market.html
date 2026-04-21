@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鏡片刻圖市集 - Lohas 樂活眼鏡</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="market-body">
+
+<header class="main-header">
+    <nav class="nav-container">
+        <div class="logo">
+            <a href="index.html">
+                <img src="images/lohas-logo.svg" alt="Lohas樂活眼鏡">
+            </a>
+        </div>
+
+        <div class="menu-toggle" id="mobile-menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+
+        <ul class="nav-links" id="nav-list">
+            <li><a href="/news/1-最新消息">最新消息</a></li>
+            <li><a href="engraving.html">獨家雷刻服務</a></li>
+            <li class="dropdown-parent mega-menu-parent">
+                <a href="#">購物商城 <i class="fas fa-chevron-down dropdown-icon"></i></a>
+                </li>
+            <li><a href="/allstore/1-門市據點">門市據點</a></li>
+            <li><a href="/vipstore">樂活商店街</a></li>
+            <li class="mobile-cta"><a href="/loginM.html" class="btn-primary">會員專區</a></li>
+        </ul>
+
+        <div class="nav-cta">
+            <a href="#" class="btn-primary">會員專區</a>
+        </div>
+    </nav>
+</header>
+
+<main class="market-main-content" style="padding-top: 70px;">
+    
+    <div class="market-layout">
+        
+        <aside class="market-sidebar">
+            <div class="market-search-box">
+                <input type="text" placeholder="搜尋刻圖設計...">
+                <i class="fas fa-search"></i>
+            </div>
+
+            
+            <ul class="market-category-list">
+                <li><a href="#" class="active">首頁</a></li>
+                <li><a href="#">官方聯名</a></li>
+                <li><a href="#">個人原創</a></li>
+                
+            </ul>
+        </aside>
+
+        <div class="market-content-area">
+            
+            <div class="market-banner-wrapper">
+                <img src="images/market-banner.jpg" alt="我的眼鏡我設計" class="market-hero-banner">
+            </div>
+
+            <section class="market-section">
+                <div class="market-section-header">
+                    <h2 class="market-section-title">官方聯名設計</h2>
+                    <a href="#" class="market-see-all">顯示全部 &gt;</a>
+                </div>
+                
+                <div class="market-grid">
+                    <div class="market-card" onclick="openMarketModal('DINU 狗狗', 'dtto friends', 'images/market-collab-05.jpg', 'Dinu 是一隻活潑的黃色狗狗，因常被誤認為熊而聞名，個性溫暖愛助人，卻常苦惱異性緣不佳。')">
+                        <div class="market-badge badge-premium">Premium</div>
+                        <div class="market-card-img">
+                            <img src="images/market-collab-01.jpg" alt="DINU 狗狗">
+                        </div>
+                        <div class="market-card-info">
+                            <h3 class="market-item-title">DINU 狗狗</h3>
+                            <p class="market-item-author">dtto friends</p>
+                        </div>
+                    </div>
+
+                    <div class="market-card" onclick="openMarketModal('野生喵喵怪', '胸毛公寓', 'images/market-collab-05.jpg', '白白圓圓、帶點慵懶與憨厚表情的生物，風格常帶有日常幽默、迷因（Meme）元素，有時會化身為「被被精靈」黏在床上。')">
+                        <div class="market-badge badge-new">New</div>
+                        <div class="market-card-img">
+                            <img src="images/market-collab-02.jpg" alt="野生喵喵怪">
+                        </div>
+                        <div class="market-card-info">
+                            <h3 class="market-item-title">野生喵喵怪</h3>
+                            <p class="market-item-author">胸毛公寓</p>
+                        </div>
+                    </div>
+                    
+                    <div class="market-card">
+                        <div class="market-card-img">
+                            <img src="images/market-collab-03.jpg" alt="狐狐好朋友">
+                        </div>
+                        <div class="market-card-info">
+                            <h3 class="market-item-title">狐狐好朋友</h3>
+                            <p class="market-item-author">插畫家 二毛</p>
+                        </div>
+                    </div>
+
+                    <div class="market-card">
+                        <div class="market-card-img">
+                            <img src="images/market-collab-04.jpg" alt="杏仁ミル">
+                        </div>
+                        <div class="market-card-info">
+                            <h3 class="market-item-title">杏仁ミル</h3>
+                            <p class="market-item-author">畫師 マカ猫</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="market-section">
+                <div class="market-section-header">
+                    <h2 class="market-section-title">個人原創作品</h2>
+                    <a href="#" class="market-see-all">顯示全部 &gt;</a>
+                </div>
+                
+                <div class="market-grid">
+                    <div class="market-card">
+                        <div class="market-badge badge-hot">熱門排行 1</div>
+                        <div class="market-card-img"><img src="images/market-design-01.jpg" alt="圖案"></div>
+                        <div class="market-card-info">
+                            <h3 class="market-item-title">月契之紋</h3>
+                            <p class="market-item-author">黃邦哲</p>
+                        </div>
+                    </div>
+
+                    <div class="market-card">
+                        <div class="market-card-img"><img src="images/market-design-02.jpg" alt="圖案"></div>
+                        <div class="market-card-info">
+                            <h3 class="market-item-title">哭哭貓咪</h3>
+                            <p class="market-item-author">孫以丞</p>
+                        </div>
+                    </div>
+
+                    <div class="market-card">
+                        <div class="market-badge badge-new">New</div>
+                        <div class="market-card-img"><img src="images/market-design-03.jpg" alt="圖案"></div>
+                        <div class="market-card-info">
+                            <h3 class="market-item-title">迷路 (聖誕款)</h3>
+                            <p class="market-item-author">詹証閔</p>
+                        </div>
+                    </div>
+
+                    <div class="market-card">
+                        <div class="market-card-img"><img src="images/market-design-04.jpg" alt="圖案"></div>
+                        <div class="market-card-info">
+                            <h3 class="market-item-title">吉財娃娃</h3>
+                            <p class="market-item-author">熊品琇</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</main>
+
+<div id="marketModal" class="market-modal">
+    <div class="market-modal-content">
+        <span class="market-close-btn" onclick="closeMarketModal()">&times;</span>
+        <div class="market-modal-body">
+            <div class="market-modal-image">
+                <img id="modalImg" src="" alt="預覽圖">
+            </div>
+            <div class="market-modal-details">
+                <h2 id="modalTitle">標題</h2>
+                <p id="modalAuthor" class="market-item-author">設計師</p>
+                <p id="modalDesc" class="market-description">描述文字...</p>
+                <div class="market-modal-actions">
+                    <button class="market-btn-outline"><i class="far fa-heart"></i> 加入願望清單</button>
+                    <button class="market-btn-primary">立即使用設計</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="main-footer">
+    </footer>
+
+<script>
+    // 保留你原有的選單控制腳本
+    document.addEventListener('DOMContentLoaded', () => {
+        const menu = document.getElementById('mobile-menu');
+        const navList = document.getElementById('nav-list');
+        if (menu && navList) {
+            menu.addEventListener('click', () => {
+                menu.classList.toggle('active');
+                navList.classList.toggle('active');
+                document.body.style.overflow = navList.classList.contains('active') ? 'hidden' : 'auto';
+            });
+        }
+    });
+
+    // 市集專用 Modal 控制腳本
+    const modal = document.getElementById("marketModal");
+
+    function openMarketModal(title, author, imgSrc, description) {
+        document.getElementById("modalTitle").innerText = title;
+        document.getElementById("modalAuthor").innerText = author;
+        document.getElementById("modalImg").src = imgSrc;
+        document.getElementById("modalDesc").innerText = description;
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden"; 
+    }
+
+    function closeMarketModal() {
+        modal.style.display = "none";
+        document.body.style.overflow = "auto";
+    }
+
+    // 點擊背景關閉
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeMarketModal();
+        }
+    }
+</script>
+
+</body>
+</html>
