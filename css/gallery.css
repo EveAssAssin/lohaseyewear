@@ -103,8 +103,7 @@ main{
   justify-content:flex-start;
   overflow:hidden;
   color:#fff;
-  padding-left:5%;
-  padding-bottom:40px;
+  padding:0 32px 40px;
   background:#000;
 }
 
@@ -134,10 +133,11 @@ main{
 .plan1-banner .banner-text{
   position:relative;
   z-index:3;
-  max-width:800px;
+  width:100%;
+  max-width:1280px;
+  margin:0 auto;
   text-align:left;
   padding:0;
-  margin:0;
 }
 
 .plan1-banner .hero-title{
@@ -744,7 +744,7 @@ main{
   }
 
   .plan1-banner .banner-text{
-    max-width:90%;
+    max-width:100%;
   }
 
   .plan1-banner .hero-title{

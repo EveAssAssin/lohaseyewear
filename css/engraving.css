@@ -49,8 +49,7 @@
     display: flex;
     align-items: flex-end; /* 文字靠底 */
     justify-content: flex-start; /* 文字靠左 */
-    padding-left: 5%;
-    padding-bottom: 60px; /* 增加底部間距避免太貼齊邊緣 */
+    padding: 0 32px 60px;
     z-index: 1;
 }
 
@@ -77,6 +76,9 @@
 .engraving-hero .hero-content {
     z-index: 3;
     position: relative;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
 }
 
 .engraving-hero .hero-title {
@@ -243,8 +245,7 @@
 @media (max-width: 768px) {
     .engraving-hero {
         height: 100svh; /* 手機版滿版高度 */
-        padding-left: 20px;
-        padding-bottom: 40px;
+        padding: 0 20px 40px;
         align-items: flex-end;
         justify-content: flex-start;
     }

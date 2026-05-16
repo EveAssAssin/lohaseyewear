@@ -22,8 +22,7 @@
     justify-content: flex-start; /* 水平對齊：左側 */
     overflow: hidden;
     color: #fff; /* 文字顏色通常為白色 */
-    padding-left: 5%;        /* 距離左邊一段距離，更有設計感 */
-    padding-bottom: 40px;     /* 距離底部一段距離 */
+    padding: 0 32px 40px;
 }
 
 /* 背景圖處理 (仿 Gogoro 的沉浸式感) */
@@ -57,9 +56,10 @@
 /* 文字內容 */
 .hero-content {
     text-align: left;
-    max-width: 800px;
-    padding: 0x;
-    
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0;
 }
 
 .hero-title {
@@ -93,15 +93,14 @@
 /* 手機版適應 (RWD) */
 @media (max-width: 768px) {
     .hero-banner {
-        padding-left: 20px;    /* 縮小左側間距，適合手機螢幕 */
-        padding-bottom: 40px;  /* 縮小底部間距 */
-        align-items: flex-end; /* 確保垂直靠底 */
-        justify-content: flex-start; /* 確保水平靠左 */
+        padding: 0 20px 40px;
+        align-items: flex-end;
+        justify-content: flex-start;
         height: 100svh;
     }
 
     .hero-content {
-        max-width: 90%;        /* 讓內容在手機上稍微寬一點點 */
+        max-width: 100%;
     }
 
     .hero-title {

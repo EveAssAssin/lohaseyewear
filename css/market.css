@@ -37,8 +37,7 @@
   justify-content:flex-start;
   overflow:hidden;
   color:#fff;
-  padding-left:5%;
-  padding-bottom:40px;
+  padding:0 32px 40px;
 }
 .cm .hero-banner .hero-bg{
   position:absolute;
@@ -65,7 +64,9 @@
 }
 .cm .hero-banner .hero-content{
   text-align:left;
-  max-width:800px;
+  width:100%;
+  max-width:1280px;
+  margin:0 auto;
   padding:0;
 }
 .cm .hero-banner .hero-title{
@@ -1163,7 +1164,7 @@
   .cm .hero-banner{
     height:100vh;
     min-height:500px;
-    padding-bottom:40px;
+    padding:0 20px 40px;
   }
   .cm .hero-banner .hero-title{ font-size:1.8rem }
   .cm .hero-banner .hero-subtitle{ font-size:0.9rem; letter-spacing:1px }
