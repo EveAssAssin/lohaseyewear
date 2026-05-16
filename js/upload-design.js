@@ -164,7 +164,7 @@
           '<div class="dum-terms">',
             '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
             '<div class="dum-terms-text">',
-              '上傳即同意樂活雷雕服務條款,作品被使用一次將獲得 <b>$500 分潤</b>,月底結算。首件通過審核後自動開通創作者身份。',
+              '上傳即同意樂活雷雕服務條款,作品被使用一次將獲得 <b>$100 分潤</b>,月底結算。首件通過審核後自動開通創作者身份。',
             '</div>',
           '</div>',
 

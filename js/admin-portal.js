@@ -897,7 +897,7 @@
   }
 
   async function promoteToCreator(erpid, name) {
-    if (!confirm(`確定將「${name}」升級為 Creator?\n\n升級後可以:\n· 上架刻圖設計\n· 享 $500/次 分潤\n· 編輯創作者個人頁`)) return;
+    if (!confirm(`確定將「${name}」升級為 Creator?\n\n升級後可以:\n· 上架刻圖設計\n· 享 $100/次 分潤\n· 編輯創作者個人頁`)) return;
 
     const sb = getSb();
     if (!sb) return alert('Supabase 連線失敗');
@@ -974,9 +974,25 @@
      6. 刻圖審核
      ============================================================= */
 
-  async function loadDesignReview() {
+  async function loadDesignReview(statusFilter, sortOrder) {
     const grid = root.querySelector('.content-page[data-page="review-designs"] .review-grid');
     if (!grid) return;
+
+    // 從 UI 抓篩選 (如果沒帶參數)
+    const statusSelect = document.getElementById('reviewDesignsStatus');
+    const sortSelect   = document.getElementById('reviewDesignsSort');
+    const status = statusFilter || statusSelect?.value || 'pending';
+    const sort   = sortOrder    || sortSelect?.value   || 'oldest';
+
+    // 第一次載入時綁 listener
+    if (statusSelect && !statusSelect._bound) {
+      statusSelect._bound = true;
+      statusSelect.addEventListener('change', () => loadDesignReview());
+    }
+    if (sortSelect && !sortSelect._bound) {
+      sortSelect._bound = true;
+      sortSelect.addEventListener('change', () => loadDesignReview());
+    }
 
     grid.innerHTML = '<p class="empty-text" style="grid-column:1/-1;text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>';
 
@@ -986,9 +1002,9 @@
     try {
       const { data, error } = await sb
         .from('engraving_designs')
-        .select('id, name, slogan, description, category, image_url, image_url_png, image_url_svg, type, creator_id, designer_name, created_at')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: true });
+        .select('id, name, slogan, description, category, image_url, image_url_png, image_url_svg, type, creator_id, designer_name, reject_reason, reviewed_at, created_at')
+        .eq('status', status)
+        .order('created_at', { ascending: sort === 'oldest' });
 
       if (error) {
         grid.innerHTML = `<p class="empty-text" style="grid-column:1/-1">載入失敗: ${escapeHtml(error.message)}</p>`;
@@ -1006,11 +1022,15 @@
       }
 
       if (designs.length === 0) {
-        grid.innerHTML = '<p class="empty-text" style="grid-column:1/-1;text-align:center;padding:60px;color:var(--lohas-mute)">目前沒有待審核設計</p>';
+        const emptyText = status === 'rejected'
+          ? '目前沒有已駁回的設計'
+          : '目前沒有待審核設計';
+        grid.innerHTML = '<p class="empty-text" style="grid-column:1/-1;text-align:center;padding:60px;color:var(--lohas-mute)">' + emptyText + '</p>';
         return;
       }
 
       const grads = ['', 'g2', 'g3', 'g4', 'g5', 'g6'];
+      const isRejectedView = status === 'rejected';
 
       grid.innerHTML = designs.map((d, i) => {
         const grad = grads[i % grads.length];
@@ -1026,6 +1046,32 @@
           ? `style="background-image:url('${escapeHtml(d.image_url)}');background-size:cover;background-position:center"`
           : '';
 
+        // 根據狀態切換按鈕
+        const actions = isRejectedView
+          ? `<div class="rcard-actions">
+               <button class="approve" data-act="reopen" data-id="${d.id}">
+                 <i class="fa-solid fa-rotate-left"></i>重 新 開 放
+               </button>
+               <button class="reject" data-act="delete" data-id="${d.id}" data-name="${escapeHtml(d.name)}"><i class="fa-solid fa-trash"></i>永 久 刪 除</button>
+             </div>`
+          : `<div class="rcard-actions">
+               <button class="approve" data-act="approve"
+                       data-id="${d.id}"
+                       data-name="${escapeHtml(d.name)}"
+                       data-category="${escapeHtml(d.category || '')}"
+                       data-creator-id="${escapeHtml(d.creator_id || '')}">
+                 <i class="fa-solid fa-pen-to-square"></i>開 始 審 核
+               </button>
+               <button class="reject" data-act="reject" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-by="${escapeHtml(d.creator_id)}"><i class="fa-solid fa-xmark"></i>駁 回</button>
+             </div>`;
+
+        // 駁回理由顯示
+        const rejectInfo = isRejectedView && d.reject_reason
+          ? `<div class="rcard-quote" style="color:#B05050;background:#FBEEEE;padding:6px 10px;border-radius:6px;margin-top:6px">
+               <i class="fa-solid fa-circle-exclamation"></i> 駁回原因:${escapeHtml(d.reject_reason)}
+             </div>`
+          : '';
+
         return `
           <div class="rcard" data-id="${d.id}">
             <div class="rcard-img ${grad}" ${imgStyle}>
@@ -1035,17 +1081,9 @@
               <div class="rcard-title">${escapeHtml(d.name)}</div>
               <div class="rcard-by">by <b>${escapeHtml(d.creator_id)}</b> <span class="role-pill ${rolePillCls}">${rolePillContent}</span></div>
               ${d.description ? `<div class="rcard-quote">${escapeHtml(d.description)}</div>` : ''}
-              <div class="rcard-meta"><i class="fa-regular fa-clock"></i>送審 ${formatTime(d.created_at)}</div>
-              <div class="rcard-actions">
-                <button class="approve" data-act="approve"
-                        data-id="${d.id}"
-                        data-name="${escapeHtml(d.name)}"
-                        data-category="${escapeHtml(d.category || '')}"
-                        data-creator-id="${escapeHtml(d.creator_id || '')}">
-                  <i class="fa-solid fa-pen-to-square"></i>開 始 審 核
-                </button>
-                <button class="reject" data-act="reject" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-by="${escapeHtml(d.creator_id)}"><i class="fa-solid fa-xmark"></i>駁 回</button>
-              </div>
+              ${rejectInfo}
+              <div class="rcard-meta"><i class="fa-regular fa-clock"></i>${isRejectedView ? '駁回於 ' + formatTime(d.reviewed_at || d.created_at) : '送審 ' + formatTime(d.created_at)}</div>
+              ${actions}
             </div>
           </div>`;
       }).join('');
@@ -1061,6 +1099,40 @@
       });
       grid.querySelectorAll('[data-act="reject"]').forEach(b => {
         b.addEventListener('click', () => openRejectModal('design', b.dataset.id, { name: b.dataset.name, by: b.dataset.by }));
+      });
+      // 駁回模式: 重新開放 / 永久刪除
+      grid.querySelectorAll('[data-act="reopen"]').forEach(b => {
+        b.addEventListener('click', async () => {
+          if (!confirm('確定要把這筆刻圖重新開放審核?\n(狀態改回「待審核」,清空駁回原因)')) return;
+          const sb = getSb();
+          if (!sb) return;
+          try {
+            const { error } = await sb.from('engraving_designs')
+              .update({ status: 'pending', reject_reason: null, reviewed_at: null, reviewed_by: null })
+              .eq('id', b.dataset.id);
+            if (error) throw error;
+            loadDesignReview();
+            refreshReviewCounts && refreshReviewCounts();
+          } catch (err) {
+            alert('重新開放失敗:' + err.message);
+          }
+        });
+      });
+      grid.querySelectorAll('[data-act="delete"]').forEach(b => {
+        b.addEventListener('click', async () => {
+          if (!confirm(`確定要永久刪除「${b.dataset.name}」?\n\n⚠️ 無法復原`)) return;
+          const sb = getSb();
+          if (!sb) return;
+          try {
+            const { error } = await sb.from('engraving_designs')
+              .delete()
+              .eq('id', b.dataset.id);
+            if (error) throw error;
+            loadDesignReview();
+          } catch (err) {
+            alert('刪除失敗:' + err.message);
+          }
+        });
       });
 
     } catch (err) {
@@ -1157,6 +1229,17 @@
       document.getElementById('apClose')?.addEventListener('click', closeApproveModal);
       document.getElementById('approveDesignModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'approveDesignModal') closeApproveModal();
+      });
+      // 售價快捷按鈕
+      document.querySelectorAll('#approveDesignModal .md-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = btn.dataset.price;
+          const input = document.getElementById('apPrice');
+          if (input) {
+            input.value = p;
+            input.focus();
+          }
+        });
       });
     });
   })();
@@ -1273,6 +1356,7 @@
               <div class="rcard-title">${escapeHtml(p.title || '未命名')}</div>
               <div class="rcard-by">by <b>${escapeHtml(customerLabel)}</b> <span class="role-pill member">Member</span></div>
               ${p.story ? `<div class="rcard-quote">${escapeHtml(p.story)}</div>` : ''}
+              ${(status === 'rejected' && p.reject_reason) ? `<div class="rcard-quote" style="color:#B05050;background:#FBEEEE;padding:6px 10px;border-radius:6px;margin-top:6px"><i class="fa-solid fa-circle-exclamation"></i> 駁回原因:${escapeHtml(p.reject_reason)}</div>` : ''}
               <div class="rcard-meta">
                 <i class="fa-regular fa-clock"></i>送審 ${formatTime(p.created_at)}
                 ${meta ? ` · <i class="fa-regular fa-folder"></i> ${escapeHtml(meta)}` : ''}
@@ -1384,6 +1468,7 @@
               <div class="rcard-title">${escapeHtml(p.title || '未命名')}</div>
               <div class="rcard-by">by <b>${escapeHtml(customerLabel)}</b> <span class="role-pill member">Member</span></div>
               ${p.story ? `<div class="rcard-quote">${escapeHtml(p.story)}</div>` : ''}
+              ${(status === 'rejected' && p.reject_reason) ? `<div class="rcard-quote" style="color:#B05050;background:#FBEEEE;padding:6px 10px;border-radius:6px;margin-top:6px"><i class="fa-solid fa-circle-exclamation"></i> 駁回原因:${escapeHtml(p.reject_reason)}</div>` : ''}
               <div class="rcard-meta">
                 <i class="fa-regular fa-clock"></i>送審 ${formatTime(p.created_at)}
                 ${meta ? ` · <i class="fa-regular fa-folder"></i> ${escapeHtml(meta)}` : ''}
