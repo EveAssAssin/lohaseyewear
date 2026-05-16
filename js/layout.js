@@ -67,7 +67,8 @@ function initMobileDropdown() {
 
   dropdownParents.forEach(parent => {
     parent.addEventListener("click", e => {
-      if (window.innerWidth <= 768) {
+      // 手機版且不是「直接外連」才展開下拉
+      if (window.innerWidth <= 768 && !parent.dataset.mobileDirect) {
         e.preventDefault();
         parent.parentElement.classList.toggle("active");
       }
