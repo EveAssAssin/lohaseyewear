@@ -2972,8 +2972,6 @@
     grid-template-columns:repeat(2, 1fr);
     gap:10px;
   }
-  .ad .md-card-actions{ opacity:1 }      /* 手機沒 hover,永遠顯示 */
-  .ad .md-card:hover .md-card-type{ opacity:1 }
 }
 
 
@@ -3024,38 +3022,4 @@
   letter-spacing:0.5px;
 }
 
-/* === 刻圖管理 卡片內 上架/下架 toggle === */
-.ad .md-show-toggle{
-  position:absolute;
-  bottom:8px;
-  left:8px;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  padding:5px 10px;
-  border:0;
-  border-radius:999px;
-  font-family:inherit;
-  font-size:11px;
-  font-weight:600;
-  letter-spacing:0.5px;
-  cursor:pointer;
-  transition:all .15s;
-  z-index:2;
-  backdrop-filter:blur(4px);
-}
-.ad .md-show-toggle.on{
-  background:rgba(63, 126, 111, 0.95);   /* 綠 */
-  color:#fff;
-}
-.ad .md-show-toggle.on:hover{
-  background:rgba(50, 102, 90, 1);
-}
-.ad .md-show-toggle.off{
-  background:rgba(120, 120, 120, 0.85);  /* 灰 */
-  color:#fff;
-}
-.ad .md-show-toggle.off:hover{
-  background:rgba(63, 126, 111, 0.95);   /* hover 變回綠色預示「點擊上架」 */
-}
-.ad .md-show-toggle i{ font-size:10px }
+/* === 刻圖管理 卡片內 上架/下架 toggle (舊版浮動定位,已改頂部常駐 ─ 樣式見上方) === */
