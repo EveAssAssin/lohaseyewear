@@ -2942,6 +2942,34 @@
   box-sizing:border-box;
 }
 .ad .md-form-row input:focus{ border-color:var(--lohas-brown); background:#fff }
+
+/* 售價快捷按鈕 (審核 modal 用) */
+.ad .md-quick-prices{
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+}
+.ad .md-quick-btn{
+  flex:1;
+  height:32px;
+  background:#FAF7F2;
+  border:1px solid var(--lohas-line);
+  border-radius:6px;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:600;
+  color:var(--lohas-sub);
+  cursor:pointer;
+  letter-spacing:0.5px;
+  transition:all .15s;
+}
+.ad .md-quick-btn:hover{
+  background:var(--lohas-brown);
+  border-color:var(--lohas-brown);
+  color:#fff;
+}
+.ad .md-quick-btn:active{ transform:scale(0.97) }
+
 .ad .md-modal-foot{
   display:flex;
   gap:10px;
