@@ -76,21 +76,40 @@ function initMobileDropdown() {
   });
 }
 
-/* 電腦版 Mega Menu 開啟時禁止背景捲動 */
+/* 電腦版 Mega Menu - 用 JS 控制 .open class (避免純 CSS hover 抖動) */
 function initMegaMenuScrollLock() {
-  const megaMenuParent = document.querySelector(".mega-menu-parent");
+  const megaMenuParents = document.querySelectorAll(".mega-menu-parent");
 
-  if (!megaMenuParent) return;
+  if (!megaMenuParents.length) return;
 
-  megaMenuParent.addEventListener("mouseenter", () => {
-    if (window.innerWidth > 768) {
-      document.body.classList.add("no-scroll");
+  megaMenuParents.forEach(parent => {
+    let closeTimer = null;
+
+    function open() {
+      if (window.innerWidth <= 768) return;
+      clearTimeout(closeTimer);
+      // 關掉其他開著的 mega menu
+      megaMenuParents.forEach(p => { if (p !== parent) p.classList.remove("open"); });
+      parent.classList.add("open");
     }
-  });
 
-  megaMenuParent.addEventListener("mouseleave", () => {
-    if (window.innerWidth > 768) {
-      document.body.classList.remove("no-scroll");
+    function scheduleClose() {
+      if (window.innerWidth <= 768) return;
+      clearTimeout(closeTimer);
+      // 100ms 延遲關閉,讓滑鼠有時間移到 mega-menu 區域
+      closeTimer = setTimeout(() => {
+        parent.classList.remove("open");
+      }, 120);
+    }
+
+    parent.addEventListener("mouseenter", open);
+    parent.addEventListener("mouseleave", scheduleClose);
+
+    // 內部 mega-menu 也綁定,防止滑鼠進入子選單後關閉
+    const megaMenu = parent.querySelector(".mega-menu");
+    if (megaMenu) {
+      megaMenu.addEventListener("mouseenter", open);
+      megaMenu.addEventListener("mouseleave", scheduleClose);
     }
   });
 }
