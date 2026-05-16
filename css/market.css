@@ -27,13 +27,11 @@
 }
 
 
-/* === Hero Banner (跟其他頁面統一樣式 plan1-banner) === */
-.cm .plan1-banner{
+/* === Hero Banner (跟首頁 index.html 完全相同樣式) === */
+.cm .hero-banner{
   position:relative;
-  width:100vw;
-  margin-left:calc(50% - 50vw);
-  height:50vh;
-  min-height:420px;
+  width:100%;
+  height:100vh;
   display:flex;
   align-items:flex-end;
   justify-content:flex-start;
@@ -41,84 +39,80 @@
   color:#fff;
   padding-left:5%;
   padding-bottom:40px;
-  background:#000;
 }
-.cm .plan1-banner .hero-bg{
+.cm .hero-banner .hero-bg{
   position:absolute;
-  inset:0;
-  z-index:0;
-  pointer-events:none;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index:-1;
 }
-.cm .plan1-banner .hero-bg img{
+.cm .hero-banner .hero-bg img{
   width:100%;
   height:100%;
   object-fit:cover;
   object-position:center;
-  pointer-events:none;
 }
-.cm .plan1-banner .hero-bg::after{
-  content:"";
+.cm .hero-banner .hero-bg::after{
+  content:'';
   position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.3);
-  pointer-events:none;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.1);
 }
-.cm .plan1-banner .banner-text{
-  position:relative;
-  z-index:3;
-  max-width:800px;
+.cm .hero-banner .hero-content{
   text-align:left;
+  max-width:800px;
   padding:0;
-  margin:0;
 }
-.cm .plan1-banner .hero-title{
-  margin:-10px 0 10px;
-  color:#fff;
+.cm .hero-banner .hero-title{
   font-size:2.5rem;
-  font-weight:700 !important;
+  font-weight:700;
+  margin-top:-10px;
+  margin-bottom:5px;
   letter-spacing:1px;
-  line-height:1.2;
 }
-.cm .plan1-banner .hero-subtitle{
-  margin:0 0 10px;
-  color:#fff;
-  font-size:1rem;
-  line-height:1.8;
-  font-weight:400 !important;
+.cm .hero-banner .hero-subtitle{
+  font-size:1.0rem;
+  margin-bottom:5px;
+  font-weight:400;
   letter-spacing:2px;
 }
-.cm .plan1-banner .hero-btns{
+.cm .hero-banner .hero-btns{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
   margin-top:10px;
 }
-.cm .plan1-banner .btn{
+.cm .hero-banner .hero-btns .btn{
   display:inline-block;
   padding:12px 35px;
   border-radius:50px;
   border:0;
   cursor:pointer;
   font-size:16px;
-  font-weight:400 !important;
+  font-weight:400;
   transition:.3s ease;
   text-decoration:none;
 }
-.cm .plan1-banner .btn-primary{
+.cm .hero-banner .hero-btns .btn-primary{
   background:var(--lohas-brown);
-  color:#fff !important;
+  color:#fff;
 }
-.cm .plan1-banner .btn-primary:hover{
+.cm .hero-banner .hero-btns .btn-primary:hover{
   background:var(--lohas-hover);
 }
-.cm .plan1-banner .btn-outline{
+.cm .hero-banner .hero-btns .btn-outline{
   border:1px solid #fff;
+  color:#fff;
   background:transparent;
-  color:#fff !important;
 }
-.cm .plan1-banner .btn-outline:hover{
+.cm .hero-banner .hero-btns .btn-outline:hover{
   background:#fff;
-  color:#333 !important;
+  color:#333;
 }
 
 
@@ -148,12 +142,18 @@
 
 
 /* === 本月精選 (v18 Featured Hero) === */
+/* 外層米色底滿版,內層限寬置中對齊下方區塊 */
 .cm .featured-block{
-  max-width:1280px;
-  margin:0 auto;
-  padding:48px 32px;
+  padding:48px 0;
   background:var(--bg-soft);
   border-bottom:1px solid var(--lohas-line);
+}
+.cm .featured-block > *{
+  max-width:1280px;
+  margin-left:auto;
+  margin-right:auto;
+  padding-left:32px;
+  padding-right:32px;
 }
 .cm .section-head{
   display:flex;
@@ -1021,6 +1021,28 @@
   color:var(--lohas-brand);
   border:1px solid var(--lohas-brand);
 }
+
+/* 我的最愛按鈕下方提示 */
+.cm .modal-hint{
+  margin:14px 0 0;
+  padding:10px 14px;
+  background:#FAF7F1;
+  border-radius:8px;
+  border-left:3px solid var(--lohas-brown);
+  font-size:12px;
+  line-height:1.6;
+  color:var(--lohas-sub);
+  letter-spacing:0.3px;
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+}
+.cm .modal-hint i{
+  color:var(--lohas-brown);
+  font-size:13px;
+  margin-top:2px;
+  flex-shrink:0;
+}
 .cm .modal-btn-sec{
   height:48px;
   background:#fff;
@@ -1138,14 +1160,14 @@
 
 /* === RWD: 手機 === */
 @media (max-width: 768px){
-  .cm .plan1-banner{
-    height:auto;
-    min-height:380px;
-    padding:140px 20px 40px;
+  .cm .hero-banner{
+    height:100vh;
+    min-height:500px;
+    padding-bottom:40px;
   }
-  .cm .plan1-banner .hero-title{ font-size:1.8rem }
-  .cm .plan1-banner .hero-subtitle{ font-size:0.9rem; letter-spacing:1px }
-  .cm .plan1-banner .btn{ padding:10px 24px; font-size:14px }
+  .cm .hero-banner .hero-title{ font-size:1.8rem }
+  .cm .hero-banner .hero-subtitle{ font-size:0.9rem; letter-spacing:1px }
+  .cm .hero-banner .hero-btns .btn{ padding:10px 24px; font-size:14px }
 
   .cm .featured-block{ padding:32px 20px }
   .cm .featured-hero{ grid-template-columns:1fr }
