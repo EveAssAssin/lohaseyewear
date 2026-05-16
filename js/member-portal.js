@@ -865,7 +865,20 @@
           .delete()
           .eq('member_id', State.member.erpid)
           .eq('design_id', did);
-        if (!error) loadWishlist();
+        if (!error) {
+          // like_count -1
+          try {
+            const { data: cur } = await sb.from('engraving_designs')
+              .select('like_count').eq('id', did).single();
+            if (cur) {
+              const newCount = Math.max(0, (cur.like_count || 0) - 1);
+              await sb.from('engraving_designs')
+                .update({ like_count: newCount }).eq('id', did);
+            }
+          } catch (e) { console.warn('[wishlist] like_count -1 失敗', e); }
+
+          loadWishlist();
+        }
       });
     });
   }

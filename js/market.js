@@ -524,6 +524,16 @@
       if(sb){
         await sb.from('engraving_wishlist').delete()
           .eq('member_id', memberId).eq('design_id', idStr);
+        // like_count -1 (用 RPC 或讀 → 寫)
+        try {
+          var dec = await sb.from('engraving_designs')
+            .select('like_count').eq('id', idStr).single();
+          if(dec?.data){
+            var newCount = Math.max(0, (dec.data.like_count || 0) - 1);
+            await sb.from('engraving_designs')
+              .update({ like_count: newCount }).eq('id', idStr);
+          }
+        } catch(e){ console.warn('[wishlist] like_count -1 失敗', e); }
       }
       // 通知其他頁面 (member-portal 同視窗會自動 reload)
       window.dispatchEvent(new CustomEvent('lohas:wishlist-changed', {
@@ -539,6 +549,16 @@
           design_id: idStr,
           created_at: new Date().toISOString(),
         });
+        // like_count +1
+        try {
+          var inc = await sb.from('engraving_designs')
+            .select('like_count').eq('id', idStr).single();
+          if(inc?.data){
+            var newCount = (inc.data.like_count || 0) + 1;
+            await sb.from('engraving_designs')
+              .update({ like_count: newCount }).eq('id', idStr);
+          }
+        } catch(e){ console.warn('[wishlist] like_count +1 失敗', e); }
       }
       window.dispatchEvent(new CustomEvent('lohas:wishlist-changed', {
         detail: { action: 'add', designId: idStr }

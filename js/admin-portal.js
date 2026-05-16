@@ -3153,6 +3153,9 @@
     document.getElementById('mdFilterType')?.addEventListener('change', mdApplyFilters);
     document.getElementById('mdSearch')?.addEventListener('input', debounce(mdApplyFilters, 200));
 
+    // 批次改價
+    document.getElementById('mdBulkPriceBtn')?.addEventListener('click', mdBulkUpdatePrice);
+
     // 編輯 Modal
     document.getElementById('mdModalClose')?.addEventListener('click', mdCloseEditModal);
     document.getElementById('mdEditCancel')?.addEventListener('click', mdCloseEditModal);
@@ -3201,7 +3204,7 @@
     container.innerHTML = mdState.filtered.map(d => {
       const imgUrl = mdValidUrl(d.image_url_svg) || mdValidUrl(d.image_url_png) || mdValidUrl(d.image_url) || '';
       const statusLabel = { approved:'已通過', pending:'待審核', rejected:'已駁回' }[d.status] || d.status || '--';
-      const typeLabel = { legacy:'官方', member:'會員' }[d.type] || d.type || '--';
+      const typeLabel = { legacy:'舊官網', member:'會員' }[d.type] || d.type || '--';
       const designer = d.designer_name || '匿名';
       const isShow = d.is_show || '上架';
       const showOn = isShow === '上架';
@@ -3211,28 +3214,39 @@
             '<i class="fa-solid ' + (showOn ? 'fa-eye' : 'fa-eye-slash') + '"></i>' +
             (showOn ? '上架中' : '已下架') +
           '</button>'
-        : '';
+        : '<span class="md-show-toggle disabled">—</span>';
+      // 售價顯示
+      const priceText = (d.price && Number(d.price) > 0)
+        ? '<span class="md-card-price">$' + Number(d.price) + '</span>'
+        : '<span class="md-card-price unset">未定價</span>';
       return (
         '<div class="md-card" data-id="' + escapeHtml(d.id) + '">' +
-          '<div class="md-card-cover" ' + (imgUrl ? 'style="background-image:url(\'' + escapeHtml(imgUrl) + '\')"' : '') + '>' +
-            '<span class="md-card-status md-pill s-' + (d.status || 'pending') + '">' + statusLabel + '</span>' +
-            '<span class="md-card-type md-pill t-' + (d.type || 'member') + '">' + typeLabel + '</span>' +
+          // 頂部:狀態 pill + type + 上下架 toggle
+          '<div class="md-card-top">' +
+            '<div class="md-card-pills">' +
+              '<span class="md-pill s-' + (d.status || 'pending') + '">' + statusLabel + '</span>' +
+              '<span class="md-pill t-' + (d.type || 'member') + '">' + typeLabel + '</span>' +
+            '</div>' +
             showToggle +
           '</div>' +
+          // 圖片
+          '<div class="md-card-cover" ' + (imgUrl ? 'style="background-image:url(\'' + escapeHtml(imgUrl) + '\')"' : '') + '></div>' +
+          // 內文 (name + 售價 / by + 愛心)
           '<div class="md-card-body">' +
-            '<div class="md-card-name">' + escapeHtml(d.name || '(未命名)') + '</div>' +
-            (d.slogan ? '<div class="md-card-slogan">' + escapeHtml(d.slogan) + '</div>' : '') +
-            '<div class="md-card-by">by ' + escapeHtml(designer) + (d.category ? ' · ' + escapeHtml(d.category) : '') + '</div>' +
-            '<div class="md-card-stats">' +
-              '<span><i class="fa-regular fa-heart"></i>' + (d.like_count || 0) + '</span>' +
-              '<span><i class="fa-regular fa-bookmark"></i>' + (d.collect_count || 0) + '</span>' +
-              '<span><i class="fa-solid fa-share"></i>' + (d.share_count || 0) + '</span>' +
+            '<div class="md-card-row">' +
+              '<div class="md-card-name">' + escapeHtml(d.name || '(未命名)') + '</div>' +
+              priceText +
+            '</div>' +
+            '<div class="md-card-row sub">' +
+              '<div class="md-card-by">by ' + escapeHtml(designer) + (d.category ? ' · ' + escapeHtml(d.category) : '') + '</div>' +
+              '<div class="md-card-likes"><i class="fa-regular fa-heart"></i>' + (d.like_count || 0) + '</div>' +
             '</div>' +
           '</div>' +
+          // 底部按鈕 (icon+文字,常駐)
           '<div class="md-card-actions">' +
-            (d.image_url_svg ? '<button class="md-icon-btn" data-act="download-svg" title="下載 SVG"><i class="fa-solid fa-file-arrow-down"></i></button>' : '') +
-            '<button class="md-icon-btn" data-act="edit" title="編輯"><i class="fa-solid fa-pen"></i></button>' +
-            '<button class="md-icon-btn danger" data-act="delete" title="刪除"><i class="fa-solid fa-trash"></i></button>' +
+            '<button class="md-act-btn" data-act="edit"><i class="fa-solid fa-pen"></i> 編輯</button>' +
+            (d.image_url_svg ? '<button class="md-act-btn" data-act="download-svg"><i class="fa-solid fa-file-arrow-down"></i> SVG</button>' : '') +
+            '<button class="md-act-btn danger" data-act="delete"><i class="fa-solid fa-trash"></i> 刪除</button>' +
           '</div>' +
         '</div>'
       );
@@ -3282,6 +3296,66 @@
   }
 
 
+  async function mdBulkUpdatePrice() {
+    const targetCount = mdState.filtered.length;
+    if (targetCount === 0) {
+      alert('目前篩選結果為 0 筆,無可改價的對象');
+      return;
+    }
+
+    const input = prompt(
+      '批次修改售價\n\n' +
+      '⚠️ 將套用到目前篩選結果共 ' + targetCount + ' 筆刻圖\n' +
+      '(請先用上方的狀態 / 來源 / 搜尋篩出要改的範圍)\n\n' +
+      '請輸入售價(元):\n' +
+      '  輸入 0 = 全部設為「未定價」\n' +
+      '  其他 = 全部設為該數字',
+      '500'
+    );
+    if (input === null) return;
+    const priceNum = parseInt(input.trim(), 10);
+    if (isNaN(priceNum) || priceNum < 0) {
+      alert('請輸入有效的非負整數');
+      return;
+    }
+
+    const finalPrice = priceNum === 0 ? null : priceNum;
+    const displayPrice = priceNum === 0 ? '未定價' : '$' + priceNum;
+
+    if (!confirm('確定要把這 ' + targetCount + ' 筆刻圖售價全部設成「' + displayPrice + '」?')) return;
+
+    const sb = getSb();
+    if (!sb) return;
+
+    const btn = document.getElementById('mdBulkPriceBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...'; }
+
+    try {
+      const ids = mdState.filtered.map(d => d.id);
+      // 一次 update 多個 (用 in)
+      const { error } = await sb.from('engraving_designs')
+        .update({ price: finalPrice })
+        .in('id', ids);
+
+      if (error) throw error;
+
+      // 同步本地
+      mdState.designs.forEach(d => {
+        if (ids.includes(d.id)) d.price = finalPrice;
+      });
+
+      alert('已成功將 ' + targetCount + ' 筆刻圖售價設為「' + displayPrice + '」');
+      mdApplyFilters();
+
+    } catch (err) {
+      console.error('[mdBulkUpdatePrice]', err);
+      alert('批次改價失敗:' + (err.message || err));
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-tag"></i> 批次改價'; }
+    }
+  }
+
+
   async function mdToggleShow(id) {
     const d = mdState.designs.find(x => String(x.id) === String(id));
     if (!d) return;
@@ -3320,6 +3394,7 @@
     document.getElementById('mdEditCategory').value = d.category || '';
     document.getElementById('mdEditKeywords').value = d.keywords || '';
     document.getElementById('mdEditDesigner').value = d.designer_name || '';
+    document.getElementById('mdEditPrice').value    = d.price || '';
 
     document.getElementById('mdModalOverlay').hidden = false;
     setTimeout(() => document.getElementById('mdEditName').focus(), 50);
@@ -3340,12 +3415,16 @@
     saveBtn.textContent = '儲存中...';
 
     try {
+      const priceRaw = document.getElementById('mdEditPrice').value.trim();
+      const priceNum = priceRaw ? Math.max(0, parseInt(priceRaw, 10) || 0) : null;
+
       const payload = {
         name:          document.getElementById('mdEditName').value.trim(),
         slogan:        document.getElementById('mdEditSlogan').value.trim(),
         category:      document.getElementById('mdEditCategory').value.trim(),
         keywords:      document.getElementById('mdEditKeywords').value.trim(),
         designer_name: document.getElementById('mdEditDesigner').value.trim(),
+        price:         priceNum,
       };
 
       if (!payload.name) {
