@@ -597,7 +597,7 @@
   position:absolute;
   top:18px;
   right:22px;
-  font-size:64px;
+  font-size:52px;
   font-weight:800;
   font-style:italic;
   line-height:1;
@@ -1223,7 +1223,7 @@
   .cm .join-eyebrow{ font-size:10px; letter-spacing:3px }
   .cm .join-steps{ grid-template-columns:1fr; gap:12px; margin-bottom:28px }
   .cm .join-step{ padding:24px 22px }
-  .cm .step-num{ font-size:52px; top:14px; right:18px }
+  .cm .step-num{ font-size:42px; top:14px; right:18px }
 
   /* KPI 改 3 欄 grid + 拿掉分隔線 */
   .cm .join-kpi{
