@@ -150,6 +150,11 @@
   background:var(--bg-soft);
   border-bottom:1px solid var(--lohas-line);
 }
+.cm .featured-block > *{
+  max-width:1280px;
+  margin-left:auto;
+  margin-right:auto;
+}
 .cm .section-head{
   display:flex;
   justify-content:space-between;
