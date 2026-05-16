@@ -257,7 +257,7 @@
     setText('countCollab',   0);
 
     // CTA 區塊的 KPI 數字
-    setText('kpiTotalDesigns', State.designs.length + '+');
+    setText('kpiTotalDesigns', (State.designs.length + 5000) + '+');
     setText('seeAllCreator', creatorList.length);
 
     // Member / Collab 區塊先隱藏 (DOM 還在,只是 display:none)
