@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>創作者刻圖市集 · LOHAS 樂活眼鏡</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
@@ -20,9 +23,9 @@
 
 <main class="cm" id="cm">
 
-  <!-- Hero (統一 banner 樣式) -->
-  <section class="plan1-banner">
-    <div class="banner-text">
+  <!-- Hero (用首頁同款 hero-banner 樣式) -->
+  <section class="hero-banner">
+    <div class="hero-content">
       <p class="hero-subtitle">每一張設計 都有人的故事</p>
       <h1 class="hero-title">創作者刻圖市集</h1>
 
@@ -31,9 +34,11 @@
         <a href="#gridGallery" class="btn btn-outline">探索圖庫</a>
       </div>
     </div>
-
     <div class="hero-bg">
-      <img src="images/hero-banner-market.jpg" alt="創作者刻圖市集">
+      <picture>
+        <source srcset="images/hero-banner-market-mobile.jpg" media="(max-width: 768px)">
+        <img src="images/hero-banner-market.jpg" alt="創作者刻圖市集">
+      </picture>
     </div>
   </section>
 
@@ -214,6 +219,10 @@
             <i class="fa-regular fa-heart"></i>
             <span id="wishText">加 入 我 的 最 愛 刻 圖</span>
           </button>
+          <p class="modal-hint">
+            <i class="fa-solid fa-circle-info"></i>
+            喜歡這張設計嗎?加入後,你下次來門市配眼鏡時,就能直接選用這個圖案刻在鏡片上
+          </p>
         </div>
       </div>
     </div>
