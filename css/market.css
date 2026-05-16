@@ -145,19 +145,10 @@
 
 
 /* === 本月精選 (v18 Featured Hero) === */
-/* 外層米色底滿版,內層限寬置中對齊下方區塊 */
 .cm .featured-block{
-  padding:48px 0;
+  padding:48px 32px;
   background:var(--bg-soft);
   border-bottom:1px solid var(--lohas-line);
-  overflow:hidden;
-}
-.cm .featured-block > *{
-  max-width:1280px;
-  margin-left:auto;
-  margin-right:auto;
-  padding-left:32px;
-  padding-right:32px;
 }
 .cm .section-head{
   display:flex;
