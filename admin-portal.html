@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>樂活管理後台</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+  <!-- Supabase JS SDK (給 supabase.js 用的全域 window.supabase) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #F9F8F6;
+      min-height: 100vh;
+    }
+  </style>
+  <!-- LOHAS CSS · 載入順序: tokens → base → components → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
+  <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
+  <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
+  <link rel="stylesheet" href="css/admin-portal.css?v=20260510-1720">
+
+</head>
+<body>
+
+<div class="ad" id="ad">
+
+<!-- ====== 手機版獨立 Header (LOGO + 跳官網 + 漢堡) ====== -->
+<header class="ad-mobile-header">
+  <button type="button" class="ad-mobile-burger" id="adMobileBurger" aria-label="選單">
+    <i class="fa-solid fa-bars"></i>
+  </button>
+  <img class="ad-mobile-logo" src="images/lohas-logo.svg" alt="LOHAS">
+  <a class="ad-mobile-front" href="index.html" target="_blank" title="在新分頁打開樂活官網">
+    <i class="fa-solid fa-up-right-from-square"></i>
+  </a>
+</header>
+
+<!-- ====== 手機版抽屜選單 ====== -->
+<div class="ad-drawer-overlay" id="adDrawerOverlay"></div>
+<aside class="ad-drawer" id="adDrawer">
+  <div class="ad-drawer-header">
+    <h3>管理後台</h3>
+    <button type="button" class="ad-drawer-close" id="adDrawerClose" aria-label="關閉">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+  <div class="ad-drawer-body" id="adDrawerBody">
+    <!-- 動態填入 sidebar 同樣的 nav-section -->
+  </div>
+</aside>
+
+<!-- ====== Sidebar ====== -->
+<aside class="sidebar">
+  <div class="nav-section">
+    <button class="nav-link on" data-page="dashboard">
+      <i class="fa-solid fa-gauge-high"></i><span>首頁</span>
+    </button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">審 核 中 心</div>
+    <button class="nav-link" data-page="review-designs">
+      <i class="fa-regular fa-pen-to-square"></i><span>刻圖審核</span>
+      <span class="badge" id="badgeDesigns">0</span>
+    </button>
+    <button class="nav-link" data-page="review-uploads">
+      <i class="fa-regular fa-image"></i><span>上傳照片審核</span>
+      <span class="badge" id="badgeUploads">0</span>
+    </button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">內 容 管 理</div>
+    <button class="nav-link" data-page="cm-banner">
+      <i class="fa-regular fa-images"></i><span>首頁與分頁 Banner</span>
+    </button>
+    <button class="nav-link" data-page="cm-news">
+      <i class="fa-regular fa-newspaper"></i><span>最新消息</span>
+    </button>
+    <button class="nav-link" data-page="admin-upload">
+      <i class="fa-solid fa-camera-retro"></i><span>樂活官方上傳</span>
+    </button>
+    <button class="nav-link" data-page="manage-designs">
+      <i class="fa-solid fa-pen-ruler"></i><span>刻圖管理</span>
+    </button>
+    <button class="nav-link" data-page="manage-shares">
+      <i class="fa-solid fa-images"></i><span>分享牆管理</span>
+    </button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">會 員 與 創 作 者</div>
+    <button class="nav-link" data-page="users">
+      <i class="fa-regular fa-user"></i><span>會員列表</span>
+    </button>
+    <button class="nav-link" data-page="creators">
+      <i class="fa-solid fa-star"></i><span>創作者管理</span>
+    </button>
+    <button class="nav-link" data-page="ip">
+      <i class="fa-solid fa-copyright"></i><span>IP 合作</span>
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="admin-user">
+      <div class="admin-avatar">企</div>
+      <div class="admin-info">
+        <div class="admin-name">企劃部 · 林</div>
+        <div class="admin-role">超級管理員</div>
+      </div>
+      <button class="logout-btn" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+    </div>
+  </div>
+</aside>
+
+<!-- ====== Main ====== -->
+<main class="main">
+
+  <div class="topbar">
+    <div class="breadcrumb"><a href="#" id="adBcHome">樂活管理後台</a> &nbsp;›&nbsp; <b id="breadcrumbCurrent">首頁</b></div>
+    <div class="topbar-right">
+      <a class="icon-btn-lg" id="btnOpenFront" href="index.html" target="_blank" title="在新分頁打開樂活官網"><i class="fa-solid fa-up-right-from-square"></i></a>
+    </div>
+  </div>
+
+  <!-- 規則 banner -->
+  <div class="rule-banner" id="ruleBanner">
+    <i class="fa-solid fa-circle-info"></i>
+    <span><b>後台規則：</b>所有上傳內容預設待審核 · 通過後自動公開於前台 · 創作者首次刻圖通過後系統自動升級權限</span>
+  </div>
+
+  <div class="content">
+
+    <!-- ============= 首頁 ============= -->
+    <div class="content-page on" data-page="dashboard">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">首頁</h1>
+          <div class="page-sub" id="dashboardDate"></div>
+        </div>
+        <div class="page-actions">
+          <button class="btn"><i class="fa-regular fa-calendar"></i>本月</button>
+          <button class="btn primary"><i class="fa-solid fa-arrow-down-to-line"></i>匯出報表</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card alert">
+          <div class="kpi-label"><i class="fa-solid fa-circle-exclamation"></i>待 審 核 項 目</div>
+          <div class="kpi-value" id="kpiReviewTotal">—</div>
+          <div class="kpi-trend flat" id="kpiReviewBreakdown">— 設計 · — 照片 · — 故事</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><i class="fa-solid fa-pen-ruler"></i>本 月 新 刻 圖 上 架</div>
+          <div class="kpi-value" id="kpiNewDesigns">—</div>
+          <div class="kpi-trend purple" id="kpiNewDesignsBreakdown">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><i class="fa-regular fa-image"></i>本 月 上 傳 照 片</div>
+          <div class="kpi-value" id="kpiNewPhotos">—</div>
+          <div class="kpi-trend up" id="kpiNewPhotosTrend">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><i class="fa-solid fa-pencil"></i>本 月 雷 刻 預 約</div>
+          <div class="kpi-value" id="kpiNewOrders">—</div>
+          <div class="kpi-trend up" id="kpiNewOrdersTrend">—</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-panel">
+          <div class="dash-panel-head">
+            <h3 class="dash-panel-h">優先處理 · 待審核</h3>
+          </div>
+          <div class="review-list">
+            <p class="empty-text" style="text-align:center;padding:40px 0;color:var(--lohas-mute);font-size:12px">載入中...</p>
+          </div>
+        </div>
+
+        <div class="dash-panel">
+          <div class="dash-panel-head">
+            <h3 class="dash-panel-h">最近活動</h3>
+          </div>
+          <div class="activity-list" id="activityList">
+            <p class="empty-text" style="text-align:center;padding:40px 0;color:var(--lohas-mute);font-size:12px">載入中...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 刻圖審核 ============= -->
+    <div class="content-page" data-page="review-designs">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">刻圖審核</h1>
+          <div class="page-sub" id="reviewDesignsSub">— 件待審核 · 通過後自動上架創作者市集</div>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <label>排序</label>
+        <select><option>送審時間 · 最舊優先</option><option>送審時間 · 最新優先</option></select>
+        <label>狀態</label>
+        <select><option>待審核</option><option>已駁回</option></select>
+        <div class="spacer"></div>
+        <div class="filter-info" id="reviewDesignsFilterInfo">— 件</div>
+      </div>
+
+      <div class="review-grid">
+        <div class="rcard">
+          <div class="rcard-img"><span class="rcard-pill"><i class="fa-solid fa-star" style="color:#9D7E3F"></i>Creator</span>想 你 想 到 睡 不 著</div>
+          <div class="rcard-info">
+            <div class="rcard-title">想你想到睡不著</div>
+            <div class="rcard-by">by <b>EMO Bonnie</b> <span class="role-pill creator"><i class="fa-solid fa-star"></i>Creator</span></div>
+            <div class="rcard-quote">睡不著的不是身體,是想念。把這句話刻在眼鏡上,提醒自己晚上要早點睡。</div>
+            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>送審 2 小時前</div>
+            <div class="rcard-actions">
+              <button class="approve"><i class="fa-solid fa-check"></i>通 過</button>
+              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>駁 回</button>
+              <button class="more"><i class="fa-solid fa-ellipsis"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="rcard">
+          <div class="rcard-img g2"><span class="rcard-pill"><i class="fa-solid fa-crown" style="color:#9D7E3F"></i>Collab</span>D I N U 狗 狗</div>
+          <div class="rcard-info">
+            <div class="rcard-title">DINU 狗狗</div>
+            <div class="rcard-by">by <b>DTTO FRIENDS</b> <span class="role-pill ip"><i class="fa-solid fa-crown"></i>Collab</span></div>
+            <div class="rcard-quote">DTTO 經典角色 DINU,六款表情同款上線。</div>
+            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>送審 8 小時前</div>
+            <div class="rcard-actions">
+              <button class="approve"><i class="fa-solid fa-check"></i>通 過</button>
+              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>駁 回</button>
+              <button class="more"><i class="fa-solid fa-ellipsis"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="rcard">
+          <div class="rcard-img g3"><span class="rcard-pill">Member</span>初 戀 簽 名</div>
+          <div class="rcard-info">
+            <div class="rcard-title">初戀簽名</div>
+            <div class="rcard-by">by <b>林*婕</b> <span class="role-pill member">Member</span></div>
+            <div class="rcard-quote">把初戀寫的那張卡片掃描下來,變成眼鏡上唯一的紀念。</div>
+            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>送審 1 天前</div>
+            <div class="rcard-actions">
+              <button class="approve"><i class="fa-solid fa-check"></i>通 過</button>
+              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>駁 回</button>
+              <button class="more"><i class="fa-solid fa-ellipsis"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 最新消息 ============= -->
+    <div class="content-page" data-page="cm-news">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">最新消息</h1>
+          <div class="page-sub">公告、活動、優惠等資訊發布管理</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn primary" id="btnCreateNews"><i class="fa-solid fa-plus"></i>新增消息</button>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <label>分類</label>
+        <select><option>全部</option><option>系統公告</option><option>活動優惠</option><option>創作者公告</option></select>
+        <label>狀態</label>
+        <select><option>全部</option><option>已發布</option><option>草稿</option><option>已排程</option></select>
+        <div class="spacer"></div>
+        <div class="filter-info" id="newsFilterInfo">— 篇</div>
+      </div>
+
+      <table class="news-table">
+        <thead>
+          <tr>
+            <th>標題</th>
+            <th>分類</th>
+            <th>狀態</th>
+            <th>發布時間</th>
+            <th style="text-align:right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>新功能上線 · 創作者市集正式公開</td>
+            <td>系統公告</td>
+            <td><span class="news-status published"><i class="fa-solid fa-circle-check"></i>已發布</span></td>
+            <td>2026.04.10</td>
+            <td><div class="news-actions"><button><i class="fa-regular fa-pen-to-square"></i></button><button><i class="fa-regular fa-eye"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></td>
+          </tr>
+          <tr>
+            <td>夏季全配限定優惠</td>
+            <td>活動優惠</td>
+            <td><span class="news-status draft">草稿</span></td>
+            <td>—</td>
+            <td><div class="news-actions"><button><i class="fa-regular fa-pen-to-square"></i></button><button><i class="fa-regular fa-eye"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></td>
+          </tr>
+          <tr>
+            <td>父親節企劃 · 預約刻字</td>
+            <td>活動優惠</td>
+            <td><span class="news-status scheduled"><i class="fa-regular fa-clock"></i>已排程 6/15</span></td>
+            <td>—</td>
+            <td><div class="news-actions"><button><i class="fa-regular fa-pen-to-square"></i></button><button><i class="fa-regular fa-eye"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ============= 會員列表 (v14) ============= -->
+    <div class="content-page" data-page="users">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">會員列表</h1>
+          <div class="page-sub">所有註冊會員,可篩選身份、停權帳號、手動升級為 Creator</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">總 會 員 數</div>
+          <div class="kpi-value" id="usersKpiTotal">—</div>
+          <div class="kpi-trend flat" id="usersKpiTotalSub">統計中</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">CREATOR 總 數</div>
+          <div class="kpi-value" id="usersKpiCreator">—</div>
+          <div class="kpi-trend purple" id="usersKpiCreatorSub">含官方</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">官 方 創 作 者</div>
+          <div class="kpi-value" id="usersKpiOfficial">—</div>
+          <div class="kpi-trend flat" id="usersKpiOfficialSub">virt- 帳號</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">停 權 帳 號</div>
+          <div class="kpi-value" id="usersKpiSuspended">—</div>
+          <div class="kpi-trend flat" id="usersKpiSuspendedSub">已停權</div>
+        </div>
+      </div>
+
+      <div class="role-legend">
+        <div class="role-legend-title"><i class="fa-solid fa-circle-info"></i>身 份 說 明</div>
+        <div class="role-legend-grid">
+          <div class="role-legend-item">
+            <span class="row-role-pill member">Member</span>
+            <div class="legend-text">
+              <div class="legend-cn">會員</div>
+              <div class="legend-desc">一般註冊會員</div>
+            </div>
+          </div>
+          <div class="role-legend-item">
+            <span class="row-role-pill creator"><i class="fa-solid fa-star"></i>Creator</span>
+            <div class="legend-text">
+              <div class="legend-cn">創作者</div>
+              <div class="legend-desc">可上架設計、享分潤</div>
+            </div>
+          </div>
+          <div class="role-legend-item">
+            <span class="row-role-pill ip"><i class="fa-solid fa-crown"></i>Collab</span>
+            <div class="legend-text">
+              <div class="legend-cn">獨家聯名</div>
+              <div class="legend-desc">合作 IP 帳號</div>
+            </div>
+          </div>
+          <div class="role-legend-item">
+            <span class="row-role-pill admin"><i class="fa-solid fa-shield-halved"></i>Admin</span>
+            <div class="legend-text">
+              <div class="legend-cn">管理員</div>
+              <div class="legend-desc">後台管理權限</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="userSearchInput" placeholder="搜尋姓名、電話、信箱、會員編號..."/>
+        </div>
+        <div class="filter-group">
+          <label>身份</label>
+          <select id="filterRole">
+            <option value="">所有身份</option>
+            <option value="member">Member</option>
+            <option value="creator">Creator</option>
+            <option value="ip">Collab</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>狀態</label>
+          <select id="filterStatus">
+            <option value="">所有狀態</option>
+            <option value="active">正常</option>
+            <option value="suspended">已停權</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="users-table-wrap">
+        <table class="users-table" id="usersTable">
+          <thead>
+            <tr>
+              <th style="width:36%">會員</th>
+              <th>身份</th>
+              <th>狀態</th>
+              <th>累積上傳</th>
+              <th style="text-align:right;width:24%">操作</th>
+            </tr>
+          </thead>
+          <tbody id="usersTbody">
+            <!-- 由 JS 動態填入 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============= 其他頁 placeholder ============= -->
+    <!-- ============= 照片審核 (合併: photo + story) ============= -->
+    <div class="content-page" data-page="review-uploads">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">上傳照片審核</h1>
+          <div class="page-sub" id="reviewUploadsSub">— 件待審核 · 通過後將出現在靈感牆</div>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <label>類型</label>
+        <select id="reviewUploadsType">
+          <option value="all">全部</option>
+          <option value="photo">只有照片</option>
+          <option value="story">有故事 (≥50字)</option>
+        </select>
+        <label style="margin-left:14px">狀態</label>
+        <select id="reviewUploadsStatus">
+          <option value="pending">待審核</option>
+          <option value="rejected">已駁回</option>
+        </select>
+        <div class="spacer"></div>
+      </div>
+
+      <div class="review-grid" id="reviewUploadsGrid">
+        <div class="empty-page" style="grid-column:1/-1">
+          <i class="fa-regular fa-image"></i>
+          <div class="empty-page-title">載入中...</div>
+        </div>
+      </div>
+    </div>
+    <div class="content-page" data-page="cm-banner"><div class="page-head"><h1 class="page-title">首頁與分頁 Banner</h1></div><div class="empty-page"><i class="fa-regular fa-images"></i><div class="empty-page-title">Banner 管理介面</div></div></div>
+    <!-- ============= 創作者管理 (列表 + 編輯/刪除) ============= -->
+    <div class="content-page" data-page="creators">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">創作者管理</h1>
+          <div class="page-sub" id="creatorsListSub">— 位創作者</div>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <input class="editor-input" id="creatorsSearchInput" placeholder="搜尋名稱 / member_id..." style="max-width:280px"/>
+        <div class="filter-group">
+          <label>類型</label>
+          <select id="creatorsFilterType">
+            <option value="all">全部</option>
+            <option value="member">真實會員</option>
+            <option value="virt">樂活官方</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>狀態</label>
+          <select id="creatorsFilterStatus">
+            <option value="all">全部</option>
+            <option value="active">顯示中</option>
+            <option value="inactive">已隱藏</option>
+          </select>
+        </div>
+        <div class="spacer"></div>
+        <button class="action-btn-solid" id="creatorsAddBtn"><i class="fa-solid fa-plus"></i>新增創作者</button>
+      </div>
+
+      <div id="creatorsList">
+        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
+      </div>
+    </div>
+    <div class="content-page" data-page="ip"><div class="page-head"><h1 class="page-title">IP 合作</h1></div><div class="empty-page"><i class="fa-solid fa-copyright"></i><div class="empty-page-title">IP 授權與聯名管理</div></div></div>
+
+    <!-- ============= #4 樂活官方上傳照片 ============= -->
+    <div class="content-page" data-page="admin-upload">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">樂活官方上傳</h1>
+          <div class="page-sub">代表「樂活企劃部」上傳照片到靈感牆 · 自動通過審核</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-row">
+          <label>顯示名稱</label>
+          <input class="editor-input" id="adminUploadName" value="LOHAS 企劃部" placeholder="LOHAS 企劃部"/>
+          <div class="form-hint">此名稱會顯示在靈感牆每張照片下方</div>
+        </div>
+
+        <div class="form-row">
+          <label>標題</label>
+          <input class="editor-input" id="adminUploadTitle" maxlength="24" placeholder="例如：陪伴我10年的狗狗"/>
+        </div>
+
+        <div class="form-row">
+          <label>靈感主題</label>
+          <select class="editor-input" id="adminUploadTopic">
+            <option value="愛情紀念">愛情紀念</option>
+            <option value="家人親情">家人親情</option>
+            <option value="寵物回憶">寵物回憶</option>
+            <option value="心靈寄託">心靈寄託</option>
+            <option value="個人簽名">個人簽名</option>
+            <option value="生日節慶">生日節慶</option>
+            <option value="企業團體">企業團體</option>
+            <option value="開運祝福">開運祝福</option>
+            <option value="客製圖案">客製圖案</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>刻圖位置</label>
+          <select class="editor-input" id="adminUploadCarrier">
+            <option value="鏡片">鏡片</option>
+            <option value="鏡腳">鏡腳</option>
+            <option value="眼鏡布">眼鏡布</option>
+            <option value="眼鏡盒">眼鏡盒</option>
+            <option value="鼻墊">鼻墊</option>
+            <option value="其他周邊配件">其他周邊配件</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>圖片</label>
+          <div>
+            <input type="file" id="adminUploadFileInput" class="hidden-file-input" accept="image/*"/>
+            <div class="upload-grid admin-upload-grid">
+              <div class="upload-box main-upload" data-admin-slot="0" tabindex="0" role="button">
+                <span class="badge-main">首圖</span>
+                <div class="upload-placeholder">
+                  <i class="fa-regular fa-image"></i>
+                  <p>上傳首圖</p>
+                  <span class="upload-hint">點擊或拖曳圖片到這裡</span>
+                </div>
+              </div>
+              <div class="sub-upload-container">
+                <div class="upload-box sub-upload" data-admin-slot="1" tabindex="0" role="button">
+                  <div class="upload-placeholder">
+                    <i class="fa-regular fa-image"></i>
+                    <p>上傳圖片</p>
+                    <span class="upload-hint">副圖二（選填）</span>
+                  </div>
+                </div>
+                <div class="upload-box sub-upload" data-admin-slot="2" tabindex="0" role="button">
+                  <div class="upload-placeholder">
+                    <i class="fa-regular fa-image"></i>
+                    <p>上傳圖片</p>
+                    <span class="upload-hint">副圖三（選填）</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>故事內容</label>
+          <textarea class="editor-input" id="adminUploadStory" rows="4" maxlength="100" placeholder="(可選) 分享背後故事 · 50 字以上會自動歸類為「故事」"></textarea>
+        </div>
+
+        <div class="form-row">
+          <label></label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn primary" id="adminUploadSubmit">
+              <i class="fa-solid fa-upload"></i>上傳並自動通過
+            </button>
+            <button class="btn" id="adminUploadReset">清空</button>
+          </div>
+          <div class="form-hint" id="adminUploadHint" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:24px">
+        <h3 class="panel-h"><span><i class="fa-solid fa-clock-rotate-left"></i>最近 5 筆官方上傳</span></h3>
+        <div id="adminUploadHistory">
+          <p class="empty-text">載入中...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= #5 刻圖管理 ============= -->
+    <div class="content-page" data-page="manage-designs">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">刻圖管理</h1>
+          <div class="page-sub">編輯 / 刪除所有刻圖設計(含 legacy + 會員上傳)</div>
+        </div>
+      </div>
+
+      <!-- 工具列 -->
+      <div class="md-toolbar">
+        <div class="md-filters">
+          <select class="md-select" id="mdFilterStatus">
+            <option value="">全部狀態</option>
+            <option value="approved">已通過</option>
+            <option value="pending">待審核</option>
+            <option value="rejected">已駁回</option>
+          </select>
+          <select class="md-select" id="mdFilterType">
+            <option value="">全部來源</option>
+            <option value="legacy">Legacy(官方圖庫)</option>
+            <option value="member">會員上傳</option>
+          </select>
+          <input class="md-search" id="mdSearch" type="text" placeholder="搜尋名稱 / 創作者 / 一句話故事...">
+        </div>
+        <div class="md-meta" id="mdCount">載入中...</div>
+      </div>
+
+      <!-- 卡片 grid -->
+      <div class="md-grid" id="mdGrid">
+        <div class="md-empty">載入中...</div>
+      </div>
+    </div>
+
+
+    <!-- ============= #6 分享牆管理 ============= -->
+    <div class="content-page" data-page="manage-shares">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">分享牆管理</h1>
+          <div class="page-sub">編輯 / 刪除所有靈感牆分享(照片 + 故事)</div>
+        </div>
+      </div>
+
+      <div class="md-toolbar">
+        <div class="md-filters">
+          <select class="md-select" id="msFilterStatus">
+            <option value="">全部狀態</option>
+            <option value="approved">已通過</option>
+            <option value="pending">待審核</option>
+            <option value="rejected">已駁回</option>
+          </select>
+          <select class="md-select" id="msFilterType">
+            <option value="">全部類型</option>
+            <option value="photo">照片</option>
+            <option value="story">故事</option>
+          </select>
+          <input class="md-search" id="msSearch" type="text" placeholder="搜尋標題 / 會員 / 故事內容...">
+        </div>
+        <div class="md-meta" id="msCount">載入中...</div>
+      </div>
+
+      <div class="md-grid" id="msGrid">
+        <div class="md-empty">載入中...</div>
+      </div>
+    </div>
+
+
+    <!-- ============= 分享牆編輯 Modal ============= -->
+    <div class="md-modal-overlay" id="msModalOverlay" hidden>
+      <div class="md-modal">
+        <div class="md-modal-head">
+          <h2>編輯分享</h2>
+          <button class="md-modal-close" id="msModalClose" type="button"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="md-modal-body">
+          <div class="md-form-row">
+            <label>標題 <span class="req">*</span></label>
+            <input type="text" id="msEditTitle" maxlength="40">
+          </div>
+          <div class="md-form-row">
+            <label>故事內容</label>
+            <textarea id="msEditStory" rows="4" maxlength="500" style="width:100%;padding:10px 12px;background:#FAF7F2;border:1px solid var(--lohas-line);border-radius:8px;font-size:13px;color:var(--lohas-text);font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+          </div>
+          <div class="md-form-row">
+            <label>主題</label>
+            <input type="text" id="msEditTopic" placeholder="例如:寵物回憶 / 愛情紀念">
+          </div>
+          <div class="md-form-row">
+            <label>承載物</label>
+            <input type="text" id="msEditCarrier" placeholder="例如:眼鏡 / 杯子">
+          </div>
+        </div>
+        <div class="md-modal-foot">
+          <button class="md-btn md-btn-cancel" id="msEditCancel">取消</button>
+          <button class="md-btn md-btn-save"   id="msEditSave">儲存</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ============= 刻圖審核 Modal ============= -->
+    <div class="md-modal-overlay" id="approveDesignModal" hidden>
+      <div class="md-modal">
+        <div class="md-modal-head">
+          <h2><i class="fa-solid fa-pen-to-square"></i> 開始審核</h2>
+          <button class="md-modal-close" id="apClose" type="button"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="md-modal-body">
+          <input type="hidden" id="apDesignId">
+          <div class="md-form-row">
+            <label>創作者</label>
+            <div class="md-form-readonly" id="apCreatorIdLabel">--</div>
+          </div>
+          <div class="md-form-row">
+            <label>名稱 <span class="req">*</span></label>
+            <input type="text" id="apName" maxlength="40" placeholder="設計名稱(可編輯)">
+          </div>
+          <div class="md-form-row">
+            <label>分類</label>
+            <input type="text" id="apCategory" placeholder="例如:寵物回憶 / 愛情紀念(可編輯)">
+          </div>
+          <div class="md-form-row">
+            <label>ErpNumber <span class="req">*</span></label>
+            <input type="text" id="apErpNumber" placeholder="門市端商品編號">
+          </div>
+          <div class="md-form-row">
+            <label>Price <span class="req">*</span></label>
+            <input type="number" id="apPrice" min="0" step="1" placeholder="0">
+          </div>
+        </div>
+        <div class="md-modal-foot">
+          <button class="md-btn md-btn-cancel" id="apCancel">取消</button>
+          <button class="md-btn md-btn-save"   id="apSubmit">完成審核</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ============= 刻圖編輯 Modal ============= -->
+    <div class="md-modal-overlay" id="mdModalOverlay" hidden>
+      <div class="md-modal">
+        <div class="md-modal-head">
+          <h2>編輯刻圖設計</h2>
+          <button class="md-modal-close" id="mdModalClose" type="button"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="md-modal-body">
+          <div class="md-form-row">
+            <label>名稱 <span class="req">*</span></label>
+            <input type="text" id="mdEditName" maxlength="20">
+          </div>
+          <div class="md-form-row">
+            <label>一句話故事</label>
+            <input type="text" id="mdEditSlogan" maxlength="40">
+          </div>
+          <div class="md-form-row">
+            <label>分類</label>
+            <input type="text" id="mdEditCategory" placeholder="例如:寵物回憶 / 愛情紀念">
+          </div>
+          <div class="md-form-row">
+            <label>標籤(逗號分隔)</label>
+            <input type="text" id="mdEditKeywords" placeholder="例如:寵物名字,寵物線稿">
+          </div>
+          <div class="md-form-row">
+            <label>創作者姓名</label>
+            <input type="text" id="mdEditDesigner">
+          </div>
+        </div>
+        <div class="md-modal-foot">
+          <button class="md-btn md-btn-cancel" id="mdEditCancel">取消</button>
+          <button class="md-btn md-btn-save"   id="mdEditSave">儲存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 創作者編輯 Modal (新增 + 編輯共用) ============= -->
+    <div class="ag-modal-overlay" id="agModalOverlay" style="display:none">
+      <div class="ag-modal">
+        <div class="ag-modal-header">
+          <h2 class="ag-modal-title" id="agModalTitle">新增創作者個人頁</h2>
+          <button class="ag-modal-close" id="agModalClose" type="button" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="ag-modal-body">
+          <div class="creator-edit-wrap">
+        <div class="editor-panel">
+          <h3 class="editor-panel-h"><i class="fa-regular fa-id-badge"></i>基本資訊</h3>
+          <div class="editor-row">
+            <div class="editor-label">頭像</div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <div class="creator-avatar-wrap">
+                <div class="ed-avatar" id="agAvatar">LO</div>
+                <button class="ed-avatar-camera" id="agAvatarUploadBtn" type="button" aria-label="更換頭像">
+                  <i class="fa-solid fa-camera"></i>
+                </button>
+                <input type="file" id="agAvatarInput" class="visually-hidden" accept="image/*">
+              </div>
+            </div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">顯示名稱</div>
+            <div><input class="editor-input" id="agDisplayName" value="LOHAS 企劃部" placeholder="LOHAS 企劃部"/></div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">短標籤</div>
+            <div>
+              <input class="editor-input" id="agTagline" placeholder="例如:官方品牌"/>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在名字下方</div>
+            </div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">自我介紹</div>
+            <div><textarea class="editor-area" id="agBio" placeholder="說說這位創作者..."></textarea></div>
+          </div>
+        </div>
+
+        <div class="editor-panel">
+          <h3 class="editor-panel-h"><i class="fa-regular fa-heart"></i>與樂活的緣分</h3>
+          <div class="editor-row">
+            <div class="editor-label">圖片</div>
+            <div>
+              <div class="creator-photo-wrap">
+                <div class="creator-photo-preview" id="agJoiningPhotoPreview">
+                  <i class="fa-regular fa-image"></i>
+                  <span>3:4 直式</span>
+                </div>
+                <button class="creator-photo-clear" id="agJoiningPhotoClear" type="button" aria-label="移除緣分照片" style="display:none">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+                <button class="creator-photo-upload-btn" id="agJoiningPhotoBtn" type="button">
+                  <i class="fa-solid fa-camera"></i>更換圖片
+                </button>
+                <input type="file" id="agJoiningPhotoInput" class="visually-hidden" accept="image/*">
+                <input type="hidden" id="agJoiningPhoto"/>
+              </div>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">3:4 直式照片,顯示在文字左側</div>
+            </div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">緣分故事</div>
+            <div>
+              <textarea class="editor-area" id="agJoiningStory" placeholder="說說這位創作者跟樂活的緣分..." style="min-height:140px"></textarea>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">空一行 = 段落分隔</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-panel">
+          <h3 class="editor-panel-h">
+            <i class="fa-regular fa-rectangle-list"></i>自訂內容區塊
+            <button class="btn" id="agAddCustomBlockBtn" type="button" style="margin-left:auto;font-size:11px;padding:6px 12px">
+              <i class="fa-solid fa-plus"></i>新增區塊
+            </button>
+          </h3>
+          <div id="agCustomBlocksList">
+            <p class="empty-text" style="padding:30px 20px;font-size:12px">點上方「新增區塊」加入自訂的圖文段落</p>
+          </div>
+        </div>
+
+        <div class="editor-panel">
+          <h3 class="editor-panel-h"><i class="fa-brands fa-youtube"></i>創作者影片 (選填)</h3>
+          <div class="editor-row">
+            <div class="editor-label">YouTube URL</div>
+            <div>
+              <input class="editor-input" id="agVideoUrl" placeholder="https://www.youtube.com/watch?v=..."/>
+            </div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">影片標題</div>
+            <div><input class="editor-input" id="agVideoTitle" placeholder="例如:LOHAS 品牌故事"/></div>
+          </div>
+        </div>
+
+        <div class="editor-panel">
+          <h3 class="editor-panel-h"><i class="fa-regular fa-comment-dots"></i>聯絡方式 / 社群連結</h3>
+          <div class="editor-row">
+            <div class="editor-label">Instagram</div>
+            <div><input class="editor-input" id="agIg" placeholder="https://instagram.com/yourname"/></div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">Facebook</div>
+            <div><input class="editor-input" id="agFb" placeholder="https://facebook.com/yourname"/></div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">LINE ID</div>
+            <div><input class="editor-input" id="agLine" placeholder="yourname"/></div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">Email</div>
+            <div><input class="editor-input" id="agEmail" placeholder="hello@example.com"/></div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="action-btn-solid" id="agSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>建立創作者</span></button>
+              <button class="btn" id="agResetBtn">清空表單</button>
+              <button class="btn" id="agModalCloseBottom">關閉</button>
+            </div>
+            <div class="form-hint" id="agHint" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ====== 駁回 modal ====== -->
+<div class="modal-ovl" id="rejectModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3 class="modal-h">駁回審核</h3>
+      <p class="modal-sub">請選擇或輸入駁回原因,作者會收到通知並看到原因說明</p>
+      <button class="modal-close" id="closeRejectX"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-target">
+        <div class="thumb"></div>
+        <div>
+          <div class="info-t">想你想到睡不著</div>
+          <div class="info-m">by EMO Bonnie · 創作者作品</div>
+        </div>
+      </div>
+
+      <label class="field-label">常用駁回原因</label>
+      <div class="reason-presets">
+        <button class="preset" data-text="圖片解析度不足 300 dpi,線條轉印後容易模糊。請重新上傳更高解析度版本。">解析度不足</button>
+        <button class="preset" data-text="圖案內容含有可辨識的版權元素,無法通過審核。請使用原創圖案重新提交。">疑似侵權</button>
+        <button class="preset" data-text="設計師的話文字內容不符合樂活內容規範,請修改後重新提交。">文字違規</button>
+        <button class="preset" data-text="圖片尺寸或比例不符合雷刻規格(建議 1:1 正方形)。請依規範重新上傳。">尺寸不符</button>
+        <button class="preset" data-text="圖片中有可辨識的他人面孔,基於肖像權考量無法公開。請重新上傳模糊處理或無他人入鏡的版本。">肖像權問題</button>
+      </div>
+
+      <label class="field-label">駁回原因說明 <span class="req">(必填)</span></label>
+      <textarea class="reason-area" id="reasonText" placeholder="請說明駁回原因,作者會看到這段內容..."></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="cancelReject">取消</button>
+      <button class="btn danger-solid" id="confirmReject"><i class="fa-solid fa-xmark"></i>確認駁回</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ====== 依賴 (按順序載入) ====== -->
+<script src="js/utils.js?v=20260510-1720"></script>
+<script src="js/auth.js?v=20260510-1720"></script>
+<script src="js/supabase.js?v=20260510-1720"></script>
+<script src="js/cropper-helper.js?v=20260510-1720"></script>
+
+<!-- 後台主邏輯 -->
+<script src="js/admin-portal.js?v=20260510-1720"></script>
+
+</body>
+</html>
