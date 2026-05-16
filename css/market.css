@@ -1025,12 +1025,12 @@
 /* 我的最愛按鈕下方提示 */
 .cm .modal-hint{
   margin:14px 0 0;
-  padding:10px 14px;
+  padding:12px 16px;
   background:#FAF7F1;
   border-radius:8px;
   border-left:3px solid var(--lohas-brown);
-  font-size:12px;
-  line-height:1.6;
+  font-size:14px;
+  line-height:1.7;
   color:var(--lohas-sub);
   letter-spacing:0.3px;
   display:flex;
@@ -1039,7 +1039,7 @@
 }
 .cm .modal-hint i{
   color:var(--lohas-brown);
-  font-size:13px;
+  font-size:16px;
   margin-top:2px;
   flex-shrink:0;
 }
