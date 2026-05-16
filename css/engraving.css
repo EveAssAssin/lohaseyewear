@@ -49,8 +49,7 @@
     display: flex;
     align-items: flex-end; /* 文字靠底 */
     justify-content: flex-start; /* 文字靠左 */
-    padding-left: 5%;
-    padding-bottom: 60px; /* 增加底部間距避免太貼齊邊緣 */
+    padding: 0 32px 60px;
     z-index: 1;
 }
 
@@ -77,6 +76,9 @@
 .engraving-hero .hero-content {
     z-index: 3;
     position: relative;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
 }
 
 .engraving-hero .hero-title {
@@ -235,6 +237,39 @@
     letter-spacing: 0.3px;
     line-height: 1.4;
 }
+
+/* 區塊下方統一 CTA */
+.inspiration-cta-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+    padding: 0 20px;
+}
+.btn-inspiration-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 36px;
+    background: var(--lohas-brand);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 15px;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+.btn-inspiration-cta:hover {
+    background: var(--lohas-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(80, 66, 45, 0.25);
+}
+.btn-inspiration-cta i {
+    font-size: 13px;
+    transition: transform 0.3s;
+}
+.btn-inspiration-cta:hover i {
+    transform: translateX(4px);
+}
 .btn-more-simple {
     display: inline-block; 
     text-decoration: none; 
@@ -315,7 +350,7 @@
     color: #2C2620;
     margin: 0 0 18px;
     line-height: 1.35;
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: 1.5px;
 }
 .cta-hero-en {
@@ -354,8 +389,7 @@
 @media (max-width: 768px) {
     .engraving-hero {
         height: 100svh; /* 手機版滿版高度 */
-        padding-left: 20px;
-        padding-bottom: 40px;
+        padding: 0 20px 40px;
         align-items: flex-end;
         justify-content: flex-start;
     }
