@@ -186,6 +186,7 @@
   overflow:hidden;
   display:grid;
   grid-template-columns:340px 1fr;
+  align-items:stretch;
   cursor:pointer;
   transition:all .3s;
   box-shadow:var(--sh-soft, 0 12px 28px rgba(80,66,45,0.05));
@@ -212,6 +213,8 @@
   padding:48px 32px;
   transition:filter .3s;
   min-height:340px;
+  height:100%;
+  align-self:stretch;
 }
 .cm .featured-avatar-big{
   width:160px;

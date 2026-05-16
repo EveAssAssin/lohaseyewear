@@ -49,7 +49,8 @@
     display: flex;
     align-items: flex-end; /* 文字靠底 */
     justify-content: flex-start; /* 文字靠左 */
-    padding: 0 32px 60px;
+    padding-left: 5%;
+    padding-bottom: 60px; /* 增加底部間距避免太貼齊邊緣 */
     z-index: 1;
 }
 
@@ -76,9 +77,6 @@
 .engraving-hero .hero-content {
     z-index: 3;
     position: relative;
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
 }
 
 .engraving-hero .hero-title {
@@ -189,16 +187,54 @@
     display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 25px; max-width: 1200px; margin: 0 auto; padding: 0 20px;
 }
+
+/* 9 大類專屬 — 強制 3x3 */
+.grid-container.inspiration-9 {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1280px;
+}
+@media (max-width: 968px) {
+    .grid-container.inspiration-9 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 600px) {
+    .grid-container.inspiration-9 {
+        grid-template-columns: 1fr;
+    }
+}
+
 .grid-item {
     background: #fff; border-radius: 12px; overflow: hidden;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: transform 0.3s;
+    display: flex;
+    flex-direction: column;
 }
 .grid-item:hover { transform: translateY(-5px); }
 .grid-img img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
 .grid-text { padding: 20px; }
 .grid-text .tag { font-size: 10px; color: var(--lohas-light); letter-spacing: 1px; font-weight: bold; display: block; margin-bottom: 5px;}
-.grid-text h5 { color: var(--lohas-brand); font-size: 18px; margin-bottom: 8px;}
+.grid-text h5 { color: var(--lohas-brand); font-size: 18px; margin-bottom: 12px;}
 .grid-text p { font-size: 14px; color: #666; margin-bottom: 15px;}
+
+/* 子標籤 chips */
+.sub-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.sub-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #F4F1EC;
+    color: var(--lohas-brand);
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+}
 .btn-more-simple {
     display: inline-block; 
     text-decoration: none; 
@@ -226,26 +262,100 @@
 .faq-item h4 { color: var(--lohas-brand); margin-bottom: 12px; font-size: 18px; }
 .faq-item p { color: #666; font-size: 15px; line-height: 1.6; }
 
-/* 區塊六：門市預約 CTA */
-.store-cta-section { padding: 80px 20px; }
-.cta-box {
-    background: var(--lohas-brand); padding: 50px; border-radius: 20px;
-    display: flex; justify-content: space-between; align-items: center;
-    max-width: 1000px; margin: 0 auto; color: #fff;
+/* 區塊六：門市預約 CTA (Apple 明亮版 A2 - 店面照片 + 左下角玻璃霧化文字) */
+.store-cta-section {
+    padding: 80px 20px;
+    max-width: 1280px;
+    margin: 0 auto;
 }
-.cta-content h3 { font-size: 24px; margin-bottom: 10px; }
-.cta-content p { font-size: 15px; opacity: 0.8; }
-.cta-box .btn-primary { 
-    background: #fff !important; color: var(--lohas-brand) !important; 
-    font-weight: bold; border: none;
+.cta-hero {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/8;
+    min-height: 380px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #2a2520;
 }
-.cta-box .btn-primary:hover { background: var(--bg-warm) !important; }
+.cta-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+.cta-hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+/* 左下角玻璃霧化文字塊 */
+.cta-hero-text {
+    position: absolute;
+    left: 40px;
+    bottom: 40px;
+    z-index: 2;
+    background: rgba(255, 250, 242, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(60, 46, 30, 0.08);
+    padding: 28px 32px 24px;
+    border-radius: 6px;
+    max-width: 360px;
+}
+.cta-hero-tag {
+    display: block;
+    font-size: 10px;
+    color: rgba(60, 46, 30, 0.55);
+    letter-spacing: 3px;
+    margin-bottom: 14px;
+    font-weight: 600;
+}
+.cta-hero-title {
+    font-size: 26px;
+    color: #2C2620;
+    margin: 0 0 8px;
+    line-height: 1.35;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+.cta-hero-en {
+    font-size: 11px;
+    color: rgba(60, 46, 30, 0.55);
+    letter-spacing: 3px;
+    margin: 0 0 18px;
+    font-weight: 300;
+}
+.cta-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: #2C2620;
+    color: #fff !important;
+    border-radius: 999px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+.cta-hero-btn:hover {
+    background: #50422D;
+    transform: translateX(3px);
+}
+.cta-hero-btn i {
+    font-size: 11px;
+    transition: transform 0.3s;
+}
+.cta-hero-btn:hover i {
+    transform: translateX(3px);
+}
 
 /* 手機版 RWD 適應 */
 @media (max-width: 768px) {
     .engraving-hero {
         height: 100svh; /* 手機版滿版高度 */
-        padding: 0 20px 40px;
+        padding-left: 20px;
+        padding-bottom: 40px;
         align-items: flex-end;
         justify-content: flex-start;
     }
@@ -277,7 +387,19 @@
     }
     .specs-container, .process-wrapper { flex-direction: column; gap: 40px; }
     .process-arrow { transform: rotate(90deg); margin: -10px 0; }
-    .cta-box { flex-direction: column; text-align: center; gap: 25px; padding: 40px 20px; }
+    .cta-hero {
+        aspect-ratio: 4/5;
+        min-height: 460px;
+    }
+    .cta-hero-text {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        max-width: none;
+        padding: 22px 24px 20px;
+    }
+    .cta-hero-title { font-size: 22px; }
+    .cta-hero-btn { padding: 10px 22px; font-size: 12px; }
 }
 /* RWD 回應式調整 */
 @media (max-width: 1024px) {
