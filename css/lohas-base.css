@@ -269,9 +269,11 @@
 
 @media (min-width: 769px) {
     .nav-links > li > a {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
         position: relative;
-        padding-bottom: 6px;
+        height: 70px;
+        padding-bottom: 0;
     }
 
     .nav-links > li:hover > a {
@@ -281,7 +283,7 @@
     .nav-links > li > a::after {
         content: '';
         position: absolute;
-        bottom: 0;
+        bottom: 12px;
         left: 0;
         width: 0;
         height: 1px;
