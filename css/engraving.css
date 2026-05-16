@@ -264,16 +264,14 @@
 
 /* 區塊六：門市預約 CTA (Apple 明亮版 A2 - 店面照片 + 左下角玻璃霧化文字) */
 .store-cta-section {
-    padding: 80px 20px;
-    max-width: 1280px;
-    margin: 0 auto;
+    padding: 0;
+    width: 100%;
 }
 .cta-hero {
     position: relative;
     width: 100%;
-    aspect-ratio: 16/8;
-    min-height: 380px;
-    border-radius: 20px;
+    height: 70vh;
+    min-height: 520px;
     overflow: hidden;
     background: #2a2520;
 }
@@ -288,19 +286,19 @@
     object-fit: cover;
     display: block;
 }
-/* 左下角玻璃霧化文字塊 */
+/* 左下角玻璃霧化文字塊 (對齊 1280 內容區左邊) */
 .cta-hero-text {
     position: absolute;
-    left: 40px;
-    bottom: 40px;
+    left: max(40px, calc((100% - 1280px) / 2 + 32px));
+    bottom: 60px;
     z-index: 2;
     background: rgba(255, 250, 242, 0.92);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(60, 46, 30, 0.08);
-    padding: 28px 32px 24px;
+    padding: 32px 36px 28px;
     border-radius: 6px;
-    max-width: 360px;
+    max-width: 400px;
 }
 .cta-hero-tag {
     display: block;
@@ -311,19 +309,19 @@
     font-weight: 600;
 }
 .cta-hero-title {
-    font-size: 26px;
+    font-size: 28px;
     color: #2C2620;
-    margin: 0 0 8px;
+    margin: 0 0 14px;
     line-height: 1.35;
     font-weight: 500;
     letter-spacing: 1px;
 }
 .cta-hero-en {
-    font-size: 11px;
-    color: rgba(60, 46, 30, 0.55);
-    letter-spacing: 3px;
-    margin: 0 0 18px;
-    font-weight: 300;
+    font-size: 13px;
+    color: rgba(60, 46, 30, 0.65);
+    line-height: 1.7;
+    margin: 0 0 22px;
+    letter-spacing: 0.5px;
 }
 .cta-hero-btn {
     display: inline-flex;
