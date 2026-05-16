@@ -1198,7 +1198,12 @@
     const btn = document.getElementById('addDesignBtn');
     if (btn) {
       btn.addEventListener('click', () => {
-        alert('上傳刻圖設計功能即將推出');
+        if (window.LohasUploadDesign && window.LohasUploadDesign.openModal) {
+          window.LohasUploadDesign.openModal();
+        } else {
+          console.error('[addDesignBtn] LohasUploadDesign 未載入');
+          alert('刻圖上傳模組未載入,請重新整理頁面');
+        }
       });
     }
   }
@@ -2137,8 +2142,13 @@
             window.LohasUpload.openModal();
           }
         } else if (action === 'upload-design') {
-          // 開上傳刻圖設計 modal (尚未實作 → 暫時提示)
-          alert('上傳刻圖設計功能即將推出');
+          // 開上傳刻圖設計 modal
+          if (window.LohasUploadDesign && window.LohasUploadDesign.openModal) {
+            window.LohasUploadDesign.openModal();
+          } else {
+            console.error('[upload-design] LohasUploadDesign 未載入,確認 member-portal.html 是否引用 js/upload-design.js');
+            alert('刻圖上傳模組未載入,請重新整理頁面或聯絡客服');
+          }
         }
       });
     });
