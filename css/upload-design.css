@@ -1,0 +1,611 @@
+/* =============================================================
+   LohasUploadDesign · 創作者刻圖上傳 Modal 樣式
+   -------------------------------------------------------------
+   依賴: lohas-tokens.css (--lohas-brand 等變數)
+   命名: 全部前綴 .design-upload-modal / .dum-*
+   ============================================================= */
+
+
+.design-upload-modal{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  font-family:inherit;
+}
+.design-upload-modal.is-open{ display:flex }
+
+.dum-bg{
+  position:absolute;
+  inset:0;
+  background:rgba(45,37,32,0.55);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+
+.dum-dialog{
+  position:relative;
+  background:#fff;
+  border-radius:20px;
+  width:920px;
+  max-width:100%;
+  max-height:calc(100vh - 60px);
+  display:grid;
+  grid-template-columns:380px 1fr;
+  grid-template-rows:1fr;          /* 強制單列,撐滿 max-height */
+  overflow:hidden;
+  box-shadow:0 24px 80px rgba(80,66,45,0.28);
+  animation:dumIn .3s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes dumIn{
+  from{ opacity:0; transform:translateY(20px) scale(.96) }
+  to  { opacity:1; transform:translateY(0)    scale(1) }
+}
+
+.dum-close{
+  position:absolute;
+  top:16px;
+  right:16px;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#fff;
+  border:0;
+  color:var(--lohas-brand, #50422D);
+  cursor:pointer;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:5;
+  box-shadow:0 2px 8px rgba(80,66,45,0.2);
+  transition:all .2s;
+}
+.dum-close:hover{ background:var(--lohas-brand, #50422D); color:#fff }
+
+
+/* === 左欄:上傳區 === */
+.dum-left{
+  padding:24px 24px 28px;
+  background:linear-gradient(180deg, #FAF7F2 0%, var(--bg-soft, #F4F1EC) 100%);
+  border-right:1px solid var(--lohas-bd, #E8DED1);
+  display:flex;
+  flex-direction:column;
+  min-height:0;         /* 讓 flex 子可以 shrink */
+  overflow-y:auto;      /* 內容過長可滾 */
+}
+
+.dum-eyebrow{
+  font-size:11px;
+  letter-spacing:3px;
+  color:var(--lohas-hover, #765F4A);
+  font-weight:600;
+  margin-bottom:14px;
+}
+
+.dum-uploader{
+  background:#fff;
+  border-radius:14px;
+  border:1px dashed var(--lohas-bd, #E8DED1);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  text-align:center;
+  padding:18px;
+  margin-bottom:14px;
+  transition:all .2s;
+  position:relative;
+  overflow:hidden;
+  flex-shrink:0;          /* 防 flex column 把上傳框壓扁 */
+  aspect-ratio:1/1;
+  min-height:300px;
+}
+.dum-uploader:hover,
+.dum-uploader:focus-visible{
+  border-color:var(--lohas-brand, #50422D);
+  background:#FFFDF9;
+  outline:none;
+}
+.dum-uploader.drag{
+  border-color:var(--lohas-brand, #50422D);
+  background:#F4F1EC;
+  border-style:solid;
+}
+.dum-uploader.has-file{
+  cursor:default;
+  padding:0;
+  border-style:solid;
+}
+/* 上傳後強制隱藏「點擊或拖曳上傳」文字塊 */
+.dum-uploader.has-file .dum-uploader-empty{
+  display:none !important;
+}
+.dum-uploader-empty{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.dum-uploader-empty[hidden]{
+  display:none !important;
+}
+.dum-uploader-icon{
+  width:56px;
+  height:56px;
+  background:var(--bg-soft, #F4F1EC);
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--lohas-brand, #50422D);
+  font-size:22px;
+  margin-bottom:14px;
+}
+.dum-uploader-h{
+  font-size:13px;
+  font-weight:600;
+  color:var(--lohas-text, #2F2A24);
+  letter-spacing:0.5px;
+  margin-bottom:6px;
+}
+.dum-uploader-p{
+  font-size:11px;
+  color:var(--lohas-muted, #9B9186);
+  letter-spacing:0.3px;
+  line-height:1.7;
+}
+
+/* 預覽 - 絕對定位覆蓋整個 uploader */
+.dum-uploader-preview{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+.dum-uploader-preview[hidden]{
+  display:none !important;
+}
+.dum-uploader-preview img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#fff;
+  padding:16px;
+  box-sizing:border-box;
+  display:block;
+}
+.dum-preview-actions{
+  position:absolute;
+  bottom:8px;
+  left:8px;
+  right:8px;
+  display:flex;
+  gap:6px;
+  justify-content:center;
+}
+.dum-preview-btn{
+  background:rgba(255,255,255,0.95);
+  border:1px solid var(--lohas-bd, #E8DED1);
+  color:var(--lohas-text, #2F2A24);
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:500;
+  cursor:pointer;
+  font-family:inherit;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  transition:all .15s;
+}
+.dum-preview-btn:hover{ background:#fff; border-color:var(--lohas-brand, #50422D) }
+.dum-preview-btn.danger{ color:#A85A4A }
+.dum-preview-btn.danger:hover{ background:#A85A4A; color:#fff; border-color:#A85A4A }
+
+.dum-tip{
+  background:var(--bg-soft, #F4F1EC);
+  border-radius:10px;
+  padding:10px 14px;
+  font-size:11px;
+  color:var(--lohas-hover, #765F4A);
+  letter-spacing:0.3px;
+  line-height:1.7;
+}
+.dum-tip b{ color:var(--lohas-brand, #50422D); font-weight:600 }
+
+
+/* === 眼鏡模擬框 (上傳後才顯示) === */
+.dum-mock-frame{
+  margin-top:14px;
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:14px;
+  overflow:hidden;
+  flex-shrink:0;            /* 防 flex column 把整個框壓扁 */
+  animation:dumIn .25s ease-out;
+}
+.dum-mock-label{
+  padding:10px 14px 8px;
+  font-size:10px;
+  letter-spacing:2.5px;
+  color:var(--lohas-hover, #765F4A);
+  font-weight:600;
+  background:linear-gradient(180deg, #FAF7F2, #fff);
+  border-bottom:1px solid #F0EBE2;
+}
+.dum-mock-stage{
+  display:block;
+  position:relative;
+  width:100%;
+  aspect-ratio:1;
+  flex-shrink:0;
+  background-color:#fff;
+  background-image:url('../images/glasses-mockup.jpg');
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+}
+.dum-mock-engrave{
+  /* 鏡片右上 - 縮小版 */
+  position:absolute;
+  left:80%;
+  top:22%;
+  width:15%;
+  height:15%;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.dum-mock-engrave img{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  opacity:0.88;
+}
+
+
+
+.dum-flow-info{
+  margin-top:auto;
+  padding-top:18px;
+  border-top:1px solid var(--lohas-bd, #E8DED1);
+}
+.dum-flow-label{
+  font-size:11px;
+  color:var(--lohas-muted, #9B9186);
+  letter-spacing:1.5px;
+  margin-bottom:8px;
+}
+.dum-flow-desc{
+  font-size:12px;
+  color:var(--text-sub, #6F665D);
+  line-height:1.85;
+  letter-spacing:0.3px;
+}
+.dum-flow-desc .pending{ color:#B58A42; font-weight:600 }
+
+
+/* === 右欄:表單 === */
+.dum-right{
+  padding:30px 32px 26px;
+  display:flex;
+  flex-direction:column;
+  min-height:0;         /* 讓 flex 子可以 shrink,overflow 才會 work */
+  overflow-y:auto;
+}
+
+.dum-header{ margin-bottom:22px }
+.dum-title{
+  font-size:22px;
+  font-weight:600;
+  color:var(--lohas-text, #2F2A24);
+  letter-spacing:0.5px;
+  margin:0 0 6px;
+}
+.dum-subtitle{
+  font-size:12px;
+  color:var(--lohas-muted, #9B9186);
+  letter-spacing:0.5px;
+  margin:0;
+}
+.dum-by{ color:var(--lohas-brand, #50422D); font-weight:600 }
+
+.dum-form{ display:flex; flex-direction:column; gap:16px; margin-bottom:18px }
+
+.dum-field label{
+  display:block;
+  font-size:12px;
+  color:var(--lohas-brand, #50422D);
+  font-weight:600;
+  letter-spacing:0.8px;
+  margin-bottom:6px;
+}
+.dum-field .req{ color:#A85A4A; margin-left:2px }
+.dum-field input[type="text"]{
+  width:100%;
+  height:40px;
+  padding:0 14px;
+  background:#FAF7F2;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:10px;
+  font-size:13px;
+  color:var(--lohas-text, #2F2A24);
+  font-family:inherit;
+  outline:none;
+  box-sizing:border-box;
+  transition:all .15s;
+}
+.dum-field input[type="text"]:focus{
+  border-color:var(--lohas-brand, #50422D);
+  background:#fff;
+}
+.dum-field-hint{
+  font-size:10px;
+  color:var(--lohas-muted, #9B9186);
+  margin-top:4px;
+  letter-spacing:0.3px;
+}
+
+/* Chip 共用 */
+.dum-chip-row{ display:flex; flex-wrap:wrap; gap:6px }
+.dum-chip{
+  background:#fff;
+  color:var(--text-sub, #6F665D);
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:11px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  cursor:pointer;
+  font-family:inherit;
+  font-weight:500;
+  letter-spacing:0.3px;
+  transition:all .15s;
+}
+.dum-chip:hover{ border-color:var(--lohas-light, #CDBEA2); color:var(--lohas-brand, #50422D) }
+.dum-chip.on{
+  background:var(--lohas-brand, #50422D);
+  color:#fff;
+  border-color:var(--lohas-brand, #50422D);
+  font-weight:600;
+}
+
+/* 子標籤區 */
+.dum-subcat-wrap{
+  background:var(--bg-soft, #F4F1EC);
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:12px;
+  padding:14px 16px;
+  animation:dumSlide .25s ease-out;
+}
+@keyframes dumSlide{
+  from{ opacity:0; transform:translateY(-6px) }
+  to  { opacity:1; transform:translateY(0)    }
+}
+.dum-subcat-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.dum-subcat-head label{ margin:0 }
+.dum-subcat-meta{
+  color:var(--lohas-muted, #9B9186);
+  font-weight:400;
+  font-size:10px;
+  letter-spacing:0.3px;
+}
+.dum-subcat-count{
+  font-size:10px;
+  color:var(--lohas-muted, #9B9186);
+  letter-spacing:0.3px;
+}
+.dum-subchip{ padding:5px 12px }
+
+
+/* 條款 */
+.dum-terms{
+  background:#FAF7F2;
+  border-radius:12px;
+  padding:12px 14px;
+  margin-bottom:18px;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+.dum-terms-icon{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--lohas-brand, #50422D);
+  font-size:10px;
+  flex-shrink:0;
+  border:1px solid var(--lohas-bd, #E8DED1);
+}
+.dum-terms-text{
+  font-size:11px;
+  color:var(--text-sub, #6F665D);
+  line-height:1.85;
+  letter-spacing:0.3px;
+}
+.dum-terms-text b{ color:var(--lohas-brand, #50422D); font-weight:600 }
+
+
+/* CTA */
+.dum-actions{ display:flex; gap:10px; margin-top:auto }
+.dum-btn-cancel,
+.dum-btn-submit{
+  height:44px;
+  border-radius:999px;
+  font-family:inherit;
+  font-size:13px;
+  letter-spacing:0.8px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.dum-btn-cancel{
+  flex:1;
+  background:transparent;
+  color:var(--lohas-text, #2F2A24);
+  border:1px solid var(--lohas-light, #CDBEA2);
+}
+.dum-btn-cancel:hover:not(:disabled){
+  border-color:var(--lohas-brand, #50422D);
+  color:var(--lohas-brand, #50422D);
+}
+.dum-btn-submit{
+  flex:2;
+  background:var(--lohas-brand, #50422D);
+  color:#fff;
+  border:0;
+  font-weight:600;
+  letter-spacing:1px;
+}
+.dum-btn-submit:hover:not(:disabled){
+  background:var(--lohas-hover, #765F4A);
+  transform:translateY(-1px);
+}
+.dum-btn-submit:disabled,
+.dum-btn-cancel:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+}
+
+/* 錯誤訊息 */
+.dum-error{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#FBEAEA;
+  color:#A33B33;
+  font-size:13px;
+  font-weight:600;
+  padding:14px 18px;
+  border-radius:12px;
+  margin-bottom:16px;        /* 放在表單上面 */
+  letter-spacing:0.5px;
+  border:1px solid #F0D2D2;
+  box-shadow:0 4px 12px rgba(168, 90, 74, 0.12);
+}
+.dum-error[hidden]{ display:none !important }
+.dum-error i{
+  font-size:18px;
+  flex-shrink:0;
+  color:#C2493D;
+}
+.dum-error-text{
+  flex:1;
+  line-height:1.5;
+}
+.dum-error.shake{
+  animation:dumShake .4s;
+}
+@keyframes dumShake{
+  0%, 100%{ transform:translateX(0) }
+  25%{ transform:translateX(-4px) }
+  75%{ transform:translateX(4px) }
+}
+
+
+/* === RWD: 平板 === */
+@media (max-width: 900px){
+  .dum-dialog{ grid-template-columns:320px 1fr; width:96vw }
+  .dum-left{ padding:20px }
+  .dum-right{ padding:24px 24px 20px }
+}
+
+
+/* === RWD: 手機 === */
+@media (max-width: 680px){
+  .design-upload-modal{
+    padding:0;
+    box-sizing:border-box;
+  }
+  .dum-dialog,
+  .dum-dialog *{
+    box-sizing:border-box;
+  }
+  .dum-dialog{
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
+    width:100vw;
+    max-width:100vw;
+    height:100vh;
+    max-height:100vh;
+    border-radius:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+  .dum-left,
+  .dum-right{
+    overflow:visible;
+    min-height:auto;
+    max-width:100%;
+  }
+  .dum-left{
+    border-right:0;
+    border-bottom:1px solid var(--lohas-bd, #E8DED1);
+    padding:80px 20px 20px;
+  }
+  .dum-uploader{ aspect-ratio:auto; height:200px }
+  .dum-flow-info{ padding-top:14px; margin-top:14px }
+  .dum-right{ padding:22px 20px 24px }
+  .dum-title{ font-size:20px }
+  .dum-actions{ flex-direction:column-reverse }
+  .dum-btn-cancel,
+  .dum-btn-submit{ flex:none; width:100% }
+}
+
+
+/* === Loading overlay (透明轉換中) === */
+.dum-loading{
+  position:absolute;
+  inset:0;
+  background:rgba(255,253,249,0.92);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s;
+}
+.dum-loading.on{
+  opacity:1;
+  pointer-events:auto;
+}
+.dum-loading-box{
+  text-align:center;
+}
+.dum-loading-spinner{
+  width:44px;
+  height:44px;
+  border:3px solid var(--lohas-bd, #E8DED1);
+  border-top-color:var(--lohas-brand, #50422D);
+  border-radius:50%;
+  animation:dumSpin .8s linear infinite;
+  margin:0 auto 14px;
+}
+@keyframes dumSpin{ to{ transform:rotate(360deg) } }
+.dum-loading-text{
+  font-size:13px;
+  font-weight:600;
+  color:var(--lohas-text, #2F2A24);
+  letter-spacing:1px;
+  margin-bottom:6px;
+}
+.dum-loading-hint{
+  font-size:11px;
+  color:var(--lohas-muted, #9B9186);
+  letter-spacing:0.5px;
+}

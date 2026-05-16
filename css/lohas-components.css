@@ -1,0 +1,277 @@
+/* =============================================
+   LOHAS Components · 通用元件
+   --------------------------------------------
+   依賴: lohas-tokens.css
+   --------------------------------------------
+   包含:
+   - Buttons (.btn-outline / .btn-ghost / .btn-lg)
+     注意: .btn-primary 已在 lohas-base.css 定義 (全站通用)
+   - Pagination (.lohas-pagination / .page-btn)
+   - Modal (.lohas-ovl / .lohas-modal / .lohas-modal-close)
+     注意: 各分頁專用 modal 樣式 (例如市集主圖+縮圖) 寫在自己的 CSS
+   - Toast (.lohas-toast)
+   - Breadcrumb (.lohas-breadcrumb)
+
+   命名前綴規則:
+   - 通用元件: .lohas-* (避免跟舊命名衝突)
+   - 例外: .btn-primary 沿用舊版以維持相容
+   ============================================= */
+
+/* ============ Buttons ============ */
+/*
+   注意命名規則:
+   - .btn-pill-* 是 components 提供的「全膠囊大按鈕」(48px 高 / 圓角 999px / 大字距)
+     用於市集 hero、CTA、創作者方案等視覺重點按鈕
+   - 各頁面 hero 內的 .btn-outline (例如 .hero-btns .btn-outline) 是頁面自己定義的
+     不要跟 components 的 .btn-pill-outline 混淆
+   - 全站通用的 .btn-primary 在 lohas-base.css (10px padding / 50px 圓角)
+*/
+
+/* .btn-pill-outline 白底棕邊棕字 (大尺寸全膠囊) */
+.btn-pill-outline{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:48px;padding:0 28px;
+  background:#fff;
+  color:var(--lohas-brand);
+  border:1px solid var(--lohas-brand);
+  border-radius:var(--r-pill);
+  font-family:inherit;
+  font-size:14px;letter-spacing:1px;font-weight:600;
+  cursor:pointer;
+  transition:all .2s;
+  text-decoration:none;
+}
+.btn-pill-outline:hover{
+  background:var(--lohas-brand);
+  color:#fff;
+  transform:translateY(-1px);
+  /* box-shadow removed (no shadow on buttons) */
+}
+
+/* .btn-pill-ghost 透明邊框 (大尺寸全膠囊) */
+.btn-pill-ghost{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:48px;padding:0 28px;
+  background:transparent;
+  color:var(--text-main);
+  border:1px solid var(--text-light);
+  border-radius:var(--r-pill);
+  font-family:inherit;
+  font-size:13px;letter-spacing:0.8px;font-weight:500;
+  cursor:pointer;
+  transition:all .2s;
+  text-decoration:none;
+}
+.btn-pill-ghost:hover{
+  border-color:var(--lohas-brand);
+  color:var(--lohas-brand);
+}
+
+/* 小尺寸 (適用 nav 內等較緊湊位置) */
+.btn-pill-sm{
+  height:38px;padding:0 22px;
+  font-size:13px;letter-spacing:0.5px;
+}
+
+/* ============ Breadcrumb 麵包屑 ============ */
+.lohas-breadcrumb{
+  font-size:12px;color:var(--text-muted);
+  letter-spacing:0.5px;
+  display:flex;align-items:center;gap:8px;
+  flex-wrap:wrap;
+}
+.lohas-breadcrumb a{
+  color:var(--text-sub);
+  display:inline-flex;align-items:center;gap:6px;
+  transition:color .15s;
+}
+.lohas-breadcrumb a:hover{color:var(--lohas-brand)}
+.lohas-breadcrumb i{font-size:9px;color:var(--text-light)}
+.lohas-breadcrumb .current{color:var(--lohas-brand);font-weight:600}
+
+/* ============ Pagination 分頁器 ============ */
+.lohas-pagination{
+  display:flex;justify-content:center;
+  gap:4px;
+  padding:48px 0 24px;
+  flex-wrap:wrap;
+}
+.page-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:38px;height:38px;
+  font-size:13px;font-family:inherit;
+  color:var(--text-sub);
+  background:#fff;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-sm);
+  cursor:pointer;
+  transition:all .15s;
+  letter-spacing:0.3px;
+}
+.page-btn:hover:not(.disabled){
+  border-color:var(--lohas-brand);
+  color:var(--lohas-brand);
+}
+.page-btn.on{
+  background:var(--lohas-brand);
+  color:#fff;
+  border-color:var(--lohas-brand);
+  font-weight:600;
+}
+.page-btn.disabled{
+  color:var(--text-light);
+  cursor:not-allowed;
+  opacity:0.5;
+}
+.page-btn.arrow{width:auto;padding:0 14px;gap:6px}
+.page-btn.arrow i{font-size:10px}
+
+.page-ellipsis{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:24px;height:38px;
+  color:var(--text-muted);font-size:13px;
+}
+
+.pagination-info{
+  text-align:center;
+  font-size:11px;color:var(--text-muted);
+  letter-spacing:0.5px;
+  padding-bottom:16px;
+}
+.pagination-info b{color:var(--lohas-brand);font-weight:600}
+
+/* ============ Modal (通用外殼) ============ */
+.lohas-ovl{
+  position:fixed;inset:0;
+  background:rgba(45,37,32,.55);
+  display:none;
+  align-items:center;justify-content:center;
+  padding:28px;
+  z-index:var(--z-modal);
+  opacity:0;
+  transition:opacity .3s ease;
+  backdrop-filter:blur(4px);
+}
+.lohas-ovl.show{display:flex;opacity:1}
+
+.lohas-modal{
+  background:#fff;
+  border-radius:var(--r-xl);
+  max-width:96vw;max-height:96vh;
+  overflow:hidden;
+  box-shadow:var(--sh-modal);
+  position:relative;
+  transform:translateY(20px) scale(.96);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);
+}
+.lohas-ovl.show .lohas-modal{
+  transform:translateY(0) scale(1);
+}
+
+.lohas-modal-close{
+  position:absolute;top:14px;right:14px;
+  width:36px;height:36px;
+  border-radius:var(--r-pill);
+  background:#fff;
+  border:0;
+  color:var(--lohas-brand);
+  font-size:14px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  z-index:5;
+  box-shadow:0 2px 8px rgba(80,66,45,.2);
+  transition:all .2s;
+}
+.lohas-modal-close:hover{
+  background:var(--lohas-brand);
+  color:#fff;
+}
+
+/* Modal 通用按鈕 (主膠囊 / 次膠囊 / 已選中態) */
+.lohas-modal-actions{
+  display:flex;flex-direction:column;
+  gap:10px;
+  margin-top:auto;
+}
+.lohas-modal-btn-pri{
+  height:48px;
+  background:var(--lohas-brand);color:#fff;
+  border:0;
+  border-radius:var(--r-pill);
+  font-family:inherit;
+  font-size:14px;letter-spacing:1px;font-weight:600;
+  cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;
+}
+.lohas-modal-btn-pri:hover{
+  background:var(--lohas-hover);
+  transform:translateY(-1px);
+  /* box-shadow removed (no shadow on buttons) */
+}
+.lohas-modal-btn-pri.added{
+  background:#fff;
+  color:var(--lohas-brand);
+  border:1px solid var(--lohas-brand);
+}
+.lohas-modal-btn-sec{
+  height:48px;
+  background:#fff;
+  color:var(--lohas-brand);
+  border:1px solid var(--lohas-brand);
+  border-radius:var(--r-pill);
+  font-family:inherit;
+  font-size:14px;letter-spacing:1px;font-weight:600;
+  cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;
+}
+.lohas-modal-btn-sec:hover{
+  background:var(--lohas-brand);
+  color:#fff;
+  transform:translateY(-1px);
+  /* box-shadow removed (no shadow on buttons) */
+}
+
+/* ============ Toast 提示訊息 ============ */
+.lohas-toast{
+  position:fixed;
+  bottom:32px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--lohas-brand);color:#fff;
+  padding:12px 22px;
+  border-radius:var(--r-pill);
+  font-size:13px;letter-spacing:0.5px;font-weight:500;
+  display:flex;align-items:center;gap:8px;
+  opacity:0;
+  transition:all .3s ease;
+  z-index:var(--z-toast);
+  pointer-events:none;
+  box-shadow:0 8px 24px rgba(80,66,45,.3);
+}
+.lohas-toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+.lohas-toast i{color:#FFD89B}
+
+.lohas-toast.toast-error{background:var(--err)}
+.lohas-toast.toast-error i{color:#fff}
+
+.lohas-toast.toast-warn{background:var(--warn)}
+.lohas-toast.toast-warn i{color:#fff}
+
+/* ============ RWD: 手機版共用 ============ */
+@media (max-width:768px){
+  .page-btn.arrow span{display:none}
+  .page-btn{width:34px;height:34px;font-size:12px}
+  .page-btn.arrow{width:34px;padding:0}
+
+  /* Modal 手機版改成底部抽屜 */
+  .lohas-ovl{padding:0;align-items:flex-end}
+  .lohas-modal{
+    width:100%;max-width:100%;
+    border-radius:var(--r-lg) var(--r-lg) 0 0;
+    max-height:92vh;
+  }
+}

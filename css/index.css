@@ -1,0 +1,481 @@
+/* =============================================
+   首頁 · 頁面專用 CSS
+   --------------------------------------------
+   依賴: lohas-tokens.css + lohas-base.css + lohas-components.css
+   --------------------------------------------
+   包含:
+   - Hero Banner (.hero-banner / .hero-bg / .hero-content / .hero-title)
+   - 內容區 (.content / .owndays-grid-section / .owndays-wrapper)
+   - OWNDAYS 商品卡 grid (.owndays-container / .owndays-item)
+   - 滑動箭頭按鈕 (.scroll-btn / .prev-btn / .next-btn)
+   - 底部橫幅 (Secondary Banner)
+   - 門市據點區塊
+   ============================================= */
+
+/* Hero Banner 容器 */
+.hero-banner {
+    position: relative;
+    width: 100%;
+    height: 100vh; /* 滿版高度，如需縮小可改為 80vh */
+    display: flex;
+    align-items: flex-end;    /* 垂直對齊：底部 */
+    justify-content: flex-start; /* 水平對齊：左側 */
+    overflow: hidden;
+    color: #fff; /* 文字顏色通常為白色 */
+    padding-left: 5%;        /* 距離左邊一段距離，更有設計感 */
+    padding-bottom: 40px;     /* 距離底部一段距離 */
+}
+
+/* 背景圖處理 (仿 Gogoro 的沉浸式感) */
+.hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* 確保在文字下方 */
+}
+
+.hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 關鍵：圖片會填滿容器且不變形 */
+    object-position: center;
+}
+
+/* 為了讓文字清楚，可加上暗色遮罩 */
+.hero-bg::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1); /* 10% 透明黑色遮罩 */
+}
+
+/* 文字內容 */
+.hero-content {
+    text-align: left;
+    max-width: 800px;
+    padding: 0x;
+    
+}
+
+.hero-title {
+    font-size: 2.5rem; /* 大標題 */
+    font-weight: 700;
+    margin-top: -10px;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+
+.hero-subtitle {
+    font-size: 1.0rem;
+    margin-bottom: 5px;
+    font-weight: 400;
+    letter-spacing: 2px;
+}
+
+/* Hero 按鈕白邊白字 (深色 banner 背景上)
+   注意: .hero-btns .btn 通用樣式已在 lohas-base.css */
+.hero-btns .btn-outline {
+    border: 1px solid #fff;
+    color: #fff;
+    background: transparent;
+}
+
+.hero-btns .btn-outline:hover {
+    background: #fff;
+    color: #333;
+}
+
+/* 手機版適應 (RWD) */
+@media (max-width: 768px) {
+    .hero-banner {
+        padding-left: 20px;    /* 縮小左側間距，適合手機螢幕 */
+        padding-bottom: 40px;  /* 縮小底部間距 */
+        align-items: flex-end; /* 確保垂直靠底 */
+        justify-content: flex-start; /* 確保水平靠左 */
+        height: 100svh;
+    }
+
+    .hero-content {
+        max-width: 90%;        /* 讓內容在手機上稍微寬一點點 */
+    }
+
+    .hero-title {
+        font-size: 2.0rem;     /* 縮小標題字體 (原為 2.5rem) */
+        margin-bottom: 3px;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem;     /* 縮小副標題字體 (原為 1.0rem) */
+        margin-bottom: 3px;
+    }
+
+    .hero-btns .btn {
+        display: inline-block; /* 確保按鈕是併排或隨文字流動 */
+        padding: 8px 25px;     /* 縮小按鈕 */
+        font-size: 0.85rem;    
+        margin-right: 10px;    /* 關鍵：增加按鈕右邊的間距 */
+        margin-top: 10px;      /* 關鍵：若按鈕被迫換行時，上方不會黏在一起 */
+    }
+}
+/* 內容區填充 */
+.content {
+    padding-top: 150px;
+    text-align: center;
+}
+
+.owndays-grid-section {
+    padding: 40px 0;
+    background-color: #fff;
+}
+
+.owndays-wrapper {
+    position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.owndays-container {
+    display: flex;
+    gap: 15px;
+    padding: 0 20px; /* 保留原本的內距 */
+    overflow-x: auto; 
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+/* --- 新增：卡片區塊頂部的排版 --- */
+.owndays-header {
+    display: flex;
+    justify-content: flex-end; /* 讓內容（按鈕）靠右對齊 */
+    padding: 0 20px;
+    margin-bottom: 15px;       /* 與下方的卡片保持一點距離 */
+}
+
+.owndays-controls {
+    display: flex;
+    gap: 12px; /* 兩個圈圈箭頭並排時的距離 */
+}
+
+/* --- 新增：電腦版圓圈箭頭按鈕樣式 --- */
+.scroll-btn {
+    /* 移除原本的 position, top, left, right 等絕對定位語法 */
+    width: 42px;  /* 放在右上方可以稍微縮小一點點，更精緻 */
+    height: 42px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0; /* 改為極淡的灰色邊框 */
+    border-radius: 50%;
+    color: var(--lohas-brand); 
+    font-size: 14px; /* 箭頭稍微縮小 */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+/* 滑過時變成樂活褐底白字 */
+.scroll-btn:hover {
+    background-color: var(--lohas-brand);
+    color: #ffffff;
+    border-color: var(--lohas-brand);
+    
+}
+
+/* 將按鈕往內縮一點，讓它有一半疊在圖片上的精緻感 */
+.prev-btn {
+    left: 10px; 
+}
+
+.next-btn {
+    right: 10px; 
+}
+
+/* --- 手機版隱藏按鈕 --- */
+@media (max-width: 768px) {
+    .scroll-btn {
+        display: none !important; /* 手機版只需靠手動滑動，不需要箭頭 */
+    }
+}
+
+/* 隱藏捲軸 */
+.owndays-container::-webkit-scrollbar {
+    display: none;
+}
+
+.owndays-item {
+    position: relative;
+    flex: 0 0 calc(50% - 7.5px);
+    min-width: 0;
+    aspect-ratio: 16 / 9; /* 根據 OWNDAYS 比例調整 */
+    overflow: hidden;
+    scroll-snap-align: start;
+    text-decoration: none;
+    border-radius: 8px; /* 增加一點點日系溫潤感 */
+}
+
+.owndays-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+/* 文字遮罩層 */
+.item-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.05); /* 輕微暗化讓文字更清楚 */
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* 文字靠下 */
+    z-index: 2;
+}
+
+.item-overlay .tag {
+    font-size: 12px;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.item-overlay h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+    font-weight: 800;
+}
+
+.item-overlay p {
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.btn-more {
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid #fff;
+    padding: 8px 20px;
+    width: fit-content;
+    transition: 0.3s;
+}
+
+/* 滑過效果 */
+.owndays-item:hover img {
+    transform: scale(1.05);
+}
+
+.owndays-item:hover .btn-more {
+    background: #fff;
+    color: #000;
+}
+
+/* --- 手機版 RWD --- */
+@media (max-width: 768px) {
+    .owndays-item {
+        flex: 0 0 85%; /* 手機上一張圖佔 90%，旁邊露出下一張圖的邊緣 */
+        aspect-ratio: 4 / 3; /* 手機版通常比例會縮一點 */
+        scroll-snap-align: center; /* 關鍵：滑動停止時，卡片會精準對齊我們在容器設定的 padding 位置 */
+    }
+    .owndays-item .item-overlay {
+        padding: 20px;
+        justify-content: flex-end; 
+    }
+    
+    .owndays-container {
+        padding-right: 30px; /* 增加右側留白感 */
+        padding-bottom: 20px;
+    }
+
+    .item-overlay h2 {
+        font-size: 18px;
+        margin-bottom: 2px;
+    }
+    .item-overlay p {
+        /* 縮小描述文字下方的 margin，讓按鈕更靠近底部 */
+        margin-bottom: 10px; 
+    }
+    .owndays-grid-section {
+        padding-top: 20px !important;
+        padding-bottom: 20px; /* 原本是 40px，減去內層的 20px，讓上下視覺總和都是 40px */
+    }
+}
+
+/* 針對母親節與商店街卡片修改文字為樂活標準色 */
+.mother-day .item-overlay,
+.shopping-street-style .item-overlay {
+    color: var(--lohas-brand); 
+}
+
+/* 將按鈕的邊框與文字也改為深褐色 */
+.mother-day .btn-more,
+.shopping-street-style .btn-more {
+    border: 1px solid var(--lohas-brand);
+    color: var(--lohas-brand);
+}
+
+/* 滑鼠移過去時，按鈕變成深褐底白字 */
+.mother-day:hover .btn-more,
+.shopping-street-style:hover .btn-more {
+    background: var(--lohas-brand);
+    color: #ffffff;
+}
+
+/* --- 底部滿版橫幅 (Secondary Banner) --- */
+.secondary-banner {
+    position: relative;
+    width: 100%;
+    height: 75vh; /* 高度為螢幕的%，可依需求修改數字 */
+    min-height: 400px; /* 確保螢幕太小時不會縮得太扁 */
+    display: flex;
+    align-items: center;     /* 垂直置中 */
+    justify-content: center; /* 水平置中 */
+    overflow: hidden;
+    color: #fff;
+}
+
+/* 讓裡面的內容置中排版 */
+.secondary-banner .hero-content {
+    text-align: center; 
+    z-index: 2; /* 確保文字在背景遮罩之上 */
+    padding: 0 20px;
+}
+
+/* 讓按鈕在置中排版時更美觀 */
+.secondary-banner .hero-btns .btn {
+    margin: 15px 5px 0 5px;
+}
+
+/* 手機版 RWD 高度微調 */
+@media (max-width: 768px) {
+    .secondary-banner {
+        height: 50vh; 
+        min-height: 350px;
+    }
+}
+
+/* --- 門市據點區塊 (左右分割版型) --- */
+.store-location-section {
+    width: 100%;
+    background-color: #fff;
+    padding: 0 0 80px 0;
+}
+
+.store-location-container {
+    width: 100%;       /* 改為 100% 寬度 */
+    max-width: none;   /* 移除 1200px 的限制 */
+    margin: 0 auto;
+    display: flex;
+    align-items: stretch; /* 讓左右區塊等高 */
+    background-color: var(--bg-warm); /* 溫潤的大地色系背景 */
+    border-radius: 0px;
+    overflow: hidden; /* 確保圖片圓角不會突出 */
+    box-shadow: none; /* 滿版設計通常不使用外陰影 */
+}
+
+.store-text-block {
+    flex: 4;
+    padding: 40px 10%; /* 使用百分比 padding，確保在大螢幕上文字不會太靠邊 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.store-title {
+    font-size: 32px;
+    color: var(--lohas-brand); /* 樂活標準色 */
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.store-desc {
+    font-size: 16px;
+    color: var(--lohas-brand);
+    line-height: 1.8;
+    margin-bottom: 35px;
+    opacity: 0.8; /* 稍微降低透明度，讓文字看起來更細緻不突兀 */
+}
+
+.btn-store {
+    background-color: var(--lohas-brand);
+    color: #fff !important;
+    padding: 12px 35px;
+    border-radius: 50px;
+    font-size: 15px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-store:hover {
+    background-color: var(--lohas-hover); /* 滑入時顏色稍微變淺 */
+}
+
+.store-image-block {
+    flex: 6;
+    position: relative;
+    min-height: 450px; /* 確保圖片區塊在電腦版有足夠高度 */
+}
+
+.store-image-block img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 讓圖片自動填滿且不變形 */
+}
+
+/* --- 手機版 RWD --- */
+@media (max-width: 768px) {
+    .store-location-section {
+        padding: 0 0 40px 0;
+    }
+
+    .store-location-container {
+        flex-direction: column-reverse; /* 關鍵：讓圖片在上，文字區塊在下 */
+        border-radius: 0px;
+        box-shadow: none;
+    }
+
+    .store-text-block {
+        padding-top: 0px; 
+        padding-bottom: 40px;
+        padding-left: 25px;
+        padding-right: 25px;
+        align-items: center; /* 手機版文字與按鈕置中 */
+        text-align: center;
+    }
+
+    .store-title {
+        font-size: 26px;
+    }
+
+    .store-desc {
+        font-size: 15px;
+        margin-bottom: 25px;
+    }
+
+    .store-image-block {
+        width: 100%;
+        min-height: 280px; /* 手機版圖片高度稍微縮減 */
+    }
+
+    .store-image-block img {
+        /* 6. 確保圖片填滿 */
+        position: relative;
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3 !important; 
+        object-fit: cover; /* 確保圖片填滿正方形且不變形 */
+    }
+}

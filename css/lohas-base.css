@@ -1,0 +1,716 @@
+/* =============================================
+   LOHAS Base · 站點骨架
+   --------------------------------------------
+   依賴: lohas-tokens.css
+   --------------------------------------------
+   包含 (對應 components/header.html + footer.html):
+   - .main-header / .nav-container / .logo
+   - .nav-links / .dropdown / .dropdown-menu
+   - .mega-menu (含電腦版 + 手機版)
+   - .menu-toggle / .bar (漢堡按鈕)
+   - body.no-scroll
+   - .btn-primary (全站通用主按鈕)
+   - .main-footer / .footer-container / .footer-column
+   - .footer-social-wrap / .social-link
+   - .cookie-banner / .btn-cookie-accept
+   ============================================= */
+
+/* --- Header 導覽列 --- */
+.main-header {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    width: 100%;
+    height: 70px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--z-header);
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+}
+
+.nav-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo img {
+    height: 35px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+}
+
+/* --- 電腦版 Mega Menu --- */
+@media (min-width: 769px) {
+    .mega-menu-parent {
+        position: static !important;
+    }
+
+    .mega-menu {
+        position: absolute;
+        top: 70px;
+        left: 0;
+        width: 100%;
+        background-color: #fff;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+        border-bottom: 1px solid #eee;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        z-index: -1;
+    }
+
+    .mega-menu-parent:hover .mega-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .mega-menu-container {
+        display: flex;
+        width: 100%;
+        height: 420px;
+        margin: 0;
+        padding: 0;
+        background-color: #fff;
+    }
+
+    .mega-image {
+        flex: 0 0 45%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .mega-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .mega-content {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        max-height: 450px;
+        overflow-y: auto;
+        padding: 40px 40px 60px 80px;
+        background-color: #fff;
+        gap: 30px;
+        align-content: start;
+    }
+
+    .mega-column h4 {
+        font-size: 13px;
+        color: var(--lohas-brand);
+        margin-bottom: 20px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 10px;
+    }
+
+    .mega-column ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .mega-column ul li {
+        margin-bottom: 12px;
+    }
+
+    .mega-column ul li a {
+        font-size: 16px;
+        color: var(--lohas-brand);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .mega-column ul li a:hover {
+        color: var(--lohas-light);
+    }
+}
+
+/* --- 手機版 Mega Menu --- */
+@media (max-width: 768px) {
+    .mega-image {
+        display: none;
+    }
+
+    .mega-menu {
+        position: relative;
+        top: 0;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        box-shadow: none;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease;
+    }
+
+    .mega-menu-parent.active .mega-menu {
+        max-height: 1000px;
+    }
+
+    .mega-content {
+        padding: 10px 0;
+    }
+
+    .mega-column h4 {
+        display: none;
+    }
+
+    .mega-column ul li a {
+        font-size: 16px;
+        padding: 12px 0;
+        display: block;
+        color: rgba(80, 66, 45, 0.7);
+        text-align: center;
+    }
+}
+
+/* --- Dropdown --- */
+.nav-links li {
+    position: relative;
+}
+
+.dropdown-icon {
+    font-size: 12px;
+    margin-left: 6px;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(15px);
+    background-color: #ffffff;
+    min-width: 160px;
+    box-shadow: 0 8px 24px rgba(80, 66, 45, 0.08);
+    border-radius: 8px;
+    padding: 10px 0;
+    list-style: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.nav-links li.dropdown-parent:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.nav-links li.dropdown-parent:hover .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu li {
+    width: 100%;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 10px 24px;
+    font-size: 15px;
+    color: var(--lohas-brand);
+    text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.dropdown-menu a:hover {
+    background-color: var(--bg-warm);
+    color: var(--lohas-light);
+}
+
+/* --- Nav Links --- */
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 30px;
+    align-items: center;
+}
+
+.nav-links a {
+    text-decoration: none !important;
+    color: var(--lohas-brand);
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.dropdown-menu a:hover {
+    color: var(--lohas-light) !important;
+}
+
+@media (min-width: 769px) {
+    .nav-links > li > a {
+        display: inline-block;
+        position: relative;
+        padding-bottom: 6px;
+    }
+
+    .nav-links > li:hover > a {
+        color: var(--lohas-brand) !important;
+    }
+
+    .nav-links > li > a::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background-color: #000;
+        transition: width 0.3s ease-in-out;
+    }
+
+    .nav-links > li.mobile-cta > a::after {
+        display: none !important;
+    }
+
+    .nav-links > li:not(.mobile-cta):hover > a::after {
+        width: 100%;
+    }
+
+    .dropdown-menu a::after {
+        content: none !important;
+        display: none !important;
+        width: 0 !important;
+    }
+}
+
+body.no-scroll {
+    overflow: hidden;
+    height: 100%;
+}
+
+/* --- Button --- */
+.btn-primary {
+    background-color: var(--lohas-brand);
+    color: #fff !important;
+    padding: 10px 24px;
+    border-radius: 50px;
+    font-size: 16px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--lohas-hover);
+}
+
+.mobile-cta {
+    display: none;
+}
+
+/* --- Mobile Menu --- */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+    gap: 6px;
+}
+
+.bar {
+    width: 25px;
+    height: 2px;
+    background-color: #333;
+    transition: 0.3s;
+}
+
+@media screen and (max-width: 768px) {
+    .nav-cta {
+        display: none;
+    }
+
+    .logo img {
+        height: 28px;
+    }
+
+    .menu-toggle {
+        display: flex;
+    }
+
+    .nav-links {
+        position: fixed;
+        top: 70px;
+        left: -100%;
+        width: 100%;
+        height: calc(100vh - 70px);
+        height: calc(100dvh - 70px);
+        background-color: #fff;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 60px;
+        padding-bottom: 80px;
+        gap: 35px;
+        transition: 0.4s ease-in-out;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-links.active {
+        left: 0;
+    }
+
+    .nav-links a {
+        font-size: 20px;
+    }
+
+    .mobile-cta {
+        display: block;
+        margin-top: 20px;
+    }
+
+    .menu-toggle.active .bar:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+    }
+
+    .menu-toggle.active .bar:nth-child(2) {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    .menu-toggle.active .bar:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+    }
+
+    .dropdown-menu,
+    .nav-links li.dropdown-parent:hover .dropdown-menu {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none !important;
+        box-shadow: none;
+        background-color: transparent;
+        min-width: 100%;
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        transition: max-height 0.4s ease, opacity 0.4s ease;
+        text-align: center;
+    }
+
+    .dropdown-menu a {
+        font-size: 16px;
+        padding: 12px 0;
+        color: rgba(80, 66, 45, 0.7);
+    }
+
+    .nav-links li.dropdown-parent.active .dropdown-menu {
+        max-height: 300px;
+        opacity: 1;
+        visibility: visible;
+        margin-top: 15px;
+    }
+
+    .dropdown-parent.active .dropdown-icon {
+        transform: rotate(180deg) !important;
+    }
+
+    .nav-links li.dropdown-parent:hover .dropdown-icon {
+        transform: none;
+    }
+
+    .nav-links li.dropdown-parent.active:hover .dropdown-icon {
+        transform: rotate(180deg);
+    }
+
+    .nav-links li.dropdown-parent > a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .dropdown-parent .dropdown-icon {
+        font-size: 14px;
+        transition: transform 0.3s ease;
+    }
+
+    .nav-links li.dropdown-parent.active > a .dropdown-icon {
+        transform: rotate(180deg) !important;
+    }
+}
+
+/* --- Footer --- */
+.main-footer {
+    background-color: var(--lohas-brand);
+    color: #ffffff;
+    padding: 40px 0 40px;
+    font-family: "PingFang TC", "Helvetica Neue", "Light", sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+.footer-column {
+    margin-top: 45px;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: flex-start;
+    gap: 100px;
+    margin-bottom: 60px;
+}
+
+.footer-column h3 {
+    font-size: 16px;
+    font-weight: 400;
+    margin-bottom: 25px;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-column ul li {
+    margin-bottom: 15px;
+}
+
+.footer-column ul li a {
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 400;
+    font-size: 15px;
+    transition: color 0.3s;
+}
+
+.footer-column ul li a:hover {
+    color: #ffffff;
+}
+
+.footer-social-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 150px;
+    margin-right: 40px;
+    margin-top: 45px;
+}
+
+.social-link {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: 1px;
+    transition: opacity 0.3s ease;
+}
+
+.social-link:hover {
+    opacity: 0.6;
+}
+
+.social-link i {
+    font-size: 18px;
+    width: 20px;
+    text-align: center;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-bottom p {
+    color: var(--lohas-light);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/* --- Footer 手機版 --- */
+@media screen and (max-width: 768px) {
+    .footer-social-wrap {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px 10px;
+        padding: 10px 0 30px 0;
+        margin-right: 0;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 0;
+    }
+
+    .social-link {
+        justify-content: flex-start;
+    }
+
+    .footer-links {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .footer-column {
+        margin-top: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-column h3 {
+        padding: 15px 0;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0;
+    }
+
+    .footer-column h3::after {
+        content: '+';
+        font-size: 20px;
+        transition: transform 0.3s;
+    }
+
+    .footer-column ul {
+        display: block !important;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out;
+        opacity: 0;
+    }
+
+    .footer-column.active ul {
+        max-height: 500px;
+        opacity: 1;
+        padding-bottom: 20px;
+    }
+
+    .footer-column.active h3::after {
+        transform: rotate(45deg);
+    }
+}
+
+/* --- Cookie Banner --- */
+.cookie-banner {
+    position: fixed;
+    bottom: 0;
+    transform: translateY(120%);
+    left: 0;
+    width: 100%;
+    background-color: rgba(25, 25, 25, 0.96);
+    color: #fff;
+    z-index: var(--z-cookie);
+    padding: 20px 0;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.cookie-banner.show {
+    transform: translateY(0);
+}
+
+.cookie-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cookie-content p {
+    font-size: 13px;
+    font-weight: 200;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+}
+
+.cookie-content a {
+    color: #fff;
+    text-decoration: underline;
+    transition: opacity 0.3s;
+}
+
+.btn-cookie-accept {
+    background-color: var(--lohas-brand);
+    color: #fff;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.btn-cookie-accept:hover {
+    background-color: var(--lohas-hover);
+    transform: scale(1.05);
+}
+
+@media screen and (max-width: 768px) {
+    .cookie-banner {
+        padding: 25px 0;
+        bottom: 0;
+        transform: translateY(120%);
+    }
+
+    .cookie-banner.show {
+        transform: translateY(0);
+    }
+
+    .cookie-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+
+    .cookie-content p {
+        font-size: 12px;
+        padding: 0 10px;
+    }
+
+    .btn-cookie-accept {
+        width: 100%;
+        max-width: 280px;
+    }
+}
+
+
+/* =============================================
+   Hero Banner 共用按鈕基礎樣式
+   --------------------------------------------
+   index / engraving / gallery 三頁的 hero 都用 .hero-btns 容器
+   各頁的 .btn-outline 顏色 (白邊白字 / 黑邊黑字) 由各自的 CSS 定義
+   ============================================= */
+.hero-btns .btn {
+    display: inline-block;
+    padding: 12px 35px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 400;
+    transition: all 0.3s ease;
+    margin: 0;
+    font-size: 1rem;
+}

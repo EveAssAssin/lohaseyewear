@@ -1,0 +1,927 @@
+/* =============================================
+   獨家雷刻服務 · 頁面專用 CSS
+   --------------------------------------------
+   依賴: lohas-tokens.css + lohas-base.css + lohas-components.css
+   --------------------------------------------
+   包含:
+   - 雷刻服務頁本身 (.engraving-service-page / .engraving-hero / .engraving-process / .engraving-faq)
+   - 載體選擇 (.engraving-carrier-section / .carrier-info-grid / .carrier-info-card)
+   - 規格說明 (.specs-container / .spec-card)
+   - JINS Coordinate 復刻區塊 (.jins-style-page / .coord-*)
+   - KOL split banners (.kol-split-banners / .split-item)
+   - 雷刻載體選擇彈窗 (.market-modal / .market-modal-content / 等 - 沿用舊命名)
+   - .cta-box / .store-cta-section
+   ============================================= */
+
+/* =========================================
+   獨立頁面：雷刻服務專屬樣式
+========================================= */
+
+.engraving-service-page {
+    background-color: #fff;
+    padding-top: 0; /* 移除推擠，讓 Banner 衝到最頂端 */
+}
+
+/* 共用：區塊標題與通用線條 */
+.engraving-service-page .section-header {
+    text-align: center;
+    margin: 60px 0 40px;
+    padding: 0 20px;
+}
+.engraving-service-page .section-title {
+    color: var(--lohas-brand);
+    font-size: 26px;
+    letter-spacing: 2px;
+    font-weight: 700;
+}
+.engraving-service-page .title-line {
+    width: 40px;
+    height: 2px;
+    background: var(--lohas-brand);
+    margin: 15px auto;
+}
+
+/* 區塊一：Hero Banner */
+.engraving-hero {
+    position: relative;
+    width: 100%;
+    height: 100vh; /* 滿版高度 */
+    display: flex;
+    align-items: flex-end; /* 文字靠底 */
+    justify-content: flex-start; /* 文字靠左 */
+    padding-left: 5%;
+    padding-bottom: 60px; /* 增加底部間距避免太貼齊邊緣 */
+    z-index: 1;
+}
+
+/* 確保背景圖與首頁邏輯一致 */
+.engraving-hero .hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; 
+}
+
+.engraving-hero .hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+.engraving-hero::after {
+    background: rgba(0, 0, 0, 0.1); /* 僅保留 10% 透明度 */
+}
+
+.engraving-hero .hero-content {
+    z-index: 3;
+    position: relative;
+}
+
+.engraving-hero .hero-title {
+    font-size: 2.5rem; 
+    font-weight: 700;
+    margin-top: -10px;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+
+.engraving-hero .hero-subtitle {
+    font-size: 1.0rem;
+    margin-bottom: 5px;
+    font-weight: 400;
+    letter-spacing: 2px;
+}
+.engraving-hero .hero-desc {
+    font-size: 16px; 
+    margin: 0 0 20px 0; /* 👉 配合靠左，取消置中並留適當下方間距 */
+    opacity: 0.9; 
+    line-height: 1.8;
+}
+.engraving-hero .hero-btns {
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 5px; /* 直接使用 gap 產生按鈕間的水平與垂直間距 */
+    margin-top: 20px;
+}
+
+.engraving-hero .btn-outline {
+    border: 1px solid #000000; /* 黑色外框 */
+    color: #000000;           /* 黑色文字 */
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+/* 探索設計靈感按鈕：滑入時白底黑字 */
+.engraving-hero .btn-outline:hover {
+    background-color: #ffffff; /* 白色背景 */
+    color: #000000;           /* 黑色文字 */
+    border-color: #ffffff;     /* 邊框同步轉白，視覺更乾淨 */
+}
+
+/* 區塊二：技術規格 */
+.specs-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 電腦版 4 欄排列 */
+    gap: 30px;
+    padding: 0 20px;
+}
+
+.spec-card {
+    background: #fff;
+    padding: 40px 25px; /* 稍微縮小內距以適應 4 欄 */
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.spec-card:hover {
+    transform: translateY(-10px);
+}
+
+.spec-icon {
+    font-size: 40px;
+    color: var(--lohas-light);
+    margin-bottom: 25px;
+}
+
+.spec-card h3 {
+    color: var(--lohas-brand);
+    margin-bottom: 15px;
+    font-size: 18px; /* 調整標題大小 */
+    font-weight: 700;
+}
+
+.spec-card p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+}
+
+/* 區塊三：客製流程 */
+.engraving-process { padding: 80px 0; }
+.process-wrapper {
+    display: flex; align-items: center; justify-content: center;
+    gap: 30px; max-width: 1000px; margin: 0 auto; padding: 0 20px;
+}
+.process-item { text-align: center; flex: 1; }
+.step-circle {
+    width: 60px; height: 60px; border: 1px solid var(--lohas-brand);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; font-size: 18px; color: var(--lohas-brand); font-weight: bold;
+}
+.process-item h4 { color: var(--lohas-brand); margin-bottom: 10px; }
+.process-item p { font-size: 14px; color: #666; }
+.process-arrow { color: var(--lohas-light); font-size: 24px; }
+
+/* 區塊四：靈感藝廊 */
+.inspiration-grid-section { padding-bottom: 100px; }
+.grid-container {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px; max-width: 1200px; margin: 0 auto; padding: 0 20px;
+}
+.grid-item {
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: transform 0.3s;
+}
+.grid-item:hover { transform: translateY(-5px); }
+.grid-img img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.grid-text { padding: 20px; }
+.grid-text .tag { font-size: 10px; color: var(--lohas-light); letter-spacing: 1px; font-weight: bold; display: block; margin-bottom: 5px;}
+.grid-text h5 { color: var(--lohas-brand); font-size: 18px; margin-bottom: 8px;}
+.grid-text p { font-size: 14px; color: #666; margin-bottom: 15px;}
+.btn-more-simple {
+    display: inline-block; 
+    text-decoration: none; 
+    background: #fff; 
+    border: 1px solid #ebe5dd;          /* 比照「全部照片」filter 的淡米色細邊 */
+    color: #4c4030;                      /* 比照 filter 的深棕字 */
+    padding: 10px 22px; 
+    font-size: 13px; 
+    border-radius: 999px;                /* 完全圓角膠囊 */
+    cursor: pointer; 
+    transition: 0.3s;
+    width: fit-content;
+    font-weight: 400;
+}
+.btn-more-simple:hover { 
+    background: var(--lohas-brand); 
+    color: #fff; 
+    border-color: var(--lohas-brand); 
+}
+
+/* 區塊五：FAQ */
+.engraving-faq { padding: 60px 0 80px; background: var(--bg-warm); }
+.faq-container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+.faq-item { margin-bottom: 30px; border-bottom: 1px solid #eaeaea; padding-bottom: 20px; }
+.faq-item h4 { color: var(--lohas-brand); margin-bottom: 12px; font-size: 18px; }
+.faq-item p { color: #666; font-size: 15px; line-height: 1.6; }
+
+/* 區塊六：門市預約 CTA */
+.store-cta-section { padding: 80px 20px; }
+.cta-box {
+    background: var(--lohas-brand); padding: 50px; border-radius: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    max-width: 1000px; margin: 0 auto; color: #fff;
+}
+.cta-content h3 { font-size: 24px; margin-bottom: 10px; }
+.cta-content p { font-size: 15px; opacity: 0.8; }
+.cta-box .btn-primary { 
+    background: #fff !important; color: var(--lohas-brand) !important; 
+    font-weight: bold; border: none;
+}
+.cta-box .btn-primary:hover { background: var(--bg-warm) !important; }
+
+/* 手機版 RWD 適應 */
+@media (max-width: 768px) {
+    .engraving-hero {
+        height: 100svh; /* 手機版滿版高度 */
+        padding-left: 20px;
+        padding-bottom: 40px;
+        align-items: flex-end;
+        justify-content: flex-start;
+    }
+    .engraving-hero .hero-title {
+        font-size: 2.0rem;
+        margin-bottom: 3px;
+    }
+    .engraving-hero .hero-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 3px;
+    }
+
+    .engraving-hero .hero-btns {
+        display: flex;
+        flex-direction: row; /* 確保按鈕橫向排列 */
+        flex-wrap: wrap;     /* 空間不足時才換行 */
+        gap: 8px;           /* 將原本的 15px 縮小至 8px，控制按鈕間的水平與垂直距離 */
+        margin-top: 5px;    /* 縮小按鈕區塊與上方文字的整體間距 */
+    }
+    
+    .engraving-hero .hero-btns .btn {
+        padding: 8px 20px;   /* 稍微縮減按鈕高度 */
+        font-size: 0.85rem;
+        margin: 0;           /* 移除舊有的 margin，統一由 gap 控制 */
+    }
+    .engraving-hero .hero-desc {
+        font-size: 14px;
+        margin-bottom: 10px; /* 從原本可能的 15px 或 20px 縮小至 10px */
+    }
+    .specs-container, .process-wrapper { flex-direction: column; gap: 40px; }
+    .process-arrow { transform: rotate(90deg); margin: -10px 0; }
+    .cta-box { flex-direction: column; text-align: center; gap: 25px; padding: 40px 20px; }
+}
+/* RWD 回應式調整 */
+@media (max-width: 1024px) {
+    .specs-container {
+        grid-template-columns: repeat(2, 1fr); /* 平板版改為 2 欄 */
+    }
+}
+
+@media (max-width: 576px) {
+    .specs-container {
+        grid-template-columns: 1fr; /* 手機版改為 1 欄 */
+        gap: 20px;
+    }
+}
+
+/* --- JINS Coordinate 1:1 復刻樣式 --- */
+
+.jins-style-page {
+    /* 使用乾淨的無襯線字體 */
+    font-family: "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+    color: #000;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px 100px;
+}
+
+/* 標題區 */
+.page-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* 頂部分類頁籤 */
+.top-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 50px;
+}
+
+.top-tabs a {
+    color: #999;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    padding-bottom: 8px;
+    position: relative;
+    letter-spacing: 1px;
+    transition: color 0.3s;
+}
+
+.top-tabs a:hover {
+    color: #000;
+}
+
+.top-tabs a.active {
+    color: #000;
+}
+
+/* JINS 經典的粗黑底線 */
+.top-tabs a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #000;
+}
+
+/* 佈局架構 */
+.main-layout {
+    display: flex;
+    align-items: flex-start;
+}
+
+/* 左側篩選欄 */
+.jins-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    margin-right: 50px;
+}
+
+.filter-block {
+    margin-bottom: 40px;
+}
+
+.filter-block h3 {
+    font-size: 13px;
+    font-weight: 700;
+    border-bottom: 1px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.filter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.filter-list li {
+    margin-bottom: 12px;
+}
+
+.filter-list label {
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 強制將 JINS 表單元素變為黑色系 */
+.filter-list input[type="radio"], 
+.filter-list input[type="checkbox"] {
+    accent-color: #000;
+    width: 14px;
+    height: 14px;
+}
+
+/* 左側 Hashtag 雲 */
+.hashtag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hashtag-cloud a {
+    font-size: 12px;
+    color: #666;
+    text-decoration: none;
+    background: #f5f5f5;
+    padding: 4px 10px;
+    transition: 0.3s;
+}
+
+.hashtag-cloud a:hover {
+    background: #e0e0e0;
+    color: #000;
+}
+
+/* 右側主內容區 */
+.content-area {
+    flex-grow: 1;
+}
+
+.result-count {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* 四欄式畫廊網格 */
+.coord-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px 15px; /* 上下間距較大，左右間距較小 */
+}
+
+.coord-item {
+    text-decoration: none;
+    color: #000;
+    display: block;
+    transition: opacity 0.3s;
+}
+
+.coord-item:hover {
+    opacity: 0.7; /* JINS 特有的懸浮淡化效果 */
+}
+
+.coord-img {
+    width: 100%;
+    aspect-ratio: 3 / 4; /* JINS 愛用的直立相片比例 */
+    object-fit: cover;
+    margin-bottom: 12px;
+    background-color: #f9f9f9;
+}
+
+.coord-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.coord-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #eee;
+}
+
+.coord-name {
+    font-size: 11px;
+    color: #666;
+}
+
+.coord-title {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+/* 底部 JINS 風格分頁器 */
+.jins-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 60px;
+}
+
+.jins-pagination a, 
+.jins-pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+    color: #333;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.jins-pagination a:hover {
+    border-color: #ddd;
+}
+
+.jins-pagination span.current {
+    background-color: #000;
+    color: #fff;
+}
+
+/* --- 手機版 RWD 適應 --- */
+@media (max-width: 768px) {
+    .top-tabs {
+        gap: 20px;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 15px;
+        justify-content: flex-start;
+    }
+    
+    .main-layout {
+        flex-direction: column;
+    }
+
+    /* 手機版將側邊欄搬到底部或折疊 (這裡採取 JINS 常用的排列方式：先圖片後篩選) */
+    .jins-sidebar {
+        width: 100%;
+        margin-right: 0;
+        margin-top: 40px;
+        order: 2; /* 將篩選器移到圖片下方 */
+    }
+
+    .content-area {
+        order: 1;
+        width: 100%;
+    }
+
+    /* 手機版變成雙欄網格 */
+    .coord-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px 10px;
+    }
+}
+
+
+/* =========================================
+   KOL
+========================================= */
+
+.kol-split-banners {
+    width: 100%;
+    background: #fff;
+}
+
+.split-item {
+    display: flex;
+    min-height: 200px; /* 維持你原本的設定 */
+    align-items: stretch;
+    margin-bottom: 15px; /* 【新增】設定區域之間的間距，可依需求調整數值 */
+    box-shadow: none !important; /* 【新增】確保移除任何可能的陰影 */
+    border: none; /* 【建議】確保沒有邊框造成的視覺陰影感 */
+}
+
+.split-item:last-child {
+    margin-bottom: 0;
+}
+
+.split-item.inverse {
+    flex-direction: row-reverse; /* 讓圖文左右對調 */
+}
+
+.split-img {
+    flex: 0 0 35%;
+    overflow: hidden;
+}
+
+.split-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.split-text {
+    flex: 1;
+    background-color: var(--bg-warm); /* 大地色系底色 */
+    padding: 30px 8%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.split-text h3 {
+    font-size: 20px;
+    color: var(--lohas-brand);
+    margin: 5px 0 10px;
+}
+
+.split-text p {
+    font-size: 14px; 
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+/* 手機版 RWD：全部改為垂直排列 */
+@media (max-width: 768px) {
+    .split-item, .split-item.inverse {
+        flex-direction: column;
+    }
+    .split-img {
+        height: 200px;
+    }
+    .split-text {
+        padding: 30px 20px;
+        align-items: center;
+        text-align: center;
+    }
+}
+
+/* 雙圖組合容器 */
+.split-img-group {
+    flex: 0 0 35%; /* 稍微加寬一點點以容納兩張圖，原為25% */
+    display: flex;
+    gap: 0px; /* 兩圖中間的極細白線感 */
+    background-color: #fff;
+    box-shadow: none !important; /* 確保圖片群組也沒有陰影 */
+}
+
+/* 人物照佔比 60% */
+.main-portrait {
+    flex: 6;
+    overflow: hidden;
+}
+
+/* 細節照佔比 40% */
+.detail-shot {
+    flex: 4;
+    overflow: hidden;
+    border-left: 1px solid #f0f0f0;
+}
+
+.split-img-group img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 為了維持壓扁感，調整內容區塊 */
+.kol-split-banners .split-item {
+    min-height: 200px;
+    align-items: stretch;
+}
+
+/* 手機版 RWD 調整：左右並列改為上下堆疊或維持並列 */
+@media (max-width: 768px) {
+    .split-img-group {
+        flex: none;
+        height: 180px; /* 手機版高度 */
+    }
+    .split-item, .split-item.inverse {
+        flex-direction: column;
+    }
+}
+
+/* 雷刻靈感分享牆預覽區樣式 */
+.inspiration-wall-preview {
+    padding: 60px 20px 100px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 建立一個三欄的網格，並複用 gallery.html 的小卡樣式 */
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 核心設定：只顯示三欄 */
+    gap: 25px;
+    margin-bottom: 50px;
+}
+
+/* 讓按鈕容器置中 */
+.view-more-container {
+    text-align: center;
+}
+
+/* RWD：手機版調整為單欄或多欄滾動 */
+@media (max-width: 768px) {
+    .preview-grid {
+        grid-template-columns: repeat(1, 1fr); /* 手機版可改為單欄 */
+        gap: 20px;
+    }
+}
+
+/* 載體區域新樣式 */
+.engraving-carrier-section {
+    padding: 100px 0;
+    background-color: var(--bg-warm);
+    text-align: center;
+}
+
+/* 全新二合一排版樣式 */
+.carrier-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 電腦版 2 個一行 */
+    gap: 30px;
+    max-width: 1100px;
+    margin: 60px auto;
+}
+
+.carrier-info-card {
+    display: flex; /* 左右分欄 */
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(80, 66, 45, 0.05);
+    text-align: left;
+    transition: transform 0.3s ease;
+}
+
+.carrier-info-card:hover {
+    transform: translateY(-5px);
+}
+
+.carrier-card-img {
+    flex: 0 0 40%;
+}
+
+.carrier-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.carrier-card-content {
+    flex: 1;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.carrier-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.carrier-card-header i {
+    font-size: 24px;
+    color: var(--lohas-light);
+}
+
+.carrier-card-header h3 {
+    font-size: 22px;
+    color: var(--lohas-brand);
+}
+
+.carrier-card-content p {
+    font-size: 15px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* 總數量數字區域 */
+.total-counter-wrapper {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: none;
+}
+
+.count-number {
+    display: block;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 80px;
+    font-weight: 300;
+    color: var(--lohas-brand);
+    line-height: 1;
+    margin-bottom: 10px;
+}
+
+.counter-label {
+    font-size: 14px;
+    color: #888;
+    letter-spacing: 1px;
+}
+
+
+
+/* 手機版 RWD：改回單欄垂直排版 */
+@media (max-width: 768px) {
+    .carrier-info-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .carrier-info-card {
+        flex-direction: column;
+        border-radius: 0; /* [修正] 取消圓角 */
+        box-shadow: none; /* [建議] 滿版設計通常取消陰影更俐落 */
+        border-bottom: 1px solid #eee; /* [新增] 加上細線區隔卡片 */
+    }
+    .carrier-card-img {
+        height: 200px;
+        border-radius: 0;
+    }
+
+    .carrier-card-img img {
+        border-radius: 0; 
+    }
+
+    .count-number {
+        font-size: 60px;
+    }
+
+    
+}
+
+/* ============================================= */
+/* 雷刻載體選擇彈窗 (Carrier Modal)              */
+/* ============================================= */
+/* =========================================
+   彈出預覽視窗 (Modal)
+========================================= */
+.market-modal {
+    display: none; 
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: var(--z-modal); /* 高於 header */
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.market-modal-content {
+    background-color: #fff;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 12px;
+    position: relative;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    animation: marketFadeIn 0.3s ease;
+}
+
+@keyframes marketFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.market-close-btn {
+    position: absolute;
+    top: 15px; right: 20px;
+    font-size: 24px; color: #aaa;
+    cursor: pointer;
+}
+.market-close-btn:hover { color: #333; }
+
+.market-modal-body {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}
+
+.market-modal-image {
+    flex: 1;
+    background-color: var(--bg-warm);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.market-modal-image img {
+    width: 100%;
+    max-width: 180px;
+    aspect-ratio: 1/1;
+    object-fit: contain;
+}
+
+.market-modal-details { flex: 1.2; }
+.market-modal-details h2 { font-size: 20px; color: var(--lohas-brand); margin-bottom: 5px; }
+.market-description { font-size: 14px; color: #666; margin: 15px 0 25px; line-height: 1.6; }
+
+.market-modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.market-btn-primary {
+    background-color: var(--lohas-brand); color: #fff;
+    border: none; padding: 10px 20px; border-radius: 25px;
+    font-size: 14px; cursor: pointer; flex: 1;
+}
+.market-btn-outline {
+    background-color: #fff; color: var(--lohas-brand);
+    border: 1px solid var(--lohas-brand); padding: 10px 15px; border-radius: 25px;
+    font-size: 14px; cursor: pointer;
+}
+
+/* --- 手機版 RWD 調整 --- */
+
+/* Carrier Modal RWD */
+@media (max-width: 768px) {
+    .market-modal-body {
+        flex-direction: column;
+        text-align: center;
+    }
+    .market-modal-actions {
+        flex-direction: column;
+    }
+}

@@ -1,0 +1,541 @@
+/* =============================================
+   登入頁 · 頁面專用 CSS
+   --------------------------------------------
+   依賴: lohas-tokens.css + lohas-base.css + lohas-components.css
+   ============================================= */
+
+:root {
+  --lohas-brand-color: var(--lohas-brand);
+  --lohas-hover-color: var(--lohas-hover);
+  --lohas-bg-warm: var(--bg-warm);
+  --lohas-text-light: var(--lohas-light);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #fff;
+  color: #333;
+  font-family: "Noto Sans TC", sans-serif;
+}
+
+#login-section .text-center{
+  margin-top: 0;
+  margin-bottom: 0px;
+}
+
+#login-section .text-center img{
+  height: 32px;
+  display: block;
+  margin: 0 auto 16px;
+}
+
+#login-section .text-center p{
+  margin-top: 0px;
+  margin-bottom: 18px;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  color: var(--lohas-brand-color);
+  line-height: 1.2;
+  transform: translateY(-25px);
+  }
+
+/* =========================
+   Login Page（原始乾淨版）
+========================= */
+
+.input-lohas {
+  width: 100%;
+  border: 1px solid #e5e5e5;
+  border-radius: 50px;
+  padding: 12px 20px;
+  background: #fafafa;
+  font-size: 15px;
+  color: #333;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-lohas::placeholder {
+  color: #aaa;
+}
+
+.input-lohas:focus {
+  border-color: var(--lohas-brand-color);
+  background: #fff;
+}
+
+.btn-lohas {
+  width: 100%;
+  border: 0;
+  border-radius: 50px;
+  padding: 12px 16px;
+  background: var(--lohas-brand-color);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: background 0.3s ease, opacity 0.3s ease;
+}
+
+.btn-lohas:hover {
+  background: var(--lohas-hover-color);
+}
+
+.btn-lohas:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+/* =========================
+   Member Center
+========================= */
+
+#profile-section {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.sidebar-wrapper {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--lohas-bg-warm);
+  border-right: 1px solid #eee;
+}
+
+.main-content-wrapper {
+  flex-grow: 1;
+  padding: 60px 40px;
+  background: #fff;
+}
+
+.nav-item-active {
+  background: var(--lohas-brand-color);
+  color: #fff;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(80, 66, 45, 0.15);
+}
+
+.sidebar-nav-link:hover:not(.nav-item-active) {
+  background: #fff;
+  color: var(--lohas-brand-color);
+}
+
+.profile-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 40px;
+  border: 1px solid var(--lohas-bg-warm);
+  box-shadow: 0 10px 30px rgba(80, 66, 45, 0.05);
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+
+/* =========================
+   Mobile
+========================= */
+
+@media (max-width: 768px) {
+  #profile-section {
+    flex-direction: column;
+  }
+
+  .sidebar-wrapper {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  .main-content-wrapper {
+    padding: 30px 20px;
+  }
+
+  .profile-card {
+    padding: 28px 22px;
+  }
+
+  #login-section .text-center{
+    margin-top: 0;
+    margin-bottom: 42px;
+  }
+
+  #login-section .text-center p{
+    margin-top: 68px;
+    margin-bottom: 16px;
+    font-size: 24px;
+    letter-spacing: .06em;
+    transform: none;
+  }
+}
+
+/* =========================
+   Member Center Upgrade
+========================= */
+
+.member-page {
+  background: #fff;
+}
+
+.member-sidebar-head {
+  padding: 32px 28px;
+  border-bottom: 1px solid #eee;
+}
+
+.member-sidebar-head p {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--lohas-text-light);
+  letter-spacing: .16em;
+}
+
+.member-sidebar-head h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--lohas-brand-color);
+  font-weight: 700;
+}
+
+.member-nav {
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.member-nav-link,
+.member-logout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  color: var(--lohas-brand-color);
+  text-decoration: none;
+  font-size: 15px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.member-nav-link:hover {
+  background: #fff;
+}
+
+.member-nav-link.nav-item-active {
+  background: var(--lohas-brand-color);
+  color: #fff;
+}
+
+.member-logout {
+  margin-top: 24px;
+  color: #c65f5f;
+  border-top: 1px solid #eee;
+  border-radius: 0;
+  padding-top: 24px;
+}
+
+.member-main {
+  flex: 1;
+  padding: 60px 40px;
+}
+
+.member-mobile-hero {
+  display: none;
+}
+
+.member-section-title h1 {
+  margin: 0 0 32px;
+  font-size: 26px;
+  color: var(--lohas-brand-color);
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 44px;
+}
+
+.profile-field {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f1eee8;
+}
+
+.profile-field span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--lohas-text-light);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.profile-field div {
+  color: var(--lohas-brand-color);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.edit-profile-btn {
+  margin-top: 34px;
+  padding: 12px 34px;
+  border: 1px solid var(--lohas-brand-color);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--lohas-brand-color);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.edit-profile-btn:hover {
+  background: var(--lohas-brand-color);
+  color: #fff;
+}
+
+.mobile-logout-btn {
+  display: none;
+}
+
+/* =========================
+   Mobile Member Center
+========================= */
+
+@media (max-width: 768px) {
+  .member-page {
+    display: block;
+    background: var(--bg-warm);
+  }
+
+  .sidebar-wrapper {
+    display: none;
+  }
+
+  .member-main {
+    padding: 24px 16px 42px;
+    background: var(--bg-warm);
+  }
+
+  .member-mobile-hero {
+    display: block;
+  }
+
+  .member-mobile-hero h1 {
+    margin: 0 0 20px;
+    color: var(--lohas-brand-color);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: .08em;
+  }
+
+  .member-user-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 24px 22px;
+    margin-bottom: 20px;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(80, 66, 45, .08);
+  }
+
+  .member-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #E8DED2;
+    color: var(--lohas-brand-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    flex-shrink: 0;
+  }
+
+  .member-user-card h2 {
+    margin: 0 0 8px;
+    font-size: 24px;
+    color: var(--lohas-brand-color);
+  }
+
+  .member-user-card p {
+    margin: 0;
+    color: #806f5f;
+    font-size: 15px;
+  }
+
+  .member-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 34px;
+  }
+
+  .quick-card {
+    min-height: 118px;
+    border-radius: 18px;
+    background: #fff;
+    color: var(--lohas-brand-color);
+    text-decoration: none;
+    box-shadow: 0 10px 26px rgba(80, 66, 45, .07);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .quick-card i {
+    font-size: 28px;
+    color: #9A8671;
+  }
+
+  .member-section-title h1 {
+    margin-bottom: 18px;
+    font-size: 22px;
+    letter-spacing: .06em;
+  }
+
+  .profile-card {
+    padding: 26px 22px;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(80, 66, 45, .07);
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .profile-field div {
+    font-size: 17px;
+  }
+
+  .edit-profile-btn {
+    width: 100%;
+    margin-top: 28px;
+    padding: 13px 20px;
+  }
+
+  .mobile-logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 22px;
+    padding: 15px 20px;
+    border: 1px solid #ead6d6;
+    border-radius: 14px;
+    background: #fff4f4;
+    color: #c65f5f;
+    font-size: 15px;
+    font-weight: 600;
+  }
+}
+
+.my-photos-section{
+  margin-top:40px;
+}
+
+.my-photo-list{
+  display:grid;
+  gap:14px;
+}
+
+.my-photo-card{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:14px;
+  border:1px solid #f0ebe4;
+  border-radius:16px;
+  background:#fff;
+}
+
+.my-photo-card img{
+  width:72px;
+  height:72px;
+  border-radius:12px;
+  object-fit:cover;
+  flex-shrink:0;
+}
+
+.my-photo-info{
+  flex:1;
+}
+
+.my-photo-info h3{
+  margin:0 0 6px;
+  color:var(--lohas-brand);
+  font-size:16px;
+}
+
+.my-photo-info p{
+  margin:0;
+  color:#9A8671;
+  font-size:13px;
+}
+
+.delete-my-photo{
+  border:0;
+  background:#fff4f4;
+  color:#c65f5f;
+  border-radius:999px;
+  padding:8px 14px;
+  cursor:pointer;
+}
+
+.empty-text{
+  color:#9A8671;
+  font-size:14px;
+}
+
+@media(max-width:768px){
+  .my-photo-card{
+    align-items:flex-start;
+  }
+
+  .my-photo-card img{
+    width:64px;
+    height:64px;
+  }
+}
+
+.upload-modal .error-msg,
+.share-modal .error-msg,
+.form-error {
+  display: none;
+  margin: 4px 0 0;
+  padding: 0;
+  min-height: 0;
+  height: auto;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #c0392b;
+}
+
+.upload-modal .error-msg.show,
+.share-modal .error-msg.show,
+.form-error.show {
+  display: block;
+}
+
+.profile-field div {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}

@@ -1,0 +1,100 @@
+/* =============================================
+   LOHAS UI Style Guide v1.0 · Design Tokens
+   --------------------------------------------
+   全站基礎變數 / Reset / .pill 身份系統
+   依賴: 無
+   ============================================= */
+
+:root{
+  /* === Brand Color === */
+  --lohas-brand: #50422D;
+  --lohas-hover: #765F4A;
+  --lohas-light: #CDBEA2;
+  --lohas-bd: #E8DED1;
+
+  /* === Background === */
+  --bg-warm: #F9F8F6;
+  --bg-soft: #F4F1EC;
+
+  /* === Text === */
+  --text-main: #2F2A24;
+  --text-sub: #6F665D;
+  --text-muted: #9B9186;
+  --text-light: #CDBEA2;
+
+  /* === Identity Tier (身份系統) === */
+  --m-bg: #E8E5E0;        /* Member 灰米 */
+  --m-text: #3D3D3D;
+  --c-bg: #EFE9F5;        /* Creator 紫底 (淡) */
+  --c-text: #6B5887;
+  --c-solid: #6B5887;     /* Creator 實色 */
+  --collab-bg: #3D2F2C;   /* Collab 深棕 */
+  --collab-bg-2: #2D2520;
+  --collab-gold: #D4B068; /* Collab 金邊 */
+
+  /* === Status === */
+  --ok: #5F7A5A;
+  --ok-bg: #EEF1EC;
+  --warn: #B58A42;
+  --warn-bg: #F8F1E1;
+  --err: #A85A4A;
+  --err-bg: #F5E8E4;
+  --favorite: #C85F5F;
+
+  /* === Radius === */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+
+  /* === Shadow === */
+  --sh-soft: 0 12px 28px rgba(80,66,45,0.05);
+  --sh-card: 0 18px 38px rgba(80,66,45,0.09);
+  --sh-modal: 0 24px 80px rgba(80,66,45,0.28);
+
+  /* === Z-index === */
+  --z-header: 9999;
+  --z-dropdown: 200;
+  --z-sticky: 80;
+  --z-modal: 10000;
+  --z-cookie: 10001;
+  --z-toast: 10002;
+
+  /* === Font === */
+  --font-tc: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+/* === Reset === */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+html{scroll-behavior:smooth}
+
+body{
+  font-family:var(--font-tc);
+  color:#333;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+img{max-width:100%;height:auto;display:block}
+
+/* === .pill 身份系統 (跨頁通用) === */
+.pill{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;padding:3px 10px;
+  border-radius:var(--r-pill);
+  font-weight:600;letter-spacing:0.5px;flex-shrink:0;
+}
+.pill i{font-size:9px}
+.pill.member{background:var(--m-bg);color:var(--m-text)}
+.pill.creator{background:var(--c-solid);color:#fff}
+.pill.creator i{color:#FFD86B}
+.pill.collab{background:var(--collab-bg);color:#fff;border:1px solid var(--collab-gold);padding:2px 9px}
+.pill.collab i{color:var(--collab-gold)}
