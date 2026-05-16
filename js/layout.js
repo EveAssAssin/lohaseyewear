@@ -114,17 +114,28 @@ function initCookieBanner() {
 
   if (!cookieBanner || !acceptBtn) return;
 
-  if (!localStorage.getItem("lohas_cookies_accepted")) {
-    setTimeout(() => {
-      cookieBanner.classList.add("show");
-    }, 1500);
+  // 防止重複 init (例如某些頁面 layout 重 render)
+  if (cookieBanner.dataset.bound) return;
+  cookieBanner.dataset.bound = "1";
+
+  // 已同意過 → 直接從 DOM 拿掉 (永遠不會閃出來)
+  if (localStorage.getItem("lohas_cookies_accepted")) {
+    cookieBanner.remove();
+    return;
   }
 
-  acceptBtn.addEventListener("click", () => {
-    cookieBanner.classList.remove("show");
-    cookieBanner.classList.add("is-hide");
+  // 1.5 秒後滑上來
+  setTimeout(() => {
+    // 二次保險:萬一同時其他地方寫了 localStorage,這時候也不顯示
+    if (localStorage.getItem("lohas_cookies_accepted")) return;
+    cookieBanner.classList.add("show");
+  }, 1500);
 
+  acceptBtn.addEventListener("click", () => {
     localStorage.setItem("lohas_cookies_accepted", "true");
+    cookieBanner.classList.remove("show");
+    // 等動畫跑完後完全 remove
+    setTimeout(() => cookieBanner.remove(), 700);
   });
 }
 
