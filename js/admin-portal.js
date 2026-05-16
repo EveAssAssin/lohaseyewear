@@ -3230,6 +3230,7 @@
             '</div>' +
           '</div>' +
           '<div class="md-card-actions">' +
+            (d.image_url_svg ? '<button class="md-icon-btn" data-act="download-svg" title="下載 SVG"><i class="fa-solid fa-file-arrow-down"></i></button>' : '') +
             '<button class="md-icon-btn" data-act="edit" title="編輯"><i class="fa-solid fa-pen"></i></button>' +
             '<button class="md-icon-btn danger" data-act="delete" title="刪除"><i class="fa-solid fa-trash"></i></button>' +
           '</div>' +
@@ -3245,10 +3246,39 @@
         if (act === 'edit')         { mdOpenEditModal(id); return; }
         if (act === 'delete')       { mdDeleteDesign(id); return; }
         if (act === 'toggle-show')  { mdToggleShow(id); return; }
+        if (act === 'download-svg') { mdDownloadSvg(id); return; }
         // 點卡片其他地方 → 直接開編輯 Modal
         mdOpenEditModal(id);
       });
     });
+  }
+
+
+  async function mdDownloadSvg(id) {
+    const d = mdState.designs.find(x => String(x.id) === String(id));
+    if (!d || !d.image_url_svg) {
+      alert('此刻圖沒有 SVG 檔');
+      return;
+    }
+    try {
+      const res = await fetch(d.image_url_svg);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      const safeName = (d.name || 'engraving').replace(/[\\/:*?"<>|]/g, '_').slice(0, 50);
+      const filename = safeName + '.svg';
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[mdDownloadSvg]', err);
+      alert('下載失敗:' + (err.message || err));
+    }
   }
 
 
