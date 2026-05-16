@@ -5,6 +5,10 @@
    依賴: 無
    ============================================= */
 
+/* === Google Font 統一引入 (Noto Sans TC) ===
+   ↑ @import 必須放在 CSS 檔最頂端,跨頁字體一致避免「字重變細」現象  */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
 :root{
   /* === Brand Color === */
   --lohas-brand: #50422D;
