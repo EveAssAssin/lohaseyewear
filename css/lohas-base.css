@@ -64,26 +64,15 @@
         border-bottom: 1px solid #eee;
         opacity: 0;
         visibility: hidden;
-        transform: translateY(0);
         transition: opacity 0.25s ease, visibility 0s linear 0.25s;
         z-index: 9998;
         pointer-events: none;
     }
-    /* 上方延伸不可見區做緩衝 (避免縫隙導致 hover 中斷) */
-    .mega-menu::before {
-        content: "";
-        position: absolute;
-        top: -20px;
-        left: 0;
-        right: 0;
-        height: 20px;
-    }
 
-    .mega-menu-parent:hover .mega-menu,
-    .mega-menu:hover {
+    /* 用 .open class 顯示 (純 hover 容易抖動,改 JS 控制) */
+    .mega-menu-parent.open .mega-menu {
         opacity: 1;
         visibility: visible;
-        transform: translateY(0);
         pointer-events: auto;
         transition: opacity 0.25s ease, visibility 0s linear 0s;
     }
