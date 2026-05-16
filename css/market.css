@@ -148,6 +148,7 @@
   padding:48px 0;
   background:var(--bg-soft);
   border-bottom:1px solid var(--lohas-line);
+  overflow:hidden;
 }
 .cm .featured-block > *{
   max-width:1280px;
@@ -183,13 +184,17 @@
   background:#fff;
   border:1px solid var(--lohas-line);
   border-radius:var(--r-xl, 24px);
-  overflow:hidden;
+  overflow:visible;
   display:grid;
   grid-template-columns:340px 1fr;
   align-items:stretch;
+  padding:0;
+  margin:0;
   cursor:pointer;
   transition:all .3s;
   box-shadow:var(--sh-soft, 0 12px 28px rgba(80,66,45,0.05));
+  position:relative;
+  z-index:1;
   text-decoration:none;
   color:inherit;
 }
@@ -215,6 +220,11 @@
   min-height:340px;
   height:100%;
   align-self:stretch;
+  /* 紫色延伸到視窗左邊外 (-100vw shadow,clip-path 只露左邊延伸不蓋右邊白色) */
+  box-shadow:-100vw 0 0 0 #8B7BA8;
+  clip-path:polygon(-100vw 0, 100% 0, 100% 100%, -100vw 100%);
+  border-top-left-radius:var(--r-xl, 24px);
+  border-bottom-left-radius:var(--r-xl, 24px);
 }
 .cm .featured-avatar-big{
   width:160px;
@@ -1175,7 +1185,14 @@
 
   .cm .featured-block{ padding:32px 20px }
   .cm .featured-hero{ grid-template-columns:1fr }
-  .cm .featured-visual{ min-height:200px; padding:36px 24px }
+  .cm .featured-visual{
+    min-height:200px;
+    padding:36px 24px;
+    /* 手機:左右兩邊都延伸 */
+    box-shadow:-100vw 0 0 0 #8B7BA8, 100vw 0 0 0 #8B7BA8;
+    clip-path:polygon(-100vw 0, 100vw 0, 100vw 100%, -100vw 100%);
+    border-radius:0;
+  }
   .cm .featured-avatar-big{ width:110px; height:110px; font-size:30px }
   .cm .featured-content{ padding:28px 24px }
   .cm .featured-name{ font-size:20px }
