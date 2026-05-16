@@ -3208,13 +3208,13 @@
       const designer = d.designer_name || '匿名';
       const isShow = d.is_show || '上架';
       const showOn = isShow === '上架';
-      // 只有「已通過」的圖才能切上下架
+      // 只有「已通過」的圖才能切上下架,改用滑桿
       const showToggle = d.status === 'approved'
-        ? '<button class="md-show-toggle ' + (showOn ? 'on' : 'off') + '" data-act="toggle-show" title="' + (showOn ? '點擊下架' : '點擊上架') + '">' +
-            '<i class="fa-solid ' + (showOn ? 'fa-eye' : 'fa-eye-slash') + '"></i>' +
-            (showOn ? '上架中' : '已下架') +
+        ? '<button class="md-switch ' + (showOn ? 'on' : 'off') + '" data-act="toggle-show" title="' + (showOn ? '點擊下架' : '點擊上架') + '">' +
+            '<span class="md-switch-label">' + (showOn ? '上架' : '下架') + '</span>' +
+            '<span class="md-switch-track"><span class="md-switch-thumb"></span></span>' +
           '</button>'
-        : '<span class="md-show-toggle disabled">—</span>';
+        : '<span class="md-switch disabled">—</span>';
       // 售價顯示
       const priceText = (d.price && Number(d.price) > 0)
         ? '<span class="md-card-price">$' + Number(d.price) + '</span>'
