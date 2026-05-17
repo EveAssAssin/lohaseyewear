@@ -405,16 +405,17 @@
               </label>
             </div>
 
-            <div class="editor-row">
-              <label class="editor-label">首頁 Tag (大寫英文)</label>
-              <input type="text" class="editor-input" id="news_homepage_tag" placeholder="例如:LIMITED / NEW / EVENT(大寫英文較佳)" />
-              <p class="editor-hint">顯示在首頁卡片左上角</p>
-            </div>
-
-            <div class="editor-row">
-              <label class="editor-label">首頁副標</label>
-              <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="首頁卡片副標(1 行最佳)" />
-              <p class="editor-hint">不填則用「摘要」</p>
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">首頁 Tag (大寫英文)</label>
+                <input type="text" class="editor-input" id="news_homepage_tag" placeholder="例如:LIMITED / NEW / EVENT" />
+                <p class="editor-hint">顯示在首頁卡片左上角</p>
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">首頁副標</label>
+                <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="首頁卡片副標(1 行最佳)" />
+                <p class="editor-hint">不填則用「摘要」</p>
+              </div>
             </div>
 
             <div class="editor-row">
@@ -428,9 +429,25 @@
               </div>
             </div>
 
-            <div class="editor-row">
-              <label class="editor-label">首頁排序 (數字越小越前)</label>
-              <input type="number" class="editor-input" id="news_sort_order" value="0" />
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">按鈕連結目標</label>
+                <select class="editor-input" id="news_homepage_link_type">
+                  <option value="news_detail">最新消息內頁 (預設)</option>
+                  <option value="custom">指定網址</option>
+                </select>
+                <p class="editor-hint">點卡片後要去哪裡</p>
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">首頁排序 (數字越小越前)</label>
+                <input type="number" class="editor-input" id="news_sort_order" value="0" />
+              </div>
+            </div>
+
+            <div class="editor-row" id="news_homepage_link_url_row" style="display:none">
+              <label class="editor-label">指定網址</label>
+              <input type="text" class="editor-input" id="news_homepage_link_url" placeholder="例如:/collab.html?id=dinu 或 https://..." />
+              <p class="editor-hint">可填內部相對路徑 (如 /market.html) 或完整外部網址</p>
             </div>
           </div>
 
@@ -1425,7 +1442,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-0200"></script>
+<script src="js/admin-portal.js?v=20260518-0300"></script>
 
 </body>
 </html>
