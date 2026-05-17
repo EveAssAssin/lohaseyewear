@@ -105,7 +105,7 @@
       <i class="fa-solid fa-star"></i><span>創作者管理</span>
     </button>
     <button class="nav-link" data-page="ip">
-      <i class="fa-solid fa-copyright"></i><span>IP 合作</span>
+      <i class="fa-solid fa-copyright"></i><span>授權聯名管理</span>
     </button>
   </div>
 
@@ -501,41 +501,45 @@
         <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
       </div>
     </div>
-    <!-- ============= IP 合作 / 聯名活動管理 ============= -->
+    <!-- ============= 授權聯名管理 ============= -->
     <div class="content-page" data-page="ip">
       <div class="page-head">
         <div>
-          <h1 class="page-title">聯名活動管理</h1>
-          <p class="page-sub">管理 IP 授權聯名活動,前台 collab.html / collabs.html 動態頁的內容來源</p>
+          <h1 class="page-title">授權聯名管理</h1>
+          <div class="page-sub" id="collabListSub">— 個聯名活動</div>
         </div>
       </div>
 
       <!-- 篩選列 (對齊創作者管理) -->
       <div class="filter-row">
-        <input type="text" class="filter-search" id="collabSearchInput" placeholder="搜尋品牌名 / Slug...">
-        <select class="filter-select" id="collabFilterStatus">
-          <option value="">所有狀態</option>
-          <option value="draft">草稿</option>
-          <option value="upcoming">即將推出</option>
-          <option value="active">進行中</option>
-          <option value="ended">已結束</option>
-          <option value="archived">封存</option>
-        </select>
-        <select class="filter-select" id="collabFilterCategory">
-          <option value="">所有分類</option>
-          <option value="fashion">FASHION / SPORTS</option>
-          <option value="character">CHARACTER</option>
-          <option value="anime">ANIME / GAME</option>
-        </select>
-        <div class="filter-spacer"></div>
-        <button class="action-btn-solid" id="collabNewBtn">
-          <i class="fa-solid fa-plus"></i> 新增聯名
-        </button>
+        <input class="editor-input" id="collabSearchInput" placeholder="搜尋品牌名 / Slug..." style="max-width:280px"/>
+        <div class="filter-group">
+          <label>狀態</label>
+          <select id="collabFilterStatus">
+            <option value="">全部</option>
+            <option value="draft">草稿</option>
+            <option value="upcoming">即將推出</option>
+            <option value="active">進行中</option>
+            <option value="ended">已結束</option>
+            <option value="archived">封存</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>分類</label>
+          <select id="collabFilterCategory">
+            <option value="">全部</option>
+            <option value="fashion">FASHION / SPORTS</option>
+            <option value="character">CHARACTER</option>
+            <option value="anime">ANIME / GAME</option>
+          </select>
+        </div>
+        <div class="spacer"></div>
+        <button class="action-btn-solid" id="collabNewBtn"><i class="fa-solid fa-plus"></i>新增聯名</button>
       </div>
 
       <!-- 列表 (用 creator-card 樣式) -->
       <div class="creators-list" id="collabList">
-        <div class="empty-state">載入中...</div>
+        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
       </div>
     </div>
 
@@ -792,15 +796,16 @@
         </div>
 
         <div class="ag-modal-footer">
-          <div class="ag-modal-footer-left">
-            <a href="#" class="btn-secondary" id="collabPreviewBtn" target="_blank" style="display:none">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i> 預覽前台
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="action-btn-solid" id="collabSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
+            <button class="btn" id="collabCancelBtn">關閉</button>
+            <a href="#" class="btn" id="collabPreviewBtn" target="_blank" style="display:none">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>預覽前台
             </a>
-          </div>
-          <div class="ag-modal-footer-right">
-            <button class="btn-secondary btn-danger" id="collabDeleteBtn" style="display:none">刪除聯名</button>
-            <button class="btn-secondary" id="collabCancelBtn">關閉</button>
-            <button class="btn-primary" id="collabSaveBtn">儲存</button>
+            <div class="spacer"></div>
+            <button class="btn btn-danger" id="collabDeleteBtn" style="display:none">
+              <i class="fa-solid fa-trash"></i>刪除聯名
+            </button>
           </div>
         </div>
       </div>
