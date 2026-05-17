@@ -284,8 +284,9 @@
           <select id="newsFilterStatus">
             <option value="">全部</option>
             <option value="published">已發佈</option>
+            <option value="scheduled">已排程</option>
             <option value="draft">草稿</option>
-            <option value="archived">已封存</option>
+            <option value="archived">已下架</option>
           </select>
         </div>
         <div class="filter-group">
@@ -327,8 +328,8 @@
             <h3 class="editor-panel-title">基本資料</h3>
 
             <div class="editor-row">
-              <label class="editor-label">Slug (URL ID)<span class="req">*</span></label>
-              <input type="text" class="editor-input" id="news_slug" placeholder="mother-day-2026" />
+              <label class="editor-label">Slug (URL ID,系統自動生成)</label>
+              <input type="text" class="editor-input" id="news_slug" placeholder="儲存後自動產生" readonly style="background:#f0ebe2;color:#888;cursor:not-allowed" />
               <p class="editor-hint">前台連結將是 news-detail.html?id=<span id="news_slug_preview">xxx</span></p>
             </div>
 
@@ -337,8 +338,9 @@
                 <label class="editor-label">狀態</label>
                 <select class="editor-input" id="news_status">
                   <option value="draft">草稿 (前台看不到)</option>
+                  <option value="scheduled">已排程 (時間到自動發布)</option>
                   <option value="published">已發佈</option>
-                  <option value="archived">已封存</option>
+                  <option value="archived">已下架</option>
                 </select>
               </div>
               <div class="editor-row">
@@ -356,22 +358,23 @@
 
             <div class="editor-row">
               <label class="editor-label">標題<span class="req">*</span></label>
-              <input type="text" class="editor-input" id="news_title" placeholder="母親節專區 · 一份走進心裡的禮物" />
+              <input type="text" class="editor-input" id="news_title" placeholder="請輸入消息標題" />
             </div>
 
             <div class="editor-row">
               <label class="editor-label">摘要</label>
-              <textarea class="editor-input" id="news_excerpt" rows="2" placeholder="文章列表頁顯示的描述"></textarea>
+              <textarea class="editor-input" id="news_excerpt" rows="2" placeholder="請輸入摘要,顯示在列表頁(建議 2 行內)"></textarea>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
                 <label class="editor-label">發佈時間</label>
                 <input type="datetime-local" class="editor-input" id="news_published_at" />
+                <p class="editor-hint">選「已排程」狀態時必填,時間到了會自動發佈</p>
               </div>
               <div class="editor-row">
                 <label class="editor-label">作者</label>
-                <input type="text" class="editor-input" id="news_author" placeholder="樂活編輯部" />
+                <input type="text" class="editor-input" id="news_author" placeholder="例如:樂活編輯部 / 雷刻技術組" />
               </div>
             </div>
           </div>
@@ -404,13 +407,13 @@
 
             <div class="editor-row">
               <label class="editor-label">首頁 Tag (大寫英文)</label>
-              <input type="text" class="editor-input" id="news_homepage_tag" placeholder="MOTHER'S DAY" />
+              <input type="text" class="editor-input" id="news_homepage_tag" placeholder="例如:LIMITED / NEW / EVENT(大寫英文較佳)" />
               <p class="editor-hint">顯示在首頁卡片左上角</p>
             </div>
 
             <div class="editor-row">
               <label class="editor-label">首頁副標</label>
-              <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="一份走進心裡的禮物" />
+              <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="首頁卡片副標(1 行最佳)" />
               <p class="editor-hint">不填則用「摘要」</p>
             </div>
 
@@ -436,7 +439,7 @@
             <h3 class="editor-panel-title">內文</h3>
             <div class="editor-row">
               <label class="editor-label">文章內容</label>
-              <textarea class="editor-input editor-textarea" id="news_content" rows="14" placeholder="支援純文字段落 (空行分段) 或 HTML / 簡單 Markdown (## 標題 / > 引用)"></textarea>
+              <textarea class="editor-input editor-textarea" id="news_content" rows="14" placeholder="請輸入文章內容,支援純文字段落、HTML、或簡易 Markdown(## 大標、> 引用)"></textarea>
               <p class="editor-hint">純文字會自動按空行分段。可使用 ## 大標、> 引用、HTML</p>
             </div>
           </div>
@@ -696,14 +699,14 @@
 
             <div class="editor-row">
               <label class="editor-label">Slug (URL ID,英數+底線)<span class="req">*</span></label>
-              <input type="text" class="editor-input" id="cm_slug" placeholder="dinu" />
+              <input type="text" class="editor-input" id="cm_slug" placeholder="英文 + 數字 + 底線,例如:my-collab-2026" />
               <p class="editor-hint">前台連結將是 collab.html?id=<span id="cm_slug_preview">dinu</span></p>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
                 <label class="editor-label">品牌名稱<span class="req">*</span></label>
-                <input type="text" class="editor-input" id="cm_brand_name" placeholder="DINU" />
+                <input type="text" class="editor-input" id="cm_brand_name" placeholder="請輸入品牌或 IP 名稱" />
               </div>
               <div class="editor-row">
                 <label class="editor-label">分類<span class="req">*</span></label>
@@ -750,18 +753,18 @@
 
             <div class="editor-row">
               <label class="editor-label">Eyebrow 小標 (Hero 上方小字)</label>
-              <input type="text" class="editor-input" id="cm_hero_eyebrow" placeholder="LIMITED EDITION · 200 套" />
+              <input type="text" class="editor-input" id="cm_hero_eyebrow" placeholder="例如:LIMITED EDITION · 200 套" />
               <p class="editor-hint">例如:LIMITED EDITION · 200 套(可以直接編輯數字)</p>
             </div>
 
             <div class="editor-row">
               <label class="editor-label">Hero 標題</label>
-              <input type="text" class="editor-input" id="cm_hero_title" placeholder="LOHAS × DINU" />
+              <input type="text" class="editor-input" id="cm_hero_title" placeholder="例如:LOHAS × 品牌名" />
             </div>
 
             <div class="editor-row">
               <label class="editor-label">副標</label>
-              <input type="text" class="editor-input" id="cm_hero_subtitle" placeholder="把陪伴戴在身上" />
+              <input type="text" class="editor-input" id="cm_hero_subtitle" placeholder="品牌主軸 slogan(1 行)" />
             </div>
           </div>
 
@@ -787,13 +790,13 @@
 
             <div class="editor-row">
               <label class="editor-label">日期區間文字 (例如 MAY 20 — JUNE 30)</label>
-              <input type="text" class="editor-input" id="cm_date_range_text" />
+              <input type="text" class="editor-input" id="cm_date_range_text" placeholder="例如:MAY 20 — JUNE 30" />
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
                 <label class="editor-label">限量總數</label>
-                <input type="number" class="editor-input" id="cm_limit_total" placeholder="200" />
+                <input type="number" class="editor-input" id="cm_limit_total" placeholder="例如:200" />
               </div>
               <div class="editor-row">
                 <label class="editor-label">已預約數</label>
@@ -804,11 +807,11 @@
             <div class="editor-row-2col">
               <div class="editor-row">
                 <label class="editor-label">上市文字</label>
-                <input type="text" class="editor-input" id="cm_launch_date_text" placeholder="2026.05.20" />
+                <input type="text" class="editor-input" id="cm_launch_date_text" placeholder="例如:2026.05.20" />
               </div>
               <div class="editor-row">
                 <label class="editor-label">限定門市</label>
-                <input type="text" class="editor-input" id="cm_available_stores" placeholder="北中南各 1 家" />
+                <input type="text" class="editor-input" id="cm_available_stores" placeholder="例如:北中南各 1 家 / 限線上預購" />
               </div>
             </div>
           </div>
@@ -853,17 +856,17 @@
             <div class="editor-row-2col">
               <div class="editor-row">
                 <label class="editor-label">創作者名稱</label>
-                <input type="text" class="editor-input" id="cm_creator_name" placeholder="DTTO FRIENDS" />
+                <input type="text" class="editor-input" id="cm_creator_name" placeholder="例如:設計師 / 工作室名稱" />
               </div>
               <div class="editor-row">
                 <label class="editor-label">創作者副標</label>
-                <input type="text" class="editor-input" id="cm_creator_subtitle" placeholder="DTTO FRIENDS · DINU 創作者" />
+                <input type="text" class="editor-input" id="cm_creator_subtitle" placeholder="例如:設計師 · 角色 創作者" />
               </div>
             </div>
 
             <div class="editor-row">
               <label class="editor-label">訪談標題</label>
-              <input type="text" class="editor-input" id="cm_interview_title" placeholder="當 DINU 第一次刻在鏡片上" />
+              <input type="text" class="editor-input" id="cm_interview_title" placeholder="訪談主標題(1 行)" />
             </div>
 
             <div class="editor-row">
@@ -1264,22 +1267,23 @@
                 </button>
                 <input type="file" id="agAvatarInput" class="visually-hidden" accept="image/*">
               </div>
+              <p class="editor-hint" style="margin:0">建議比例 1:1 · 建議尺寸 400 × 400 px</p>
             </div>
           </div>
           <div class="editor-row">
             <div class="editor-label">顯示名稱</div>
-            <div><input class="editor-input" id="agDisplayName" value="LOHAS 企劃部" placeholder="LOHAS 企劃部"/></div>
+            <div><input class="editor-input" id="agDisplayName" placeholder="請輸入創作者顯示名稱"/></div>
           </div>
           <div class="editor-row">
             <div class="editor-label">短標籤</div>
             <div>
-              <input class="editor-input" id="agTagline" placeholder="例如:官方品牌"/>
+              <input class="editor-input" id="agTagline" placeholder="例如:插畫家 / 平面設計師 / 工作室"/>
               <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在名字下方</div>
             </div>
           </div>
           <div class="editor-row">
             <div class="editor-label">自我介紹</div>
-            <div><textarea class="editor-area" id="agBio" placeholder="說說這位創作者..."></textarea></div>
+            <div><textarea class="editor-area" id="agBio" placeholder="請輸入創作者的自我介紹"></textarea></div>
           </div>
         </div>
 
@@ -1302,13 +1306,13 @@
                 <input type="file" id="agJoiningPhotoInput" class="visually-hidden" accept="image/*">
                 <input type="hidden" id="agJoiningPhoto"/>
               </div>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">3:4 直式照片,顯示在文字左側</div>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">3:4 直式照片,顯示在文字左側 · 建議尺寸 600 × 800 px</div>
             </div>
           </div>
           <div class="editor-row">
             <div class="editor-label">緣分故事</div>
             <div>
-              <textarea class="editor-area" id="agJoiningStory" placeholder="說說這位創作者跟樂活的緣分..." style="min-height:140px"></textarea>
+              <textarea class="editor-area" id="agJoiningStory" placeholder="這位創作者跟樂活如何開始合作?說個小故事吧(空一行 = 段落分隔)" style="min-height:140px"></textarea>
               <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">空一行 = 段落分隔</div>
             </div>
           </div>
@@ -1336,7 +1340,7 @@
           </div>
           <div class="editor-row">
             <div class="editor-label">影片標題</div>
-            <div><input class="editor-input" id="agVideoTitle" placeholder="例如:LOHAS 品牌故事"/></div>
+            <div><input class="editor-input" id="agVideoTitle" placeholder="請輸入影片標題"/></div>
           </div>
         </div>
 
