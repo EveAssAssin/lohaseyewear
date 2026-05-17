@@ -472,16 +472,24 @@ body.no-scroll {
 
 .footer-links {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-start;
-    gap: 40px 50px;
+    gap: 50px;
     margin-bottom: 60px;
+}
+
+.footer-columns-wrap {
+    display: contents;
 }
 
 .footer-column {
     margin-top: 45px;
-    flex: 0 0 auto;
-    min-width: 130px;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.footer-column h3 {
+    white-space: nowrap;
 }
 
 .footer-column h3 {
@@ -580,6 +588,10 @@ body.no-scroll {
         flex-direction: column;
         flex-wrap: nowrap;
         gap: 0;
+    }
+
+    .footer-columns-wrap {
+        display: contents;
     }
 
     .footer-column {
