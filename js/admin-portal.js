@@ -3941,6 +3941,10 @@
     }
 
     function renderList(){
+      // 更新副標計數
+      const subEl = $('collabListSub');
+      if(subEl) subEl.textContent = allCollabs.length + ' 個聯名活動';
+
       let arr = allCollabs;
       if(filterText){
         const q = filterText.toLowerCase();
