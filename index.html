@@ -48,39 +48,9 @@
         </div>
 
         <div class="owndays-container" id="owndays-container">
-           <a href="#" class="owndays-item mother-day">
-                <div class="item-overlay">
-                    <span class="tag">MOTHER'Ｓ DAY</span>
-                    <h2>母親節專區</h2>
-                    <p>一份走進心裡的禮物</p>
-                    <span class="btn-more">VIEW MORE</span>
-                </div>
-                <picture>
-                    <source srcset="images/mother-banner-mobile.jpg" media="(max-width: 768px)">
-                    <img src="images/mother-banner.jpg" alt="母親節">
-                </picture>
-            </a>
-
-            <a href="#" class="owndays-item creators-market">
-                <div class="item-overlay">
-                    <span class="tag">CREATORS MARKET</span>
-                    <h2>鏡片刻圖市集</h2>
-                    <p>將你的創作分享給全世界</p>
-                    <span class="btn-more">VIEW MORE</span>
-                </div>
-                <img src="images/market-banner.jpg" alt="刻圖市集">
-            </a>
-
-             <a href="#" class="owndays-item creators-market">
-                <div class="item-overlay">
-                    <span class="tag">CREATORS MARKET</span>
-                    <h2>鏡片刻圖市集</h2>
-                    <p>將你的創作分享給全世界</p>
-                    <span class="btn-more">VIEW MORE</span>
-                </div>
-                <img src="images/market-banner.jpg" alt="刻圖市集">
-            </a>
-            
+            <!-- 由 index.js 動態載入 (show_in_homepage=true 的最新消息) -->
+            <div class="owndays-loading" style="padding:40px 20px;color:#888;text-align:center;flex:0 0 100%">載入中...</div>
+        
         </div>
     </div>
 </section>
@@ -170,6 +140,8 @@
   <div id="site-footer"></div>
 
   <script src="js/layout.js"></script>
-  <script src="js/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/index.js?v=20260517"></script>
 </body>
 </html>
