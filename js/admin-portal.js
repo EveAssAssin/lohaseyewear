@@ -4871,16 +4871,32 @@
         const preview = wrap.querySelector('.img-upload-preview');
         if(!input || !preview) return;
 
-        preview.addEventListener('click', () => input.click());
+        console.log('[news] 綁定圖片上傳:', field);
+
+        preview.addEventListener('click', () => {
+          console.log('[news] 點預覽,觸發 file input', field);
+          input.click();
+        });
 
         input.addEventListener('change', async e => {
           const file = e.target.files?.[0];
+          console.log('[news] file change:', field, file?.name, file?.size);
           if(!file) return;
 
+          if(!window.LohasCropper){
+            console.error('[news] LohasCropper 沒載入!');
+            toast('裁切工具未載入,請重整頁面');
+            return;
+          }
+
+          console.log('[news] 開始裁切, aspect:', aspect);
           const cropped = await cropImage(file, aspect);
+          console.log('[news] 裁切完成:', !!cropped, cropped?.size);
           if(!cropped){ input.value = ''; return; }
 
           pendingFiles[field] = cropped;
+          console.log('[news] pendingFiles 已設定:', field, pendingFiles);
+
           const reader = new FileReader();
           reader.onload = ev => {
             preview.innerHTML = '<img src="' + ev.target.result + '" alt="" />';
@@ -4917,11 +4933,20 @@
       if(saveBtnSpan) saveBtnSpan.textContent = '儲存中...';
 
       try {
+        console.log('[news save] pendingFiles:', pendingFiles);
+        console.log('[news save] currentNews:', currentNews);
+
         if(pendingFiles.cover_image_url){
+          console.log('[news save] 上傳 cover 圖中...', pendingFiles.cover_image_url.size, 'bytes');
           coverUrl = await uploadFile(pendingFiles.cover_image_url, 'news-cover');
+          console.log('[news save] cover 上傳成功:', coverUrl);
+        } else {
+          console.log('[news save] 沒有新的 cover 檔,沿用:', coverUrl);
         }
         if(pendingFiles.homepage_image_url){
+          console.log('[news save] 上傳 homepage 圖中...');
           homepageImgUrl = await uploadFile(pendingFiles.homepage_image_url, 'news-homepage');
+          console.log('[news save] homepage 上傳成功:', homepageImgUrl);
         }
 
         const payload = {
