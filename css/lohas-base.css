@@ -464,10 +464,6 @@ body.no-scroll {
     letter-spacing: 0.5px;
 }
 
-.footer-column {
-    margin-top: 45px;
-}
-
 .footer-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -476,9 +472,16 @@ body.no-scroll {
 
 .footer-links {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-start;
-    gap: 100px;
+    gap: 40px 50px;
     margin-bottom: 60px;
+}
+
+.footer-column {
+    margin-top: 45px;
+    flex: 0 0 auto;
+    min-width: 130px;
 }
 
 .footer-column h3 {
