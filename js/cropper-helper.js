@@ -28,7 +28,7 @@
     const div = document.createElement('div');
     div.id = 'lohasCropModal';
     div.className = 'lohas-crop-modal';
-    div.setAttribute('aria-hidden', 'true');
+    div.setAttribute('inert', '');
     div.innerHTML = `
       <div class="lohas-crop-bg"></div>
       <div class="lohas-crop-dialog">
@@ -85,7 +85,7 @@
     if (cropper) { cropper.destroy(); cropper = null; }
     if (modalEl) {
       modalEl.classList.remove('is-open');
-      modalEl.setAttribute('aria-hidden', 'true');
+      modalEl.setAttribute('inert', '');
     }
     document.body.style.overflow = '';
     if (resolveFn) {
@@ -141,7 +141,7 @@
         img.src = ev.target.result;
 
         modalEl.classList.add('is-open');
-        modalEl.setAttribute('aria-hidden', 'false');
+        modalEl.removeAttribute('inert');
         document.body.style.overflow = 'hidden';
 
         // 給瀏覽器時間 render 圖, 再初始化 cropper
