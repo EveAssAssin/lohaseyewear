@@ -19,6 +19,7 @@
   // ===== State =====
   var State = {
     designs: [],
+    collabs: [],
     wishlistIds: new Set(),
     activeTier: 'all',
     searchTerm: '',
@@ -58,6 +59,13 @@
       console.error('[market] Supabase 載入失敗:', e);
       showToast('載入失敗,請重新整理');
       return;
+    }
+
+    try {
+      await loadCollabsFromSupabase();
+      console.log('[market] 載入', State.collabs.length, '個聯名');
+    } catch(e) {
+      console.warn('[market] 聯名載入失敗:', e);
     }
 
     await renderFeatured();
@@ -116,6 +124,26 @@
         isLegacy: d.type === 'legacy',
       };
     });
+  }
+
+  // ===== 載入聯名 =====
+  async function loadCollabsFromSupabase(){
+    var sb = window.LohasSupabase?.getClient?.()
+          || window.Supabase?.client
+          || window.supabase;
+    if(!sb || typeof sb.from !== 'function') {
+      State.collabs = [];
+      return;
+    }
+
+    var { data, error } = await sb
+      .from('collabs')
+      .select('id, slug, brand_name, hero_title, hero_subtitle, hero_image_url, lifecycle_status, status, sort_order')
+      .in('status', ['active', 'upcoming'])
+      .order('sort_order', { ascending: true });
+
+    if(error){ console.warn('[market] collabs 讀取失敗', error); State.collabs = []; return; }
+    State.collabs = data || [];
   }
 
 
@@ -260,17 +288,29 @@
     setText('kpiTotalDesigns', (State.designs.length + 5000) + '+');
     setText('seeAllCreator', creatorList.length);
 
-    // Member / Collab 區塊先隱藏 (DOM 還在,只是 display:none)
+    // Member 區塊先隱藏 (DOM 還在,只是 display:none)
     var memberBlock = root.querySelector('.market-block[data-section="member"]');
-    var collabBlock = root.querySelector('.market-block[data-section="collab"]');
     if(memberBlock) memberBlock.style.display = 'none';
-    if(collabBlock) collabBlock.style.display = 'none';
 
-    // Member / Collab sidebar 按鈕也隱藏
+    // Member sidebar 按鈕也隱藏
     var memberBtn = root.querySelector('.cat-btn[data-tier="member"]');
-    var collabBtn = root.querySelector('.cat-btn[data-tier="collab"]');
     if(memberBtn) memberBtn.closest('li').style.display = 'none';
-    if(collabBtn) collabBtn.closest('li').style.display = 'none';
+
+    // 聯名區 — 有 active/upcoming 聯名才顯示
+    var collabBlock = root.querySelector('.market-block[data-section="collab"]');
+    var collabBtn = root.querySelector('.cat-btn[data-tier="collab"]');
+    var collabCount = State.collabs ? State.collabs.length : 0;
+    if(collabCount > 0){
+      if(collabBlock) collabBlock.style.display = '';
+      if(collabBtn){
+        collabBtn.closest('li').style.display = '';
+        setText('countCollab', collabCount);
+      }
+      renderCollabs(State.collabs);
+    } else {
+      if(collabBlock) collabBlock.style.display = 'none';
+      if(collabBtn) collabBtn.closest('li').style.display = 'none';
+    }
 
     // 先渲染前 9 件到 creator grid (跟原本 v18 設計一致)
     renderGrid('creator', creatorList.slice(0, 9));
@@ -284,6 +324,39 @@
         seeAllBtn.style.display = 'none';
       });
     }
+  }
+
+  // ===== 渲染聯名卡片 =====
+  function renderCollabs(list){
+    var grid = root.querySelector('.design-grid[data-grid="collab"]');
+    if(!grid) return;
+
+    if(!list.length){ grid.innerHTML = ''; return; }
+
+    var STAGE_LABEL = {
+      upcoming: '即將推出',
+      preorder: '預購中',
+      on_sale: '販售中',
+      sold_out: '已售完',
+      ended: '已結束'
+    };
+
+    grid.innerHTML = list.map(function(c){
+      var stage = c.lifecycle_status || 'preorder';
+      var stageLabel = STAGE_LABEL[stage] || stage;
+      var img = c.hero_image_url
+        ? '<img src="' + escapeHtml(c.hero_image_url) + '" alt="' + escapeHtml(c.brand_name) + '" loading="lazy" />'
+        : '<div class="collab-card-no-img"></div>';
+      return '<a class="design-card collab-card" href="collab.html?id=' + escapeHtml(c.slug) + '">'
+        + '<div class="design-card-img collab-card-img">' + img
+        + '<span class="collab-stage-tag stage-' + stage + '">' + escapeHtml(stageLabel) + '</span>'
+        + '</div>'
+        + '<div class="design-card-body">'
+        +   '<div class="design-card-name">' + escapeHtml(c.brand_name || c.hero_title || '') + '</div>'
+        +   '<div class="design-card-meta">LOHAS × ' + escapeHtml(c.brand_name || '') + '</div>'
+        + '</div>'
+      + '</a>';
+    }).join('');
   }
 
   function renderGrid(tier, list){
