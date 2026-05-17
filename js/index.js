@@ -26,7 +26,7 @@
     const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
-      .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt')
+      .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt, homepage_link_type, homepage_link_url')
       .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
       .eq('show_in_homepage', true)
       .order('sort_order', { ascending: true })
@@ -47,7 +47,9 @@
 
     const html = data.map(n => {
       const img = n.homepage_image_url || n.cover_image_url;
-      const href = 'news-detail.html?id=' + escapeHtml(n.slug);
+      const href = (n.homepage_link_type === 'custom' && n.homepage_link_url)
+        ? escapeHtml(n.homepage_link_url)
+        : 'news-detail.html?id=' + escapeHtml(n.slug);
       const tag = n.homepage_tag || '';
       const sub = n.homepage_subtitle || n.excerpt || '';
       return '<a href="' + href + '" class="owndays-item">' +

@@ -4798,11 +4798,13 @@
       $('newsPreviewBtn').style.display = 'none';
 
       ['news_slug','news_title','news_excerpt','news_homepage_tag','news_homepage_subtitle',
-       'news_author','news_published_at','news_content'].forEach(id => setVal(id, ''));
+       'news_author','news_published_at','news_content','news_homepage_link_url'].forEach(id => setVal(id, ''));
       setVal('news_status', 'draft');
       setVal('news_category', 'story');
       setVal('news_show_in_homepage', false);
       setVal('news_sort_order', 0);
+      setVal('news_homepage_link_type', 'news_detail');
+      updateLinkUrlVisibility();
 
       resetImagePreview('news_cover_preview');
       resetImagePreview('news_homepage_image_preview');
@@ -4842,6 +4844,9 @@
       setVal('news_homepage_subtitle', n.homepage_subtitle);
       setVal('news_sort_order', n.sort_order);
       setVal('news_content', n.content);
+      setVal('news_homepage_link_type', n.homepage_link_type || 'news_detail');
+      setVal('news_homepage_link_url', n.homepage_link_url);
+      updateLinkUrlVisibility();
 
       setImagePreview('news_cover_preview', n.cover_image_url);
       setImagePreview('news_homepage_image_preview', n.homepage_image_url);
@@ -4860,6 +4865,12 @@
     function updateSlugPreview(){
       const preview = $('news_slug_preview');
       if(preview) preview.textContent = val('news_slug') || 'xxx';
+    }
+
+    function updateLinkUrlVisibility(){
+      const type = val('news_homepage_link_type');
+      const row = $('news_homepage_link_url_row');
+      if(row) row.style.display = (type === 'custom') ? '' : 'none';
     }
 
     function bindImageUploads(){
@@ -4965,6 +4976,8 @@
           homepage_tag: val('news_homepage_tag'),
           homepage_subtitle: val('news_homepage_subtitle'),
           homepage_image_url: homepageImgUrl,
+          homepage_link_type: val('news_homepage_link_type') || 'news_detail',
+          homepage_link_url: val('news_homepage_link_url'),
           sort_order: val('news_sort_order') || 0,
           published_at: val('news_published_at'),
           author: val('news_author'),
@@ -5009,6 +5022,7 @@
     $('newsSaveBtn').addEventListener('click', save);
     $('newsDeleteBtn').addEventListener('click', deleteNews);
     $('news_slug').addEventListener('input', updateSlugPreview);
+    $('news_homepage_link_type').addEventListener('change', updateLinkUrlVisibility);
 
     bindImageUploads();
 
