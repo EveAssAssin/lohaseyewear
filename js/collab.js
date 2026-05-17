@@ -109,27 +109,6 @@
       startCountdown(collab.end_date);
     }
 
-    // ====== 預購 / 門市按鈕 ======
-    const preBtn = $('preorderBtn');
-    if(collab.preorder_link){
-      preBtn.href = collab.preorder_link;
-    } else {
-      preBtn.addEventListener('click', function(e){
-        e.preventDefault();
-        toast('預約預購表單會開啟,需登入會員');
-      });
-    }
-
-    const storeBtn = $('storeBtn');
-    if(collab.store_link){
-      storeBtn.href = collab.store_link;
-    } else {
-      storeBtn.addEventListener('click', function(e){
-        e.preventDefault();
-        toast('跳轉到指定門市地圖');
-      });
-    }
-
     // ====== Meta bar (限量資訊) ======
     if(collab.show_limit){
       renderMetaBar(collab);
