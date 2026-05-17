@@ -217,13 +217,13 @@
 
 .owndays-item {
     position: relative;
-    flex: 0 0 calc(50% - 7.5px);
+    flex: 0 0 680px;
     min-width: 0;
-    aspect-ratio: 16 / 9; /* 根據 OWNDAYS 比例調整 */
+    aspect-ratio: 16 / 9;
     overflow: hidden;
     scroll-snap-align: start;
     text-decoration: none;
-    border-radius: 8px; /* 增加一點點日系溫潤感 */
+    border-radius: 8px;
 }
 
 .owndays-item img {
