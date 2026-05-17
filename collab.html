@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>聯名活動 | LOHAS 樂活眼鏡</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/collab.css?v=20260516">
+  <script src="js/layout.js?v=20260516" defer></script>
+</head>
+<body>
+
+<div id="site-header"></div>
+
+<main class="collab-page" id="collabPage" style="opacity:0;transition:opacity .3s">
+
+  <!-- Loading 狀態 -->
+  <div class="collab-loading" id="collabLoading">
+    <div class="loader-spin"></div>
+    <p>載入聯名活動中...</p>
+  </div>
+
+  <!-- 找不到 -->
+  <div class="collab-notfound" id="collabNotFound" style="display:none">
+    <h2>找不到這個聯名活動</h2>
+    <p>它可能已結束或從未存在。</p>
+    <a href="market.html" class="btn btn-primary">回刻圖市集</a>
+  </div>
+
+  <!-- 內容 (JS 注入) -->
+  <div id="collabContent" style="display:none">
+    <!-- Hero -->
+    <section class="cb-hero">
+      <div class="cb-hero-inner">
+        <div class="cb-eb" id="heroEb"></div>
+        <h1 class="cb-h1" id="heroTitle"></h1>
+        <p class="cb-hero-sub" id="heroSub"></p>
+        <div class="cb-hero-img" id="heroImg"></div>
+        <div class="cb-countdown" id="countdownWrap" style="display:none">
+          <div class="cb-ct"><div class="cb-ct-num" id="cdDays">00</div><div class="cb-ct-lab">DAYS</div></div>
+          <div class="cb-ct"><div class="cb-ct-num" id="cdHours">00</div><div class="cb-ct-lab">HOURS</div></div>
+          <div class="cb-ct"><div class="cb-ct-num" id="cdMin">00</div><div class="cb-ct-lab">MIN</div></div>
+          <div class="cb-ct"><div class="cb-ct-num" id="cdSec">00</div><div class="cb-ct-lab">SEC</div></div>
+        </div>
+        <div class="cb-cta-row">
+          <a class="cb-cta-p" id="preorderBtn">預 約 預 購</a>
+          <a class="cb-cta-g" id="storeBtn">指 定 門 市</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Meta bar -->
+    <div class="cb-meta-bar" id="metaBar"></div>
+
+    <!-- Story -->
+    <section class="cb-sec" id="storySec" style="display:none">
+      <div class="cb-sec-inner">
+        <div class="cb-sec-eb">— STORY OF THE COLLAB</div>
+        <h2 class="cb-sec-h">關於這個系列</h2>
+        <div class="cb-story">
+          <div class="cb-story-img" id="storyImg"></div>
+          <div id="storyContent"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Package -->
+    <section class="cb-sec" id="pkgSec" style="display:none">
+      <div class="cb-sec-inner">
+        <div class="cb-sec-eb">— PACKAGE</div>
+        <h2 class="cb-sec-h">套餐內容</h2>
+        <div class="cb-pkg-grid" id="pkgGrid"></div>
+      </div>
+    </section>
+
+    <!-- Designs -->
+    <section class="cb-sec" id="designSec" style="display:none">
+      <div class="cb-sec-inner">
+        <div class="cb-sec-eb">— CHOOSE YOUR DESIGN</div>
+        <h2 class="cb-sec-h" id="designSecTitle">圖案任選一款</h2>
+        <div class="cb-icon-grid" id="iconGrid"></div>
+        <p class="cb-icon-hint">點選看不同圖案,每副眼鏡限選一款</p>
+      </div>
+    </section>
+
+    <!-- Interview -->
+    <section class="cb-sec" id="interviewSec" style="display:none">
+      <div class="cb-sec-inner">
+        <div class="cb-sec-eb">— INTERVIEW</div>
+        <h2 class="cb-sec-h">創作者的話</h2>
+        <a class="cb-interview" id="interviewBox">
+          <div class="cb-iv-av" id="ivAvatar"></div>
+          <div>
+            <div class="cb-iv-eb" id="ivSubtitle"></div>
+            <div class="cb-iv-name" id="ivTitle"></div>
+            <p class="cb-iv-quote" id="ivQuote"></p>
+            <span class="cb-iv-link">看完整訪談 →</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Customer photos -->
+    <section class="cb-sec" id="photoSec" style="display:none">
+      <div class="cb-sec-inner">
+        <div class="cb-sec-eb">— REAL CUSTOMERS</div>
+        <h2 class="cb-sec-h" id="photoSecTitle">客人分享</h2>
+        <p class="cb-photo-sub">部分客人已開始分享他們的聯名眼鏡照片</p>
+        <div class="cb-gal-grid" id="galGrid"></div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="cb-cta-bottom" id="bottomCta">
+      <div class="cb-cta-inner">
+        <div class="cb-cta-eb">— ONE LAST CHANCE</div>
+        <h2 id="bottomCtaH"></h2>
+        <p id="bottomCtaP"></p>
+        <div class="cb-cta-btns">
+          <a class="cb-cta-b solid" id="bottomPreorderBtn">立 即 預 約</a>
+          <a class="cb-cta-b" href="market.html">回 刻 圖 市 集</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- alert -->
+<div class="cb-alert" id="cbAlert"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/collab.js?v=20260516"></script>
+
+</body>
+</html>
