@@ -737,7 +737,7 @@
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">狀態</label>
+                <label class="editor-label">上架狀態</label>
                 <select class="editor-input" id="cm_status">
                   <option value="draft">草稿 (前台看不到)</option>
                   <option value="upcoming">即將推出</option>
@@ -747,9 +747,21 @@
                 </select>
               </div>
               <div class="editor-row">
-                <label class="editor-label">排序 (數字越小越前)</label>
-                <input type="number" class="editor-input" id="cm_sort_order" value="0" />
+                <label class="editor-label">活動階段</label>
+                <select class="editor-input" id="cm_lifecycle_status">
+                  <option value="upcoming">即將推出 (倒數到上市)</option>
+                  <option value="preorder">預購中 (倒數結束)</option>
+                  <option value="on_sale">販售中 (拿掉預購字眼)</option>
+                  <option value="sold_out">已售完 (灰底,殘念全數售出)</option>
+                  <option value="ended">活動結束</option>
+                </select>
+                <p class="editor-hint">影響前台文案 / CTA / 倒數顯示</p>
               </div>
+            </div>
+
+            <div class="editor-row">
+              <label class="editor-label">排序 (數字越小越前)</label>
+              <input type="number" class="editor-input" id="cm_sort_order" value="0" />
             </div>
           </div>
 
@@ -1442,7 +1454,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-0300"></script>
+<script src="js/admin-portal.js?v=20260518-0400"></script>
 
 </body>
 </html>
