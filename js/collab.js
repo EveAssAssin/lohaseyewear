@@ -104,9 +104,19 @@
     }
 
     // ====== 倒數 ======
-    if(collab.show_countdown && collab.end_date){
+    const stage = collab.lifecycle_status || 'preorder';
+    if(collab.show_countdown && collab.end_date && (stage === 'upcoming' || stage === 'preorder')){
       $('countdownWrap').style.display = '';
+      // 倒數文案根據 lifecycle 切換
+      const cdEb = document.querySelector('.cb-cd-eb');
+      if(cdEb){
+        if(stage === 'upcoming') cdEb.textContent = '距 離 上 市 還 剩';
+        else if(stage === 'preorder') cdEb.textContent = '距 離 預 購 結 束 還 剩';
+      }
       startCountdown(collab.end_date);
+    } else if(stage === 'on_sale'){
+      // 販售中:倒數隱藏,改顯示「現正販售中」標語
+      $('countdownWrap').style.display = 'none';
     }
 
     // ====== Meta bar (限量資訊) ======
@@ -175,15 +185,32 @@
   function renderMetaBar(c){
     const bar = $('metaBar');
     const items = [];
+    const stage = c.lifecycle_status || 'preorder';
+
     if(c.limit_total){
       items.push({ lab:'限 量', val: c.limit_total + ' 套' });
     }
-    if(c.preorder_count){
+    // 預購中:顯示「已預約」+「剩餘」
+    if(stage === 'preorder' && c.preorder_count){
       items.push({ lab:'已 預 約', val: c.preorder_count + ' 位' });
       const left = (c.limit_total || 0) - c.preorder_count;
       if(left > 0) items.push({ lab:'剩 餘', val: left + ' 套' });
     }
-    if(c.launch_date_text){
+    // 販售中:顯示「販售中」
+    else if(stage === 'on_sale'){
+      items.push({ lab:'狀 態', val: '販 售 中' });
+      if(c.preorder_count && c.limit_total){
+        const left = c.limit_total - c.preorder_count;
+        if(left > 0) items.push({ lab:'剩 餘 庫 存', val: left + ' 套' });
+      }
+    }
+    // 已售完
+    else if(stage === 'sold_out'){
+      items.push({ lab:'狀 態', val: '已 售 完' });
+    }
+
+    // 上市日期 (only 即將推出 / 預購階段顯示)
+    if(c.launch_date_text && (stage === 'upcoming' || stage === 'preorder')){
       items.push({ lab:'上 市', val: c.launch_date_text });
     }
     if(c.available_stores){
@@ -281,32 +308,66 @@
   }
 
   function renderBottomCta(c){
+    const stage = c.lifecycle_status || 'preorder';
     let h2 = '一起參與這個聯名';
     let p = '預約專屬於你的限定組合';
+    let btnText = '立 即 預 約';
+    let ctaEb = '— ONE LAST CHANCE';
 
-    if(c.show_limit && c.limit_total){
-      const left = (c.limit_total || 0) - (c.preorder_count || 0);
-      if(left > 0){
-        h2 = '還剩 ' + left + ' 套';
+    if(stage === 'upcoming'){
+      h2 = '即將推出';
+      p = c.launch_date_text ? '上市 ' + c.launch_date_text : '敬請期待';
+      btnText = '我 要 通 知 我';
+      ctaEb = '— COMING SOON';
+    } else if(stage === 'preorder'){
+      if(c.show_limit && c.limit_total){
+        const left = (c.limit_total || 0) - (c.preorder_count || 0);
+        if(left > 0) h2 = '還剩 ' + left + ' 套';
       }
+      if(c.date_range_text){
+        p = c.date_range_text + ' · 限定門市憑會員預約購買';
+      } else if(c.launch_date_text){
+        p = '上市 ' + c.launch_date_text + ' · 限定門市憑會員預約購買';
+      }
+    } else if(stage === 'on_sale'){
+      h2 = '現正販售中';
+      p = c.available_stores ? c.available_stores + ' · 限定門市販售' : '限定門市販售';
+      btnText = '立 即 購 買';
+      ctaEb = '— NOW AVAILABLE';
+    } else if(stage === 'sold_out'){
+      h2 = '殘念,全數售出';
+      p = '感謝大家的熱烈支持,下次聯名見';
+      btnText = '看 其 他 聯 名';
+      ctaEb = '— SOLD OUT';
+    } else if(stage === 'ended'){
+      h2 = '活動已結束';
+      p = '感謝大家的參與,期待下次再見';
+      btnText = '看 其 他 聯 名';
+      ctaEb = '— THE END';
     }
 
-    if(c.date_range_text){
-      p = c.date_range_text + ' · 限定門市憑會員預約購買';
-    } else if(c.launch_date_text){
-      p = '上市 ' + c.launch_date_text + ' · 限定門市憑會員預約購買';
-    }
+    // 更新 eyebrow
+    const ebEl = document.querySelector('.cb-cta-bottom .cb-cta-eb');
+    if(ebEl) ebEl.textContent = ctaEb;
 
     $('bottomCtaH').textContent = h2;
     $('bottomCtaP').textContent = p;
 
     const btn = $('bottomPreorderBtn');
-    if(c.preorder_link){
+    btn.textContent = btnText;
+
+    // sold_out / ended:CTA 按鈕導向 collabs 列表
+    if(stage === 'sold_out' || stage === 'ended'){
+      btn.href = 'collabs.html';
+      btn.classList.add('disabled-cta');
+    } else if(c.preorder_link){
       btn.href = c.preorder_link;
     } else {
       btn.addEventListener('click', function(e){
         e.preventDefault();
-        toast('預約預購表單會開啟,需登入會員');
+        if(stage === 'upcoming') toast('將開啟上市通知訂閱表單,需登入會員');
+        else if(stage === 'on_sale') toast('將開啟線上購買 / 預約系統');
+        else toast('預約預購表單會開啟,需登入會員');
       });
     }
   }

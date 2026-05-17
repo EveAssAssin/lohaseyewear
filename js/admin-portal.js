@@ -4028,6 +4028,7 @@
        'cm_start_date','cm_end_date','cm_story_paragraphs'].forEach(id => setVal(id, ''));
 
       setVal('cm_status', 'draft');
+      setVal('cm_lifecycle_status', 'preorder');
       setVal('cm_category', 'character');
       setVal('cm_sort_order', 0);
       setVal('cm_show_countdown', false);
@@ -4071,6 +4072,7 @@
 
       setVal('cm_slug', c.slug);
       setVal('cm_status', c.status);
+      setVal('cm_lifecycle_status', c.lifecycle_status || 'preorder');
       setVal('cm_category', c.category || 'character');
       setVal('cm_brand_name', c.brand_name);
       setVal('cm_sort_order', c.sort_order);
@@ -4410,6 +4412,7 @@
         const payload = {
           slug,
           status: val('cm_status') || 'draft',
+          lifecycle_status: val('cm_lifecycle_status') || 'preorder',
           category: val('cm_category') || 'character',
           sort_order: val('cm_sort_order') || 0,
           brand_name: val('cm_brand_name'),
