@@ -3035,6 +3035,13 @@
   font-size:10px;
 }
 
+/* 排程狀態 tag */
+.ad .creator-card-tag.scheduled{
+  background:#FAEEDA;
+  color:#854F0B;
+  font-weight:500;
+}
+
 /* 本月精選按鈕狀態 */
 .ad .btn.featured-on{
   background:linear-gradient(135deg, #D4B068 0%, #B8923E 100%);
