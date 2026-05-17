@@ -3057,7 +3057,7 @@
         </div>
         <div class="editor-row">
           <div class="editor-label">標題</div>
-          <div><input class="editor-input cb-title" placeholder="例如:創作風格" value="${escapeHtml(data.title || '')}"/></div>
+          <div><input class="editor-input cb-title" placeholder="請輸入區塊標題" value="${escapeHtml(data.title || '')}"/></div>
         </div>
         <div class="editor-row">
           <div class="editor-label">圖片</div>
@@ -3074,11 +3074,12 @@
               <input type="hidden" class="cb-image" value="${escapeHtml(data.image || '')}"/>
               <input type="hidden" class="cb-image-base64" value=""/>
             </div>
+            <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">建議比例 3:4 · 建議尺寸 600 × 800 px</div>
           </div>
         </div>
         <div class="editor-row">
           <div class="editor-label">內文</div>
-          <div><textarea class="editor-area cb-text" placeholder="輸入內文...">${escapeHtml(data.text || '')}</textarea></div>
+          <div><textarea class="editor-area cb-text" placeholder="請輸入區塊內文(可空一行分段)">${escapeHtml(data.text || '')}</textarea></div>
         </div>
       </div>
     `;
@@ -4622,7 +4623,7 @@
       people: '人物誌', member: '會員專區', official: '官方公告'
     };
     const STATUS_LABEL = {
-      draft: '草稿', published: '已發佈', archived: '已封存'
+      draft: '草稿', published: '已發佈', scheduled: '已排程', archived: '已下架'
     };
 
     function toast(msg){ if(window.toast) window.toast(msg); else alert(msg); }
@@ -4748,7 +4749,25 @@
             '<div class="creator-card-name-row">' +
               '<span class="creator-card-name">' + esc(n.title || '未命名') + '</span>' +
               '<span class="creator-card-tag">' + esc(CAT_LABEL[n.category] || n.category) + '</span>' +
-              '<span class="creator-card-tag ' + (n.status === 'published' ? 'featured' : n.status === 'draft' ? 'suspended' : '') + '">' + esc(STATUS_LABEL[n.status] || n.status) + '</span>' +
+              (function(){
+                let cls = '', label = STATUS_LABEL[n.status] || n.status;
+                if(n.status === 'published') cls = 'featured';
+                else if(n.status === 'draft') cls = 'suspended';
+                else if(n.status === 'scheduled'){
+                  cls = 'scheduled';
+                  if(n.published_at){
+                    const t = new Date(n.published_at);
+                    const now = new Date();
+                    if(t > now){
+                      label = '已排程 ' + (t.getMonth()+1) + '/' + t.getDate();
+                    } else {
+                      label = '已發佈 (排程到時)';
+                      cls = 'featured';
+                    }
+                  }
+                }
+                return '<span class="creator-card-tag ' + cls + '">' + esc(label) + '</span>';
+              })() +
               homeTag +
             '</div>' +
             '<div class="creator-card-meta">' +
@@ -4876,10 +4895,18 @@
       const client = sb();
       if(!client){ toast('Supabase 未配置'); return; }
 
-      const slug = val('news_slug');
-      if(!slug){ toast('Slug 必填'); return; }
-      if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 只能英數+底線+減號'); return; }
+      let slug = val('news_slug');
       if(!val('news_title')){ toast('標題必填'); return; }
+      const status = val('news_status') || 'draft';
+      if(status === 'scheduled' && !val('news_published_at')){
+        toast('已排程狀態必須填發佈時間');
+        return;
+      }
+      // 沒 slug 就自動生成 (timestamp + 隨機)
+      if(!slug){
+        slug = 'news-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+      }
+      if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 格式錯誤'); return; }
 
       let coverUrl = currentNews?.cover_image_url || null;
       let homepageImgUrl = currentNews?.homepage_image_url || null;
@@ -4899,7 +4926,7 @@
 
         const payload = {
           slug,
-          status: val('news_status') || 'draft',
+          status: status,
           category: val('news_category') || 'story',
           title: val('news_title'),
           excerpt: val('news_excerpt'),

@@ -102,10 +102,11 @@
       return;
     }
 
+    const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
       .select('*')
-      .eq('status', 'published')
+      .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
       .order('published_at', { ascending: false });
 
     if (error) {

@@ -23,10 +23,11 @@
       return;
     }
 
+    const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
       .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt')
-      .eq('status', 'published')
+      .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
       .eq('show_in_homepage', true)
       .order('sort_order', { ascending: true })
       .order('published_at', { ascending: false })
