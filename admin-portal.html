@@ -396,9 +396,8 @@
 
           <!-- 首頁曝光 -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">首頁曝光 (首頁輪播小卡)</h3>
-
-            <div class="editor-row">
+            <div class="editor-panel-head">
+              <h3 class="editor-panel-title" style="margin:0">首頁曝光 (首頁輪播小卡)</h3>
               <label class="editor-check">
                 <input type="checkbox" id="news_show_in_homepage" />
                 顯示在首頁輪播 (最多取前 4 篇)
@@ -407,14 +406,12 @@
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">首頁 Tag (大寫英文)</label>
-                <input type="text" class="editor-input" id="news_homepage_tag" placeholder="例如:LIMITED / NEW / EVENT" />
-                <p class="editor-hint">顯示在首頁卡片左上角</p>
+                <label class="editor-label">首頁 Tag</label>
+                <input type="text" class="editor-input" id="news_homepage_tag" placeholder="LIMITED / NEW / EVENT" />
               </div>
               <div class="editor-row">
                 <label class="editor-label">首頁副標</label>
-                <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="首頁卡片副標(1 行最佳)" />
-                <p class="editor-hint">不填則用「摘要」</p>
+                <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="不填則使用「摘要」" />
               </div>
             </div>
 
@@ -425,7 +422,7 @@
                   <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 (不填則用封面)</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
-                <p class="editor-hint">建議比例 16:9 · 建議尺寸 1600 × 900 px · 不填則用封面圖</p>
+                <p class="editor-hint">建議比例 16:9 · 1600 × 900 px</p>
               </div>
             </div>
 
@@ -436,18 +433,16 @@
                   <option value="news_detail">最新消息內頁 (預設)</option>
                   <option value="custom">指定網址</option>
                 </select>
-                <p class="editor-hint">點卡片後要去哪裡</p>
               </div>
-              <div class="editor-row">
-                <label class="editor-label">首頁排序 (數字越小越前)</label>
-                <input type="number" class="editor-input" id="news_sort_order" value="0" />
+              <div class="editor-row" id="news_homepage_link_url_row" style="display:none">
+                <label class="editor-label">指定網址</label>
+                <input type="text" class="editor-input" id="news_homepage_link_url" placeholder="/collab.html?id=xxx 或 https://..." />
               </div>
             </div>
 
-            <div class="editor-row" id="news_homepage_link_url_row" style="display:none">
-              <label class="editor-label">指定網址</label>
-              <input type="text" class="editor-input" id="news_homepage_link_url" placeholder="例如:/collab.html?id=dinu 或 https://..." />
-              <p class="editor-hint">可填內部相對路徑 (如 /market.html) 或完整外部網址</p>
+            <div class="editor-row">
+              <label class="editor-label">首頁排序 (數字越小越前)</label>
+              <input type="number" class="editor-input" id="news_sort_order" value="0" />
             </div>
           </div>
 
@@ -1454,7 +1449,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-0400"></script>
+<script src="js/admin-portal.js?v=20260518-0500"></script>
 
 </body>
 </html>
