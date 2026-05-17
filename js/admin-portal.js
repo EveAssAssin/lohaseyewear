@@ -4035,7 +4035,7 @@
       setVal('cm_show_limit', false);
       setVal('cm_limit_total', '');
       setVal('cm_preorder_count', 0);
-      setVal('cm_story_paragraphs', '[]');
+      setVal('cm_story_paragraphs', '');
       setVal('cm_theme_primary', '#7A2754');
       setVal('cm_theme_primary_picker', '#7A2754');
       setVal('cm_theme_accent', '#F8E4ED');
@@ -4088,7 +4088,14 @@
       setVal('cm_preorder_count', c.preorder_count);
       setVal('cm_launch_date_text', c.launch_date_text);
       setVal('cm_available_stores', c.available_stores);
-      setVal('cm_story_paragraphs', JSON.stringify(c.story_paragraphs || [], null, 2));
+      // 把 story_paragraphs (JSON array) 轉回純文字格式
+      const paragraphsTxt = (c.story_paragraphs || [])
+        .map(p => {
+          if (p.type === 'quote') return '> ' + (p.text || '');
+          return p.text || '';
+        })
+        .join('\n\n');
+      setVal('cm_story_paragraphs', paragraphsTxt);
       setVal('cm_creator_name', c.creator_name);
       setVal('cm_creator_subtitle', c.creator_subtitle);
       setVal('cm_interview_title', c.interview_title);
@@ -4383,12 +4390,18 @@
       }
       if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 格式錯誤'); return; }
 
-      // 解析 story paragraphs
-      let paragraphs = [];
-      try {
-        const txt = val('cm_story_paragraphs');
-        paragraphs = txt ? JSON.parse(txt) : [];
-      } catch(e){ toast('故事段落 JSON 格式錯誤'); return; }
+      // 解析 story paragraphs (純文字格式)
+      // 規則: 空一行 = 段落分隔;以 > 開頭 = 引用樣式
+      const storyTxt = val('cm_story_paragraphs') || '';
+      const paragraphs = storyTxt
+        .split(/\n\s*\n/)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(s => {
+          if (s.startsWith('> ')) return { type: 'quote', text: s.slice(2).trim() };
+          if (s.startsWith('>')) return { type: 'quote', text: s.slice(1).trim() };
+          return { type: 'p', text: s };
+        });
 
       // 處理主圖上傳
       let heroUrl = currentCollab?.hero_image_url || null;
