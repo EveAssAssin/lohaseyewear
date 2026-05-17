@@ -1,109 +1,146 @@
-document.addEventListener("DOMContentLoaded", () => {
-  initNewsFilter();
-  initLoadMore();
-  initNewsSearch();
-});
+/* =============================================================
+   最新消息列表頁 · news.js
+   ============================================================= */
 
-/* =========================
-   分類篩選
-========================= */
+(function () {
+  'use strict';
 
-function initNewsFilter() {
-  const filterButtons = document.querySelectorAll(".filter-btn");
-  const cards = document.querySelectorAll(".news-card");
-  const loadMoreBtn = document.getElementById("loadMoreBtn");
+  const CAT_LABEL = {
+    story: '品牌故事',
+    event: '活動優惠',
+    engraving: '雷刻服務',
+    people: '人物誌',
+    member: '會員專區',
+    official: '官方公告'
+  };
 
-  if (!filterButtons.length || !cards.length) return;
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
 
-  filterButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const filter = button.dataset.filter;
+  function formatDate(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return y + '.' + m + '.' + day;
+    } catch { return ''; }
+  }
 
-      filterButtons.forEach((btn) => btn.classList.remove("active"));
-      button.classList.add("active");
+  let allNews = [];
+  let currentFilter = 'all';
+  let visibleCount = 12;
 
-      cards.forEach((card) => {
-        const category = card.dataset.category;
-        const isMatch = filter === "all" || category === filter;
+  function renderList() {
+    const grid = document.getElementById('newsGrid');
+    const loading = document.getElementById('newsLoading');
+    const empty = document.getElementById('newsEmpty');
+    if (!grid) return;
 
-        card.classList.remove("is-filter-hidden");
+    if (loading) loading.style.display = 'none';
 
-        if (!isMatch) {
-          card.classList.add("is-filter-hidden");
-        }
+    const filtered = currentFilter === 'all'
+      ? allNews
+      : allNews.filter(n => n.category === currentFilter);
 
-        if (filter !== "all") {
-          card.classList.remove("is-hidden-card");
-        }
-      });
+    grid.querySelectorAll('.news-card').forEach(el => el.remove());
 
-      if (loadMoreBtn) {
-        if (filter === "all") {
-          const hiddenCards = document.querySelectorAll(".news-card.is-hidden-card");
-          loadMoreBtn.classList.toggle("is-hidden", hiddenCards.length === 0);
-        } else {
-          loadMoreBtn.classList.add("is-hidden");
-        }
-      }
-    });
-  });
-}
-
-/* =========================
-   更多文章
-========================= */
-
-function initLoadMore() {
-  const loadMoreBtn = document.getElementById("loadMoreBtn");
-
-  if (!loadMoreBtn) return;
-
-  loadMoreBtn.addEventListener("click", () => {
-    const hiddenCards = document.querySelectorAll(".news-card.is-hidden-card");
-
-    hiddenCards.forEach((card) => {
-      card.classList.remove("is-hidden-card");
-    });
-
-    loadMoreBtn.classList.add("is-hidden");
-  });
-}
-
-/* =========================
-   搜尋文章
-========================= */
-
-function initNewsSearch() {
-  const searchInput = document.getElementById("newsSearchInput");
-  const cards = document.querySelectorAll(".news-card");
-  const filterButtons = document.querySelectorAll(".filter-btn");
-  const loadMoreBtn = document.getElementById("loadMoreBtn");
-
-  if (!searchInput || !cards.length) return;
-
-  searchInput.addEventListener("input", () => {
-    const keyword = searchInput.value.trim().toLowerCase();
-
-    filterButtons.forEach((btn) => btn.classList.remove("active"));
-
-    const allButton = document.querySelector('.filter-btn[data-filter="all"]');
-    if (allButton) allButton.classList.add("active");
-
-    cards.forEach((card) => {
-      card.classList.remove("is-hidden-card");
-
-      const text = card.innerText.toLowerCase();
-      const isMatch = text.includes(keyword);
-
-      if (!keyword || isMatch) {
-        card.classList.remove("is-filter-hidden");
-      } else {
-        card.classList.add("is-filter-hidden");
-      }
-    });
-
-    if (loadMoreBtn) {
-      loadMoreBtn.classList.add("is-hidden");
+    if (!filtered.length) {
+      if (empty) empty.style.display = '';
+      return;
     }
+
+    if (empty) empty.style.display = 'none';
+
+    const visible = filtered.slice(0, visibleCount);
+
+    const html = visible.map(n => {
+      const slug = escapeHtml(n.slug);
+      const href = 'news-detail.html?id=' + slug;
+      return '<article class="news-card" data-category="' + escapeHtml(n.category) + '">' +
+        '<a href="' + href + '" class="news-card__image">' +
+          (n.cover_image_url
+            ? '<img src="' + escapeHtml(n.cover_image_url) + '" alt="' + escapeHtml(n.title) + '">'
+            : '<div class="news-card__placeholder"></div>'
+          ) +
+        '</a>' +
+        '<div class="news-card__body">' +
+          '<div class="post-meta">' +
+            '<span class="post-tag">' + escapeHtml(CAT_LABEL[n.category] || n.category) + '</span>' +
+            '<span class="post-date">' + formatDate(n.published_at || n.created_at) + '</span>' +
+          '</div>' +
+          '<h3><a href="' + href + '">' + escapeHtml(n.title) + '</a></h3>' +
+          '<p>' + escapeHtml(n.excerpt || '') + '</p>' +
+          '<a href="' + href + '" class="post-readmore card-readmore">READ MORE <span>→</span></a>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    if (loading) {
+      loading.insertAdjacentHTML('beforebegin', html);
+    } else {
+      grid.insertAdjacentHTML('afterbegin', html);
+    }
+
+    // load more 顯隱
+    const loadMoreWrap = document.querySelector('.news-load-more-wrap');
+    if (loadMoreWrap) {
+      loadMoreWrap.style.display = filtered.length > visibleCount ? '' : 'none';
+    }
+  }
+
+  async function loadNews() {
+    const sb = window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
+    if (!sb) {
+      const loading = document.getElementById('newsLoading');
+      if (loading) loading.innerHTML = '<p style="text-align:center;color:#888;padding:60px 0">系統暫時無法使用</p>';
+      return;
+    }
+
+    const { data, error } = await sb
+      .from('news')
+      .select('*')
+      .eq('status', 'published')
+      .order('published_at', { ascending: false });
+
+    if (error) {
+      console.error('[載入消息失敗]', error);
+      const loading = document.getElementById('newsLoading');
+      if (loading) loading.innerHTML = '<p style="text-align:center;color:#888;padding:60px 0">載入失敗</p>';
+      return;
+    }
+
+    allNews = data || [];
+    renderList();
+  }
+
+  function bindFilters() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter || 'all';
+        visibleCount = 12;
+        renderList();
+      });
+    });
+
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', () => {
+        visibleCount += 12;
+        renderList();
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    bindFilters();
+    loadNews();
   });
-}
+})();

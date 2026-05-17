@@ -4597,4 +4597,398 @@
     }
   })();
 
+  // ================================================================
+  // 最新消息管理 v2
+  // ================================================================
+  (function initNewsManager(){
+    const sb = function(){
+      return window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
+    };
+    const SUPABASE_BUCKET = window.LohasSupabase?.CONFIG?.STORAGE_BUCKET || 'gallery-uploads';
+
+    const $ = id => document.getElementById(id);
+    const list = $('newsList');
+    const modal = $('newsEditModal');
+    if(!list || !modal) return;
+
+    let currentNews = null;
+    const pendingFiles = { cover_image_url: null, homepage_image_url: null };
+
+    let filterText = '', filterStatus = '', filterCategory = '';
+    let allNews = [];
+
+    const CAT_LABEL = {
+      story: '品牌故事', event: '活動優惠', engraving: '雷刻服務',
+      people: '人物誌', member: '會員專區', official: '官方公告'
+    };
+    const STATUS_LABEL = {
+      draft: '草稿', published: '已發佈', archived: '已封存'
+    };
+
+    function toast(msg){ if(window.toast) window.toast(msg); else alert(msg); }
+    function esc(s){
+      return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function val(id){
+      const el = $(id);
+      if(!el) return null;
+      if(el.type === 'checkbox') return el.checked;
+      if(el.type === 'number') return el.value === '' ? null : Number(el.value);
+      if(el.type === 'datetime-local') return el.value ? new Date(el.value).toISOString() : null;
+      return el.value || null;
+    }
+    function setVal(id, v){
+      const el = $(id);
+      if(!el) return;
+      if(el.type === 'checkbox'){ el.checked = !!v; return; }
+      if(el.type === 'datetime-local' && v){
+        try { el.value = new Date(v).toISOString().slice(0, 16); } catch(e){ el.value = ''; }
+        return;
+      }
+      el.value = v == null ? '' : v;
+    }
+    function getExt(file){
+      const m = (file.name || '').match(/\.([a-z0-9]+)$/i);
+      return m ? m[1].toLowerCase() : 'jpg';
+    }
+
+    async function cropImage(file, aspectStr){
+      if(!window.LohasCropper) return file;
+      let ratio = NaN;
+      if(aspectStr){
+        const parts = aspectStr.split(':');
+        if(parts.length === 2) ratio = Number(parts[0]) / Number(parts[1]);
+      }
+      const cropped = await window.LohasCropper.crop(file, {
+        aspectRatio: isFinite(ratio) ? ratio : 1,
+        title: '裁切圖片 · ' + (aspectStr || '1:1')
+      });
+      return cropped || null;
+    }
+
+    async function uploadFile(file, folder){
+      if(!file) return null;
+      const client = sb();
+      if(!client) throw new Error('Supabase 未配置');
+      const filePath = folder + '/' + Date.now() + '-' + crypto.randomUUID() + '.' + getExt(file);
+      const { error } = await client.storage.from(SUPABASE_BUCKET).upload(filePath, file, { cacheControl: '3600', upsert: false });
+      if(error) throw error;
+      const { data } = client.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+      return data.publicUrl;
+    }
+
+    function resetImagePreview(previewId){
+      const el = $(previewId);
+      if(!el) return;
+      el.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>';
+    }
+    function setImagePreview(previewId, url){
+      const el = $(previewId);
+      if(!el) return;
+      if(url){
+        el.innerHTML = '<img src="' + esc(url) + '" alt="" />';
+      } else {
+        resetImagePreview(previewId);
+      }
+    }
+
+    async function loadList(){
+      const client = sb();
+      if(!client){ list.innerHTML = '<div class="empty-state">Supabase 未配置</div>'; return; }
+
+      list.innerHTML = '<div class="empty-state">載入中...</div>';
+      const { data, error } = await client
+        .from('news')
+        .select('*')
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false });
+
+      if(error){
+        list.innerHTML = '<div class="empty-state">載入失敗: ' + esc(error.message) + '</div>';
+        return;
+      }
+      allNews = data || [];
+      renderList();
+    }
+
+    function renderList(){
+      const subEl = $('newsListSub');
+      if(subEl) subEl.textContent = allNews.length + ' 篇';
+
+      let arr = allNews;
+      if(filterText){
+        const q = filterText.toLowerCase();
+        arr = arr.filter(n =>
+          (n.title || '').toLowerCase().includes(q) ||
+          (n.slug || '').toLowerCase().includes(q)
+        );
+      }
+      if(filterStatus) arr = arr.filter(n => n.status === filterStatus);
+      if(filterCategory) arr = arr.filter(n => n.category === filterCategory);
+
+      if(!arr.length){
+        list.innerHTML = '<div class="empty-state">' + (allNews.length ? '沒有符合篩選的消息' : '還沒有任何消息,點右上「+ 新增消息」開始建立') + '</div>';
+        return;
+      }
+
+      list.innerHTML = arr.map(n => {
+        const cover = n.cover_image_url || n.homepage_image_url;
+        const avatarHtml = cover
+          ? '<div class="creator-card-avatar" style="background-image:url(\'' + esc(cover) + '\');background-size:cover;background-position:center"></div>'
+          : '<div class="creator-card-avatar" style="background:#F4F1EC;color:#9D7E3F"><i class="fa-regular fa-newspaper"></i></div>';
+
+        const homeTag = n.show_in_homepage
+          ? '<span class="creator-card-tag featured"><i class="fa-solid fa-house"></i> 首頁</span>' : '';
+
+        const dateStr = n.published_at ? new Date(n.published_at).toISOString().slice(0,10).replace(/-/g, '.') : '—';
+
+        return '<div class="creator-card" data-id="' + esc(n.id) + '">' +
+          avatarHtml +
+          '<div class="creator-card-body">' +
+            '<div class="creator-card-name-row">' +
+              '<span class="creator-card-name">' + esc(n.title || '未命名') + '</span>' +
+              '<span class="creator-card-tag">' + esc(CAT_LABEL[n.category] || n.category) + '</span>' +
+              '<span class="creator-card-tag ' + (n.status === 'published' ? 'featured' : n.status === 'draft' ? 'suspended' : '') + '">' + esc(STATUS_LABEL[n.status] || n.status) + '</span>' +
+              homeTag +
+            '</div>' +
+            '<div class="creator-card-meta">' +
+              '<code>/news-detail.html?id=' + esc(n.slug) + '</code>' +
+              ' · ' + esc(dateStr) +
+              (n.view_count ? ' · ' + n.view_count + ' 次瀏覽' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="creator-card-actions">' +
+            '<a class="btn" href="news-detail.html?id=' + esc(n.slug) + '" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i>查看</a>' +
+            '<button class="btn" data-act="edit-news" data-id="' + esc(n.id) + '"><i class="fa-regular fa-pen-to-square"></i>編輯</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      list.querySelectorAll('[data-act="edit-news"]').forEach(btn => {
+        btn.addEventListener('click', () => openEdit(btn.dataset.id));
+      });
+    }
+
+    function openNew(){
+      currentNews = null;
+      pendingFiles.cover_image_url = null;
+      pendingFiles.homepage_image_url = null;
+
+      $('newsModalTitle').textContent = '新增消息';
+      $('newsDeleteBtn').style.display = 'none';
+      $('newsPreviewBtn').style.display = 'none';
+
+      ['news_slug','news_title','news_excerpt','news_homepage_tag','news_homepage_subtitle',
+       'news_author','news_published_at','news_content'].forEach(id => setVal(id, ''));
+      setVal('news_status', 'draft');
+      setVal('news_category', 'story');
+      setVal('news_show_in_homepage', false);
+      setVal('news_sort_order', 0);
+
+      resetImagePreview('news_cover_preview');
+      resetImagePreview('news_homepage_image_preview');
+      updateSlugPreview();
+
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    async function openEdit(id){
+      const client = sb();
+      if(!client) return;
+
+      const { data: n, error } = await client.from('news').select('*').eq('id', id).maybeSingle();
+      if(error || !n){ toast('載入失敗'); return; }
+
+      currentNews = n;
+      pendingFiles.cover_image_url = null;
+      pendingFiles.homepage_image_url = null;
+
+      $('newsModalTitle').textContent = '編輯:' + (n.title || n.slug);
+      $('newsDeleteBtn').style.display = '';
+      const preview = $('newsPreviewBtn');
+      preview.style.display = '';
+      preview.href = 'news-detail.html?id=' + encodeURIComponent(n.slug);
+
+      setVal('news_slug', n.slug);
+      setVal('news_status', n.status);
+      setVal('news_category', n.category);
+      setVal('news_title', n.title);
+      setVal('news_excerpt', n.excerpt);
+      setVal('news_published_at', n.published_at);
+      setVal('news_author', n.author);
+      setVal('news_show_in_homepage', n.show_in_homepage);
+      setVal('news_homepage_tag', n.homepage_tag);
+      setVal('news_homepage_subtitle', n.homepage_subtitle);
+      setVal('news_sort_order', n.sort_order);
+      setVal('news_content', n.content);
+
+      setImagePreview('news_cover_preview', n.cover_image_url);
+      setImagePreview('news_homepage_image_preview', n.homepage_image_url);
+      updateSlugPreview();
+
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(){
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function updateSlugPreview(){
+      const preview = $('news_slug_preview');
+      if(preview) preview.textContent = val('news_slug') || 'xxx';
+    }
+
+    function bindImageUploads(){
+      modal.querySelectorAll('.img-upload-wrap[data-field]').forEach(wrap => {
+        if(wrap.dataset.bound) return;
+        wrap.dataset.bound = '1';
+
+        const field = wrap.dataset.field;
+        const aspect = wrap.dataset.aspect || '16:9';
+        const input = wrap.querySelector('.img-upload-input');
+        const preview = wrap.querySelector('.img-upload-preview');
+        if(!input || !preview) return;
+
+        preview.addEventListener('click', () => input.click());
+
+        input.addEventListener('change', async e => {
+          const file = e.target.files?.[0];
+          if(!file) return;
+
+          const cropped = await cropImage(file, aspect);
+          if(!cropped){ input.value = ''; return; }
+
+          pendingFiles[field] = cropped;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            preview.innerHTML = '<img src="' + ev.target.result + '" alt="" />';
+          };
+          reader.readAsDataURL(cropped);
+          input.value = '';
+        });
+      });
+    }
+
+    async function save(){
+      const client = sb();
+      if(!client){ toast('Supabase 未配置'); return; }
+
+      const slug = val('news_slug');
+      if(!slug){ toast('Slug 必填'); return; }
+      if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 只能英數+底線+減號'); return; }
+      if(!val('news_title')){ toast('標題必填'); return; }
+
+      let coverUrl = currentNews?.cover_image_url || null;
+      let homepageImgUrl = currentNews?.homepage_image_url || null;
+
+      const saveBtn = $('newsSaveBtn');
+      saveBtn.disabled = true;
+      const saveBtnSpan = saveBtn.querySelector('span');
+      if(saveBtnSpan) saveBtnSpan.textContent = '儲存中...';
+
+      try {
+        if(pendingFiles.cover_image_url){
+          coverUrl = await uploadFile(pendingFiles.cover_image_url, 'news-cover');
+        }
+        if(pendingFiles.homepage_image_url){
+          homepageImgUrl = await uploadFile(pendingFiles.homepage_image_url, 'news-homepage');
+        }
+
+        const payload = {
+          slug,
+          status: val('news_status') || 'draft',
+          category: val('news_category') || 'story',
+          title: val('news_title'),
+          excerpt: val('news_excerpt'),
+          cover_image_url: coverUrl,
+          content: val('news_content'),
+          show_in_homepage: val('news_show_in_homepage'),
+          homepage_tag: val('news_homepage_tag'),
+          homepage_subtitle: val('news_homepage_subtitle'),
+          homepage_image_url: homepageImgUrl,
+          sort_order: val('news_sort_order') || 0,
+          published_at: val('news_published_at'),
+          author: val('news_author'),
+          updated_at: new Date().toISOString()
+        };
+
+        if(currentNews && currentNews.id){
+          const { error } = await client.from('news').update(payload).eq('id', currentNews.id);
+          if(error) throw error;
+        } else {
+          const { error } = await client.from('news').insert(payload);
+          if(error) throw error;
+        }
+
+        toast('已儲存');
+        closeModal();
+        loadList();
+      } catch(err){
+        console.error(err);
+        toast('儲存失敗:' + (err.message || err));
+      } finally {
+        saveBtn.disabled = false;
+        if(saveBtnSpan) saveBtnSpan.textContent = '儲存';
+      }
+    }
+
+    async function deleteNews(){
+      if(!currentNews) return;
+      if(!confirm('確定刪除「' + currentNews.title + '」?\n此操作無法復原。')) return;
+
+      const client = sb();
+      const { error } = await client.from('news').delete().eq('id', currentNews.id);
+      if(error){ toast('刪除失敗:' + error.message); return; }
+      toast('已刪除');
+      closeModal();
+      loadList();
+    }
+
+    $('newsAddBtn').addEventListener('click', openNew);
+    $('newsModalClose').addEventListener('click', closeModal);
+    $('newsCancelBtn').addEventListener('click', closeModal);
+    $('newsSaveBtn').addEventListener('click', save);
+    $('newsDeleteBtn').addEventListener('click', deleteNews);
+    $('news_slug').addEventListener('input', updateSlugPreview);
+
+    bindImageUploads();
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
+    });
+
+    const searchInput = $('newsSearchInput');
+    const filterStatusEl = $('newsFilterStatus');
+    const filterCatEl = $('newsFilterCategory');
+    if(searchInput){
+      searchInput.addEventListener('input', () => {
+        filterText = searchInput.value.trim();
+        renderList();
+      });
+    }
+    if(filterStatusEl){
+      filterStatusEl.addEventListener('change', () => {
+        filterStatus = filterStatusEl.value;
+        renderList();
+      });
+    }
+    if(filterCatEl){
+      filterCatEl.addEventListener('change', () => {
+        filterCategory = filterCatEl.value;
+        renderList();
+      });
+    }
+
+    document.querySelectorAll('.nav-link[data-page="cm-news"]').forEach(btn => {
+      btn.addEventListener('click', () => setTimeout(loadList, 100));
+    });
+
+    if(document.querySelector('.content-page[data-page="cm-news"]')?.classList.contains('active')){
+      loadList();
+    }
+  })();
+
 })(window);
