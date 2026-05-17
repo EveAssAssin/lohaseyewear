@@ -199,6 +199,94 @@
         line-height: 1.6;
         letter-spacing: 0.3px;
     }
+
+    /* ============================================
+       Mega Uniqlo 風 - 深色頂部欄 + 左圖右文
+       ============================================ */
+    .mega-menu.mega-uniqlo {
+        padding: 0;
+    }
+    .mega-uniqlo-bar {
+        background: #2C2620;
+        padding: 0 32px;
+        display: flex;
+        gap: 0;
+        max-width: 100%;
+    }
+    .muji-bar-link {
+        padding: 14px 24px;
+        color: #fff !important;
+        font-size: 13px;
+        letter-spacing: 3px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background .2s;
+    }
+    .muji-bar-link:hover {
+        background: rgba(255,255,255,0.08);
+    }
+    .muji-bar-cta {
+        margin-left: auto;
+        background: var(--lohas-light, #9D7E3F);
+    }
+    .muji-bar-cta:hover {
+        background: var(--lohas-brand, #50422D);
+    }
+    .mega-uniqlo-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 32px;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 40px;
+    }
+    .uniqlo-feature {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: transform .2s;
+    }
+    .uniqlo-feature:hover {
+        transform: translateY(-3px);
+    }
+    .uniqlo-feature-img {
+        aspect-ratio: 1/1;
+        background: #F4EFE3;
+        overflow: hidden;
+        border-radius: 4px;
+        margin-bottom: 16px;
+    }
+    .uniqlo-feature-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .35s ease;
+    }
+    .uniqlo-feature:hover .uniqlo-feature-img img {
+        transform: scale(1.04);
+    }
+    .uniqlo-feature-tag {
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--lohas-light, #9D7E3F);
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+    .uniqlo-feature-h {
+        font-size: 18px;
+        color: var(--lohas-brand, #3D3025);
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+    .uniqlo-feature-sub {
+        font-size: 13px;
+        color: #6A5C4D;
+    }
+    .uniqlo-content {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+    }
 }
 
 /* --- 手機版 Mega Menu --- */
