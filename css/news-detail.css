@@ -1,0 +1,256 @@
+/* =============================================================
+   news-detail.css · 最新消息內頁
+   ============================================================= */
+
+.nd-main {
+  padding-top: 100px;
+  padding-bottom: 80px;
+  min-height: 60vh;
+  background: var(--bg-warm, #FAF7F2);
+  font-family: "Noto Sans TC", sans-serif;
+}
+
+.nd-loading, .nd-error {
+  text-align: center;
+  padding: 80px 20px;
+  color: #888;
+  font-size: 14px;
+}
+.nd-error .nd-back-link {
+  display: inline-block;
+  margin-top: 16px;
+  color: #50422D;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
+/* ===== Article 容器 ===== */
+.nd-article {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== 麵包屑 ===== */
+.nd-breadcrumb {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 30px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.nd-breadcrumb a {
+  color: #888;
+  text-decoration: none;
+}
+.nd-breadcrumb a:hover {
+  color: #50422D;
+}
+
+/* ===== Header ===== */
+.nd-header {
+  margin-bottom: 36px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #E8DED1;
+}
+.nd-meta-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.nd-cat {
+  font-size: 12px;
+  padding: 4px 14px;
+  background: #50422D;
+  color: #fff;
+  border-radius: 999px;
+  letter-spacing: 1px;
+}
+.nd-date {
+  font-size: 13px;
+  color: #888;
+  letter-spacing: 1px;
+}
+.nd-title {
+  font-size: 32px;
+  font-weight: 500;
+  color: #3D3026;
+  margin: 0 0 14px;
+  line-height: 1.4;
+  letter-spacing: 1px;
+}
+.nd-excerpt {
+  font-size: 16px;
+  color: #6A5C4D;
+  line-height: 1.8;
+  margin: 0 0 12px;
+}
+.nd-author-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nd-author {
+  font-size: 13px;
+  color: #888;
+  letter-spacing: 0.5px;
+}
+.nd-author:not(:empty)::before {
+  content: "撰文 / ";
+  color: #b8a584;
+}
+
+/* ===== 封面圖 ===== */
+.nd-cover {
+  margin: 0 0 36px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.nd-cover img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===== 內文 ===== */
+.nd-content {
+  font-size: 16px;
+  line-height: 1.95;
+  color: #3D3026;
+  margin-bottom: 50px;
+}
+.nd-content p {
+  margin: 0 0 1.4em;
+}
+.nd-content h2 {
+  font-size: 24px;
+  color: #50422D;
+  margin: 1.8em 0 0.8em;
+  letter-spacing: 1px;
+}
+.nd-content h3 {
+  font-size: 19px;
+  color: #50422D;
+  margin: 1.4em 0 0.6em;
+  letter-spacing: 0.5px;
+}
+.nd-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.2em 0;
+}
+.nd-content blockquote {
+  margin: 1.2em 0;
+  padding: 16px 22px;
+  border-left: 3px solid #50422D;
+  background: #fff;
+  color: #6A5C4D;
+  font-style: italic;
+}
+.nd-content a {
+  color: #50422D;
+  text-decoration: underline;
+}
+.nd-content ul, .nd-content ol {
+  margin: 0 0 1.2em;
+  padding-left: 1.5em;
+}
+.nd-content li {
+  margin: 0.4em 0;
+}
+
+/* ===== 分享區 ===== */
+.nd-share {
+  margin: 48px 0;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #E8DED1;
+  border-radius: 12px;
+  text-align: center;
+}
+.nd-share-label {
+  font-size: 13px;
+  color: #888;
+  margin: 0 0 16px;
+  letter-spacing: 2px;
+}
+.nd-share-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.nd-share-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #FAF7F2;
+  border: 1px solid #E8DED1;
+  color: #50422D;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s;
+}
+.nd-share-btn i {
+  font-size: 15px;
+}
+.nd-share-btn:hover {
+  background: #50422D;
+  color: #fff;
+  border-color: #50422D;
+}
+.nd-share-btn.copied {
+  background: #50422D;
+  color: #fff;
+  border-color: #50422D;
+}
+
+/* ===== 底部 ===== */
+.nd-foot {
+  text-align: center;
+  padding-top: 30px;
+  border-top: 1px solid #E8DED1;
+}
+.nd-back-link {
+  color: #50422D;
+  text-decoration: none;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+.nd-back-link:hover {
+  text-decoration: underline;
+}
+
+/* ===== 響應式 ===== */
+@media (max-width: 768px) {
+  .nd-main {
+    padding-top: 80px;
+    padding-bottom: 60px;
+  }
+  .nd-article {
+    padding: 0 16px;
+  }
+  .nd-title {
+    font-size: 24px;
+  }
+  .nd-content {
+    font-size: 15px;
+  }
+  .nd-share {
+    padding: 20px 16px;
+  }
+  .nd-share-btn span {
+    display: none;
+  }
+  .nd-share-btn {
+    padding: 12px 14px;
+  }
+}
