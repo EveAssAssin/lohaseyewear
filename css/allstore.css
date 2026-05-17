@@ -269,29 +269,12 @@
   letter-spacing: 0.5px;
 }
 
-/* === 右側地圖 === */
+/* === 右側地圖（用真實台灣 SVG 輪廓）=== */
 .as-map {
   position: relative;
-  background: #E8E4DC;
+  background: linear-gradient(135deg, #DDE5EA 0%, #CFD9E0 50%, #BCC8D2 100%);
   overflow: hidden;
 }
-.as-map-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #EFE9DD 0%, #DDD3C0 50%, #C5B89E 100%);
-}
-.as-map-island {
-  position: absolute;
-  background: var(--bg-soft);
-  border-radius: 50%;
-  box-shadow:
-    inset -10px -20px 60px rgba(80, 66, 45, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.06);
-}
-.as-map-island.is-1 { left: 30%; top: 8%; width: 38%; height: 28%; transform: rotate(8deg); }
-.as-map-island.is-2 { left: 28%; top: 30%; width: 44%; height: 32%; transform: rotate(-3deg); }
-.as-map-island.is-3 { left: 30%; top: 56%; width: 42%; height: 38%; transform: rotate(2deg); }
-
 .as-map-grid {
   position: absolute;
   inset: 0;
@@ -299,17 +282,51 @@
     linear-gradient(rgba(80, 66, 45, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(80, 66, 45, 0.04) 1px, transparent 1px);
   background-size: 40px 40px;
-}
-.as-map-region-label {
-  position: absolute;
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
-  font-size: 14px;
-  color: var(--lohas-brand);
-  opacity: 0.45;
-  letter-spacing: 0.3em;
   pointer-events: none;
+}
+/* SVG 容器：填滿地圖區，pin 用 % 對位 */
+.as-map-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.as-map-svg .land {
+  fill: var(--bg-soft);
+  stroke: var(--lohas-light);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 6px 20px rgba(80, 66, 45, 0.18));
+}
+.as-map-svg .land-shadow {
+  fill: rgba(80, 66, 45, 0.08);
+}
+.as-map-svg .mountain {
+  fill: rgba(80, 66, 45, 0.06);
+  stroke: none;
+}
+.as-map-svg .coastline {
+  fill: none;
+  stroke: rgba(80, 66, 45, 0.18);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 3;
+}
+
+/* 城市標籤（畫在 SVG 內，跟著縮放） */
+.as-map-svg .city {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 8px;
+  fill: var(--lohas-brand);
+  opacity: 0.55;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  text-anchor: middle;
+}
+.as-map-svg .city.major {
+  font-size: 10px;
+  opacity: 0.78;
+  letter-spacing: 0.2em;
   font-weight: 700;
-  white-space: nowrap;
 }
 
 /* 地圖 hint 卡（中央提示）*/

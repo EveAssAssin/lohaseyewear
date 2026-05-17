@@ -69,51 +69,52 @@
 .store-status-dot.closed { color: var(--text-muted); }
 .store-status-dot.closed i { color: var(--text-muted); }
 
-/* === 地圖大頭針（樹葉滴形）=== */
-.store-pin {
-  position: absolute;
-  width: 32px;
-  height: 32px;
+/* === 地圖大頭針（SVG 內版本） ===
+   pin 直接放進台灣 SVG 裡，使用 SVG 座標系 (viewBox 300×400)
+   這樣不論容器多大，pin 都會跟台灣輪廓一起等比縮放 */
+.as-map-svg .pin-g {
   cursor: pointer;
-  transform: translate(-50%, -100%);
-  transition: all 0.25s;
-  z-index: 5;
+  pointer-events: auto;
+  transition: transform 0.2s;
+  transform-origin: center;
+  transform-box: fill-box;
 }
-.store-pin-head {
-  width: 28px;
-  height: 28px;
-  border-radius: 50% 50% 50% 0;
-  background: var(--lohas-hover);
-  transform: rotate(-45deg);
-  box-shadow: 0 4px 12px rgba(80, 66, 45, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
+.as-map-svg .pin-g:hover {
+  transform: scale(1.15);
 }
-.store-pin-head::after {
-  content: "";
-  width: 8px;
-  height: 8px;
-  background: #fff;
-  border-radius: 50%;
-  transform: rotate(45deg);
+.as-map-svg .pin-shadow {
+  fill: rgba(0, 0, 0, 0.25);
 }
-.store-pin.flagship .store-pin-head {
-  background: var(--lohas-brand);
-  width: 34px;
-  height: 34px;
-  border: 2px solid #fff;
+.as-map-svg .pin-head-svg {
+  fill: var(--lohas-hover);
+  stroke: #fff;
+  stroke-width: 1;
 }
-.store-pin.flagship .store-pin-head::after { background: var(--collab-gold); }
-.store-pin.active { z-index: 10; }
-.store-pin.active .store-pin-head {
-  background: var(--err);
-  width: 38px;
-  height: 38px;
-  box-shadow: 0 6px 20px rgba(168, 90, 74, 0.5);
+.as-map-svg .pin-g.flagship .pin-head-svg {
+  fill: var(--lohas-brand);
+  stroke-width: 1.5;
 }
-.store-pin:hover .store-pin-head { transform: rotate(-45deg) scale(1.1); }
+.as-map-svg .pin-g.active .pin-head-svg {
+  fill: var(--err);
+  stroke-width: 2;
+}
+.as-map-svg .pin-dot {
+  fill: #fff;
+}
+.as-map-svg .pin-g.flagship .pin-dot {
+  fill: var(--collab-gold);
+}
+.as-map-svg .pin-pulse {
+  fill: var(--err);
+  opacity: 0.4;
+  animation: as-pin-pulse 1.8s ease-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+@keyframes as-pin-pulse {
+  0%   { transform: scale(1);   opacity: 0.5; }
+  100% { transform: scale(2.5); opacity: 0;   }
+}
 
 /* === 假地圖卡片（單店頁右側）=== */
 .store-map-preview {
