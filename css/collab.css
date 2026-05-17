@@ -117,10 +117,20 @@
 
 /* 倒數 */
 .cb-countdown {
+  margin-bottom: 28px;
+  text-align: center;
+}
+.cb-cd-eb {
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: color-mix(in srgb, var(--cb-primary) 75%, black);
+  margin: 0 0 14px;
+  font-weight: 500;
+}
+.cb-cd-row {
   display: flex;
   justify-content: center;
   gap: 14px;
-  margin-bottom: 28px;
   flex-wrap: wrap;
 }
 .cb-ct {
@@ -543,7 +553,9 @@
   .cb-eb { font-size: 10px; letter-spacing: 5px; }
   .cb-hero-sub { font-size: 13px; }
 
-  .cb-countdown { gap: 8px; }
+  .cb-countdown { margin-bottom: 22px; }
+  .cb-cd-eb { font-size: 10px; letter-spacing: 3px; margin-bottom: 10px; }
+  .cb-cd-row { gap: 8px; }
   .cb-ct { padding: 12px 14px; min-width: 60px; }
   .cb-ct-num { font-size: 22px; }
   .cb-ct-lab { font-size: 8px; letter-spacing: 2px; }
