@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- 首頁 -->
+  <url>
+    <loc>https://premium.lohasglasses.com/</loc>
+    <lastmod>2026-05-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- 獨家雷刻服務 (主打 SEO 關鍵字) -->
+  <url>
+    <loc>https://premium.lohasglasses.com/engraving.html</loc>
+    <lastmod>2026-05-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 創作者刻圖市集 -->
+  <url>
+    <loc>https://premium.lohasglasses.com/market.html</loc>
+    <lastmod>2026-05-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 刻圖靈感分享牆 -->
+  <url>
+    <loc>https://premium.lohasglasses.com/gallery.html</loc>
+    <lastmod>2026-05-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 最新消息 -->
+  <url>
+    <loc>https://premium.lohasglasses.com/news.html</loc>
+    <lastmod>2026-05-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 聯名活動 (DINU - 動態頁範例) -->
+  <url>
+    <loc>https://premium.lohasglasses.com/collab.html?id=dinu</loc>
+    <lastmod>2026-05-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 門市據點 -->
+  <url>
+    <loc>https://premium.lohasglasses.com/allstore.html</loc>
+    <lastmod>2026-05-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+</urlset>

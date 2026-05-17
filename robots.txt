@@ -1,0 +1,19 @@
+# LOHAS 樂活眼鏡 robots.txt
+# https://premium.lohasglasses.com/robots.txt
+
+User-agent: *
+Allow: /
+
+# 後台 / 登入 / 會員專區 — 不索引
+Disallow: /admin-portal.html
+Disallow: /login.html
+Disallow: /member-portal.html
+
+# 個人創作者頁(動態) — 不索引(避免重複內容問題)
+Disallow: /creator-public.html
+
+# Supabase 上傳資源(若有 query string 變化版本) — 不索引
+Disallow: /*?v=*
+
+# Sitemap 位置
+Sitemap: https://premium.lohasglasses.com/sitemap.xml
