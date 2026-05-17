@@ -1,0 +1,482 @@
+/* =============================================
+   LOHAS · Booking Modal
+   --------------------------------------------
+   依賴：tokens, base, components
+   --------------------------------------------
+   驗光師 → 服務項目 → 日期 → 時段 → 確認資料
+   ============================================= */
+
+/* === Overlay === */
+.bm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(45, 36, 24, 0.6);
+  z-index: var(--z-modal);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.bm-overlay.open { opacity: 1; pointer-events: auto; }
+
+/* === Dialog === */
+.bm-dialog {
+  background: #fff;
+  border-radius: var(--r-xl);
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--sh-modal);
+  transform: translateY(40px) scale(0.96);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.bm-overlay.open .bm-dialog {
+  transform: translateY(0) scale(1);
+}
+
+/* === Header === */
+.bm-head {
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid var(--lohas-bd);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.bm-head-info {
+  flex: 1;
+  min-width: 0;
+}
+.bm-head-info .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 2px 8px;
+  background: var(--err-bg);
+  color: var(--err);
+  border-radius: var(--r-pill);
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.bm-head-info h2 {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 18px;
+  color: var(--lohas-brand);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.bm-head-info p {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.bm-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-warm);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  border: 0;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.bm-close:hover { background: var(--lohas-bd); }
+
+/* === Step indicator === */
+.bm-steps {
+  display: flex;
+  padding: 12px 24px;
+  gap: 4px;
+  border-bottom: 1px solid var(--lohas-bd);
+  background: var(--bg-warm);
+  flex-shrink: 0;
+}
+.bm-step {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  letter-spacing: 0.3px;
+  transition: color 0.2s;
+}
+.bm-step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--lohas-bd);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+.bm-step.active { color: var(--lohas-brand); font-weight: 600; }
+.bm-step.active .bm-step-num { background: var(--lohas-brand); color: #fff; }
+.bm-step.done { color: var(--ok); }
+.bm-step.done .bm-step-num { background: var(--ok); color: #fff; }
+
+/* === Body (可捲) === */
+.bm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* === 區段標題 === */
+.bm-sec {
+  margin-bottom: 22px;
+}
+.bm-sec:last-child { margin-bottom: 0; }
+.bm-sec-title {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+/* === 驗光師選擇 === */
+.bm-staff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.bm-staff-pick {
+  background: var(--bg-warm);
+  border-radius: 12px;
+  padding: 14px 8px;
+  text-align: center;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.bm-staff-pick:hover { background: var(--bg-soft); }
+.bm-staff-pick.active {
+  background: #fff;
+  border-color: var(--lohas-brand);
+  box-shadow: var(--sh-soft);
+}
+.bm-staff-pick .av {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--lohas-light) 0%, var(--lohas-hover) 100%);
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0 auto 6px;
+}
+.bm-staff-pick .name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+}
+.bm-staff-pick .sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* === 服務 chips === */
+.bm-svc-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bm-svc-pick {
+  padding: 9px 14px;
+  background: var(--bg-warm);
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-sub);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.bm-svc-pick:hover { background: var(--bg-soft); }
+.bm-svc-pick.active {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+
+/* === 日期選擇 === */
+.bm-date-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
+}
+.bm-date-row::-webkit-scrollbar { display: none; }
+.bm-date-pick {
+  flex-shrink: 0;
+  width: 60px;
+  padding: 10px 4px;
+  background: var(--bg-warm);
+  border-radius: 10px;
+  text-align: center;
+  border: 2px solid transparent;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: all 0.15s;
+}
+.bm-date-pick:hover:not(.full) { background: var(--bg-soft); }
+.bm-date-pick.active {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+.bm-date-pick.full {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.bm-date-pick .dw {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.bm-date-pick.active .dw { color: rgba(255, 255, 255, 0.7); }
+.bm-date-pick .dn {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 2px 0;
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+}
+.bm-date-pick .da {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+.bm-date-pick.active .da { color: rgba(255, 255, 255, 0.6); }
+.bm-date-pick.full .da { color: var(--err); }
+
+/* === 時段選擇 === */
+.bm-time-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.bm-time-pick {
+  padding: 11px 4px;
+  text-align: center;
+  background: var(--bg-warm);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.bm-time-pick:hover:not(.full) { background: var(--bg-soft); }
+.bm-time-pick.active {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+.bm-time-pick.full {
+  opacity: 0.35;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* === 表單 === */
+.bm-form-row {
+  margin-bottom: 12px;
+}
+.bm-form-row label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+.bm-form-row input,
+.bm-form-row textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-warm);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-main);
+  outline: 0;
+  transition: border-color 0.15s;
+}
+.bm-form-row input:focus,
+.bm-form-row textarea:focus {
+  border-color: var(--lohas-brand);
+  background: #fff;
+}
+.bm-form-row textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+/* === Footer === */
+.bm-foot {
+  border-top: 1px solid var(--lohas-bd);
+  padding: 14px 24px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+  background: #fff;
+}
+.bm-foot-summary {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.5;
+  min-width: 0;
+}
+.bm-foot-summary b {
+  color: var(--lohas-brand);
+  font-size: 14px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+.bm-foot-actions {
+  display: flex;
+  gap: 6px;
+}
+.bm-btn {
+  padding: 11px 18px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.bm-btn.ghost {
+  background: var(--bg-warm);
+  color: var(--text-sub);
+}
+.bm-btn.ghost:hover { background: var(--lohas-bd); }
+.bm-btn.primary {
+  background: var(--lohas-brand);
+  color: #fff;
+}
+.bm-btn.primary:hover { background: var(--lohas-hover); }
+.bm-btn.primary:disabled {
+  background: var(--lohas-bd);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* === Loading / Error 區塊 === */
+.bm-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+.bm-state .spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--bg-soft);
+  border-top-color: var(--lohas-brand);
+  border-radius: 50%;
+  animation: bm-spin 0.7s linear infinite;
+}
+@keyframes bm-spin { to { transform: rotate(360deg); } }
+.bm-state-title {
+  font-size: 14px;
+  color: var(--text-sub);
+  margin-top: 12px;
+}
+.bm-state-msg {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+/* === Success === */
+.bm-success {
+  text-align: center;
+  padding: 30px 24px;
+}
+.bm-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--ok-bg);
+  color: var(--ok);
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+.bm-success-title {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 20px;
+  color: var(--lohas-brand);
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.bm-success-msg {
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.7;
+  max-width: 380px;
+  margin: 0 auto 20px;
+}
+.bm-success-detail {
+  background: var(--bg-warm);
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 12px;
+  color: var(--text-sub);
+  max-width: 360px;
+  margin: 0 auto;
+}
+.bm-success-detail div { padding: 4px 0; }
+.bm-success-detail b { color: var(--lohas-brand); font-weight: 600; }
+
+/* === 響應式 === */
+@media (max-width: 600px) {
+  .bm-overlay { padding: 0; align-items: flex-end; }
+  .bm-dialog {
+    max-width: none;
+    max-height: 96vh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+  }
+  .bm-staff-grid { grid-template-columns: repeat(2, 1fr); }
+  .bm-time-grid { grid-template-columns: repeat(3, 1fr); }
+}

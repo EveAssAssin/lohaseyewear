@@ -1,0 +1,602 @@
+/* =============================================
+   LOHAS · allstore.html (門市列表頁)
+   --------------------------------------------
+   依賴：tokens, base, components, store-components
+   --------------------------------------------
+   頁面結構：
+   - .as-shell                  整頁框
+   - .as-subheader              全頁下方副標頭（「選擇預約門市」）
+   - .as-layout                 左列表 / 右地圖 分欄
+   - .as-panel                  左側列表 panel
+   - .as-store-row              店家列表項
+   - .as-map                    右側地圖容器
+   - .as-pin-card               點 pin / 點 row 後浮現的詳情卡
+   ============================================= */
+
+/* 因為 main-header 是 fixed h70，這頁要把整個列表填滿剩餘高度 */
+.as-shell {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+/* === 副標頭（醒目強調「選擇預約門市」）=== */
+.as-subheader {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--lohas-bd);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+.as-subheader-inner {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.as-subheader-title {
+  font-size: 13px;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.as-subheader-title i {
+  color: var(--err);
+  font-size: 14px;
+}
+.as-subheader-title .accent {
+  color: var(--err);
+  font-weight: 600;
+  font-size: 14px;
+}
+.as-subheader-title b { color: var(--lohas-brand); font-weight: 600; }
+.as-subheader-actions { display: flex; gap: 8px; }
+.as-subheader-btn {
+  padding: 7px 14px;
+  font-size: 12px;
+  border-radius: var(--r-pill);
+  color: var(--lohas-brand);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.as-subheader-btn:hover { background: var(--bg-warm); }
+.as-subheader-btn.primary {
+  background: var(--lohas-brand);
+  color: #fff;
+}
+.as-subheader-btn.primary:hover { background: var(--lohas-hover); }
+
+/* === 列表 / 地圖 兩欄 === */
+.as-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 440px 1fr;
+  overflow: hidden;
+}
+
+/* === 左側 panel === */
+.as-panel {
+  background: #fff;
+  border-right: 1px solid var(--lohas-bd);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.as-panel-head {
+  padding: 24px 22px 14px;
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10;
+  border-bottom: 1px solid var(--lohas-bd);
+}
+.as-panel-title {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 22px;
+  color: var(--lohas-brand);
+  letter-spacing: 2px;
+  margin-bottom: 2px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.as-panel-title i {
+  color: var(--err);
+  font-size: 16px;
+}
+.as-panel-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* 搜尋框 */
+.as-search {
+  margin-top: 14px;
+  position: relative;
+  background: var(--bg-warm);
+  border-radius: 12px;
+}
+.as-search i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.as-search input {
+  width: 100%;
+  padding: 12px 14px 12px 38px;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: 14px;
+  color: var(--text-main);
+  font-family: inherit;
+}
+.as-search input::placeholder { color: var(--text-muted); }
+
+/* 區域 chips（用 .region-pill 從 store-components） */
+.as-regions {
+  margin-top: 12px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.as-regions::-webkit-scrollbar { display: none; }
+
+/* === 店家列表 === */
+.as-store-list { padding: 8px 0 30px; }
+.as-store-row {
+  padding: 18px 22px 16px;
+  border-bottom: 1px solid var(--lohas-bd);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+.as-store-row:hover { background: var(--bg-warm); }
+.as-store-row.active {
+  background: var(--bg-warm);
+  border-left: 3px solid var(--lohas-brand);
+  padding-left: 19px;
+}
+.as-store-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+.as-store-row-name {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 17px;
+  color: var(--lohas-brand);
+  font-weight: 600;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.as-store-row-slogan {
+  font-size: 12px;
+  color: var(--lohas-hover);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  font-style: italic;
+  letter-spacing: 0.3px;
+}
+.as-store-row-slogan::before { content: "「"; opacity: 0.6; }
+.as-store-row-slogan::after { content: "」"; opacity: 0.6; }
+.as-store-row-addr {
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.as-store-row-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.as-store-row-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.as-store-row-meta i { color: var(--lohas-light); }
+.as-store-row-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.as-store-row-btn {
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  transition: all 0.15s;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+}
+.as-store-row-btn.outline {
+  border: 1px solid var(--lohas-bd);
+  color: var(--text-sub);
+  background: #fff;
+}
+.as-store-row-btn.outline:hover {
+  border-color: var(--lohas-light);
+  color: var(--lohas-brand);
+}
+.as-store-row-btn.book {
+  background: var(--lohas-brand);
+  color: #fff;
+}
+.as-store-row-btn.book:hover { background: var(--lohas-hover); color: #fff; }
+.as-store-row-distance {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* === 右側地圖 === */
+.as-map {
+  position: relative;
+  background: #E8E4DC;
+  overflow: hidden;
+}
+.as-map-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #EFE9DD 0%, #DDD3C0 50%, #C5B89E 100%);
+}
+.as-map-island {
+  position: absolute;
+  background: var(--bg-soft);
+  border-radius: 50%;
+  box-shadow:
+    inset -10px -20px 60px rgba(80, 66, 45, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.06);
+}
+.as-map-island.is-1 { left: 30%; top: 8%; width: 38%; height: 28%; transform: rotate(8deg); }
+.as-map-island.is-2 { left: 28%; top: 30%; width: 44%; height: 32%; transform: rotate(-3deg); }
+.as-map-island.is-3 { left: 30%; top: 56%; width: 42%; height: 38%; transform: rotate(2deg); }
+
+.as-map-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(80, 66, 45, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(80, 66, 45, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.as-map-region-label {
+  position: absolute;
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 14px;
+  color: var(--lohas-brand);
+  opacity: 0.45;
+  letter-spacing: 0.3em;
+  pointer-events: none;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* 地圖 hint 卡（中央提示）*/
+.as-map-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--r-lg);
+  padding: 28px 32px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 8;
+  opacity: 1;
+  transition: opacity 0.3s;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+  max-width: 360px;
+}
+.as-map-hint.hide { opacity: 0; }
+.as-map-hint .badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 3px 10px;
+  background: var(--lohas-brand);
+  color: #fff;
+  border-radius: var(--r-pill);
+  letter-spacing: 1.5px;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.as-map-hint h3 {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 22px;
+  color: var(--lohas-brand);
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+.as-map-hint p {
+  font-size: 13px;
+  color: var(--text-sub);
+  letter-spacing: 0.3px;
+  line-height: 1.7;
+}
+.as-map-hint i { color: var(--err); margin-right: 6px; }
+
+/* 地圖控制按鈕 */
+.as-map-controls {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  z-index: 15;
+}
+.as-map-ctrl {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lohas-brand);
+  font-size: 14px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.as-map-ctrl + .as-map-ctrl { border-top: 1px solid var(--lohas-bd); }
+.as-map-ctrl:hover { background: var(--bg-warm); }
+
+/* 圖例 */
+.as-map-legend {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-sub);
+  z-index: 15;
+}
+.as-map-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.as-map-legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
+.as-map-legend-dot.flag {
+  background: var(--lohas-brand);
+  border: 1.5px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.as-map-legend-dot.reg { background: var(--lohas-hover); }
+.as-map-legend-dot.act { background: var(--err); }
+
+/* === 點 pin 後彈出的詳情卡 === */
+.as-pin-card {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  width: 380px;
+  background: #fff;
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 20;
+}
+.as-pin-card.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.as-pin-card-img {
+  height: 170px;
+  background: linear-gradient(135deg, var(--lohas-brand) 0%, var(--lohas-hover) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 48px;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+.as-pin-card-img.flagship {
+  background: linear-gradient(135deg, #50422D 0%, #2D2418 100%);
+}
+.as-pin-card-flag {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--lohas-brand);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.as-pin-card-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lohas-brand);
+  cursor: pointer;
+  font-size: 14px;
+  border: 0;
+  font-family: inherit;
+}
+.as-pin-card-body { padding: 20px 22px 22px; }
+.as-pin-card-name {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 22px;
+  color: var(--lohas-brand);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.as-pin-card-slogan {
+  font-size: 12px;
+  color: var(--lohas-hover);
+  font-style: italic;
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
+}
+.as-pin-card-slogan::before { content: "「"; opacity: 0.6; }
+.as-pin-card-slogan::after { content: "」"; opacity: 0.6; }
+.as-pin-card-addr {
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.as-pin-card-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--lohas-bd);
+  border-bottom: 1px solid var(--lohas-bd);
+  margin-bottom: 14px;
+}
+.as-pin-card-meta div {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.as-pin-card-meta i { color: var(--lohas-light); }
+.as-pin-card-meta b { color: var(--lohas-brand); font-weight: 500; }
+.as-pin-card-actions {
+  display: flex;
+  gap: 8px;
+}
+.as-pin-card-actions .btn {
+  flex: 1;
+  padding: 11px 0;
+  text-align: center;
+  font-size: 12px;
+  border-radius: var(--r-pill);
+  transition: all 0.2s;
+  font-weight: 500;
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+}
+.as-pin-card-actions .btn.outline {
+  border: 1px solid var(--lohas-bd);
+  color: var(--text-sub);
+  background: #fff;
+}
+.as-pin-card-actions .btn.outline:hover {
+  border-color: var(--lohas-light);
+  color: var(--lohas-brand);
+}
+.as-pin-card-actions .btn.filled {
+  background: var(--lohas-brand);
+  color: #fff;
+  flex: 1.6;
+}
+.as-pin-card-actions .btn.filled:hover { background: var(--lohas-hover); color: #fff; }
+
+/* === 響應式 === */
+@media (max-width: 900px) {
+  .as-shell {
+    position: static;
+    height: auto;
+  }
+  body { overflow-y: auto; }
+  .as-layout {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+  .as-panel {
+    border-right: 0;
+    max-height: 65vh;
+    border-bottom: 1px solid var(--lohas-bd);
+  }
+  .as-map {
+    height: 60vh;
+    min-height: 480px;
+  }
+  .as-pin-card {
+    width: calc(100% - 32px);
+    right: 16px;
+    bottom: 16px;
+  }
+}

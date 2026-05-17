@@ -1,0 +1,672 @@
+/* =============================================
+   LOHAS · store.html (單店詳情頁)
+   --------------------------------------------
+   依賴：tokens, base, components, store-components
+   --------------------------------------------
+   頁面結構：
+   - .sd-breadcrumb            麵包屑（在 main-header 下）
+   - .sd-layout                左內容 / 右 sticky 預約面板
+   - .sd-hero                  Hero banner（漸層 + slogan）
+   - .booking-prompt-bar       Hero 下方預約提示橫條（用 store-components）
+   - .sd-body                  左側內容區
+   - .sd-quick-stats           4 格 stats（營業中 / 評分 / 驗光師 / 距離）
+   - .sd-gallery               店內空間
+   - .sd-staff-row             驗光師預約卡
+   - .sd-reviews               顧客評價
+   - .sd-right                 右側 sticky 預約面板
+   ============================================= */
+
+.sd-page {
+  margin-top: 70px;          /* main-header 高 */
+  background: #fff;
+}
+
+/* === 麵包屑 === */
+.sd-breadcrumb {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--lohas-bd);
+  padding: 12px 32px;
+  position: sticky;
+  top: 70px;
+  z-index: var(--z-sticky);
+}
+.sd-breadcrumb-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.sd-breadcrumb a { transition: color 0.2s; }
+.sd-breadcrumb a:hover { color: var(--lohas-brand); }
+.sd-breadcrumb i.sep { font-size: 9px; color: var(--text-muted); }
+.sd-breadcrumb .current {
+  color: var(--lohas-brand);
+  font-weight: 500;
+}
+.sd-breadcrumb .erp-tag {
+  font-size: 10px;
+  background: var(--bg-warm);
+  color: var(--text-muted);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  margin-left: auto;
+}
+
+/* === 主版型 === */
+.sd-layout {
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  min-height: calc(100vh - 70px - 50px);
+}
+
+.sd-left {
+  background: #fff;
+}
+
+/* === Hero === */
+.sd-hero {
+  position: relative;
+  height: 440px;
+  background: linear-gradient(135deg, var(--lohas-brand) 0%, var(--lohas-hover) 60%, var(--lohas-light) 100%);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+.sd-hero::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -60px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+.sd-hero::after {
+  content: "";
+  position: absolute;
+  bottom: -100px;
+  left: 30%;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+}
+/* 當有真實 cover 圖時加深色 overlay 讓文字可讀 */
+.sd-hero.has-cover {
+  background-color: rgba(0, 0, 0, 0.4);
+  background-blend-mode: darken;
+}
+
+.sd-hero-back {
+  position: absolute;
+  top: 24px;
+  left: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+}
+.sd-hero-back:hover { background: rgba(255, 255, 255, 0.25); color: #fff; }
+.sd-hero-actions {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+.sd-hero-action {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sd-hero-action:hover { background: rgba(255, 255, 255, 0.25); }
+.sd-hero-content {
+  position: absolute;
+  bottom: 40px;
+  left: 32px;
+  right: 32px;
+  color: #fff;
+  z-index: 1;
+}
+.sd-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.sd-hero-tag i { color: var(--collab-gold); }
+.sd-hero h1 {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  margin-bottom: 10px;
+  line-height: 1.1;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.sd-hero h1 .erp-tag {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  font-weight: 400;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.sd-hero-slogan {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 18px;
+  font-style: italic;
+  opacity: 0.92;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+.sd-hero-slogan::before { content: "「"; opacity: 0.6; }
+.sd-hero-slogan::after { content: "」"; opacity: 0.6; }
+.sd-hero-subtitle {
+  font-size: 14px;
+  opacity: 0.75;
+  letter-spacing: 1px;
+}
+.sd-hero-subtitle b { font-weight: 500; }
+
+/* === 內容 body === */
+.sd-body {
+  padding: 40px 56px 80px;
+  max-width: 920px;
+}
+
+/* === Quick stats === */
+.sd-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--bg-warm);
+  border-radius: var(--r-lg);
+  padding: 6px;
+  margin-bottom: 40px;
+}
+.sd-q-stat {
+  text-align: center;
+  padding: 16px 12px;
+  border-radius: 12px;
+}
+.sd-q-stat:not(:first-child) { border-left: 1px solid var(--lohas-bd); }
+.sd-q-stat .num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  line-height: 1;
+}
+.sd-q-stat .num.ok { color: var(--ok); }
+.sd-q-stat .num.ok::before { content: "● "; font-size: 14px; }
+.sd-q-stat .num small {
+  font-size: 13px;
+  color: var(--lohas-light);
+  font-weight: 400;
+}
+.sd-q-stat .lbl {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* === Sections === */
+.sd-sec { margin-bottom: 48px; }
+.sd-sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 18px;
+}
+.sd-sec-head h2 {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--lohas-brand);
+  letter-spacing: 1px;
+}
+.sd-sec-head .more {
+  font-size: 12px;
+  color: var(--lohas-brand);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+/* === Gallery === */
+.sd-gallery {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+  height: 320px;
+}
+.sd-gallery-main {
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--lohas-brand) 0%, #2D2418 100%);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 64px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.sd-gallery-main:hover { transform: scale(0.99); }
+.sd-gallery-side {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+}
+.sd-gallery-cell {
+  border-radius: var(--r-lg);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 36px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.sd-gallery-cell:hover { transform: scale(0.98); }
+.sd-gallery-cell.c1 { background: linear-gradient(135deg, var(--lohas-light) 0%, var(--lohas-hover) 100%); }
+.sd-gallery-cell.c2 { background: linear-gradient(135deg, #B8946B 0%, #8B6F4A 100%); }
+.sd-gallery-count {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+.sd-gallery-count i { margin-right: 4px; }
+
+/* === Staff row === */
+.sd-staff-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.sd-staff-card {
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-lg);
+  padding: 24px 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sd-staff-card:hover {
+  border-color: var(--lohas-light);
+  box-shadow: var(--sh-card);
+  transform: translateY(-2px);
+}
+.sd-staff-card.top {
+  border-top: 3px solid var(--collab-gold);
+  background: linear-gradient(180deg, #FBF9F5 0%, #fff 30%);
+}
+.sd-staff-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--lohas-light) 0%, var(--lohas-hover) 100%);
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 28px;
+  font-weight: 700;
+}
+.sd-staff-card.top .sd-staff-avatar {
+  background: linear-gradient(135deg, var(--lohas-brand) 0%, #2D2418 100%);
+}
+.sd-staff-name {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--lohas-brand);
+  letter-spacing: 1.5px;
+  margin-bottom: 3px;
+}
+.sd-staff-title {
+  font-size: 11px;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.sd-staff-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 14px;
+  min-height: 48px;
+}
+.sd-staff-badge {
+  font-size: 10px;
+  padding: 3px 8px;
+  background: var(--bg-warm);
+  color: var(--text-sub);
+  border-radius: var(--r-pill);
+}
+.sd-staff-badge.hot { background: #FBEFE7; color: #B5743A; }
+.sd-staff-badge.gold { background: var(--lohas-brand); color: var(--collab-gold); }
+.sd-staff-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--bg-soft);
+  border-bottom: 1px solid var(--bg-soft);
+  margin-bottom: 14px;
+  font-size: 11px;
+}
+.sd-staff-stats div { color: var(--text-muted); }
+.sd-staff-stats b {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  display: block;
+  color: var(--lohas-brand);
+  font-size: 15px;
+}
+.sd-staff-book {
+  width: 100%;
+  padding: 10px;
+  background: var(--lohas-brand);
+  color: #fff;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  letter-spacing: 1px;
+  font-weight: 500;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sd-staff-book:hover { background: var(--lohas-hover); }
+.sd-staff-card.top .sd-staff-book { background: var(--collab-gold); color: var(--lohas-brand); }
+.sd-staff-card.top .sd-staff-book:hover { background: var(--lohas-brand); color: #fff; }
+
+/* === Reviews === */
+.sd-review-summary {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 32px;
+  align-items: center;
+  padding: 24px 0;
+  margin-bottom: 20px;
+}
+.sd-score-block {
+  text-align: center;
+  border-right: 1px solid var(--lohas-bd);
+  padding-right: 32px;
+}
+.sd-score-block .num {
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  line-height: 1;
+}
+.sd-score-block .stars {
+  color: #E8B547;
+  margin-top: 6px;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+.sd-score-block .count {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+.sd-score-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sd-score-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11.5px;
+  color: var(--text-sub);
+}
+.sd-score-bar .lbl { width: 28px; }
+.sd-score-bar .bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-warm);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.sd-score-bar .fill {
+  height: 100%;
+  background: var(--lohas-light);
+}
+.sd-score-bar .pct {
+  width: 36px;
+  text-align: right;
+  font-weight: 500;
+}
+.sd-review-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.sd-review-card {
+  background: var(--bg-warm);
+  border-radius: var(--r-lg);
+  padding: 20px;
+}
+.sd-review-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.sd-review-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--lohas-light) 0%, var(--lohas-hover) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+.sd-review-name {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--lohas-brand);
+}
+.sd-review-time {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.sd-review-stars {
+  color: #E8B547;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.sd-review-text {
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.7;
+}
+
+/* === Right sticky panel === */
+.sd-right {
+  background: var(--bg-warm);
+  border-left: 1px solid var(--lohas-bd);
+  position: sticky;
+  top: 120px;             /* 70 header + 50 breadcrumb */
+  align-self: start;
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+.sd-right-pad { padding: 28px 28px 40px; }
+
+.sd-info-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 特色服務區塊 */
+.sd-feat-block {
+  margin-top: 24px;
+  background: #fff;
+  border-radius: var(--r-lg);
+  padding: 18px;
+}
+.sd-feat-block h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lohas-brand);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sd-feat-block h4 i { color: var(--lohas-light); }
+.sd-feat-ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sd-feat-ul li {
+  padding: 6px 0;
+  padding-left: 22px;
+  position: relative;
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+.sd-feat-ul li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  background: var(--bg-warm);
+  color: var(--lohas-brand);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* === 響應式 === */
+@media (max-width: 1100px) {
+  .sd-layout { grid-template-columns: 1fr; }
+  .sd-right {
+    position: static;
+    height: auto;
+    border-left: 0;
+    border-top: 1px solid var(--lohas-bd);
+  }
+  .sd-gallery {
+    grid-template-columns: 1fr;
+    grid-template-rows: 200px 200px;
+    height: auto;
+  }
+  .sd-gallery-side {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+  .sd-review-grid { grid-template-columns: 1fr; }
+  .sd-review-summary { grid-template-columns: 1fr; }
+  .sd-score-block {
+    border-right: 0;
+    border-bottom: 1px solid var(--lohas-bd);
+    padding-right: 0;
+    padding-bottom: 20px;
+  }
+}
+@media (max-width: 700px) {
+  .sd-body { padding: 28px 24px 60px; }
+  .sd-breadcrumb { padding: 10px 20px; }
+  .sd-breadcrumb-inner { font-size: 12px; }
+  .sd-breadcrumb a:not(.current):not(.logo-back) { display: none; }
+  .sd-breadcrumb i.sep { display: none; }
+  .sd-hero { height: 360px; }
+  .sd-hero h1 { font-size: 36px; letter-spacing: 3px; }
+  .sd-hero h1 .erp-tag { font-size: 11px; }
+  .sd-hero-slogan { font-size: 14px; letter-spacing: 1px; }
+  .sd-staff-row { grid-template-columns: 1fr; }
+  .sd-quick-stats { grid-template-columns: repeat(2, 1fr); }
+  .sd-q-stat:nth-child(3) { border-left: 0; }
+}
