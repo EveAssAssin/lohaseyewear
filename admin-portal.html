@@ -506,239 +506,300 @@
       <div class="page-head">
         <div>
           <h1 class="page-title">聯名活動管理</h1>
-          <p class="page-sub">管理所有 IP 授權聯名 (collab.html 動態頁的內容來源)</p>
+          <p class="page-sub">管理 IP 授權聯名活動,前台 collab.html / collabs.html 動態頁的內容來源</p>
         </div>
-        <button class="btn-primary" id="collabNewBtn">
+      </div>
+
+      <!-- 篩選列 (對齊創作者管理) -->
+      <div class="filter-row">
+        <input type="text" class="filter-search" id="collabSearchInput" placeholder="搜尋品牌名 / Slug...">
+        <select class="filter-select" id="collabFilterStatus">
+          <option value="">所有狀態</option>
+          <option value="draft">草稿</option>
+          <option value="upcoming">即將推出</option>
+          <option value="active">進行中</option>
+          <option value="ended">已結束</option>
+          <option value="archived">封存</option>
+        </select>
+        <select class="filter-select" id="collabFilterCategory">
+          <option value="">所有分類</option>
+          <option value="fashion">FASHION / SPORTS</option>
+          <option value="character">CHARACTER</option>
+          <option value="anime">ANIME / GAME</option>
+        </select>
+        <div class="filter-spacer"></div>
+        <button class="action-btn-solid" id="collabNewBtn">
           <i class="fa-solid fa-plus"></i> 新增聯名
         </button>
       </div>
 
-      <!-- 列表 -->
-      <div class="collab-list" id="collabList">
-        <div class="collab-list-loading">載入中...</div>
+      <!-- 列表 (用 creator-card 樣式) -->
+      <div class="creators-list" id="collabList">
+        <div class="empty-state">載入中...</div>
       </div>
     </div>
 
-    <!-- 編輯 Modal -->
-    <div class="modal-overlay" id="collabEditModal" style="display:none">
-      <div class="modal-content collab-modal">
-        <div class="modal-head">
-          <h2 id="collabModalTitle">編輯聯名</h2>
-          <button class="modal-close" id="collabModalClose">&times;</button>
+    <!-- ============= IP 編輯 Modal (對齊 ag-modal 樣式) ============= -->
+    <div class="ag-modal-overlay" id="collabEditModal" style="display:none">
+      <div class="ag-modal">
+        <div class="ag-modal-header">
+          <h2 class="ag-modal-title" id="collabModalTitle">編輯聯名</h2>
+          <button class="ag-modal-close" id="collabModalClose" type="button" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
 
-        <!-- Tab 切換 -->
-        <div class="collab-tabs">
-          <button class="collab-tab active" data-tab="basic">基本資料</button>
-          <button class="collab-tab" data-tab="hero">Hero 區</button>
-          <button class="collab-tab" data-tab="meta">限量/倒數</button>
-          <button class="collab-tab" data-tab="story">故事</button>
-          <button class="collab-tab" data-tab="interview">創作者訪談</button>
-          <button class="collab-tab" data-tab="theme">色票</button>
-          <button class="collab-tab" data-tab="packages">套餐</button>
-          <button class="collab-tab" data-tab="designs">設計</button>
-          <button class="collab-tab" data-tab="photos">客人照</button>
-        </div>
+        <div class="ag-modal-body collab-body">
 
-        <div class="modal-body collab-body">
+          <!-- 基本資料 panel -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">基本資料</h3>
 
-          <!-- 基本 -->
-          <div class="collab-tab-pane active" data-tab-pane="basic">
-            <div class="form-row">
-              <label>Slug (URL ID,英數+底線,例如 dinu)<span class="req">*</span></label>
-              <input type="text" id="cm_slug" placeholder="dinu" />
+            <div class="editor-row">
+              <label class="editor-label">Slug (URL ID,英數+底線)<span class="req">*</span></label>
+              <input type="text" class="editor-input" id="cm_slug" placeholder="dinu" />
+              <p class="editor-hint">前台連結將是 collab.html?id=<span id="cm_slug_preview">dinu</span></p>
             </div>
-            <div class="form-row">
-              <label>狀態</label>
-              <select id="cm_status">
-                <option value="draft">草稿 (前台看不到)</option>
-                <option value="upcoming">即將推出</option>
-                <option value="active">進行中</option>
-                <option value="ended">已結束</option>
-                <option value="archived">封存</option>
-              </select>
+
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">品牌名稱<span class="req">*</span></label>
+                <input type="text" class="editor-input" id="cm_brand_name" placeholder="DINU" />
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">分類<span class="req">*</span></label>
+                <select class="editor-input" id="cm_category">
+                  <option value="character">CHARACTER 角色</option>
+                  <option value="fashion">FASHION / SPORTS 時尚運動</option>
+                  <option value="anime">ANIME / GAME 動畫遊戲</option>
+                </select>
+              </div>
             </div>
-            <div class="form-row">
-              <label>品牌名稱 (例如 DINU)<span class="req">*</span></label>
-              <input type="text" id="cm_brand_name" />
-            </div>
-            <div class="form-row">
-              <label>排序 (數字越小越前)</label>
-              <input type="number" id="cm_sort_order" value="0" />
-            </div>
-            <div class="form-row">
-              <label>預購連結</label>
-              <input type="text" id="cm_preorder_link" placeholder="https://..." />
-            </div>
-            <div class="form-row">
-              <label>門市連結</label>
-              <input type="text" id="cm_store_link" placeholder="/allstore/..." />
+
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">狀態</label>
+                <select class="editor-input" id="cm_status">
+                  <option value="draft">草稿 (前台看不到)</option>
+                  <option value="upcoming">即將推出</option>
+                  <option value="active">進行中</option>
+                  <option value="ended">已結束</option>
+                  <option value="archived">封存</option>
+                </select>
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">排序 (數字越小越前)</label>
+                <input type="number" class="editor-input" id="cm_sort_order" value="0" />
+              </div>
             </div>
           </div>
 
-          <!-- Hero -->
-          <div class="collab-tab-pane" data-tab-pane="hero">
-            <div class="form-row">
-              <label>Hero 標題 (例如 LOHAS × DINU)</label>
-              <input type="text" id="cm_hero_title" />
+          <!-- Hero 區 panel -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">Hero 主視覺</h3>
+
+            <div class="editor-row">
+              <label class="editor-label">主視覺大圖</label>
+              <div class="img-upload-wrap" data-field="hero_image_url" data-aspect="16:9">
+                <div class="img-upload-preview" id="cm_hero_image_preview">
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
+                </div>
+                <input type="file" accept="image/*" class="img-upload-input">
+                <p class="editor-hint">建議比例 16:9</p>
+              </div>
             </div>
-            <div class="form-row">
-              <label>副標</label>
-              <input type="text" id="cm_hero_subtitle" placeholder="把陪伴戴在身上" />
+
+            <div class="editor-row">
+              <label class="editor-label">Eyebrow 小標 (Hero 上方小字)</label>
+              <input type="text" class="editor-input" id="cm_hero_eyebrow" placeholder="LIMITED EDITION · 200 套" />
+              <p class="editor-hint">例如:LIMITED EDITION · 200 套(可以直接編輯數字)</p>
             </div>
-            <div class="form-row">
-              <label>Eyebrow 小標</label>
-              <input type="text" id="cm_hero_eyebrow" placeholder="LIMITED EDITION · 200 套" />
+
+            <div class="editor-row">
+              <label class="editor-label">Hero 標題</label>
+              <input type="text" class="editor-input" id="cm_hero_title" placeholder="LOHAS × DINU" />
             </div>
-            <div class="form-row">
-              <label>主視覺大圖 URL</label>
-              <input type="text" id="cm_hero_image_url" placeholder="https://..." />
+
+            <div class="editor-row">
+              <label class="editor-label">副標</label>
+              <input type="text" class="editor-input" id="cm_hero_subtitle" placeholder="把陪伴戴在身上" />
             </div>
           </div>
 
-          <!-- Meta -->
-          <div class="collab-tab-pane" data-tab-pane="meta">
-            <div class="form-row form-check">
-              <label><input type="checkbox" id="cm_show_countdown" /> 顯示倒數計時</label>
+          <!-- 限量 / 倒數 panel -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">限量與倒數</h3>
+
+            <div class="editor-row-2col">
+              <label class="editor-check"><input type="checkbox" id="cm_show_countdown" /> 顯示倒數計時</label>
+              <label class="editor-check"><input type="checkbox" id="cm_show_limit" /> 顯示限量資訊</label>
             </div>
-            <div class="form-row form-check">
-              <label><input type="checkbox" id="cm_show_limit" /> 顯示限量資訊 (Meta bar)</label>
+
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">活動開始日</label>
+                <input type="datetime-local" class="editor-input" id="cm_start_date" />
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">活動結束日 (倒數)</label>
+                <input type="datetime-local" class="editor-input" id="cm_end_date" />
+              </div>
             </div>
-            <div class="form-row">
-              <label>活動開始日</label>
-              <input type="datetime-local" id="cm_start_date" />
+
+            <div class="editor-row">
+              <label class="editor-label">日期區間文字 (例如 MAY 20 — JUNE 30)</label>
+              <input type="text" class="editor-input" id="cm_date_range_text" />
             </div>
-            <div class="form-row">
-              <label>活動結束日 (倒數用)</label>
-              <input type="datetime-local" id="cm_end_date" />
+
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">限量總數</label>
+                <input type="number" class="editor-input" id="cm_limit_total" placeholder="200" />
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">已預約數</label>
+                <input type="number" class="editor-input" id="cm_preorder_count" value="0" />
+              </div>
             </div>
-            <div class="form-row">
-              <label>日期區間文字 (例如 MAY 20 — JUNE 30)</label>
-              <input type="text" id="cm_date_range_text" />
-            </div>
-            <div class="form-row">
-              <label>限量總數</label>
-              <input type="number" id="cm_limit_total" placeholder="200" />
-            </div>
-            <div class="form-row">
-              <label>已預約數</label>
-              <input type="number" id="cm_preorder_count" value="0" />
-            </div>
-            <div class="form-row">
-              <label>上市文字 (例如 2026.05.20)</label>
-              <input type="text" id="cm_launch_date_text" />
-            </div>
-            <div class="form-row">
-              <label>限定門市文字 (例如 北中南各 1 家)</label>
-              <input type="text" id="cm_available_stores" />
+
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">上市文字</label>
+                <input type="text" class="editor-input" id="cm_launch_date_text" placeholder="2026.05.20" />
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">限定門市</label>
+                <input type="text" class="editor-input" id="cm_available_stores" placeholder="北中南各 1 家" />
+              </div>
             </div>
           </div>
 
-          <!-- Story -->
-          <div class="collab-tab-pane" data-tab-pane="story">
-            <div class="form-row">
-              <label>故事圖片 URL</label>
-              <input type="text" id="cm_story_image_url" />
+          <!-- 故事 panel -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">故事介紹</h3>
+
+            <div class="editor-row">
+              <label class="editor-label">故事圖片</label>
+              <div class="img-upload-wrap" data-field="story_image_url" data-aspect="4:5">
+                <div class="img-upload-preview" id="cm_story_image_preview">
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
+                </div>
+                <input type="file" accept="image/*" class="img-upload-input">
+                <p class="editor-hint">建議比例 4:5(直式)</p>
+              </div>
             </div>
-            <div class="form-row">
-              <label>故事段落 (JSON 格式)</label>
-              <textarea id="cm_story_paragraphs" rows="10"></textarea>
-              <p class="form-hint">格式範例: [{"type":"p","text":"段落內容"},{"type":"quote","text":"引用句"}]</p>
+
+            <div class="editor-row">
+              <label class="editor-label">故事段落 (JSON 格式)</label>
+              <textarea class="editor-input editor-textarea" id="cm_story_paragraphs" rows="8"></textarea>
+              <p class="editor-hint">格式範例: [{"type":"p","text":"段落內容"},{"type":"quote","text":"引用句"}]</p>
             </div>
           </div>
 
-          <!-- Interview -->
-          <div class="collab-tab-pane" data-tab-pane="interview">
-            <div class="form-row">
-              <label>創作者名稱</label>
-              <input type="text" id="cm_creator_name" placeholder="DTTO FRIENDS" />
+          <!-- 創作者訪談 panel -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">創作者訪談</h3>
+
+            <div class="editor-row">
+              <label class="editor-label">創作者頭像</label>
+              <div class="img-upload-wrap" data-field="creator_avatar_url" data-aspect="1:1">
+                <div class="img-upload-preview img-upload-circle" id="cm_creator_avatar_preview">
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-user"></i></span>
+                </div>
+                <input type="file" accept="image/*" class="img-upload-input">
+                <p class="editor-hint">建議比例 1:1(正方形)</p>
+              </div>
             </div>
-            <div class="form-row">
-              <label>創作者副標</label>
-              <input type="text" id="cm_creator_subtitle" placeholder="DTTO FRIENDS · DINU 創作者" />
+
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">創作者名稱</label>
+                <input type="text" class="editor-input" id="cm_creator_name" placeholder="DTTO FRIENDS" />
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">創作者副標</label>
+                <input type="text" class="editor-input" id="cm_creator_subtitle" placeholder="DTTO FRIENDS · DINU 創作者" />
+              </div>
             </div>
-            <div class="form-row">
-              <label>創作者頭像 URL</label>
-              <input type="text" id="cm_creator_avatar_url" />
+
+            <div class="editor-row">
+              <label class="editor-label">訪談標題</label>
+              <input type="text" class="editor-input" id="cm_interview_title" placeholder="當 DINU 第一次刻在鏡片上" />
             </div>
-            <div class="form-row">
-              <label>訪談標題</label>
-              <input type="text" id="cm_interview_title" placeholder="當 DINU 第一次刻在鏡片上" />
+
+            <div class="editor-row">
+              <label class="editor-label">訪談引言</label>
+              <textarea class="editor-input editor-textarea" id="cm_interview_quote" rows="4"></textarea>
             </div>
-            <div class="form-row">
-              <label>訪談引言</label>
-              <textarea id="cm_interview_quote" rows="4"></textarea>
-            </div>
-            <div class="form-row">
-              <label>完整訪談連結</label>
-              <input type="text" id="cm_interview_full_link" />
+
+            <div class="editor-row">
+              <label class="editor-label">完整訪談連結</label>
+              <input type="text" class="editor-input" id="cm_interview_full_link" />
             </div>
           </div>
 
-          <!-- Theme -->
-          <div class="collab-tab-pane" data-tab-pane="theme">
-            <div class="form-row form-color">
-              <label>主色 (按鈕/標題)</label>
-              <div class="color-input-row">
+          <!-- 主題色 panel -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">自訂色票</h3>
+
+            <div class="theme-color-grid">
+              <div class="theme-color-row">
+                <label>主色</label>
                 <input type="color" id="cm_theme_primary_picker" value="#7A2754" />
-                <input type="text" id="cm_theme_primary" value="#7A2754" />
+                <input type="text" class="editor-input" id="cm_theme_primary" value="#7A2754" />
               </div>
-            </div>
-            <div class="form-row form-color">
-              <label>副色 (Hero 背景漸層)</label>
-              <div class="color-input-row">
+              <div class="theme-color-row">
+                <label>副色</label>
                 <input type="color" id="cm_theme_accent_picker" value="#F8E4ED" />
-                <input type="text" id="cm_theme_accent" value="#F8E4ED" />
+                <input type="text" class="editor-input" id="cm_theme_accent" value="#F8E4ED" />
               </div>
-            </div>
-            <div class="form-row form-color">
-              <label>底色 (大背景)</label>
-              <div class="color-input-row">
+              <div class="theme-color-row">
+                <label>底色</label>
                 <input type="color" id="cm_theme_bg_picker" value="#FAF7F2" />
-                <input type="text" id="cm_theme_bg" value="#FAF7F2" />
+                <input type="text" class="editor-input" id="cm_theme_bg" value="#FAF7F2" />
               </div>
             </div>
+
             <div class="theme-preview" id="themePreview">
-              <div class="tp-hero">Hero 主色 / 副色</div>
-              <div class="tp-bg">底色</div>
+              <div class="tp-hero">Hero 主色 / 副色預覽</div>
             </div>
           </div>
 
-          <!-- Packages 子表 -->
-          <div class="collab-tab-pane" data-tab-pane="packages">
-            <div class="subtable-head">
-              <span>套餐項目</span>
-              <button class="btn-mini" id="cm_addPkg" type="button">+ 新增套餐</button>
-            </div>
+          <!-- 套餐子表 -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">套餐項目</h3>
+            <p class="editor-hint">先儲存聯名後,才能上傳套餐圖片</p>
             <div class="subtable-list" id="cm_pkgList"></div>
-            <p class="form-hint">儲存聯名前先儲存基本資料後再編輯套餐</p>
+            <button class="btn-mini" id="cm_addPkg" type="button">+ 新增套餐</button>
           </div>
 
-          <!-- Designs 子表 -->
-          <div class="collab-tab-pane" data-tab-pane="designs">
-            <div class="subtable-head">
-              <span>設計選項</span>
-              <button class="btn-mini" id="cm_addDesign" type="button">+ 新增設計</button>
-            </div>
+          <!-- 設計子表 -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">設計選項</h3>
+            <p class="editor-hint">先儲存聯名後,才能上傳設計預覽圖</p>
             <div class="subtable-list" id="cm_designList"></div>
+            <button class="btn-mini" id="cm_addDesign" type="button">+ 新增設計</button>
           </div>
 
-          <!-- Photos 子表 -->
-          <div class="collab-tab-pane" data-tab-pane="photos">
-            <div class="subtable-head">
-              <span>客人照片</span>
-              <button class="btn-mini" id="cm_addPhoto" type="button">+ 新增照片</button>
-            </div>
+          <!-- 客人照子表 -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">客人照片</h3>
+            <p class="editor-hint">先儲存聯名後,才能上傳客人照</p>
             <div class="subtable-list" id="cm_photoList"></div>
+            <button class="btn-mini" id="cm_addPhoto" type="button">+ 新增照片</button>
           </div>
 
         </div>
 
-        <div class="modal-foot">
-          <a href="#" class="btn-secondary" id="collabPreviewBtn" target="_blank">預覽前台 ↗</a>
-          <div class="modal-foot-right">
-            <button class="btn-secondary" id="collabDeleteBtn" style="display:none">刪除</button>
-            <button class="btn-secondary" id="collabCancelBtn">取消</button>
+        <div class="ag-modal-footer">
+          <div class="ag-modal-footer-left">
+            <a href="#" class="btn-secondary" id="collabPreviewBtn" target="_blank" style="display:none">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> 預覽前台
+            </a>
+          </div>
+          <div class="ag-modal-footer-right">
+            <button class="btn-secondary btn-danger" id="collabDeleteBtn" style="display:none">刪除聯名</button>
+            <button class="btn-secondary" id="collabCancelBtn">關閉</button>
             <button class="btn-primary" id="collabSaveBtn">儲存</button>
           </div>
         </div>
