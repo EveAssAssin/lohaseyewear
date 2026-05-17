@@ -22,7 +22,8 @@
     justify-content: flex-start; /* 水平對齊：左側 */
     overflow: hidden;
     color: #fff; /* 文字顏色通常為白色 */
-    padding: 0 32px 40px;
+    padding-left: 5%;        /* 距離左邊一段距離，更有設計感 */
+    padding-bottom: 40px;     /* 距離底部一段距離 */
 }
 
 /* 背景圖處理 (仿 Gogoro 的沉浸式感) */
@@ -56,10 +57,9 @@
 /* 文字內容 */
 .hero-content {
     text-align: left;
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0;
+    max-width: 800px;
+    padding: 0x;
+    
 }
 
 .hero-title {
@@ -93,14 +93,15 @@
 /* 手機版適應 (RWD) */
 @media (max-width: 768px) {
     .hero-banner {
-        padding: 0 20px 40px;
-        align-items: flex-end;
-        justify-content: flex-start;
+        padding-left: 20px;    /* 縮小左側間距，適合手機螢幕 */
+        padding-bottom: 40px;  /* 縮小底部間距 */
+        align-items: flex-end; /* 確保垂直靠底 */
+        justify-content: flex-start; /* 確保水平靠左 */
         height: 100svh;
     }
 
     .hero-content {
-        max-width: 100%;
+        max-width: 90%;        /* 讓內容在手機上稍微寬一點點 */
     }
 
     .hero-title {
@@ -130,21 +131,29 @@
 .owndays-grid-section {
     padding: 40px 0;
     background-color: #fff;
+    overflow: hidden;
 }
 
+/* 包含 header 控制 + scroll container,左對齊 1400px 容器 */
 .owndays-wrapper {
     position: relative;
     max-width: 1400px;
     margin: 0 auto;
+    padding-left: 32px;
 }
 
+/* scroll 容器突破 wrapper 右邊界,延伸到視窗右邊 */
 .owndays-container {
     display: flex;
     gap: 15px;
-    padding: 0 20px; /* 保留原本的內距 */
-    overflow-x: auto; 
+    overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
+    /* 右邊用 padding 製造尾巴空間,讓最後一張卡能滑到中央 */
+    padding-right: 32px;
+    /* 計算:wrapper 已限 1400 max + padding-left 32,要延伸右邊
+       用 negative margin 把容器拉到視窗右邊 */
+    margin-right: calc(-1 * max(0px, (100vw - 1400px) / 2));
 }
 
 /* --- 新增：卡片區塊頂部的排版 --- */
