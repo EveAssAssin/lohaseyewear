@@ -1802,9 +1802,7 @@
     document.getElementById('confirmReject')?.addEventListener('click', confirmReject);
 
     const modal = document.getElementById('rejectModal');
-    modal?.addEventListener('click', e => {
-      if (e.target === modal) closeReject();
-    });
+    // 點背景不關閉 (避免誤觸,只能點 X 或 ESC)
 
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && modal?.classList.contains('show')) closeReject();
@@ -2960,10 +2958,7 @@
     const closeBtn = document.getElementById('agModalClose');
     if (overlay && !overlay.dataset.bound) {
       overlay.dataset.bound = '1';
-      // 點背景關閉
-      overlay.addEventListener('click', e => {
-        if (e.target === overlay) closeCreatorModal();
-      });
+      // 點背景不關閉 (避免誤觸,只能點 X / ESC / 底部關閉)
     }
     if (closeBtn && !closeBtn.dataset.bound) {
       closeBtn.dataset.bound = '1';
@@ -4290,9 +4285,11 @@
       renderPhotoList();
     });
 
-    // 點背景關閉
-    modal.addEventListener('click', e => {
-      if(e.target === modal) modal.style.display = 'none';
+    // 點背景不關閉 (避免誤觸,只能點 X / 取消 / ESC)
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && modal.style.display !== 'none') {
+        modal.style.display = 'none';
+      }
     });
 
     // 切到這個 tab 時載入
