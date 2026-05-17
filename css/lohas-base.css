@@ -472,10 +472,19 @@ body.no-scroll {
 
 .footer-links {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: flex-start;
     justify-content: flex-start;
-    gap: 40px 50px;
+    gap: 50px;
     margin-bottom: 60px;
+}
+
+.footer-columns-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px 50px;
+    flex: 1;
+    min-width: 0;
 }
 
 .footer-column {
@@ -520,6 +529,7 @@ body.no-scroll {
     min-width: 150px;
     margin-right: 40px;
     margin-top: 45px;
+    flex-shrink: 0;
 }
 
 .social-link {
