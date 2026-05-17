@@ -3521,6 +3521,21 @@
   letter-spacing: 0.3px;
 }
 
+/* focus-only hint - 預設隱藏,輸入框 focus 才顯示 */
+.editor-hint.editor-hint-focus {
+  max-height: 0;
+  margin: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height .2s ease, opacity .15s ease, margin .2s ease;
+}
+.editor-row:focus-within > .editor-hint.editor-hint-focus,
+.editor-row:focus-within .editor-hint.editor-hint-focus {
+  max-height: 40px;
+  margin: 6px 0 0;
+  opacity: 1;
+}
+
 /* editor-textarea (高度 + monospace) */
 .editor-textarea {
   font-family: monospace !important;
