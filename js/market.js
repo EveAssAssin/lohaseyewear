@@ -20,6 +20,7 @@
   var State = {
     designs: [],
     collabs: [],
+    allCollabs: [],
     wishlistIds: new Set(),
     activeTier: 'all',
     searchTerm: '',
@@ -133,17 +134,30 @@
           || window.supabase;
     if(!sb || typeof sb.from !== 'function') {
       State.collabs = [];
+      State.allCollabs = [];
       return;
     }
 
+    // 進行中 (顯示在上方 market block) - active/upcoming
     var { data, error } = await sb
       .from('collabs')
       .select('id, slug, brand_name, hero_title, hero_subtitle, hero_image_url, lifecycle_status, status, sort_order')
       .in('status', ['active', 'upcoming'])
       .order('sort_order', { ascending: true });
 
-    if(error){ console.warn('[market] collabs 讀取失敗', error); State.collabs = []; return; }
-    State.collabs = data || [];
+    if(error){ console.warn('[market] collabs 讀取失敗', error); State.collabs = []; }
+    else State.collabs = data || [];
+
+    // 全部聯名 (顯示在下方授權聯名牆) - 含已結束
+    var allResp = await sb
+      .from('collabs')
+      .select('id, slug, brand_name, hero_title, hero_image_url, creator_name, lifecycle_status, status, sort_order')
+      .neq('status', 'draft')
+      .neq('status', 'archived')
+      .order('sort_order', { ascending: true });
+
+    if(allResp.error){ console.warn('[market] all collabs 讀取失敗', allResp.error); State.allCollabs = []; }
+    else State.allCollabs = allResp.data || [];
   }
 
 
@@ -312,6 +326,9 @@
       if(collabBtn) collabBtn.closest('li').style.display = 'none';
     }
 
+    // 官方授權聯名牆 (含已結束)
+    renderOfficialCollabWall(State.allCollabs || []);
+
     // 先渲染前 9 件到 creator grid (跟原本 v18 設計一致)
     renderGrid('creator', creatorList.slice(0, 9));
 
@@ -326,7 +343,7 @@
     }
   }
 
-  // ===== 渲染聯名卡片 =====
+  // ===== 渲染聯名卡片 (上方 market block) =====
   function renderCollabs(list){
     var grid = root.querySelector('.design-grid[data-grid="collab"]');
     if(!grid) return;
@@ -354,6 +371,43 @@
         + '<div class="design-card-body">'
         +   '<div class="design-card-name">' + escapeHtml(c.brand_name || c.hero_title || '') + '</div>'
         +   '<div class="design-card-meta">LOHAS × ' + escapeHtml(c.brand_name || '') + '</div>'
+        + '</div>'
+      + '</a>';
+    }).join('');
+  }
+
+  // ===== 官方授權聯名牆 (深棕金邊,含已結束) =====
+  function renderOfficialCollabWall(list){
+    var block = document.getElementById('officialCollabBlock');
+    var grid = document.getElementById('officialCollabGrid');
+    if(!block || !grid) return;
+
+    if(!list.length){
+      block.style.display = 'none';
+      return;
+    }
+
+    block.style.display = '';
+    grid.innerHTML = list.map(function(c){
+      var stage = c.lifecycle_status || 'preorder';
+      var isEnded = (stage === 'ended' || stage === 'sold_out');
+      var coverContent;
+      if(c.hero_image_url){
+        coverContent = '<img src="' + escapeHtml(c.hero_image_url) + '" alt="' + escapeHtml(c.brand_name || '') + '" loading="lazy" />';
+      } else {
+        // 沒圖時用品牌名大字
+        var displayName = (c.brand_name || c.hero_title || '?')
+          .toUpperCase()
+          .split('').join(' ');
+        coverContent = escapeHtml(displayName);
+      }
+      var creator = c.creator_name || (c.brand_name || '');
+      return '<a class="collab-wall-card' + (isEnded ? ' is-ended' : '') + '" href="collab.html?id=' + escapeHtml(c.slug) + '">'
+        + '<div class="collab-wall-badge"><i class="fa-solid fa-crown"></i>Collab</div>'
+        + '<div class="collab-wall-cover">' + coverContent + '</div>'
+        + '<div class="collab-wall-info">'
+        +   '<div class="collab-wall-name">' + escapeHtml(c.brand_name || c.hero_title || '') + '</div>'
+        +   '<div class="collab-wall-by">' + escapeHtml(creator) + '</div>'
         + '</div>'
       + '</a>';
     }).join('');
