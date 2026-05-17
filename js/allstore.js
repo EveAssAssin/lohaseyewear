@@ -1,16 +1,17 @@
 /* =============================================
-   LOHAS · allstore.html 邏輯
+   LOHAS · allstore.html · Leaflet 地圖版
    --------------------------------------------
    依賴：
    - js/api/api-core.js
    - js/api/api-store.js
    - js/store-data.js
+   - Leaflet (CDN)
    --------------------------------------------
    流程：
-   1. 載入時呼叫 getAllStores
-   2. 正規化資料
-   3. 第一次渲染（list + pins）
-   4. 監聽：region 切換、搜尋、點 row/pin
+   1. 初始化 Leaflet 地圖（台灣全島視角）
+   2. 載入店家資料 + 為每間店建 marker（自訂 divIcon）
+   3. 列表 row 點擊 ↔ 地圖 marker 點擊 雙向連動
+   4. 區域 chip 切換 → 地圖飛到該區域
    ============================================= */
 
 (function () {
@@ -22,20 +23,35 @@
 
   /* === State === */
   const state = {
-    allStores: [],     // 全部正規化後的店家
-    filtered: [],      // 過濾後的店家
+    allStores: [],
+    filtered: [],
     currentRegion: "all",
     searchText: "",
-    activeErpid: null  // 目前選取的店 erpid
+    activeErpid: null,
+    map: null,
+    markers: {}
   };
 
-  /* === DOM refs（DOMContentLoaded 後填入） === */
+  /* === Region 中心座標 + zoom === */
+  const REGION_VIEWS = {
+    all:        { center: [23.7, 121.0], zoom: 7 },
+    north:      { center: [25.0, 121.5], zoom: 11 },
+    hsinchu:    { center: [24.8, 121.0], zoom: 11 },
+    taichung1:  { center: [24.15, 120.7], zoom: 12 },
+    taichung2:  { center: [24.17, 120.65], zoom: 12 },
+    kaohsiung1: { center: [22.66, 120.31], zoom: 13 },
+    tainan:     { center: [22.99, 120.23], zoom: 13 },
+    kaohsiung2: { center: [22.68, 120.30], zoom: 12 },
+    malaysia:   { center: [3.08, 101.59], zoom: 12 }
+  };
+
   const dom = {};
 
   document.addEventListener("DOMContentLoaded", async () => {
     cacheDom();
     bindEvents();
     renderRegionPills();
+    initMap();
     await loadStores();
   });
 
@@ -44,8 +60,7 @@
     dom.search = document.getElementById("as-search");
     dom.regions = document.getElementById("as-regions");
     dom.list = document.getElementById("as-store-list");
-    dom.pins = document.getElementById("as-pins");
-    dom.hint = document.getElementById("as-map-hint");
+    dom.mapCanvas = document.getElementById("as-map-canvas");
     dom.pinCard = document.getElementById("as-pin-card");
   }
 
@@ -58,9 +73,9 @@
       pill.classList.add("active");
       state.currentRegion = pill.dataset.region;
       state.activeErpid = null;
-      dom.hint.classList.remove("hide");
       dom.pinCard.classList.remove("show");
       refresh();
+      flyToRegion(state.currentRegion);
     });
 
     /* 搜尋 */
@@ -73,24 +88,16 @@
       }, 200);
     });
 
-    /* 點列表 row → selectStore */
+    /* 點列表 row */
     dom.list.addEventListener("click", e => {
       const row = e.target.closest(".as-store-row");
       if (!row) return;
-      /* row 內的 button 不觸發選取（用 stopPropagation） */
       if (e.target.closest(".as-store-row-btn")) {
         const btn = e.target.closest(".as-store-row-btn");
-        handleStoreAction(btn, row.dataset.erpid);
+        handleStoreAction(btn.dataset.action, row.dataset.erpid);
         return;
       }
       selectStore(row.dataset.erpid);
-    });
-
-    /* 點 SVG 內的 pin → selectStore（SVG 內事件要用 closest("[data-erpid]")）*/
-    dom.pins.addEventListener("click", e => {
-      const pin = e.target.closest("[data-erpid]");
-      if (!pin) return;
-      selectStore(pin.dataset.erpid);
     });
   }
 
@@ -120,20 +127,101 @@
     });
   }
 
+  /* === Leaflet 地圖初始化 === */
+  function initMap() {
+    if (typeof L === "undefined") {
+      console.error("[allstore] Leaflet (L) 未載入，請確認 leaflet.js 已在 HTML 中載入");
+      return;
+    }
+    state.map = L.map(dom.mapCanvas, {
+      center: REGION_VIEWS.all.center,
+      zoom: REGION_VIEWS.all.zoom,
+      minZoom: 6,
+      maxZoom: 18,
+      zoomControl: false,
+      attributionControl: true,
+      scrollWheelZoom: true
+    });
+
+    /* Tile layer：OpenStreetMap 預設（免費、無金鑰、無流量限制） */
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(state.map);
+
+    /* zoom 控制改放右下 */
+    L.control.zoom({ position: "bottomright" }).addTo(state.map);
+
+    /* 點地圖空白處：關閉詳情卡與 marker 高亮 */
+    state.map.on("click", () => {
+      if (state.activeErpid) {
+        state.activeErpid = null;
+        renderList();
+        renderPinCard();
+        updateMarkerStates();
+      }
+    });
+
+    console.log("[allstore] Leaflet 地圖初始化完成");
+  }
+
+  function flyToRegion(regionKey) {
+    if (!state.map) return;
+    const view = REGION_VIEWS[regionKey] || REGION_VIEWS.all;
+    state.map.flyTo(view.center, view.zoom, { duration: 0.8 });
+  }
+
   /* === 載入店家資料 === */
   async function loadStores() {
+    console.log("[allstore] loadStores: 開始");
     renderLoading();
     try {
       const raw = await storeApi.getAllStores();
+      console.log("[allstore] getAllStores 回傳", raw && raw.length, "筆");
+
       state.allStores = (raw || [])
         .map(storeData.normalizeStore)
         .filter(Boolean)
         .sort((a, b) => a.region.order - b.region.order || a.sort - b.sort);
+      console.log("[allstore] 正規化", state.allStores.length, "間");
+
       updateRegionCounts();
+      addMarkersToMap();
       refresh();
+      console.log("[allstore] 渲染完成");
     } catch (err) {
+      console.error("[allstore] loadStores 失敗:", err);
+      console.error(err.stack);
       renderError(err);
     }
+  }
+
+  function addMarkersToMap() {
+    if (!state.map) return;
+    Object.values(state.markers).forEach(m => state.map.removeLayer(m));
+    state.markers = {};
+
+    state.allStores.forEach(s => {
+      if (!s.lat || !s.lng) return;
+      const icon = createPinIcon(s, false);
+      const marker = L.marker([s.lat, s.lng], { icon })
+        .addTo(state.map)
+        .on("click", () => selectStore(s.erpid));
+      state.markers[s.erpid] = marker;
+    });
+  }
+
+  function createPinIcon(store, isActive) {
+    const cls =
+      "lohas-pin" +
+      (store.isFlagship ? " flagship" : "") +
+      (isActive ? " active" : "");
+    return L.divIcon({
+      html: `<div class="${cls}"><div class="lohas-pin-body"></div></div>`,
+      className: "",
+      iconSize: [28, 36],
+      iconAnchor: [14, 36]
+    });
   }
 
   /* === 過濾 === */
@@ -152,8 +240,20 @@
     applyFilter();
     renderResultCount();
     renderList();
-    renderPins();
-    renderPinCard();
+    updateMarkersVisibility();
+  }
+
+  function updateMarkersVisibility() {
+    if (!state.map) return;
+    const visibleErpIds = new Set(state.filtered.map(s => s.erpid));
+    Object.entries(state.markers).forEach(([erpid, marker]) => {
+      const shouldShow = state.currentRegion === "all" && !state.searchText
+        ? true
+        : visibleErpIds.has(erpid);
+      const onMap = state.map.hasLayer(marker);
+      if (shouldShow && !onMap) state.map.addLayer(marker);
+      else if (!shouldShow && onMap) state.map.removeLayer(marker);
+    });
   }
 
   /* === 渲染 === */
@@ -184,7 +284,7 @@
       const isActive = state.activeErpid === s.erpid;
       return (
         `<div class="as-store-row${isActive ? " active" : ""}" data-erpid="${s.erpid}">` +
-          `<span class="as-store-row-distance">#${s.erpid}</span>` +
+          `<span class="as-store-row-erp">#${s.erpid}</span>` +
           `<div class="as-store-row-head">` +
             `<span class="as-store-row-name">${s.name}</span>` +
             flagBadge +
@@ -196,96 +296,16 @@
             (s.worktime ? `<span><i class="fa-regular fa-clock"></i>${s.worktime}</span>` : "") +
           `</div>` +
           `<div class="as-store-row-actions">` +
-            `<a class="as-store-row-btn outline" data-action="navigate"><i class="fa-solid fa-diamond-turn-right"></i> 導航</a>` +
-            `<a class="as-store-row-btn outline" data-action="info"><i class="fa-solid fa-store"></i> 門市資訊</a>` +
-            `<a class="as-store-row-btn book" data-action="book"><i class="fa-regular fa-calendar-check"></i> 立即預約</a>` +
+            `<button class="as-store-row-btn outline" data-action="navigate" type="button">` +
+              `<i class="fa-solid fa-diamond-turn-right"></i> 導航` +
+            `</button>` +
+            `<button class="as-store-row-btn book" data-action="book" type="button">` +
+              `<i class="fa-regular fa-calendar-check"></i> 立即預約` +
+            `</button>` +
           `</div>` +
         `</div>`
       );
     }).join("");
-  }
-
-  function renderPins() {
-    /* pin 用 SVG 渲染，直接畫在台灣輪廓 SVG 內，自動跟著縮放
-       不畫海外店，台灣本島區域才有 pin */
-    const list = state.filtered.filter(s => !s.isOverseas);
-
-    const pinsSvg = list.map(s => {
-      const pos = computeSvgPos(s);
-      const cls =
-        "pin-g" +
-        (s.isFlagship ? " flagship" : "") +
-        (state.activeErpid === s.erpid ? " active" : "");
-
-      const isActive = state.activeErpid === s.erpid;
-      const scale = s.isFlagship ? 1.15 : 1;
-      const pulse = isActive
-        ? `<circle class="pin-pulse" cx="${pos.x}" cy="${pos.y - 6}" r="5"/>`
-        : "";
-
-      return (
-        pulse +
-        `<g class="${cls}" data-erpid="${s.erpid}" transform="translate(${pos.x},${pos.y}) scale(${scale})">` +
-          /* 陰影 */
-          `<ellipse class="pin-shadow" cx="0" cy="0" rx="3" ry="1"/>` +
-          /* 水滴 head（尖端在 (0,0)，圓在上方）*/
-          `<path class="pin-head-svg" d="M 0,0 C -4,-6 -4,-10 0,-12 C 4,-10 4,-6 0,0 Z"/>` +
-          /* 中心圓點 */
-          `<circle class="pin-dot" cx="0" cy="-8" r="1.6"/>` +
-        `</g>`
-      );
-    }).join("");
-
-    /* 重要：SVG 內元素需用 SVG namespace 才能正確渲染。
-       innerHTML 在 SVG 環境會 work，但某些瀏覽器邊界有問題。
-       這裡用 DOMParser 解析後逐一搬移，最穩定。 */
-    setSvgInnerHTML(dom.pins, pinsSvg);
-  }
-
-  /* 安全地把 HTML 字串塞進 SVG 子元素裡（修正命名空間問題） */
-  function setSvgInnerHTML(svgNode, htmlString) {
-    /* 把 string 包進臨時 SVG 解析，再搬移節點過來 */
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(
-      `<svg xmlns="http://www.w3.org/2000/svg">${htmlString}</svg>`,
-      "image/svg+xml"
-    );
-    /* 清空現有 */
-    while (svgNode.firstChild) svgNode.removeChild(svgNode.firstChild);
-    /* 搬移所有節點 */
-    const children = Array.from(doc.documentElement.childNodes);
-    children.forEach(child => {
-      svgNode.appendChild(child);
-    });
-  }
-
-  /* === 經緯度 → SVG viewBox 座標（300×400）===
-     viewBox 300×400 對應經度 119.5-122.5、緯度 21.5-25.5 */
-  function computeSvgPos(s) {
-    if (s.lat && s.lng) {
-      const x = ((s.lng - 119.5) / 3.0) * 300;
-      const y = ((25.5 - s.lat) / 4.0) * 400;
-      return { x, y };
-    }
-    return regionFallbackSvgPos(s.region.key, s.erpid);
-  }
-
-  /* 沒座標時用 region 假位置（SVG 座標 0-300, 0-400） */
-  function regionFallbackSvgPos(regionKey, erpid) {
-    const base = {
-      north:      { x: 155, y: 70 },   // 北部
-      hsinchu:    { x: 135, y: 115 },  // 新竹
-      taichung1:  { x: 140, y: 195 },  // 台中區一
-      taichung2:  { x: 135, y: 188 },  // 台中區二
-      kaohsiung1: { x: 160, y: 325 },  // 高雄區一
-      tainan:     { x: 150, y: 290 },  // 台南
-      kaohsiung2: { x: 155, y: 320 }   // 高雄區二
-    }[regionKey] || { x: 150, y: 200 };
-    const offset = (parseInt(String(erpid).slice(-2), 10) || 0) % 10;
-    return {
-      x: base.x + (offset - 5) * 3,
-      y: base.y + ((offset * 7) % 10 - 5) * 2.5
-    };
   }
 
   function renderPinCard() {
@@ -298,14 +318,12 @@
     const flagBadge = s.isFlagship
       ? `<span class="as-pin-card-flag">${s.isOverseas ? "海外旗艦" : "旗艦門市"}</span>`
       : `<span class="as-pin-card-flag">${s.region.label}</span>`;
-    const imgStyle = s.coverimage
-      ? `background-image:url('${s.coverimage}');`
-      : "";
+    const imgStyle = s.coverimage ? `background-image:url('${s.coverimage}');` : "";
 
     dom.pinCard.innerHTML =
       `<div class="as-pin-card-img${s.isFlagship ? " flagship" : ""}" style="${imgStyle}">` +
         flagBadge +
-        `<button class="as-pin-card-close" data-close><i class="fa-solid fa-xmark"></i></button>` +
+        `<button class="as-pin-card-close" data-close type="button"><i class="fa-solid fa-xmark"></i></button>` +
         (s.coverimage ? "" : `<i class="fa-solid fa-store"></i>`) +
       `</div>` +
       `<div class="as-pin-card-body">` +
@@ -319,20 +337,20 @@
           `<div><i class="fa-solid fa-route"></i><b>${s.region.label}</b></div>` +
         `</div>` +
         `<div class="as-pin-card-actions">` +
-          `<a class="btn outline" data-action="navigate"><i class="fa-solid fa-diamond-turn-right"></i> 導航</a>` +
-          `<a class="btn filled" data-action="book"><i class="fa-regular fa-calendar-check"></i> 立即預約此門市</a>` +
+          `<button class="btn outline" data-action="navigate" type="button"><i class="fa-solid fa-diamond-turn-right"></i> 導航</button>` +
+          `<button class="btn filled" data-action="book" type="button"><i class="fa-regular fa-calendar-check"></i> 立即預約此門市</button>` +
         `</div>` +
       `</div>`;
     dom.pinCard.classList.add("show");
 
-    /* 綁定卡片內部事件 */
     dom.pinCard.querySelector("[data-close]").addEventListener("click", () => {
       state.activeErpid = null;
-      dom.hint.classList.remove("hide");
-      refresh();
+      updateMarkerStates();
+      renderList();
+      renderPinCard();
     });
     dom.pinCard.querySelectorAll(".as-pin-card-actions .btn").forEach(btn => {
-      btn.addEventListener("click", () => handleStoreAction(btn, s.erpid));
+      btn.addEventListener("click", () => handleStoreAction(btn.dataset.action, s.erpid));
     });
   }
 
@@ -357,24 +375,36 @@
     if (retry) retry.addEventListener("click", loadStores);
   }
 
-  /* === 動作處理 === */
+  /* === 選店：列表 ↔ 地圖 雙向連動 === */
   function selectStore(erpid) {
     state.activeErpid = state.activeErpid === erpid ? null : erpid;
-    refresh();
+    renderList();
+    renderPinCard();
+    updateMarkerStates();
+
     if (state.activeErpid) {
-      dom.hint.classList.add("hide");
-      /* 滾動到 active row */
+      const s = storeData.findStoreByErpid(state.allStores, state.activeErpid);
+      if (s && s.lat && s.lng && state.map) {
+        state.map.flyTo([s.lat, s.lng], Math.max(state.map.getZoom(), 14), { duration: 0.6 });
+      }
       requestAnimationFrame(() => {
         const row = dom.list.querySelector(".as-store-row.active");
         if (row) row.scrollIntoView({ behavior: "smooth", block: "nearest" });
       });
-    } else {
-      dom.hint.classList.remove("hide");
     }
   }
 
-  function handleStoreAction(btn, erpid) {
-    const action = btn.dataset.action;
+  function updateMarkerStates() {
+    state.allStores.forEach(s => {
+      const marker = state.markers[s.erpid];
+      if (!marker) return;
+      const isActive = state.activeErpid === s.erpid;
+      marker.setIcon(createPinIcon(s, isActive));
+    });
+  }
+
+  /* === 動作處理 === */
+  function handleStoreAction(action, erpid) {
     const s = storeData.findStoreByErpid(state.allStores, erpid);
     if (!s) return;
     if (action === "navigate") {
@@ -383,10 +413,10 @@
         ? `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`
         : `https://www.google.com/maps/search/?api=1&query=${q}`;
       window.open(url, "_blank");
-    } else if (action === "info") {
-      window.location.href = `store.html?erpid=${encodeURIComponent(s.erpid)}`;
     } else if (action === "book") {
       window.location.href = `store.html?erpid=${encodeURIComponent(s.erpid)}#book`;
+    } else {
+      window.location.href = `store.html?erpid=${encodeURIComponent(s.erpid)}`;
     }
   }
 
