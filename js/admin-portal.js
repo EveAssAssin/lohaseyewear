@@ -4375,10 +4375,13 @@
       const client = sb();
       if(!client){ toast('Supabase 未配置'); return; }
 
-      const slug = val('cm_slug');
-      if(!slug){ toast('Slug 必填'); return; }
-      if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 只能英數+底線+減號'); return; }
+      let slug = val('cm_slug');
       if(!val('cm_brand_name')){ toast('品牌名稱必填'); return; }
+      // 沒 slug 就自動生成
+      if(!slug){
+        slug = 'collab-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+      }
+      if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 格式錯誤'); return; }
 
       // 解析 story paragraphs
       let paragraphs = [];
