@@ -478,8 +478,8 @@ body.no-scroll {
 }
 
 .footer-columns-wrap {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 40px 36px;
     min-width: 0;
 }
