@@ -13,7 +13,7 @@
 }
 
 .collab-page {
-  font-family: "Noto Serif TC", "Songti TC", ui-serif, serif;
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   background: var(--cb-bg);
   color: var(--cb-text);
   min-height: 100vh;
