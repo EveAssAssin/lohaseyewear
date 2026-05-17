@@ -3395,3 +3395,306 @@
   .subtable-row .st-input { flex: 1 1 100%; }
   .st-del { width: 100%; height: 28px; }
 }
+
+/* ============================================
+   IP 聯名管理 - v2 (對齊 creator-card / ag-modal)
+   ============================================ */
+
+/* ====== filter-row 已存在 (創作者管理),這裡複用 ====== */
+
+/* ====== 圖片上傳區 (主圖 Hero/Story/Avatar) ====== */
+.img-upload-wrap {
+  display: block;
+  margin-bottom: 4px;
+}
+.img-upload-preview {
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 16/9;
+  background: #FAF7F2;
+  border: 2px dashed #E8DED1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.img-upload-preview:hover {
+  border-color: #50422D;
+}
+.img-upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.img-upload-preview.img-upload-circle {
+  width: 120px;
+  height: 120px;
+  max-width: 120px;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+}
+.img-upload-placeholder {
+  color: #b8a584;
+  font-size: 13px;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.img-upload-placeholder i {
+  font-size: 24px;
+}
+.img-upload-input {
+  display: none;
+}
+
+/* ====== 2-column editor row (對齊 ag-modal) ====== */
+.editor-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.editor-row-2col .editor-row {
+  margin-bottom: 0;
+}
+
+/* editor-check label */
+.editor-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #4c4030;
+  font-weight: 400;
+}
+.editor-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+/* editor-hint (info text 下方) */
+.editor-hint {
+  font-size: 11px;
+  color: #b8a584;
+  margin: 6px 0 0;
+  letter-spacing: 0.3px;
+}
+
+/* editor-textarea (高度 + monospace) */
+.editor-textarea {
+  font-family: monospace !important;
+  font-size: 13px !important;
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* req 紅色星號 */
+.req {
+  color: #d05538;
+  margin-left: 3px;
+}
+
+/* ====== 色票 row ====== */
+.theme-color-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.theme-color-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.theme-color-row label {
+  font-size: 13px;
+  color: #4c4030;
+  font-weight: 500;
+}
+.theme-color-row input[type="color"] {
+  width: 100%;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #E8DED1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.theme-color-row .editor-input {
+  font-family: monospace;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.theme-preview {
+  margin-top: 14px;
+  border: 1px solid #E8DED1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.theme-preview .tp-hero {
+  padding: 28px;
+  text-align: center;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+
+/* ====== 子表 v2 (橫向卡片:圖+欄位+刪除) ====== */
+.subtable-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.subtable-empty {
+  padding: 28px;
+  text-align: center;
+  color: #b8a584;
+  font-size: 13px;
+  background: #FAF7F2;
+  border-radius: 8px;
+  border: 1px dashed #E8DED1;
+}
+.subtable-row-v2 {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid #E8DED1;
+  border-radius: 8px;
+  padding: 12px;
+}
+.subtable-img {
+  width: 80px;
+  height: 80px;
+  background: #FAF7F2;
+  border: 1px dashed #E8DED1;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color .2s;
+}
+.subtable-img:hover:not(.subtable-img-disabled) {
+  border-color: #50422D;
+}
+.subtable-img-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.subtable-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.subtable-img .subtable-file-input {
+  display: none;
+}
+.subtable-img .img-upload-placeholder {
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.subtable-img .img-upload-placeholder i {
+  font-size: 18px;
+}
+.subtable-img-hint {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  font-size: 9px;
+  color: #b8a584;
+  background: rgba(255,255,255,0.85);
+  text-align: center;
+  padding: 2px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.subtable-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.subtable-fields .st-input {
+  padding: 8px 10px;
+  border: 1px solid #E8DED1;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.subtable-fields .st-input:focus {
+  outline: none;
+  border-color: #50422D;
+}
+.subtable-row-v2 .st-del {
+  width: 32px;
+  background: #fff;
+  border: 1px solid #E8DED1;
+  color: #888;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+.subtable-row-v2 .st-del:hover {
+  border-color: #d05538;
+  color: #d05538;
+}
+
+/* ====== btn-mini (子表新增按鈕) ====== */
+.btn-mini {
+  padding: 8px 16px;
+  background: transparent;
+  color: #50422D;
+  border: 1px dashed #50422D;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s;
+}
+.btn-mini:hover {
+  background: #50422D;
+  color: #fff;
+}
+
+/* ====== btn-danger (刪除聯名) ====== */
+.btn-danger {
+  color: #d05538 !important;
+  border-color: #d05538 !important;
+}
+.btn-danger:hover {
+  background: #d05538 !important;
+  color: #fff !important;
+}
+
+/* ====== 響應式 ====== */
+@media (max-width: 768px) {
+  .editor-row-2col,
+  .theme-color-grid {
+    grid-template-columns: 1fr;
+  }
+  .subtable-row-v2 {
+    flex-wrap: wrap;
+  }
+  .subtable-img {
+    width: 64px;
+    height: 64px;
+  }
+}
