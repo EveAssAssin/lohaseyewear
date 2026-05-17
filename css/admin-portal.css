@@ -3698,3 +3698,23 @@
     height: 64px;
   }
 }
+
+/* ag-modal-footer (對齊創作者 modal) */
+.ag-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #E8DED1;
+  background: #FAF7F2;
+  flex-shrink: 0;
+  border-radius: 0 0 12px 12px;
+}
+.ag-modal-footer .spacer {
+  flex: 1;
+}
+.ag-modal-footer .btn-danger {
+  border-color: #d05538 !important;
+  color: #d05538 !important;
+}
+.ag-modal-footer .btn-danger:hover {
+  background: #d05538 !important;
+  color: #fff !important;
+}
