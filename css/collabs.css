@@ -1,0 +1,226 @@
+/* 聯名活動列表頁 - LOHAS UI 風 (無 hero banner) */
+
+.cl-page {
+  background: var(--bg-warm, #FAF7F2);
+  min-height: 100vh;
+  padding-top: 70px;
+}
+
+/* ====== 頁面標題列(取代 hero,簡潔線條樣式)====== */
+.cl-page-head {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 56px 32px 24px;
+}
+.cl-page-eb {
+  font-size: 11px;
+  letter-spacing: 5px;
+  color: var(--lohas-light, #9D7E3F);
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+.cl-page-h1 {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--lohas-brand, #50422D);
+  letter-spacing: 1.5px;
+  margin: 0 0 6px;
+}
+.cl-page-sub {
+  font-size: 13px;
+  color: var(--lohas-mute, #888);
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* ====== 錨點 tab (sticky) ====== */
+.cl-anchor-row {
+  position: sticky;
+  top: 70px;
+  background: var(--bg-warm, #FAF7F2);
+  border-bottom: 1px solid var(--lohas-bd, #E8DED1);
+  z-index: 50;
+}
+.cl-anchor-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.cl-anchor-link {
+  padding: 16px 22px;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  color: var(--lohas-mute, #999);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+  font-weight: 500;
+}
+.cl-anchor-link:hover {
+  color: var(--lohas-brand, #50422D);
+}
+.cl-anchor-link.active {
+  color: var(--lohas-brand, #50422D);
+  border-bottom-color: var(--lohas-brand, #50422D);
+}
+
+/* ====== 列表區 ====== */
+.cl-list-section {
+  padding: 0 32px 80px;
+}
+
+/* 分類區塊 */
+.cl-cat-section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px 0 0;
+}
+.cl-cat-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--lohas-bd, #E8DED1);
+  margin-bottom: 28px;
+}
+.cl-cat-h {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--lohas-brand, #50422D);
+  letter-spacing: 2px;
+  margin: 0;
+}
+.cl-cat-zh {
+  font-size: 12px;
+  color: var(--lohas-mute, #999);
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+/* 卡片 grid */
+.cl-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* 卡片(LOHAS 圓角卡片風) */
+.cl-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--lohas-bd, #E8DED1);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  transition: all .25s;
+}
+.cl-card:hover {
+  border-color: var(--lohas-brand, #50422D);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(80, 66, 45, 0.08);
+}
+.cl-card-img {
+  position: relative;
+  aspect-ratio: 4/3;
+  background: var(--bg-warm, #F4F1EC);
+  overflow: hidden;
+}
+.cl-card-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform .35s ease;
+}
+.cl-card:hover .cl-card-img img {
+  transform: scale(1.04);
+}
+.cl-card-img-fallback {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 3px;
+}
+
+.cl-card-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--lohas-brand, #50422D);
+}
+.cl-st-upcoming { background: #1e5a8a; color: #fff; }
+.cl-st-ended { background: rgba(60, 46, 30, 0.6); color: #fff; }
+
+.cl-card-body {
+  padding: 18px 20px 20px;
+}
+.cl-card-brand {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--lohas-light, #9D7E3F);
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.cl-card-h {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--lohas-brand, #50422D);
+  margin: 0 0 8px;
+  letter-spacing: 0.5px;
+  line-height: 1.5;
+}
+.cl-card-sub {
+  font-size: 13px;
+  color: #6A5C4D;
+  margin: 0 0 10px;
+  line-height: 1.6;
+}
+.cl-card-date {
+  font-size: 12px;
+  color: var(--lohas-mute, #888);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Loading / Empty */
+.cl-loading, .cl-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: #888;
+  font-size: 14px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.cl-spin {
+  width: 36px; height: 36px;
+  border: 3px solid var(--lohas-bd, #E8DED1);
+  border-top-color: var(--lohas-brand, #50422D);
+  border-radius: 50%;
+  animation: clSpin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes clSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+  .cl-page-head { padding: 40px 20px 16px; }
+  .cl-page-h1 { font-size: 22px; }
+  .cl-anchor-inner { padding: 0 20px; }
+  .cl-anchor-link { padding: 14px 14px; font-size: 11px; letter-spacing: 2px; }
+  .cl-list-section { padding: 0 20px 56px; }
+  .cl-cat-section { padding-top: 36px; }
+  .cl-cat-h { font-size: 19px; }
+  .cl-cat-grid { grid-template-columns: 1fr; gap: 16px; }
+}
