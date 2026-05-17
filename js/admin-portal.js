@@ -4810,6 +4810,7 @@
 
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
+      bindImageUploads();
     }
 
     async function openEdit(id){
@@ -4848,6 +4849,7 @@
 
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
+      bindImageUploads();
     }
 
     function closeModal(){
@@ -4861,7 +4863,9 @@
     }
 
     function bindImageUploads(){
-      modal.querySelectorAll('.img-upload-wrap[data-field]').forEach(wrap => {
+      const wraps = modal.querySelectorAll('.img-upload-wrap[data-field]');
+      console.log('[news] bindImageUploads 找到 wrap 數:', wraps.length, 'modal:', modal?.id);
+      wraps.forEach(wrap => {
         if(wrap.dataset.bound) return;
         wrap.dataset.bound = '1';
 
