@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>門市詳情 - LOHAS 樂活眼鏡</title>
+  <meta name="description" content="樂活眼鏡門市詳情頁，包含店家空間、專業驗光師團隊、顧客評價與線上預約。">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;600&display=swap" rel="stylesheet">
+
+  <!-- LOHAS CSS · 載入順序：tokens → base → components → store-components → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/lohas-base.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/lohas-components.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/store-components.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/store.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/booking-modal.css?v=20260517-1000">
+</head>
+<body>
+
+<div id="site-header"></div>
+
+<main>
+  <div class="sd-page">
+
+    <!-- 麵包屑（由 JS 渲染） -->
+    <nav class="sd-breadcrumb" id="sd-breadcrumb"></nav>
+
+    <div class="sd-layout">
+
+      <!-- 左：Hero + prompt + body -->
+      <div class="sd-left">
+        <section class="sd-hero" id="sd-hero"></section>
+        <div class="booking-prompt-bar" id="sd-book-prompt"></div>
+        <div class="sd-body" id="sd-body"></div>
+      </div>
+
+      <!-- 右：sticky 預約面板 -->
+      <aside class="sd-right" id="sd-right"></aside>
+
+    </div>
+
+  </div>
+</main>
+
+<!-- 預約 Modal 容器 -->
+<div id="lohas-booking-modal"></div>
+
+<div id="site-footer"></div>
+
+<!-- 依賴：CryptoJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
+<!-- 全站 layout -->
+<script src="js/layout.js?v=20260517-1000"></script>
+
+<!-- API 模組 -->
+<script src="js/api/api-core.js?v=20260517-1000"></script>
+<script src="js/api/api-store.js?v=20260517-1000"></script>
+<script src="js/api/api-booking.js?v=20260517-1000"></script>
+
+<!-- 資料正規化 -->
+<script src="js/store-data.js?v=20260517-1000"></script>
+
+<!-- 預約 modal -->
+<script src="js/booking-modal.js?v=20260517-1000"></script>
+
+<!-- 頁面邏輯 -->
+<script src="js/store.js?v=20260517-1000"></script>
+
+</body>
+</html>

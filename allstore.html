@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>選擇預約門市 - LOHAS 樂活眼鏡</title>
+  <meta name="description" content="選擇您要預約的樂活眼鏡門市，全台 24 間實體門市，海外 1 間旗艦店。線上預約專屬驗光師，享 NT$200 預約折抵。">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;600&display=swap" rel="stylesheet">
+
+  <!-- LOHAS CSS · 載入順序：tokens → base → components → store-components → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/lohas-base.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/lohas-components.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/store-components.css?v=20260517-1000">
+  <link rel="stylesheet" href="css/allstore.css?v=20260517-1000">
+</head>
+<body>
+
+<div id="site-header"></div>
+
+<main>
+  <div class="as-shell">
+
+    <!-- 副標頭：強調這頁是預約入口 -->
+    <header class="as-subheader">
+      <div class="as-subheader-inner">
+        <div class="as-subheader-title">
+          <i class="fa-regular fa-calendar-check"></i>
+          <span class="accent">選擇預約門市</span>
+          <span>· 全台 <b>24</b> 間 + 海外 <b>1</b> 間</span>
+        </div>
+        <div class="as-subheader-actions">
+          <button class="as-subheader-btn">
+            <i class="fa-solid fa-location-arrow"></i> 我附近的門市
+          </button>
+          <button class="as-subheader-btn primary" data-member-link>會員專區</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主體：左列表 / 右地圖 -->
+    <div class="as-layout">
+
+      <!-- 左 panel -->
+      <aside class="as-panel">
+        <div class="as-panel-head">
+          <h1 class="as-panel-title">
+            <i class="fa-regular fa-calendar-check"></i>選擇預約門市
+          </h1>
+          <div class="as-panel-count" id="as-result-count">載入中…</div>
+          <div class="as-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="search" id="as-search" placeholder="輸入縣市、地址、門市名稱">
+          </div>
+          <div class="as-regions" id="as-regions">
+            <!-- 由 JS 動態渲染 region pills -->
+          </div>
+        </div>
+        <div class="as-store-list" id="as-store-list">
+          <!-- 由 JS 動態渲染 -->
+        </div>
+      </aside>
+
+      <!-- 右地圖 -->
+      <div class="as-map">
+        <div class="as-map-bg"></div>
+        <div class="as-map-grid"></div>
+        <div class="as-map-island is-1"></div>
+        <div class="as-map-island is-2"></div>
+        <div class="as-map-island is-3"></div>
+
+        <span class="as-map-region-label" style="top:14%; left:46%;">北 部</span>
+        <span class="as-map-region-label" style="top:42%; left:48%;">中 部</span>
+        <span class="as-map-region-label" style="top:70%; left:52%;">南 部</span>
+
+        <div id="as-pins"></div>
+
+        <div class="as-map-hint" id="as-map-hint">
+          <span class="badge">RESERVATION · 線上預約</span>
+          <h3>選擇您的預約門市</h3>
+          <p>
+            <i class="fa-solid fa-hand-pointer"></i>從左側列表或地圖上點選任一間門市，<br>
+            查看可預約時段與專屬驗光師。
+          </p>
+        </div>
+
+        <div class="as-map-controls">
+          <button class="as-map-ctrl" aria-label="放大"><i class="fa-solid fa-plus"></i></button>
+          <button class="as-map-ctrl" aria-label="縮小"><i class="fa-solid fa-minus"></i></button>
+          <button class="as-map-ctrl" aria-label="定位"><i class="fa-solid fa-location-crosshairs"></i></button>
+        </div>
+
+        <div class="as-map-legend">
+          <div class="as-map-legend-row"><span class="as-map-legend-dot flag"></span>旗艦門市</div>
+          <div class="as-map-legend-row"><span class="as-map-legend-dot reg"></span>一般門市</div>
+          <div class="as-map-legend-row"><span class="as-map-legend-dot act"></span>目前選取</div>
+        </div>
+
+        <div class="as-pin-card" id="as-pin-card"></div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- 依賴：CryptoJS 處理 AES 加解密 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
+<!-- 全站 layout -->
+<script src="js/layout.js?v=20260517-1000"></script>
+
+<!-- API 模組（順序：core → store） -->
+<script src="js/api/api-core.js?v=20260517-1000"></script>
+<script src="js/api/api-store.js?v=20260517-1000"></script>
+
+<!-- 資料正規化 -->
+<script src="js/store-data.js?v=20260517-1000"></script>
+
+<!-- 頁面邏輯 -->
+<script src="js/allstore.js?v=20260517-1000"></script>
+
+</body>
+</html>
