@@ -142,7 +142,7 @@
     }
 
     /* ============================================
-       Mega Muji 風 - 三大卡帶圖
+       Mega Muji 風 - 三大卡帶圖 (精簡版)
        ============================================ */
     .mega-menu.mega-muji {
         padding: 0;
@@ -150,7 +150,7 @@
     .mega-muji-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 40px 32px 32px;
+        padding: 36px 32px 40px;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 32px;
@@ -158,14 +158,20 @@
     .muji-card {
         display: flex;
         flex-direction: column;
+        text-decoration: none;
+        color: inherit;
+        transition: transform .2s ease;
+    }
+    .muji-card:hover {
+        transform: translateY(-3px);
     }
     .muji-card-img {
         display: block;
-        aspect-ratio: 4/3;
+        aspect-ratio: 3/1;
         background: #F4F1EC;
         overflow: hidden;
         border-radius: 4px;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
     }
     .muji-card-img img {
         width: 100%;
@@ -173,78 +179,25 @@
         object-fit: cover;
         transition: transform .35s ease;
     }
-    .muji-card-img:hover img {
-        transform: scale(1.03);
-    }
-    .muji-card-eb {
-        font-size: 10px;
-        letter-spacing: 4px;
-        color: var(--lohas-light, #9D8B6E);
-        margin-bottom: 6px;
-        font-weight: 500;
+    .muji-card:hover .muji-card-img img {
+        transform: scale(1.04);
     }
     .muji-card-h {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 500;
         color: var(--lohas-brand, #3D3025);
         letter-spacing: 1px;
-        text-decoration: none;
-        margin-bottom: 6px;
-        display: block;
+        margin-bottom: 8px;
     }
-    .muji-card-h:hover {
+    .muji-card:hover .muji-card-h {
         color: var(--lohas-light, #9D7E3F);
     }
     .muji-card-sub {
         font-size: 13px;
         color: #6A5C4D;
-        margin: 0 0 14px;
-        line-height: 1.5;
-    }
-    .muji-card-list {
-        list-style: none;
-        padding: 0;
         margin: 0;
-        border-top: 0.5px solid #EAE5DC;
-        padding-top: 14px;
-    }
-    .muji-card-list li {
-        margin-bottom: 8px;
-    }
-    .muji-card-list li a {
-        font-size: 14px;
-        color: var(--lohas-brand, #3D3025) !important;
-        text-decoration: none;
-        position: relative;
-        padding-left: 14px;
-        display: inline-block;
-        transition: color .2s, padding-left .2s;
-    }
-    .muji-card-list li a::before {
-        content: "·";
-        position: absolute;
-        left: 4px;
-        color: var(--lohas-light, #9D8B6E);
-    }
-    .muji-card-list li a:hover {
-        color: var(--lohas-light, #9D7E3F) !important;
-        padding-left: 18px;
-    }
-    .mega-muji-foot {
-        background: var(--bg-warm, #FAF7F2);
-        border-top: 0.5px solid #EAE5DC;
-        padding: 18px 32px;
-        text-align: center;
-    }
-    .mega-muji-foot a {
-        font-size: 14px;
-        color: var(--lohas-light, #9D7E3F) !important;
-        text-decoration: none;
-        letter-spacing: 0.5px;
-        font-style: italic;
-    }
-    .mega-muji-foot a:hover {
-        text-decoration: underline;
+        line-height: 1.6;
+        letter-spacing: 0.3px;
     }
 }
 
