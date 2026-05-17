@@ -86,9 +86,9 @@
       selectStore(row.dataset.erpid);
     });
 
-    /* 點 pin → selectStore */
+    /* 點 SVG 內的 pin → selectStore（SVG 內事件要用 closest("[data-erpid]")）*/
     dom.pins.addEventListener("click", e => {
-      const pin = e.target.closest(".store-pin");
+      const pin = e.target.closest("[data-erpid]");
       if (!pin) return;
       selectStore(pin.dataset.erpid);
     });
@@ -206,55 +206,85 @@
   }
 
   function renderPins() {
-    /* 用 lat/lng 算 pin 位置；若沒座標就退回固定假座標 */
+    /* pin 用 SVG 渲染，直接畫在台灣輪廓 SVG 內，自動跟著縮放
+       不畫海外店，台灣本島區域才有 pin */
     const list = state.filtered.filter(s => !s.isOverseas);
-    dom.pins.innerHTML = list.map(s => {
-      const pos = computePinPos(s);
+
+    const pinsSvg = list.map(s => {
+      const pos = computeSvgPos(s);
       const cls =
-        "store-pin" +
+        "pin-g" +
         (s.isFlagship ? " flagship" : "") +
         (state.activeErpid === s.erpid ? " active" : "");
+
+      const isActive = state.activeErpid === s.erpid;
+      const scale = s.isFlagship ? 1.15 : 1;
+      const pulse = isActive
+        ? `<circle class="pin-pulse" cx="${pos.x}" cy="${pos.y - 6}" r="5"/>`
+        : "";
+
       return (
-        `<div class="${cls}" data-erpid="${s.erpid}" ` +
-        `style="left:${pos.x}%; top:${pos.y}%;">` +
-          `<div class="store-pin-head"></div>` +
-        `</div>`
+        pulse +
+        `<g class="${cls}" data-erpid="${s.erpid}" transform="translate(${pos.x},${pos.y}) scale(${scale})">` +
+          /* 陰影 */
+          `<ellipse class="pin-shadow" cx="0" cy="0" rx="3" ry="1"/>` +
+          /* 水滴 head（尖端在 (0,0)，圓在上方）*/
+          `<path class="pin-head-svg" d="M 0,0 C -4,-6 -4,-10 0,-12 C 4,-10 4,-6 0,0 Z"/>` +
+          /* 中心圓點 */
+          `<circle class="pin-dot" cx="0" cy="-8" r="1.6"/>` +
+        `</g>`
       );
     }).join("");
+
+    /* 重要：SVG 內元素需用 SVG namespace 才能正確渲染。
+       innerHTML 在 SVG 環境會 work，但某些瀏覽器邊界有問題。
+       這裡用 DOMParser 解析後逐一搬移，最穩定。 */
+    setSvgInnerHTML(dom.pins, pinsSvg);
   }
 
-  /* === 把經緯度轉成地圖內 %（簡化版假投影） ===
-     台灣經度約 120.0-122.0, 緯度約 21.9-25.3
-     對應到 map 區的 28-72% (x) / 8-92% (y) */
-  function computePinPos(s) {
+  /* 安全地把 HTML 字串塞進 SVG 子元素裡（修正命名空間問題） */
+  function setSvgInnerHTML(svgNode, htmlString) {
+    /* 把 string 包進臨時 SVG 解析，再搬移節點過來 */
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(
+      `<svg xmlns="http://www.w3.org/2000/svg">${htmlString}</svg>`,
+      "image/svg+xml"
+    );
+    /* 清空現有 */
+    while (svgNode.firstChild) svgNode.removeChild(svgNode.firstChild);
+    /* 搬移所有節點 */
+    const children = Array.from(doc.documentElement.childNodes);
+    children.forEach(child => {
+      svgNode.appendChild(child);
+    });
+  }
+
+  /* === 經緯度 → SVG viewBox 座標（300×400）===
+     viewBox 300×400 對應經度 119.5-122.5、緯度 21.5-25.5 */
+  function computeSvgPos(s) {
     if (s.lat && s.lng) {
-      const xPct = ((s.lng - 119.5) / 3.0) * 44 + 28;
-      const yPct = (1 - (s.lat - 21.5) / 4.0) * 84 + 8;
-      return {
-        x: Math.max(20, Math.min(80, xPct)),
-        y: Math.max(5, Math.min(92, yPct))
-      };
+      const x = ((s.lng - 119.5) / 3.0) * 300;
+      const y = ((25.5 - s.lat) / 4.0) * 400;
+      return { x, y };
     }
-    /* fallback：依 region 散佈 */
-    return regionFallbackPos(s.region.key, s.erpid);
+    return regionFallbackSvgPos(s.region.key, s.erpid);
   }
 
-  /* 沒座標時用 region 散佈位置 */
-  function regionFallbackPos(regionKey, erpid) {
+  /* 沒座標時用 region 假位置（SVG 座標 0-300, 0-400） */
+  function regionFallbackSvgPos(regionKey, erpid) {
     const base = {
-      north:      { x: 45, y: 16 },
-      hsinchu:    { x: 38, y: 29 },
-      taichung1:  { x: 50, y: 47 },
-      taichung2:  { x: 46, y: 45 },
-      kaohsiung1: { x: 61, y: 80 },
-      tainan:     { x: 55, y: 68 },
-      kaohsiung2: { x: 65, y: 79 }
-    }[regionKey] || { x: 50, y: 50 };
-    /* erpid 後兩碼做小幅偏移避免重疊 */
+      north:      { x: 155, y: 70 },   // 北部
+      hsinchu:    { x: 135, y: 115 },  // 新竹
+      taichung1:  { x: 140, y: 195 },  // 台中區一
+      taichung2:  { x: 135, y: 188 },  // 台中區二
+      kaohsiung1: { x: 160, y: 325 },  // 高雄區一
+      tainan:     { x: 150, y: 290 },  // 台南
+      kaohsiung2: { x: 155, y: 320 }   // 高雄區二
+    }[regionKey] || { x: 150, y: 200 };
     const offset = (parseInt(String(erpid).slice(-2), 10) || 0) % 10;
     return {
-      x: base.x + (offset - 5) * 1.2,
-      y: base.y + ((offset * 7) % 10 - 5) * 1.0
+      x: base.x + (offset - 5) * 3,
+      y: base.y + ((offset * 7) % 10 - 5) * 2.5
     };
   }
 
