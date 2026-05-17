@@ -267,61 +267,196 @@
       </div>
     </div>
 
-    <!-- ============= 最新消息 ============= -->
+    <!-- ============= 最新消息管理 v2 ============= -->
     <div class="content-page" data-page="cm-news">
       <div class="page-head">
         <div>
-          <h1 class="page-title">最新消息</h1>
-          <div class="page-sub">公告、活動、優惠等資訊發布管理</div>
-        </div>
-        <div class="page-actions">
-          <button class="btn primary" id="btnCreateNews"><i class="fa-solid fa-plus"></i>新增消息</button>
+          <h1 class="page-title">最新消息管理</h1>
+          <div class="page-sub" id="newsListSub">— 篇</div>
         </div>
       </div>
 
+      <!-- 篩選列 (對齊創作者管理) -->
       <div class="filter-row">
-        <label>分類</label>
-        <select><option>全部</option><option>系統公告</option><option>活動優惠</option><option>創作者公告</option></select>
-        <label>狀態</label>
-        <select><option>全部</option><option>已發布</option><option>草稿</option><option>已排程</option></select>
+        <input class="editor-input" id="newsSearchInput" placeholder="搜尋標題 / Slug..." style="max-width:280px"/>
+        <div class="filter-group">
+          <label>狀態</label>
+          <select id="newsFilterStatus">
+            <option value="">全部</option>
+            <option value="published">已發佈</option>
+            <option value="draft">草稿</option>
+            <option value="archived">已封存</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>分類</label>
+          <select id="newsFilterCategory">
+            <option value="">全部</option>
+            <option value="story">品牌故事</option>
+            <option value="event">活動優惠</option>
+            <option value="engraving">雷刻服務</option>
+            <option value="people">人物誌</option>
+            <option value="member">會員專區</option>
+            <option value="official">官方公告</option>
+          </select>
+        </div>
         <div class="spacer"></div>
-        <div class="filter-info" id="newsFilterInfo">— 篇</div>
+        <button class="action-btn-solid" id="newsAddBtn"><i class="fa-solid fa-plus"></i>新增消息</button>
       </div>
 
-      <table class="news-table">
-        <thead>
-          <tr>
-            <th>標題</th>
-            <th>分類</th>
-            <th>狀態</th>
-            <th>發布時間</th>
-            <th style="text-align:right">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>新功能上線 · 創作者市集正式公開</td>
-            <td>系統公告</td>
-            <td><span class="news-status published"><i class="fa-solid fa-circle-check"></i>已發布</span></td>
-            <td>2026.04.10</td>
-            <td><div class="news-actions"><button><i class="fa-regular fa-pen-to-square"></i></button><button><i class="fa-regular fa-eye"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></td>
-          </tr>
-          <tr>
-            <td>夏季全配限定優惠</td>
-            <td>活動優惠</td>
-            <td><span class="news-status draft">草稿</span></td>
-            <td>—</td>
-            <td><div class="news-actions"><button><i class="fa-regular fa-pen-to-square"></i></button><button><i class="fa-regular fa-eye"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></td>
-          </tr>
-          <tr>
-            <td>父親節企劃 · 預約刻字</td>
-            <td>活動優惠</td>
-            <td><span class="news-status scheduled"><i class="fa-regular fa-clock"></i>已排程 6/15</span></td>
-            <td>—</td>
-            <td><div class="news-actions"><button><i class="fa-regular fa-pen-to-square"></i></button><button><i class="fa-regular fa-eye"></i></button><button><i class="fa-regular fa-trash-can"></i></button></div></td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- 列表 (用 creator-card 樣式) -->
+      <div class="creators-list" id="newsList">
+        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
+      </div>
+    </div>
+
+    <!-- ============= 最新消息編輯 Modal ============= -->
+    <div class="ag-modal-overlay" id="newsEditModal" style="display:none">
+      <div class="ag-modal">
+        <div class="ag-modal-header">
+          <h2 class="ag-modal-title" id="newsModalTitle">編輯消息</h2>
+          <button class="ag-modal-close" id="newsModalClose" type="button" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="ag-modal-body">
+
+          <!-- 基本資料 -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">基本資料</h3>
+
+            <div class="editor-row">
+              <label class="editor-label">Slug (URL ID)<span class="req">*</span></label>
+              <input type="text" class="editor-input" id="news_slug" placeholder="mother-day-2026" />
+              <p class="editor-hint">前台連結將是 news-detail.html?id=<span id="news_slug_preview">xxx</span></p>
+            </div>
+
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">狀態</label>
+                <select class="editor-input" id="news_status">
+                  <option value="draft">草稿 (前台看不到)</option>
+                  <option value="published">已發佈</option>
+                  <option value="archived">已封存</option>
+                </select>
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">分類<span class="req">*</span></label>
+                <select class="editor-input" id="news_category">
+                  <option value="story">品牌故事</option>
+                  <option value="event">活動優惠</option>
+                  <option value="engraving">雷刻服務</option>
+                  <option value="people">人物誌</option>
+                  <option value="member">會員專區</option>
+                  <option value="official">官方公告</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="editor-row">
+              <label class="editor-label">標題<span class="req">*</span></label>
+              <input type="text" class="editor-input" id="news_title" placeholder="母親節專區 · 一份走進心裡的禮物" />
+            </div>
+
+            <div class="editor-row">
+              <label class="editor-label">摘要</label>
+              <textarea class="editor-input" id="news_excerpt" rows="2" placeholder="文章列表頁顯示的描述"></textarea>
+            </div>
+
+            <div class="editor-row-2col">
+              <div class="editor-row">
+                <label class="editor-label">發佈時間</label>
+                <input type="datetime-local" class="editor-input" id="news_published_at" />
+              </div>
+              <div class="editor-row">
+                <label class="editor-label">作者</label>
+                <input type="text" class="editor-input" id="news_author" placeholder="樂活編輯部" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 封面 -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">封面圖</h3>
+            <div class="editor-row">
+              <label class="editor-label">封面圖片</label>
+              <div class="img-upload-wrap" data-field="cover_image_url" data-aspect="16:9">
+                <div class="img-upload-preview" id="news_cover_preview">
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
+                </div>
+                <input type="file" accept="image/*" class="img-upload-input">
+                <p class="editor-hint">建議比例 16:9 · 建議尺寸 1600 × 900 px</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 首頁曝光 -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">首頁曝光 (首頁輪播小卡)</h3>
+
+            <div class="editor-row">
+              <label class="editor-check">
+                <input type="checkbox" id="news_show_in_homepage" />
+                顯示在首頁輪播 (最多取前 4 篇)
+              </label>
+            </div>
+
+            <div class="editor-row">
+              <label class="editor-label">首頁 Tag (大寫英文)</label>
+              <input type="text" class="editor-input" id="news_homepage_tag" placeholder="MOTHER'S DAY" />
+              <p class="editor-hint">顯示在首頁卡片左上角</p>
+            </div>
+
+            <div class="editor-row">
+              <label class="editor-label">首頁副標</label>
+              <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="一份走進心裡的禮物" />
+              <p class="editor-hint">不填則用「摘要」</p>
+            </div>
+
+            <div class="editor-row">
+              <label class="editor-label">首頁專用大圖</label>
+              <div class="img-upload-wrap" data-field="homepage_image_url" data-aspect="16:9">
+                <div class="img-upload-preview" id="news_homepage_image_preview">
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 (不填則用封面)</span>
+                </div>
+                <input type="file" accept="image/*" class="img-upload-input">
+                <p class="editor-hint">建議比例 16:9 · 建議尺寸 1600 × 900 px · 不填則用封面圖</p>
+              </div>
+            </div>
+
+            <div class="editor-row">
+              <label class="editor-label">首頁排序 (數字越小越前)</label>
+              <input type="number" class="editor-input" id="news_sort_order" value="0" />
+            </div>
+          </div>
+
+          <!-- 內文 -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">內文</h3>
+            <div class="editor-row">
+              <label class="editor-label">文章內容</label>
+              <textarea class="editor-input editor-textarea" id="news_content" rows="14" placeholder="支援純文字段落 (空行分段) 或 HTML / 簡單 Markdown (## 標題 / > 引用)"></textarea>
+              <p class="editor-hint">純文字會自動按空行分段。可使用 ## 大標、> 引用、HTML</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="ag-modal-footer">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="action-btn-solid" id="newsSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
+            <button class="btn" id="newsCancelBtn">關閉</button>
+            <a href="#" class="btn" id="newsPreviewBtn" target="_blank" style="display:none">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>預覽前台
+            </a>
+            <div class="spacer"></div>
+            <button class="btn btn-danger" id="newsDeleteBtn" style="display:none">
+              <i class="fa-solid fa-trash"></i>刪除消息
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ============= 會員列表 (v14) ============= -->

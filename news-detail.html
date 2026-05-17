@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>最新消息 · LOHAS 樂活眼鏡</title>
+  <meta name="description" content="樂活眼鏡最新消息。">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/news-detail.css?v=20260517">
+</head>
+<body>
+
+<div id="site-header"></div>
+
+<main class="nd-main">
+
+  <!-- 載入中 -->
+  <div class="nd-loading" id="ndLoading">
+    <p>載入中...</p>
+  </div>
+
+  <!-- 錯誤 -->
+  <div class="nd-error" id="ndError" style="display:none">
+    <p id="ndErrorMsg">找不到這篇文章</p>
+    <a href="news.html" class="nd-back-link">← 回最新消息</a>
+  </div>
+
+  <!-- 內容 (動態填充) -->
+  <article class="nd-article" id="ndArticle" style="display:none">
+
+    <!-- 頂部麵包屑 -->
+    <nav class="nd-breadcrumb">
+      <a href="index.html">首頁</a>
+      <span>/</span>
+      <a href="news.html">最新消息</a>
+      <span>/</span>
+      <span id="ndCrumbCat">—</span>
+    </nav>
+
+    <!-- 標題區 -->
+    <header class="nd-header">
+      <div class="nd-meta-row">
+        <span class="nd-cat" id="ndCat">—</span>
+        <span class="nd-date" id="ndDate">—</span>
+      </div>
+      <h1 class="nd-title" id="ndTitle">—</h1>
+      <p class="nd-excerpt" id="ndExcerpt"></p>
+      <div class="nd-author-row">
+        <span class="nd-author" id="ndAuthor"></span>
+      </div>
+    </header>
+
+    <!-- 封面圖 -->
+    <div class="nd-cover" id="ndCoverWrap" style="display:none">
+      <img id="ndCover" alt="">
+    </div>
+
+    <!-- 內文 -->
+    <div class="nd-content" id="ndContent"></div>
+
+    <!-- 分享 -->
+    <div class="nd-share">
+      <p class="nd-share-label">分享這篇文章</p>
+      <div class="nd-share-btns">
+        <button class="nd-share-btn" data-share="facebook" aria-label="分享到 Facebook">
+          <i class="fa-brands fa-facebook-f"></i>
+          <span>Facebook</span>
+        </button>
+        <button class="nd-share-btn" data-share="line" aria-label="分享到 LINE">
+          <i class="fa-brands fa-line"></i>
+          <span>LINE</span>
+        </button>
+        <button class="nd-share-btn" data-share="twitter" aria-label="分享到 X">
+          <i class="fa-brands fa-x-twitter"></i>
+          <span>X (Twitter)</span>
+        </button>
+        <button class="nd-share-btn" data-share="copy" aria-label="複製連結">
+          <i class="fa-regular fa-copy"></i>
+          <span id="ndCopyLabel">複製連結</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 回列表 -->
+    <div class="nd-foot">
+      <a href="news.html" class="nd-back-link">
+        <i class="fa-solid fa-arrow-left"></i> 回最新消息列表
+      </a>
+    </div>
+
+  </article>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/layout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/news-detail.js?v=20260517"></script>
+
+</body>
+</html>
