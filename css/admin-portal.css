@@ -1818,8 +1818,8 @@
 }
 .ad .creator-card-tag{
   font-size:10.5px;
-  color:var(--c-text);
-  background:var(--c-bg);
+  color:var(--lohas-brown);
+  background:var(--lohas-tip);
   padding:2px 8px;
   border-radius:999px;
   letter-spacing:0.3px;
