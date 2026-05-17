@@ -1496,6 +1496,31 @@
   display:flex; align-items:center; gap:8px;
 }
 .ad .editor-panel-h i{ font-size:11px; color:var(--lohas-mute) }
+
+/* panel head: 標題左 + 控件右 */
+.ad .editor-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--lohas-line);
+  flex-wrap: wrap;
+}
+.ad .editor-panel-head .editor-panel-title {
+  font-size: 13px;
+  color: var(--lohas-brown);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+@media (max-width: 640px) {
+  .ad .editor-panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
 .ad .editor-row{
   display:grid; grid-template-columns:120px 1fr;
   gap:14px; align-items:flex-start;
@@ -3473,13 +3498,14 @@
 
 /* editor-check label */
 .editor-check {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
   font-size: 14px;
   color: #4c4030;
   font-weight: 400;
+  white-space: nowrap;
 }
 .editor-check input[type="checkbox"] {
   width: 18px;
