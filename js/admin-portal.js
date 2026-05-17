@@ -3829,4 +3829,486 @@
   }
 
 
+  // ================================================================
+  // 聯名活動 (IP 合作) 管理
+  // ================================================================
+  (function initCollabManager(){
+    const sb = function(){
+      return window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
+    };
+
+    const $ = id => document.getElementById(id);
+    const list = $('collabList');
+    const modal = $('collabEditModal');
+    if(!list || !modal) return; // tab 未開啟時不 init
+
+    let currentCollab = null; // 當前編輯的聯名 (null = 新增)
+    let currentPackages = [];
+    let currentDesigns = [];
+    let currentPhotos = [];
+
+    // ====== 工具 ======
+    function toast(msg){
+      if(window.toast) window.toast(msg);
+      else alert(msg);
+    }
+    function esc(s){
+      return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function val(id){
+      const el = $(id);
+      if(!el) return null;
+      if(el.type === 'checkbox') return el.checked;
+      if(el.type === 'number') return el.value === '' ? null : Number(el.value);
+      if(el.type === 'datetime-local') return el.value ? new Date(el.value).toISOString() : null;
+      return el.value || null;
+    }
+    function setVal(id, v){
+      const el = $(id);
+      if(!el) return;
+      if(el.type === 'checkbox'){ el.checked = !!v; return; }
+      if(el.type === 'datetime-local' && v){
+        try { el.value = new Date(v).toISOString().slice(0, 16); } catch(e){ el.value = ''; }
+        return;
+      }
+      el.value = v == null ? '' : v;
+    }
+
+    // ====== 列表載入 ======
+    async function loadList(){
+      const client = sb();
+      if(!client){ list.innerHTML = '<div class="empty-state">Supabase 未配置</div>'; return; }
+
+      list.innerHTML = '<div class="collab-list-loading">載入中...</div>';
+      const { data, error } = await client
+        .from('collabs')
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      if(error){
+        list.innerHTML = '<div class="empty-state">載入失敗:' + esc(error.message) + '</div>';
+        return;
+      }
+      if(!data || !data.length){
+        list.innerHTML = '<div class="empty-state">還沒有任何聯名活動,點右上「+ 新增聯名」開始建立</div>';
+        return;
+      }
+
+      const STATUS_LABEL = {
+        draft: '草稿', upcoming: '即將推出', active: '進行中',
+        ended: '已結束', archived: '封存'
+      };
+
+      list.innerHTML = data.map(c => `
+        <div class="collab-card" data-id="${esc(c.id)}" data-slug="${esc(c.slug)}">
+          <div class="cc-bar" style="background:${esc(c.theme_primary || '#7A2754')}"></div>
+          <div class="cc-body">
+            <div class="cc-head">
+              <div>
+                <div class="cc-brand">${esc(c.brand_name)}</div>
+                <div class="cc-slug">/collab.html?id=${esc(c.slug)}</div>
+              </div>
+              <span class="cc-status cc-status-${esc(c.status)}">${esc(STATUS_LABEL[c.status] || c.status)}</span>
+            </div>
+            <div class="cc-title">${esc(c.hero_title || '—')}</div>
+            <div class="cc-meta">
+              ${c.show_limit && c.limit_total ? `<span><i class="fa-solid fa-box"></i> 限量 ${c.limit_total} 套</span>` : ''}
+              ${c.preorder_count ? `<span><i class="fa-solid fa-heart"></i> ${c.preorder_count} 已預約</span>` : ''}
+              ${c.date_range_text ? `<span><i class="fa-regular fa-calendar"></i> ${esc(c.date_range_text)}</span>` : ''}
+            </div>
+            <div class="cc-actions">
+              <a href="collab.html?id=${esc(c.slug)}" target="_blank" class="cc-btn cc-btn-light">前台預覽 ↗</a>
+              <button class="cc-btn cc-btn-edit" data-action="edit">編輯</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('[data-action="edit"]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const card = e.target.closest('.collab-card');
+          openEdit(card.dataset.id);
+        });
+      });
+    }
+
+    // ====== 開新增 ======
+    function openNew(){
+      currentCollab = null;
+      currentPackages = []; currentDesigns = []; currentPhotos = [];
+      $('collabModalTitle').textContent = '新增聯名';
+      $('collabDeleteBtn').style.display = 'none';
+
+      // 清空所有欄位
+      ['cm_slug','cm_brand_name','cm_hero_title','cm_hero_subtitle','cm_hero_eyebrow',
+       'cm_hero_image_url','cm_date_range_text','cm_launch_date_text','cm_available_stores',
+       'cm_story_image_url','cm_creator_name','cm_creator_subtitle','cm_creator_avatar_url',
+       'cm_interview_title','cm_interview_quote','cm_interview_full_link',
+       'cm_preorder_link','cm_store_link','cm_start_date','cm_end_date']
+        .forEach(id => setVal(id, ''));
+      setVal('cm_status', 'draft');
+      setVal('cm_sort_order', 0);
+      setVal('cm_show_countdown', false);
+      setVal('cm_show_limit', false);
+      setVal('cm_limit_total', '');
+      setVal('cm_preorder_count', 0);
+      setVal('cm_story_paragraphs', '[]');
+      setVal('cm_theme_primary', '#7A2754');
+      setVal('cm_theme_primary_picker', '#7A2754');
+      setVal('cm_theme_accent', '#F8E4ED');
+      setVal('cm_theme_accent_picker', '#F8E4ED');
+      setVal('cm_theme_bg', '#FAF7F2');
+      setVal('cm_theme_bg_picker', '#FAF7F2');
+      updateThemePreview();
+      renderSubtables();
+      switchTab('basic');
+
+      $('collabPreviewBtn').style.display = 'none';
+
+      modal.style.display = 'flex';
+    }
+
+    // ====== 開編輯 ======
+    async function openEdit(id){
+      const client = sb();
+      if(!client) return;
+
+      const { data: c, error } = await client.from('collabs').select('*').eq('id', id).maybeSingle();
+      if(error || !c){ toast('載入失敗'); return; }
+
+      currentCollab = c;
+      $('collabModalTitle').textContent = '編輯:' + (c.brand_name || c.slug);
+      $('collabDeleteBtn').style.display = '';
+
+      setVal('cm_slug', c.slug);
+      setVal('cm_status', c.status);
+      setVal('cm_brand_name', c.brand_name);
+      setVal('cm_sort_order', c.sort_order);
+      setVal('cm_preorder_link', c.preorder_link);
+      setVal('cm_store_link', c.store_link);
+      setVal('cm_hero_title', c.hero_title);
+      setVal('cm_hero_subtitle', c.hero_subtitle);
+      setVal('cm_hero_eyebrow', c.hero_eyebrow);
+      setVal('cm_hero_image_url', c.hero_image_url);
+      setVal('cm_show_countdown', c.show_countdown);
+      setVal('cm_show_limit', c.show_limit);
+      setVal('cm_start_date', c.start_date);
+      setVal('cm_end_date', c.end_date);
+      setVal('cm_date_range_text', c.date_range_text);
+      setVal('cm_limit_total', c.limit_total);
+      setVal('cm_preorder_count', c.preorder_count);
+      setVal('cm_launch_date_text', c.launch_date_text);
+      setVal('cm_available_stores', c.available_stores);
+      setVal('cm_story_image_url', c.story_image_url);
+      setVal('cm_story_paragraphs', JSON.stringify(c.story_paragraphs || [], null, 2));
+      setVal('cm_creator_name', c.creator_name);
+      setVal('cm_creator_subtitle', c.creator_subtitle);
+      setVal('cm_creator_avatar_url', c.creator_avatar_url);
+      setVal('cm_interview_title', c.interview_title);
+      setVal('cm_interview_quote', c.interview_quote);
+      setVal('cm_interview_full_link', c.interview_full_link);
+      setVal('cm_theme_primary', c.theme_primary || '#7A2754');
+      setVal('cm_theme_primary_picker', c.theme_primary || '#7A2754');
+      setVal('cm_theme_accent', c.theme_accent || '#F8E4ED');
+      setVal('cm_theme_accent_picker', c.theme_accent || '#F8E4ED');
+      setVal('cm_theme_bg', c.theme_bg || '#FAF7F2');
+      setVal('cm_theme_bg_picker', c.theme_bg || '#FAF7F2');
+      updateThemePreview();
+
+      // 子表
+      const [pkgRes, designRes, photoRes] = await Promise.all([
+        client.from('collab_packages').select('*').eq('collab_id', id).order('sort_order'),
+        client.from('collab_designs').select('*').eq('collab_id', id).order('sort_order'),
+        client.from('collab_customer_photos').select('*').eq('collab_id', id).order('sort_order')
+      ]);
+      currentPackages = pkgRes.data || [];
+      currentDesigns = designRes.data || [];
+      currentPhotos = photoRes.data || [];
+      renderSubtables();
+
+      switchTab('basic');
+
+      const preview = $('collabPreviewBtn');
+      preview.style.display = '';
+      preview.href = 'collab.html?id=' + encodeURIComponent(c.slug);
+
+      modal.style.display = 'flex';
+    }
+
+    // ====== Tab 切換 ======
+    function switchTab(name){
+      document.querySelectorAll('.collab-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === name);
+      });
+      document.querySelectorAll('.collab-tab-pane').forEach(p => {
+        p.classList.toggle('active', p.dataset.tabPane === name);
+      });
+    }
+
+    // ====== 色票 picker 雙向同步 ======
+    function bindColorSync(textId, pickerId){
+      const text = $(textId), picker = $(pickerId);
+      if(!text || !picker) return;
+      text.addEventListener('input', () => {
+        if(/^#[0-9a-f]{6}$/i.test(text.value)){
+          picker.value = text.value;
+          updateThemePreview();
+        }
+      });
+      picker.addEventListener('input', () => {
+        text.value = picker.value.toUpperCase();
+        updateThemePreview();
+      });
+    }
+    function updateThemePreview(){
+      const p = val('cm_theme_primary') || '#7A2754';
+      const a = val('cm_theme_accent') || '#F8E4ED';
+      const b = val('cm_theme_bg') || '#FAF7F2';
+      const preview = $('themePreview');
+      if(!preview) return;
+      preview.querySelector('.tp-hero').style.background = `linear-gradient(180deg, ${a}, ${b})`;
+      preview.querySelector('.tp-hero').style.color = p;
+      preview.querySelector('.tp-hero').style.borderColor = p;
+      preview.querySelector('.tp-bg').style.background = b;
+      preview.querySelector('.tp-bg').style.color = p;
+    }
+
+    // ====== 子表渲染 ======
+    function renderSubtables(){
+      renderPkgList();
+      renderDesignList();
+      renderPhotoList();
+    }
+
+    function renderPkgList(){
+      const wrap = $('cm_pkgList');
+      if(!currentCollab && !currentPackages.length){
+        wrap.innerHTML = '<div class="subtable-empty">先儲存基本資料,才能新增套餐</div>';
+        return;
+      }
+      if(!currentPackages.length){
+        wrap.innerHTML = '<div class="subtable-empty">尚未新增套餐</div>';
+        return;
+      }
+      wrap.innerHTML = currentPackages.map((p, i) => `
+        <div class="subtable-row" data-idx="${i}">
+          <input type="text" class="st-input st-input-name" value="${esc(p.name||'')}" placeholder="名稱" data-field="name" />
+          <input type="text" class="st-input st-input-meta" value="${esc(p.meta||'')}" placeholder="說明 / meta" data-field="meta" />
+          <input type="text" class="st-input st-input-img" value="${esc(p.image_url||'')}" placeholder="圖片 URL" data-field="image_url" />
+          <button class="st-del" data-action="del-pkg" data-idx="${i}">✕</button>
+        </div>
+      `).join('');
+      bindSubtable(wrap, currentPackages);
+    }
+
+    function renderDesignList(){
+      const wrap = $('cm_designList');
+      if(!currentDesigns.length){ wrap.innerHTML = '<div class="subtable-empty">尚未新增設計</div>'; return; }
+      wrap.innerHTML = currentDesigns.map((d, i) => `
+        <div class="subtable-row" data-idx="${i}">
+          <input type="text" class="st-input st-input-name" value="${esc(d.label||'')}" placeholder="標籤" data-field="label" />
+          <input type="text" class="st-input st-input-img" value="${esc(d.preview_image_url||'')}" placeholder="預覽圖 URL" data-field="preview_image_url" />
+          <button class="st-del" data-action="del-design" data-idx="${i}">✕</button>
+        </div>
+      `).join('');
+      bindSubtable(wrap, currentDesigns);
+    }
+
+    function renderPhotoList(){
+      const wrap = $('cm_photoList');
+      if(!currentPhotos.length){ wrap.innerHTML = '<div class="subtable-empty">尚未新增客人照</div>'; return; }
+      wrap.innerHTML = currentPhotos.map((p, i) => `
+        <div class="subtable-row" data-idx="${i}">
+          <input type="text" class="st-input st-input-img" value="${esc(p.image_url||'')}" placeholder="圖片 URL" data-field="image_url" />
+          <input type="text" class="st-input st-input-meta" value="${esc(p.caption||'')}" placeholder="caption (可選)" data-field="caption" />
+          <button class="st-del" data-action="del-photo" data-idx="${i}">✕</button>
+        </div>
+      `).join('');
+      bindSubtable(wrap, currentPhotos);
+    }
+
+    function bindSubtable(wrap, arr){
+      wrap.querySelectorAll('.st-input').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const idx = Number(inp.closest('.subtable-row').dataset.idx);
+          arr[idx][inp.dataset.field] = inp.value;
+        });
+      });
+      wrap.querySelectorAll('.st-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.idx);
+          if(arr[idx].id){ arr[idx]._deleted = true; }
+          else { arr.splice(idx, 1); }
+          renderSubtables();
+        });
+      });
+    }
+
+    // ====== 儲存 ======
+    async function save(){
+      const client = sb();
+      if(!client){ toast('Supabase 未配置'); return; }
+
+      const slug = val('cm_slug');
+      if(!slug){ toast('Slug 必填'); switchTab('basic'); return; }
+      if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 只能英數+底線+減號'); switchTab('basic'); return; }
+
+      // 解析 story paragraphs
+      let paragraphs = [];
+      try {
+        const txt = val('cm_story_paragraphs');
+        paragraphs = txt ? JSON.parse(txt) : [];
+      } catch(e){
+        toast('故事段落 JSON 格式錯誤'); switchTab('story'); return;
+      }
+
+      const payload = {
+        slug,
+        status: val('cm_status') || 'draft',
+        sort_order: val('cm_sort_order') || 0,
+        brand_name: val('cm_brand_name'),
+        hero_title: val('cm_hero_title'),
+        hero_subtitle: val('cm_hero_subtitle'),
+        hero_eyebrow: val('cm_hero_eyebrow'),
+        hero_image_url: val('cm_hero_image_url'),
+        show_countdown: val('cm_show_countdown'),
+        show_limit: val('cm_show_limit'),
+        start_date: val('cm_start_date'),
+        end_date: val('cm_end_date'),
+        date_range_text: val('cm_date_range_text'),
+        limit_total: val('cm_limit_total'),
+        preorder_count: val('cm_preorder_count') || 0,
+        launch_date_text: val('cm_launch_date_text'),
+        available_stores: val('cm_available_stores'),
+        story_image_url: val('cm_story_image_url'),
+        story_paragraphs: paragraphs,
+        creator_name: val('cm_creator_name'),
+        creator_subtitle: val('cm_creator_subtitle'),
+        creator_avatar_url: val('cm_creator_avatar_url'),
+        interview_title: val('cm_interview_title'),
+        interview_quote: val('cm_interview_quote'),
+        interview_full_link: val('cm_interview_full_link'),
+        preorder_link: val('cm_preorder_link'),
+        store_link: val('cm_store_link'),
+        theme_primary: val('cm_theme_primary'),
+        theme_accent: val('cm_theme_accent'),
+        theme_bg: val('cm_theme_bg'),
+        updated_at: new Date().toISOString()
+      };
+
+      let collabId = currentCollab && currentCollab.id;
+
+      try {
+        if(collabId){
+          const { error } = await client.from('collabs').update(payload).eq('id', collabId);
+          if(error) throw error;
+        } else {
+          const { data, error } = await client.from('collabs').insert(payload).select('*').single();
+          if(error) throw error;
+          collabId = data.id;
+          currentCollab = data;
+        }
+
+        // 子表:刪除標記為 _deleted 的,upsert 其他的
+        await saveSubtable(client, 'collab_packages', collabId, currentPackages, ['name','meta','image_url','sort_order']);
+        await saveSubtable(client, 'collab_designs', collabId, currentDesigns, ['label','preview_image_url','sort_order']);
+        await saveSubtable(client, 'collab_customer_photos', collabId, currentPhotos, ['image_url','caption','sort_order']);
+
+        toast('已儲存');
+        modal.style.display = 'none';
+        loadList();
+      } catch(err){
+        console.error(err);
+        toast('儲存失敗:' + (err.message || err));
+      }
+    }
+
+    async function saveSubtable(client, table, collabId, arr, allowedFields){
+      // 刪除標記
+      const toDelete = arr.filter(x => x._deleted && x.id).map(x => x.id);
+      if(toDelete.length){
+        await client.from(table).delete().in('id', toDelete);
+      }
+
+      // 重排 sort_order + upsert
+      const live = arr.filter(x => !x._deleted);
+      const rows = live.map((row, i) => {
+        const out = { collab_id: collabId, sort_order: i };
+        allowedFields.forEach(f => { if(row[f] !== undefined) out[f] = row[f]; });
+        if(row.id) out.id = row.id;
+        return out;
+      }).filter(r => {
+        // 至少一個欄位有值才存
+        return allowedFields.some(f => r[f]);
+      });
+
+      if(rows.length){
+        const { error } = await client.from(table).upsert(rows);
+        if(error) throw error;
+      }
+    }
+
+    // ====== 刪除 ======
+    async function deleteCollab(){
+      if(!currentCollab) return;
+      if(!confirm('確定刪除「' + currentCollab.brand_name + '」?所有套餐/設計/客人照都會一起刪除,無法復原。')) return;
+
+      const client = sb();
+      const { error } = await client.from('collabs').delete().eq('id', currentCollab.id);
+      if(error){ toast('刪除失敗:' + error.message); return; }
+      toast('已刪除');
+      modal.style.display = 'none';
+      loadList();
+    }
+
+    // ====== 事件綁定 ======
+    $('collabNewBtn').addEventListener('click', openNew);
+    $('collabModalClose').addEventListener('click', () => modal.style.display = 'none');
+    $('collabCancelBtn').addEventListener('click', () => modal.style.display = 'none');
+    $('collabSaveBtn').addEventListener('click', save);
+    $('collabDeleteBtn').addEventListener('click', deleteCollab);
+
+    document.querySelectorAll('.collab-tab').forEach(t => {
+      t.addEventListener('click', () => switchTab(t.dataset.tab));
+    });
+
+    bindColorSync('cm_theme_primary', 'cm_theme_primary_picker');
+    bindColorSync('cm_theme_accent', 'cm_theme_accent_picker');
+    bindColorSync('cm_theme_bg', 'cm_theme_bg_picker');
+
+    $('cm_addPkg').addEventListener('click', () => {
+      currentPackages.push({ name:'', meta:'', image_url:'' });
+      renderPkgList();
+    });
+    $('cm_addDesign').addEventListener('click', () => {
+      currentDesigns.push({ label:'', preview_image_url:'' });
+      renderDesignList();
+    });
+    $('cm_addPhoto').addEventListener('click', () => {
+      currentPhotos.push({ image_url:'', caption:'' });
+      renderPhotoList();
+    });
+
+    // 點背景關閉
+    modal.addEventListener('click', e => {
+      if(e.target === modal) modal.style.display = 'none';
+    });
+
+    // 切到這個 tab 時載入
+    document.querySelectorAll('[data-page="ip"]').forEach(p => {
+      // 監聽 nav 點擊
+    });
+    document.querySelectorAll('.nav-link[data-page="ip"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setTimeout(loadList, 100);
+      });
+    });
+
+    // 初次載入(如果頁面預設就在 ip tab)
+    if(document.querySelector('.content-page[data-page="ip"]')?.classList.contains('active')){
+      loadList();
+    }
+  })();
+
 })(window);
