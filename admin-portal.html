@@ -408,10 +408,12 @@
               <div class="editor-row">
                 <label class="editor-label">首頁 Tag</label>
                 <input type="text" class="editor-input" id="news_homepage_tag" placeholder="LIMITED / NEW / EVENT" />
+                <p class="editor-hint editor-hint-focus">大寫英文較佳,顯示在首頁卡片左上角</p>
               </div>
               <div class="editor-row">
                 <label class="editor-label">首頁副標</label>
                 <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="不填則使用「摘要」" />
+                <p class="editor-hint editor-hint-focus">建議 1 行內</p>
               </div>
             </div>
 
@@ -433,10 +435,12 @@
                   <option value="news_detail">最新消息內頁 (預設)</option>
                   <option value="custom">指定網址</option>
                 </select>
+                <p class="editor-hint editor-hint-focus">點卡片後跳到哪</p>
               </div>
               <div class="editor-row" id="news_homepage_link_url_row" style="display:none">
                 <label class="editor-label">指定網址</label>
                 <input type="text" class="editor-input" id="news_homepage_link_url" placeholder="/collab.html?id=xxx 或 https://..." />
+                <p class="editor-hint editor-hint-focus">可填內部相對路徑或完整外部網址</p>
               </div>
             </div>
 
@@ -856,9 +860,9 @@
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">故事段落 (JSON 格式)</label>
-              <textarea class="editor-input editor-textarea" id="cm_story_paragraphs" rows="8"></textarea>
-              <p class="editor-hint">格式範例: [{"type":"p","text":"段落內容"},{"type":"quote","text":"引用句"}]</p>
+              <label class="editor-label">故事段落</label>
+              <textarea class="editor-input" id="cm_story_paragraphs" rows="8" style="resize:vertical;min-height:120px;line-height:1.7" placeholder="一般段落直接寫,空一行分段&#10;以 &gt; 開頭的行 = 引用句(粉紫色斜體強調)&#10;&#10;範例:&#10;我們是 DTTO FRIENDS,畫小狐狸畫了 10 年。&#10;&#10;&gt; 把陪伴戴在身上。&#10;&#10;從草稿到鏡片,90 天的時間..."></textarea>
+              <p class="editor-hint editor-hint-focus">純文字,空一行分段;以 &gt; 開頭 = 引用樣式</p>
             </div>
           </div>
 
@@ -1449,7 +1453,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-0600"></script>
+<script src="js/admin-portal.js?v=20260518-0700"></script>
 
 </body>
 </html>
