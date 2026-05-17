@@ -4155,7 +4155,7 @@
     }
 
     function bindMainImageUploads(){
-      document.querySelectorAll('.img-upload-wrap[data-field]').forEach(wrap => {
+      modal.querySelectorAll('.img-upload-wrap[data-field]').forEach(wrap => {
         if(wrap.dataset.bound) return;
         wrap.dataset.bound = '1';
 
@@ -4866,8 +4866,8 @@
       const wraps = modal.querySelectorAll('.img-upload-wrap[data-field]');
       console.log('[news] bindImageUploads 找到 wrap 數:', wraps.length, 'modal:', modal?.id);
       wraps.forEach(wrap => {
-        if(wrap.dataset.bound) return;
-        wrap.dataset.bound = '1';
+        if(wrap.dataset.newsBound) return;
+        wrap.dataset.newsBound = '1';
 
         const field = wrap.dataset.field;
         const aspect = wrap.dataset.aspect || '16:9';
