@@ -2273,7 +2273,8 @@
     joiningPhotoFile: null,     // 緣分照片檔
     editMemberId: null,         // 編輯模式: 既有的 member_id
     existingAvatarUrl: null,    // 編輯模式: 原有頭像 URL (沒換才用)
-    existingJoiningPhotoUrl: null  // 編輯模式: 原有緣分照片 URL
+    existingJoiningPhotoUrl: null,  // 編輯模式: 原有緣分照片 URL
+    photos: []                  // 我的照片: [{ url?, file?, base64?, _new?, _existingId? }]
   };
 
   function initGrantCreator() {
@@ -2414,6 +2415,33 @@
       addCbBtn.addEventListener('click', agAddCustomBlock);
     }
 
+    // 我的照片: 新增照片
+    const addPhotoBtn = document.getElementById('agAddPhotoBtn');
+    const photoInput = document.getElementById('agPhotoInput');
+    if (addPhotoBtn && !addPhotoBtn.dataset.bound) {
+      addPhotoBtn.dataset.bound = '1';
+      addPhotoBtn.addEventListener('click', () => photoInput && photoInput.click());
+    }
+    if (photoInput && !photoInput.dataset.bound) {
+      photoInput.dataset.bound = '1';
+      photoInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        for (const file of files) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            AGState.photos.push({
+              file: file,
+              base64: ev.target.result,
+              _new: true
+            });
+            renderPhotosGrid();
+          };
+          reader.readAsDataURL(file);
+        }
+        e.target.value = '';
+      });
+    }
+
     // 第一次 init 時更新 fallback
     if (displayName) {
       const ed = document.getElementById('agAvatar');
@@ -2423,6 +2451,53 @@
     }
   }
 
+  function renderPhotosGrid() {
+    const list = document.getElementById('agPhotosList');
+    if (!list) return;
+    if (AGState.photos.length === 0) {
+      list.innerHTML = '<p class="empty-text" style="padding:30px 20px;font-size:12px">點上方「新增照片」上傳圖片</p>';
+      return;
+    }
+    list.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:4px">' +
+      AGState.photos.map((p, idx) => {
+        const src = p.base64 || p.url || '';
+        const flag = p._new ? '<span style="position:absolute;top:4px;left:4px;background:#FAE5C9;color:#7C5A2B;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:0.5px">新</span>' : '';
+        return (
+          '<div style="position:relative;aspect-ratio:1;background:#f4f1ec;border-radius:6px;overflow:hidden">' +
+            '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover">' +
+            flag +
+            '<button type="button" onclick="window.agRemovePhoto(' + idx + ')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center" aria-label="移除">×</button>' +
+          '</div>'
+        );
+      }).join('') +
+      '</div>';
+  }
+
+  window.agRemovePhoto = function(idx) {
+    const photo = AGState.photos[idx];
+    if (!photo) return;
+
+    // 既有照片要從 DB 刪
+    if (photo._existingId) {
+      if (!confirm('確定移除這張照片?(會從前台立刻消失)')) return;
+      const sb = window.LohasSupabase?.getClient?.();
+      if (sb) {
+        sb.from('gallery_posts').delete().eq('id', photo._existingId).then(({ error }) => {
+          if (error) {
+            alert('刪除失敗: ' + error.message);
+            return;
+          }
+          AGState.photos.splice(idx, 1);
+          renderPhotosGrid();
+        });
+      }
+    } else {
+      // 新加但還沒上傳的,直接從 state 移除
+      AGState.photos.splice(idx, 1);
+      renderPhotosGrid();
+    }
+  };
+
   function agReset() {
     document.getElementById('agDisplayName').value = 'LOHAS 企劃部';
     ['agTagline','agBio','agJoiningStory','agEngravingQuote','agVideoUrl','agVideoTitle','agIg','agFb','agLine','agEmail'].forEach(id => {
@@ -2430,6 +2505,10 @@
       if (el) el.value = '';
     });
     document.getElementById('agJoiningPhoto').value = '';
+
+    // 清空照片
+    AGState.photos = [];
+    renderPhotosGrid();
 
     // 重置頭像
     AGState.avatarBase64 = null;
@@ -2583,6 +2662,44 @@
 
       // 用 memberId (新建) 或 AGState.editMemberId (編輯)
       const finalId = isEdit ? AGState.editMemberId : memberId;
+
+      // 上傳新增的照片到 gallery_posts
+      const newPhotos = AGState.photos.filter(p => p._new && p.file);
+      if (newPhotos.length > 0) {
+        hint.style.color = 'var(--lohas-mute)';
+        hint.textContent = '上傳照片中 (0/' + newPhotos.length + ')...';
+        let uploaded = 0;
+        for (const p of newPhotos) {
+          try {
+            const ext = (p.file.name || '').split('.').pop()?.toLowerCase() || 'jpg';
+            const filePath = `creator-photos/${finalId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+            const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET)
+              .upload(filePath, p.file, { cacheControl: '3600', upsert: false });
+            if (upErr) {
+              console.error('[照片上傳失敗]', upErr);
+              continue;
+            }
+            const { data: urlData } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+            const photoUrl = urlData.publicUrl;
+
+            // 寫入 gallery_posts
+            const { error: insErr } = await sb.from('gallery_posts').insert({
+              title: display_name + ' 的照片',
+              type: 'photo',
+              customer_name: display_name,
+              member_id: finalId,
+              image_urls: [photoUrl],
+              main_image_url: photoUrl,
+              status: 'approved'
+            });
+            if (insErr) console.error('[gallery_posts insert 失敗]', insErr);
+            uploaded++;
+            hint.textContent = '上傳照片中 (' + uploaded + '/' + newPhotos.length + ')...';
+          } catch (err) {
+            console.error('[照片上傳例外]', err);
+          }
+        }
+      }
 
       hint.style.color = 'var(--status-approved)';
       // 顯示成功訊息 + 創作者網址
@@ -3035,6 +3152,28 @@
     // 編輯模式: 改按鈕文字
     const saveBtn = document.getElementById('agSaveBtn');
     if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存變更</span>';
+
+    // 載入該創作者既有的「我的照片」 (gallery_posts type='photo')
+    AGState.photos = [];
+    renderPhotosGrid();
+    const sb2 = window.LohasSupabase?.getClient?.();
+    if (sb2 && c.member_id) {
+      sb2.from('gallery_posts')
+        .select('id, main_image_url, image_urls')
+        .eq('member_id', c.member_id)
+        .eq('type', 'photo')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            AGState.photos = data.map(g => ({
+              url: g.main_image_url || (g.image_urls?.[0]),
+              _existingId: g.id
+            })).filter(p => p.url);
+            renderPhotosGrid();
+          }
+        });
+    }
   }
 
 
