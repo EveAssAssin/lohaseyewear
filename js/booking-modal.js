@@ -31,12 +31,12 @@
   /* state */
   const state = {
     open: false,
-    step: 1,                  // 1=staff, 2=service, 3=time, 4=form, 5=success
+    step: 1,                  // 1=staff, 2=time, 3=form, 4=success
     store: null,
     employees: [],
     selectedEmployee: null,
-    selectedService: SERVICES[1], // 預設「配鏡諮詢」
-    rounds: [],               // 從 getRounds 拿到的時段（flatten）
+    selectedService: SERVICES[1], // 預設「配鏡諮詢」（向 API 送這個值，但 UI 不再選）
+    rounds: [],
     selectedDate: null,
     selectedRoundId: null,
     form: {
@@ -77,12 +77,12 @@
       }
     } catch (_e) { /* ignore */ }
 
-    /* 預選驗光師 */
+    /* 預選驗光師 → 直接跳第 2 步（時段） */
     if (opts.preselectEmployeeErpId) {
       const target = state.employees.find(e => String(e.erpid) === String(opts.preselectEmployeeErpId));
       if (target) {
         state.selectedEmployee = target;
-        state.step = 2; // 跳到服務選擇
+        state.step = 2;
       }
     }
 
@@ -153,10 +153,9 @@
 
   function renderSteps() {
     const steps = [
-      { n: 1, label: "驗光師" },
-      { n: 2, label: "服務" },
-      { n: 3, label: "時段" },
-      { n: 4, label: "確認" }
+      { n: 1, label: "選驗光師" },
+      { n: 2, label: "選時段" },
+      { n: 3, label: "確認資料" }
     ];
     return (
       `<div class="bm-steps">` +
@@ -179,14 +178,13 @@
 
   function renderStepContent() {
     if (state.step === 1) return renderStepStaff();
-    if (state.step === 2) return renderStepService();
-    if (state.step === 3) return renderStepTime();
-    if (state.step === 4) return renderStepForm();
-    if (state.step === 5) return renderSuccess();
+    if (state.step === 2) return renderStepTime();
+    if (state.step === 3) return renderStepForm();
+    if (state.step === 4) return renderSuccess();
     return "";
   }
 
-  /* === Step 1: 選驗光師 === */
+  /* === Step 1: 選驗光師（大頭像版） === */
   function renderStepStaff() {
     if (state.employees.length === 0) {
       return (
@@ -205,11 +203,19 @@
             const photo = e.photos && e.photos[0];
             const avStyle = photo ? `style="background-image:url('${photo}')"` : "";
             const isActive = state.selectedEmployee && state.selectedEmployee.erpid === e.erpid;
+            const role = (e.role || e.jobtitle || "").trim();
+            const honor = (e.honor || "").trim();
             return (
               `<div class="bm-staff-pick ${isActive ? "active" : ""}" data-staff="${e.erpid}">` +
-                `<div class="av" ${avStyle}>${photo ? "" : initial}</div>` +
-                `<div class="name">${e.name}</div>` +
-                `<div class="sub">${e.role || e.jobtitle || ""}</div>` +
+                `<div class="bm-staff-pick-photo" ${avStyle}>` +
+                  (photo ? "" : `<span class="initial">${initial}</span>`) +
+                `</div>` +
+                `<div class="bm-staff-pick-info">` +
+                  `<div class="bm-staff-pick-name">${e.name}</div>` +
+                  (role ? `<div class="bm-staff-pick-role">${role}</div>` : "") +
+                  (honor ? `<div class="bm-staff-pick-honor"><i class="fa-solid fa-medal"></i> ${honor}</div>` : "") +
+                `</div>` +
+                `<div class="bm-staff-pick-check"><i class="fa-solid fa-check"></i></div>` +
               `</div>`
             );
           }).join("") +
@@ -218,26 +224,7 @@
     );
   }
 
-  /* === Step 2: 選服務 === */
-  function renderStepService() {
-    return (
-      `<div class="bm-sec">` +
-        `<div class="bm-sec-title">選擇服務項目</div>` +
-        `<div class="bm-svc-grid">` +
-          SERVICES.map(svc => {
-            const active = state.selectedService && state.selectedService.id === svc.id;
-            return (
-              `<button class="bm-svc-pick ${active ? "active" : ""}" data-svc="${svc.id}">` +
-                `${svc.name} · ${svc.duration}m · ${svc.price}` +
-              `</button>`
-            );
-          }).join("") +
-        `</div>` +
-      `</div>`
-    );
-  }
-
-  /* === Step 3: 選時段 === */
+  /* === Step 2: 選時段 === */
   function renderStepTime() {
     if (state.loadingRounds) {
       return (
@@ -372,7 +359,7 @@
 
   /* === Footer === */
   function renderFooter() {
-    if (state.step === 5) {
+    if (state.step === 4) {
       return (
         `<div class="bm-foot">` +
           `<div class="bm-foot-summary">` +
@@ -395,7 +382,7 @@
           (state.step > 1
             ? `<button class="bm-btn ghost" data-prev>上一步</button>`
             : "") +
-          (state.step < 4
+          (state.step < 3
             ? `<button class="bm-btn primary" data-next ${canNext ? "" : "disabled"}>` +
               `下一步 <i class="fa-solid fa-arrow-right"></i></button>`
             : `<button class="bm-btn primary" data-submit ${canNext && !state.submitting ? "" : "disabled"}>` +
@@ -411,19 +398,17 @@
   function renderSummary() {
     const parts = [];
     if (state.selectedEmployee) parts.push(state.selectedEmployee.name);
-    if (state.selectedService) parts.push(state.selectedService.name);
     if (state.selectedDate && state.selectedRoundId) {
       parts.push(formatDate(state.selectedDate) + " " + getRoundTitle(state.selectedRoundId));
     }
-    if (parts.length === 0) return `<b>步驟 ${state.step} / 4</b>依序完成以建立預約`;
+    if (parts.length === 0) return `<b>步驟 ${state.step} / 3</b>依序完成以建立預約`;
     return `<b>${parts[0] || ""}</b>${parts.slice(1).join(" · ") || "請繼續選擇"}`;
   }
 
   function canProceed() {
     if (state.step === 1) return !!state.selectedEmployee;
-    if (state.step === 2) return !!state.selectedService;
-    if (state.step === 3) return !!state.selectedRoundId;
-    if (state.step === 4) {
+    if (state.step === 2) return !!state.selectedRoundId;
+    if (state.step === 3) {
       const f = state.form;
       return !!(f.memberName && f.memberNumber && f.memberPhone && f.memberBirthday);
     }
@@ -492,7 +477,7 @@
     if (next) next.addEventListener("click", () => {
       if (!canProceed()) return;
       state.step++;
-      if (state.step === 3 && state.rounds.length === 0) {
+      if (state.step === 2 && state.rounds.length === 0) {
         loadRounds();
       }
       renderInPlace();
@@ -564,7 +549,7 @@
         reservationId = bookingApi.decryptReservationId(data.reservationid);
       }
       state.successData = { reservationId };
-      state.step = 5;
+      state.step = 4;
     } catch (err) {
       alert("建立預約失敗：" + (err.message || "請稍後再試"));
     } finally {
