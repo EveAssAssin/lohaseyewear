@@ -1296,6 +1296,15 @@
         <div class="editor-panel">
           <h3 class="editor-panel-h"><i class="fa-regular fa-id-badge"></i>基本資訊</h3>
           <div class="editor-row">
+            <div class="editor-label">雷刻頁置頂</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <label class="switch-wrap" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px">
+                <input type="checkbox" id="agIsPinned" style="width:16px;height:16px;cursor:pointer">
+                <span style="font-size:12px;color:var(--lohas-text)">在雷刻頁 KOL 區置頂顯示</span>
+              </label>
+            </div>
+          </div>
+          <div class="editor-row">
             <div class="editor-label">頭像</div>
             <div style="display:flex;align-items:center;gap:14px">
               <div class="creator-avatar-wrap">
@@ -1326,16 +1335,16 @@
         </div>
 
         <div class="editor-panel">
-          <h3 class="editor-panel-h"><i class="fa-regular fa-heart"></i>與樂活的緣分</h3>
+          <h3 class="editor-panel-h"><i class="fa-regular fa-heart"></i>我的刻圖故事</h3>
           <div class="editor-row">
-            <div class="editor-label">圖片</div>
+            <div class="editor-label">我的刻圖照片</div>
             <div>
               <div class="creator-photo-wrap">
                 <div class="creator-photo-preview" id="agJoiningPhotoPreview">
                   <i class="fa-regular fa-image"></i>
                   <span>3:4 直式</span>
                 </div>
-                <button class="creator-photo-clear" id="agJoiningPhotoClear" type="button" aria-label="移除緣分照片" style="display:none">
+                <button class="creator-photo-clear" id="agJoiningPhotoClear" type="button" aria-label="移除照片" style="display:none">
                   <i class="fa-solid fa-xmark"></i>
                 </button>
                 <button class="creator-photo-upload-btn" id="agJoiningPhotoBtn" type="button">
@@ -1348,7 +1357,14 @@
             </div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">緣分故事</div>
+            <div class="editor-label">刻圖一句話</div>
+            <div>
+              <input class="editor-input" id="agEngravingQuote" placeholder="例如:第一次知道眼鏡可以雷雕客製,把心意刻進鏡片裡,變成最特別的禮物。"/>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在雷刻頁的 KOL 配鏡分享區</div>
+            </div>
+          </div>
+          <div class="editor-row">
+            <div class="editor-label">故事內容</div>
             <div>
               <textarea class="editor-area" id="agJoiningStory" placeholder="這位創作者跟樂活如何開始合作?說個小故事吧(空一行 = 段落分隔)" style="min-height:140px"></textarea>
               <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">空一行 = 段落分隔</div>
@@ -1463,7 +1479,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-1100"></script>
+<script src="js/admin-portal.js?v=20260518-kol2"></script>
 
 </body>
 </html>
