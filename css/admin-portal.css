@@ -3521,21 +3521,6 @@
   letter-spacing: 0.3px;
 }
 
-/* focus-only hint - 預設隱藏,輸入框 focus 才顯示 */
-.editor-hint.editor-hint-focus {
-  max-height: 0;
-  margin: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: max-height .2s ease, opacity .15s ease, margin .2s ease;
-}
-.editor-row:focus-within > .editor-hint.editor-hint-focus,
-.editor-row:focus-within .editor-hint.editor-hint-focus {
-  max-height: 40px;
-  margin: 6px 0 0;
-  opacity: 1;
-}
-
 /* editor-textarea (高度 + monospace) */
 .editor-textarea {
   font-family: monospace !important;
@@ -3765,4 +3750,109 @@
 .ag-modal-footer .btn-danger:hover {
   background: #d05538 !important;
   color: #fff !important;
+}
+
+/* ===== Story Builder (聯名故事段落動態 UI) ===== */
+.ad .story-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ad .story-builder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ad .story-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid var(--lohas-line);
+  border-radius: 8px;
+  padding: 8px;
+}
+.ad .story-row-type {
+  flex-shrink: 0;
+  width: 80px;
+  border: 1px solid var(--lohas-line);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--lohas-brown);
+  background: var(--lohas-tip);
+  padding: 0 6px;
+  font-family: inherit;
+}
+.ad .story-row-text {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--lohas-line);
+  border-radius: 6px;
+  font-size: 13px;
+  padding: 8px 10px;
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.6;
+  font-family: inherit;
+  color: var(--lohas-text);
+}
+.ad .story-row-text:focus,
+.ad .story-row-type:focus {
+  outline: none;
+  border-color: var(--lohas-brown);
+}
+/* 引用樣式 — 顯示時就有差異 */
+.ad .story-row[data-type="quote"] .story-row-text {
+  background: #FAF6F0;
+  font-style: italic;
+  border-left: 3px solid var(--lohas-brown);
+}
+.ad .story-row-controls {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ad .story-row-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--lohas-line);
+  background: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--lohas-mute);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+.ad .story-row-btn:hover {
+  border-color: var(--lohas-brown);
+  color: var(--lohas-brown);
+}
+.ad .story-row-btn.danger:hover {
+  border-color: #d05538;
+  color: #d05538;
+}
+.ad .story-row-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.ad .story-builder-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ad .story-builder-actions .btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+.ad .story-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--lohas-mute);
+  font-size: 12px;
+  border: 1.5px dashed var(--lohas-line);
+  border-radius: 8px;
 }
