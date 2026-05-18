@@ -371,28 +371,61 @@
   margin-bottom: 3px;
 }
 .sd-staff-title {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-sub);
   letter-spacing: 1px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+.sd-staff-title i {
+  font-size: 10px;
+  color: var(--lohas-light);
 }
 .sd-staff-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   justify-content: center;
   margin-bottom: 14px;
   min-height: 48px;
 }
 .sd-staff-badge {
-  font-size: 10px;
-  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  padding: 4px 10px;
   background: var(--bg-warm);
   color: var(--text-sub);
   border-radius: var(--r-pill);
+  letter-spacing: 0.3px;
+  font-weight: 500;
+  line-height: 1.3;
+  border: 1px solid transparent;
+  transition: all 0.15s;
 }
-.sd-staff-badge.hot { background: #FBEFE7; color: #B5743A; }
-.sd-staff-badge.gold { background: var(--lohas-brand); color: var(--collab-gold); }
+.sd-staff-badge i {
+  font-size: 9px;
+  color: var(--lohas-light);
+}
+.sd-staff-badge.hot {
+  background: #FBEFE7;
+  color: #B5743A;
+  border-color: rgba(181, 116, 58, 0.15);
+}
+.sd-staff-badge.hot i { color: #B5743A; }
+.sd-staff-badge.gold {
+  background: linear-gradient(135deg, var(--lohas-brand) 0%, #3D3225 100%);
+  color: var(--collab-gold);
+  border-color: var(--collab-gold);
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  padding: 4px 12px;
+}
+.sd-staff-badge.gold i { color: var(--collab-gold); }
 .sd-staff-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -494,51 +527,132 @@
   text-align: right;
   font-weight: 500;
 }
-.sd-review-grid {
+/* === Review List（新版：彙整所有員工的真實評價） === */
+.sd-review-list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 14px;
+  margin-top: 18px;
 }
 .sd-review-card {
   background: var(--bg-warm);
   border-radius: var(--r-lg);
-  padding: 20px;
+  padding: 18px 20px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.sd-review-card:hover {
+  border-color: var(--lohas-bd);
+  background: #fff;
+  box-shadow: var(--sh-soft);
 }
 .sd-review-head {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .sd-review-avatar {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--lohas-light) 0%, var(--lohas-hover) 100%);
+  background-size: cover;
+  background-position: center;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-tc);
   font-size: 14px;
-  font-weight: 700;
+  flex-shrink: 0;
 }
-.sd-review-name {
-  font-size: 12.5px;
-  font-weight: 500;
+.sd-review-info {
+  flex: 1;
+  min-width: 0;
+}
+.sd-review-staff {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--lohas-brand);
+  letter-spacing: 0.5px;
 }
-.sd-review-time {
-  font-size: 10.5px;
-  color: var(--text-muted);
-}
-.sd-review-stars {
-  color: #E8B547;
+.sd-review-member {
   font-size: 11px;
-  margin-bottom: 8px;
+  color: var(--text-muted);
+  margin-top: 1px;
 }
-.sd-review-text {
+.sd-review-score {
+  color: #E8B547;
+  font-size: 13px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+.sd-review-content {
+  font-size: 12.5px;
+  color: var(--text-sub);
+  line-height: 1.7;
+  letter-spacing: 0.3px;
+}
+.sd-review-more {
+  text-align: center;
+  margin-top: 18px;
+}
+.sd-review-more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
   font-size: 12px;
+  color: var(--lohas-brand);
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-pill);
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.sd-review-more a:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+
+/* === 區段標籤（Coming Soon 等）=== */
+.sd-sec-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* === 特約商家佔位 === */
+.sd-partners-placeholder {
+  background: var(--bg-warm);
+  border: 1px dashed var(--lohas-bd);
+  border-radius: var(--r-lg);
+  padding: 50px 24px;
+  text-align: center;
+}
+.sd-partners-placeholder i {
+  font-size: 38px;
+  color: var(--lohas-light);
+  margin-bottom: 14px;
+  display: inline-block;
+}
+.sd-partners-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--lohas-brand);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.sd-partners-msg {
+  font-size: 12.5px;
   color: var(--text-sub);
   line-height: 1.7;
 }
@@ -629,6 +743,7 @@
     grid-template-rows: 1fr;
   }
   .sd-review-grid { grid-template-columns: 1fr; }
+  .sd-review-list { grid-template-columns: 1fr; }
   .sd-review-summary { grid-template-columns: 1fr; }
   .sd-score-block {
     border-right: 0;
@@ -649,4 +764,6 @@
   .sd-staff-row { grid-template-columns: 1fr; }
   .sd-quick-stats { grid-template-columns: repeat(2, 1fr); }
   .sd-q-stat:nth-child(3) { border-left: 0; }
+  .sd-partners-placeholder { padding: 36px 18px; }
+  .sd-partners-placeholder i { font-size: 30px; }
 }
