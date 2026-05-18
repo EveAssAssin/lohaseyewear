@@ -3018,15 +3018,15 @@
 }
 
 
-/* === 本月精選 creator 視覺 (樂活棕金) === */
+/* === 本月精選 creator 視覺 (深紫香檳金) === */
 .ad .creator-card.is-featured{
-  border-color:#9D7E3F;
+  border-color:#3D2E4D;
   background:linear-gradient(180deg, #FAF7F2 0%, #fff 100%);
-  box-shadow:0 4px 14px rgba(80, 66, 45, 0.15);
+  box-shadow:0 4px 14px rgba(61, 46, 77, 0.15);
 }
 .ad .creator-card-tag.featured{
-  background:linear-gradient(135deg, #50422D 0%, #9D7E3F 100%);
-  color:#fff;
+  background:linear-gradient(135deg, #3D2E4D 0%, #5A4570 100%);
+  color:#D4B068;
   font-weight:600;
   letter-spacing:0.5px;
 }
@@ -3037,17 +3037,17 @@
 
 /* 本月精選按鈕狀態 */
 .ad .btn.featured-on{
-  background:linear-gradient(135deg, #50422D 0%, #9D7E3F 100%);
-  color:#fff;
-  border-color:#50422D;
+  background:linear-gradient(135deg, #3D2E4D 0%, #5A4570 100%);
+  color:#D4B068;
+  border-color:#3D2E4D;
 }
 .ad .btn.featured-on:hover{
-  background:linear-gradient(135deg, #3D3221 0%, #856930 100%);
+  background:linear-gradient(135deg, #2E1F3D 0%, #4A3760 100%);
 }
 .ad .btn.featured-off{
   border-style:dashed;
-  border-color:#9D7E3F;
-  color:#50422D;
+  border-color:#3D2E4D;
+  color:#3D2E4D;
 }
 .ad .btn.featured-off:hover{
   background:#FAF7F2;
