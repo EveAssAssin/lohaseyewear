@@ -3020,12 +3020,12 @@
 
 /* === 本月精選 creator 視覺 (深紫香檳金) === */
 .ad .creator-card.is-featured{
-  border-color:#E0B020;
-  background:linear-gradient(180deg, #FFF7E0 0%, #fff 100%);
-  box-shadow:0 4px 14px rgba(245, 200, 66, 0.20);
+  border-color:#F0D87A;
+  background:linear-gradient(180deg, #FFFBEC 0%, #fff 100%);
+  box-shadow:0 4px 14px rgba(248, 219, 122, 0.18);
 }
 .ad .creator-card-tag.featured{
-  background:#F5C842;
+  background:#FBE07A;
   color:#1A1A1A;
   font-weight:600;
   letter-spacing:0.5px;
@@ -3037,21 +3037,21 @@
 
 /* 本月精選按鈕狀態 */
 .ad .btn.featured-on{
-  background:#F5C842;
+  background:#FBE07A;
   color:#1A1A1A;
-  border-color:#E0B020;
+  border-color:#F0D87A;
   font-weight:600;
 }
 .ad .btn.featured-on:hover{
-  background:#E0B020;
+  background:#F5D464;
 }
 .ad .btn.featured-off{
   border-style:dashed;
-  border-color:#E0B020;
+  border-color:#F0D87A;
   color:#1A1A1A;
 }
 .ad .btn.featured-off:hover{
-  background:#FFF7E0;
+  background:#FFFBEC;
   border-style:solid;
 }
 
