@@ -556,7 +556,7 @@
   border-color: var(--lohas-hover);
 }
 
-/* === 手機版底部 FAB：清單 / 地圖 切換 === */
+/* === 手機版底部 FAB：清單 / 地圖 切換（白底深咖啡） === */
 .as-view-toggle {
   display: none;
   position: fixed;
@@ -564,21 +564,25 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
-  background: var(--lohas-brand);
-  color: #fff;
+  background: #fff;
+  color: var(--lohas-brand);
   padding: 13px 24px;
   border-radius: var(--r-pill);
   font-family: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 1.5px;
-  border: 0;
+  border: 1px solid var(--lohas-bd);
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(80, 66, 45, 0.35);
+  box-shadow: 0 8px 24px rgba(80, 66, 45, 0.18);
   align-items: center;
   gap: 8px;
+  transition: all 0.15s;
 }
-.as-view-toggle:hover { background: var(--lohas-hover); }
+.as-view-toggle:hover {
+  border-color: var(--lohas-brand);
+  box-shadow: 0 10px 28px rgba(80, 66, 45, 0.25);
+}
 .as-view-toggle i { font-size: 13px; }
 
 /* === 響應式 === */
