@@ -1348,13 +1348,6 @@
             </div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">刻圖一句話</div>
-            <div>
-              <input class="editor-input" id="agEngravingQuote" placeholder="例如:第一次知道眼鏡可以雷雕客製,把心意刻進鏡片裡,變成最特別的禮物。"/>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在雷刻頁的 KOL 配鏡分享區</div>
-            </div>
-          </div>
-          <div class="editor-row">
             <div class="editor-label">故事內容</div>
             <div>
               <textarea class="editor-area" id="agJoiningStory" placeholder="這位創作者跟樂活如何開始合作?說個小故事吧(空一行 = 段落分隔)" style="min-height:140px"></textarea>
@@ -1366,17 +1359,19 @@
         <div class="editor-panel">
           <h3 class="editor-panel-h">
             <i class="fa-regular fa-rectangle-list"></i>自訂內容區塊
-            <button class="btn" id="agAddCustomBlockBtn" type="button" style="margin-left:auto;font-size:11px;padding:6px 12px">
-              <i class="fa-solid fa-plus"></i>新增區塊
-            </button>
           </h3>
           <div id="agCustomBlocksList">
-            <p class="empty-text" style="padding:30px 20px;font-size:12px">點上方「新增區塊」加入自訂的圖文段落</p>
+            <p class="empty-text" style="padding:30px 20px;font-size:12px">點下方「新增區塊」加入自訂的圖文段落</p>
+          </div>
+          <div style="display:flex;justify-content:flex-end;padding:8px 4px 0">
+            <button class="btn" id="agAddCustomBlockBtn" type="button" style="font-size:12px;padding:8px 16px">
+              <i class="fa-solid fa-plus"></i>新增區塊
+            </button>
           </div>
         </div>
 
         <div class="editor-panel">
-          <h3 class="editor-panel-h"><i class="fa-regular fa-image"></i>KOL 配鏡分享主圖</h3>
+          <h3 class="editor-panel-h"><i class="fa-regular fa-image"></i>KOL 配鏡分享</h3>
           <div class="editor-row">
             <div class="editor-label">主圖</div>
             <div>
@@ -1397,22 +1392,24 @@
               <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">1:1 正方圖,顯示在雷刻頁 KOL 配鏡分享區的小卡 · 建議尺寸 800 × 800 px</div>
             </div>
           </div>
+          <div class="editor-row">
+            <div class="editor-label">想跟大家說的話</div>
+            <div>
+              <input class="editor-input" id="agEngravingQuote" placeholder="例如:第一次知道眼鏡可以雷雕客製,把心意刻進鏡片裡,變成最特別的禮物。"/>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在雷刻頁的 KOL 配鏡分享區小卡</div>
+            </div>
+          </div>
         </div>
 
         <!-- 分享照片區 (官方創作者用,管理員代上傳,自動通過審核) -->
         <div class="editor-panel" id="agShareSection" style="display:none">
           <h3 class="editor-panel-h">
             <i class="fa-regular fa-camera"></i>分享照片
-            <button class="btn" id="agAddPhotoBtn" type="button" style="margin-left:auto;font-size:11px;padding:6px 12px">
-              <i class="fa-solid fa-plus"></i>新增照片
-            </button>
           </h3>
           <div style="padding:0 4px 12px;font-size:11.5px;color:var(--lohas-mute);letter-spacing:0.3px">
             上傳的照片會出現在創作者公開頁的「分享照片」區與分享牆,直接通過審核。
           </div>
-          <div id="agPhotosList">
-            <p class="empty-text" style="padding:30px 20px;font-size:12px">尚未上傳照片</p>
-          </div>
+          <div id="agPhotosList"></div>
           <input type="file" id="agPhotoInput" class="visually-hidden" accept="image/*" multiple>
         </div>
 
