@@ -3025,8 +3025,8 @@
   box-shadow:0 4px 14px rgba(61, 46, 77, 0.15);
 }
 .ad .creator-card-tag.featured{
-  background:linear-gradient(135deg, #3D2E4D 0%, #5A4570 100%);
-  color:#D4B068;
+  background:#F5C842;
+  color:#1A1A1A;
   font-weight:600;
   letter-spacing:0.5px;
 }
