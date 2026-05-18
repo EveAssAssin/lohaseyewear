@@ -162,6 +162,13 @@
   function goTo(page, opts) {
     opts = opts || {};
 
+    // 離開「樂活官方上傳」頁時,清掉「代創作者」旗標
+    if (page !== 'admin-upload' && window.__adminUploadAsCreator) {
+      delete window.__adminUploadAsCreator;
+      const banner = document.getElementById('adminUploadBanner');
+      if (banner) banner.style.display = 'none';
+    }
+
     // 「新增創作者個人頁」改成: 跳到 creators 頁 + 打開 Modal
     if (page === 'admin-grant-creator') {
       goTo('creators');  // 點亮創作者管理 + 顯示列表
@@ -2196,13 +2203,23 @@
         status: 'approved'
       };
 
+      // 如果是「代某創作者上傳」,改 member_id + customer_name
+      if (window.__adminUploadAsCreator?.member_id) {
+        payload.member_id = window.__adminUploadAsCreator.member_id;
+        if (window.__adminUploadAsCreator.name) {
+          payload.customer_name = window.__adminUploadAsCreator.name;
+        }
+      }
+
       hint.textContent = '寫入資料庫中...';
 
       const { error: insertError } = await sb.from('gallery_posts').insert(payload);
       if (insertError) throw insertError;
 
       hint.style.color = 'var(--status-approved)';
-      hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})`;
+      const asCreator = window.__adminUploadAsCreator;
+      const suffix = asCreator ? ` · 已歸給「${asCreator.name || asCreator.member_id}」` : '';
+      hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})${suffix}`;
 
       adminUploadReset();
       loadAdminUploadHistory();
@@ -2477,6 +2494,44 @@
       });
     }
 
+    // 「開啟上傳模組」按鈕: 跳到樂活官方上傳頁,帶 query 標示為哪位創作者上傳
+    const openShareBtn = document.getElementById('agOpenShareBtn');
+    if (openShareBtn && !openShareBtn.dataset.bound) {
+      openShareBtn.dataset.bound = '1';
+      openShareBtn.addEventListener('click', () => {
+        const mid = AGState.editMemberId;
+        const name = document.getElementById('agDisplayName').value.trim();
+        if (!mid) {
+          alert('請先儲存創作者後再分享照片');
+          return;
+        }
+        // 設定全域 state 標示這次上傳是代哪位 creator 發
+        window.__adminUploadAsCreator = { member_id: mid, name: name };
+        // 跳到樂活官方上傳頁
+        goTo('admin-upload');
+        // 預填 customer_name + 顯示 banner
+        const nameInput = document.getElementById('adminUploadName');
+        if (nameInput && name) nameInput.value = name;
+        const banner = document.getElementById('adminUploadBanner');
+        const bannerName = document.getElementById('adminUploadAsCreatorName');
+        if (banner) banner.style.display = 'flex';
+        if (bannerName) bannerName.textContent = name || mid;
+      });
+    }
+
+    // banner 「取消代上傳」按鈕
+    const cancelAs = document.getElementById('adminUploadCancelAs');
+    if (cancelAs && !cancelAs.dataset.bound) {
+      cancelAs.dataset.bound = '1';
+      cancelAs.addEventListener('click', () => {
+        delete window.__adminUploadAsCreator;
+        const banner = document.getElementById('adminUploadBanner');
+        if (banner) banner.style.display = 'none';
+        const nameInput = document.getElementById('adminUploadName');
+        if (nameInput) nameInput.value = 'LOHAS 企劃部';
+      });
+    }
+
     // 第一次 init 時更新 fallback
     if (displayName) {
       const ed = document.getElementById('agAvatar');
@@ -2505,6 +2560,10 @@
     }
     const kc = document.getElementById('agKolMainClear');
     if (kc) kc.style.display = 'none';
+
+    // reset 分享區 (預設隱藏)
+    const shareSec = document.getElementById('agShareSection');
+    if (shareSec) shareSec.style.display = 'none';
 
     // 重置頭像
     AGState.avatarBase64 = null;
@@ -3142,6 +3201,13 @@
       const clearBtn = document.getElementById('agKolMainClear');
       if (clearBtn) clearBtn.style.display = 'flex';
       AGState.existingKolMainUrl = c.kol_main_image_url;
+    }
+
+    // 「分享我的照片」區: 僅官方 (virt-) 創作者顯示
+    const shareSec = document.getElementById('agShareSection');
+    if (shareSec) {
+      const isVirt = (c.member_id || '').startsWith('virt-');
+      shareSec.style.display = isVirt ? '' : 'none';
     }
   }
 
