@@ -94,7 +94,7 @@
       .eq('member_id', erpid)
       .eq('status', 'approved');
 
-    // 合併:照片卡 + 故事卡 都顯示在「刻圖分享照片」區
+    // 合併:照片卡 + 故事卡 都顯示在「分享照片」區
     const allPhotos = (photos || []).slice(0, 12);
 
     // 渲染
@@ -135,7 +135,7 @@
         }).join('')
       : '<p class="empty-text" style="grid-column:1/-1">還沒上架任何設計</p>';
 
-    // 刻圖分享照片 (合併 photo + story 卡)
+    // 分享照片 (合併 photo + story 卡)
     const photosHtml = allPhotos.length > 0
       ? allPhotos.map((p, i) => {
           const cover = p.main_image_url || (Array.isArray(p.image_urls) && p.image_urls[0]) || '';
@@ -199,9 +199,6 @@
           <a href="market.html">創作刻圖市集</a> &nbsp;›&nbsp;
           <b>${escapeHtml(dn)}</b>
         </div>
-        <div class="actions">
-          <button id="shareBtn"><i class="fa-solid fa-arrow-up-from-bracket"></i>分享</button>
-        </div>
       </div>
 
       <div class="pf-hero">
@@ -222,7 +219,7 @@
         ${joiningStory ? '<button class="anchor on" data-target="sec-joining">與樂活的緣分</button><span class="anchor-divider"></span>' : ''}
         <button class="anchor ${joiningStory ? '' : 'on'}" data-target="sec-designs">我的刻圖設計</button>
         <span class="anchor-divider"></span>
-        <button class="anchor" data-target="sec-photos">刻圖分享照片</button>
+        <button class="anchor" data-target="sec-photos">分享照片</button>
       </div>
 
       ${joiningSection}
@@ -238,7 +235,7 @@
 
       <div class="pf-section" id="sec-photos">
         <div class="pf-section-eb">PHOTOS</div>
-        <h2 class="pf-section-h">刻圖分享照片</h2>
+        <h2 class="pf-section-h">分享照片</h2>
         <div class="pf-section-sub">${allPhotos.length} 張公開照片</div>
         <div class="photos-grid">${photosHtml}</div>
       </div>
