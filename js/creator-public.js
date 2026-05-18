@@ -176,16 +176,32 @@
 
     // 自訂區塊
     const customBlocksHtml = customBlocks.length > 0
-      ? customBlocks.map((b, i) => `
-          <div class="pf-section">
-            <div class="pf-section-eb">SECTION · 0${i + 1}</div>
-            <h2 class="pf-section-h">${escapeHtml(b.title || '自訂區塊')}</h2>
-            <div class="joining-content">
-              ${b.image ? `<div class="joining-photo" style="background-image:url('${escapeHtml(b.image)}')"></div>` : '<div></div>'}
-              <div class="joining-text">${escapeHtml(b.text || '')}</div>
+      ? customBlocks.map((b, i) => {
+          const hasTitle = b.title && b.title.trim();
+          // 第 1 個自訂 (idx=0): 圖右文左 (跟緣分區交錯)
+          // 第 2 個自訂 (idx=1): 圖左文右
+          const isReverse = (i % 2 === 0);
+          const contentStyle = isReverse
+            ? 'style="display:grid;grid-template-columns:1fr 1fr;gap:30px;direction:rtl"'
+            : '';
+          const innerStyle = isReverse ? 'style="direction:ltr"' : '';
+          const titleBlock = hasTitle
+            ? `<div class="pf-section-eb">SECTION · 0${i + 1}</div>
+               <h2 class="pf-section-h">${escapeHtml(b.title)}</h2>`
+            : '';
+
+          return `
+            <div class="pf-section">
+              ${titleBlock}
+              <div class="joining-content" ${contentStyle}>
+                ${b.image
+                  ? `<div class="joining-photo" ${innerStyle} style="background-image:url('${escapeHtml(b.image)}')${isReverse ? ';direction:ltr' : ''}"></div>`
+                  : '<div></div>'}
+                <div class="joining-text" ${innerStyle}>${escapeHtml(b.text || '')}</div>
+              </div>
             </div>
-          </div>
-        `).join('')
+          `;
+        }).join('')
       : '';
 
     document.getElementById('cpLoading').style.display = 'none';

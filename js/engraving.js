@@ -16,13 +16,17 @@
 
   async function loadKOL() {
     const section = document.getElementById(SECTION_ID);
-    if(!section) return;
+    if(!section) {
+      console.warn('[engraving KOL] 找不到 #kolSection');
+      return;
+    }
 
     const sb = window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
     if(!sb){
       console.warn('[engraving KOL] Supabase 未配置,保留靜態卡片');
       return;
     }
+    console.log('[engraving KOL] Supabase ready, querying creator_info...');
 
     try {
       // 抓所有 active 創作者(含必要欄位)
@@ -37,19 +41,24 @@
         console.error('[engraving KOL] 載入失敗,保留靜態卡片', error);
         return;
       }
+      console.log('[engraving KOL] 抓到', data?.length || 0, '位有 engraving_quote 的創作者', data);
 
       const creators = data || [];
       if(creators.length === 0){
-        // 沒有真實資料,保留 HTML 內的 8 張假資料卡
+        console.log('[engraving KOL] 沒有真實資料,保留靜態 8 張假卡');
         return;
       }
 
       // 全部隨機排序
       shuffle(creators);
-      const ordered = creators;
 
-      // render
-      section.innerHTML = ordered.map((c, idx) => renderKolCard(c, idx)).join('');
+      // 計算現有 .split-item 數量,讓新卡片接續 inverse 規則
+      const existingCount = section.querySelectorAll('.split-item').length;
+
+      // 在現有 HTML 8 張之後 append
+      const newHtml = creators.map((c, i) => renderKolCard(c, existingCount + i)).join('');
+      console.log('[engraving KOL] 既有', existingCount, '張 + 新增', creators.length, '張');
+      section.insertAdjacentHTML('beforeend', newHtml);
 
     } catch (err) {
       console.error('[engraving KOL] err,保留靜態卡片', err);
@@ -63,7 +72,7 @@
     const name = escHtml(c.display_name || '創作者');
     const tag = escHtml((c.tagline || 'DESIGNER').toUpperCase());
     const quote = escHtml(c.engraving_quote || '');
-    const link = 'creator-page.html?id=' + encodeURIComponent(c.member_id || '');
+    const link = 'creator-public.html?id=' + encodeURIComponent(c.member_id || '');
 
     return (
       '<div class="split-item' + inverse + '">' +
