@@ -5,15 +5,14 @@
    --------------------------------------------
    頁面結構：
    - .sd-breadcrumb            麵包屑（在 main-header 下）
-   - .sd-layout                左內容 / 右 sticky 預約面板
+   - .sd-layout                單欄主版型
    - .sd-hero                  Hero banner（漸層 + slogan）
-   - .booking-prompt-bar       Hero 下方預約提示橫條（用 store-components）
-   - .sd-body                  左側內容區
-   - .sd-quick-stats           4 格 stats（營業中 / 評分 / 驗光師 / 距離）
+   - .sd-info-strip            Hero 下方的資訊條（地址/電話/時間/預約 CTA）
+   - .sd-body                  內容區
+   - .sd-quick-stats           4 格 stats（營業中 / 評分 / 驗光師 / 區域）
    - .sd-gallery               店內空間
-   - .sd-staff-row             驗光師預約卡
-   - .sd-reviews               顧客評價
-   - .sd-right                 右側 sticky 預約面板
+   - .sd-staff-row             驗光師預約卡（人像為主視覺）
+   - .sd-review-list           顧客評價
    ============================================= */
 
 .sd-page {
@@ -49,16 +48,118 @@
   font-weight: 500;
 }
 
-/* === 主版型 === */
+/* === 主版型（單欄，右側 info 已併入 hero 下方 info-strip） === */
 .sd-layout {
-  display: grid;
-  grid-template-columns: 1fr 480px;
+  display: block;
   min-height: calc(100vh - 70px - 50px);
 }
 
 .sd-left {
   background: #fff;
 }
+
+/* === Hero 下方資訊條（橫向：地址 / 電話 / 時間 / 預約 CTA） === */
+.sd-info-strip {
+  background: #fff;
+  border-bottom: 1px solid var(--lohas-bd);
+}
+.sd-info-strip-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 18px 40px;
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.5fr auto;
+  gap: 28px;
+  align-items: center;
+}
+.sd-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s;
+}
+.sd-info-cell[href]:hover { opacity: 0.7; }
+.sd-info-cell-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg-warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lohas-brand);
+  font-size: 14px;
+}
+.sd-info-cell-body { min-width: 0; }
+.sd-info-cell-label {
+  font-size: 10.5px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sd-info-status {
+  font-size: 10px;
+  color: var(--ok, #5F7A5A);
+  letter-spacing: 0.3px;
+  font-weight: 600;
+}
+.sd-info-cell-value {
+  font-size: 13.5px;
+  color: var(--text-main);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sd-info-cta {
+  background: var(--lohas-brand);
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: var(--r-pill);
+  padding: 12px 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.sd-info-cta:hover {
+  background: var(--lohas-hover);
+  transform: translateY(-1px);
+}
+.sd-info-cta-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+.sd-info-cta-text b {
+  font-size: 13px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.sd-info-cta-text span {
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  opacity: 0.75;
+}
+.sd-info-cta i {
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+.sd-info-cta:hover i { transform: translateX(3px); }
 
 /* === Hero === */
 .sd-hero {
@@ -346,15 +447,17 @@
   border: 2px solid var(--collab-gold);
 }
 
-/* === 上半部：人像主視覺（佔卡片高度 ~62%） === */
+/* === 上半部：人像主視覺（1:1 大頭像區塊，只露出上 2/3 上身） === */
 .sd-staff-photo {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1;
   background-color: var(--bg-soft);
-  background-size: cover;
-  background-position: center 18%;     /* 略偏上以對齊臉部 */
+  background-size: 130% auto;            /* 放大 1.3 倍，讓頭部主體更突出 */
+  background-position: center 8%;        /* 對齊頭頂下方 8%，臉部置中、留出空間給上方角標 */
+  background-repeat: no-repeat;
   overflow: hidden;
+  transition: background-position 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .sd-staff-photo::after {
   content: "";
@@ -362,14 +465,14 @@
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(45, 36, 24, 0.85) 0%,
-    rgba(45, 36, 24, 0.45) 35%,
-    rgba(45, 36, 24, 0) 65%
+    rgba(45, 36, 24, 0.78) 0%,
+    rgba(45, 36, 24, 0.35) 30%,
+    rgba(45, 36, 24, 0) 55%
   );
   transition: opacity 0.3s;
 }
 .sd-staff-card:hover .sd-staff-photo {
-  background-position: center 12%;     /* hover 時略往上滑，有「靠近」的感覺 */
+  background-position: center 5%;        /* hover 時略往上滑 */
 }
 
 /* 照片不存在時的 fallback */
@@ -395,7 +498,7 @@
   color: #fff;
 }
 
-/* === 角標：王牌顧問（左上）/ 職稱（右上） === */
+/* === 角標：只剩王牌顧問（其他資訊在照片底部） === */
 .sd-staff-pin {
   position: absolute;
   top: 14px;
@@ -403,29 +506,20 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 12px;
+  padding: 5px 11px;
   border-radius: var(--r-pill);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-size: 10.5px;
+  font-weight: 700;
   line-height: 1;
-  backdrop-filter: blur(8px);
 }
 .sd-staff-pin i { font-size: 10px; }
 .sd-staff-pin.gold {
   left: 14px;
   background: var(--collab-gold);
   color: var(--lohas-brand);
-  letter-spacing: 1.5px;
-  font-weight: 700;
-  box-shadow: 0 4px 12px rgba(212, 176, 104, 0.4);
+  letter-spacing: 2px;
+  box-shadow: 0 4px 12px rgba(212, 176, 104, 0.5);
 }
-.sd-staff-pin.role {
-  right: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--lohas-brand);
-}
-.sd-staff-pin.role i { color: var(--lohas-brand); }
 
 /* === 照片底部：姓名 + 職稱（疊壓在漸層上） === */
 .sd-staff-photo-info {
@@ -775,82 +869,14 @@
   line-height: 1.7;
 }
 
-/* === Right sticky panel === */
-.sd-right {
-  background: var(--bg-warm);
-  border-left: 1px solid var(--lohas-bd);
-  position: sticky;
-  top: 120px;             /* 70 header + 50 breadcrumb */
-  align-self: start;
-  height: calc(100vh - 120px);
-  overflow-y: auto;
-}
-.sd-right-pad { padding: 28px 28px 40px; }
-
-.sd-info-list {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* 特色服務區塊 */
-.sd-feat-block {
-  margin-top: 24px;
-  background: #fff;
-  border-radius: var(--r-lg);
-  padding: 18px;
-}
-.sd-feat-block h4 {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--lohas-brand);
-  margin-bottom: 12px;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.sd-feat-block h4 i { color: var(--lohas-light); }
-.sd-feat-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.sd-feat-ul li {
-  padding: 6px 0;
-  padding-left: 22px;
-  position: relative;
-  font-size: 12px;
-  color: var(--text-sub);
-  line-height: 1.6;
-}
-.sd-feat-ul li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  top: 6px;
-  width: 16px;
-  height: 16px;
-  background: var(--bg-warm);
-  color: var(--lohas-brand);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  font-weight: 700;
-}
-
 /* === 響應式 === */
 @media (max-width: 1100px) {
-  .sd-layout { grid-template-columns: 1fr; }
-  .sd-right {
-    position: static;
-    height: auto;
-    border-left: 0;
-    border-top: 1px solid var(--lohas-bd);
+  .sd-info-strip-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
+    padding: 18px 28px;
   }
+  .sd-info-cta { grid-column: span 2; justify-content: center; }
   .sd-gallery {
     grid-template-columns: 1fr;
     grid-template-rows: 200px 200px;
@@ -880,8 +906,13 @@
   .sd-hero { height: 360px; }
   .sd-hero h1 { font-size: 36px; letter-spacing: 3px; }
   .sd-hero-slogan { font-size: 14px; letter-spacing: 1px; }
+  .sd-info-strip-inner {
+    grid-template-columns: 1fr;
+    padding: 16px 20px;
+    gap: 14px;
+  }
+  .sd-info-cta { grid-column: 1; width: 100%; justify-content: center; }
   .sd-staff-row { grid-template-columns: 1fr; gap: 16px; }
-  .sd-staff-photo { aspect-ratio: 3 / 4; }     /* 手機改成稍矮的比例，避免太長 */
   .sd-staff-name { font-size: 22px; letter-spacing: 3px; }
   .sd-quick-stats { grid-template-columns: repeat(2, 1fr); }
   .sd-q-stat:nth-child(3) { border-left: 0; }

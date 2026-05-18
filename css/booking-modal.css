@@ -27,7 +27,7 @@
   background: #fff;
   border-radius: var(--r-xl);
   width: 100%;
-  max-width: 560px;
+  max-width: 780px;
   max-height: 92vh;
   display: flex;
   flex-direction: column;
@@ -154,51 +154,97 @@
   margin-bottom: 10px;
 }
 
-/* === 驗光師選擇 === */
+/* === 驗光師選擇（大頭像卡片版） === */
 .bm-staff-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 .bm-staff-pick {
-  background: var(--bg-warm);
-  border-radius: 12px;
-  padding: 14px 8px;
-  text-align: center;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.bm-staff-pick:hover { background: var(--bg-soft); }
-.bm-staff-pick.active {
   background: #fff;
-  border-color: var(--lohas-brand);
-  box-shadow: var(--sh-soft);
+  border: 2px solid var(--lohas-bd);
+  border-radius: var(--r-lg);
+  padding: 18px 16px 18px 20px;
+  display: grid;
+  grid-template-columns: 80px 1fr 28px;
+  gap: 16px;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
 }
-.bm-staff-pick .av {
-  width: 44px;
-  height: 44px;
+.bm-staff-pick:hover {
+  border-color: var(--lohas-light);
+  background: var(--bg-warm);
+  transform: translateY(-1px);
+}
+.bm-staff-pick.active {
+  border-color: var(--lohas-brand);
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(80, 66, 45, 0.12);
+}
+.bm-staff-pick-photo {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--lohas-light) 0%, var(--lohas-hover) 100%);
   background-size: cover;
-  background-position: center;
-  color: #fff;
+  background-position: center 18%;        /* 上 2/3 裁切 */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
-  font-weight: 700;
-  margin: 0 auto 6px;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(80, 66, 45, 0.08);
 }
-.bm-staff-pick .name {
-  font-size: 12px;
+.bm-staff-pick-photo .initial {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.bm-staff-pick-info {
+  min-width: 0;
+}
+.bm-staff-pick-name {
+  font-size: 18px;
   font-weight: 700;
   color: var(--lohas-brand);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+  line-height: 1.2;
 }
-.bm-staff-pick .sub {
-  font-size: 10px;
+.bm-staff-pick-role {
+  font-size: 12px;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.bm-staff-pick-honor {
+  font-size: 11px;
+  color: #B5743A;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.bm-staff-pick-honor i { font-size: 10px; }
+.bm-staff-pick-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-soft);
   color: var(--text-muted);
-  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.bm-staff-pick.active .bm-staff-pick-check {
+  background: var(--lohas-brand);
+  color: #fff;
 }
 
 /* === 服務 chips === */
@@ -477,6 +523,9 @@
     max-height: 96vh;
     border-radius: var(--r-xl) var(--r-xl) 0 0;
   }
-  .bm-staff-grid { grid-template-columns: repeat(2, 1fr); }
+  .bm-staff-grid { grid-template-columns: 1fr; }
+  .bm-staff-pick { padding: 14px 12px 14px 14px; gap: 12px; grid-template-columns: 64px 1fr 24px; }
+  .bm-staff-pick-photo { width: 64px; height: 64px; }
+  .bm-staff-pick-name { font-size: 16px; }
   .bm-time-grid { grid-template-columns: repeat(3, 1fr); }
 }
