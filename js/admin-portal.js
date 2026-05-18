@@ -4036,6 +4036,7 @@
       setVal('cm_limit_total', '');
       setVal('cm_preorder_count', 0);
       setVal('cm_story_paragraphs', '');
+      renderStoryBuilder([]);
       setVal('cm_theme_primary', '#7A2754');
       setVal('cm_theme_primary_picker', '#7A2754');
       setVal('cm_theme_accent', '#F8E4ED');
@@ -4088,14 +4089,8 @@
       setVal('cm_preorder_count', c.preorder_count);
       setVal('cm_launch_date_text', c.launch_date_text);
       setVal('cm_available_stores', c.available_stores);
-      // 把 story_paragraphs (JSON array) 轉回純文字格式
-      const paragraphsTxt = (c.story_paragraphs || [])
-        .map(p => {
-          if (p.type === 'quote') return '> ' + (p.text || '');
-          return p.text || '';
-        })
-        .join('\n\n');
-      setVal('cm_story_paragraphs', paragraphsTxt);
+      // story_paragraphs (JSON array) → 餵給 builder
+      renderStoryBuilder(c.story_paragraphs || []);
       setVal('cm_creator_name', c.creator_name);
       setVal('cm_creator_subtitle', c.creator_subtitle);
       setVal('cm_interview_title', c.interview_title);
@@ -4162,6 +4157,108 @@
         el.innerHTML = `<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>`;
       }
     }
+
+    // ===== Story Builder (聯名故事段落) =====
+    function renderStoryBuilder(paragraphs){
+      const list = $('cm_story_list');
+      if(!list) return;
+      list.innerHTML = '';
+      if(!paragraphs || !paragraphs.length){
+        list.innerHTML = '<div class="story-empty">尚未新增段落,點下方「+ 新增段落」開始</div>';
+        return;
+      }
+      paragraphs.forEach((p, idx) => {
+        list.appendChild(makeStoryRow(p.type || 'p', p.text || '', idx, paragraphs.length));
+      });
+    }
+
+    function makeStoryRow(type, text, idx, total){
+      const row = document.createElement('div');
+      row.className = 'story-row';
+      row.dataset.type = type;
+      row.innerHTML = `
+        <select class="story-row-type">
+          <option value="p"${type==='p'?' selected':''}>段落</option>
+          <option value="quote"${type==='quote'?' selected':''}>引用</option>
+        </select>
+        <textarea class="story-row-text" rows="2" placeholder="${type==='quote'?'引用句(會顯示成斜體)':'段落內文'}">${escapeHtml(text)}</textarea>
+        <div class="story-row-controls">
+          <button type="button" class="story-row-btn" data-act="up" title="上移"${idx===0?' disabled':''}><i class="fa-solid fa-chevron-up"></i></button>
+          <button type="button" class="story-row-btn" data-act="down" title="下移"${idx===total-1?' disabled':''}><i class="fa-solid fa-chevron-down"></i></button>
+          <button type="button" class="story-row-btn danger" data-act="del" title="刪除"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `;
+      // type change → 同步 dataset (套樣式)
+      row.querySelector('.story-row-type').addEventListener('change', e => {
+        row.dataset.type = e.target.value;
+        const ta = row.querySelector('.story-row-text');
+        if(ta) ta.placeholder = e.target.value === 'quote' ? '引用句(會顯示成斜體)' : '段落內文';
+      });
+      // 控制按鈕
+      row.querySelectorAll('[data-act]').forEach(btn => {
+        btn.addEventListener('click', () => handleStoryAction(row, btn.dataset.act));
+      });
+      return row;
+    }
+
+    function handleStoryAction(row, act){
+      const list = $('cm_story_list');
+      if(!list) return;
+      if(act === 'del'){
+        row.remove();
+        // 沒了就顯示空狀態
+        if(!list.querySelector('.story-row')){
+          list.innerHTML = '<div class="story-empty">尚未新增段落,點下方「+ 新增段落」開始</div>';
+        } else {
+          refreshStoryRowButtons();
+        }
+      } else if(act === 'up'){
+        const prev = row.previousElementSibling;
+        if(prev && prev.classList.contains('story-row')) list.insertBefore(row, prev);
+        refreshStoryRowButtons();
+      } else if(act === 'down'){
+        const next = row.nextElementSibling;
+        if(next && next.classList.contains('story-row')) list.insertBefore(next, row);
+        refreshStoryRowButtons();
+      }
+    }
+
+    function refreshStoryRowButtons(){
+      const rows = $('cm_story_list').querySelectorAll('.story-row');
+      rows.forEach((row, idx) => {
+        const upBtn = row.querySelector('[data-act="up"]');
+        const downBtn = row.querySelector('[data-act="down"]');
+        if(upBtn) upBtn.disabled = idx === 0;
+        if(downBtn) downBtn.disabled = idx === rows.length - 1;
+      });
+    }
+
+    function addStoryRow(type){
+      const list = $('cm_story_list');
+      if(!list) return;
+      // 清空狀態
+      const empty = list.querySelector('.story-empty');
+      if(empty) empty.remove();
+      const currentRows = list.querySelectorAll('.story-row');
+      const newRow = makeStoryRow(type, '', currentRows.length, currentRows.length + 1);
+      list.appendChild(newRow);
+      refreshStoryRowButtons();
+      // 自動 focus 新加的 textarea
+      newRow.querySelector('.story-row-text')?.focus();
+    }
+
+    function collectStoryBuilder(){
+      const list = $('cm_story_list');
+      if(!list) return [];
+      const rows = list.querySelectorAll('.story-row');
+      return Array.from(rows).map(row => {
+        const type = row.querySelector('.story-row-type')?.value || 'p';
+        const text = row.querySelector('.story-row-text')?.value?.trim() || '';
+        return { type, text };
+      }).filter(p => p.text);
+    }
+
+    // ===== /Story Builder =====
 
     function bindMainImageUploads(){
       modal.querySelectorAll('.img-upload-wrap[data-field]').forEach(wrap => {
@@ -4390,18 +4487,8 @@
       }
       if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 格式錯誤'); return; }
 
-      // 解析 story paragraphs (純文字格式)
-      // 規則: 空一行 = 段落分隔;以 > 開頭 = 引用樣式
-      const storyTxt = val('cm_story_paragraphs') || '';
-      const paragraphs = storyTxt
-        .split(/\n\s*\n/)
-        .map(s => s.trim())
-        .filter(Boolean)
-        .map(s => {
-          if (s.startsWith('> ')) return { type: 'quote', text: s.slice(2).trim() };
-          if (s.startsWith('>')) return { type: 'quote', text: s.slice(1).trim() };
-          return { type: 'p', text: s };
-        });
+      // 從 story builder 收集 paragraphs
+      const paragraphs = collectStoryBuilder();
 
       // 處理主圖上傳
       let heroUrl = currentCollab?.hero_image_url || null;
@@ -4552,6 +4639,11 @@
 
     // Slug 即時 preview
     $('cm_slug').addEventListener('input', updateSlugPreview);
+
+    // Story builder: + 新增段落 / 新增引用
+    document.querySelectorAll('[data-add-story]').forEach(btn => {
+      btn.addEventListener('click', () => addStoryRow(btn.dataset.addStory));
+    });
 
     bindColorSync('cm_theme_primary', 'cm_theme_primary_picker');
     bindColorSync('cm_theme_accent', 'cm_theme_accent_picker');
