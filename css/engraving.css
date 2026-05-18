@@ -214,22 +214,8 @@
     flex-direction: column;
 }
 .grid-item:hover { transform: translateY(-5px); }
-.grid-img {
-    background: #FAF7F2;
-    aspect-ratio: 4/3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    border-bottom: 1px solid #E8DED1;
-}
-.grid-img img {
-    max-width: 70%;
-    max-height: 70%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-}
+.grid-img { background:#F4EEE3; aspect-ratio: 16/9; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.grid-img img { width: 70%; height: 70%; object-fit: contain; }
 .grid-text { padding: 20px; }
 .grid-text .tag { font-size: 10px; color: var(--lohas-light); letter-spacing: 1px; font-weight: bold; display: block; margin-bottom: 5px;}
 .grid-text h5 { color: var(--lohas-brand); font-size: 18px; margin-bottom: 12px;}
