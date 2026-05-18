@@ -8,7 +8,6 @@
    - .store-map-preview              假地圖卡片（單店頁右側用）
    - .store-info-row                 資訊列項（地址/電話/時間/捷運）
    - .store-status-dot               ● 營業中 狀態點
-   - .store-flag-tag                 旗艦 / 海外 標記
    - .booking-cta-card               棕底金按鈕預約 CTA 卡
    ============================================= */
 
@@ -30,28 +29,6 @@
 .region-pill.active { background: var(--lohas-brand); color: #fff; }
 .region-pill em { font-style: normal; opacity: 0.6; margin-left: 4px; font-size: 10px; }
 .region-pill.active em { opacity: 0.8; }
-
-/* === 旗艦標籤 === */
-.store-flag-tag {
-  display: inline-block;
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--lohas-brand);
-  color: #fff;
-  letter-spacing: 1px;
-  font-weight: 600;
-}
-.store-flag-tag.overseas { background: var(--c-solid); }
-
-/* === ERP 編號小 tag === */
-.store-erp-tag {
-  font-family: var(--font-tc);
-  font-size: 10px;
-  color: var(--text-muted);
-  font-weight: 400;
-  letter-spacing: 0.3px;
-}
 
 /* === 狀態 dot === */
 .store-status-dot {

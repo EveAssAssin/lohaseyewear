@@ -251,14 +251,6 @@
   color: #fff;
 }
 .as-store-row-btn.book:hover { background: var(--lohas-hover); color: #fff; }
-.as-store-row-erp {
-  position: absolute;
-  top: 18px;
-  right: 22px;
-  font-size: 11px;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
-}
 
 /* === 右側 Leaflet 地圖 === */
 .as-map {
@@ -315,10 +307,10 @@
 .lohas-pin-body {
   position: absolute;
   inset: 0;
-  background: var(--lohas-hover);
+  background: var(--lohas-brand);
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(80, 66, 45, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -330,13 +322,6 @@
   background: #fff;
   border-radius: 50%;
   transform: rotate(45deg);
-}
-.lohas-pin.flagship .lohas-pin-body {
-  background: var(--lohas-brand);
-  border: 2px solid #fff;
-}
-.lohas-pin.flagship .lohas-pin-body::after {
-  background: var(--collab-gold);
 }
 .lohas-pin.active .lohas-pin-body {
   background: var(--err);
@@ -376,9 +361,6 @@
   color: rgba(255, 255, 255, 0.3);
   font-size: 48px;
   position: relative;
-}
-.as-pin-card-img.flagship {
-  background: linear-gradient(135deg, #50422D 0%, #2D2418 100%);
 }
 .as-pin-card-flag {
   position: absolute;

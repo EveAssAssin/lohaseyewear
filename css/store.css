@@ -48,15 +48,6 @@
   color: var(--lohas-brand);
   font-weight: 500;
 }
-.sd-breadcrumb .erp-tag {
-  font-size: 10px;
-  background: var(--bg-warm);
-  color: var(--text-muted);
-  padding: 2px 7px;
-  border-radius: 4px;
-  letter-spacing: 0.3px;
-  margin-left: auto;
-}
 
 /* === 主版型 === */
 .sd-layout {
@@ -185,16 +176,6 @@
   align-items: baseline;
   gap: 14px;
   flex-wrap: wrap;
-}
-.sd-hero h1 .erp-tag {
-  font-family: var(--font-tc);
-  font-size: 13px;
-  letter-spacing: 1px;
-  font-weight: 400;
-  background: rgba(255, 255, 255, 0.18);
-  padding: 4px 10px;
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.85);
 }
 .sd-hero-slogan {
   font-family: var(--font-tc);
@@ -664,7 +645,6 @@
   .sd-breadcrumb i.sep { display: none; }
   .sd-hero { height: 360px; }
   .sd-hero h1 { font-size: 36px; letter-spacing: 3px; }
-  .sd-hero h1 .erp-tag { font-size: 11px; }
   .sd-hero-slogan { font-size: 14px; letter-spacing: 1px; }
   .sd-staff-row { grid-template-columns: 1fr; }
   .sd-quick-stats { grid-template-columns: repeat(2, 1fr); }
