@@ -256,12 +256,13 @@
       const arr = thisM.data || [];
       const creatorCount = arr.filter(d => d.type === 'creator').length;
       const collabCount = arr.filter(d => d.type === 'collab').length;
+      const storeCount = arr.filter(d => d.type === 'store').length;
       const memberCount = arr.filter(d => d.type === 'member' || !d.type).length;
       const totalDesigns = arr.length;
       const lastCount = lastM.count || 0;
 
       Utils.setText('#kpiNewDesigns', totalDesigns);
-      Utils.setText('#kpiNewDesignsBreakdown', formatTrend(totalDesigns, lastCount, `Creator ${creatorCount} · Collab ${collabCount} · Member ${memberCount}`));
+      Utils.setText('#kpiNewDesignsBreakdown', formatTrend(totalDesigns, lastCount, `Creator ${creatorCount} · Collab ${collabCount} · 門市 ${storeCount} · 官網 ${memberCount}`));
     } catch (err) {
       console.error('[本月新刻圖統計失敗]', err);
     }
@@ -1036,10 +1037,15 @@
         const grad = grads[i % grads.length];
         const typeLabel = d.type === 'collab' ? '<i class="fa-solid fa-crown" style="color:#9D7E3F"></i>Collab'
           : d.type === 'creator' ? '<i class="fa-solid fa-star" style="color:#9D7E3F"></i>Creator'
+          : d.type === 'store' ? '<i class="fa-solid fa-store" style="color:#9D7E3F"></i>門市 ' + escapeHtml(d.store_id || '')
           : 'Member';
-        const rolePillCls = d.type === 'collab' ? 'ip' : d.type === 'creator' ? 'creator' : 'member';
+        const rolePillCls = d.type === 'collab' ? 'ip'
+          : d.type === 'creator' ? 'creator'
+          : d.type === 'store' ? 'store'
+          : 'member';
         const rolePillContent = d.type === 'collab' ? '<i class="fa-solid fa-crown"></i>Collab'
           : d.type === 'creator' ? '<i class="fa-solid fa-star"></i>Creator'
+          : d.type === 'store' ? '<i class="fa-solid fa-store"></i>門市'
           : 'Member';
 
         const imgStyle = d.image_url
@@ -3285,7 +3291,7 @@
     container.innerHTML = mdState.filtered.map(d => {
       const imgUrl = mdValidUrl(d.image_url_svg) || mdValidUrl(d.image_url_png) || mdValidUrl(d.image_url) || '';
       const statusLabel = { approved:'已通過', pending:'待審核', rejected:'已駁回' }[d.status] || d.status || '--';
-      const typeLabel = { legacy:'舊官網', member:'會員' }[d.type] || d.type || '--';
+      const typeLabel = { legacy:'舊官網', member:'官網上傳', store:'門市上傳' }[d.type] || d.type || '--';
       const designer = d.designer_name || '匿名';
       const isShow = d.is_show || '上架';
       const showOn = isShow === '上架';
