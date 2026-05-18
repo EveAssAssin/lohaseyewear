@@ -995,6 +995,13 @@
         </div>
       </div>
 
+      <!-- 代創作者上傳 banner -->
+      <div id="adminUploadBanner" style="display:none;margin:16px 0;padding:14px 18px;background:#FAE5C9;border:1px solid #BA7517;border-radius:8px;color:#7C5A2B;font-size:13px;letter-spacing:0.4px;display:flex;align-items:center;gap:10px">
+        <i class="fa-solid fa-circle-info" style="font-size:16px"></i>
+        <div style="flex:1">目前是<b>代「<span id="adminUploadAsCreatorName">—</span>」上傳</b>,照片會歸到該創作者的「我的照片」區。</div>
+        <button type="button" class="btn" id="adminUploadCancelAs" style="font-size:12px;padding:5px 12px">取消代上傳</button>
+      </div>
+
       <div class="form-card">
         <div class="form-row">
           <label>顯示名稱</label>
@@ -1434,6 +1441,22 @@
           </div>
         </div>
 
+        <!-- 分享我的照片 (官方創作者用,點了開「樂活官方上傳」頁面帶當前 creator 身份) -->
+        <div class="editor-panel" id="agShareSection" style="display:none">
+          <h3 class="editor-panel-h"><i class="fa-regular fa-camera"></i>分享我的照片</h3>
+          <div style="padding:0 4px 14px;font-size:11.5px;color:var(--lohas-mute);letter-spacing:0.3px">
+            官方創作者沒有登入帳號無法自行分享,管理員可代為上傳照片。照片會出現在創作者公開頁的「我的照片」區與分享牆。
+          </div>
+          <div class="editor-row">
+            <div class="editor-label"></div>
+            <div>
+              <button type="button" class="action-btn-solid" id="agOpenShareBtn">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>開啟上傳模組
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="editor-panel">
           <div class="editor-row">
             <div class="editor-label"></div>
@@ -1498,7 +1521,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-kol5"></script>
+<script src="js/admin-portal.js?v=20260518-share"></script>
 
 </body>
 </html>
