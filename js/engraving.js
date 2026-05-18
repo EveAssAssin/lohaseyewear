@@ -28,7 +28,7 @@
       // 抓所有 active 創作者(含必要欄位)
       const { data, error } = await sb
         .from('creator_info')
-        .select('member_id, display_name, tagline, avatar_url, joining_photo_url, engraving_quote, is_pinned, status')
+        .select('member_id, display_name, tagline, avatar_url, joining_photo_url, engraving_quote, status')
         .eq('status', 'active')
         .not('engraving_quote', 'is', null)
         .neq('engraving_quote', '');
@@ -44,11 +44,9 @@
         return;
       }
 
-      // 排序: 置頂優先,其餘隨機
-      const pinned = creators.filter(c => c.is_pinned);
-      const rest = creators.filter(c => !c.is_pinned);
-      shuffle(rest);
-      const ordered = [...pinned, ...rest];
+      // 全部隨機排序
+      shuffle(creators);
+      const ordered = creators;
 
       // render
       section.innerHTML = ordered.map((c, idx) => renderKolCard(c, idx)).join('');

@@ -2430,7 +2430,6 @@
       if (el) el.value = '';
     });
     document.getElementById('agJoiningPhoto').value = '';
-    document.getElementById('agIsPinned').checked = false;
 
     // 重置頭像
     AGState.avatarBase64 = null;
@@ -2552,7 +2551,6 @@
         joining_photo_url: joining_photo_url,
         joining_story: joining_story || null,
         engraving_quote: document.getElementById('agEngravingQuote').value.trim() || null,
-        is_pinned: document.getElementById('agIsPinned').checked,
         video_url: video_url || null,
         video_title: video_title || null,
         social_links: social_links,
@@ -2991,7 +2989,6 @@
     document.getElementById('agBio').value = c.bio || '';
     document.getElementById('agJoiningStory').value = c.joining_story || '';
     document.getElementById('agEngravingQuote').value = c.engraving_quote || '';
-    document.getElementById('agIsPinned').checked = !!c.is_pinned;
     document.getElementById('agVideoUrl').value = c.video_url || '';
     document.getElementById('agVideoTitle').value = c.video_title || '';
 
