@@ -428,17 +428,14 @@
   }
 
   function renderStaffCard(emp, isTop) {
-    const initial = (emp.name || "?").slice(-1) || emp.name[0] || "?";
+    const initial = (emp.name || "?").slice(-1) || (emp.name && emp.name[0]) || "?";
     const photo = emp.photos && emp.photos[0];
-    const avatarStyle = photo ? `style="background-image:url('${photo}')"` : "";
-    const avatarContent = photo ? "" : initial;
+    const hasPhoto = !!photo;
 
     /* 職稱（role 優先，否則 jobtitle） */
     const roleText = (emp.role || emp.jobtitle || "").trim();
 
-    /* 榮譽 / 獎章列表 ===
-       資料來源：emp.honor（單一字串）+ emp.honors（陣列）
-       去重後最多顯示 3 個 pill */
+    /* 榮譽 / 獎章列表（去重後最多 3 個）*/
     const honorTexts = [];
     if (emp.honor) honorTexts.push(emp.honor.trim());
     (emp.honors || []).forEach(h => {
@@ -446,40 +443,77 @@
       if (t && honorTexts.indexOf(t) === -1) honorTexts.push(t);
     });
 
-    const badges = [];
-    if (isTop) {
-      badges.push(
-        `<span class="sd-staff-badge gold">` +
-          `<i class="fa-solid fa-star"></i> 王 牌 顧 問` +
-        `</span>`
-      );
-    }
-    honorTexts.slice(0, 3).forEach((t, i) => {
-      badges.push(
-        `<span class="sd-staff-badge${i === 0 && !isTop ? " hot" : ""}">` +
-          `<i class="${honorIcon(t)}"></i> ${t}` +
-        `</span>`
-      );
-    });
+    const badges = honorTexts.slice(0, 3).map((t, i) =>
+      `<span class="sd-staff-badge${i === 0 ? " hot" : ""}">` +
+        `<i class="${honorIcon(t)}"></i> ${t}` +
+      `</span>`
+    ).join("");
 
-    const score = emp.averageScore != null ? emp.averageScore.toFixed(1) : "—";
+    /* 頂部角標：王牌顧問 or 職稱 */
+    const topPin = isTop
+      ? `<div class="sd-staff-pin gold"><i class="fa-solid fa-star"></i> 王 牌 顧 問</div>`
+      : "";
+    const rolePin = roleText
+      ? `<div class="sd-staff-pin role"><i class="${roleIcon(roleText)}"></i> ${roleText}</div>`
+      : "";
+
+    const score = emp.averageScore != null ? emp.averageScore.toFixed(1) : null;
     const reviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
+    const intro = (emp.introduction || "").trim();
+    const shortIntro = intro
+      ? (intro.length > 60 ? intro.slice(0, 58) + "…" : intro)
+      : "";
+
+    /* 評分區塊（有分數才顯示）*/
+    const ratingBlock = score
+      ? `<div class="sd-staff-rating">` +
+          `<span class="sd-staff-rating-stars">${renderStars(emp.averageScore)}</span>` +
+          `<span class="sd-staff-rating-num">${score}</span>` +
+          (reviewCount > 0
+            ? `<span class="sd-staff-rating-count">· ${reviewCount} 則評價</span>`
+            : "") +
+        `</div>`
+      : "";
+
+    /* 頭像區域：有照片用 background-image，沒照片顯示首字 + icon */
+    const photoStyle = hasPhoto
+      ? `style="background-image:url('${photo}')"`
+      : "";
+    const photoFallback = hasPhoto
+      ? ""
+      : `<div class="sd-staff-photo-fallback">` +
+          `<i class="fa-regular fa-user"></i>` +
+          `<span>${initial}</span>` +
+        `</div>`;
 
     return (
       `<div class="sd-staff-card${isTop ? " top" : ""}">` +
-        `<div class="sd-staff-avatar" ${avatarStyle}>${avatarContent}</div>` +
-        `<div class="sd-staff-name">${emp.name || ""}</div>` +
-        (roleText
-          ? `<div class="sd-staff-title"><i class="${roleIcon(roleText)}"></i> ${roleText}</div>`
-          : "") +
-        `<div class="sd-staff-badges">${badges.join("")}</div>` +
-        `<div class="sd-staff-stats">` +
-          `<div>滿意度<b>${score}</b></div>` +
-          `<div>${reviewCount > 0 ? "評價<b>" + reviewCount + "</b>" : "事蹟<b>" + honorTexts.length + "</b>"}</div>` +
+        /* === 頭像主視覺區（佔卡片上半） === */
+        `<div class="sd-staff-photo" ${photoStyle}>` +
+          photoFallback +
+          topPin +
+          rolePin +
+          `<div class="sd-staff-photo-info">` +
+            `<div class="sd-staff-name">${emp.name || ""}</div>` +
+            (roleText ? `<div class="sd-staff-subtitle">${roleText}</div>` : "") +
+          `</div>` +
         `</div>` +
-        `<button class="sd-staff-book" data-book="${emp.erpid}">` +
-          `<i class="fa-regular fa-calendar-check"></i> 預約 ${emp.name}` +
-        `</button>` +
+
+        /* === 卡片下半（內容區） === */
+        `<div class="sd-staff-body">` +
+          ratingBlock +
+          (shortIntro
+            ? `<p class="sd-staff-intro">「${shortIntro}」</p>`
+            : `<p class="sd-staff-intro placeholder">提 供 專 業 配 鏡 諮 詢 服 務</p>`) +
+          (badges
+            ? `<div class="sd-staff-badges">${badges}</div>`
+            : "") +
+          `<button class="sd-staff-book" data-book="${emp.erpid}" type="button">` +
+            `<i class="fa-regular fa-calendar-check"></i>` +
+            `<span>預 約 ${emp.name}</span>` +
+            `<i class="fa-solid fa-arrow-right"></i>` +
+          `</button>` +
+        `</div>` +
       `</div>`
     );
   }
