@@ -212,10 +212,7 @@
   }
 
   function createPinIcon(store, isActive) {
-    const cls =
-      "lohas-pin" +
-      (store.isFlagship ? " flagship" : "") +
-      (isActive ? " active" : "");
+    const cls = "lohas-pin" + (isActive ? " active" : "");
     return L.divIcon({
       html: `<div class="${cls}"><div class="lohas-pin-body"></div></div>`,
       className: "",
@@ -278,16 +275,11 @@
     }
 
     dom.list.innerHTML = state.filtered.map(s => {
-      const flagBadge = s.isFlagship
-        ? `<span class="store-flag-tag${s.isOverseas ? " overseas" : ""}">${s.isOverseas ? "海外" : "旗艦"}</span>`
-        : "";
       const isActive = state.activeErpid === s.erpid;
       return (
         `<div class="as-store-row${isActive ? " active" : ""}" data-erpid="${s.erpid}">` +
-          `<span class="as-store-row-erp">#${s.erpid}</span>` +
           `<div class="as-store-row-head">` +
             `<span class="as-store-row-name">${s.name}</span>` +
-            flagBadge +
           `</div>` +
           (s.slogan ? `<div class="as-store-row-slogan">${s.slogan}</div>` : "") +
           `<div class="as-store-row-addr">${s.address}</div>` +
@@ -315,19 +307,16 @@
     }
     const s = storeData.findStoreByErpid(state.allStores, state.activeErpid);
     if (!s) return;
-    const flagBadge = s.isFlagship
-      ? `<span class="as-pin-card-flag">${s.isOverseas ? "海外旗艦" : "旗艦門市"}</span>`
-      : `<span class="as-pin-card-flag">${s.region.label}</span>`;
     const imgStyle = s.coverimage ? `background-image:url('${s.coverimage}');` : "";
 
     dom.pinCard.innerHTML =
-      `<div class="as-pin-card-img${s.isFlagship ? " flagship" : ""}" style="${imgStyle}">` +
-        flagBadge +
+      `<div class="as-pin-card-img" style="${imgStyle}">` +
+        `<span class="as-pin-card-flag">${s.region.label}</span>` +
         `<button class="as-pin-card-close" data-close type="button"><i class="fa-solid fa-xmark"></i></button>` +
         (s.coverimage ? "" : `<i class="fa-solid fa-store"></i>`) +
       `</div>` +
       `<div class="as-pin-card-body">` +
-        `<div class="as-pin-card-name">${s.name}<span class="store-erp-tag">#${s.erpid}</span></div>` +
+        `<div class="as-pin-card-name">${s.name}</div>` +
         (s.slogan ? `<div class="as-pin-card-slogan">${s.slogan}</div>` : "") +
         `<div class="as-pin-card-addr">${s.address}</div>` +
         `<div class="as-pin-card-meta">` +

@@ -124,16 +124,12 @@
         `<a href="allstore.html?region=${s.region.key}">${s.region.label}</a>` +
         `<i class="fa-solid fa-chevron-right sep"></i>` +
         `<span class="current">${s.name}</span>` +
-        `<span class="erp-tag">#${s.erpid}</span>` +
       `</div>`;
   }
 
   function renderHero() {
     const s = state.store;
     const bg = s.coverimage ? `style="background-image:url('${s.coverimage}')"` : "";
-    const flagTag = s.isFlagship
-      ? `<span class="sd-hero-tag"><i class="fa-solid fa-crown"></i> ${s.isOverseas ? "海外旗艦門市" : "旗艦門市"}</span>`
-      : `<span class="sd-hero-tag"><i class="fa-solid fa-fire"></i> 提 供 預 約 服 務</span>`;
 
     dom.hero.className = "sd-hero" + (s.coverimage ? " has-cover" : "");
     dom.hero.setAttribute("style", s.coverimage ? `background-image:url('${s.coverimage}')` : "");
@@ -146,8 +142,8 @@
         `<button class="sd-hero-action" aria-label="分享"><i class="fa-solid fa-share-nodes"></i></button>` +
       `</div>` +
       `<div class="sd-hero-content">` +
-        flagTag +
-        `<h1>${s.name} <span class="erp-tag">ERP #${s.erpid}</span></h1>` +
+        `<span class="sd-hero-tag"><i class="fa-solid fa-fire"></i> 提 供 預 約 服 務</span>` +
+        `<h1>${s.name}</h1>` +
         (s.slogan ? `<div class="sd-hero-slogan">${s.slogan}</div>` : "") +
         `<div class="sd-hero-subtitle">${s.city || ""} · <b>${s.region.label} 門 市</b></div>` +
       `</div>`;
