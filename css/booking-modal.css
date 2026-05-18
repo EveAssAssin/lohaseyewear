@@ -59,16 +59,16 @@
   align-items: center;
   gap: 4px;
   font-size: 10px;
-  padding: 2px 8px;
-  background: var(--err-bg);
-  color: var(--err);
+  padding: 3px 10px;
+  background: var(--lohas-bd);
+  color: var(--lohas-brand);
   border-radius: var(--r-pill);
   letter-spacing: 1px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .bm-head-info h2 {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 18px;
   color: var(--lohas-brand);
   font-weight: 700;
@@ -266,7 +266,7 @@
   font-size: 18px;
   font-weight: 800;
   margin: 2px 0;
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
 }
 .bm-date-pick .da {
   font-size: 9px;
@@ -442,7 +442,7 @@
   margin: 0 auto 16px;
 }
 .bm-success-title {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 20px;
   color: var(--lohas-brand);
   font-weight: 700;

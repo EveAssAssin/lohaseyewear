@@ -175,7 +175,7 @@
 }
 .sd-hero-tag i { color: var(--collab-gold); }
 .sd-hero h1 {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 56px;
   font-weight: 700;
   letter-spacing: 6px;
@@ -187,7 +187,7 @@
   flex-wrap: wrap;
 }
 .sd-hero h1 .erp-tag {
-  font-family: "Noto Sans TC", sans-serif;
+  font-family: var(--font-tc);
   font-size: 13px;
   letter-spacing: 1px;
   font-weight: 400;
@@ -197,9 +197,9 @@
   color: rgba(255, 255, 255, 0.85);
 }
 .sd-hero-slogan {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 18px;
-  font-style: italic;
+  /* italic 移除 (中文字體不支援) */
   opacity: 0.92;
   letter-spacing: 2px;
   margin-bottom: 14px;
@@ -239,7 +239,7 @@
   font-size: 22px;
   font-weight: 700;
   color: var(--lohas-brand);
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   line-height: 1;
 }
 .sd-q-stat .num.ok { color: var(--ok); }
@@ -265,7 +265,7 @@
   margin-bottom: 18px;
 }
 .sd-sec-head h2 {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 20px;
   font-weight: 600;
   color: var(--lohas-brand);
@@ -374,7 +374,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 28px;
   font-weight: 700;
 }
@@ -382,7 +382,7 @@
   background: linear-gradient(135deg, var(--lohas-brand) 0%, #2D2418 100%);
 }
 .sd-staff-name {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 17px;
   font-weight: 600;
   color: var(--lohas-brand);
@@ -424,7 +424,7 @@
 }
 .sd-staff-stats div { color: var(--text-muted); }
 .sd-staff-stats b {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   display: block;
   color: var(--lohas-brand);
   font-size: 15px;
@@ -466,7 +466,7 @@
   padding-right: 32px;
 }
 .sd-score-block .num {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 56px;
   font-weight: 700;
   color: var(--lohas-brand);
@@ -538,7 +538,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 14px;
   font-weight: 700;
 }

@@ -50,29 +50,34 @@
   align-items: center;
   gap: 10px;
 }
-.as-subheader-title i { color: var(--err); font-size: 14px; }
+.as-subheader-title i { color: var(--lohas-brand); font-size: 14px; }
 .as-subheader-title .accent {
-  color: var(--err);
+  color: var(--lohas-brand);
   font-weight: 600;
   font-size: 14px;
+  letter-spacing: 1.5px;
 }
 .as-subheader-title b { color: var(--lohas-brand); font-weight: 600; }
 .as-subheader-actions { display: flex; gap: 8px; }
 .as-subheader-btn {
-  padding: 7px 14px;
-  font-size: 12px;
+  padding: 9px 18px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
   border-radius: var(--r-pill);
   color: var(--lohas-brand);
   background: transparent;
   border: 0;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 .as-subheader-btn:hover { background: var(--bg-warm); }
 .as-subheader-btn.primary {
   background: var(--lohas-brand);
   color: #fff;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 .as-subheader-btn.primary:hover { background: var(--lohas-hover); }
 
@@ -103,7 +108,7 @@
   border-bottom: 1px solid var(--lohas-bd);
 }
 .as-panel-title {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 22px;
   color: var(--lohas-brand);
   letter-spacing: 2px;
@@ -113,7 +118,7 @@
   align-items: center;
   gap: 8px;
 }
-.as-panel-title i { color: var(--err); font-size: 16px; }
+.as-panel-title i { color: var(--lohas-brand); font-size: 16px; }
 .as-panel-count {
   font-size: 12px;
   color: var(--text-muted);
@@ -177,7 +182,7 @@
   margin-bottom: 4px;
 }
 .as-store-row-name {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 17px;
   color: var(--lohas-brand);
   font-weight: 600;
@@ -188,7 +193,7 @@
   color: var(--lohas-hover);
   line-height: 1.5;
   margin-bottom: 8px;
-  font-style: italic;
+  /* italic 移除 (中文字體不支援) */
   letter-spacing: 0.3px;
 }
 .as-store-row-slogan::before { content: "「"; opacity: 0.6; }
@@ -218,15 +223,15 @@
   margin-top: 8px;
 }
 .as-store-row-btn {
-  font-size: 11px;
-  padding: 6px 12px;
+  font-size: 12px;
+  padding: 7px 14px;
   border-radius: var(--r-pill);
   letter-spacing: 0.5px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-weight: 500;
-  transition: all 0.15s;
+  gap: 5px;
+  font-weight: 600;
+  transition: all 0.2s;
   border: 0;
   cursor: pointer;
   font-family: inherit;
@@ -347,7 +352,7 @@
   width: 380px;
   background: #fff;
   border-radius: var(--r-lg);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--sh-card);
   overflow: hidden;
   opacity: 0;
   transform: translateY(20px);
@@ -406,7 +411,7 @@
 }
 .as-pin-card-body { padding: 20px 22px 22px; }
 .as-pin-card-name {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 22px;
   color: var(--lohas-brand);
   letter-spacing: 2px;
@@ -419,7 +424,7 @@
 .as-pin-card-slogan {
   font-size: 12px;
   color: var(--lohas-hover);
-  font-style: italic;
+  /* italic 移除 (中文字體不支援) */
   margin-bottom: 12px;
   letter-spacing: 0.3px;
 }
@@ -455,17 +460,17 @@
 }
 .as-pin-card-actions .btn {
   flex: 1;
-  padding: 11px 0;
+  padding: 12px 0;
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
   border-radius: var(--r-pill);
   transition: all 0.2s;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 1px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
   border: 0;
   cursor: pointer;
   font-family: inherit;

@@ -46,7 +46,7 @@
 
 /* === ERP 編號小 tag === */
 .store-erp-tag {
-  font-family: "Noto Sans TC", sans-serif;
+  font-family: var(--font-tc);
   font-size: 10px;
   color: var(--text-muted);
   font-weight: 400;
@@ -112,10 +112,10 @@
 .store-map-pin-body {
   width: 36px;
   height: 36px;
-  background: var(--err);
+  background: var(--lohas-brand);
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  box-shadow: 0 6px 16px rgba(168, 90, 74, 0.4);
+  box-shadow: 0 6px 16px rgba(80, 66, 45, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -238,7 +238,7 @@
   z-index: 1;
 }
 .booking-cta-card h3 {
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 19px;
   letter-spacing: 1.5px;
   margin-bottom: 6px;
@@ -272,7 +272,7 @@
 .booking-cta-meta-item b {
   display: block;
   color: var(--collab-gold);
-  font-family: "Noto Serif TC", "Noto Sans TC", serif;
+  font-family: var(--font-tc);
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 2px;
@@ -312,14 +312,14 @@
 .booking-prompt-icon {
   width: 42px;
   height: 42px;
-  background: var(--err);
+  background: var(--lohas-brand);
   color: #fff;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 17px;
-  box-shadow: 0 4px 10px rgba(168, 90, 74, 0.25);
+  box-shadow: 0 4px 10px rgba(80, 66, 45, 0.25);
   flex-shrink: 0;
 }
 .booking-prompt-left {
