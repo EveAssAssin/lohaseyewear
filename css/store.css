@@ -127,39 +127,25 @@
   cursor: pointer;
   font-family: inherit;
   border-radius: var(--r-pill);
-  padding: 12px 22px;
+  padding: 16px 32px;
   display: inline-flex;
   align-items: center;
   gap: 14px;
   transition: all 0.2s;
   white-space: nowrap;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 4px;
 }
 .sd-info-cta:hover {
   background: var(--lohas-hover);
   transform: translateY(-1px);
 }
-.sd-info-cta-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.2;
-}
-.sd-info-cta-text b {
-  font-size: 13px;
-  letter-spacing: 2px;
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-.sd-info-cta-text span {
-  font-size: 10.5px;
-  letter-spacing: 1px;
-  opacity: 0.75;
-}
 .sd-info-cta i {
-  font-size: 12px;
+  font-size: 14px;
   transition: transform 0.2s;
 }
-.sd-info-cta:hover i { transform: translateX(3px); }
+.sd-info-cta:hover i { transform: translateX(4px); }
 
 /* === Hero === */
 .sd-hero {
@@ -299,7 +285,8 @@
 /* === 內容 body === */
 .sd-body {
   padding: 40px 56px 80px;
-  max-width: 920px;
+  max-width: 1080px;
+  margin: 0 auto;
 }
 
 /* === Quick stats === */
@@ -326,6 +313,9 @@
 }
 .sd-q-stat .num.ok { color: var(--ok); }
 .sd-q-stat .num.ok::before { content: "● "; font-size: 14px; }
+.sd-q-stat .num.off { color: var(--err); }
+.sd-q-stat .num.off::before { content: "● "; font-size: 14px; }
+.sd-q-stat .num.muted { color: var(--text-muted); }
 .sd-q-stat .num small {
   font-size: 13px;
   color: var(--lohas-light);
