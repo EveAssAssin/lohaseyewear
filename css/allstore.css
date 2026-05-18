@@ -1,47 +1,38 @@
 /* =============================================
-   LOHAS · allstore.html · Leaflet 地圖版
-   --------------------------------------------
-   依賴：tokens, base, components, store-components, leaflet.css
+   LOHAS · allstore.html · C 版本（Airbnb 風 + 樂活設計系統）
    --------------------------------------------
    結構：
-   - .as-shell                  fixed 整頁框
-   - .as-subheader              副標頭（選擇預約門市）
-   - .as-layout                 左列表 440px / 右地圖 1fr
-   - .as-panel                  左側列表
-   - .as-map                    右側 Leaflet 地圖容器
+   - .as-subheader              頂部副標頭（標題 + 區域 pills + 搜尋）
+   - .as-layout                 主版型：左卡片清單 / 右 Leaflet 地圖
+   - .as-list-panel             卡片清單區
+   - .as-card                   單一店家卡（4:3 照片 + body + foot CTA）
+   - .as-map-panel              右側地圖
+   - .as-view-toggle            手機版底部 FAB（切換清單/地圖）
    ============================================= */
 
 .as-shell {
-  position: fixed;
-  top: 70px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
+  margin-top: 70px;
+  background: var(--bg-warm);
 }
 
-/* === 副標頭 === */
+/* === Subheader === */
 .as-subheader {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: #fff;
   border-bottom: 1px solid var(--lohas-bd);
-  height: 56px;
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  flex-shrink: 0;
+  padding: 16px 0;
+  position: sticky;
+  top: 70px;
+  z-index: 60;
 }
 .as-subheader-inner {
-  width: 100%;
-  max-width: 1400px;
+  max-width: 1480px;
   margin: 0 auto;
+  padding: 0 32px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 20px;
 }
+
 .as-subheader-title {
   font-size: 13px;
   color: var(--text-sub);
@@ -49,6 +40,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 .as-subheader-title i { color: var(--lohas-brand); font-size: 14px; }
 .as-subheader-title .accent {
@@ -58,283 +50,404 @@
   letter-spacing: 1.5px;
 }
 .as-subheader-title b { color: var(--lohas-brand); font-weight: 600; }
-.as-subheader-actions { display: flex; gap: 8px; }
-.as-subheader-btn {
-  padding: 9px 18px;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-  font-weight: 500;
-  border-radius: var(--r-pill);
-  color: var(--lohas-brand);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s;
-}
-.as-subheader-btn:hover { background: var(--bg-warm); }
-.as-subheader-btn.primary {
-  background: var(--lohas-brand);
-  color: #fff;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-.as-subheader-btn.primary:hover { background: var(--lohas-hover); }
-
-/* === 左右兩欄 === */
-.as-layout {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 440px 1fr;
-  overflow: hidden;
-}
-
-/* === 左 panel === */
-.as-panel {
-  background: #fff;
-  border-right: 1px solid var(--lohas-bd);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-.as-panel-head {
-  padding: 24px 22px 14px;
-  position: sticky;
-  top: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: 10;
-  border-bottom: 1px solid var(--lohas-bd);
-}
-.as-panel-title {
-  font-family: var(--font-tc);
-  font-size: 22px;
-  color: var(--lohas-brand);
-  letter-spacing: 2px;
-  margin-bottom: 2px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.as-panel-title i { color: var(--lohas-brand); font-size: 16px; }
-.as-panel-count {
-  font-size: 12px;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
-}
 
 .as-search {
-  margin-top: 14px;
+  flex: 0 1 280px;
   position: relative;
+}
+.as-search input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-pill);
+  padding: 0 18px 0 42px;
+  font-family: inherit;
+  font-size: 13px;
   background: var(--bg-warm);
-  border-radius: 12px;
+  color: var(--text-main);
+  letter-spacing: 0.3px;
+  outline: none;
+  transition: all 0.15s;
+}
+.as-search input:focus {
+  border-color: var(--lohas-brand);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(80, 66, 45, 0.08);
 }
 .as-search i {
   position: absolute;
-  left: 14px;
   top: 50%;
+  left: 16px;
   transform: translateY(-50%);
   color: var(--text-muted);
   font-size: 13px;
 }
-.as-search input {
-  width: 100%;
-  padding: 12px 14px 12px 38px;
-  background: transparent;
-  border: 0;
-  outline: 0;
-  font-size: 14px;
-  color: var(--text-main);
-  font-family: inherit;
-}
-.as-search input::placeholder { color: var(--text-muted); }
 
 .as-regions {
-  margin-top: 12px;
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  scrollbar-width: none;
+  flex: 1;
 }
 .as-regions::-webkit-scrollbar { display: none; }
-
-/* 店家列表 row */
-.as-store-list { padding: 8px 0 30px; }
-.as-store-row {
-  padding: 18px 22px 16px;
-  border-bottom: 1px solid var(--lohas-bd);
+.region-pill {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  background: #fff;
+  color: var(--text-sub);
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  letter-spacing: 0.8px;
   cursor: pointer;
-  transition: background 0.15s;
+  white-space: nowrap;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.region-pill:hover { border-color: var(--lohas-brand); color: var(--lohas-brand); }
+.region-pill.active {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+.region-pill em {
+  font-style: normal;
+  opacity: 0.6;
+  margin-left: 4px;
+  font-size: 10.5px;
+}
+
+.as-subheader-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.as-subheader-btn {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  border-radius: var(--r-pill);
+  color: var(--text-sub);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.as-subheader-btn:hover {
+  background: var(--bg-warm);
+  color: var(--lohas-brand);
+}
+.as-subheader-btn i { font-size: 12px; }
+
+/* === Layout：左清單 + 右地圖 === */
+.as-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: calc(100vh - 70px - 72px);
   position: relative;
 }
-.as-store-row:hover { background: var(--bg-warm); }
-.as-store-row.active {
+
+/* === 左：卡片清單 === */
+.as-list-panel {
+  overflow-y: auto;
+  padding: 28px 32px 60px;
   background: var(--bg-warm);
-  border-left: 3px solid var(--lohas-brand);
-  padding-left: 19px;
 }
-.as-store-row-head {
+
+.as-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* === 卡片 === */
+.as-card {
+  background: #fff;
+  cursor: pointer;
+  border-radius: var(--r-lg);
+  transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 4px;
+  flex-direction: column;
 }
-.as-store-row-name {
-  font-family: var(--font-tc);
-  font-size: 17px;
-  color: var(--lohas-brand);
+.as-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(80, 66, 45, 0.1);
+}
+.as-card:hover .as-card-photo { transform: scale(1.04); }
+.as-card.active {
+  box-shadow: 0 0 0 2px var(--lohas-brand), 0 16px 36px rgba(80, 66, 45, 0.15);
+}
+
+.as-card-photo-wrap {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-soft);
+}
+.as-card-photo {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.as-card-photo-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(45, 36, 24, 0.55) 0%, transparent 40%);
+  pointer-events: none;
+}
+.as-card-photo-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 48px;
+  z-index: 1;
+}
+
+.as-card-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(6px);
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 1px;
+  color: var(--ok);
+  letter-spacing: 0.5px;
+  z-index: 2;
 }
-.as-store-row-slogan {
-  font-size: 12px;
-  color: var(--lohas-hover);
-  line-height: 1.5;
-  margin-bottom: 8px;
-  /* italic 移除 (中文字體不支援) */
-  letter-spacing: 0.3px;
+.as-card-status.off { color: var(--err); }
+.as-card-status.muted { color: var(--text-muted); }
+
+.as-card-region {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--lohas-brand);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 10.5px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  z-index: 2;
 }
-.as-store-row-slogan::before { content: "「"; opacity: 0.6; }
-.as-store-row-slogan::after { content: "」"; opacity: 0.6; }
-.as-store-row-addr {
-  font-size: 12px;
+
+.as-card-name-overlay {
+  position: absolute;
+  bottom: 14px;
+  left: 16px;
+  right: 16px;
+  z-index: 2;
+  color: #fff;
+}
+.as-card-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  line-height: 1.1;
+}
+
+.as-card-body {
+  padding: 14px 6px 4px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.as-card-slogan {
+  font-size: 12.5px;
   color: var(--text-sub);
   line-height: 1.5;
   margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: 0.3px;
+  min-height: 19px;
 }
-.as-store-row-meta {
+.as-card-meta {
   display: flex;
-  gap: 14px;
-  font-size: 11px;
+  gap: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
 }
-.as-store-row-meta span {
+.as-card-meta-item {
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
-.as-store-row-meta i { color: var(--lohas-light); }
-.as-store-row-actions {
+.as-card-meta-item i { font-size: 9.5px; }
+
+.as-card-foot {
   display: flex;
-  gap: 6px;
-  margin-top: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--lohas-bd);
+  margin-top: auto;
 }
-.as-store-row-btn {
+.as-card-phone {
   font-size: 12px;
-  padding: 7px 14px;
-  border-radius: var(--r-pill);
-  letter-spacing: 0.5px;
+  color: var(--text-sub);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+  min-width: 0;
+  flex: 1;
+}
+.as-card-phone-num {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-weight: 600;
-  transition: all 0.2s;
-  border: 0;
-  cursor: pointer;
-  font-family: inherit;
-  text-decoration: none;
 }
-.as-store-row-btn.outline {
+.as-card-phone-num i { font-size: 9px; opacity: 0.6; }
+.as-card-phone small {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.as-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.as-card-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   border: 1px solid var(--lohas-bd);
-  color: var(--text-sub);
   background: #fff;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-family: inherit;
 }
-.as-store-row-btn.outline:hover {
-  border-color: var(--lohas-light);
+.as-card-btn:hover {
+  border-color: var(--lohas-brand);
   color: var(--lohas-brand);
 }
-.as-store-row-btn.book {
+.as-card-btn-book {
+  width: auto;
+  padding: 0 16px;
   background: var(--lohas-brand);
   color: #fff;
+  border-color: var(--lohas-brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  gap: 6px;
 }
-.as-store-row-btn.book:hover { background: var(--lohas-hover); color: #fff; }
+.as-card-btn-book:hover {
+  background: var(--lohas-hover);
+  color: #fff;
+  border-color: var(--lohas-hover);
+}
 
-/* === 右側 Leaflet 地圖 === */
-.as-map {
+/* === 空狀態 / 載入中 === */
+.as-list .store-state {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+/* === 右：Leaflet 地圖 === */
+.as-map-panel {
   position: relative;
-  background: #DCD8D2;
-  overflow: hidden;
+  background: var(--bg-soft);
+  border-left: 1px solid var(--lohas-bd);
 }
 #as-map-canvas {
-  position: absolute;
-  inset: 0;
+  width: 100%;
+  height: 100%;
   z-index: 1;
 }
 
-/* Leaflet zoom 控制改放右下角 + 樂活配色 */
-.as-map .leaflet-control-zoom {
-  border: 0 !important;
-  box-shadow: 0 4px 16px rgba(80, 66, 45, 0.15);
+/* Leaflet 控件 */
+.leaflet-control-zoom {
+  border: 1px solid var(--lohas-bd) !important;
+  box-shadow: 0 4px 12px rgba(80, 66, 45, 0.08) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
 }
-.as-map .leaflet-control-zoom a {
+.leaflet-control-zoom a {
   background: #fff !important;
   color: var(--lohas-brand) !important;
-  border: 0 !important;
-  border-bottom: 1px solid var(--lohas-bd) !important;
-  width: 38px !important;
-  height: 38px !important;
-  line-height: 38px !important;
-  font-size: 16px;
-  transition: background 0.15s;
+  font-weight: 600 !important;
 }
-.as-map .leaflet-control-zoom a:last-child { border-bottom: 0 !important; }
-.as-map .leaflet-control-zoom a:hover { background: var(--bg-warm) !important; }
-
-/* Leaflet attribution */
-.as-map .leaflet-control-attribution {
+.leaflet-control-zoom a:hover { background: var(--bg-warm) !important; }
+.leaflet-control-attribution {
   background: rgba(255, 255, 255, 0.85) !important;
-  color: var(--text-muted) !important;
   font-size: 10px !important;
-  padding: 2px 8px !important;
-  border-radius: 4px;
-}
-.as-map .leaflet-control-attribution a {
-  color: var(--lohas-brand) !important;
+  padding: 1px 6px !important;
 }
 
-/* 自訂 pin 圖示（Leaflet divIcon） */
+/* === 地圖 pin（電話樣式） === */
+.lohas-pin-wrap {
+  background: transparent;
+  border: 0;
+}
 .lohas-pin {
-  width: 28px;
-  height: 36px;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.15s;
-}
-.lohas-pin:hover { transform: scale(1.1); }
-.lohas-pin-body {
-  position: absolute;
-  inset: 0;
-  background: var(--lohas-brand);
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  box-shadow: 0 4px 12px rgba(80, 66, 45, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.lohas-pin-body::after {
-  content: "";
-  width: 9px;
-  height: 9px;
   background: #fff;
-  border-radius: 50%;
-  transform: rotate(45deg);
+  border: 1px solid var(--lohas-bd);
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  display: inline-block;
+  font-family: var(--font-tc);
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
 }
-.lohas-pin.active .lohas-pin-body {
-  background: var(--err);
-  transform: rotate(-45deg) scale(1.15);
-  box-shadow: 0 6px 18px rgba(168, 90, 74, 0.45);
+.lohas-pin:hover {
+  border-color: var(--lohas-brand);
+  transform: scale(1.05);
+}
+.lohas-pin.active {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+  transform: scale(1.08);
+  z-index: 1000;
 }
 
-/* === 詳情卡（點 pin 後彈出） === */
+/* === pin 點開後的詳情卡 === */
 .as-pin-card {
   position: absolute;
   bottom: 24px;
   right: 24px;
-  width: 380px;
+  width: 360px;
+  max-width: calc(100% - 48px);
   background: #fff;
   border-radius: var(--r-lg);
   box-shadow: var(--sh-card);
@@ -351,16 +464,20 @@
   pointer-events: auto;
 }
 .as-pin-card-img {
-  height: 170px;
-  background: linear-gradient(135deg, var(--lohas-brand) 0%, var(--lohas-hover) 100%);
+  aspect-ratio: 16 / 9;
   background-size: cover;
   background-position: center;
+  background-color: var(--lohas-hover);
+  position: relative;
+}
+.as-pin-card-img > i {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.3);
   font-size: 48px;
-  position: relative;
+  color: rgba(255, 255, 255, 0.3);
 }
 .as-pin-card-flag {
   position: absolute;
@@ -372,131 +489,165 @@
   padding: 4px 10px;
   border-radius: var(--r-pill);
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.5px;
+  backdrop-filter: blur(8px);
 }
 .as-pin-card-close {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 14px;
+  right: 14px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
+  border: 0;
+  cursor: pointer;
+  color: var(--text-main);
+  font-size: 12px;
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--lohas-brand);
-  cursor: pointer;
-  font-size: 14px;
-  border: 0;
-  font-family: inherit;
 }
-.as-pin-card-body { padding: 20px 22px 22px; }
+.as-pin-card-body { padding: 16px 18px 18px; }
 .as-pin-card-name {
-  font-family: var(--font-tc);
-  font-size: 22px;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--lohas-brand);
   letter-spacing: 2px;
   margin-bottom: 4px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 .as-pin-card-slogan {
-  font-size: 12px;
-  color: var(--lohas-hover);
-  /* italic 移除 (中文字體不支援) */
-  margin-bottom: 12px;
-  letter-spacing: 0.3px;
-}
-.as-pin-card-slogan::before { content: "「"; opacity: 0.6; }
-.as-pin-card-slogan::after { content: "」"; opacity: 0.6; }
-.as-pin-card-addr {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-sub);
-  line-height: 1.7;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.as-pin-card-addr {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
   margin-bottom: 12px;
 }
 .as-pin-card-meta {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 12px 0;
-  border-top: 1px solid var(--lohas-bd);
-  border-bottom: 1px solid var(--lohas-bd);
+  gap: 4px 12px;
+  font-size: 11.5px;
+  color: var(--text-sub);
   margin-bottom: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--bg-soft);
+  border-bottom: 1px solid var(--bg-soft);
 }
-.as-pin-card-meta div {
-  font-size: 11px;
-  color: var(--text-muted);
-  display: flex;
+.as-pin-card-meta > div {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  letter-spacing: 0.3px;
 }
-.as-pin-card-meta i { color: var(--lohas-light); }
-.as-pin-card-meta b { color: var(--lohas-brand); font-weight: 500; }
+.as-pin-card-meta i { font-size: 10px; color: var(--lohas-light); width: 12px; text-align: center; }
+.as-pin-card-meta b { font-weight: 500; color: var(--text-main); }
 .as-pin-card-actions {
   display: flex;
   gap: 8px;
 }
 .as-pin-card-actions .btn {
   flex: 1;
-  padding: 12px 0;
-  text-align: center;
-  font-size: 13px;
+  height: 38px;
   border-radius: var(--r-pill);
-  transition: all 0.2s;
+  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 1px;
+  border: 1px solid;
+  cursor: pointer;
+  font-family: inherit;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  border: 0;
-  cursor: pointer;
-  font-family: inherit;
-  text-decoration: none;
+  gap: 6px;
+  transition: all 0.15s;
 }
 .as-pin-card-actions .btn.outline {
-  border: 1px solid var(--lohas-bd);
-  color: var(--text-sub);
   background: #fff;
-}
-.as-pin-card-actions .btn.outline:hover {
-  border-color: var(--lohas-light);
   color: var(--lohas-brand);
+  border-color: var(--lohas-bd);
 }
+.as-pin-card-actions .btn.outline:hover { border-color: var(--lohas-brand); }
 .as-pin-card-actions .btn.filled {
+  flex: 2;
   background: var(--lohas-brand);
   color: #fff;
-  flex: 1.6;
+  border-color: var(--lohas-brand);
 }
-.as-pin-card-actions .btn.filled:hover { background: var(--lohas-hover); color: #fff; }
+.as-pin-card-actions .btn.filled:hover {
+  background: var(--lohas-hover);
+  border-color: var(--lohas-hover);
+}
+
+/* === 手機版底部 FAB：清單 / 地圖 切換 === */
+.as-view-toggle {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: var(--lohas-brand);
+  color: #fff;
+  padding: 13px 24px;
+  border-radius: var(--r-pill);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(80, 66, 45, 0.35);
+  align-items: center;
+  gap: 8px;
+}
+.as-view-toggle:hover { background: var(--lohas-hover); }
+.as-view-toggle i { font-size: 13px; }
 
 /* === 響應式 === */
-@media (max-width: 900px) {
-  .as-shell {
-    position: static;
-    height: auto;
-  }
-  body { overflow-y: auto; }
+@media (max-width: 1100px) {
   .as-layout {
     grid-template-columns: 1fr;
-    overflow: visible;
+    position: relative;
   }
-  .as-panel {
-    border-right: 0;
-    max-height: 65vh;
-    border-bottom: 1px solid var(--lohas-bd);
+  /* 清單和地圖重疊，靠 class 切換 */
+  .as-list-panel,
+  .as-map-panel {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.2s;
   }
-  .as-map {
-    height: 60vh;
-    min-height: 480px;
+  .as-map-panel { border-left: 0; opacity: 0; pointer-events: none; }
+  .as-list-panel { opacity: 1; }
+
+  /* 切換模式 */
+  .as-layout.map-mode .as-map-panel { opacity: 1; pointer-events: auto; }
+  .as-layout.map-mode .as-list-panel { opacity: 0; pointer-events: none; }
+
+  .as-view-toggle { display: inline-flex; }
+}
+
+@media (max-width: 800px) {
+  .as-subheader-inner {
+    flex-wrap: wrap;
+    padding: 0 20px;
+    gap: 12px;
   }
-  .as-pin-card {
-    width: calc(100% - 32px);
-    right: 16px;
-    bottom: 16px;
-  }
+  .as-search { flex: 1 1 100%; order: 1; }
+  .as-regions { order: 2; width: 100%; }
+  .as-subheader-actions { order: 3; margin-left: auto; }
+  .as-list { grid-template-columns: 1fr; }
+  .as-list-panel { padding: 22px 20px 100px; }
+}
+
+@media (max-width: 560px) {
+  .as-card-name { font-size: 20px; letter-spacing: 2.5px; }
+  .as-pin-card { width: calc(100% - 32px); right: 16px; bottom: 90px; }
 }
