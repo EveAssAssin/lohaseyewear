@@ -139,8 +139,10 @@ body { margin:0; padding:24px; background:#F9F8F6; min-height:100vh; font-family
     .lh .pf-footer-cta p{font-size:13px;color:rgba(255,255,255,.7);margin:0 0 32px;line-height:1.9;letter-spacing:0.5px}
     .lh .pf-footer-cta .btns{display:flex;flex-direction:column;gap:14px;justify-content:center;align-items:center;max-width:280px;margin:0 auto}
     .lh .pf-footer-cta button{padding:13px 28px;font-size:13px;letter-spacing:2px;font-family:inherit;cursor:pointer;border-radius:999px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;width:100%}
-    .lh .pf-footer-cta .primary{background:#fff;color:var(--lohas-brown)}
-    .lh .pf-footer-cta .ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)}
+    .lh .pf-footer-cta .primary{background:#fff;color:var(--lohas-brown);transition:all .2s}
+    .lh .pf-footer-cta .primary:hover{background:var(--lohas-brown);color:#fff}
+    .lh .pf-footer-cta .ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);transition:all .2s}
+    .lh .pf-footer-cta .ghost:hover{background:rgba(255,255,255,.12);border-color:#fff}
 
     /* RWD */
     @media (max-width: 768px){
