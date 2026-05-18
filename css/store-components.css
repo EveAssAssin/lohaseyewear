@@ -69,53 +69,6 @@
 .store-status-dot.closed { color: var(--text-muted); }
 .store-status-dot.closed i { color: var(--text-muted); }
 
-/* === 地圖大頭針（SVG 內版本） ===
-   pin 直接放進台灣 SVG 裡，使用 SVG 座標系 (viewBox 300×400)
-   這樣不論容器多大，pin 都會跟台灣輪廓一起等比縮放 */
-.as-map-svg .pin-g {
-  cursor: pointer;
-  pointer-events: auto;
-  transition: transform 0.2s;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-.as-map-svg .pin-g:hover {
-  transform: scale(1.15);
-}
-.as-map-svg .pin-shadow {
-  fill: rgba(0, 0, 0, 0.25);
-}
-.as-map-svg .pin-head-svg {
-  fill: var(--lohas-hover);
-  stroke: #fff;
-  stroke-width: 1;
-}
-.as-map-svg .pin-g.flagship .pin-head-svg {
-  fill: var(--lohas-brand);
-  stroke-width: 1.5;
-}
-.as-map-svg .pin-g.active .pin-head-svg {
-  fill: var(--err);
-  stroke-width: 2;
-}
-.as-map-svg .pin-dot {
-  fill: #fff;
-}
-.as-map-svg .pin-g.flagship .pin-dot {
-  fill: var(--collab-gold);
-}
-.as-map-svg .pin-pulse {
-  fill: var(--err);
-  opacity: 0.4;
-  animation: as-pin-pulse 1.8s ease-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-@keyframes as-pin-pulse {
-  0%   { transform: scale(1);   opacity: 0.5; }
-  100% { transform: scale(2.5); opacity: 0;   }
-}
-
 /* === 假地圖卡片（單店頁右側）=== */
 .store-map-preview {
   position: relative;
