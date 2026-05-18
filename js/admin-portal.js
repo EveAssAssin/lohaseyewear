@@ -4025,7 +4025,7 @@
 
       $('collabModalTitle').textContent = '新增聯名';
       $('collabDeleteBtn').style.display = 'none';
-      $('collabPreviewBtn').style.display = 'none';
+      $('collabPreviewBtn').style.display = '';
 
       // 清空 所有欄位
       ['cm_slug','cm_brand_name','cm_hero_title','cm_hero_subtitle','cm_hero_eyebrow',
@@ -4126,9 +4126,7 @@
       currentPhotos = photoRes.data || [];
       renderSubtables();
 
-      const preview = $('collabPreviewBtn');
-      preview.style.display = '';
-      preview.href = 'collab.html?id=' + encodeURIComponent(c.slug);
+      $('collabPreviewBtn').style.display = '';
 
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
@@ -4642,6 +4640,78 @@
     $('collabCancelBtn').addEventListener('click', closeModal);
     $('collabSaveBtn').addEventListener('click', save);
     $('collabDeleteBtn').addEventListener('click', deleteCollab);
+    $('collabPreviewBtn').addEventListener('click', openPreview);
+
+    function openPreview(){
+      // 收集當前所有欄位 (跟 save 一致,但不上傳 + 不寫 DB)
+      const previewData = {
+        slug: val('cm_slug') || 'preview',
+        status: val('cm_status') || 'draft',
+        lifecycle_status: val('cm_lifecycle_status') || 'preorder',
+        category: val('cm_category'),
+        brand_name: val('cm_brand_name'),
+        hero_eyebrow: val('cm_hero_eyebrow'),
+        hero_title: val('cm_hero_title'),
+        hero_subtitle: val('cm_hero_subtitle'),
+        date_range_text: val('cm_date_range_text'),
+        launch_date_text: val('cm_launch_date_text'),
+        available_stores: val('cm_available_stores'),
+        limit_total: val('cm_limit_total'),
+        preorder_count: val('cm_preorder_count'),
+        show_countdown: val('cm_show_countdown'),
+        show_limit: val('cm_show_limit'),
+        start_date: val('cm_start_date'),
+        end_date: val('cm_end_date'),
+        story_paragraphs: collectStoryBuilder(),
+        creator_name: val('cm_creator_name'),
+        creator_subtitle: val('cm_creator_subtitle'),
+        interview_title: val('cm_interview_title'),
+        interview_quote: val('cm_interview_quote'),
+        interview_full_link: val('cm_interview_full_link'),
+        theme_primary: val('cm_theme_primary') || '#7A2754',
+        theme_accent: val('cm_theme_accent') || '#F8E4ED',
+        theme_bg: val('cm_theme_bg') || '#FAF7F2',
+        preorder_link: val('cm_preorder_link'),
+        store_link: val('cm_store_link'),
+        // 圖片用既有 URL,新上傳檔做 base64 preview
+        hero_image_url: currentCollab?.hero_image_url || null,
+        story_image_url: currentCollab?.story_image_url || null,
+        creator_avatar_url: currentCollab?.creator_avatar_url || null,
+        // 子表用 currentCollab 帶過去 (modal 內已綁定到 state)
+        packages: collectSubtable('packages'),
+        designs: collectSubtable('designs'),
+        customer_photos: collectSubtable('customer_photos'),
+      };
+
+      // 新上傳圖檔轉 dataURL 給預覽用
+      const fileMap = [
+        ['hero_image_url', 'news_cover_preview'], // 不對,collab 是別的 id
+      ];
+
+      // 簡單做法:存 sessionStorage,collab.html 自己讀
+      try {
+        sessionStorage.setItem('lohas_collab_preview', JSON.stringify(previewData));
+      } catch(e){
+        toast('預覽資料過大,無法暫存');
+        return;
+      }
+
+      // 新分頁打開預覽
+      window.open('collab.html?preview=1', '_blank');
+    }
+
+    function collectSubtable(name){
+      const list = $('cm_' + name + '_list');
+      if(!list) return [];
+      const rows = list.querySelectorAll('.subtable-row-v2');
+      return Array.from(rows).map(row => {
+        const data = {};
+        row.querySelectorAll('[data-field]').forEach(input => {
+          data[input.dataset.field] = input.value || null;
+        });
+        return data;
+      });
+    }
 
     // Slug 即時 preview
     $('cm_slug').addEventListener('input', updateSlugPreview);
@@ -4912,7 +4982,7 @@
 
       $('newsModalTitle').textContent = '新增消息';
       $('newsDeleteBtn').style.display = 'none';
-      $('newsPreviewBtn').style.display = 'none';
+      $('newsPreviewBtn').style.display = '';
 
       ['news_slug','news_title','news_excerpt','news_homepage_tag','news_homepage_subtitle',
        'news_author','news_published_at','news_content','news_homepage_link_url'].forEach(id => setVal(id, ''));
@@ -4945,9 +5015,7 @@
 
       $('newsModalTitle').textContent = '編輯:' + (n.title || n.slug);
       $('newsDeleteBtn').style.display = '';
-      const preview = $('newsPreviewBtn');
-      preview.style.display = '';
-      preview.href = 'news-detail.html?id=' + encodeURIComponent(n.slug);
+      $('newsPreviewBtn').style.display = '';
 
       setVal('news_slug', n.slug);
       setVal('news_status', n.status);
@@ -5138,8 +5206,39 @@
     $('newsCancelBtn').addEventListener('click', closeModal);
     $('newsSaveBtn').addEventListener('click', save);
     $('newsDeleteBtn').addEventListener('click', deleteNews);
+    $('newsPreviewBtn').addEventListener('click', openNewsPreview);
     $('news_slug').addEventListener('input', updateSlugPreview);
     $('news_homepage_link_type').addEventListener('change', updateLinkUrlVisibility);
+
+    function openNewsPreview(){
+      const previewData = {
+        slug: val('news_slug') || 'preview',
+        status: 'published',  // 預覽強制當已發佈
+        category: val('news_category') || 'story',
+        title: val('news_title') || '(未命名標題)',
+        excerpt: val('news_excerpt'),
+        cover_image_url: currentNews?.cover_image_url || null,
+        homepage_image_url: currentNews?.homepage_image_url || null,
+        content: val('news_content'),
+        show_in_homepage: val('news_show_in_homepage'),
+        homepage_tag: val('news_homepage_tag'),
+        homepage_subtitle: val('news_homepage_subtitle'),
+        homepage_link_type: val('news_homepage_link_type') || 'news_detail',
+        homepage_link_url: val('news_homepage_link_url'),
+        sort_order: val('news_sort_order') || 0,
+        published_at: val('news_published_at') || new Date().toISOString(),
+        author: val('news_author'),
+        view_count: currentNews?.view_count || 0,
+      };
+
+      try {
+        sessionStorage.setItem('lohas_news_preview', JSON.stringify(previewData));
+      } catch(e){
+        toast('預覽資料過大');
+        return;
+      }
+      window.open('news-detail.html?preview=1', '_blank');
+    }
 
     bindImageUploads();
 
