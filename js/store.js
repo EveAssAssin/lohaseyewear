@@ -75,6 +75,33 @@
     return out;
   }
 
+  /* === 解析 worktime 字串並判斷是否在營業時間 ===
+     接受格式：「11:30~21:30」「11:30 ~ 21:30」「11：30~21：30」「11:30-21:30」「11:30 — 21:30」
+     回傳 { open: true/false, range: "11:30-21:30" } */
+  function parseWorktime(worktime) {
+    if (!worktime) return null;
+    // 統一全形冒號、各種破折號
+    const normalized = String(worktime)
+      .replace(/：/g, ":")
+      .replace(/[~～\-—–－]/g, "~");
+    const m = normalized.match(/(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    const [, sh, sm, eh, em] = m.map((v, i) => i === 0 ? v : parseInt(v, 10));
+    return { startH: sh, startM: sm, endH: eh, endM: em };
+  }
+
+  function isOpenNow(worktime) {
+    const parsed = parseWorktime(worktime);
+    if (!parsed) return null;  // 無法解析 → 不顯示狀態
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const start = parsed.startH * 60 + parsed.startM;
+    let end = parsed.endH * 60 + parsed.endM;
+    // 處理跨夜（少見但保險）
+    if (end < start) end += 24 * 60;
+    return cur >= start && cur < end;
+  }
+
   /* State */
   const state = {
     erpid: null,
@@ -229,10 +256,6 @@
       `<a href="allstore.html" class="sd-hero-back" data-back>` +
         `<i class="fa-solid fa-arrow-left"></i> 返回門市列表` +
       `</a>` +
-      `<div class="sd-hero-actions">` +
-        `<button class="sd-hero-action" aria-label="收藏"><i class="fa-regular fa-heart"></i></button>` +
-        `<button class="sd-hero-action" aria-label="分享"><i class="fa-solid fa-share-nodes"></i></button>` +
-      `</div>` +
       `<div class="sd-hero-content">` +
         `<span class="sd-hero-tag"><i class="fa-solid fa-fire"></i> 提 供 預 約 服 務</span>` +
         `<h1>${s.name}</h1>` +
@@ -269,17 +292,14 @@
         (s.worktime ? `<div class="sd-info-cell">` +
           `<div class="sd-info-cell-icon"><i class="fa-regular fa-clock"></i></div>` +
           `<div class="sd-info-cell-body">` +
-            `<div class="sd-info-cell-label">營業時間 <span class="sd-info-status">● 營業中</span></div>` +
+            `<div class="sd-info-cell-label">營業時間</div>` +
             `<div class="sd-info-cell-value">${s.worktime}</div>` +
           `</div>` +
         `</div>` : "") +
 
         /* 預約 CTA */
         `<button class="sd-info-cta" data-book="any" type="button">` +
-          `<div class="sd-info-cta-text">` +
-            `<b>立 即 預 約</b>` +
-            `<span>${e.length} 位驗光師</span>` +
-          `</div>` +
+          `<span>立 即 預 約</span>` +
           `<i class="fa-solid fa-arrow-right"></i>` +
         `</button>` +
       `</div>`;
@@ -299,11 +319,20 @@
     const e = state.employees;
     const avgScore = computeAverage(e.map(x => x.averageScore).filter(Boolean)) || 4.8;
 
+    /* 營業狀態（真實判斷） */
+    const openStatus = isOpenNow(s.worktime);  // true / false / null
+    const statusText = openStatus === true ? "營業中" :
+                       openStatus === false ? "休息中" :
+                       "—";
+    const statusClass = openStatus === true ? "ok" :
+                        openStatus === false ? "off" :
+                        "muted";
+
     /* Quick stats */
     const stats =
       `<div class="sd-quick-stats">` +
         `<div class="sd-q-stat">` +
-          `<div class="num ok">營業中</div>` +
+          `<div class="num ${statusClass}">${statusText}</div>` +
           `<div class="lbl">${s.worktime || "-"}</div>` +
         `</div>` +
         `<div class="sd-q-stat">` +
