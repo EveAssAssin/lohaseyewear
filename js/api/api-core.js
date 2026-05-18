@@ -1,40 +1,37 @@
 /* =============================================
-   LOHAS API · Core
+   LOHAS API · Core (BFF 版)
    --------------------------------------------
-   底層工具：AES-128-CBC 加解密、HTTP 封裝、錯誤處理
-   依賴：CryptoJS 4.x （由 HTML head 載入）
+   架構：前端 → Supabase Edge Function → 左手 API
+   --------------------------------------------
+   差異：
+   - 不需要 CryptoJS（AES 加密改在 Supabase Edge Function 做）
+   - 不需要 AES 金鑰（金鑰存在 Supabase Secrets，永遠不會在瀏覽器）
+   - 不會遇到 CORS 問題（Supabase Edge Function 預設支援 CORS）
+   - 前端只送明文，BFF 自動處理加密
    --------------------------------------------
    被以下檔案 import：
    - js/api/api-store.js
    - js/api/api-booking.js
-   - js/api/api-message.js (未來)
-   - js/api/api-order.js (未來)
    ============================================= */
 
 (function (root) {
   "use strict";
 
-  /* === 環境設定（對應 API 文件 v0.2.4） === */
-  const ENV = {
-    // AES 加解密金鑰（左手系統提供）
-    aesKey: "GmAOoS003d5OJ2G2",
-    aesIv: "bgfDcfWdWG6NSUr5",
+  /* === 設定 ===
+     Supabase Edge Function endpoint
+     部署完成後在 Supabase Dashboard 取得 */
+  const CONFIG = {
+    /* TODO: 部署 Edge Function 後填入實際 URL */
+    bffUrl: "https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/lohas-api-proxy",
 
-    // 預約系統 endpoint
-    rsv: {
-      prod: "https://rsv.lohasglasses.com/_api/v1.ashx",
-      test: "https://rsvlohasgalsses.lefthand.tw/_api/v1.ashx"
-    },
-
-    // 門市/人員系統 endpoint
-    map: {
-      prod: "https://map.lohasglasses.com/_api/v1.ashx",
-      test: "https://maplohas.lefthand.tw/_api/v1.ashx"
-    }
+    /* Supabase anon key（給 BFF 認證用，不是左手系統 key）
+       這個 key 可以放前端，是 Supabase 設計允許的 */
+    supabaseAnonKey:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxZG15eHhyc2t2bGxrY2VkeWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzkxMDIsImV4cCI6MjA5MzExNTEwMn0.OsHmLXwgQvxxZ2MTCULxhYmDt3fMO6x9RXohn_eP1RM"
   };
 
-  /* === Mode 切換：用 localStorage 'lohas_api_mode' 控制 ===
-     開啟 console 後執行 LohasApi.setMode('test') 或 'prod' */
+  /* === Mode 切換：test / prod ===
+     透過 header x-lohas-mode 傳給 BFF */
   function getMode() {
     return localStorage.getItem("lohas_api_mode") || "test";
   }
@@ -47,41 +44,6 @@
     console.log("[LohasApi] mode switched to", mode);
   }
 
-  function getEndpoint(host) {
-    const mode = getMode();
-    return ENV[host][mode];
-  }
-
-  /* === AES-128-CBC 加密 ===
-     CryptoJS 預設 Pkcs7 padding，UTF-8 編碼，Base64 輸出 */
-  function aesEncrypt(plaintext) {
-    if (plaintext === null || plaintext === undefined) return "";
-    if (typeof CryptoJS === "undefined") {
-      throw new Error("[LohasApi] CryptoJS not loaded — please include before api-core.js");
-    }
-    const key = CryptoJS.enc.Utf8.parse(ENV.aesKey);
-    const iv = CryptoJS.enc.Utf8.parse(ENV.aesIv);
-    const encrypted = CryptoJS.AES.encrypt(
-      CryptoJS.enc.Utf8.parse(String(plaintext)),
-      key,
-      { iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }
-    );
-    return encrypted.toString(); // Base64
-  }
-
-  function aesDecrypt(ciphertext) {
-    if (!ciphertext) return "";
-    if (typeof CryptoJS === "undefined") {
-      throw new Error("[LohasApi] CryptoJS not loaded");
-    }
-    const key = CryptoJS.enc.Utf8.parse(ENV.aesKey);
-    const iv = CryptoJS.enc.Utf8.parse(ENV.aesIv);
-    const decrypted = CryptoJS.AES.decrypt(ciphertext, key, {
-      iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7
-    });
-    return decrypted.toString(CryptoJS.enc.Utf8);
-  }
-
   /* === 統一錯誤類別 === */
   class LohasApiError extends Error {
     constructor(message, opts) {
@@ -89,36 +51,37 @@
       this.name = "LohasApiError";
       this.statecode = opts && opts.statecode;
       this.method = opts && opts.method;
-      this.host = opts && opts.host;
       this.original = opts && opts.original;
     }
   }
 
-  /* === HTTP POST 封裝 ===
-     host: 'rsv' | 'map'
-     payload: 已加密好的純物件（含 method）
-     回傳：解析後的 data；錯誤統一 throw LohasApiError */
-  async function post(host, payload) {
-    const url = getEndpoint(host);
+  /* === HTTP POST → Supabase Edge Function ===
+     payload 用明文，BFF 會自動加密該加密的欄位 */
+  async function post(_host, payload) {
     const method = payload && payload.method;
     let response;
 
     try {
-      response = await fetch(url, {
+      response = await fetch(CONFIG.bffUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json; charset=utf-8" },
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Authorization": "Bearer " + CONFIG.supabaseAnonKey,
+          "apikey": CONFIG.supabaseAnonKey,
+          "x-lohas-mode": getMode()
+        },
         body: JSON.stringify(payload)
       });
     } catch (err) {
       throw new LohasApiError("網路連線失敗，請稍後再試", {
-        method, host, original: err
+        method, original: err
       });
     }
 
     if (!response.ok) {
       throw new LohasApiError(
-        "伺服器回應錯誤 (HTTP " + response.status + ")",
-        { method, host, statecode: response.status }
+        "BFF 回應錯誤 (HTTP " + response.status + ")",
+        { method, statecode: response.status }
       );
     }
 
@@ -126,46 +89,50 @@
     try {
       json = await response.json();
     } catch (err) {
-      throw new LohasApiError("回應格式錯誤", { method, host, original: err });
+      throw new LohasApiError("回應格式錯誤", { method, original: err });
     }
 
-    /* 統一回傳結構：{ statecode, data, message }
-       statecode "0" = 成功；"1" = 失敗 */
     if (String(json.statecode) !== "0") {
       throw new LohasApiError(
         json.message || "API 回傳失敗",
-        { method, host, statecode: json.statecode }
+        { method, statecode: json.statecode }
       );
     }
 
-    /* data 欄位有兩種格式：
-       1. 直接是 JSON 物件/陣列（多數 API）
-       2. 是 stringified JSON（少數 API 如 getGroupUnProcess） */
+    /* data 欄位可能是 stringified JSON，統一解析 */
     let data = json.data;
     if (typeof data === "string" && data.length > 0) {
       try {
         data = JSON.parse(data);
-      } catch (_e) {
-        /* 不是 JSON 字串，保留原樣 */
-      }
+      } catch (_e) { /* 不是 JSON 字串，保留原樣 */ }
     }
     return data;
+  }
+
+  /* === Stub: BFF 版本前端不直接做加解密
+     這兩個函式保留 API 相容性，實際在 Edge Function 做 */
+  function aesEncrypt(plaintext) {
+    console.warn("[LohasApi] aesEncrypt 在 BFF 版本中已停用，加密由 Edge Function 處理");
+    return plaintext;
+  }
+  function aesDecrypt(ciphertext) {
+    /* 部分回傳值（如 reservationid）需要解密
+       BFF 應該在回傳前就先解密好，但為相容保留此函式 */
+    console.warn("[LohasApi] aesDecrypt 在 BFF 版本中已停用，解密應由 Edge Function 處理");
+    return ciphertext;
   }
 
   /* === 對外 namespace === */
   root.LohasApi = root.LohasApi || {};
   root.LohasApi.core = {
-    ENV,
+    CONFIG,
     getMode,
     setMode,
-    getEndpoint,
-    aesEncrypt,
-    aesDecrypt,
     post,
+    aesEncrypt,    // stub
+    aesDecrypt,    // stub
     LohasApiError
   };
-
-  /* 方便 console debug：window.LohasApi.setMode('test') */
   root.LohasApi.setMode = setMode;
   root.LohasApi.getMode = getMode;
 
