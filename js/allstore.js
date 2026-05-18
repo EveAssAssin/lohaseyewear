@@ -56,12 +56,14 @@
   });
 
   function cacheDom() {
-    dom.resultCount = document.getElementById("as-result-count");
     dom.search = document.getElementById("as-search");
     dom.regions = document.getElementById("as-regions");
     dom.list = document.getElementById("as-store-list");
+    dom.layout = document.getElementById("as-layout");
     dom.mapCanvas = document.getElementById("as-map-canvas");
     dom.pinCard = document.getElementById("as-pin-card");
+    dom.viewToggle = document.getElementById("as-view-toggle");
+    dom.viewToggleText = document.getElementById("as-view-toggle-text");
   }
 
   function bindEvents() {
@@ -88,17 +90,49 @@
       }, 200);
     });
 
-    /* 點列表 row */
+    /* 點卡片 */
     dom.list.addEventListener("click", e => {
-      const row = e.target.closest(".as-store-row");
-      if (!row) return;
-      if (e.target.closest(".as-store-row-btn")) {
-        const btn = e.target.closest(".as-store-row-btn");
-        handleStoreAction(btn.dataset.action, row.dataset.erpid);
+      const card = e.target.closest(".as-card");
+      if (!card) return;
+      const erpid = card.dataset.erpid;
+
+      /* 預約按鈕 */
+      const bookBtn = e.target.closest('[data-action="book"]');
+      if (bookBtn) {
+        e.stopPropagation();
+        handleStoreAction("book", erpid);
         return;
       }
-      selectStore(row.dataset.erpid);
+      /* 導航按鈕 */
+      const navBtn = e.target.closest('[data-action="navigate"]');
+      if (navBtn) {
+        e.stopPropagation();
+        handleStoreAction("navigate", erpid);
+        return;
+      }
+
+      /* 點卡片其他地方 → 選店 + 飛到該店 */
+      selectStore(erpid);
     });
+
+    /* 手機版底部切換 FAB */
+    if (dom.viewToggle) {
+      dom.viewToggle.addEventListener("click", () => {
+        dom.layout.classList.toggle("map-mode");
+        const isMap = dom.layout.classList.contains("map-mode");
+        dom.viewToggleText.textContent = isMap ? "清單" : "地圖";
+        const icon = dom.viewToggle.querySelector("i");
+        if (icon) {
+          icon.className = isMap
+            ? "fa-solid fa-list-ul"
+            : "fa-solid fa-map-location-dot";
+        }
+        /* 切到地圖時讓 Leaflet 重算 tiles */
+        if (isMap && state.map) {
+          setTimeout(() => state.map.invalidateSize(), 250);
+        }
+      });
+    }
   }
 
   function renderRegionPills() {
@@ -212,12 +246,14 @@
   }
 
   function createPinIcon(store, isActive) {
+    /* C 版電話 pin：顯示電話末四碼或店名 */
+    const label = store.phone || store.name;
     const cls = "lohas-pin" + (isActive ? " active" : "");
     return L.divIcon({
-      html: `<div class="${cls}"><div class="lohas-pin-body"></div></div>`,
-      className: "",
-      iconSize: [28, 36],
-      iconAnchor: [14, 36]
+      html: `<div class="${cls}">${label}</div>`,
+      className: "lohas-pin-wrap",
+      iconSize: null,        /* 讓 div 自適應寬度 */
+      iconAnchor: [50, 14]   /* 中心錨點 */
     });
   }
 
@@ -235,7 +271,6 @@
 
   function refresh() {
     applyFilter();
-    renderResultCount();
     renderList();
     updateMarkersVisibility();
   }
@@ -254,13 +289,28 @@
   }
 
   /* === 渲染 === */
-  function renderResultCount() {
-    const n = state.filtered.length;
-    const total = state.allStores.length;
-    dom.resultCount.textContent =
-      state.currentRegion === "all" && !state.searchText
-        ? `顯示全部 ${total} 間門市`
-        : `顯示 ${n} 間門市`;
+  /* === 解析 worktime 並判斷營業中 === */
+  function parseWorktime(worktime) {
+    if (!worktime) return null;
+    const normalized = String(worktime)
+      .replace(/：/g, ":")
+      .replace(/[~～\-—–－]/g, "~");
+    const m = normalized.match(/(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    return {
+      startH: parseInt(m[1], 10), startM: parseInt(m[2], 10),
+      endH:   parseInt(m[3], 10), endM:   parseInt(m[4], 10)
+    };
+  }
+  function isOpenNow(worktime) {
+    const p = parseWorktime(worktime);
+    if (!p) return null;
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const start = p.startH * 60 + p.startM;
+    let end = p.endH * 60 + p.endM;
+    if (end < start) end += 24 * 60;
+    return cur >= start && cur < end;
   }
 
   function renderList() {
@@ -276,24 +326,51 @@
 
     dom.list.innerHTML = state.filtered.map(s => {
       const isActive = state.activeErpid === s.erpid;
+      const photoStyle = s.coverimage ? `style="background-image:url('${s.coverimage}')"` : "";
+      const photoEmpty = s.coverimage
+        ? ""
+        : '<div class="as-card-photo-empty"><i class="fa-solid fa-store"></i></div>';
+
+      /* 真實營業狀態 */
+      const openStatus = isOpenNow(s.worktime);
+      const statusText = openStatus === true ? "● 營業中" :
+                         openStatus === false ? "● 休息中" : "● 營業";
+      const statusClass = openStatus === true ? "" :
+                          openStatus === false ? "off" : "muted";
+
       return (
-        `<div class="as-store-row${isActive ? " active" : ""}" data-erpid="${s.erpid}">` +
-          `<div class="as-store-row-head">` +
-            `<span class="as-store-row-name">${s.name}</span>` +
+        `<div class="as-card${isActive ? " active" : ""}" data-erpid="${s.erpid}">` +
+          `<div class="as-card-photo-wrap">` +
+            `<div class="as-card-photo" ${photoStyle}></div>` +
+            photoEmpty +
+            `<div class="as-card-status ${statusClass}">${statusText}</div>` +
+            `<div class="as-card-region">${s.region.label}</div>` +
+            `<div class="as-card-name-overlay">` +
+              `<div class="as-card-name">${s.name}</div>` +
+            `</div>` +
           `</div>` +
-          (s.slogan ? `<div class="as-store-row-slogan">${s.slogan}</div>` : "") +
-          `<div class="as-store-row-addr">${s.address}</div>` +
-          `<div class="as-store-row-meta">` +
-            `<span class="store-status-dot"><i class="fa-solid fa-circle"></i>營業中</span>` +
-            (s.worktime ? `<span><i class="fa-regular fa-clock"></i>${s.worktime}</span>` : "") +
-          `</div>` +
-          `<div class="as-store-row-actions">` +
-            `<button class="as-store-row-btn outline" data-action="navigate" type="button">` +
-              `<i class="fa-solid fa-diamond-turn-right"></i> 導航` +
-            `</button>` +
-            `<button class="as-store-row-btn book" data-action="book" type="button">` +
-              `<i class="fa-regular fa-calendar-check"></i> 立即預約` +
-            `</button>` +
+          `<div class="as-card-body">` +
+            `<div class="as-card-slogan">${s.slogan || ""}</div>` +
+            `<div class="as-card-meta">` +
+              (s.worktime ? `<span class="as-card-meta-item"><i class="fa-regular fa-clock"></i>${s.worktime}</span>` : "") +
+              (s.city ? `<span class="as-card-meta-item"><i class="fa-solid fa-location-dot"></i>${s.city}</span>` : "") +
+            `</div>` +
+            `<div class="as-card-foot">` +
+              `<div class="as-card-phone">` +
+                (s.phone
+                  ? `<span class="as-card-phone-num"><i class="fa-solid fa-phone"></i>${s.phone}</span>`
+                  : `<span class="as-card-phone-num">—</span>`) +
+                `<small>${s.region.label}</small>` +
+              `</div>` +
+              `<div class="as-card-actions">` +
+                `<button class="as-card-btn" data-action="navigate" type="button" title="導航">` +
+                  `<i class="fa-solid fa-diamond-turn-right"></i>` +
+                `</button>` +
+                `<button class="as-card-btn as-card-btn-book" data-action="book" type="button">` +
+                  `立即預約` +
+                `</button>` +
+              `</div>` +
+            `</div>` +
           `</div>` +
         `</div>`
       );
@@ -377,8 +454,8 @@
         state.map.flyTo([s.lat, s.lng], Math.max(state.map.getZoom(), 14), { duration: 0.6 });
       }
       requestAnimationFrame(() => {
-        const row = dom.list.querySelector(".as-store-row.active");
-        if (row) row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        const card = dom.list.querySelector(".as-card.active");
+        if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
       });
     }
   }
