@@ -32,7 +32,7 @@
       // 抓所有 active 創作者(含必要欄位)
       const { data, error } = await sb
         .from('creator_info')
-        .select('member_id, display_name, tagline, avatar_url, joining_photo_url, engraving_quote, status')
+        .select('member_id, display_name, tagline, avatar_url, kol_main_image_url, engraving_quote, status')
         .eq('status', 'active')
         .not('engraving_quote', 'is', null)
         .neq('engraving_quote', '');
@@ -68,7 +68,7 @@
   function renderKolCard(c, idx) {
     const inverse = (idx % 2 === 1) ? ' inverse' : '';
     const portrait = escAttr(c.avatar_url || 'images/kol-placeholder.jpg');
-    const detail = escAttr(c.joining_photo_url || FALLBACK_DETAIL_IMG);
+    const detail = escAttr(c.kol_main_image_url || FALLBACK_DETAIL_IMG);
     const name = escHtml(c.display_name || '創作者');
     const tag = escHtml((c.tagline || 'DESIGNER').toUpperCase());
     const quote = escHtml(c.engraving_quote || '');
