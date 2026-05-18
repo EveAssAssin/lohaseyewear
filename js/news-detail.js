@@ -80,12 +80,11 @@
       return;
     }
 
-    const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
       .select('*')
       .eq('slug', id)
-      .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
+      .eq('status', 'published')
       .maybeSingle();
 
     if (error) {
@@ -152,10 +151,12 @@
         } else if (type === 'line') {
           window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url),
             '_blank', 'width=600,height=500');
-        } else if (type === 'twitter') {
-          window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) +
-            '&text=' + encodeURIComponent(title),
-            '_blank', 'width=600,height=500');
+        } else if (type === 'instagram') {
+          // IG 沒有官方分享 web intent,複製連結 + 開 IG 讓使用者貼上
+          copyToClipboard(url, btn);
+          setTimeout(() => {
+            window.open('https://www.instagram.com/', '_blank');
+          }, 200);
         } else if (type === 'copy') {
           copyToClipboard(url, btn);
         }
