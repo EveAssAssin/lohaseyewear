@@ -35,32 +35,26 @@
           <span class="accent">選擇預約門市</span>
           <span>· 全台 <b>24</b> 間 + 海外 <b>1</b> 間</span>
         </div>
+        <div class="as-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" id="as-search" placeholder="輸入縣市、地址、門市名稱">
+        </div>
+        <div class="as-regions" id="as-regions"></div>
         <div class="as-subheader-actions">
           <button class="as-subheader-btn">
-            <i class="fa-solid fa-location-arrow"></i> 我附近的門市
+            <i class="fa-solid fa-location-arrow"></i> 我附近
           </button>
         </div>
       </div>
     </header>
 
-    <div class="as-layout">
+    <div class="as-layout" id="as-layout">
 
-      <aside class="as-panel">
-        <div class="as-panel-head">
-          <h1 class="as-panel-title">
-            <i class="fa-regular fa-calendar-check"></i>選擇預約門市
-          </h1>
-          <div class="as-panel-count" id="as-result-count">載入中…</div>
-          <div class="as-search">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="search" id="as-search" placeholder="輸入縣市、地址、門市名稱">
-          </div>
-          <div class="as-regions" id="as-regions"></div>
-        </div>
-        <div class="as-store-list" id="as-store-list"></div>
+      <aside class="as-list-panel">
+        <div class="as-list" id="as-store-list"></div>
       </aside>
 
-      <div class="as-map">
+      <div class="as-map-panel">
         <div id="as-map-canvas"></div>
         <div class="as-pin-card" id="as-pin-card"></div>
       </div>
@@ -68,6 +62,12 @@
     </div>
 
   </div>
+
+  <!-- 手機版底部切換 FAB -->
+  <button class="as-view-toggle" id="as-view-toggle" type="button">
+    <i class="fa-solid fa-map-location-dot"></i>
+    <span id="as-view-toggle-text">地圖</span>
+  </button>
 </main>
 
 <div id="site-footer"></div>
