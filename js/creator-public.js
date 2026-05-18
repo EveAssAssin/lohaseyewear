@@ -94,8 +94,8 @@
       .eq('member_id', erpid)
       .eq('status', 'approved');
 
-    const photoOnly = (photos || []).filter(p => p.type !== 'story').slice(0, 8);
-    const stories = (photos || []).filter(p => p.type === 'story').slice(0, 5);
+    // 合併:照片卡 + 故事卡 都顯示在「刻圖分享照片」區
+    const allPhotos = (photos || []).slice(0, 12);
 
     // 渲染
     const dn = creatorInfo.display_name || member.name || '創作者';
@@ -114,8 +114,9 @@
 
     // 社群
     const socialItems = [];
-    if (social.instagram) socialItems.push(`<a class="social-link ig" href="${escapeHtml(social.instagram)}" target="_blank"><i class="fa-brands fa-instagram"></i>${escapeHtml(extractIgHandle(social.instagram) || 'Instagram')}</a>`);
+    if (social.instagram) socialItems.push(`<a class="social-link ig" href="${escapeHtml(social.instagram)}" target="_blank"><i class="fa-brands fa-instagram"></i>Instagram</a>`);
     if (social.facebook) socialItems.push(`<a class="social-link fb" href="${escapeHtml(social.facebook)}" target="_blank"><i class="fa-brands fa-facebook"></i>Facebook</a>`);
+    if (social.website) socialItems.push(`<a class="social-link web" href="${escapeHtml(social.website)}" target="_blank"><i class="fa-solid fa-globe"></i>網站</a>`);
     if (social.line) socialItems.push(`<a class="social-link line" href="https://line.me/ti/p/${escapeHtml(social.line)}" target="_blank"><i class="fa-brands fa-line"></i>LINE</a>`);
     if (social.email) socialItems.push(`<a class="social-link email" href="mailto:${escapeHtml(social.email)}"><i class="fa-regular fa-envelope"></i>${escapeHtml(social.email)}</a>`);
 
@@ -134,22 +135,9 @@
         }).join('')
       : '<p class="empty-text" style="grid-column:1/-1">還沒上架任何設計</p>';
 
-    // 故事
-    const storiesHtml = stories.length > 0
-      ? stories.map(s => {
-          const cover = s.main_image_url || (Array.isArray(s.image_urls) && s.image_urls[0]) || '';
-          return `
-            <div class="story-row">
-              <div class="story-thumb" ${cover ? `style="background-image:url('${escapeHtml(cover)}')"` : ''}></div>
-              <p class="story-quote">「${escapeHtml(s.title || '')}」</p>
-              <div class="story-arrow">→</div>
-            </div>`;
-        }).join('')
-      : '<p class="empty-text">還沒寫過故事</p>';
-
-    // 照片
-    const photosHtml = photoOnly.length > 0
-      ? photoOnly.map((p, i) => {
+    // 刻圖分享照片 (合併 photo + story 卡)
+    const photosHtml = allPhotos.length > 0
+      ? allPhotos.map((p, i) => {
           const cover = p.main_image_url || (Array.isArray(p.image_urls) && p.image_urls[0]) || '';
           const grad = photoGrads[i % photoGrads.length];
           return `<div class="photo ${grad}" ${cover ? `style="background-image:url('${escapeHtml(cover)}')"` : ''}></div>`;
@@ -159,9 +147,10 @@
     // 影片 (從 YouTube URL 抓 video ID)
     const videoSection = videoUrl ? renderVideoSection(videoUrl, videoTitle) : '';
 
-    // 緣分區 (joining story)
+    // 緣分區 (joining story) — 若有自訂區跟在後面則無分隔線
+    const joiningNoDivider = customBlocks.length > 0 ? ' no-divider' : '';
     const joiningSection = (joiningStory || joiningPhoto) ? `
-      <div class="pf-section" id="sec-joining">
+      <div class="pf-section${joiningNoDivider}" id="sec-joining">
         <div class="pf-section-eb">STORY OF JOINING</div>
         <h2 class="pf-section-h">與樂活的緣分</h2>
         <div class="pf-section-sub">${escapeHtml(dn)} 是怎麼成為樂活的合作創作者的</div>
@@ -182,9 +171,12 @@
             ? `<div class="pf-section-eb">SECTION · 0${i + 1}</div>
                <h2 class="pf-section-h">${escapeHtml(b.title)}</h2>`
             : '';
+          // 除最後一個自訂區外都 no-divider (跟前一個自訂區之間無線)
+          const isLast = (i === customBlocks.length - 1);
+          const ndClass = isLast ? '' : ' no-divider';
 
           return `
-            <div class="pf-section">
+            <div class="pf-section${ndClass}">
               ${titleBlock}
               <div class="joining-content">
                 ${b.image
@@ -208,7 +200,6 @@
           <b>${escapeHtml(dn)}</b>
         </div>
         <div class="actions">
-          <button id="followBtn"><i class="fa-regular fa-bookmark"></i>追蹤</button>
           <button id="shareBtn"><i class="fa-solid fa-arrow-up-from-bracket"></i>分享</button>
         </div>
       </div>
@@ -223,23 +214,15 @@
           </div>
           ${tagline ? `<div class="pf-tag">${escapeHtml(tagline)}</div>` : ''}
           ${bio ? `<p class="pf-bio">${escapeHtml(bio)}</p>` : ''}
-          <div class="pf-stats">
-            <div><div class="pf-stat-label">累 積 照 片</div><div class="pf-stat-num">${photoOnly.length}</div></div>
-            <div><div class="pf-stat-label">故 事 篇 數</div><div class="pf-stat-num">${stories.length}</div></div>
-            <div><div class="pf-stat-label">上 架 設 計</div><div class="pf-stat-num">${(designs || []).length}</div></div>
-            <div><div class="pf-stat-label">設 計 被 使 用</div><div class="pf-stat-num">${totalUsed}</div></div>
-          </div>
           <div class="pf-social">${socialItems.join('') || '<span style="font-size:12px;color:var(--lohas-mute)">尚未設定聯絡方式</span>'}</div>
         </div>
       </div>
 
       <div class="anchor-nav">
         ${joiningStory ? '<button class="anchor on" data-target="sec-joining">與樂活的緣分</button><span class="anchor-divider"></span>' : ''}
-        <button class="anchor ${joiningStory ? '' : 'on'}" data-target="sec-designs">我的設計</button>
+        <button class="anchor ${joiningStory ? '' : 'on'}" data-target="sec-designs">我的刻圖設計</button>
         <span class="anchor-divider"></span>
-        <button class="anchor" data-target="sec-stories">我的故事</button>
-        <span class="anchor-divider"></span>
-        <button class="anchor" data-target="sec-photos">我的照片</button>
+        <button class="anchor" data-target="sec-photos">刻圖分享照片</button>
       </div>
 
       ${joiningSection}
@@ -248,22 +231,15 @@
 
       <div class="pf-section" id="sec-designs">
         <div class="pf-section-eb">DESIGNS</div>
-        <h2 class="pf-section-h">我的設計</h2>
+        <h2 class="pf-section-h">我的刻圖設計</h2>
         <div class="pf-section-sub">${(designs || []).length} 件已上架</div>
         <div class="pf-designs">${designsHtml}</div>
       </div>
 
-      <div class="pf-section" id="sec-stories">
-        <div class="pf-section-eb">STORIES</div>
-        <h2 class="pf-section-h">我的故事</h2>
-        <div class="pf-section-sub">${stories.length} 篇已發表</div>
-        ${storiesHtml}
-      </div>
-
       <div class="pf-section" id="sec-photos">
         <div class="pf-section-eb">PHOTOS</div>
-        <h2 class="pf-section-h">我的照片</h2>
-        <div class="pf-section-sub">${photoOnly.length} 張公開照片</div>
+        <h2 class="pf-section-h">刻圖分享照片</h2>
+        <div class="pf-section-sub">${allPhotos.length} 張公開照片</div>
         <div class="photos-grid">${photosHtml}</div>
       </div>
 

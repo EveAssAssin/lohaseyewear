@@ -2543,7 +2543,7 @@
 
   function agReset() {
     document.getElementById('agDisplayName').value = 'LOHAS 企劃部';
-    ['agTagline','agBio','agJoiningStory','agEngravingQuote','agVideoUrl','agVideoTitle','agIg','agFb','agLine','agEmail'].forEach(id => {
+    ['agTagline','agBio','agJoiningStory','agEngravingQuote','agVideoUrl','agVideoTitle','agIg','agFb','agWebsite','agLine','agEmail'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -2617,6 +2617,7 @@
     const video_title = document.getElementById('agVideoTitle').value.trim();
     const ig = document.getElementById('agIg').value.trim();
     const fb = document.getElementById('agFb').value.trim();
+    const website = document.getElementById('agWebsite').value.trim();
     const line = document.getElementById('agLine').value.trim();
     const email = document.getElementById('agEmail').value.trim();
 
@@ -2668,6 +2669,7 @@
       const social_links = {};
       if (ig) social_links.instagram = ig;
       if (fb) social_links.facebook = fb;
+      if (website) social_links.website = website;
       if (line) social_links.line = line;
       if (email) social_links.email = email;
 
@@ -2959,7 +2961,7 @@
             <div class="creator-card-name-row">
               <span class="creator-card-name">${escapeHtml(c.display_name || '未命名')}</span>
               ${isFeatured ? '<span class="creator-card-tag featured"><i class="fa-solid fa-star"></i>本月精選</span>' : ''}
-              ${isVirt ? '<span class="creator-card-tag virt">樂活官方</span>' : '<span class="creator-card-tag">會員</span>'}
+              ${isVirt ? '<span class="creator-card-tag virt">樂活官方建立</span>' : '<span class="creator-card-tag">會員</span>'}
               ${isSuspended ? '<span class="creator-card-tag suspended">已隱藏</span>' : ''}
             </div>
             <div class="creator-card-meta">
@@ -3151,6 +3153,7 @@
     const sl = c.social_links || {};
     document.getElementById('agIg').value = sl.instagram || '';
     document.getElementById('agFb').value = sl.facebook || '';
+    document.getElementById('agWebsite').value = sl.website || '';
     document.getElementById('agLine').value = sl.line || '';
     document.getElementById('agEmail').value = sl.email || '';
 
