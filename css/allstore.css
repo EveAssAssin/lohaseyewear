@@ -118,34 +118,6 @@
   font-size: 10.5px;
 }
 
-.as-subheader-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.as-subheader-btn {
-  height: 38px;
-  padding: 0 14px;
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  border-radius: var(--r-pill);
-  color: var(--text-sub);
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.as-subheader-btn:hover {
-  background: var(--bg-warm);
-  color: var(--lohas-brand);
-}
-.as-subheader-btn i { font-size: 12px; }
-
 /* === Layout：左清單 + 右地圖 === */
 .as-layout {
   display: grid;
@@ -616,7 +588,6 @@
   }
   .as-search { flex: 1 1 100%; order: 1; }
   .as-regions { order: 2; width: 100%; }
-  .as-subheader-actions { order: 3; margin-left: auto; }
   .as-list { grid-template-columns: 1fr; }
   .as-list-panel { padding: 22px 20px 100px; }
 }
