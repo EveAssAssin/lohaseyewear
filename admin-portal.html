@@ -995,13 +995,6 @@
         </div>
       </div>
 
-      <!-- 代創作者上傳 banner -->
-      <div id="adminUploadBanner" style="display:none;margin:16px 0;padding:14px 18px;background:#FAE5C9;border:1px solid #BA7517;border-radius:8px;color:#7C5A2B;font-size:13px;letter-spacing:0.4px;display:flex;align-items:center;gap:10px">
-        <i class="fa-solid fa-circle-info" style="font-size:16px"></i>
-        <div style="flex:1">目前是<b>代「<span id="adminUploadAsCreatorName">—</span>」上傳</b>,照片會歸到該創作者的「我的照片」區。</div>
-        <button type="button" class="btn" id="adminUploadCancelAs" style="font-size:12px;padding:5px 12px">取消代上傳</button>
-      </div>
-
       <div class="form-card">
         <div class="form-row">
           <label>顯示名稱</label>
@@ -1383,6 +1376,47 @@
         </div>
 
         <div class="editor-panel">
+          <h3 class="editor-panel-h"><i class="fa-regular fa-image"></i>KOL 配鏡分享主圖</h3>
+          <div class="editor-row">
+            <div class="editor-label">主圖</div>
+            <div>
+              <div class="creator-photo-wrap">
+                <div class="creator-photo-preview" id="agKolMainPreview" style="aspect-ratio:1">
+                  <i class="fa-regular fa-image"></i>
+                  <span>1:1 正方</span>
+                </div>
+                <button class="creator-photo-clear" id="agKolMainClear" type="button" aria-label="移除" style="display:none">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+                <button class="creator-photo-upload-btn" id="agKolMainBtn" type="button">
+                  <i class="fa-solid fa-camera"></i>更換圖片
+                </button>
+                <input type="file" id="agKolMainInput" class="visually-hidden" accept="image/*">
+                <input type="hidden" id="agKolMainUrl"/>
+              </div>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">1:1 正方圖,顯示在雷刻頁 KOL 配鏡分享區的小卡 · 建議尺寸 800 × 800 px</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分享照片區 (官方創作者用,管理員代上傳,自動通過審核) -->
+        <div class="editor-panel" id="agShareSection" style="display:none">
+          <h3 class="editor-panel-h">
+            <i class="fa-regular fa-camera"></i>分享照片
+            <button class="btn" id="agAddPhotoBtn" type="button" style="margin-left:auto;font-size:11px;padding:6px 12px">
+              <i class="fa-solid fa-plus"></i>新增照片
+            </button>
+          </h3>
+          <div style="padding:0 4px 12px;font-size:11.5px;color:var(--lohas-mute);letter-spacing:0.3px">
+            上傳的照片會出現在創作者公開頁的「分享照片」區與分享牆,直接通過審核。
+          </div>
+          <div id="agPhotosList">
+            <p class="empty-text" style="padding:30px 20px;font-size:12px">尚未上傳照片</p>
+          </div>
+          <input type="file" id="agPhotoInput" class="visually-hidden" accept="image/*" multiple>
+        </div>
+
+<div class="editor-panel">
           <h3 class="editor-panel-h"><i class="fa-brands fa-youtube"></i>創作者影片 (選填)</h3>
           <div class="editor-row">
             <div class="editor-label">YouTube URL</div>
@@ -1421,47 +1455,9 @@
         </div>
 
         <!-- KOL 配鏡分享主圖 (顯示在雷刻頁的 KOL 區) -->
-        <div class="editor-panel">
-          <h3 class="editor-panel-h"><i class="fa-regular fa-image"></i>KOL 配鏡分享主圖</h3>
-          <div class="editor-row">
-            <div class="editor-label">主圖</div>
-            <div>
-              <div class="creator-photo-wrap">
-                <div class="creator-photo-preview" id="agKolMainPreview" style="aspect-ratio:1">
-                  <i class="fa-regular fa-image"></i>
-                  <span>1:1 正方</span>
-                </div>
-                <button class="creator-photo-clear" id="agKolMainClear" type="button" aria-label="移除" style="display:none">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-                <button class="creator-photo-upload-btn" id="agKolMainBtn" type="button">
-                  <i class="fa-solid fa-camera"></i>更換圖片
-                </button>
-                <input type="file" id="agKolMainInput" class="visually-hidden" accept="image/*">
-                <input type="hidden" id="agKolMainUrl"/>
-              </div>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">1:1 正方圖,顯示在雷刻頁 KOL 配鏡分享區的小卡 · 建議尺寸 800 × 800 px</div>
-            </div>
-          </div>
-        </div>
+        
 
-        <!-- 分享我的照片 (官方創作者用,點了開「樂活官方上傳」頁面帶當前 creator 身份) -->
-        <div class="editor-panel" id="agShareSection" style="display:none">
-          <h3 class="editor-panel-h"><i class="fa-regular fa-camera"></i>分享我的照片</h3>
-          <div style="padding:0 4px 14px;font-size:11.5px;color:var(--lohas-mute);letter-spacing:0.3px">
-            官方創作者沒有登入帳號無法自行分享,管理員可代為上傳照片。照片會出現在創作者公開頁的「我的照片」區與分享牆。
-          </div>
-          <div class="editor-row">
-            <div class="editor-label"></div>
-            <div>
-              <button type="button" class="action-btn-solid" id="agOpenShareBtn">
-                <i class="fa-solid fa-arrow-up-from-bracket"></i>開啟上傳模組
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="editor-panel">
+        <div class="editor-panel" style="border-top:1px dashed var(--lohas-line);background:transparent;padding-top:18px;margin-top:8px">
           <div class="editor-row">
             <div class="editor-label"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1525,7 +1521,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-final"></script>
+<script src="js/admin-portal.js?v=20260518-final2"></script>
 
 </body>
 </html>
