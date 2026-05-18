@@ -92,7 +92,7 @@
 
     /* 點卡片 */
     dom.list.addEventListener("click", e => {
-      const card = e.target.closest(".as-card");
+      const card = e.target.closest(".as-store-card");
       if (!card) return;
       const erpid = card.dataset.erpid;
 
@@ -326,50 +326,39 @@
 
     dom.list.innerHTML = state.filtered.map(s => {
       const isActive = state.activeErpid === s.erpid;
-      const photoStyle = s.coverimage ? `style="background-image:url('${s.coverimage}')"` : "";
-      const photoEmpty = s.coverimage
-        ? ""
-        : '<div class="as-card-photo-empty"><i class="fa-solid fa-store"></i></div>';
+      const imgStyle = s.coverimage ? `background-image:url('${s.coverimage}');` : "";
 
-      /* 真實營業狀態 */
+      /* 真實判斷營業狀態 */
       const openStatus = isOpenNow(s.worktime);
-      const statusText = openStatus === true ? "● 營業中" :
-                         openStatus === false ? "● 休息中" : "● 營業";
-      const statusClass = openStatus === true ? "" :
-                          openStatus === false ? "off" : "muted";
+      const statusHtml = openStatus === true
+        ? `<span class="store-status-dot"><i class="fa-solid fa-circle"></i><b>營業中</b></span>`
+        : openStatus === false
+          ? `<span class="store-status-dot off"><i class="fa-solid fa-circle"></i><b>休息中</b></span>`
+          : `<span class="store-status-dot muted"><i class="fa-solid fa-circle"></i><b>—</b></span>`;
 
       return (
-        `<div class="as-card${isActive ? " active" : ""}" data-erpid="${s.erpid}">` +
-          `<div class="as-card-photo-wrap">` +
-            `<div class="as-card-photo" ${photoStyle}></div>` +
-            photoEmpty +
-            `<div class="as-card-status ${statusClass}">${statusText}</div>` +
-            `<div class="as-card-region">${s.region.label}</div>` +
-            `<div class="as-card-name-overlay">` +
-              `<div class="as-card-name">${s.name}</div>` +
-            `</div>` +
+        `<div class="as-store-card${isActive ? " active" : ""}" data-erpid="${s.erpid}">` +
+          `<div class="as-store-card-img" style="${imgStyle}">` +
+            `<span class="as-store-card-flag">${s.region.label}</span>` +
+            (s.coverimage ? "" : `<i class="fa-solid fa-store"></i>`) +
           `</div>` +
-          `<div class="as-card-body">` +
-            `<div class="as-card-slogan">${s.slogan || ""}</div>` +
-            `<div class="as-card-meta">` +
-              (s.worktime ? `<span class="as-card-meta-item"><i class="fa-regular fa-clock"></i>${s.worktime}</span>` : "") +
-              (s.city ? `<span class="as-card-meta-item"><i class="fa-solid fa-location-dot"></i>${s.city}</span>` : "") +
+          `<div class="as-store-card-body">` +
+            `<div class="as-store-card-name">${s.name}</div>` +
+            (s.slogan ? `<div class="as-store-card-slogan">${s.slogan}</div>` : "") +
+            `<div class="as-store-card-addr">${s.address || ""}</div>` +
+            `<div class="as-store-card-meta">` +
+              `<div>${statusHtml}</div>` +
+              (s.worktime ? `<div><i class="fa-regular fa-clock"></i><b>${s.worktime}</b></div>` : "") +
+              (s.phone ? `<div><i class="fa-solid fa-phone"></i><b>${s.phone}</b></div>` : "") +
+              `<div><i class="fa-solid fa-route"></i><b>${s.region.label}</b></div>` +
             `</div>` +
-            `<div class="as-card-foot">` +
-              `<div class="as-card-phone">` +
-                (s.phone
-                  ? `<span class="as-card-phone-num"><i class="fa-solid fa-phone"></i>${s.phone}</span>`
-                  : `<span class="as-card-phone-num">—</span>`) +
-                `<small>${s.region.label}</small>` +
-              `</div>` +
-              `<div class="as-card-actions">` +
-                `<button class="as-card-btn" data-action="navigate" type="button" title="導航">` +
-                  `<i class="fa-solid fa-diamond-turn-right"></i>` +
-                `</button>` +
-                `<button class="as-card-btn as-card-btn-book" data-action="book" type="button">` +
-                  `立即預約` +
-                `</button>` +
-              `</div>` +
+            `<div class="as-store-card-actions">` +
+              `<button class="btn outline" data-action="navigate" type="button">` +
+                `<i class="fa-solid fa-diamond-turn-right"></i> 導航` +
+              `</button>` +
+              `<button class="btn filled" data-action="book" type="button">` +
+                `<i class="fa-regular fa-calendar-check"></i> 立即預約` +
+              `</button>` +
             `</div>` +
           `</div>` +
         `</div>`
@@ -386,6 +375,14 @@
     if (!s) return;
     const imgStyle = s.coverimage ? `background-image:url('${s.coverimage}');` : "";
 
+    /* 真實判斷營業狀態 */
+    const openStatus = isOpenNow(s.worktime);
+    const statusHtml = openStatus === true
+      ? `<span class="store-status-dot"><i class="fa-solid fa-circle"></i><b>營業中</b></span>`
+      : openStatus === false
+        ? `<span class="store-status-dot off"><i class="fa-solid fa-circle"></i><b>休息中</b></span>`
+        : `<span class="store-status-dot muted"><i class="fa-solid fa-circle"></i><b>—</b></span>`;
+
     dom.pinCard.innerHTML =
       `<div class="as-pin-card-img" style="${imgStyle}">` +
         `<span class="as-pin-card-flag">${s.region.label}</span>` +
@@ -397,7 +394,7 @@
         (s.slogan ? `<div class="as-pin-card-slogan">${s.slogan}</div>` : "") +
         `<div class="as-pin-card-addr">${s.address}</div>` +
         `<div class="as-pin-card-meta">` +
-          `<div><span class="store-status-dot"><i class="fa-solid fa-circle"></i><b>營業中</b></span></div>` +
+          `<div>${statusHtml}</div>` +
           (s.worktime ? `<div><i class="fa-regular fa-clock"></i><b>${s.worktime}</b></div>` : "") +
           (s.phone ? `<div><i class="fa-solid fa-phone"></i><b>${s.phone}</b></div>` : "") +
           `<div><i class="fa-solid fa-route"></i><b>${s.region.label}</b></div>` +
@@ -454,7 +451,7 @@
         state.map.flyTo([s.lat, s.lng], Math.max(state.map.getZoom(), 14), { duration: 0.6 });
       }
       requestAnimationFrame(() => {
-        const card = dom.list.querySelector(".as-card.active");
+        const card = dom.list.querySelector(".as-store-card.active");
         if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
       });
     }
