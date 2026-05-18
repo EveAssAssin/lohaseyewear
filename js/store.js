@@ -41,9 +41,13 @@
     }
     await loadAll();
 
-    /* 如果 URL 有 #book，自動開啟預約 */
-    if (location.hash === "#book") {
-      setTimeout(openBookingModal, 300);
+    /* 不再自動開預約。URL 有 #staff 或 #book 只是「滾動到驗光師區塊」 */
+    if (location.hash === "#staff" || location.hash === "#book") {
+      setTimeout(() => {
+        const el = document.querySelector(".sd-staff-row") ||
+                   document.querySelector("#sd-book-prompt");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
     }
   });
 
@@ -78,9 +82,7 @@
   async function loadAll() {
     renderLoading();
     try {
-      /* 並行：getAllStores + getEmployeesByGroup
-         說明：API 文件中沒有「依 erpid 取單一店家」的 API，
-         所以先取全部再 filter。getEmployeesByGroup 用 group ERP 直接拿到員工。 */
+      /* 並行：getAllStores + getEmployeesByGroup */
       const [allRaw, empRaw] = await Promise.all([
         storeApi.getAllStores(),
         storeApi.getEmployeesByGroup(state.erpid)
@@ -97,12 +99,50 @@
       state.store = store;
       state.employees = (empRaw || [])
         .map(storeData.normalizeEmployeeShort)
-        .filter(e => e && !e.isLeave && !e.isFreeze);
+        .filter(e => e && !e.isLeave && !e.isFreeze && !e.isUnspecify);
 
+      /* 先渲染（員工詳細評價還沒下載完，先空白）*/
       renderAll();
+
+      /* 背景：並行抓每位員工的詳細評價，邊抓邊更新 */
+      loadEmployeeDetails();
     } catch (err) {
       renderError(err);
     }
+  }
+
+  /* === 並行抓每位員工的詳細資料（含評價）=== */
+  async function loadEmployeeDetails() {
+    if (!state.employees || state.employees.length === 0) return;
+
+    /* 為每位員工發起 detail 請求（不指定店員的不要打）*/
+    const realEmployees = state.employees.filter(e =>
+      e.erpid && !/^9{4,}\d*$/.test(e.erpid)  // 排除「9999999」這類不指定店員
+    );
+
+    const results = await Promise.allSettled(
+      realEmployees.map(e =>
+        storeApi.getEmployeeDetail(e.erpid, 5)   // 一次拿 5 則評價
+      )
+    );
+
+    /* 把詳細資料 merge 回 state.employees */
+    results.forEach((res, i) => {
+      if (res.status !== "fulfilled" || !res.value) return;
+      const detail = storeData.normalizeEmployeeDetail(res.value);
+      if (!detail) return;
+      const emp = realEmployees[i];
+      /* 用 detail 覆蓋（保留 short 已有的） */
+      emp.introduction = detail.introduction || emp.introduction;
+      emp.photos = detail.photos && detail.photos.length > 0 ? detail.photos : emp.photos;
+      emp.honors = detail.honors && detail.honors.length > 0 ? detail.honors : emp.honors;
+      emp.averageScore = detail.averageScore != null ? detail.averageScore : emp.averageScore;
+      emp.evaluationList = detail.evaluationList || [];
+    });
+
+    /* 全部回來後，重新渲染（員工卡片 + 評價區）*/
+    renderBody();
+    console.log("[store] 員工詳細資料載入完成", realEmployees.length, "位");
   }
 
   /* === 渲染：總入口 === */
@@ -245,32 +285,146 @@
         `</section>`;
     }
 
-    /* Reviews（先用 placeholder；未來可逐人呼叫 getEmployeeDetail 拿到 evaluations 後彙整） */
+    /* === 真實評價彙整 ===
+       把每位員工的 evaluationList 全部彙整，按時間（無 date 欄位則按出現順序）顯示。
+       分數分布也基於真實評價計算。 */
+    const allEvals = [];
+    e.forEach(emp => {
+      (emp.evaluationList || []).forEach(ev => {
+        allEvals.push({
+          ...ev,
+          empName: emp.name,
+          empPhoto: (emp.photos && emp.photos[0]) || ""
+        });
+      });
+    });
+
+    /* 分數分布計算 */
+    const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    allEvals.forEach(ev => {
+      const s = Math.round(ev.score);
+      if (s >= 1 && s <= 5) dist[s]++;
+    });
+    const totalReviews = allEvals.length;
+    const pct = (n) => totalReviews > 0 ? Math.round((dist[n] / totalReviews) * 100) : 0;
+
+    /* Reviews block */
+    let reviewsContent;
+    if (totalReviews === 0) {
+      reviewsContent =
+        `<div class="store-state" style="padding:30px;">` +
+          `<div class="store-state-icon"><i class="fa-regular fa-comments"></i></div>` +
+          `<div class="store-state-title">目前還沒有評價</div>` +
+          `<div class="store-state-msg">完成預約並體驗後，您也可以留下您的回饋</div>` +
+        `</div>`;
+    } else {
+      /* 評價列表（最多顯示 6 則）*/
+      const list = allEvals.slice(0, 6).map(renderReviewCard).join("");
+      reviewsContent =
+        `<div class="sd-review-list">${list}</div>` +
+        (allEvals.length > 6
+          ? `<div class="sd-review-more"><a href="#">查看全部 ${allEvals.length} 則評價 <i class="fa-solid fa-arrow-right"></i></a></div>`
+          : "");
+    }
+
     const reviews =
       `<section class="sd-sec">` +
         `<div class="sd-sec-head">` +
           `<h2>顧 客 評 價</h2>` +
+          (totalReviews > 0 ? `<a class="more">${totalReviews} 則真實評價</a>` : "") +
         `</div>` +
         `<div class="sd-review-summary">` +
           `<div class="sd-score-block">` +
             `<div class="num">${avgScore.toFixed(1)}</div>` +
-            `<div class="stars">★★★★★</div>` +
-            `<div class="count">依驗光師平均</div>` +
+            `<div class="stars">${renderStars(avgScore)}</div>` +
+            `<div class="count">${totalReviews > 0 ? totalReviews + " 則評價" : "依驗光師平均"}</div>` +
           `</div>` +
           `<div class="sd-score-bars">` +
-            renderScoreBar("5★", 78) +
-            renderScoreBar("4★", 16) +
-            renderScoreBar("3★", 4) +
-            renderScoreBar("2★", 1) +
-            renderScoreBar("1★", 1) +
+            renderScoreBar("5★", pct(5)) +
+            renderScoreBar("4★", pct(4)) +
+            renderScoreBar("3★", pct(3)) +
+            renderScoreBar("2★", pct(2)) +
+            renderScoreBar("1★", pct(1)) +
           `</div>` +
         `</div>` +
-        `<div class="store-state" style="padding:24px;">` +
-          `<div class="store-state-msg">完整評價將於下一階段串接 <code>getemployeeinfobyerpid</code> 取得</div>` +
+        reviewsContent +
+      `</section>`;
+
+    /* === 特約商家（API 文件無此 endpoint，先用 Coming Soon 佔位） === */
+    const partners =
+      `<section class="sd-sec">` +
+        `<div class="sd-sec-head">` +
+          `<h2>區 域 特 約 商 家</h2>` +
+          `<span class="sd-sec-tag">即將上線</span>` +
+        `</div>` +
+        `<div class="sd-partners-placeholder">` +
+          `<i class="fa-solid fa-store-alt"></i>` +
+          `<div class="sd-partners-title">${s.region.label} 特約商家專區</div>` +
+          `<div class="sd-partners-msg">本店所屬區域的合作商家優惠資訊即將於此呈現</div>` +
         `</div>` +
       `</section>`;
 
-    dom.body.innerHTML = stats + gallery + staffSection + reviews;
+    dom.body.innerHTML = stats + gallery + staffSection + reviews + partners;
+  }
+
+  /* === 渲染單則評價卡 === */
+  function renderReviewCard(ev) {
+    const photo = ev.empPhoto ? `style="background-image:url('${ev.empPhoto}')"` : "";
+    const photoContent = ev.empPhoto ? "" : `<i class="fa-regular fa-user"></i>`;
+    const stars = renderStars(ev.score);
+    const memberDisplay = ev.memberName || "匿名顧客";
+    return (
+      `<div class="sd-review-card">` +
+        `<div class="sd-review-head">` +
+          `<div class="sd-review-avatar" ${photo}>${photoContent}</div>` +
+          `<div class="sd-review-info">` +
+            `<div class="sd-review-staff">${ev.empName}</div>` +
+            `<div class="sd-review-member">— ${memberDisplay}</div>` +
+          `</div>` +
+          `<div class="sd-review-score">${stars}</div>` +
+        `</div>` +
+        (ev.content ? `<div class="sd-review-content">${ev.content}</div>` : "") +
+      `</div>`
+    );
+  }
+
+  /* === 把分數轉成 ★★★★☆ === */
+  function renderStars(score) {
+    const n = Math.round(score || 0);
+    let s = "";
+    for (let i = 0; i < 5; i++) s += i < n ? "★" : "☆";
+    return s;
+  }
+
+  /* === 把職稱／榮譽文字映射到合適的 icon ===
+     依關鍵字判斷，找不到時用通用 icon */
+  function honorIcon(text) {
+    const t = String(text || "");
+    if (/冠軍|王牌/.test(t)) return "fa-solid fa-trophy";
+    if (/金|gold|白金|platinum/i.test(t)) return "fa-solid fa-medal";
+    if (/銀|silver/i.test(t)) return "fa-solid fa-medal";
+    if (/驗光生|驗光師|驗配/.test(t)) return "fa-solid fa-eye";
+    if (/AI|認證/.test(t)) return "fa-solid fa-certificate";
+    if (/隱形/.test(t)) return "fa-regular fa-circle";
+    if (/多焦|漸進/.test(t)) return "fa-solid fa-glasses";
+    if (/光學|鏡片/.test(t)) return "fa-solid fa-magnifying-glass-plus";
+    if (/微笑|服務|親切/.test(t)) return "fa-regular fa-face-smile";
+    if (/聖誕|祝福|大使/.test(t)) return "fa-solid fa-gift";
+    if (/店長|店長職憑/.test(t)) return "fa-solid fa-crown";
+    if (/副店長/.test(t)) return "fa-solid fa-user-tie";
+    if (/門市管理|管理者|經理|店主/.test(t)) return "fa-solid fa-user-shield";
+    if (/區長/.test(t)) return "fa-solid fa-map-location-dot";
+    if (/樂活人/.test(t)) return "fa-solid fa-leaf";
+    return "fa-solid fa-star";
+  }
+
+  /* === role 圖示（職稱專用，較精簡）=== */
+  function roleIcon(role) {
+    const t = String(role || "");
+    if (/區長/.test(t)) return "fa-solid fa-map-location-dot";
+    if (/店長/.test(t) && !/副/.test(t)) return "fa-solid fa-crown";
+    if (/副店長/.test(t)) return "fa-solid fa-user-tie";
+    return "fa-regular fa-user";
   }
 
   function renderStaffCard(emp, isTop) {
@@ -279,27 +433,49 @@
     const avatarStyle = photo ? `style="background-image:url('${photo}')"` : "";
     const avatarContent = photo ? "" : initial;
 
+    /* 職稱（role 優先，否則 jobtitle） */
+    const roleText = (emp.role || emp.jobtitle || "").trim();
+
+    /* 榮譽 / 獎章列表 ===
+       資料來源：emp.honor（單一字串）+ emp.honors（陣列）
+       去重後最多顯示 3 個 pill */
+    const honorTexts = [];
+    if (emp.honor) honorTexts.push(emp.honor.trim());
+    (emp.honors || []).forEach(h => {
+      const t = (h.title || h).toString().trim();
+      if (t && honorTexts.indexOf(t) === -1) honorTexts.push(t);
+    });
+
     const badges = [];
-    if (emp.honor) badges.push(`<span class="sd-staff-badge hot">${emp.honor}</span>`);
-    if (isTop) badges.push(`<span class="sd-staff-badge gold">王牌</span>`);
-    if (emp.jobtitle) {
-      emp.jobtitle.split(/[·,，、]/).slice(0, 2).forEach(t => {
-        const tt = t.trim();
-        if (tt) badges.push(`<span class="sd-staff-badge">${tt}</span>`);
-      });
+    if (isTop) {
+      badges.push(
+        `<span class="sd-staff-badge gold">` +
+          `<i class="fa-solid fa-star"></i> 王 牌 顧 問` +
+        `</span>`
+      );
     }
+    honorTexts.slice(0, 3).forEach((t, i) => {
+      badges.push(
+        `<span class="sd-staff-badge${i === 0 && !isTop ? " hot" : ""}">` +
+          `<i class="${honorIcon(t)}"></i> ${t}` +
+        `</span>`
+      );
+    });
 
     const score = emp.averageScore != null ? emp.averageScore.toFixed(1) : "—";
+    const reviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
 
     return (
       `<div class="sd-staff-card${isTop ? " top" : ""}">` +
         `<div class="sd-staff-avatar" ${avatarStyle}>${avatarContent}</div>` +
         `<div class="sd-staff-name">${emp.name || ""}</div>` +
-        `<div class="sd-staff-title">${emp.role || emp.jobtitle || ""}</div>` +
+        (roleText
+          ? `<div class="sd-staff-title"><i class="${roleIcon(roleText)}"></i> ${roleText}</div>`
+          : "") +
         `<div class="sd-staff-badges">${badges.join("")}</div>` +
         `<div class="sd-staff-stats">` +
           `<div>滿意度<b>${score}</b></div>` +
-          `<div>${emp.honors.length > 0 ? "事蹟<b>" + emp.honors.length + "</b>" : "資歷<b>—</b>"}</div>` +
+          `<div>${reviewCount > 0 ? "評價<b>" + reviewCount + "</b>" : "事蹟<b>" + honorTexts.length + "</b>"}</div>` +
         `</div>` +
         `<button class="sd-staff-book" data-book="${emp.erpid}">` +
           `<i class="fa-regular fa-calendar-check"></i> 預約 ${emp.name}` +

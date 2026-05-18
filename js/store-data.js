@@ -85,6 +85,17 @@
       // 人員
       employees: (raw.employees || []).map(normalizeEmployeeShort),
 
+      // 後台未確認用途的欄位（保留以便未來釐清）
+      // - dl: 推測為特約商家 ID 陣列，但 API 文件 v0.2.4 未列出對應 endpoint
+      //       目前不使用，等左手系統提供說明
+      // - wd, ml, unspecifyemployee: 暫不使用
+      dl: Array.isArray(raw.dl) ? raw.dl : [],
+      _meta: {
+        wd: raw.wd,
+        ml: raw.ml,
+        unspecifyemployee: raw.unspecifyemployee
+      },
+
       // 留原始 raw 給需要時取用
       _raw: raw
     };
@@ -113,8 +124,10 @@
       timeLimitedMessage: raw.timelimitedmessage || "",
       isFreeze: !!raw.isfreeze,
       isLeave: !!raw.isleave,
+      isUnspecify: !!raw.isunspecify,
       leaveTime: raw.leavetime || null,
       averageScore: parseFloat(raw.averagescore) || null,
+      evaluationList: [],
       _raw: raw
     };
   }

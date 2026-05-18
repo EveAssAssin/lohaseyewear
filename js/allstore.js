@@ -403,7 +403,7 @@
         : `https://www.google.com/maps/search/?api=1&query=${q}`;
       window.open(url, "_blank");
     } else if (action === "book") {
-      window.location.href = `store.html?erpid=${encodeURIComponent(s.erpid)}#book`;
+      window.location.href = `store.html?erpid=${encodeURIComponent(s.erpid)}#staff`;
     } else {
       window.location.href = `store.html?erpid=${encodeURIComponent(s.erpid)}`;
     }
