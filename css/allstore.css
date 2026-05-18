@@ -167,208 +167,178 @@
   gap: 20px;
 }
 
-/* === 卡片 === */
-.as-card {
+/* === 卡片（樣式比照地圖小卡 .as-pin-card） === */
+.as-store-card {
   background: #fff;
-  cursor: pointer;
   border-radius: var(--r-lg);
+  overflow: hidden;
+  cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--lohas-bd);
 }
-.as-card:hover {
+.as-store-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 16px 36px rgba(80, 66, 45, 0.1);
+  border-color: var(--lohas-light);
 }
-.as-card:hover .as-card-photo { transform: scale(1.04); }
-.as-card.active {
-  box-shadow: 0 0 0 2px var(--lohas-brand), 0 16px 36px rgba(80, 66, 45, 0.15);
+.as-store-card.active {
+  border-color: var(--lohas-brand);
+  box-shadow: 0 0 0 1px var(--lohas-brand), 0 16px 36px rgba(80, 66, 45, 0.15);
 }
 
-.as-card-photo-wrap {
-  aspect-ratio: 4 / 3;
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  position: relative;
-  background-color: var(--bg-soft);
-}
-.as-card-photo {
-  width: 100%;
-  height: 100%;
+.as-store-card-img {
+  aspect-ratio: 16 / 9;
   background-size: cover;
   background-position: center;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: var(--lohas-hover);
+  position: relative;
 }
-.as-card-photo-wrap::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(45, 36, 24, 0.55) 0%, transparent 40%);
-  pointer-events: none;
-}
-.as-card-photo-empty {
+.as-store-card-img > i {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.5);
   font-size: 48px;
-  z-index: 1;
+  color: rgba(255, 255, 255, 0.3);
 }
-
-.as-card-status {
+.as-store-card-flag {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 14px;
+  left: 14px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(6px);
+  color: var(--lohas-brand);
+  font-size: 11px;
   padding: 4px 10px;
   border-radius: var(--r-pill);
-  font-size: 10.5px;
   font-weight: 600;
-  color: var(--ok);
-  letter-spacing: 0.5px;
-  z-index: 2;
-}
-.as-card-status.off { color: var(--err); }
-.as-card-status.muted { color: var(--text-muted); }
-
-.as-card-region {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: var(--lohas-brand);
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: var(--r-pill);
-  font-size: 10.5px;
   letter-spacing: 1.5px;
-  font-weight: 600;
-  z-index: 2;
+  backdrop-filter: blur(8px);
 }
 
-.as-card-name-overlay {
-  position: absolute;
-  bottom: 14px;
-  left: 16px;
-  right: 16px;
-  z-index: 2;
-  color: #fff;
-}
-.as-card-name {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  line-height: 1.1;
-}
-
-.as-card-body {
-  padding: 14px 6px 4px;
+.as-store-card-body {
+  padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
   flex: 1;
 }
-.as-card-slogan {
+.as-store-card-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.as-store-card-slogan {
   font-size: 12.5px;
   color: var(--text-sub);
-  line-height: 1.5;
+  letter-spacing: 0.3px;
   margin-bottom: 8px;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  letter-spacing: 0.3px;
-  min-height: 19px;
 }
-.as-card-meta {
-  display: flex;
-  gap: 12px;
-  font-size: 11.5px;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-  letter-spacing: 0.3px;
-}
-.as-card-meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.as-card-meta-item i { font-size: 9.5px; }
-
-.as-card-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--lohas-bd);
-  margin-top: auto;
-}
-.as-card-phone {
+.as-store-card-addr {
   font-size: 12px;
-  color: var(--text-sub);
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.35;
-  min-width: 0;
-  flex: 1;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.as-card-phone-num {
+.as-store-card-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  font-size: 11.5px;
+  color: var(--text-sub);
+  margin-bottom: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--bg-soft);
+  border-bottom: 1px solid var(--bg-soft);
+}
+.as-store-card-meta > div {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  letter-spacing: 0.3px;
+  min-width: 0;
 }
-.as-card-phone-num i { font-size: 9px; opacity: 0.6; }
-.as-card-phone small {
+.as-store-card-meta > div b {
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.as-store-card-meta i {
   font-size: 10px;
-  color: var(--text-muted);
-  letter-spacing: 1px;
-}
-
-.as-card-actions {
-  display: flex;
-  gap: 6px;
+  color: var(--lohas-light);
+  width: 12px;
+  text-align: center;
   flex-shrink: 0;
 }
-.as-card-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--lohas-bd);
-  background: #fff;
-  color: var(--text-sub);
-  cursor: pointer;
-  font-size: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-  font-family: inherit;
+.as-store-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
 }
-.as-card-btn:hover {
-  border-color: var(--lohas-brand);
-  color: var(--lohas-brand);
-}
-.as-card-btn-book {
-  width: auto;
-  padding: 0 16px;
-  background: var(--lohas-brand);
-  color: #fff;
-  border-color: var(--lohas-brand);
+.as-store-card-actions .btn {
+  flex: 1;
+  height: 38px;
+  border-radius: var(--r-pill);
   font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 1px;
+  border: 1px solid;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
+  transition: all 0.15s;
 }
-.as-card-btn-book:hover {
-  background: var(--lohas-hover);
+.as-store-card-actions .btn.outline {
+  background: #fff;
+  color: var(--lohas-brand);
+  border-color: var(--lohas-bd);
+}
+.as-store-card-actions .btn.outline:hover { border-color: var(--lohas-brand); }
+.as-store-card-actions .btn.filled {
+  flex: 2;
+  background: var(--lohas-brand);
   color: #fff;
+  border-color: var(--lohas-brand);
+}
+.as-store-card-actions .btn.filled:hover {
+  background: var(--lohas-hover);
   border-color: var(--lohas-hover);
 }
+
+/* === store-status-dot 共用 === */
+.store-status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+}
+.store-status-dot i {
+  font-size: 7px !important;
+  color: var(--ok) !important;
+  width: auto !important;
+}
+.store-status-dot b { color: var(--ok) !important; font-weight: 600 !important; }
+.store-status-dot.off i { color: var(--err) !important; }
+.store-status-dot.off b { color: var(--err) !important; }
+.store-status-dot.muted i { color: var(--text-muted) !important; }
+.store-status-dot.muted b { color: var(--text-muted) !important; }
 
 /* === 空狀態 / 載入中 === */
 .as-list .store-state {
@@ -648,6 +618,6 @@
 }
 
 @media (max-width: 560px) {
-  .as-card-name { font-size: 20px; letter-spacing: 2.5px; }
+  .as-store-card-name { font-size: 18px; letter-spacing: 1.5px; }
   .as-pin-card { width: calc(100% - 32px); right: 16px; bottom: 90px; }
 }
