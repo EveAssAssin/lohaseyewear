@@ -410,62 +410,47 @@
 }
 .sd-gallery-count i { margin-right: 4px; }
 
-/* === Staff row (店員卡 — 以人為主題) === */
+/* === Staff row (店員卡 — B 版 Airbnb 風 + 勳章 pill) === */
 .sd-staff-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 
 .sd-staff-card {
   background: #fff;
-  border: 1px solid var(--lohas-bd);
-  border-radius: var(--r-lg);
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
   position: relative;
 }
 .sd-staff-card:hover {
-  border-color: var(--lohas-light);
-  box-shadow: 0 20px 40px rgba(80, 66, 45, 0.12);
   transform: translateY(-4px);
-}
-.sd-staff-card.top {
-  border: 2px solid var(--collab-gold);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.11);
 }
 
-/* === 上半部：人像主視覺（1:1 大頭像區塊，只露出上 2/3 上身） === */
-.sd-staff-photo {
+/* === 上半：1:1 大頭照 + 王牌徽章 + 收藏愛心 === */
+.sd-staff-photo-wrap {
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
   background-color: var(--bg-soft);
-  background-size: 130% auto;            /* 放大 1.3 倍，讓頭部主體更突出 */
-  background-position: center 8%;        /* 對齊頭頂下方 8%，臉部置中、留出空間給上方角標 */
-  background-repeat: no-repeat;
   overflow: hidden;
-  transition: background-position 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.sd-staff-photo::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(45, 36, 24, 0.78) 0%,
-    rgba(45, 36, 24, 0.35) 30%,
-    rgba(45, 36, 24, 0) 55%
-  );
-  transition: opacity 0.3s;
+.sd-staff-photo {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center 12%;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.sd-staff-card:hover .sd-staff-photo {
-  background-position: center 5%;        /* hover 時略往上滑 */
-}
+.sd-staff-card:hover .sd-staff-photo { transform: scale(1.04); }
 
-/* 照片不存在時的 fallback */
+/* 沒照片時的 fallback */
 .sd-staff-photo-fallback {
   position: absolute;
   inset: 0;
@@ -477,10 +462,7 @@
   background: linear-gradient(135deg, var(--lohas-light) 0%, var(--lohas-hover) 100%);
   color: rgba(255, 255, 255, 0.7);
 }
-.sd-staff-photo-fallback i {
-  font-size: 56px;
-  opacity: 0.5;
-}
+.sd-staff-photo-fallback i { font-size: 56px; opacity: 0.5; }
 .sd-staff-photo-fallback span {
   font-size: 32px;
   font-weight: 700;
@@ -488,176 +470,219 @@
   color: #fff;
 }
 
-/* === 角標：只剩王牌顧問（其他資訊在照片底部） === */
-.sd-staff-pin {
+/* 王牌徽章（左上）*/
+.sd-staff-flag {
   position: absolute;
   top: 14px;
+  left: 14px;
   z-index: 2;
+  background: var(--lohas-brand);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(80, 66, 45, 0.25);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border-radius: var(--r-pill);
-  font-size: 10.5px;
-  font-weight: 700;
-  line-height: 1;
+  gap: 4px;
 }
-.sd-staff-pin i { font-size: 10px; }
-.sd-staff-pin.gold {
-  left: 14px;
-  background: var(--collab-gold);
-  color: var(--lohas-brand);
-  letter-spacing: 2px;
-  box-shadow: 0 4px 12px rgba(212, 176, 104, 0.5);
+.sd-staff-flag i {
+  font-size: 9px;
+  color: var(--collab-gold);
 }
 
-/* === 照片底部：姓名 + 職稱（疊壓在漸層上） === */
-.sd-staff-photo-info {
+/* 收藏愛心（右上）*/
+.sd-staff-fav {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 22px 22px 18px;
+  top: 14px;
+  right: 14px;
   z-index: 2;
-  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 0;
+  cursor: pointer;
+  color: var(--text-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.15s;
 }
-.sd-staff-name {
-  font-family: var(--font-tc);
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  margin-bottom: 4px;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-  line-height: 1.1;
-}
-.sd-staff-subtitle {
-  font-size: 11px;
-  letter-spacing: 3px;
-  color: rgba(255, 255, 255, 0.85);
-  font-weight: 400;
+.sd-staff-fav:hover {
+  background: #fff;
+  color: var(--lohas-brand);
+  transform: scale(1.08);
 }
 
-/* === 下半部：內容區 === */
+/* === 下半：內容區 === */
 .sd-staff-body {
-  padding: 18px 20px 20px;
+  padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
   flex: 1;
 }
 
-/* 評分區 */
-.sd-staff-rating {
+/* 姓名 + 評分一行 */
+.sd-staff-head {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--bg-soft);
-  font-size: 12px;
-  color: var(--text-muted);
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
 }
-.sd-staff-rating-stars {
-  color: #E8B547;
-  font-size: 13px;
-  letter-spacing: 1.5px;
-  line-height: 1;
-}
-.sd-staff-rating-num {
+.sd-staff-name {
+  font-size: 17px;
   font-weight: 700;
-  color: var(--lohas-brand);
-  font-size: 14px;
-  letter-spacing: 0.5px;
+  color: var(--text-main);
+  letter-spacing: -0.3px;
+  min-width: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-tc);
 }
-.sd-staff-rating-count {
-  font-size: 11px;
+.sd-staff-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  color: var(--text-main);
+}
+.sd-staff-rating i { font-size: 11px; color: var(--text-main); }
+.sd-staff-rating .num { color: var(--text-main); }
+.sd-staff-rating .count {
   color: var(--text-muted);
+  font-weight: 400;
+  font-size: 12px;
 }
 
-/* 引文簡介 */
+/* 職稱 */
+.sd-staff-role {
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: -0.1px;
+  margin-bottom: 8px;
+}
+
+/* 簡介引文 */
 .sd-staff-intro {
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--text-sub);
-  line-height: 1.75;
+  line-height: 1.55;
   margin-bottom: 14px;
-  letter-spacing: 0.3px;
-  min-height: 44px;
+  letter-spacing: -0.1px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: 42px;
 }
+.sd-staff-intro::before { content: "「"; opacity: 0.5; }
+.sd-staff-intro::after { content: "」"; opacity: 0.5; }
 .sd-staff-intro.placeholder {
   color: var(--text-muted);
   letter-spacing: 2px;
-  font-style: normal;
-  text-align: center;
 }
+.sd-staff-intro.placeholder::before,
+.sd-staff-intro.placeholder::after { content: ""; }
 
-/* 獎章 */
+/* === 勳章 pill（圓徽 + 文字一體 / 方向 2）=== */
 .sd-staff-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 6px;
   margin-bottom: 16px;
-  min-height: 28px;
+  min-height: 32px;
 }
 .sd-staff-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 10.5px;
-  padding: 4px 10px;
-  background: var(--bg-warm);
-  color: var(--text-sub);
-  border-radius: var(--r-pill);
-  letter-spacing: 0.3px;
-  font-weight: 500;
-  line-height: 1.3;
-  border: 1px solid transparent;
-  transition: all 0.15s;
+  background: #fff;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  border: 1px solid var(--lohas-bd);
+  padding: 0 12px 0 0;
+  overflow: hidden;
+  letter-spacing: 0.2px;
+  line-height: 28px;
+  white-space: nowrap;
 }
-.sd-staff-badge i {
-  font-size: 9px;
-  color: var(--lohas-light);
-}
-.sd-staff-badge.hot {
-  background: #FBEFE7;
-  color: #B5743A;
-  border-color: rgba(181, 116, 58, 0.15);
-}
-.sd-staff-badge.hot i { color: #B5743A; }
-
-/* 預約按鈕（取代上一版的 gold variant，現在用 hot/普通底色） */
-.sd-staff-book {
-  width: 100%;
-  height: 46px;
-  background: var(--lohas-brand);
-  color: #fff;
-  border-radius: var(--r-pill);
-  font-size: 13px;
-  letter-spacing: 1.5px;
-  font-weight: 600;
-  transition: all 0.2s;
-  display: inline-flex;
+/* 第一個（金色，最高榮譽）*/
+.sd-staff-badge .ic {
+  width: 28px;
+  height: 28px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  background: linear-gradient(135deg, var(--collab-gold) 0%, #B89154 100%);
+  color: #fff;
+  font-size: 11px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(212, 176, 104, 0.4);
+}
+/* 第二個（銀色）*/
+.sd-staff-badge.silver .ic {
+  background: linear-gradient(135deg, #D6D6D6 0%, #989898 100%);
+  box-shadow: 0 2px 6px rgba(150, 150, 150, 0.3);
+}
+/* 第三個（銅色）*/
+.sd-staff-badge.bronze .ic {
+  background: linear-gradient(135deg, #D6A06E 0%, #8B5A2B 100%);
+  box-shadow: 0 2px 6px rgba(139, 90, 43, 0.3);
+}
+
+/* === CTA 區（細灰線分隔）=== */
+.sd-staff-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--lohas-bd);
+  margin-top: auto;
+  gap: 10px;
+}
+.sd-staff-foot-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+.sd-staff-book {
+  background: var(--lohas-brand);
+  color: #fff;
   border: 0;
   cursor: pointer;
   font-family: inherit;
-  margin-top: auto;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
-.sd-staff-book i:first-child { font-size: 13px; }
-.sd-staff-book i:last-child {
-  font-size: 11px;
-  transition: transform 0.2s;
-}
+.sd-staff-book i { font-size: 10px; }
 .sd-staff-book:hover {
   background: var(--lohas-hover);
+  transform: scale(1.03);
+  box-shadow: 0 6px 16px rgba(80, 66, 45, 0.25);
 }
-.sd-staff-book:hover i:last-child {
-  transform: translateX(3px);
-}
+
+/* === 王牌卡片：CTA 變金色 === */
 .sd-staff-card.top .sd-staff-book {
   background: var(--collab-gold);
   color: var(--lohas-brand);
@@ -903,7 +928,7 @@
   }
   .sd-info-cta { grid-column: 1; width: 100%; justify-content: center; }
   .sd-staff-row { grid-template-columns: 1fr; gap: 16px; }
-  .sd-staff-name { font-size: 22px; letter-spacing: 3px; }
+  .sd-staff-name { font-size: 18px; letter-spacing: -0.3px; }
   .sd-quick-stats { grid-template-columns: repeat(2, 1fr); }
   .sd-q-stat:nth-child(3) { border-left: 0; }
   .sd-partners-placeholder { padding: 36px 18px; }
