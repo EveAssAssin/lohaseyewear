@@ -1714,57 +1714,51 @@
     // modal close
     document.getElementById('bannerModalClose')?.addEventListener('click', closeBannerModal);
     document.getElementById('bmCancelBtn')?.addEventListener('click', closeBannerModal);
-    document.querySelector('#bannerEditModal .ag-modal-overlay')?.addEventListener('click', closeBannerModal);
+    document.getElementById('bannerEditModal')?.addEventListener('click', e => {
+      if (e.target.id === 'bannerEditModal') closeBannerModal();
+    });
 
     // save / delete
     document.getElementById('bmSaveBtn')?.addEventListener('click', saveBanner);
     document.getElementById('bmDeleteBtn')?.addEventListener('click', deleteBanner);
 
-    // 圖片上傳
-    const imgBtn = document.getElementById('bmImageBtn');
-    const imgInput = document.getElementById('bmImageInput');
-    const imgPreview = document.getElementById('bmImagePreview');
-    imgBtn?.addEventListener('click', () => imgInput?.click());
-    imgPreview?.addEventListener('click', () => imgInput?.click());
-    document.getElementById('bmImageClear')?.addEventListener('click', e => {
-      e.stopPropagation();
-      BannerState.imageFile = null;
-      BannerState.imageBase64 = null;
-      BannerState.existingImageUrl = null;
-      imgPreview.style.backgroundImage = '';
-      imgPreview.classList.remove('has-image');
-      document.getElementById('bmImageClear').style.display = 'none';
-      if (imgInput) imgInput.value = '';
-    });
+    // 圖片上傳 (img-upload-wrap 風格)
+    const wrap = document.getElementById('bmImageWrap');
+    const preview = document.getElementById('bmImagePreview');
+    const input = wrap?.querySelector('.img-upload-input');
 
-    imgInput?.addEventListener('change', async e => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      // 依當前 position 套用 aspectRatio
-      const cfg = BANNER_POSITIONS[BannerState.currentPos];
-      let aspectRatio = 16/9;
-      if (cfg.aspect === '21:9') aspectRatio = 21/9;
+    if (wrap && !wrap.dataset.bound) {
+      wrap.dataset.bound = '1';
+      preview?.addEventListener('click', () => input?.click());
 
-      let finalFile = file;
-      if (window.LohasCropper) {
-        const cropped = await window.LohasCropper.crop(file, {
-          aspectRatio: aspectRatio,
-          title: '裁切 Banner · ' + cfg.aspect
-        });
-        if (!cropped) { imgInput.value = ''; return; }
-        finalFile = cropped;
-      }
-      BannerState.imageFile = finalFile;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        BannerState.imageBase64 = ev.target.result;
-        imgPreview.style.backgroundImage = `url('${ev.target.result}')`;
-        imgPreview.classList.add('has-image');
-        document.getElementById('bmImageClear').style.display = 'flex';
-      };
-      reader.readAsDataURL(finalFile);
-      imgInput.value = '';
-    });
+      input?.addEventListener('change', async e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // 依當前 position 套用 aspectRatio
+        const cfg = BANNER_POSITIONS[BannerState.currentPos];
+        let aspectRatio = 16/9;
+        if (cfg.aspect === '21:9') aspectRatio = 21/9;
+
+        let finalFile = file;
+        if (window.LohasCropper) {
+          const cropped = await window.LohasCropper.crop(file, {
+            aspectRatio: aspectRatio,
+            title: '裁切 Banner · ' + cfg.aspect
+          });
+          if (!cropped) { input.value = ''; return; }
+          finalFile = cropped;
+        }
+        BannerState.imageFile = finalFile;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          BannerState.imageBase64 = ev.target.result;
+          preview.innerHTML = '<img src="' + ev.target.result + '" alt="" />';
+        };
+        reader.readAsDataURL(finalFile);
+        input.value = '';
+      });
+    }
   }
 
   async function loadBannerList(position) {
@@ -1858,9 +1852,12 @@
     const cfg = BANNER_POSITIONS[BannerState.currentPos];
     document.getElementById('bannerModalTitle').textContent =
       (BannerState.editing ? '編輯' : '新增') + ' Banner — ' + cfg.label;
-    document.getElementById('bmAspectHint').textContent = cfg.aspect;
+    document.getElementById('bmAspectHint').textContent = '(' + cfg.aspect + ')';
     document.getElementById('bmImageHint').textContent = cfg.size;
-    document.getElementById('bmImagePreview').style.aspectRatio = cfg.aspect.replace(':', '/');
+
+    // 同步 aspect 到 wrap (給 cropper 用)
+    const wrap = document.getElementById('bmImageWrap');
+    if (wrap) wrap.dataset.aspect = cfg.aspect;
 
     // 顯隱排序 row
     document.getElementById('bmSortRow').style.display = cfg.multi ? '' : 'none';
@@ -1875,21 +1872,17 @@
     document.getElementById('bmIsActive').checked = b.is_active !== false;
     document.getElementById('bmSortOrder').value = b.sort_order != null ? b.sort_order : 0;
 
+    // 圖片預覽
     const preview = document.getElementById('bmImagePreview');
-    const clearBtn = document.getElementById('bmImageClear');
     if (b.image_url) {
-      preview.style.backgroundImage = `url('${escapeHtml(b.image_url)}')`;
-      preview.classList.add('has-image');
-      clearBtn.style.display = 'flex';
+      preview.innerHTML = '<img src="' + escapeHtml(b.image_url) + '" alt="" />';
       BannerState.existingImageUrl = b.image_url;
     } else {
-      preview.style.backgroundImage = '';
-      preview.classList.remove('has-image');
-      clearBtn.style.display = 'none';
+      preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(' + cfg.aspect + ')</span></span>';
     }
 
     document.getElementById('bmHint').textContent = '';
-    modal.style.display = 'flex';
+    modal.style.display = '';
     document.body.style.overflow = 'hidden';
   }
 

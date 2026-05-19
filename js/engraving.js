@@ -86,7 +86,7 @@
     const shareBtn = igLink
       ? '<a href="' + igLink + '" class="btn-more-simple" target="_blank" rel="noopener">查看完整分享</a>'
       : '';
-    const profileBtn = '<a href="' + profileLink + '" class="btn-more-outline">了解創作者</a>';
+    const profileBtn = '<a href="' + profileLink + '" class="kol-profile-link">了解 ' + name + ' <span>→</span></a>';
 
     return (
       '<div class="split-item' + inverse + '">' +
