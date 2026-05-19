@@ -44,42 +44,36 @@
 
     if (loading) loading.style.display = 'none';
 
-    const filtered = currentFilter === 'all'
-      ? allNews
-      : allNews.filter(n => n.category === currentFilter);
+    // 1. 處理「本月精選」(只取一篇,放在頁面上方 featured 區)
+    renderFeatured();
 
-    // 排序: is_featured 優先,其他按 published_at desc (已從 DB 排好)
-    const sorted = [...filtered].sort((a, b) => {
-      const fa = a.is_featured ? 0 : 1;
-      const fb = b.is_featured ? 0 : 1;
-      return fa - fb;
-    });
+    // 2. 列表排除精選那篇,並套用篩選
+    const featuredId = (allNews.find(n => n.is_featured) || {}).id;
+    const filtered = (currentFilter === 'all'
+      ? allNews
+      : allNews.filter(n => n.category === currentFilter)
+    ).filter(n => n.id !== featuredId);
 
     grid.querySelectorAll('.news-card').forEach(el => el.remove());
 
-    if (!sorted.length) {
+    if (!filtered.length) {
       if (empty) empty.style.display = '';
       return;
     }
 
     if (empty) empty.style.display = 'none';
 
-    const visible = sorted.slice(0, visibleCount);
+    const visible = filtered.slice(0, visibleCount);
 
     const html = visible.map(n => {
       const slug = escapeHtml(n.slug);
       const href = 'news-detail.html?id=' + slug;
-      const featuredClass = n.is_featured ? ' news-card--featured' : '';
-      const featuredBadge = n.is_featured
-        ? '<span class="news-card__featured-badge"><i class="fa-solid fa-star"></i>本月精選</span>'
-        : '';
-      return '<article class="news-card' + featuredClass + '" data-category="' + escapeHtml(n.category) + '">' +
+      return '<article class="news-card" data-category="' + escapeHtml(n.category) + '">' +
         '<a href="' + href + '" class="news-card__image">' +
           (n.cover_image_url
             ? '<img src="' + escapeHtml(n.cover_image_url) + '" alt="' + escapeHtml(n.title) + '">'
             : '<div class="news-card__placeholder"></div>'
           ) +
-          featuredBadge +
         '</a>' +
         '<div class="news-card__body">' +
           '<div class="post-meta">' +
@@ -102,8 +96,41 @@
     // load more 顯隱
     const loadMoreWrap = document.querySelector('.news-load-more-wrap');
     if (loadMoreWrap) {
-      loadMoreWrap.style.display = sorted.length > visibleCount ? '' : 'none';
+      loadMoreWrap.style.display = filtered.length > visibleCount ? '' : 'none';
     }
+  }
+
+  function renderFeatured() {
+    const section = document.getElementById('newsFeaturedSection');
+    const slot = document.getElementById('newsFeaturedSlot');
+    if (!section || !slot) return;
+
+    const featured = allNews.find(n => n.is_featured);
+    if (!featured) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = '';
+    const href = 'news-detail.html?id=' + escapeHtml(featured.slug);
+    slot.innerHTML =
+      '<article class="featured-post">' +
+        '<a href="' + href + '" class="featured-post__media">' +
+          (featured.cover_image_url
+            ? '<img src="' + escapeHtml(featured.cover_image_url) + '" alt="' + escapeHtml(featured.title) + '">'
+            : '<div class="news-card__placeholder" style="width:100%;height:100%"></div>'
+          ) +
+        '</a>' +
+        '<div class="featured-post__body">' +
+          '<div class="post-meta">' +
+            '<span class="post-tag">' + escapeHtml(CAT_LABEL[featured.category] || featured.category) + '</span>' +
+            '<span class="post-date">' + formatDate(featured.published_at || featured.created_at) + '</span>' +
+          '</div>' +
+          '<h3><a href="' + href + '">' + escapeHtml(featured.title) + '</a></h3>' +
+          '<p>' + escapeHtml(featured.excerpt || '') + '</p>' +
+          '<a href="' + href + '" class="post-readmore">READ MORE <span>→</span></a>' +
+        '</div>' +
+      '</article>';
   }
 
   async function loadNews() {
