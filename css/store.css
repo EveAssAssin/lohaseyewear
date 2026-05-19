@@ -208,21 +208,27 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff;
-  padding: 8px 14px;
+  background: #fff;
+  color: var(--text-main);
+  padding: 9px 16px;
   border-radius: var(--r-pill);
-  font-size: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
   letter-spacing: 0.5px;
   z-index: 2;
   border: 0;
   cursor: pointer;
   font-family: inherit;
   text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition: all 0.15s;
 }
-.sd-hero-back:hover { background: rgba(255, 255, 255, 0.25); color: #fff; }
+.sd-hero-back i { font-size: 11px; }
+.sd-hero-back:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+  transform: translateX(-2px);
+}
 .sd-hero-actions {
   position: absolute;
   top: 24px;
@@ -294,12 +300,6 @@
 }
 .sd-hero-slogan::before { content: "「"; opacity: 0.6; }
 .sd-hero-slogan::after { content: "」"; opacity: 0.6; }
-.sd-hero-subtitle {
-  font-size: 14px;
-  opacity: 0.75;
-  letter-spacing: 1px;
-}
-.sd-hero-subtitle b { font-weight: 500; }
 
 /* === 內容 body === */
 .sd-body {
@@ -445,17 +445,21 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--lohas-bd);
   position: relative;
 }
 .sd-staff-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+  border-color: var(--lohas-light);
 }
 .sd-staff-card.top {
   box-shadow: 0 6px 20px rgba(212, 176, 104, 0.18);
+  border-color: var(--collab-gold);
 }
 .sd-staff-card.top:hover {
   box-shadow: 0 16px 36px rgba(212, 176, 104, 0.35);
+  border-color: var(--collab-gold);
 }
 
 /* === 上半：照片滿版填滿卡片上半部 === */
@@ -465,16 +469,19 @@
   aspect-ratio: 1 / 1;
   background-color: var(--bg-soft);
   overflow: hidden;
-  /* 滿版：直接貼齊卡片頂部，無 padding 也無圓角 */
 }
 .sd-staff-photo {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   background-size: cover;
-  background-position: center 12%;
+  background-position: center 15%;
+  background-repeat: no-repeat;
+  transform: scale(1.02);                  /* 預設就略放大確保不會露出底色 */
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.sd-staff-card:hover .sd-staff-photo { transform: scale(1.05); }
+.sd-staff-card:hover .sd-staff-photo { transform: scale(1.08); }
 
 /* 沒照片 fallback - 用大 icon */
 .sd-staff-photo-fallback {
@@ -926,13 +933,23 @@
 }
 @media (max-width: 700px) {
   .sd-body { padding: 28px 24px 60px; }
-  .sd-breadcrumb { padding: 10px 20px; }
-  .sd-breadcrumb-inner { font-size: 12px; }
-  .sd-breadcrumb a:not(.current):not(.logo-back) { display: none; }
-  .sd-breadcrumb i.sep { display: none; }
+  .sd-breadcrumb { padding: 11px 0; }
+  .sd-breadcrumb-inner {
+    font-size: 12px;
+    padding: 0 20px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .sd-breadcrumb-inner::-webkit-scrollbar { display: none; }
+  .sd-breadcrumb a,
+  .sd-breadcrumb .current { flex-shrink: 0; }
+  .sd-breadcrumb i.sep { flex-shrink: 0; }
   .sd-hero { height: 360px; }
   .sd-hero h1 { font-size: 36px; letter-spacing: 3px; }
   .sd-hero-slogan { font-size: 14px; letter-spacing: 1px; }
+  .sd-hero-back { top: 16px; left: 16px; padding: 7px 13px; font-size: 12px; }
   .sd-info-strip-inner {
     grid-template-columns: 1fr;
     padding: 16px 20px;

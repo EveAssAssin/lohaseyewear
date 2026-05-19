@@ -199,10 +199,10 @@
   border: 2px solid #fff;
   box-shadow: 0 2px 8px rgba(80, 66, 45, 0.08);
 }
-.bm-staff-pick-photo .initial {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 1px;
+.bm-staff-pick-photo .initial,
+.bm-staff-pick-photo i {
+  font-size: 32px;
+  color: rgba(255, 255, 255, 0.85);
 }
 .bm-staff-pick-info {
   min-width: 0;
