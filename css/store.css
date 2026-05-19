@@ -463,13 +463,19 @@
   aspect-ratio: 1 / 1;
   background-color: var(--bg-soft);
   overflow: hidden;
-  /* 重要：本身無 border / 無 padding，照片才能完全貼齊 */
+  /* 配合卡片的 16px 圓角（卡片有 1px border，所以內部圓角 15px）*/
+  border-radius: 15px 15px 0 0;
 }
 .sd-staff-photo {
   display: block;
-  width: 101%;             /* 略大於容器，吃掉 sub-pixel 縫 */
-  height: 101%;
-  margin: -0.5%;
+  /* 用 absolute + inset 確保填滿整個 wrap（包括圓角區域），
+     再用 -1px 偏移吃掉所有 sub-pixel 縫 */
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  margin: 0;
   object-fit: cover;
   object-position: center 15%;
 }
