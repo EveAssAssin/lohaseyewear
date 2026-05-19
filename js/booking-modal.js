@@ -199,7 +199,6 @@
         `<div class="bm-sec-title">選擇驗光師</div>` +
         `<div class="bm-staff-grid">` +
           state.employees.map(e => {
-            const initial = (e.name || "?").slice(-1);
             const photo = e.photos && e.photos[0];
             const avStyle = photo ? `style="background-image:url('${photo}')"` : "";
             const isActive = state.selectedEmployee && state.selectedEmployee.erpid === e.erpid;
@@ -208,7 +207,7 @@
             return (
               `<div class="bm-staff-pick ${isActive ? "active" : ""}" data-staff="${e.erpid}">` +
                 `<div class="bm-staff-pick-photo" ${avStyle}>` +
-                  (photo ? "" : `<span class="initial">${initial}</span>`) +
+                  (photo ? "" : `<i class="fa-regular fa-user"></i>`) +
                 `</div>` +
                 `<div class="bm-staff-pick-info">` +
                   `<div class="bm-staff-pick-name">${e.name}</div>` +

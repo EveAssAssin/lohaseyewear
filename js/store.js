@@ -260,7 +260,6 @@
         `<span class="sd-hero-tag"><i class="fa-solid fa-fire"></i> 提 供 預 約 服 務</span>` +
         `<h1>${s.name}</h1>` +
         (s.slogan ? `<div class="sd-hero-slogan">${s.slogan}</div>` : "") +
-        `<div class="sd-hero-subtitle">${s.city || ""} · <b>${s.region.label} 門 市</b></div>` +
       `</div>`;
   }
 
