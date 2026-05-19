@@ -62,8 +62,7 @@
     dom.layout = document.getElementById("as-layout");
     dom.mapCanvas = document.getElementById("as-map-canvas");
     dom.pinCard = document.getElementById("as-pin-card");
-    dom.viewToggle = document.getElementById("as-view-toggle");
-    dom.viewToggleText = document.getElementById("as-view-toggle-text");
+    dom.viewTabs = document.getElementById("as-view-tabs");
   }
 
   function bindEvents() {
@@ -115,18 +114,22 @@
       selectStore(erpid);
     });
 
-    /* 手機版底部切換 FAB */
-    if (dom.viewToggle) {
-      dom.viewToggle.addEventListener("click", () => {
-        dom.layout.classList.toggle("map-mode");
-        const isMap = dom.layout.classList.contains("map-mode");
-        dom.viewToggleText.textContent = isMap ? "清單" : "地圖";
-        const icon = dom.viewToggle.querySelector("i");
-        if (icon) {
-          icon.className = isMap
-            ? "fa-solid fa-list-ul"
-            : "fa-solid fa-map-location-dot";
-        }
+    /* 手機版底部 TAB：列表/地圖切換 */
+    if (dom.viewTabs) {
+      dom.viewTabs.addEventListener("click", e => {
+        const tab = e.target.closest(".as-view-tab");
+        if (!tab) return;
+        const view = tab.dataset.view; /* "list" 或 "map" */
+
+        /* 更新 active 樣式 */
+        dom.viewTabs.querySelectorAll(".as-view-tab").forEach(t => {
+          t.classList.toggle("active", t === tab);
+        });
+
+        /* 切換 layout 模式 */
+        const isMap = view === "map";
+        dom.layout.classList.toggle("map-mode", isMap);
+
         /* 切到地圖時讓 Leaflet 重算 tiles */
         if (isMap && state.map) {
           setTimeout(() => state.map.invalidateSize(), 250);
