@@ -59,11 +59,17 @@
 
   </div>
 
-  <!-- 手機版底部切換 FAB -->
-  <button class="as-view-toggle" id="as-view-toggle" type="button">
-    <i class="fa-solid fa-map-location-dot"></i>
-    <span id="as-view-toggle-text">地圖</span>
-  </button>
+  <!-- 手機版底部 TAB 切換（列表 / 地圖） -->
+  <div class="as-view-tabs" id="as-view-tabs">
+    <button class="as-view-tab active" data-view="list" type="button">
+      <i class="fa-solid fa-list-ul"></i>
+      <span>列表</span>
+    </button>
+    <button class="as-view-tab" data-view="map" type="button">
+      <i class="fa-solid fa-map-location-dot"></i>
+      <span>地圖</span>
+    </button>
+  </div>
 </main>
 
 <div id="site-footer"></div>
