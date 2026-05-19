@@ -102,16 +102,11 @@
       // 人員
       employees: (raw.employees || []).map(normalizeEmployeeShort),
 
-      // 後台未確認用途的欄位（保留以便未來釐清）
-      // - dl: 推測為特約商家 ID 陣列，但 API 文件 v0.2.4 未列出對應 endpoint
-      //       目前不使用，等左手系統提供說明
-      // - wd, ml, unspecifyemployee: 暫不使用
-      dl: Array.isArray(raw.dl) ? raw.dl : [],
-      _meta: {
-        wd: raw.wd,
-        ml: raw.ml,
-        unspecifyemployee: raw.unspecifyemployee
-      },
+      // 左手系統內部欄位，前端不使用（已於 2026/05 經左手確認）：
+      // - dl: 健康指導（不是特約商家！特約商家資料在「即時互動」不在左手）
+      // - ml: 每日排休上限
+      // - wd: 月薪天數
+      // - unspecifyemployee: 不指定人員（左手內部用）
 
       // 留原始 raw 給需要時取用
       _raw: raw

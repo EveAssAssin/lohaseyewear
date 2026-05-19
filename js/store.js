@@ -498,7 +498,7 @@
         reviewsContent +
       `</section>`;
 
-    /* === 特約商家（API 文件無此 endpoint，先用 Coming Soon 佔位） === */
+    /* === 特約商家（資料在「即時互動」系統，非左手；待對接後串接）=== */
     const partners =
       `<section class="sd-sec">` +
         `<div class="sd-sec-head">` +
