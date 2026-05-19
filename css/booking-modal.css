@@ -384,8 +384,8 @@
 .bm-time-pick.active {
   background: var(--lohas-brand);
   color: #fff;
-  border-color: var(--lohas-brand);
-  box-shadow: 0 0 0 2px var(--lohas-bd);
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--lohas-brand);
 }
 .bm-time-pick.full {
   opacity: 0.35;
