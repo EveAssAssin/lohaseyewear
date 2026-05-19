@@ -5173,6 +5173,9 @@
         const homeTag = n.show_in_homepage
           ? '<span class="creator-card-tag featured"><i class="fa-solid fa-house"></i> 首頁</span>' : '';
 
+        const featuredTag = n.is_featured
+          ? '<span class="creator-card-tag featured"><i class="fa-solid fa-star"></i> 本月精選</span>' : '';
+
         const dateStr = n.published_at ? new Date(n.published_at).toISOString().slice(0,10).replace(/-/g, '.') : '—';
 
         return '<div class="creator-card" data-id="' + esc(n.id) + '">' +
@@ -5201,6 +5204,7 @@
                 return '<span class="creator-card-tag ' + cls + '">' + esc(label) + '</span>';
               })() +
               homeTag +
+              featuredTag +
             '</div>' +
             '<div class="creator-card-meta">' +
               '<code>/news-detail.html?id=' + esc(n.slug) + '</code>' +
@@ -5210,6 +5214,9 @@
           '</div>' +
           '<div class="creator-card-actions">' +
             '<a class="btn" href="news-detail.html?id=' + esc(n.slug) + '" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i>查看</a>' +
+            (n.is_featured
+              ? '<button class="btn featured-on" data-act="toggle-news-featured" data-id="' + esc(n.id) + '"><i class="fa-solid fa-star"></i>取消精選</button>'
+              : '<button class="btn featured-off" data-act="toggle-news-featured" data-id="' + esc(n.id) + '"><i class="fa-regular fa-star"></i>設為精選</button>') +
             '<button class="btn" data-act="edit-news" data-id="' + esc(n.id) + '"><i class="fa-regular fa-pen-to-square"></i>編輯</button>' +
           '</div>' +
         '</div>';
@@ -5217,6 +5224,36 @@
 
       list.querySelectorAll('[data-act="edit-news"]').forEach(btn => {
         btn.addEventListener('click', () => openEdit(btn.dataset.id));
+      });
+
+      // 設為精選 / 取消精選
+      list.querySelectorAll('[data-act="toggle-news-featured"]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          const item = allNews.find(x => x.id === id);
+          if (!item) return;
+
+          const sb = window.LohasSupabase?.getClient?.();
+          if (!sb) return;
+
+          if (item.is_featured) {
+            // 取消精選
+            const { error } = await sb.from('news').update({ is_featured: false }).eq('id', id);
+            if (error) { toast('取消失敗: ' + error.message); return; }
+            item.is_featured = false;
+            toast('已取消精選');
+          } else {
+            // 設為精選: 先把其他全部設 false, 再把這篇設 true (確保只有一篇)
+            await sb.from('news').update({ is_featured: false }).eq('is_featured', true);
+            const { error } = await sb.from('news').update({ is_featured: true }).eq('id', id);
+            if (error) { toast('設定失敗: ' + error.message); return; }
+            // 同步 local state
+            allNews.forEach(x => { x.is_featured = (x.id === id); });
+            toast('已設為本月精選');
+          }
+          renderList();
+        });
       });
     }
 

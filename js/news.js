@@ -48,26 +48,38 @@
       ? allNews
       : allNews.filter(n => n.category === currentFilter);
 
+    // 排序: is_featured 優先,其他按 published_at desc (已從 DB 排好)
+    const sorted = [...filtered].sort((a, b) => {
+      const fa = a.is_featured ? 0 : 1;
+      const fb = b.is_featured ? 0 : 1;
+      return fa - fb;
+    });
+
     grid.querySelectorAll('.news-card').forEach(el => el.remove());
 
-    if (!filtered.length) {
+    if (!sorted.length) {
       if (empty) empty.style.display = '';
       return;
     }
 
     if (empty) empty.style.display = 'none';
 
-    const visible = filtered.slice(0, visibleCount);
+    const visible = sorted.slice(0, visibleCount);
 
     const html = visible.map(n => {
       const slug = escapeHtml(n.slug);
       const href = 'news-detail.html?id=' + slug;
-      return '<article class="news-card" data-category="' + escapeHtml(n.category) + '">' +
+      const featuredClass = n.is_featured ? ' news-card--featured' : '';
+      const featuredBadge = n.is_featured
+        ? '<span class="news-card__featured-badge"><i class="fa-solid fa-star"></i>本月精選</span>'
+        : '';
+      return '<article class="news-card' + featuredClass + '" data-category="' + escapeHtml(n.category) + '">' +
         '<a href="' + href + '" class="news-card__image">' +
           (n.cover_image_url
             ? '<img src="' + escapeHtml(n.cover_image_url) + '" alt="' + escapeHtml(n.title) + '">'
             : '<div class="news-card__placeholder"></div>'
           ) +
+          featuredBadge +
         '</a>' +
         '<div class="news-card__body">' +
           '<div class="post-meta">' +
@@ -90,7 +102,7 @@
     // load more 顯隱
     const loadMoreWrap = document.querySelector('.news-load-more-wrap');
     if (loadMoreWrap) {
-      loadMoreWrap.style.display = filtered.length > visibleCount ? '' : 'none';
+      loadMoreWrap.style.display = sorted.length > visibleCount ? '' : 'none';
     }
   }
 
@@ -102,11 +114,10 @@
       return;
     }
 
-    const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
       .select('*')
-      .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
+      .eq('status', 'published')
       .order('published_at', { ascending: false });
 
     if (error) {
