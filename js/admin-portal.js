@@ -156,7 +156,7 @@
     'manage-shares': '分享牆管理',
     'users': '會員列表',
     'creators': '創作者管理',
-    'ip': 'IP 合作'
+    'ip': '授權聯名管理'
   };
 
   function goTo(page, opts) {
@@ -5051,16 +5051,32 @@
     window.cmTriggerPhotoUpload = function(){
       $('cm_photoInput').click();
     };
-    window.cmDeletePhoto = function(idx){
+    window.cmDeletePhoto = async function(idx){
       const photos = currentPhotos.filter(p => !p._deleted);
       const item = photos[idx];
       if(!item) return;
-      if(item.id){ item._deleted = true; }
-      else {
-        const realIdx = currentPhotos.indexOf(item);
-        if(realIdx > -1) currentPhotos.splice(realIdx, 1);
+      if(!confirm('確定刪除這張照片?分享牆上對應的照片也會一起刪除。')) return;
+
+      const client = sb();
+      if(!client) return;
+
+      // 1. 刪 collab_customer_photos
+      if(item.id){
+        const { error: e1 } = await client.from('collab_customer_photos').delete().eq('id', item.id);
+        if(e1){ alert('刪除聯名照片失敗:' + e1.message); return; }
       }
+
+      // 2. 同步刪 gallery_posts (用 image_url 反查最快)
+      if(item.image_url){
+        const { error: e2 } = await client.from('gallery_posts').delete().eq('main_image_url', item.image_url);
+        if(e2) console.warn('[gallery_posts 刪除警告]', e2);
+      }
+
+      // 3. 從 state 移除
+      const realIdx = currentPhotos.indexOf(item);
+      if(realIdx > -1) currentPhotos.splice(realIdx, 1);
       renderPhotoList();
+      toast('已刪除');
     };
 
     function bindSubtable(wrap, arr, folder){
@@ -5577,18 +5593,17 @@
             member_id: 'collab-' + collabId,
             image_urls: [photoUrl],
             main_image_url: photoUrl,
-            status: 'approved'
+            status: 'approved',
+            topic: '授權聯名'
           };
-          console.log('[聯名→gallery_posts] payload:', galleryPayload);
           const { data: gpData, error: gpErr } = await client.from('gallery_posts')
             .insert(galleryPayload)
             .select('*')
             .single();
           if(gpErr){
-            console.error('[gallery_posts insert 失敗] ❌', gpErr);
-            alert('客人照已儲存,但同步到分享牆失敗:' + gpErr.message);
-          } else {
-            console.log('[gallery_posts insert 成功] ✓', gpData);
+            console.error('[gallery_posts insert 失敗]', gpErr);
+          } else if(gpData){
+            cpData._galleryPostId = gpData.id;
           }
 
           // 5. push 到 state
