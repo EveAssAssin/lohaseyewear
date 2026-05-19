@@ -299,8 +299,9 @@
 
         /* 預約 CTA */
         `<button class="sd-info-cta" data-book="any" type="button">` +
-          `<span>立 即 預 約</span>` +
-          `<i class="fa-solid fa-arrow-right"></i>` +
+          `<i class="fa-regular fa-calendar-check"></i>` +
+          `<span>立即預約</span>` +
+          `<i class="fa-solid fa-arrow-right arr"></i>` +
         `</button>` +
       `</div>`;
 
@@ -385,7 +386,7 @@
     if (e.length === 0) {
       staffSection =
         `<section class="sd-sec">` +
-          `<div class="sd-sec-head"><h2>選 擇 驗 光 師 預 約</h2></div>` +
+          `<div class="sd-sec-head"><h2>選 擇 門 市 人 員 預 約</h2></div>` +
           `<div class="store-state">` +
             `<div class="store-state-icon"><i class="fa-regular fa-user"></i></div>` +
             `<div class="store-state-title">本店尚無公開的驗光師資料</div>` +
@@ -396,7 +397,7 @@
       staffSection =
         `<section class="sd-sec">` +
           `<div class="sd-sec-head">` +
-            `<h2>選 擇 驗 光 師 預 約</h2>` +
+            `<h2>選 擇 門 市 人 員 預 約</h2>` +
           `</div>` +
           `<div class="sd-staff-row">${cards}</div>` +
         `</section>`;
@@ -493,25 +494,39 @@
     dom.body.innerHTML = stats + gallery + staffSection + reviews + partners;
   }
 
-  /* === 渲染單則評價卡 === */
+  /* === 渲染單則評價卡（顯示客人首字頭像，不顯示店員照） === */
   function renderReviewCard(ev) {
-    const photo = ev.empPhoto ? `style="background-image:url('${ev.empPhoto}')"` : "";
-    const photoContent = ev.empPhoto ? "" : `<i class="fa-regular fa-user"></i>`;
     const stars = renderStars(ev.score);
-    const memberDisplay = ev.memberName || "匿名顧客";
+    const memberName = (ev.memberName || "匿名顧客").trim();
+    /* 取客人姓名最後一字作為頭像（如「陳小姐」→「陳」、「李先生」→「李」） */
+    const initial = memberName.charAt(0) || "客";
+    /* 用一致性 hash 給每位客人不同色調 */
+    const hue = stringToHue(memberName);
+    const avatarStyle = `background: linear-gradient(135deg, hsl(${hue}, 35%, 65%) 0%, hsl(${hue}, 30%, 50%) 100%);`;
+
     return (
       `<div class="sd-review-card">` +
         `<div class="sd-review-head">` +
-          `<div class="sd-review-avatar" ${photo}>${photoContent}</div>` +
+          `<div class="sd-review-avatar" style="${avatarStyle}">${initial}</div>` +
           `<div class="sd-review-info">` +
-            `<div class="sd-review-staff">${ev.empName}</div>` +
-            `<div class="sd-review-member">— ${memberDisplay}</div>` +
+            `<div class="sd-review-member">${memberName}</div>` +
+            `<div class="sd-review-staff">給 ${ev.empName} 的評價</div>` +
           `</div>` +
           `<div class="sd-review-score">${stars}</div>` +
         `</div>` +
         (ev.content ? `<div class="sd-review-content">${ev.content}</div>` : "") +
       `</div>`
     );
+  }
+
+  /* 把字串轉成 hue 值（0-360）讓相同名字永遠是同色 */
+  function stringToHue(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+      h = (h << 5) - h + s.charCodeAt(i);
+      h |= 0;
+    }
+    return Math.abs(h) % 360;
   }
 
   /* === 把分數轉成 ★★★★☆ === */
@@ -554,31 +569,56 @@
   }
 
   function renderStaffCard(emp, isTop) {
-    const initial = (emp.name || "?").slice(-1) || (emp.name && emp.name[0]) || "?";
     const photo = emp.photos && emp.photos[0];
     const hasPhoto = !!photo;
 
     /* 職稱（role 優先，否則 jobtitle） */
     const roleText = (emp.role || emp.jobtitle || "").trim();
 
-    /* 榮譽 / 獎章列表（去重後最多 3 個）*/
-    const honorTexts = [];
-    if (emp.honor) honorTexts.push(emp.honor.trim());
+    /* === 榮譽 / 獎章列表 ===
+       支援兩種 schema：
+       - emp.honor (string)         單一榮譽（後台主要欄位、視為 featured）
+       - emp.honors (array)         多榮譽，可能是 string 或 { title, top|featured|highlight }
+       featured 為 true 的會排前面且有金邊強調 */
+    const honorItems = [];
+    if (emp.honor) {
+      honorItems.push({ title: emp.honor.trim(), featured: true });
+    }
     (emp.honors || []).forEach(h => {
-      const t = (h.title || h).toString().trim();
-      if (t && honorTexts.indexOf(t) === -1) honorTexts.push(t);
+      if (typeof h === "string") {
+        honorItems.push({ title: h.trim(), featured: false });
+      } else if (h && h.title) {
+        honorItems.push({
+          title: h.title.trim(),
+          featured: !!(h.top || h.featured || h.highlight)
+        });
+      }
     });
+    /* 依 title 去重 */
+    const seen = {};
+    const honors = [];
+    honorItems.forEach(it => {
+      if (it.title && !seen[it.title]) {
+        seen[it.title] = true;
+        honors.push(it);
+      }
+    });
+    /* featured 排前 */
+    honors.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+    const topHonors = honors.slice(0, 4);
 
-    /* 勳章 pill（方向 2 風格：圓徽 + 文字一體成型）
-       金/銀/銅依序對應第 1/2/3 個榮譽 */
-    const tierClasses = ["", "silver", "bronze"];
-    const badges = honorTexts.slice(0, 3).map((t, i) =>
-      `<span class="sd-staff-badge${tierClasses[i] ? " " + tierClasses[i] : ""}">` +
-        `<span class="ic"><i class="${honorIcon(t)}"></i></span>${t}` +
-      `</span>`
-    ).join("");
+    /* 獎章 HTML：使用設計感緞帶圖示，不用 fa-icon */
+    const badges = topHonors.map(h => {
+      const cls = h.featured ? "sd-honor featured" : "sd-honor";
+      return (
+        `<div class="${cls}" title="${h.title}">` +
+          `<span class="sd-honor-medal">${medalSvg(h.featured)}</span>` +
+          `<span class="sd-honor-text">${h.title}</span>` +
+        `</div>`
+      );
+    }).join("");
 
-    /* 王牌徽章（左上） */
+    /* 王牌徽章（左上）*/
     const topBadge = isTop
       ? `<div class="sd-staff-flag"><i class="fa-solid fa-award"></i> 王 牌 顧 問</div>`
       : "";
@@ -587,13 +627,10 @@
     const score = emp.averageScore != null ? emp.averageScore.toFixed(1) : null;
     const reviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
 
-    /* 簡介 */
+    /* 簡介 ─ 完整顯示，不再切斷 */
     const intro = (emp.introduction || "").trim();
-    const shortIntro = intro
-      ? (intro.length > 60 ? intro.slice(0, 58) + "…" : intro)
-      : "";
 
-    /* 頭像背景 */
+    /* 頭像 — 沒照片時用大 icon fallback */
     const photoStyle = hasPhoto
       ? `style="background-image:url('${photo}')"`
       : "";
@@ -601,19 +638,15 @@
       ? ""
       : `<div class="sd-staff-photo-fallback">` +
           `<i class="fa-regular fa-user"></i>` +
-          `<span>${initial}</span>` +
         `</div>`;
 
     return (
       `<article class="sd-staff-card${isTop ? " top" : ""}">` +
-        /* === 上半：1:1 大照片 === */
+        /* === 上半：照片滿版填滿卡片頂部 === */
         `<div class="sd-staff-photo-wrap">` +
           `<div class="sd-staff-photo" ${photoStyle}></div>` +
           photoFallback +
           topBadge +
-          `<button class="sd-staff-fav" type="button" aria-label="收藏">` +
-            `<i class="fa-regular fa-heart"></i>` +
-          `</button>` +
         `</div>` +
 
         /* === 下半：內容區 === */
@@ -629,25 +662,76 @@
                 `</div>`
               : "") +
           `</div>` +
-          /* 職稱行 */
+          /* 職稱 */
           (roleText ? `<div class="sd-staff-role">${roleText}</div>` : "") +
-          /* 簡介 */
-          (shortIntro
-            ? `<p class="sd-staff-intro">${shortIntro}</p>`
+          /* 簡介（不切斷）*/
+          (intro
+            ? `<p class="sd-staff-intro">${intro}</p>`
             : `<p class="sd-staff-intro placeholder">提 供 專 業 配 鏡 諮 詢 服 務</p>`) +
-          /* 勳章 pills */
+          /* 獎章區（獨立 block）*/
           (badges
-            ? `<div class="sd-staff-badges">${badges}</div>`
+            ? `<div class="sd-staff-honors">${badges}</div>`
             : "") +
-          /* CTA 區（細灰線分隔）*/
+          /* CTA */
           `<div class="sd-staff-foot">` +
             `<div class="sd-staff-foot-meta">線上立即預約</div>` +
             `<button class="sd-staff-book" data-book="${emp.erpid}" type="button">` +
-              `預約 <i class="fa-solid fa-arrow-right"></i>` +
+              `跟我預約 <i class="fa-solid fa-arrow-right"></i>` +
             `</button>` +
           `</div>` +
         `</div>` +
       `</article>`
+    );
+  }
+
+  /* === 獎章 SVG（緞帶 + 圓徽） === */
+  function medalSvg(featured) {
+    /* featured 時：金色立體 + 星形；一般：青銅色簡化版 */
+    if (featured) {
+      return (
+        `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">` +
+          /* 緞帶左 */
+          `<path d="M8 2 L12 14 L18 18 L14 4 Z" fill="#A8412B"/>` +
+          `<path d="M8 2 L12 14 L15 12 L11 2 Z" fill="#C95440"/>` +
+          /* 緞帶右 */
+          `<path d="M28 2 L24 14 L18 18 L22 4 Z" fill="#A8412B"/>` +
+          `<path d="M28 2 L24 14 L21 12 L25 2 Z" fill="#C95440"/>` +
+          /* 圓徽底（金色漸層）*/
+          `<circle cx="18" cy="23" r="11" fill="#B89154"/>` +
+          `<circle cx="18" cy="23" r="11" fill="url(#gold-grad)"/>` +
+          /* 金色內圈 */
+          `<circle cx="18" cy="23" r="8" fill="none" stroke="#A57F44" stroke-width="0.5"/>` +
+          /* 中央星 */
+          `<path d="M18 17 L19.5 21 L23.5 21 L20.5 23.5 L22 27.5 L18 25 L14 27.5 L15.5 23.5 L12.5 21 L16.5 21 Z" fill="#fff" opacity="0.95"/>` +
+          /* 漸層定義 */
+          `<defs>` +
+            `<linearGradient id="gold-grad" x1="0" y1="0" x2="0" y2="1">` +
+              `<stop offset="0%" stop-color="#F4D27A"/>` +
+              `<stop offset="100%" stop-color="#B89154"/>` +
+            `</linearGradient>` +
+          `</defs>` +
+        `</svg>`
+      );
+    }
+    /* 一般獎章（簡化版）*/
+    return (
+      `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">` +
+        /* 緞帶（淺色）*/
+        `<path d="M10 4 L14 14 L18 16 L13 6 Z" fill="#7A6B5C"/>` +
+        `<path d="M26 4 L22 14 L18 16 L23 6 Z" fill="#7A6B5C"/>` +
+        /* 圓徽 */
+        `<circle cx="18" cy="22" r="10" fill="#C9BCA3"/>` +
+        `<circle cx="18" cy="22" r="10" fill="url(#silver-grad)"/>` +
+        `<circle cx="18" cy="22" r="7" fill="none" stroke="#8F7E66" stroke-width="0.5"/>` +
+        /* 中央簡化圖案：交叉葉 */
+        `<path d="M18 17 L18 27 M15 22 L21 22" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>` +
+        `<defs>` +
+          `<linearGradient id="silver-grad" x1="0" y1="0" x2="0" y2="1">` +
+            `<stop offset="0%" stop-color="#E8DED1"/>` +
+            `<stop offset="100%" stop-color="#A89882"/>` +
+          `</linearGradient>` +
+        `</defs>` +
+      `</svg>`
     );
   }
 
