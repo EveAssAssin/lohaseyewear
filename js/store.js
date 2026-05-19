@@ -24,6 +24,7 @@
   /* === 混合範本評價（當該店真實評價不足時，從 pool 補上）===
      每筆評價在顯示時會隨機指派為「該店其中一位店員」收到的評價。 */
   const SAMPLE_REVIEW_POOL = [
+    /* 一般服務體驗 */
     { score: 5, member: "陳小姐", content: "服務真的非常仔細，從驗光到挑框花了一整個下午陪我，最後配出來的眼鏡舒適到我幾乎忘記戴著。" },
     { score: 5, member: "李先生", content: "第一次到樂活配眼鏡，講解專業不囉嗦，整個過程很舒服。鏡框選擇也很多，會推薦給朋友。" },
     { score: 5, member: "張小姐", content: "超有耐心，我選擇困難症陪我試了快二十副框，最後選到的真的非常喜歡。" },
@@ -39,7 +40,28 @@
     { score: 4, member: "羅小姐", content: "鏡框設計感很好，店員也親切。價格中上但物有所值。" },
     { score: 5, member: "簡先生", content: "店裡氣氛很放鬆，不會像有些眼鏡行壓力大。配完還會仔細調整鼻墊跟鏡腿，很貼心。" },
     { score: 5, member: "潘小姐", content: "因為散光度數較深，特別找這裡的驗光師，果然配出來的鏡片完全沒暈眩感。" },
-    { score: 5, member: "高小姐", content: "AI 訂製鏡片的服務很神奇，配出來的視野超清晰，邊緣不會變形。" }
+    { score: 5, member: "高小姐", content: "AI 訂製鏡片的服務很神奇，配出來的視野超清晰，邊緣不會變形。" },
+    /* 更多面向：技術、產品、空間、回購、價格 */
+    { score: 5, member: "莊先生", content: "驗光過程比醫院還細，連我自己都不知道的散光軸度都驗出來，新眼鏡戴起來就是不一樣。" },
+    { score: 5, member: "曾小姐", content: "店員給的搭配建議很中肯，我臉型其實不太好挑框，他們耐心試到我滿意為止，沒有絲毫不耐。" },
+    { score: 5, member: "趙先生", content: "在這裡買第三副了，每次都有不同驚喜。這次的鈦金屬鏡腳真的輕到我以為自己沒戴眼鏡。" },
+    { score: 5, member: "宋小姐", content: "鏡片防藍光的效果很明顯，盯電腦一整天眼睛沒有以前那麼乾澀，超有感。" },
+    { score: 5, member: "馮先生", content: "幫長輩配老花鏡，店員放慢速度跟長輩解釋每個步驟，連我媽都被服務感動。" },
+    { score: 4, member: "韓小姐", content: "鏡框質感真的很好，雖然單價偏高但用久了就知道值得。" },
+    { score: 5, member: "杜先生", content: "預約準時、不用等。店內裝潢有質感，喝著拿鐵慢慢挑框，整個流程根本是享受。" },
+    { score: 5, member: "彭太太", content: "驗光師會主動關心我之前戴眼鏡頭痛的問題，調整瞳距後完全改善，太專業了。" },
+    { score: 5, member: "孫小姐", content: "鏡片是日本 Nikon 的，視野超廣超清晰，跟之前的鏡片完全不同等級。" },
+    { score: 5, member: "葉先生", content: "意外發現店員會手語，幫我聽障的姊姊配鏡完全沒有溝通障礙，很感動。" },
+    { score: 5, member: "白小姐", content: "從預約、驗光、選框、取貨都很流暢，整個體驗下來，連我老公都說下次他也要來。" },
+    { score: 4, member: "石先生", content: "鏡框種類齊全，從基本款到設計師款都有。店員不會硬推，會依據需求介紹。" },
+    { score: 5, member: "唐小姐", content: "我度數很深、有散光、又是高敏感族，被店員照顧得無微不至，配出來的眼鏡完全沒不適。" },
+    { score: 5, member: "丁先生", content: "雖然不是最便宜的，但服務的細緻度跟專業度真的值得這個價格，我很推薦。" },
+    { score: 5, member: "費小姐", content: "店裡的兒童區設計得很可愛，小朋友自己跑去玩，配鏡過程完全不哭鬧，超棒。" },
+    { score: 5, member: "魏先生", content: "鏡腳調整三次才滿意，店員一句抱怨都沒有，每次都笑著歡迎我回去。" },
+    { score: 5, member: "夏太太", content: "拿到眼鏡後不適應，回店重新調整鏡片度數，免費！這服務真的找不到第二家。" },
+    { score: 5, member: "袁小姐", content: "原本只是路過進來看看，結果被店員的專業度說服，當天就決定配新眼鏡。" },
+    { score: 4, member: "薛先生", content: "整體不錯，鏡片清晰度沒話說。只是建議可以多增加幾款圓框設計。" },
+    { score: 5, member: "陶小姐", content: "推薦給男友來配，他原本對眼鏡很挑剔，這次居然滿意到主動說要回來買第二副。" }
   ];
 
   /* 依 erpid 為 seed 做穩定的虛擬隨機（同一店每次重整都一樣）*/
@@ -418,10 +440,11 @@
         `</section>`;
     }
 
-    /* === 評價彙整 ===
-       1. 先把每位員工的真實 evaluationList 拿來。
-       2. 不足 6 則時，用 SAMPLE_REVIEW_POOL 補上「混合各家店員」的範例。
-       3. 評價總數顯示用一個 200~500 的隨機固定值（基於 store erpid 為 seed，每店穩定）。*/
+    /* === 評價彙整（只顯示該店）===
+       1. 先收集該店各員工的真實 evaluationList
+       2. 不足 12 則時，用 SAMPLE_REVIEW_POOL 補充假評論
+       3. 假評論的「給 XX 的評價」會隨機指派該店店員，看起來像該店評論
+       4. 總評價數仍用 200~500 的 seed 隨機數 */
     const realEvals = [];
     e.forEach(emp => {
       (emp.evaluationList || []).forEach(ev => {
@@ -433,10 +456,11 @@
       });
     });
 
-    /* 不足 6 則 → 用 pool 混合店員 */
+    /* 目標 12 則 — 不足從 pool 補 */
+    const TARGET_REVIEWS = 12;
     const displayEvals = realEvals.slice();
-    if (displayEvals.length < 6) {
-      const need = 6 - displayEvals.length;
+    if (displayEvals.length < TARGET_REVIEWS) {
+      const need = TARGET_REVIEWS - displayEvals.length;
       const filler = pickReviewsFromPool(e, need, s.erpid);
       filler.forEach(f => displayEvals.push(f));
     }
@@ -463,7 +487,7 @@
           `<div class="store-state-msg">完成預約並體驗後，您也可以留下您的回饋</div>` +
         `</div>`;
     } else {
-      const list = displayEvals.slice(0, 6).map(renderReviewCard).join("");
+      const list = displayEvals.slice(0, 12).map(renderReviewCard).join("");
       reviewsContent =
         `<div class="sd-review-list">${list}</div>` +
         `<div class="sd-review-more"><a href="#">查看全部 ${totalReviews} 則評價 <i class="fa-solid fa-arrow-right"></i></a></div>`;
@@ -638,9 +662,17 @@
       ? `<div class="sd-staff-flag"><i class="fa-solid fa-award"></i> 王 牌 顧 問</div>`
       : "";
 
-    /* 評分 */
-    const score = emp.averageScore != null ? emp.averageScore.toFixed(1) : null;
-    const reviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
+    /* 評分（真值優先，沒值就用 seed 假分數 4.7~4.9） */
+    const fakeScore = (seededRandomInt(emp.erpid || emp.name, 47, 49) / 10).toFixed(1);
+    const score = emp.averageScore != null
+      ? emp.averageScore.toFixed(1)
+      : fakeScore;
+
+    /* 評價數（真值優先，沒足夠評論就用 seed 假數字 30~200） */
+    const realReviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
+    const reviewCount = realReviewCount >= 10
+      ? realReviewCount
+      : seededRandomInt(emp.erpid || emp.name, 30, 200);
 
     /* 簡介 ─ 完整顯示，不再切斷 */
     const intro = (emp.introduction || "").trim();
