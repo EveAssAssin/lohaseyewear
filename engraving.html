@@ -15,9 +15,10 @@
   <script src="js/layout.js?v=20260516" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js?v=20260518" defer></script>
-  <script src="js/engraving.js?v=20260518-koldyn" defer></script>
+  <script src="js/page-banner.js?v=20260518" defer></script>
+  <script src="js/engraving.js?v=20260518-kolbtns" defer></script>
 </head>
-<body>
+<body data-banner-pos="engraving">
 
 <div id="site-header"></div>
     
@@ -27,7 +28,7 @@
         <div class="hero-bg">
             <picture>
                 <source srcset="images/hero-banner-engraving-mobile.jpg" media="(max-width: 768px)">
-                <img src="images/hero-banner-engraving.jpg" alt="LOHAS 鏡片雷刻工藝">
+                <img id="pageHeroImg" src="images/hero-banner-engraving.jpg" alt="LOHAS 鏡片雷刻工藝">
             </picture>
         </div>
         <div class="hero-content">
