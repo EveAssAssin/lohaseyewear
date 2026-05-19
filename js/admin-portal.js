@@ -1698,11 +1698,10 @@
   }
 
   function bindBannerEvents() {
-    if (window.__bannerBound) return;
-    window.__bannerBound = true;
-
     // tab 切換
     document.querySelectorAll('.banner-tab').forEach(tab => {
+      if (tab.dataset.bannerBound) return;
+      tab.dataset.bannerBound = '1';
       tab.addEventListener('click', async () => {
         document.querySelectorAll('.banner-tab').forEach(t => t.classList.remove('on'));
         tab.classList.add('on');
@@ -1712,28 +1711,51 @@
     });
 
     // modal close
-    document.getElementById('bannerModalClose')?.addEventListener('click', closeBannerModal);
-    document.getElementById('bmCancelBtn')?.addEventListener('click', closeBannerModal);
-    document.getElementById('bannerEditModal')?.addEventListener('click', e => {
-      if (e.target.id === 'bannerEditModal') closeBannerModal();
-    });
+    const closeBtn = document.getElementById('bannerModalClose');
+    if (closeBtn && !closeBtn.dataset.bound) {
+      closeBtn.dataset.bound = '1';
+      closeBtn.addEventListener('click', closeBannerModal);
+    }
+    const cancelBtn = document.getElementById('bmCancelBtn');
+    if (cancelBtn && !cancelBtn.dataset.bound) {
+      cancelBtn.dataset.bound = '1';
+      cancelBtn.addEventListener('click', closeBannerModal);
+    }
+    const overlay = document.getElementById('bannerEditModal');
+    if (overlay && !overlay.dataset.bound) {
+      overlay.dataset.bound = '1';
+      overlay.addEventListener('click', e => {
+        if (e.target.id === 'bannerEditModal') closeBannerModal();
+      });
+    }
 
     // save / delete
-    document.getElementById('bmSaveBtn')?.addEventListener('click', saveBanner);
-    document.getElementById('bmDeleteBtn')?.addEventListener('click', deleteBanner);
+    const saveBtn = document.getElementById('bmSaveBtn');
+    if (saveBtn && !saveBtn.dataset.bound) {
+      saveBtn.dataset.bound = '1';
+      saveBtn.addEventListener('click', saveBanner);
+    }
+    const delBtn = document.getElementById('bmDeleteBtn');
+    if (delBtn && !delBtn.dataset.bound) {
+      delBtn.dataset.bound = '1';
+      delBtn.addEventListener('click', deleteBanner);
+    }
 
     // 圖片上傳 (img-upload-wrap 風格)
     const wrap = document.getElementById('bmImageWrap');
     const preview = document.getElementById('bmImagePreview');
     const input = wrap?.querySelector('.img-upload-input');
+    console.log('[Banner img bind]', { wrap: !!wrap, preview: !!preview, input: !!input, bound: wrap?.dataset?.bound });
 
     if (wrap && !wrap.dataset.bound) {
       wrap.dataset.bound = '1';
-      preview?.addEventListener('click', () => input?.click());
+      preview?.addEventListener('click', () => {
+        console.log('[Banner preview clicked]', !!input);
+        input?.click();
+      });
 
       input?.addEventListener('change', async e => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        console.log('[Banner input change]', e.target.files?.length);
 
         // 依當前 position 套用 aspectRatio
         const cfg = BANNER_POSITIONS[BannerState.currentPos];
