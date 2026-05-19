@@ -169,37 +169,31 @@
 /* === Hero === */
 .sd-hero {
   position: relative;
-  height: 440px;
+  height: 480px;
   background: linear-gradient(135deg, var(--lohas-brand) 0%, var(--lohas-hover) 60%, var(--lohas-light) 100%);
   background-size: cover;
   background-position: center;
   overflow: hidden;
 }
-.sd-hero::before {
-  content: "";
-  position: absolute;
-  top: -80px;
-  right: -60px;
-  width: 360px;
-  height: 360px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-}
+/* A 版：底部漸層暗化，讓白字清楚（從透明 → 深色）*/
 .sd-hero::after {
   content: "";
   position: absolute;
-  bottom: -100px;
-  left: 30%;
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0.25) 0%,
+    rgba(0, 0, 0, 0.05) 40%,
+    rgba(0, 0, 0, 0.75) 100%);
+  pointer-events: none;
 }
-/* 當有真實 cover 圖時加深色 overlay 讓文字可讀 */
-.sd-hero.has-cover {
-  background-color: rgba(0, 0, 0, 0.4);
-  background-blend-mode: darken;
+/* 沒 cover 圖（用品牌漸層）時減弱漸層 */
+.sd-hero:not(.has-cover)::after {
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 50%,
+    rgba(0, 0, 0, 0.35) 100%);
 }
+.sd-hero.has-cover { /* 有照片時不再黑色 overlay，靠 ::after 漸層處理 */ }
 
 .sd-hero-back {
   position: absolute;
@@ -256,47 +250,31 @@
 .sd-hero-action:hover { background: rgba(255, 255, 255, 0.25); }
 .sd-hero-content {
   position: absolute;
-  bottom: 40px;
-  left: 32px;
-  right: 32px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px 48px;
   color: #fff;
   z-index: 1;
 }
-.sd-hero-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: var(--r-pill);
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-.sd-hero-tag i { color: var(--collab-gold); }
 .sd-hero h1 {
   font-family: var(--font-tc);
-  font-size: 56px;
+  font-size: 64px;
   font-weight: 700;
   letter-spacing: 6px;
-  margin-bottom: 10px;
-  line-height: 1.1;
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  flex-wrap: wrap;
+  margin-bottom: 14px;
+  line-height: 1.05;
 }
 .sd-hero-slogan {
   font-family: var(--font-tc);
-  font-size: 18px;
-  /* italic 移除 (中文字體不支援) */
+  font-size: 17px;
   opacity: 0.92;
   letter-spacing: 2px;
-  margin-bottom: 14px;
   font-weight: 500;
+  max-width: 540px;
+  line-height: 1.55;
 }
 .sd-hero-slogan::before { content: "「"; opacity: 0.6; }
 .sd-hero-slogan::after { content: "」"; opacity: 0.6; }
@@ -462,26 +440,23 @@
   border-color: var(--collab-gold);
 }
 
-/* === 上半：照片滿版填滿卡片上半部 === */
+/* === 上半：照片真正滿版填滿卡片上半部 === */
 .sd-staff-photo-wrap {
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
   background-color: var(--bg-soft);
   overflow: hidden;
+  /* 重要：本身無 border / 無 padding，照片才能完全貼齊 */
 }
 .sd-staff-photo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center 15%;
-  background-repeat: no-repeat;
-  transform: scale(1.02);                  /* 預設就略放大確保不會露出底色 */
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+  width: 101%;             /* 略大於容器，吃掉 sub-pixel 縫 */
+  height: 101%;
+  margin: -0.5%;
+  object-fit: cover;
+  object-position: center 15%;
 }
-.sd-staff-card:hover .sd-staff-photo { transform: scale(1.08); }
 
 /* 沒照片 fallback - 用大 icon */
 .sd-staff-photo-fallback {
