@@ -495,6 +495,40 @@
   height: 66.67vh;
   overflow: hidden;
   background: #FAF7F2;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+/* 電腦版左右箭頭 (比照 .scroll-btn) */
+.home-main-banner-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46px;
+  height: 46px;
+  background-color: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  color: var(--lohas-brand);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 3;
+  padding: 0;
+}
+.home-main-banner-arrow:hover {
+  background-color: var(--lohas-brand);
+  color: #ffffff;
+  border-color: var(--lohas-brand);
+}
+.home-main-banner-arrow.prev {
+  left: 24px;
+}
+.home-main-banner-arrow.next {
+  right: 24px;
 }
 .home-main-banner-track {
   position: absolute;
@@ -604,6 +638,11 @@
 @media (max-width: 768px) {
   .home-main-banner {
     height: 50vh;
+    margin-top: 24px;
+    margin-bottom: 24px;
+  }
+  .home-main-banner-arrow {
+    display: none !important;
   }
   .home-main-banner .hmb-overlay {
     padding: 0 6%;

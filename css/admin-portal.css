@@ -3408,6 +3408,31 @@
 .img-upload-wrap {
   display: block;
   margin-bottom: 4px;
+  position: relative;
+  max-width: 360px;
+}
+.img-upload-clear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  z-index: 2;
+  transition: background .2s, transform .2s;
+  padding: 0;
+}
+.img-upload-clear:hover {
+  background: rgba(196, 60, 60, 0.92);
+  transform: scale(1.08);
 }
 .img-upload-preview {
   width: 100%;
