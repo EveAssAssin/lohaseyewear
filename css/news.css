@@ -636,3 +636,67 @@
     padding-top: 72px;
   }
 }
+
+/* ===== 本月精選卡片 ===== */
+.news-card--featured {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0;
+  border: 1px solid #F0D87A;
+  background: linear-gradient(180deg, #FFFBEC 0%, #fff 100%);
+  box-shadow: 0 6px 20px rgba(248, 219, 122, 0.18);
+}
+.news-card--featured .news-card__image {
+  aspect-ratio: auto;
+  min-height: 320px;
+}
+.news-card--featured .news-card__body {
+  padding: 36px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.news-card--featured h3 {
+  font-size: 22px;
+  line-height: 1.4;
+  margin: 10px 0;
+}
+.news-card--featured p {
+  font-size: 14px;
+  line-height: 1.8;
+  -webkit-line-clamp: 3;
+}
+.news-card__featured-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: #FBE07A;
+  color: #50422D;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+}
+.news-card__image {
+  position: relative;
+}
+@media (max-width: 720px) {
+  .news-card--featured {
+    grid-template-columns: 1fr;
+  }
+  .news-card--featured .news-card__image {
+    min-height: 220px;
+  }
+  .news-card--featured .news-card__body {
+    padding: 24px 22px;
+  }
+  .news-card--featured h3 {
+    font-size: 18px;
+  }
+}
