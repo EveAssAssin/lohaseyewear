@@ -4590,6 +4590,7 @@
       $('collabModalTitle').textContent = '新增聯名';
       $('collabDeleteBtn').style.display = 'none';
       $('collabPreviewBtn').style.display = '';
+      $('collabApplyTemplateBtn').style.display = '';  // 新增時顯示套公版
 
       // 清空 所有欄位
       ['cm_slug','cm_brand_name','cm_hero_title','cm_hero_subtitle','cm_hero_eyebrow',
@@ -4640,6 +4641,7 @@
 
       $('collabModalTitle').textContent = '編輯:' + (c.brand_name || c.slug) + (c.is_locked ? ' 🔒 範例' : '');
       $('collabDeleteBtn').style.display = c.is_locked ? 'none' : '';
+      $('collabApplyTemplateBtn').style.display = 'none';  // 編輯時不顯示
 
       setVal('cm_slug', c.slug);
       setVal('cm_status', c.status);
@@ -5134,8 +5136,26 @@
           ['image_url', 'caption', 'sort_order'], 'collab-photo');
 
         toast('已儲存');
-        closeModal();
-        loadList();
+        // 不關 modal,留在編輯頁繼續編
+        if(collabId){
+          // 重抓主資料 + 子表
+          const { data: refreshed } = await client.from('collabs').select('*').eq('id', collabId).maybeSingle();
+          if(refreshed){
+            currentCollab = refreshed;
+            $('collabModalTitle').textContent = '編輯:' + (refreshed.brand_name || refreshed.slug) + (refreshed.is_locked ? ' 🔒 範例' : '');
+            $('collabDeleteBtn').style.display = refreshed.is_locked ? 'none' : '';
+          }
+          const [pkgRes, dsRes, phRes] = await Promise.all([
+            client.from('collab_packages').select('*').eq('collab_id', collabId).order('sort_order'),
+            client.from('collab_designs').select('*').eq('collab_id', collabId).order('sort_order'),
+            client.from('collab_customer_photos').select('*').eq('collab_id', collabId).order('sort_order')
+          ]);
+          currentPackages = pkgRes.data || [];
+          currentDesigns = dsRes.data || [];
+          currentPhotos = phRes.data || [];
+          renderSubtables();
+        }
+        loadList(); // 背景刷新列表
       } catch(err){
         console.error(err);
         toast('儲存失敗:' + (err.message || err));
@@ -5206,6 +5226,76 @@
     $('collabNewBtn').addEventListener('click', openNew);
     $('collabModalClose').addEventListener('click', closeModal);
     $('collabCancelBtn').addEventListener('click', closeModal);
+
+    // 快速套公版: 抓 DINU 範例的所有欄位填到當前表單
+    $('collabApplyTemplateBtn').addEventListener('click', async () => {
+      if(!confirm('將載入 DINU 範例內容,目前已填的內容會被覆蓋。要繼續嗎?')) return;
+      const client = sb();
+      if(!client) return;
+
+      // 抓 DINU 範例
+      const { data: tpl, error } = await client.from('collabs').select('*').eq('slug', 'dinu').maybeSingle();
+      if(error || !tpl) { toast('範例載入失敗,請先跑 DINU SQL'); return; }
+
+      // 抓子表
+      const [pkgRes, dsRes] = await Promise.all([
+        client.from('collab_packages').select('*').eq('collab_id', tpl.id).order('sort_order'),
+        client.from('collab_designs').select('*').eq('collab_id', tpl.id).order('sort_order')
+      ]);
+
+      // 填欄位 (slug 要清空,因為要新建)
+      setVal('cm_slug', '');
+      setVal('cm_brand_name', tpl.brand_name);
+      setVal('cm_hero_title', tpl.hero_title);
+      setVal('cm_hero_subtitle', tpl.hero_subtitle);
+      setVal('cm_hero_eyebrow', tpl.hero_eyebrow);
+      setVal('cm_status', 'draft');  // 新建一律從 draft 開始
+      setVal('cm_lifecycle_status', tpl.lifecycle_status || 'preorder');
+      setVal('cm_category', tpl.category || 'character');
+      setVal('cm_show_countdown', tpl.show_countdown);
+      setVal('cm_show_limit', tpl.show_limit);
+      setVal('cm_start_date', tpl.start_date);
+      setVal('cm_end_date', tpl.end_date);
+      setVal('cm_date_range_text', tpl.date_range_text);
+      setVal('cm_limit_total', tpl.limit_total);
+      setVal('cm_preorder_count', 0);  // 新建從 0 開始
+      setVal('cm_launch_date_text', tpl.launch_date_text);
+      setVal('cm_available_stores', tpl.available_stores);
+      setVal('cm_creator_name', tpl.creator_name);
+      setVal('cm_creator_subtitle', tpl.creator_subtitle);
+      setVal('cm_interview_title', tpl.interview_title);
+      setVal('cm_interview_quote', tpl.interview_quote);
+      setVal('cm_interview_full_link', tpl.interview_full_link);
+      setVal('cm_theme_primary', tpl.theme_primary);
+      setVal('cm_theme_accent', tpl.theme_accent);
+      setVal('cm_theme_bg', tpl.theme_bg);
+
+      // 故事段落
+      renderStoryBuilder(tpl.story_paragraphs || []);
+
+      // 主題色 picker 同步
+      ['cm_theme_primary', 'cm_theme_accent', 'cm_theme_bg'].forEach(id => {
+        const text = $(id);
+        const picker = $(id + '_picker');
+        if(text && picker && /^#[0-9a-f]{6}$/i.test(text.value)) picker.value = text.value;
+      });
+      if(typeof updateThemePreview === 'function') updateThemePreview();
+
+      // 子表 (移除 id, 讓它變成新資料)
+      currentPackages = (pkgRes.data || []).map(p => {
+        const { id, collab_id, created_at, ...rest } = p;
+        return rest;
+      });
+      currentDesigns = (dsRes.data || []).map(d => {
+        const { id, collab_id, created_at, ...rest } = d;
+        return rest;
+      });
+      currentPhotos = [];  // 客人照不複製 (新建沒客人)
+
+      renderSubtables();
+
+      toast('已套用 DINU 範例,記得修改 Slug 與品牌名再儲存');
+    });
     $('collabSaveBtn').addEventListener('click', save);
     $('collabDeleteBtn').addEventListener('click', deleteCollab);
     $('collabPreviewBtn').addEventListener('click', openPreview);
@@ -5256,9 +5346,10 @@
         ['hero_image_url', 'news_cover_preview'], // 不對,collab 是別的 id
       ];
 
-      // 簡單做法:存 sessionStorage,collab.html 自己讀
+      // 用 localStorage (跨分頁可讀)
       try {
-        sessionStorage.setItem('lohas_collab_preview', JSON.stringify(previewData));
+        localStorage.setItem('lohas_collab_preview', JSON.stringify(previewData));
+        localStorage.setItem('lohas_collab_preview_ts', String(Date.now()));
       } catch(e){
         toast('預覽資料過大,無法暫存');
         return;

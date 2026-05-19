@@ -46,13 +46,16 @@
 
   // ====== 主流程 ======
   async function load(){
-    // PREVIEW 模式: 從 sessionStorage 讀,不打 DB
+    // PREVIEW 模式: 從 localStorage 讀,不打 DB
     if(isPreview){
       try {
-        const json = sessionStorage.getItem('lohas_collab_preview');
+        // 先嘗試 localStorage,再 fallback sessionStorage
+        let json = localStorage.getItem('lohas_collab_preview');
+        if(!json) json = sessionStorage.getItem('lohas_collab_preview');
         if(!json){
-          console.warn('[collab preview] sessionStorage 無資料');
-          showNotFound();
+          console.warn('[collab preview] storage 無資料');
+          LOADING.innerHTML = '<p style="text-align:center;padding:60px 20px;color:#888">⚠️ 預覽資料未找到<br><br>請先回到 admin 點「預覽前台」按鈕來生成預覽。</p>';
+          PAGE.style.opacity = '1';
           return;
         }
         const data = JSON.parse(json);
@@ -62,11 +65,11 @@
           data.designs || [],
           data.customer_photos || []
         );
-        // 預覽標記
         showPreviewBanner();
       } catch(err) {
         console.error('[collab preview] parse err', err);
-        showNotFound();
+        LOADING.innerHTML = '<p style="text-align:center;padding:60px 20px;color:#888">⚠️ 預覽資料解析失敗:' + err.message + '</p>';
+        PAGE.style.opacity = '1';
       }
       return;
     }
