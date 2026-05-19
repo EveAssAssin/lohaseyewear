@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="css/index.css">
 
 </head>
-<body>
+<body data-banner-pos="home_hero">
 
   <div id="site-header"></div>
 
@@ -32,9 +32,15 @@
     <div class="hero-bg">
         <picture>
   <source srcset="images/hero-banner-mobile.jpg" media="(max-width: 768px)">
-  <img src="images/hero-banner.jpg" alt="最新消息">
+  <img id="pageHeroImg" src="images/hero-banner.jpg" alt="最新消息">
 </picture>
     </div>
+</section>
+
+<!-- 本月主打活動 banner (從 banners 表抓 position=home_main,可多張輪播) -->
+<section class="home-main-banner" id="homeMainBannerSection" style="display:none">
+  <div class="home-main-banner-track" id="homeMainBannerTrack"></div>
+  <div class="home-main-banner-dots" id="homeMainBannerDots"></div>
 </section>
     
 <section class="owndays-grid-section">
@@ -142,6 +148,7 @@
   <script src="js/layout.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
-  <script src="js/index.js?v=20260518"></script>
+  <script src="js/page-banner.js?v=20260518" defer></script>
+  <script src="js/index.js?v=20260517"></script>
 </body>
 </html>
