@@ -3720,3 +3720,69 @@
   background: #d05538 !important;
   color: #fff !important;
 }
+
+/* ===== 創作者編輯 - 分享照片 grid ===== */
+.ad .ag-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 4px;
+}
+.ad .ag-photo-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  background: #f4f1ec;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ad .ag-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ad .ag-photo-thumb button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.ad .ag-photo-add-tile {
+  background: #fff;
+  border: 2px dashed #C9B98C;
+  border-radius: 8px;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #50422D;
+  font-family: inherit;
+  gap: 6px;
+  transition: all .15s;
+  padding: 0;
+}
+.ad .ag-photo-add-tile:hover {
+  background: #FAF6F0;
+  border-color: #50422D;
+}
+.ad .ag-photo-add-tile i {
+  font-size: 22px;
+  opacity: 0.7;
+}
+.ad .ag-photo-add-tile span {
+  font-size: 11px;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
