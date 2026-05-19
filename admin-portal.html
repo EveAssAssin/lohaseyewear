@@ -808,9 +808,14 @@
       <div class="ag-modal">
         <div class="ag-modal-header">
           <h2 class="ag-modal-title" id="collabModalTitle">編輯聯名</h2>
-          <button class="ag-modal-close" id="collabModalClose" type="button" aria-label="關閉">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
+          <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+            <button class="btn" id="collabApplyTemplateBtn" type="button" style="display:none;background:#FBE07A;border-color:#F0D87A;color:#3D3026;font-weight:600">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> 快速套公版
+            </button>
+            <button class="ag-modal-close" id="collabModalClose" type="button" aria-label="關閉">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
         </div>
 
         <div class="ag-modal-body collab-body">
@@ -876,12 +881,12 @@
 
             <div class="editor-row">
               <label class="editor-label">主視覺大圖</label>
-              <div class="img-upload-wrap" data-field="hero_image_url" data-aspect="16:9">
-                <div class="img-upload-preview" id="cm_hero_image_preview">
+              <div class="img-upload-wrap" data-field="hero_image_url" data-aspect="16:7">
+                <div class="img-upload-preview" id="cm_hero_image_preview" style="aspect-ratio:16/7">
                   <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
-                <p class="editor-hint">建議比例 16:9 · 建議尺寸 1600 × 900 px</p>
+                <p class="editor-hint">建議比例 16:7(銀幕橫條) · 建議尺寸 1600 × 700 px · 上傳會自動裁切</p>
               </div>
             </div>
 
@@ -1621,7 +1626,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-collabprev"></script>
+<script src="js/admin-portal.js?v=20260518-collabsave"></script>
 
 </body>
 </html>
