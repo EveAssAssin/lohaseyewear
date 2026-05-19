@@ -134,18 +134,18 @@
 
     // ====== 倒數 ======
     const stage = collab.lifecycle_status || 'preorder';
-    if(collab.show_countdown && collab.end_date && (stage === 'upcoming' || stage === 'preorder')){
+    // upcoming / preorder / on_sale 三個階段都顯示倒數
+    if(collab.show_countdown && collab.end_date &&
+       (stage === 'upcoming' || stage === 'preorder' || stage === 'on_sale')){
       $('countdownWrap').style.display = '';
       // 倒數文案根據 lifecycle 切換
       const cdEb = document.querySelector('.cb-cd-eb');
       if(cdEb){
         if(stage === 'upcoming') cdEb.textContent = '距 離 上 市 還 剩';
         else if(stage === 'preorder') cdEb.textContent = '距 離 預 購 結 束 還 剩';
+        else if(stage === 'on_sale') cdEb.textContent = '距 離 活 動 結 束 還 剩';
       }
       startCountdown(collab.end_date);
-    } else if(stage === 'on_sale'){
-      // 販售中:倒數隱藏,改顯示「現正販售中」標語
-      $('countdownWrap').style.display = 'none';
     }
 
     // ====== Meta bar (限量資訊) ======
@@ -219,15 +219,21 @@
     if(c.limit_total){
       items.push({ lab:'限 量', val: c.limit_total + ' 套' });
     }
+    // 即將上市:中間顯示「即將上市」狀態徽章
+    if(stage === 'upcoming'){
+      items.push({ lab:'狀 態', val: '即 將 上 市' });
+    }
     // 預購中:顯示「已預約」+「剩餘」
-    if(stage === 'preorder' && c.preorder_count){
+    else if(stage === 'preorder' && c.preorder_count){
       items.push({ lab:'已 預 約', val: c.preorder_count + ' 位' });
       const left = (c.limit_total || 0) - c.preorder_count;
       if(left > 0) items.push({ lab:'剩 餘', val: left + ' 套' });
     }
-    // 販售中:顯示「販售中」
+    // 販售中:顯示「已購買」+「剩餘庫存」(已預約欄位改用「已購買」展示)
     else if(stage === 'on_sale'){
-      items.push({ lab:'狀 態', val: '販 售 中' });
+      if(c.preorder_count){
+        items.push({ lab:'已 購 買', val: c.preorder_count + ' 位' });
+      }
       if(c.preorder_count && c.limit_total){
         const left = c.limit_total - c.preorder_count;
         if(left > 0) items.push({ lab:'剩 餘 庫 存', val: left + ' 套' });
@@ -236,6 +242,10 @@
     // 已售完
     else if(stage === 'sold_out'){
       items.push({ lab:'狀 態', val: '已 售 完' });
+    }
+    // 活動結束:中間新增「活動結束」狀態徽章
+    else if(stage === 'ended'){
+      items.push({ lab:'狀 態', val: '活 動 結 束' });
     }
 
     // 上市日期 (only 即將推出 / 預購階段顯示)
@@ -346,7 +356,7 @@
     if(stage === 'upcoming'){
       h2 = '即將推出';
       p = c.launch_date_text ? '上市 ' + c.launch_date_text : '敬請期待';
-      btnText = '我 要 通 知 我';
+      btnText = '了 解 更 多';
       ctaEb = '— COMING SOON';
     } else if(stage === 'preorder'){
       if(c.show_limit && c.limit_total){
@@ -366,12 +376,12 @@
     } else if(stage === 'sold_out'){
       h2 = '殘念,全數售出';
       p = '感謝大家的熱烈支持,下次聯名見';
-      btnText = '看 其 他 聯 名';
+      btnText = '看 刻 圖 市 集';
       ctaEb = '— SOLD OUT';
     } else if(stage === 'ended'){
       h2 = '活動已結束';
       p = '感謝大家的參與,期待下次再見';
-      btnText = '看 其 他 聯 名';
+      btnText = '看 刻 圖 市 集';
       ctaEb = '— THE END';
     }
 
@@ -385,9 +395,9 @@
     const btn = $('bottomPreorderBtn');
     btn.textContent = btnText;
 
-    // sold_out / ended:CTA 按鈕導向 collabs 列表
+    // sold_out / ended:CTA 按鈕導向刻圖市集
     if(stage === 'sold_out' || stage === 'ended'){
-      btn.href = 'collabs.html';
+      btn.href = 'market.html';
       btn.classList.add('disabled-cta');
     } else if(c.preorder_link){
       btn.href = c.preorder_link;
