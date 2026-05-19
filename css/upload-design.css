@@ -441,21 +441,24 @@
 /* CTA */
 .dum-actions{ display:flex; gap:10px; margin-top:auto }
 
-/* 隱私權 / 使用條款 同意提示 (預設已同意,純文字) */
+/* 隱私權 / 使用條款 同意提示 (預設已同意) */
 .dum-terms{
   display:flex;
   align-items:flex-start;
   gap:8px;
-  padding:14px 0 4px;
-  margin-top:10px;
+  padding:12px 14px;
+  margin-top:18px;
+  background:#FAF6F0;
+  border:1px solid #E8DED1;
+  border-radius:8px;
   font-size:12px;
   line-height:1.7;
-  color:#9D8A6F;
+  color:#7A6B5C;
   letter-spacing:0.3px;
 }
 .dum-terms i{
-  color:#B5A487;
-  font-size:13px;
+  color:#9D7E3F;
+  font-size:14px;
   margin-top:3px;
   flex-shrink:0;
 }
