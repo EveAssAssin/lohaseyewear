@@ -1915,7 +1915,7 @@
     }
 
     document.getElementById('bmHint').textContent = '';
-    modal.style.display = '';
+    modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
 
@@ -5248,27 +5248,6 @@
         await saveSubtable(client, 'collab_customer_photos', collabId, currentPhotos,
           ['image_url', 'caption', 'sort_order'], 'collab-photo');
 
-        // 同步:把客人照寫一份到 gallery_posts (分享牆),自動通過審核
-        // 只處理「新上傳的」(沒 _galleryPostId)
-        const brandName = val('cm_brand_name') || (currentCollab?.brand_name) || '聯名活動';
-        for(const photo of currentPhotos){
-          if(photo._deleted || photo._galleryPostId || !photo.image_url) continue;
-          try {
-            const { data: gpData, error: gpErr } = await client.from('gallery_posts').insert({
-              title: brandName + ' 客人分享',
-              type: 'photo',
-              customer_name: photo.caption || '匿名',
-              image_urls: [photo.image_url],
-              main_image_url: photo.image_url,
-              status: 'approved',
-              topic: brandName
-            }).select('id').single();
-            if(gpErr){ console.warn('[gallery_posts insert 失敗]', gpErr); continue; }
-            // 記錄已寫入,避免重複
-            photo._galleryPostId = gpData.id;
-          } catch(err){ console.warn('[gallery_posts insert 例外]', err); }
-        }
-
         toast('已儲存');
         // 不關 modal,留在編輯頁繼續編
         if(collabId){
@@ -5540,25 +5519,79 @@
     $('cm_photoInput').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files || []);
       if(files.length === 0) return;
-      for(const file of files){
-        // 裁切 1:1
-        const cropped = await cropImage(file, '1:1');
-        if(!cropped) continue;
-        // 轉 base64 預覽
-        const base64 = await new Promise(res => {
-          const r = new FileReader();
-          r.onload = ev => res(ev.target.result);
-          r.readAsDataURL(cropped);
-        });
-        currentPhotos.push({
-          image_url: '',
-          caption: '',
-          _pendingFile: cropped,
-          _previewBase64: base64
-        });
-      }
       e.target.value = '';
+
+      // 必須先有 collabId 才能上傳
+      if(!currentCollab?.id){
+        alert('請先「儲存」聯名後,才能上傳客人分享照片');
+        return;
+      }
+      const collabId = currentCollab.id;
+      const brandName = currentCollab.brand_name || val('cm_brand_name') || '聯名活動';
+
+      const client = sb();
+      if(!client) return;
+
+      const SUPABASE_BUCKET = window.LohasSupabase?.CONFIG?.STORAGE_BUCKET || 'gallery-uploads';
+
+      // 加上傳中提示
+      const wrap = $('cm_photoList');
+      const tip = document.createElement('div');
+      tip.style.cssText = 'padding:8px 12px;margin:0 0 10px;background:#FFFBEC;border:1px solid #F0D87A;border-radius:6px;font-size:12px;color:#50422D';
+      tip.textContent = `上傳中 (0/${files.length})…`;
+      wrap.parentElement.insertBefore(tip, wrap);
+
+      let done = 0;
+      for(const file of files){
+        try {
+          // 1. 裁切
+          const cropped = await cropImage(file, '1:1');
+          if(!cropped) continue;
+
+          // 2. 上傳 storage
+          const ext = (cropped.name || file.name || '').split('.').pop()?.toLowerCase() || 'jpg';
+          const filePath = `collab-photo/${collabId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+          const { error: upErr } = await client.storage.from(SUPABASE_BUCKET)
+            .upload(filePath, cropped, { cacheControl: '3600', upsert: false });
+          if(upErr){ console.error('[客人照上傳失敗]', upErr); continue; }
+          const { data: urlData } = client.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+          const photoUrl = urlData.publicUrl;
+
+          // 3. 寫 collab_customer_photos
+          const photoRow = {
+            collab_id: collabId,
+            image_url: photoUrl,
+            caption: '',
+            sort_order: currentPhotos.filter(p => !p._deleted).length
+          };
+          if(typeof crypto !== 'undefined' && crypto.randomUUID) photoRow.id = crypto.randomUUID();
+          const { data: cpData, error: cpErr } = await client.from('collab_customer_photos').insert(photoRow).select('*').single();
+          if(cpErr){ console.error('[collab_customer_photos insert 失敗]', cpErr); continue; }
+
+          // 4. 同步寫 gallery_posts (分享牆)
+          const { error: gpErr } = await client.from('gallery_posts').insert({
+            title: brandName + ' 客人分享',
+            type: 'photo',
+            customer_name: '匿名',
+            image_urls: [photoUrl],
+            main_image_url: photoUrl,
+            status: 'approved',
+            topic: brandName
+          });
+          if(gpErr) console.warn('[gallery_posts insert 失敗]', gpErr);
+
+          // 5. push 到 state
+          currentPhotos.push(cpData);
+          done++;
+          tip.textContent = `上傳中 (${done}/${files.length})…`;
+        } catch(err){
+          console.error('[客人照例外]', err);
+        }
+      }
+
+      tip.remove();
       renderPhotoList();
+      toast(`已上傳 ${done} 張照片`);
     });
 
     // ESC 關閉
