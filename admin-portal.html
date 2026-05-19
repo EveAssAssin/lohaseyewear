@@ -458,9 +458,6 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <button class="action-btn-solid" id="newsSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
             <button class="btn" id="newsCancelBtn">關閉</button>
-            <button type="button" class="btn" id="newsPreviewBtn">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i>預覽前台
-            </button>
             <div class="spacer"></div>
             <button class="btn btn-danger" id="newsDeleteBtn" style="display:none">
               <i class="fa-solid fa-trash"></i>刪除消息
@@ -715,12 +712,14 @@
 
           <!-- footer (固定底部) -->
           <div class="ag-modal-footer">
-            <button class="btn danger" id="bmDeleteBtn" style="display:none">
-              <i class="fa-regular fa-trash-can"></i>刪除
-            </button>
-            <div style="flex:1"></div>
-            <button class="btn" id="bmCancelBtn">取消</button>
-            <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i>儲存</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
+              <button class="btn" id="bmCancelBtn">關閉</button>
+              <div class="spacer"></div>
+              <button class="btn btn-danger" id="bmDeleteBtn" style="display:none">
+                <i class="fa-solid fa-trash"></i>刪除 Banner
+              </button>
+            </div>
             <div class="form-hint" id="bmHint" style="width:100%;margin-top:8px;text-align:right"></div>
           </div>
         </div>
