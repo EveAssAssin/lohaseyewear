@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  ensureLegalAssets();
   await loadLayout();
 
   initMobileMenu();
@@ -8,6 +9,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   initCookieBanner();
   initMemberLink();
 });
+
+/* 自動載入 legal-modal.js + legal.css (隱私權 / 服務條款 modal)
+   全站只要載入 layout.js,任何 data-legal="privacy|terms" 元素都能觸發 modal */
+function ensureLegalAssets() {
+  // CSS
+  if (!document.querySelector('link[data-legal-css]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'css/legal.css?v=20260519';
+    link.setAttribute('data-legal-css', '1');
+    document.head.appendChild(link);
+  }
+  // JS
+  if (!document.querySelector('script[data-legal-js]')) {
+    const s = document.createElement('script');
+    s.src = 'js/legal-modal.js?v=20260519';
+    s.defer = true;
+    s.setAttribute('data-legal-js', '1');
+    document.head.appendChild(s);
+  }
+}
 
 async function loadLayout() {
   const headerTarget = document.getElementById("site-header");
