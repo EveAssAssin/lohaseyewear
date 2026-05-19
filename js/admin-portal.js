@@ -5569,16 +5569,25 @@
           if(cpErr){ console.error('[collab_customer_photos insert 失敗]', cpErr); continue; }
 
           // 4. 同步寫 gallery_posts (分享牆)
-          const { error: gpErr } = await client.from('gallery_posts').insert({
+          const galleryPayload = {
             title: brandName + ' 客人分享',
             type: 'photo',
             customer_name: '匿名',
             image_urls: [photoUrl],
             main_image_url: photoUrl,
-            status: 'approved',
-            topic: brandName
-          });
-          if(gpErr) console.warn('[gallery_posts insert 失敗]', gpErr);
+            status: 'approved'
+          };
+          console.log('[聯名→gallery_posts] payload:', galleryPayload);
+          const { data: gpData, error: gpErr } = await client.from('gallery_posts')
+            .insert(galleryPayload)
+            .select('*')
+            .single();
+          if(gpErr){
+            console.error('[gallery_posts insert 失敗] ❌', gpErr);
+            alert('客人照已儲存,但同步到分享牆失敗:' + gpErr.message);
+          } else {
+            console.log('[gallery_posts insert 成功] ✓', gpData);
+          }
 
           // 5. push 到 state
           currentPhotos.push(cpData);
