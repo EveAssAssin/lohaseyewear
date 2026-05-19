@@ -160,7 +160,7 @@
 
           '</div>',
 
-          // 條款
+          // 條款 1: 分潤
           '<div class="dum-terms">',
             '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
             '<div class="dum-terms-text">',
@@ -168,10 +168,12 @@
             '</div>',
           '</div>',
 
-          // 隱私權 / 使用條款 同意提示 (預設已同意,不需勾選)
+          // 條款 2: 隱私權 / 使用條款 (預設已同意)
           '<div class="dum-terms">',
-            '<i class="fa-solid fa-circle-check"></i>',
-            '<span>送出設計即表示您已閱讀並同意 <a href="https://www.lohasglasses.com/privacy.html" target="_blank" rel="noopener">隱私權政策</a> 與 <a href="https://www.lohasglasses.com/terms.html" target="_blank" rel="noopener">使用條款</a>,並授權樂活眼鏡將您的作品用於商品展示與宣傳。</span>',
+            '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
+            '<div class="dum-terms-text">',
+              '送出設計即表示您已閱讀並同意 <a href="https://www.lohasglasses.com/privacy.html" target="_blank" rel="noopener">隱私權政策</a> 與 <a href="https://www.lohasglasses.com/terms.html" target="_blank" rel="noopener">使用條款</a>,並授權樂活眼鏡將您的作品用於商品展示與宣傳。',
+            '</div>',
           '</div>',
 
           // CTA
