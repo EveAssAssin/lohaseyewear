@@ -641,85 +641,86 @@
       <!-- 當前位置 banner 列表 + 新增按鈕 -->
       <div id="bannerListWrap" style="margin-top:14px"></div>
 
-      <!-- Banner 編輯 Modal -->
-      <div class="ag-modal" id="bannerEditModal" style="display:none">
-        <div class="ag-modal-overlay"></div>
-        <div class="ag-modal-content">
-          <div class="ag-modal-head">
-            <h2 id="bannerModalTitle">編輯 Banner</h2>
-            <button class="ag-modal-close" id="bannerModalClose"><i class="fa-solid fa-xmark"></i></button>
+      <!-- Banner 編輯 Modal (採最新消息 modal 樣式) -->
+      <div class="ag-modal-overlay" id="bannerEditModal" style="display:none">
+        <div class="ag-modal">
+          <div class="ag-modal-header">
+            <h2 class="ag-modal-title" id="bannerModalTitle">編輯 Banner</h2>
+            <button class="ag-modal-close" id="bannerModalClose" type="button" aria-label="關閉">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
+
           <div class="ag-modal-body">
+
+            <!-- 視覺 -->
             <div class="editor-panel">
-              <h3 class="editor-panel-h"><i class="fa-regular fa-image"></i>視覺</h3>
+              <h3 class="editor-panel-title">Banner 視覺</h3>
+
               <div class="editor-row">
-                <div class="editor-label">Banner 圖</div>
-                <div>
-                  <div class="creator-photo-wrap" style="max-width:none">
-                    <div class="creator-photo-preview" id="bmImagePreview" style="aspect-ratio:16/9;width:100%;max-width:480px">
-                      <i class="fa-regular fa-image"></i>
-                      <span id="bmAspectHint">16:9</span>
-                    </div>
-                    <button class="creator-photo-clear" id="bmImageClear" type="button" aria-label="移除" style="display:none">
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <button class="creator-photo-upload-btn" id="bmImageBtn" type="button">
-                      <i class="fa-solid fa-camera"></i>更換圖片
-                    </button>
-                    <input type="file" id="bmImageInput" class="visually-hidden" accept="image/*">
+                <label class="editor-label">Banner 圖<span class="req">*</span></label>
+                <div class="img-upload-wrap" data-field="banner_image" data-aspect="16:9" id="bmImageWrap">
+                  <div class="img-upload-preview" id="bmImagePreview">
+                    <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(16:9)</span></span>
                   </div>
-                  <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px" id="bmImageHint">建議尺寸 1920 × 1080 px</div>
+                  <input type="file" accept="image/*" class="img-upload-input">
                 </div>
+                <p class="editor-hint" id="bmImageHint">建議尺寸 1920 × 1080 px</p>
               </div>
-            </div>
 
-            <div class="editor-panel">
-              <h3 class="editor-panel-h"><i class="fa-regular fa-pen-to-square"></i>文字內容</h3>
               <div class="editor-row">
-                <div class="editor-label">標題</div>
-                <div><input class="editor-input" id="bmTitle" placeholder="例如:本月限定 雷刻 7 折"/></div>
+                <label class="editor-label">啟用狀態</label>
+                <label class="editor-check">
+                  <input type="checkbox" id="bmIsActive" checked>
+                  前台顯示此 Banner
+                </label>
               </div>
-              <div class="editor-row">
-                <div class="editor-label">副標題</div>
-                <div><input class="editor-input" id="bmSubtitle" placeholder="例如:把心意刻在鏡片上 · 母親節前下訂享優惠"/></div>
-              </div>
-              <div class="editor-row">
-                <div class="editor-label">按鈕文字</div>
-                <div><input class="editor-input" id="bmCtaText" placeholder="例如:立即預訂"/></div>
-              </div>
-              <div class="editor-row">
-                <div class="editor-label">按鈕連結</div>
-                <div><input class="editor-input" id="bmLinkUrl" placeholder="https://..."/></div>
-              </div>
-            </div>
 
-            <div class="editor-panel">
-              <div class="editor-row">
-                <div class="editor-label">啟用</div>
-                <div>
-                  <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
-                    <input type="checkbox" id="bmIsActive" style="width:16px;height:16px;cursor:pointer" checked>
-                    <span style="font-size:12px">前台顯示此 Banner</span>
-                  </label>
-                </div>
-              </div>
               <div class="editor-row" id="bmSortRow" style="display:none">
-                <div class="editor-label">輪播順序</div>
-                <div><input class="editor-input" id="bmSortOrder" type="number" placeholder="0" style="max-width:120px"/></div>
-              </div>
-              <div class="editor-row" style="padding-top:18px">
-                <div class="editor-label"></div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
-                  <button class="btn" id="bmCancelBtn">關閉</button>
-                  <div style="flex:1"></div>
-                  <button class="btn btn-danger" id="bmDeleteBtn" style="display:none">
-                    <i class="fa-solid fa-trash"></i>刪除
-                  </button>
-                </div>
-                <div class="form-hint" id="bmHint" style="margin-top:10px"></div>
+                <label class="editor-label">輪播順序</label>
+                <input type="number" class="editor-input" id="bmSortOrder" placeholder="0" style="max-width:160px"/>
+                <p class="editor-hint">數字越小越前面</p>
               </div>
             </div>
+
+            <!-- 文字內容 -->
+            <div class="editor-panel">
+              <h3 class="editor-panel-title">文字內容 (選填)</h3>
+
+              <div class="editor-row">
+                <label class="editor-label">標題</label>
+                <input type="text" class="editor-input" id="bmTitle" placeholder="例如:本月限定 雷刻 7 折"/>
+                <p class="editor-hint">顯示在 Banner 上的主標題</p>
+              </div>
+
+              <div class="editor-row">
+                <label class="editor-label">副標題</label>
+                <input type="text" class="editor-input" id="bmSubtitle" placeholder="例如:把心意刻在鏡片上 · 母親節前下訂享優惠"/>
+                <p class="editor-hint">顯示在主標題下方</p>
+              </div>
+
+              <div class="editor-row-2col">
+                <div class="editor-row">
+                  <label class="editor-label">按鈕文字</label>
+                  <input type="text" class="editor-input" id="bmCtaText" placeholder="例如:立即預訂"/>
+                </div>
+                <div class="editor-row">
+                  <label class="editor-label">按鈕連結</label>
+                  <input type="text" class="editor-input" id="bmLinkUrl" placeholder="https://..."/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- footer (固定底部) -->
+          <div class="ag-modal-footer">
+            <button class="btn danger" id="bmDeleteBtn" style="display:none">
+              <i class="fa-regular fa-trash-can"></i>刪除
+            </button>
+            <div style="flex:1"></div>
+            <button class="btn" id="bmCancelBtn">取消</button>
+            <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i>儲存</button>
+            <div class="form-hint" id="bmHint" style="width:100%;margin-top:8px;text-align:right"></div>
           </div>
         </div>
       </div>
@@ -1619,7 +1620,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-newshide"></script>
+<script src="js/admin-portal.js?v=20260518-bannermodal"></script>
 
 </body>
 </html>
