@@ -809,7 +809,7 @@
         <div class="ag-modal-header">
           <h2 class="ag-modal-title" id="collabModalTitle">編輯聯名</h2>
           <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
-            <button class="btn" id="collabApplyTemplateBtn" type="button" style="display:none;background:#FBE07A;border-color:#F0D87A;color:#3D3026;font-weight:600">
+            <button class="btn" id="collabApplyTemplateBtn" type="button" style="display:none">
               <i class="fa-solid fa-wand-magic-sparkles"></i> 快速套公版
             </button>
             <button class="ag-modal-close" id="collabModalClose" type="button" aria-label="關閉">
@@ -1074,9 +1074,9 @@
           <!-- 客人照子表 -->
           <div class="editor-panel">
             <h3 class="editor-panel-title">客人分享照片</h3>
-            <p class="editor-hint">建議比例 1:1 · 建議尺寸 600 × 600 px · 先儲存聯名後,才能上傳客人分享照片</p>
-            <div class="subtable-list" id="cm_photoList"></div>
-            <button class="btn-mini" id="cm_addPhoto" type="button">+ 新增照片</button>
+            <p class="editor-hint">建議比例 1:1 · 建議尺寸 600 × 600 px · 點 + 直接上傳,免審核</p>
+            <div id="cm_photoList"></div>
+            <input type="file" id="cm_photoInput" accept="image/*" multiple class="visually-hidden">
           </div>
 
         </div>
@@ -1626,7 +1626,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-collabsave"></script>
+<script src="js/admin-portal.js?v=20260518-7items"></script>
 
 </body>
 </html>
