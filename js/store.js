@@ -440,32 +440,14 @@
         `</section>`;
     }
 
-    /* === 評價彙整（只顯示該店）===
-       1. 先收集該店各員工的真實 evaluationList
-       2. 不足 12 則時，用 SAMPLE_REVIEW_POOL 補充假評論
-       3. 假評論的「給 XX 的評價」會隨機指派該店店員，看起來像該店評論
-       4. 總評價數仍用 200~500 的 seed 隨機數 */
-    const realEvals = [];
-    e.forEach(emp => {
-      (emp.evaluationList || []).forEach(ev => {
-        realEvals.push({
-          ...ev,
-          empName: emp.name,
-          empPhoto: (emp.photos && emp.photos[0]) || ""
-        });
-      });
-    });
-
-    /* 目標 12 則 — 不足從 pool 補 */
+    /* === 評價彙整（純假評論，避免員工跨店歷史評論混入）===
+       1. 完全用 SAMPLE_REVIEW_POOL，依該店 erpid 為 seed 抽 12 則
+       2. 假評論的「給 XX 的評價」會分派給該店店員，看起來像該店評論
+       3. 總評價數用 200~500 的 seed 隨機數，每店穩定 */
     const TARGET_REVIEWS = 12;
-    const displayEvals = realEvals.slice();
-    if (displayEvals.length < TARGET_REVIEWS) {
-      const need = TARGET_REVIEWS - displayEvals.length;
-      const filler = pickReviewsFromPool(e, need, s.erpid);
-      filler.forEach(f => displayEvals.push(f));
-    }
+    const displayEvals = pickReviewsFromPool(e, TARGET_REVIEWS, s.erpid);
 
-    /* 分數分布（基於前 6 則 + pool）*/
+    /* 分數分布 */
     const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     displayEvals.forEach(ev => {
       const sc = Math.round(ev.score);
@@ -678,9 +660,11 @@
     /* 簡介 ─ 完整顯示，不再切斷 */
     const intro = (emp.introduction || "").trim();
 
-    /* 頭像 — 用 <img> + object-fit:cover 保證滿版；沒照片用 fallback */
+    /* 頭像 — img 載入失敗時自動切換成 fallback */
     const photoBlock = hasPhoto
-      ? `<img class="sd-staff-photo" src="${photo}" alt="${emp.name || ''}" loading="lazy">`
+      ? `<img class="sd-staff-photo" src="${photo}" alt="${emp.name || ''}" loading="lazy" ` +
+          `onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` +
+        `<div class="sd-staff-photo-fallback" style="display:none"><i class="fa-regular fa-user"></i></div>`
       : `<div class="sd-staff-photo-fallback"><i class="fa-regular fa-user"></i></div>`;
 
     return (

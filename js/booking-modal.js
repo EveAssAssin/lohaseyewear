@@ -202,14 +202,18 @@
             const rawPhoto = e.photos && e.photos[0];
             /* 確認真的是有效的照片 URL（不是 null / 空字串 / 純空白） */
             const photo = (rawPhoto && String(rawPhoto).trim()) ? rawPhoto : "";
-            const avStyle = photo ? `style="background-image:url('${photo}')"` : "";
             const isActive = state.selectedEmployee && state.selectedEmployee.erpid === e.erpid;
             const role = (e.role || e.jobtitle || "").trim();
             const honor = (e.honor || "").trim();
+            /* 照片區：有效 URL 用 <img>（含 onerror fallback）、無 URL 直接 icon */
+            const photoInner = photo
+              ? `<img src="${photo}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` +
+                `<span class="bm-staff-pick-fallback" style="display:none"><i class="fa-regular fa-user"></i></span>`
+              : `<span class="bm-staff-pick-fallback"><i class="fa-regular fa-user"></i></span>`;
             return (
               `<div class="bm-staff-pick ${isActive ? "active" : ""}" data-staff="${e.erpid}">` +
-                `<div class="bm-staff-pick-photo${photo ? "" : " no-photo"}" ${avStyle}>` +
-                  (photo ? "" : `<i class="fa-regular fa-user"></i>`) +
+                `<div class="bm-staff-pick-photo${photo ? "" : " no-photo"}">` +
+                  photoInner +
                 `</div>` +
                 `<div class="bm-staff-pick-info">` +
                   `<div class="bm-staff-pick-name">${e.name}</div>` +
