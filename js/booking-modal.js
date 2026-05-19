@@ -77,7 +77,7 @@
       }
     } catch (_e) { /* ignore */ }
 
-    /* 預選驗光師 → 直接跳第 2 步（時段） */
+    /* 預選顧問 → 直接跳第 2 步（時段） */
     if (opts.preselectEmployeeErpId) {
       const target = state.employees.find(e => String(e.erpid) === String(opts.preselectEmployeeErpId));
       if (target) {
@@ -153,7 +153,7 @@
 
   function renderSteps() {
     const steps = [
-      { n: 1, label: "選驗光師" },
+      { n: 1, label: "選銷售顧問" },
       { n: 2, label: "選時段" },
       { n: 3, label: "確認資料" }
     ];
@@ -184,19 +184,19 @@
     return "";
   }
 
-  /* === Step 1: 選驗光師（大頭像版） === */
+  /* === Step 1: 選顧問（大頭像版） === */
   function renderStepStaff() {
     if (state.employees.length === 0) {
       return (
         `<div class="bm-state">` +
-          `<div class="bm-state-title">本店尚未公開驗光師資料</div>` +
+          `<div class="bm-state-title">本店尚未公開銷售顧問資料</div>` +
           `<div class="bm-state-msg">請致電門市直接預約</div>` +
         `</div>`
       );
     }
     return (
       `<div class="bm-sec">` +
-        `<div class="bm-sec-title">選擇驗光師</div>` +
+        `<div class="bm-sec-title">選擇銷售顧問</div>` +
         `<div class="bm-staff-grid">` +
           state.employees.map(e => {
             const photo = e.photos && e.photos[0];
@@ -254,7 +254,7 @@
       return (
         `<div class="bm-state">` +
           `<div class="bm-state-title">目前沒有可預約時段</div>` +
-          `<div class="bm-state-msg">請致電門市，或選擇其他驗光師</div>` +
+          `<div class="bm-state-msg">請致電門市，或選擇其他銷售顧問</div>` +
         `</div>`
       );
     }
@@ -347,7 +347,7 @@
         `<div class="bm-success-msg">我們已收到您的預約資料，門市將於 24 小時內聯繫確認。請保持手機暢通。</div>` +
         `<div class="bm-success-detail">` +
           `<div>門市：<b>${state.store ? state.store.name : "-"}</b></div>` +
-          `<div>驗光師：<b>${state.selectedEmployee ? state.selectedEmployee.name : "-"}</b></div>` +
+          `<div>銷售顧問：<b>${state.selectedEmployee ? state.selectedEmployee.name : "-"}</b></div>` +
           `<div>服務：<b>${state.selectedService ? state.selectedService.name : "-"}</b></div>` +
           `<div>時段：<b>${formatDate(state.selectedDate)} ${getRoundTitle(state.selectedRoundId)}</b></div>` +
           (d.reservationId ? `<div>預約編號：<b>${d.reservationId}</b></div>` : "") +

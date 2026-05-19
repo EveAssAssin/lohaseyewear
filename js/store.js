@@ -379,7 +379,7 @@
         `</div>` +
         `<div class="sd-q-stat">` +
           `<div class="num">${e.length}<small>位</small></div>` +
-          `<div class="lbl">專業驗光師</div>` +
+          `<div class="lbl">銷售顧問</div>` +
         `</div>` +
         `<div class="sd-q-stat">` +
           `<div class="num">${s.region.label}</div>` +
@@ -423,10 +423,10 @@
     if (e.length === 0) {
       staffSection =
         `<section class="sd-sec">` +
-          `<div class="sd-sec-head"><h2>選 擇 門 市 人 員 預 約</h2></div>` +
+          `<div class="sd-sec-head"><h2>預 約 銷 售 顧 問</h2></div>` +
           `<div class="store-state">` +
             `<div class="store-state-icon"><i class="fa-regular fa-user"></i></div>` +
-            `<div class="store-state-title">本店尚無公開的驗光師資料</div>` +
+            `<div class="store-state-title">本店尚無公開的銷售顧問資料</div>` +
           `</div>` +
         `</section>`;
     } else {
@@ -434,7 +434,7 @@
       staffSection =
         `<section class="sd-sec">` +
           `<div class="sd-sec-head">` +
-            `<h2>選 擇 門 市 人 員 預 約</h2>` +
+            `<h2>預 約 銷 售 顧 問</h2>` +
           `</div>` +
           `<div class="sd-staff-row">${cards}</div>` +
         `</section>`;
