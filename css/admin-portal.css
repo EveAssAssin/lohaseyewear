@@ -3857,11 +3857,6 @@
 .ad .story-row:hover {
   border-color: #C9B98C;
 }
-.ad .story-row[data-type="quote"] {
-  background: linear-gradient(180deg, #FFFBEC 0%, #fff 100%);
-  border-color: #F0D87A;
-  border-left: 3px solid #F0D87A;
-}
 .ad .story-row-type {
   background: #FAF7F2;
   border: 1px solid var(--lohas-line);
@@ -3892,11 +3887,6 @@
   outline: none;
   border-color: var(--lohas-brown);
   box-shadow: 0 0 0 2px rgba(80, 66, 45, 0.08);
-}
-.ad .story-row[data-type="quote"] .story-row-text {
-  font-style: italic;
-  color: #7C5A2B;
-  background: transparent;
 }
 .ad .story-row-controls {
   display: flex;
