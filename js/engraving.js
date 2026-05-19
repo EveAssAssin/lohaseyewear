@@ -35,7 +35,7 @@
       // 抓所有 active 創作者(含必要欄位)
       const { data, error } = await sb
         .from('creator_info')
-        .select('member_id, display_name, tagline, avatar_url, kol_main_image_url, engraving_quote, status')
+        .select('member_id, display_name, tagline, avatar_url, kol_main_image_url, engraving_quote, social_links, status')
         .eq('status', 'active')
         .not('engraving_quote', 'is', null)
         .neq('engraving_quote', '');
@@ -80,7 +80,13 @@
     const name = escHtml(c.display_name || '創作者');
     const tag = escHtml((c.tagline || 'DESIGNER').toUpperCase());
     const quote = escHtml(c.engraving_quote || '');
-    const link = 'creator-public.html?id=' + encodeURIComponent(c.member_id || '');
+    const profileLink = 'creator-public.html?id=' + encodeURIComponent(c.member_id || '');
+    const igLink = escAttr((c.social_links && c.social_links.instagram) || '');
+
+    const shareBtn = igLink
+      ? '<a href="' + igLink + '" class="btn-more-simple" target="_blank" rel="noopener">查看完整分享</a>'
+      : '';
+    const profileBtn = '<a href="' + profileLink + '" class="btn-more-outline">了解創作者</a>';
 
     return (
       '<div class="split-item' + inverse + '">' +
@@ -96,7 +102,9 @@
           '<span class="tag">' + tag + '</span>' +
           '<h3>' + name + '</h3>' +
           '<p>「' + quote + '」</p>' +
-          '<a href="' + link + '" class="btn-more-simple">查看完整分享</a>' +
+          '<div class="kol-btns">' +
+            shareBtn + profileBtn +
+          '</div>' +
         '</div>' +
       '</div>'
     );
