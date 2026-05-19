@@ -382,10 +382,8 @@
 }
 .bm-time-pick:hover:not(.full):not(.active) { background: var(--bg-soft); }
 .bm-time-pick.active {
-  background: var(--lohas-brand);
-  color: #fff;
-  border-color: #fff;
-  box-shadow: 0 0 0 2px var(--lohas-brand);
+  border-color: var(--lohas-light);
+  box-shadow: 0 0 0 1px var(--lohas-light);
 }
 .bm-time-pick.full {
   opacity: 0.35;
