@@ -1757,6 +1757,9 @@
       input?.addEventListener('change', async e => {
         console.log('[Banner input change]', e.target.files?.length);
 
+        const file = e.target.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+
         // 依當前 position 套用 aspectRatio
         const cfg = BANNER_POSITIONS[BannerState.currentPos];
         let aspectRatio = 16/9;
