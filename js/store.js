@@ -569,36 +569,31 @@
       if (t && honorTexts.indexOf(t) === -1) honorTexts.push(t);
     });
 
+    /* 勳章 pill（方向 2 風格：圓徽 + 文字一體成型）
+       金/銀/銅依序對應第 1/2/3 個榮譽 */
+    const tierClasses = ["", "silver", "bronze"];
     const badges = honorTexts.slice(0, 3).map((t, i) =>
-      `<span class="sd-staff-badge${i === 0 ? " hot" : ""}">` +
-        `<i class="${honorIcon(t)}"></i> ${t}` +
+      `<span class="sd-staff-badge${tierClasses[i] ? " " + tierClasses[i] : ""}">` +
+        `<span class="ic"><i class="${honorIcon(t)}"></i></span>${t}` +
       `</span>`
     ).join("");
 
-    /* 頂部角標：只有王牌顧問才顯示（職稱已在照片底部，不重複）*/
-    const topPin = isTop
-      ? `<div class="sd-staff-pin gold"><i class="fa-solid fa-star"></i> 王 牌</div>`
+    /* 王牌徽章（左上） */
+    const topBadge = isTop
+      ? `<div class="sd-staff-flag"><i class="fa-solid fa-award"></i> 王 牌 顧 問</div>`
       : "";
 
+    /* 評分 */
     const score = emp.averageScore != null ? emp.averageScore.toFixed(1) : null;
     const reviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
+
+    /* 簡介 */
     const intro = (emp.introduction || "").trim();
     const shortIntro = intro
       ? (intro.length > 60 ? intro.slice(0, 58) + "…" : intro)
       : "";
 
-    /* 評分區塊（有分數才顯示）*/
-    const ratingBlock = score
-      ? `<div class="sd-staff-rating">` +
-          `<span class="sd-staff-rating-stars">${renderStars(emp.averageScore)}</span>` +
-          `<span class="sd-staff-rating-num">${score}</span>` +
-          (reviewCount > 0
-            ? `<span class="sd-staff-rating-count">· ${reviewCount} 則評價</span>`
-            : "") +
-        `</div>`
-      : "";
-
-    /* 頭像區域：有照片用 background-image，沒照片顯示首字 + icon */
+    /* 頭像背景 */
     const photoStyle = hasPhoto
       ? `style="background-image:url('${photo}')"`
       : "";
@@ -610,33 +605,49 @@
         `</div>`;
 
     return (
-      `<div class="sd-staff-card${isTop ? " top" : ""}">` +
-        /* === 頭像主視覺區（佔卡片上半） === */
-        `<div class="sd-staff-photo" ${photoStyle}>` +
+      `<article class="sd-staff-card${isTop ? " top" : ""}">` +
+        /* === 上半：1:1 大照片 === */
+        `<div class="sd-staff-photo-wrap">` +
+          `<div class="sd-staff-photo" ${photoStyle}></div>` +
           photoFallback +
-          topPin +
-          `<div class="sd-staff-photo-info">` +
-            `<div class="sd-staff-name">${emp.name || ""}</div>` +
-            (roleText ? `<div class="sd-staff-subtitle">${roleText}</div>` : "") +
-          `</div>` +
+          topBadge +
+          `<button class="sd-staff-fav" type="button" aria-label="收藏">` +
+            `<i class="fa-regular fa-heart"></i>` +
+          `</button>` +
         `</div>` +
 
-        /* === 卡片下半（內容區） === */
+        /* === 下半：內容區 === */
         `<div class="sd-staff-body">` +
-          ratingBlock +
+          /* 姓名 + 評分一行 */
+          `<div class="sd-staff-head">` +
+            `<div class="sd-staff-name">${emp.name || ""}</div>` +
+            (score
+              ? `<div class="sd-staff-rating">` +
+                  `<i class="fa-solid fa-star"></i>` +
+                  `<span class="num">${score}</span>` +
+                  (reviewCount > 0 ? `<span class="count">(${reviewCount})</span>` : "") +
+                `</div>`
+              : "") +
+          `</div>` +
+          /* 職稱行 */
+          (roleText ? `<div class="sd-staff-role">${roleText}</div>` : "") +
+          /* 簡介 */
           (shortIntro
-            ? `<p class="sd-staff-intro">「${shortIntro}」</p>`
+            ? `<p class="sd-staff-intro">${shortIntro}</p>`
             : `<p class="sd-staff-intro placeholder">提 供 專 業 配 鏡 諮 詢 服 務</p>`) +
+          /* 勳章 pills */
           (badges
             ? `<div class="sd-staff-badges">${badges}</div>`
             : "") +
-          `<button class="sd-staff-book" data-book="${emp.erpid}" type="button">` +
-            `<i class="fa-regular fa-calendar-check"></i>` +
-            `<span>預 約 ${emp.name}</span>` +
-            `<i class="fa-solid fa-arrow-right"></i>` +
-          `</button>` +
+          /* CTA 區（細灰線分隔）*/
+          `<div class="sd-staff-foot">` +
+            `<div class="sd-staff-foot-meta">線上立即預約</div>` +
+            `<button class="sd-staff-book" data-book="${emp.erpid}" type="button">` +
+              `預約 <i class="fa-solid fa-arrow-right"></i>` +
+            `</button>` +
+          `</div>` +
         `</div>` +
-      `</div>`
+      `</article>`
     );
   }
 
