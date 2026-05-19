@@ -1,0 +1,456 @@
+/* =============================================
+   LOHAS Legal Pages · Privacy / Terms
+   --------------------------------------------
+   依賴: lohas-tokens.css → lohas-base.css → lohas-components.css
+   涵蓋:
+   - .legal-main / .legal-article 頁面版型
+   - .legal-modal 通用法律文件 modal
+   - 共用內文排版 (h2, ul, p, ...)
+   ============================================= */
+
+/* ===========================================
+   頁面外框
+   =========================================== */
+.legal-main {
+  background: var(--bg-warm);
+  min-height: calc(100vh - 240px);
+  padding: 40px 20px 80px;
+}
+
+.legal-article {
+  max-width: 860px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-radius: 14px;
+  padding: 40px 48px 48px;
+  box-shadow: 0 6px 24px rgba(80, 66, 45, 0.05);
+}
+
+/* ===========================================
+   麵包屑
+   =========================================== */
+.legal-breadcrumb {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-bottom: 24px;
+  letter-spacing: 0.5px;
+}
+.legal-breadcrumb a {
+  color: var(--lohas-hover);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.legal-breadcrumb a:hover {
+  color: var(--lohas-brand);
+  text-decoration: underline;
+}
+.legal-breadcrumb span {
+  margin: 0 8px;
+  color: var(--text-muted);
+}
+
+/* ===========================================
+   標題區
+   =========================================== */
+.legal-header {
+  border-bottom: 1px solid var(--lohas-bd);
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+}
+.legal-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  margin: 0 0 10px;
+  letter-spacing: 1px;
+}
+.legal-updated {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* ===========================================
+   內文
+   =========================================== */
+.legal-content {
+  color: var(--text-main);
+  line-height: 1.85;
+  font-size: 15px;
+}
+
+.legal-intro {
+  background: var(--bg-soft);
+  border-left: 3px solid var(--lohas-light);
+  padding: 16px 18px;
+  border-radius: 0 8px 8px 0;
+  font-size: 14.5px;
+  color: var(--text-sub);
+  margin: 0 0 32px;
+}
+
+.legal-section {
+  margin-bottom: 32px;
+}
+.legal-section:last-child {
+  margin-bottom: 0;
+}
+.legal-section h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--lohas-bd);
+  letter-spacing: 0.5px;
+}
+.legal-section p {
+  margin: 0 0 12px;
+}
+.legal-section p:last-child {
+  margin-bottom: 0;
+}
+.legal-section ul {
+  padding-left: 22px;
+  margin: 8px 0 14px;
+}
+.legal-section li {
+  margin-bottom: 6px;
+}
+.legal-section li::marker {
+  color: var(--lohas-light);
+}
+.legal-section strong {
+  color: var(--lohas-brand);
+  font-weight: 500;
+}
+.legal-section a {
+  color: var(--lohas-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal-section a:hover {
+  color: var(--lohas-brand);
+}
+.legal-section code {
+  background: var(--bg-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  color: var(--lohas-brand);
+}
+
+/* 聯絡方式列表 */
+.legal-contact-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 12px 0 0;
+}
+.legal-contact-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.legal-contact-list i {
+  color: var(--lohas-hover);
+  width: 18px;
+  text-align: center;
+}
+
+/* ===========================================
+   底部導覽
+   =========================================== */
+.legal-foot {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--lohas-bd);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.legal-side-link,
+.legal-back-link {
+  font-size: 14px;
+  color: var(--lohas-hover);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+  letter-spacing: 0.5px;
+}
+.legal-side-link:hover,
+.legal-back-link:hover {
+  color: var(--lohas-brand);
+}
+
+/* ===========================================
+   響應式
+   =========================================== */
+@media (max-width: 768px) {
+  .legal-main {
+    padding: 20px 12px 60px;
+  }
+  .legal-article {
+    padding: 28px 22px 32px;
+    border-radius: 10px;
+  }
+  .legal-title {
+    font-size: 24px;
+  }
+  .legal-section h2 {
+    font-size: 16px;
+  }
+  .legal-content {
+    font-size: 14.5px;
+    line-height: 1.8;
+  }
+  .legal-foot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ===========================================
+   Modal 版本(由 js/legal-modal.js 動態插入)
+   =========================================== */
+.legal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(47, 42, 36, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s;
+}
+.legal-modal-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.legal-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 860px;
+  max-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  transform: translateY(20px);
+  transition: transform 0.22s;
+}
+.legal-modal-overlay.is-open .legal-modal {
+  transform: translateY(0);
+}
+
+/* modal 頭 */
+.legal-modal-head {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--lohas-bd);
+  background: #fff;
+  flex-shrink: 0;
+}
+.legal-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  margin: 0;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+.legal-modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-soft);
+  color: var(--lohas-brand);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.legal-modal-close:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+}
+
+/* modal 主體(可捲) */
+.legal-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px 32px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--lohas-light) transparent;
+}
+.legal-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+.legal-modal-body::-webkit-scrollbar-thumb {
+  background: var(--lohas-light);
+  border-radius: 4px;
+}
+/* modal 內隱藏麵包屑與下方導覽,只留純內容 */
+.legal-modal-body .legal-breadcrumb,
+.legal-modal-body .legal-foot {
+  display: none;
+}
+/* modal 內標題不需再加分隔線(已有 modal-head) */
+.legal-modal-body .legal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 20px;
+}
+.legal-modal-body .legal-title {
+  display: none; /* modal-head 已有標題 */
+}
+.legal-modal-body .legal-updated {
+  margin-top: 0;
+}
+
+/* modal 底部:跳轉到完整頁的連結 */
+.legal-modal-foot {
+  padding: 14px 24px;
+  border-top: 1px solid var(--lohas-bd);
+  background: var(--bg-warm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.legal-modal-foot-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.legal-modal-foot-link {
+  font-size: 13px;
+  color: var(--lohas-hover);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  letter-spacing: 0.5px;
+}
+.legal-modal-foot-link:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+
+/* Modal 載入中 */
+.legal-modal-loading {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.legal-modal-loading i {
+  font-size: 28px;
+  opacity: 0.4;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* 鎖住 body 滾動時用 */
+body.legal-modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .legal-modal-overlay {
+    padding: 0;
+  }
+  .legal-modal {
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+  }
+  .legal-modal-head {
+    padding: 14px 16px;
+  }
+  .legal-modal-body {
+    padding: 18px 20px 24px;
+  }
+  .legal-modal-foot {
+    padding: 12px 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .legal-modal-foot-link {
+    justify-content: center;
+  }
+}
+
+/* ===========================================
+   Footer 底部法律連結列
+   (放在 .footer-bottom 內,與 © 並列)
+   =========================================== */
+.footer-legal-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--lohas-light);
+  letter-spacing: 0.5px;
+}
+.footer-legal-links a {
+  color: var(--lohas-light);
+  text-decoration: none;
+  transition: color 0.2s;
+  padding: 2px 0;
+}
+.footer-legal-links a:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.footer-legal-sep {
+  opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+  .footer-bottom {
+    flex-direction: column;
+    align-items: center !important;
+    gap: 12px;
+    text-align: center;
+  }
+  .footer-legal-links {
+    order: 2;
+  }
+  .footer-bottom p {
+    order: 1;
+  }
+}
