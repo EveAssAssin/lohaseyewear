@@ -250,6 +250,20 @@
     const s = state.store;
     const bg = s.coverimage ? `style="background-image:url('${s.coverimage}')"` : "";
 
+    /* Region 英文對照（用於 hero eyebrow） */
+    const REGION_EN = {
+      north: "NORTH REGION",
+      hsinchu: "HSINCHU REGION",
+      taichung1: "TAICHUNG REGION I",
+      taichung2: "TAICHUNG REGION II",
+      kaohsiung1: "KAOHSIUNG REGION I",
+      tainan: "TAINAN REGION",
+      kaohsiung2: "KAOHSIUNG REGION II",
+      malaysia: "MALAYSIA",
+      other: "LOHAS EYEWEAR"
+    };
+    const regionEn = REGION_EN[s.region.key] || "LOHAS EYEWEAR";
+
     dom.hero.className = "sd-hero" + (s.coverimage ? " has-cover" : "");
     dom.hero.setAttribute("style", s.coverimage ? `background-image:url('${s.coverimage}')` : "");
     dom.hero.innerHTML =
@@ -257,6 +271,9 @@
         `<i class="fa-solid fa-arrow-left"></i> 返回門市列表` +
       `</a>` +
       `<div class="sd-hero-content">` +
+        `<div class="sd-hero-eyebrow">` +
+          `<b>● LOHAS EYEWEAR</b> <span>${regionEn}</span>` +
+        `</div>` +
         `<h1>${s.name}</h1>` +
         (s.slogan ? `<div class="sd-hero-slogan">${s.slogan}</div>` : "") +
       `</div>`;
