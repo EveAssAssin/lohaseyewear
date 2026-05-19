@@ -3,58 +3,74 @@
 
   <!-- 首頁 -->
   <url>
-    <loc>https://premium.lohasglasses.com/</loc>
-    <lastmod>2026-05-16</lastmod>
+    <loc>https://lohaseyewear.com/</loc>
+    <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- 獨家雷刻服務 (主打 SEO 關鍵字) -->
+  <!-- 雷刻服務介紹 -->
   <url>
-    <loc>https://premium.lohasglasses.com/engraving.html</loc>
-    <lastmod>2026-05-16</lastmod>
+    <loc>https://lohaseyewear.com/engraving.html</loc>
+    <lastmod>2026-05-19</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- 創作者刻圖市集 -->
-  <url>
-    <loc>https://premium.lohasglasses.com/market.html</loc>
-    <lastmod>2026-05-16</lastmod>
-    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- 刻圖靈感分享牆 -->
   <url>
-    <loc>https://premium.lohasglasses.com/gallery.html</loc>
-    <lastmod>2026-05-16</lastmod>
+    <loc>https://lohaseyewear.com/gallery.html</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 刻圖市集 -->
+  <url>
+    <loc>https://lohaseyewear.com/market.html</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 全台門市 -->
+  <url>
+    <loc>https://lohaseyewear.com/allstore.html</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 聯名活動列表 -->
+  <url>
+    <loc>https://lohaseyewear.com/collabs.html</loc>
+    <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- 最新消息 -->
   <url>
-    <loc>https://premium.lohasglasses.com/news.html</loc>
-    <lastmod>2026-05-16</lastmod>
+    <loc>https://lohaseyewear.com/news.html</loc>
+    <lastmod>2026-05-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <!-- 聯名活動 (DINU - 動態頁範例) -->
+  <!-- 隱私權政策 -->
   <url>
-    <loc>https://premium.lohasglasses.com/collab.html?id=dinu</loc>
-    <lastmod>2026-05-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <loc>https://lohaseyewear.com/privacy.html</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
 
-  <!-- 門市據點 -->
+  <!-- 服務條款 -->
   <url>
-    <loc>https://premium.lohasglasses.com/allstore.html</loc>
-    <lastmod>2026-05-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <loc>https://lohaseyewear.com/terms.html</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
 
 </urlset>

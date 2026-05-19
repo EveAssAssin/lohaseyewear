@@ -1,19 +1,47 @@
-# LOHAS 樂活眼鏡 robots.txt
-# https://premium.lohasglasses.com/robots.txt
+# =============================================
+# LOHAS 樂活眼鏡 · robots.txt
+# 控制搜尋引擎爬蟲行為
+# 文件規格:https://www.robotstxt.org/
+# =============================================
 
+# === 全部爬蟲共用規則 ===
 User-agent: *
-Allow: /
 
-# 後台 / 登入 / 會員專區 — 不索引
+# 擋掉:後台、會員、登入頁(不該被搜尋到)
 Disallow: /admin-portal.html
-Disallow: /login.html
 Disallow: /member-portal.html
+Disallow: /login.html
 
-# 個人創作者頁(動態) — 不索引(避免重複內容問題)
+# 擋掉:動態詳情頁(僅在帶 query 時有意義,空頁無內容可索引)
+Disallow: /news-detail.html
+Disallow: /store.html
+Disallow: /collab.html
 Disallow: /creator-public.html
 
-# Supabase 上傳資源(若有 query string 變化版本) — 不索引
-Disallow: /*?v=*
+# 擋掉:技術資源目錄(對使用者無意義,徒增爬蟲負擔)
+Disallow: /js/
+Disallow: /components/
 
-# Sitemap 位置
-Sitemap: https://premium.lohasglasses.com/sitemap.xml
+# 擋掉:常見參數雜訊(避免重複內容問題)
+Disallow: /*?utm_*
+Disallow: /*?fbclid=*
+Disallow: /*?gclid=*
+
+# 開放:CSS 與圖片(Google 需要看 CSS 才能正確渲染頁面)
+Allow: /css/
+Allow: /assets/
+Allow: /images/
+
+# === 特定爬蟲:封鎖內容農場 / AI 訓練爬蟲(可選,視政策決定) ===
+# 如不想被當作 AI 訓練資料,取消以下註解
+# User-agent: GPTBot
+# Disallow: /
+# User-agent: CCBot
+# Disallow: /
+# User-agent: ClaudeBot
+# Disallow: /
+# User-agent: Google-Extended
+# Disallow: /
+
+# === 網站地圖 ===
+Sitemap: https://lohaseyewear.com/sitemap.xml
