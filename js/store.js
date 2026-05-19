@@ -257,7 +257,6 @@
         `<i class="fa-solid fa-arrow-left"></i> 返回門市列表` +
       `</a>` +
       `<div class="sd-hero-content">` +
-        `<span class="sd-hero-tag"><i class="fa-solid fa-fire"></i> 提 供 預 約 服 務</span>` +
         `<h1>${s.name}</h1>` +
         (s.slogan ? `<div class="sd-hero-slogan">${s.slogan}</div>` : "") +
       `</div>`;
@@ -629,22 +628,16 @@
     /* 簡介 ─ 完整顯示，不再切斷 */
     const intro = (emp.introduction || "").trim();
 
-    /* 頭像 — 沒照片時用大 icon fallback */
-    const photoStyle = hasPhoto
-      ? `style="background-image:url('${photo}')"`
-      : "";
-    const photoFallback = hasPhoto
-      ? ""
-      : `<div class="sd-staff-photo-fallback">` +
-          `<i class="fa-regular fa-user"></i>` +
-        `</div>`;
+    /* 頭像 — 用 <img> + object-fit:cover 保證滿版；沒照片用 fallback */
+    const photoBlock = hasPhoto
+      ? `<img class="sd-staff-photo" src="${photo}" alt="${emp.name || ''}" loading="lazy">`
+      : `<div class="sd-staff-photo-fallback"><i class="fa-regular fa-user"></i></div>`;
 
     return (
       `<article class="sd-staff-card${isTop ? " top" : ""}">` +
         /* === 上半：照片滿版填滿卡片頂部 === */
         `<div class="sd-staff-photo-wrap">` +
-          `<div class="sd-staff-photo" ${photoStyle}></div>` +
-          photoFallback +
+          photoBlock +
           topBadge +
         `</div>` +
 
