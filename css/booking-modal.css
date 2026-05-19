@@ -293,10 +293,27 @@
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  /* 留出 8px 給捲軸 + 4px 視覺空間 */
+  padding-bottom: 12px;
   scroll-snap-type: x mandatory;
+  /* Firefox：顯示細捲軸 + 品牌色 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--lohas-light) transparent;
 }
-.bm-date-row::-webkit-scrollbar { display: none; }
+/* WebKit/Blink：保留可見的細捲軸（桌機可用滑鼠拖動） */
+.bm-date-row::-webkit-scrollbar {
+  height: 6px;
+}
+.bm-date-row::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bm-date-row::-webkit-scrollbar-thumb {
+  background: var(--lohas-light);
+  border-radius: var(--r-pill);
+}
+.bm-date-row::-webkit-scrollbar-thumb:hover {
+  background: var(--lohas-hover);
+}
 .bm-date-pick {
   flex-shrink: 0;
   width: 60px;
@@ -309,10 +326,17 @@
   scroll-snap-align: start;
   transition: all 0.15s;
 }
-.bm-date-pick:hover:not(.full) { background: var(--bg-soft); }
+/* hover 排除 active：避免已選中的日期被淡化背景蓋掉 */
+.bm-date-pick:hover:not(.full):not(.active) { background: var(--bg-soft); }
 .bm-date-pick.active {
   background: var(--lohas-brand);
   color: #fff;
+  border-color: var(--lohas-brand);
+  box-shadow: 0 4px 12px rgba(80, 66, 45, 0.22);
+}
+/* active 即使被 hover 也維持選中外觀 */
+.bm-date-pick.active:hover {
+  background: var(--lohas-brand);
   border-color: var(--lohas-brand);
 }
 .bm-date-pick.full {
@@ -352,14 +376,22 @@
   font-weight: 700;
   color: var(--text-main);
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
   font-family: inherit;
   transition: all 0.15s;
 }
-.bm-time-pick:hover:not(.full) { background: var(--bg-soft); }
+.bm-time-pick:hover:not(.full):not(.active) { background: var(--bg-soft); }
+/* 選中：白底 + 棕色粗外框 + 棕字 + 陰影,與 hover 形成明顯落差 */
 .bm-time-pick.active {
-  background: var(--lohas-brand);
-  color: #fff;
+  background: #fff;
+  color: var(--lohas-brand);
+  border-color: var(--lohas-brand);
+  box-shadow:
+    0 0 0 2px rgba(80, 66, 45, 0.12),
+    0 4px 12px rgba(80, 66, 45, 0.18);
+}
+.bm-time-pick.active:hover {
+  background: #fff;
   border-color: var(--lohas-brand);
 }
 .bm-time-pick.full {
