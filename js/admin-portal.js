@@ -5569,10 +5569,12 @@
           if(cpErr){ console.error('[collab_customer_photos insert 失敗]', cpErr); continue; }
 
           // 4. 同步寫 gallery_posts (分享牆)
+          // member_id 用 collab- 前綴 + collabId,標示為聯名客人照
           const galleryPayload = {
             title: brandName + ' 客人分享',
             type: 'photo',
             customer_name: '匿名',
+            member_id: 'collab-' + collabId,
             image_urls: [photoUrl],
             main_image_url: photoUrl,
             status: 'approved'
