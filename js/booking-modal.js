@@ -474,30 +474,12 @@
     r.querySelectorAll("[data-field]").forEach(el => {
       el.addEventListener("input", () => {
         state.form[el.dataset.field] = el.value;
-        /* 不要 full re-render，只更新 footer */
+        /* 不要 full re-render，只更新 footer（會自動重綁按鈕）*/
         updateFooter();
       });
     });
 
-    const prev = r.querySelector("[data-prev]");
-    if (prev) prev.addEventListener("click", () => {
-      state.step--;
-      if (state.step < 1) state.step = 1;
-      renderInPlace();
-    });
-
-    const next = r.querySelector("[data-next]");
-    if (next) next.addEventListener("click", () => {
-      if (!canProceed()) return;
-      state.step++;
-      if (state.step === 2 && state.rounds.length === 0) {
-        loadRounds();
-      }
-      renderInPlace();
-    });
-
-    const submit = r.querySelector("[data-submit]");
-    if (submit) submit.addEventListener("click", submitReservation);
+    bindFooterButtons();
   }
 
   function renderInPlace() {
@@ -518,6 +500,32 @@
       tmp.innerHTML = renderFooter();
       oldFoot.replaceWith(tmp.firstElementChild);
     }
+    /* 重綁 footer 上的按鈕（上一步 / 下一步 / 確認預約）
+       不重綁的話，輸入時 footer 被替換，submit 按鈕的 click listener 會消失 */
+    bindFooterButtons();
+  }
+
+  function bindFooterButtons() {
+    const r = getRoot();
+    const prev = r.querySelector("[data-prev]");
+    if (prev) prev.addEventListener("click", () => {
+      state.step--;
+      if (state.step < 1) state.step = 1;
+      renderInPlace();
+    });
+
+    const next = r.querySelector("[data-next]");
+    if (next) next.addEventListener("click", () => {
+      if (!canProceed()) return;
+      state.step++;
+      if (state.step === 2 && state.rounds.length === 0) {
+        loadRounds();
+      }
+      renderInPlace();
+    });
+
+    const submit = r.querySelector("[data-submit]");
+    if (submit) submit.addEventListener("click", submitReservation);
   }
 
   /* === API：取得可預約時段 === */
