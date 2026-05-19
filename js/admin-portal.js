@@ -162,13 +162,6 @@
   function goTo(page, opts) {
     opts = opts || {};
 
-    // 離開「樂活官方上傳」頁時,清掉「代創作者」旗標
-    if (page !== 'admin-upload' && window.__adminUploadAsCreator) {
-      delete window.__adminUploadAsCreator;
-      const banner = document.getElementById('adminUploadBanner');
-      if (banner) banner.style.display = 'none';
-    }
-
     // 「新增創作者個人頁」改成: 跳到 creators 頁 + 打開 Modal
     if (page === 'admin-grant-creator') {
       goTo('creators');  // 點亮創作者管理 + 顯示列表
@@ -2203,23 +2196,13 @@
         status: 'approved'
       };
 
-      // 如果是「代某創作者上傳」,改 member_id + customer_name
-      if (window.__adminUploadAsCreator?.member_id) {
-        payload.member_id = window.__adminUploadAsCreator.member_id;
-        if (window.__adminUploadAsCreator.name) {
-          payload.customer_name = window.__adminUploadAsCreator.name;
-        }
-      }
-
       hint.textContent = '寫入資料庫中...';
 
       const { error: insertError } = await sb.from('gallery_posts').insert(payload);
       if (insertError) throw insertError;
 
       hint.style.color = 'var(--status-approved)';
-      const asCreator = window.__adminUploadAsCreator;
-      const suffix = asCreator ? ` · 已歸給「${asCreator.name || asCreator.member_id}」` : '';
-      hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})${suffix}`;
+      hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})`;
 
       adminUploadReset();
       loadAdminUploadHistory();
@@ -2494,41 +2477,15 @@
       });
     }
 
-    // 「開啟上傳模組」按鈕: 跳到樂活官方上傳頁,帶 query 標示為哪位創作者上傳
-    const openShareBtn = document.getElementById('agOpenShareBtn');
-    if (openShareBtn && !openShareBtn.dataset.bound) {
-      openShareBtn.dataset.bound = '1';
-      openShareBtn.addEventListener('click', () => {
-        const mid = AGState.editMemberId;
-        const name = document.getElementById('agDisplayName').value.trim();
-        if (!mid) {
-          alert('請先儲存創作者後再分享照片');
-          return;
-        }
-        // 設定全域 state 標示這次上傳是代哪位 creator 發
-        window.__adminUploadAsCreator = { member_id: mid, name: name };
-        // 跳到樂活官方上傳頁
-        goTo('admin-upload');
-        // 預填 customer_name + 顯示 banner
-        const nameInput = document.getElementById('adminUploadName');
-        if (nameInput && name) nameInput.value = name;
-        const banner = document.getElementById('adminUploadBanner');
-        const bannerName = document.getElementById('adminUploadAsCreatorName');
-        if (banner) banner.style.display = 'flex';
-        if (bannerName) bannerName.textContent = name || mid;
-      });
-    }
-
-    // banner 「取消代上傳」按鈕
-    const cancelAs = document.getElementById('adminUploadCancelAs');
-    if (cancelAs && !cancelAs.dataset.bound) {
-      cancelAs.dataset.bound = '1';
-      cancelAs.addEventListener('click', () => {
-        delete window.__adminUploadAsCreator;
-        const banner = document.getElementById('adminUploadBanner');
-        if (banner) banner.style.display = 'none';
-        const nameInput = document.getElementById('adminUploadName');
-        if (nameInput) nameInput.value = 'LOHAS 企劃部';
+    // 分享照片: input change 上傳 (+ 方框點擊由 renderCreatorPhotos 內 onclick 直接觸發)
+    const photoInput = document.getElementById('agPhotoInput');
+    if (photoInput && !photoInput.dataset.bound) {
+      photoInput.dataset.bound = '1';
+      photoInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        e.target.value = '';
+        await uploadPhotosForCreator(files);
       });
     }
 
@@ -3136,6 +3093,111 @@
     }
   }
 
+  // ============================================
+  // 創作者編輯區 - 分享照片上傳
+  // ============================================
+  async function uploadPhotosForCreator(files) {
+    const sb = window.LohasSupabase?.getClient?.();
+    if (!sb) { alert('Supabase 未連線'); return; }
+    const mid = AGState.editMemberId;
+    const name = document.getElementById('agDisplayName').value.trim();
+    if (!mid) { alert('請先儲存創作者'); return; }
+
+    const SUPABASE_BUCKET = window.LohasSupabase?.CONFIG?.STORAGE_BUCKET || 'gallery-uploads';
+
+    // 加上傳中提示 (在 panel 標題下,不遮 list)
+    const shareSec = document.getElementById('agShareSection');
+    let tipEl = document.getElementById('agUploadingTip');
+    if (!tipEl && shareSec) {
+      tipEl = document.createElement('div');
+      tipEl.id = 'agUploadingTip';
+      tipEl.style.cssText = 'padding:8px 12px;margin:0 4px 10px;background:#FFFBEC;border:1px solid #F0D87A;border-radius:6px;font-size:12px;color:#50422D';
+      const list = document.getElementById('agPhotosList');
+      shareSec.insertBefore(tipEl, list);
+    }
+    if (tipEl) tipEl.textContent = `上傳中 (0/${files.length})…`;
+
+    let done = 0;
+    for (const file of files) {
+      try {
+        const ext = (file.name || '').split('.').pop()?.toLowerCase() || 'jpg';
+        const filePath = `creator-photos/${mid}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET)
+          .upload(filePath, file, { cacheControl: '3600', upsert: false });
+        if (upErr) { console.error('[照片上傳失敗]', upErr); continue; }
+        const { data: urlData } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+        const photoUrl = urlData.publicUrl;
+
+        const { error: insErr } = await sb.from('gallery_posts').insert({
+          title: name + ' 的照片',
+          type: 'photo',
+          customer_name: name,
+          member_id: mid,
+          image_urls: [photoUrl],
+          main_image_url: photoUrl,
+          status: 'approved'
+        });
+        if (insErr) console.error('[gallery_posts insert 失敗]', insErr);
+        done++;
+        if (tipEl) tipEl.textContent = `上傳中 (${done}/${files.length})…`;
+      } catch (err) {
+        console.error('[上傳例外]', err);
+      }
+    }
+    if (tipEl) tipEl.remove();
+    await loadCreatorPhotos(mid);
+  }
+
+  async function loadCreatorPhotos(mid) {
+    const sb = window.LohasSupabase?.getClient?.();
+    if (!sb || !mid) return;
+    const { data } = await sb.from('gallery_posts')
+      .select('id, main_image_url, image_urls, title, created_at')
+      .eq('member_id', mid)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false });
+    renderCreatorPhotos(data || []);
+  }
+
+  function renderCreatorPhotos(photos) {
+    const list = document.getElementById('agPhotosList');
+    if (!list) return;
+    const addTile = `<button type="button" class="ag-photo-add-tile" onclick="window.agTriggerPhotoUpload()">
+        <i class="fa-solid fa-plus"></i>
+        <span>新增照片</span>
+      </button>`;
+
+    let inner = '';
+    photos.forEach(p => {
+      const src = p.main_image_url || (p.image_urls && p.image_urls[0]) || '';
+      inner += '<div class="ag-photo-thumb">' +
+        '<img src="' + escapeHtml(src) + '">' +
+        '<button type="button" onclick="window.agDeleteCreatorPhoto(\'' + p.id + '\')" aria-label="刪除">×</button>' +
+        '</div>';
+    });
+    inner += addTile;
+
+    list.innerHTML = '<div class="ag-photos-grid">' + inner + '</div>';
+  }
+
+  // + 方框點擊
+  window.agTriggerPhotoUpload = function() {
+    if (!AGState.editMemberId) {
+      alert('請先儲存創作者後再上傳照片');
+      return;
+    }
+    document.getElementById('agPhotoInput')?.click();
+  };
+
+  window.agDeleteCreatorPhoto = async function(id) {
+    if (!confirm('確定要刪除這張照片?(從前台立即消失)')) return;
+    const sb = window.LohasSupabase?.getClient?.();
+    if (!sb) return;
+    const { error } = await sb.from('gallery_posts').delete().eq('id', id);
+    if (error) { alert('刪除失敗: ' + error.message); return; }
+    loadCreatorPhotos(AGState.editMemberId);
+  };
+
   function prefillCreatorForm(c) {
     // 切換成編輯模式 (state)
     AGState.editMemberId = c.member_id;
@@ -3206,11 +3268,15 @@
       AGState.existingKolMainUrl = c.kol_main_image_url;
     }
 
-    // 「分享我的照片」區: 僅官方 (virt-) 創作者顯示
+    // 「分享照片」區: 僅官方 (virt-) 創作者顯示
     const shareSec = document.getElementById('agShareSection');
     if (shareSec) {
       const isVirt = (c.member_id || '').startsWith('virt-');
       shareSec.style.display = isVirt ? '' : 'none';
+      if (isVirt) {
+        renderCreatorPhotos([]);  // 先顯示 + 方框
+        if (c.member_id) loadCreatorPhotos(c.member_id);
+      }
     }
   }
 
