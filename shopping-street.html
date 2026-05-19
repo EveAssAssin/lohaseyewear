@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>樂活商店街 · LOHAS 樂活眼鏡</title>
+  <meta name="description" content="樂活會員專屬商店街。全台特約店家會員優惠，憑會員身份立享專屬折扣。">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="">
+
+  <!-- LOHAS CSS · 載入順序：tokens → base → components → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css?v=20260520-1500">
+  <link rel="stylesheet" href="css/lohas-base.css?v=20260520-1500">
+  <link rel="stylesheet" href="css/lohas-components.css?v=20260520-1500">
+  <link rel="stylesheet" href="css/shopping-street.css?v=20260520-1500">
+</head>
+<body data-page="shopping-street">
+
+<!-- 全站 Header (由 layout.js 從 components/header.html 載入) -->
+<div id="site-header"></div>
+
+<main>
+  <div class="ss-shell">
+
+    <!-- 子頁頭：標題 + 搜尋 + 類別 chip -->
+    <header class="ss-subheader">
+      <div class="ss-subheader-inner">
+
+        <div class="ss-subheader-title">
+          <i class="fa-solid fa-store"></i>
+          <span class="accent">樂活商店街</span>
+          <span>· 會員專屬特約優惠 · <b id="ssTotalCount">--</b> 間店家</span>
+
+          <div class="ss-search" style="margin-left:auto">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="search" id="ss-search" placeholder="搜尋店家名稱、類別、介紹">
+          </div>
+        </div>
+
+        <!-- 類別 chip 列（橫向滾動） -->
+        <div class="ss-cats" id="ss-cats">
+          <button class="ss-chip is-active" data-cat="all">
+            <i class="fa-solid fa-bolt"></i><span>全部</span>
+          </button>
+          <!-- 其他類別由 shopping-street.js 從 API 回傳的 category_name 動態 render -->
+        </div>
+
+      </div>
+    </header>
+
+    <!-- 主體 -->
+    <div class="ss-layout" id="ss-layout">
+
+      <!-- 左：店家列表 -->
+      <aside class="ss-list-panel">
+
+        <div class="ss-list-head">
+          <div>
+            <h1 class="ss-list-title">特約店家</h1>
+            <p class="ss-list-sub">會員專屬·點店家可查看合作門市</p>
+          </div>
+          <button class="ss-sort" type="button" id="ss-sort">
+            <i class="fa-solid fa-arrow-down-wide-short"></i> 依距離
+          </button>
+        </div>
+
+        <div class="ss-list" id="ss-list">
+          <div class="ss-loading">載入中…</div>
+        </div>
+
+      </aside>
+
+      <!-- 右：地圖 -->
+      <div class="ss-map-panel">
+
+        <div id="ss-map-canvas"></div>
+
+        <!-- 工具按鈕 -->
+        <div class="ss-map-tools">
+          <button class="ss-map-tool" type="button" data-action="locate" title="我的位置">
+            <i class="fa-solid fa-location-crosshairs"></i>
+          </button>
+          <button class="ss-map-tool" type="button" data-action="zoom-in" title="放大">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+          <button class="ss-map-tool" type="button" data-action="zoom-out" title="縮小">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+        </div>
+
+        <!-- 底部計數 -->
+        <div class="ss-map-count" id="ss-map-count">
+          <i class="fa-solid fa-circle"></i> 目前顯示 <b>--</b> 間特約店家
+        </div>
+
+        <!-- 點 pin 彈出的卡片 -->
+        <div class="ss-pin-card" id="ss-pin-card"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 手機底部 TAB（列表 / 地圖） -->
+  <div class="ss-view-tabs" id="ss-view-tabs">
+    <button class="ss-view-tab is-active" data-view="list" type="button">
+      <i class="fa-solid fa-list-ul"></i>
+      <span>列表</span>
+    </button>
+    <button class="ss-view-tab" data-view="map" type="button">
+      <i class="fa-solid fa-map-location-dot"></i>
+      <span>地圖</span>
+    </button>
+  </div>
+
+</main>
+
+<!-- 全站 Footer -->
+<div id="site-footer"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<!-- 全站 layout -->
+<script src="js/layout.js?v=20260520-1500"></script>
+
+<!-- API 模組（依賴關係：core → store / shoppingStreet） -->
+<script src="js/api/api-core.js?v=20260520-1500"></script>
+<script src="js/api/api-store.js?v=20260520-1500"></script>
+<script src="js/api/api-shopping-street.js?v=20260520-1500"></script>
+
+<!-- 資料正規化 -->
+<script src="js/store-data.js?v=20260520-1500"></script>
+
+<!-- 頁面邏輯 -->
+<script src="js/shopping-street.js?v=20260520-1500"></script>
+
+</body>
+</html>
