@@ -667,7 +667,7 @@
         let role = 'member';
         if (isAdmin) role = 'admin';
         else if (isCreator) role = 'creator';
-        if (isVirt) role = 'ip';  // virt- 創作者顯示成 ip/collab
+        if (isVirt) role = 'admin';  // 官方建立的創作者 = admin
 
         const photos = photoCount[erpid] || 0;
         const creatorInfo = creatorMap[erpid];
@@ -1812,7 +1812,7 @@
     const cfg = BANNER_POSITIONS[BannerState.currentPos];
     const list = BannerState.list;
 
-    const addBtn = `<button type="button" class="action-btn-solid" onclick="window.openBannerNew()" style="margin-top:14px">
+    const addBtn = `<button type="button" class="action-btn-solid" id="bannerAddBtn" style="margin-top:14px">
         <i class="fa-solid fa-plus"></i>新增 Banner
       </button>`;
 
@@ -1827,6 +1827,9 @@
           <p style="font-size:11px;color:var(--lohas-mute);margin:0 0 14px">${cfg.size}</p>
           ${showAdd ? addBtn : ''}
         </div>`;
+      // bind 新增按鈕
+      const btn = document.getElementById('bannerAddBtn');
+      if(btn) btn.addEventListener('click', () => openBannerEdit(null));
       return;
     }
 
@@ -1851,14 +1854,22 @@
             ${b.link_url ? `<div style="font-size:11px;color:var(--lohas-mute);font-family:monospace">→ ${escapeHtml(b.link_url)}</div>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn" onclick="window.openBannerEdit('${escapeHtml(b.id)}')"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
+            <button class="btn" data-banner-edit-id="${escapeHtml(b.id)}"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
           </div>
         </div>`;
     }).join('');
 
     wrap.innerHTML = cards + (showAdd ? addBtn : '');
+
+    // bind
+    const addBtnEl = document.getElementById('bannerAddBtn');
+    if(addBtnEl) addBtnEl.addEventListener('click', () => openBannerEdit(null));
+    wrap.querySelectorAll('[data-banner-edit-id]').forEach(b => {
+      b.addEventListener('click', () => openBannerEdit(b.dataset.bannerEditId));
+    });
   }
 
+  // 保留 global wrapper 給之前 inline 用過的程式碼相容
   window.openBannerNew = () => openBannerEdit(null);
   window.openBannerEdit = (id) => openBannerEdit(id);
 
@@ -4256,18 +4267,25 @@
       const excerpt = (p.story || '').replace(/\s+/g, ' ').trim().slice(0, 50);
       return (
         '<div class="md-card" data-id="' + escapeHtml(p.id) + '">' +
-          '<div class="md-card-cover" ' + (imgUrl ? 'style="background-image:url(\'' + escapeHtml(imgUrl) + '\');background-size:cover"' : '') + '>' +
-            '<span class="md-card-status md-pill s-' + (p.status || 'pending') + '">' + statusLabel + '</span>' +
-            '<span class="md-card-type md-pill t-' + (p.type || 'photo') + '">' + typeLabel + '</span>' +
+          '<div class="md-card-top">' +
+            '<div class="md-card-pills">' +
+              '<span class="md-pill s-' + (p.status || 'pending') + '">' + statusLabel + '</span>' +
+              '<span class="md-pill t-' + (p.type || 'photo') + '">' + typeLabel + '</span>' +
+            '</div>' +
           '</div>' +
+          '<div class="md-card-cover" ' + (imgUrl ? 'style="background-image:url(\'' + escapeHtml(imgUrl) + '\')"' : '') + '></div>' +
           '<div class="md-card-body">' +
-            '<div class="md-card-name">' + escapeHtml(p.title || '(未命名)') + '</div>' +
+            '<div class="md-card-row">' +
+              '<div class="md-card-name">' + escapeHtml(p.title || '(未命名)') + '</div>' +
+            '</div>' +
             (excerpt ? '<div class="md-card-slogan">' + escapeHtml(excerpt) + '</div>' : '') +
-            '<div class="md-card-by">by ' + escapeHtml(name) + (p.topic ? ' · ' + escapeHtml(p.topic) : '') + '</div>' +
+            '<div class="md-card-row sub">' +
+              '<div class="md-card-by">by ' + escapeHtml(name) + (p.topic ? ' · ' + escapeHtml(p.topic) : '') + '</div>' +
+            '</div>' +
           '</div>' +
           '<div class="md-card-actions">' +
-            '<button class="md-icon-btn" data-act="edit" title="編輯"><i class="fa-solid fa-pen"></i></button>' +
-            '<button class="md-icon-btn danger" data-act="delete" title="刪除"><i class="fa-solid fa-trash"></i></button>' +
+            '<button class="md-act-btn" data-act="edit"><i class="fa-solid fa-pen"></i> 編輯</button>' +
+            '<button class="md-act-btn danger" data-act="delete"><i class="fa-solid fa-trash"></i> 刪除</button>' +
           '</div>' +
         '</div>'
       );
@@ -4726,6 +4744,9 @@
       } else {
         el.innerHTML = `<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>`;
       }
+      // 同步父 wrap 的叉叉按鈕
+      const wrap = el.closest('.img-upload-wrap');
+      if(wrap && wrap._updateClearBtn) wrap._updateClearBtn();
     }
 
     // ===== Story Builder (聯名故事段落) =====
@@ -4842,7 +4863,43 @@
 
         if(!input || !preview) return;
 
+        // wrap 需要 relative 給叉叉定位
+        if(!wrap.style.position) wrap.style.position = 'relative';
+
         preview.addEventListener('click', () => input.click());
+
+        // 加叉叉刪除按鈕 (一次性建立)
+        let clearBtn = wrap.querySelector('.img-upload-clear');
+        if(!clearBtn){
+          clearBtn = document.createElement('button');
+          clearBtn.type = 'button';
+          clearBtn.className = 'img-upload-clear';
+          clearBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+          clearBtn.title = '移除圖片';
+          clearBtn.style.cssText = 'position:absolute;top:8px;right:8px;width:28px;height:28px;background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:13px;display:none;align-items:center;justify-content:center;z-index:5;padding:0';
+          wrap.insertBefore(clearBtn, input);
+        }
+
+        clearBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          e.preventDefault();
+          // 清 pendingFile + 預覽 + state 既有 URL + input value
+          pendingFiles[field] = null;
+          if(currentCollab){
+            // 清掉 state 內既有 URL (儲存時會清 DB)
+            currentCollab[field] = null;
+          }
+          preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>';
+          clearBtn.style.display = 'none';
+          input.value = '';
+        });
+
+        function updateClearBtn(){
+          const hasImg = !!preview.querySelector('img');
+          clearBtn.style.display = hasImg ? 'flex' : 'none';
+        }
+        // 初始檢查
+        setTimeout(updateClearBtn, 50);
 
         input.addEventListener('change', async e => {
           const file = e.target.files?.[0];
@@ -4855,10 +4912,14 @@
           const reader = new FileReader();
           reader.onload = ev => {
             preview.innerHTML = `<img src="${ev.target.result}" alt="" />`;
+            clearBtn.style.display = 'flex';
           };
           reader.readAsDataURL(cropped);
           input.value = '';
         });
+
+        // 暴露給外部 (prefill 後 call) 更新叉叉
+        wrap._updateClearBtn = updateClearBtn;
       });
     }
 
@@ -4962,18 +5023,39 @@
 
     function renderPhotoList(){
       const wrap = $('cm_photoList');
-      if(!currentPhotos.length){
-        wrap.innerHTML = '<div class="subtable-empty">尚未新增客人分享照片</div>';
-        return;
-      }
-      const fields = [
-        { key: 'caption', placeholder: 'caption (可選)' }
-      ];
-      wrap.innerHTML = currentPhotos.filter(p => !p._deleted).map((p, i) =>
-        renderSubtableRow(p, i, fields, 'photo')
-      ).join('');
-      bindSubtable(wrap, currentPhotos, 'photo-images');
+      const photos = currentPhotos.filter(p => !p._deleted);
+      const addTile = `<button type="button" class="ag-photo-add-tile" onclick="window.cmTriggerPhotoUpload()"><i class="fa-solid fa-plus"></i><span>新增照片</span></button>`;
+
+      let inner = '';
+      photos.forEach((p, idx) => {
+        const src = p.image_url || p._previewBase64 || '';
+        if(src){
+          inner += '<div class="ag-photo-thumb">' +
+            '<img src="' + esc(src) + '">' +
+            '<button type="button" onclick="window.cmDeletePhoto(' + idx + ')" aria-label="刪除">×</button>' +
+            '</div>';
+        }
+      });
+      inner += addTile;
+
+      wrap.innerHTML = '<div class="ag-photos-grid">' + inner + '</div>';
     }
+
+    // 全域 helpers (給 inline onclick 用)
+    window.cmTriggerPhotoUpload = function(){
+      $('cm_photoInput').click();
+    };
+    window.cmDeletePhoto = function(idx){
+      const photos = currentPhotos.filter(p => !p._deleted);
+      const item = photos[idx];
+      if(!item) return;
+      if(item.id){ item._deleted = true; }
+      else {
+        const realIdx = currentPhotos.indexOf(item);
+        if(realIdx > -1) currentPhotos.splice(realIdx, 1);
+      }
+      renderPhotoList();
+    };
 
     function bindSubtable(wrap, arr, folder){
       // 文字 input 變化
@@ -5396,8 +5478,28 @@
       currentDesigns.push({ label:'', preview_image_url:'' });
       renderDesignList();
     });
-    $('cm_addPhoto').addEventListener('click', () => {
-      currentPhotos.push({ image_url:'', caption:'' });
+    // 客人照: input change → 上傳到 pending
+    $('cm_photoInput').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if(files.length === 0) return;
+      for(const file of files){
+        // 裁切 1:1
+        const cropped = await cropImage(file, '1:1');
+        if(!cropped) continue;
+        // 轉 base64 預覽
+        const base64 = await new Promise(res => {
+          const r = new FileReader();
+          r.onload = ev => res(ev.target.result);
+          r.readAsDataURL(cropped);
+        });
+        currentPhotos.push({
+          image_url: '',
+          caption: '',
+          _pendingFile: cropped,
+          _previewBase64: base64
+        });
+      }
+      e.target.value = '';
       renderPhotoList();
     });
 
