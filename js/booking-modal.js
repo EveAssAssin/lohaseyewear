@@ -281,7 +281,7 @@
         `<div class="bm-sec-title">選擇時段（${formatDate(state.selectedDate)}）</div>` +
         `<div class="bm-time-grid">` +
           rounds.map(r => {
-            const active = state.selectedRoundId === r.roundId;
+            const active = String(state.selectedRoundId) === String(r.roundId);
             const full = !r.available;
             return (
               `<button class="bm-time-pick ${active ? "active" : ""} ${full ? "full" : ""}" ` +
