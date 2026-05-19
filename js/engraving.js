@@ -23,7 +23,10 @@
 
     const sb = window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
     if(!sb){
-      console.warn('[engraving KOL] Supabase 未配置,保留靜態卡片');
+      console.warn('[engraving KOL] Supabase 未配置,隱藏 KOL 區');
+      section.style.display = 'none';
+      const header = section.previousElementSibling;
+      if(header && header.classList.contains('section-header')) header.style.display = 'none';
       return;
     }
     console.log('[engraving KOL] Supabase ready, querying creator_info...');
@@ -38,30 +41,35 @@
         .neq('engraving_quote', '');
 
       if(error){
-        console.error('[engraving KOL] 載入失敗,保留靜態卡片', error);
+        console.error('[engraving KOL] 載入失敗,隱藏 KOL 區', error);
+        section.style.display = 'none';
+        const header = section.previousElementSibling;
+        if(header && header.classList.contains('section-header')) header.style.display = 'none';
         return;
       }
       console.log('[engraving KOL] 抓到', data?.length || 0, '位有 engraving_quote 的創作者', data);
 
       const creators = data || [];
       if(creators.length === 0){
-        console.log('[engraving KOL] 沒有真實資料,保留靜態 8 張假卡');
+        // 沒有真實資料 → 隱藏整個 section (含上方標題)
+        section.style.display = 'none';
+        const header = section.previousElementSibling;
+        if(header && header.classList.contains('section-header')) header.style.display = 'none';
         return;
       }
 
       // 全部隨機排序
       shuffle(creators);
 
-      // 計算現有 .split-item 數量,讓新卡片接續 inverse 規則
-      const existingCount = section.querySelectorAll('.split-item').length;
-
-      // 在現有 HTML 8 張之後 append
-      const newHtml = creators.map((c, i) => renderKolCard(c, existingCount + i)).join('');
-      console.log('[engraving KOL] 既有', existingCount, '張 + 新增', creators.length, '張');
-      section.insertAdjacentHTML('beforeend', newHtml);
+      // 直接覆蓋 section (沒靜態卡了)
+      section.innerHTML = creators.map((c, idx) => renderKolCard(c, idx)).join('');
+      console.log('[engraving KOL] 渲染', creators.length, '張動態卡片');
 
     } catch (err) {
-      console.error('[engraving KOL] err,保留靜態卡片', err);
+      console.error('[engraving KOL] err,隱藏 KOL 區', err);
+      section.style.display = 'none';
+      const header = section.previousElementSibling;
+      if(header && header.classList.contains('section-header')) header.style.display = 'none';
     }
   }
 
