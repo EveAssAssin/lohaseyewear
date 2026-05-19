@@ -4607,7 +4607,7 @@
 
       $('collabModalTitle').textContent = '新增聯名';
       $('collabDeleteBtn').style.display = 'none';
-      $('collabPreviewBtn').style.display = '';
+      // preview btn removed
       $('collabApplyTemplateBtn').style.display = '';  // 新增時顯示套公版
 
       // 清空 所有欄位
@@ -4710,7 +4710,7 @@
       currentPhotos = photoRes.data || [];
       renderSubtables();
 
-      $('collabPreviewBtn').style.display = '';
+      // preview btn removed
 
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
@@ -4863,42 +4863,44 @@
 
         if(!input || !preview) return;
 
-        // wrap 需要 relative 給叉叉定位
-        if(!wrap.style.position) wrap.style.position = 'relative';
+        // preview 要 relative 給叉叉定位 (CSS 已 position:relative,但保險)
+        if(getComputedStyle(preview).position === 'static') preview.style.position = 'relative';
 
         preview.addEventListener('click', () => input.click());
 
-        // 加叉叉刪除按鈕 (一次性建立)
-        let clearBtn = wrap.querySelector('.img-upload-clear');
+        // 加叉叉刪除按鈕到 preview 內
+        let clearBtn = preview.querySelector('.img-upload-clear');
         if(!clearBtn){
           clearBtn = document.createElement('button');
           clearBtn.type = 'button';
           clearBtn.className = 'img-upload-clear';
           clearBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
           clearBtn.title = '移除圖片';
-          clearBtn.style.cssText = 'position:absolute;top:8px;right:8px;width:28px;height:28px;background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:13px;display:none;align-items:center;justify-content:center;z-index:5;padding:0';
-          wrap.insertBefore(clearBtn, input);
+          clearBtn.style.cssText = 'position:absolute;top:6px;right:6px;width:26px;height:26px;background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:12px;display:none;align-items:center;justify-content:center;z-index:5;padding:0';
+          preview.appendChild(clearBtn);
         }
 
         clearBtn.addEventListener('click', e => {
           e.stopPropagation();
           e.preventDefault();
-          // 清 pendingFile + 預覽 + state 既有 URL + input value
           pendingFiles[field] = null;
           if(currentCollab){
-            // 清掉 state 內既有 URL (儲存時會清 DB)
             currentCollab[field] = null;
           }
           preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>';
+          // appendChild 一個新叉叉 (剛才 innerHTML 把它清掉了)
+          preview.appendChild(clearBtn);
           clearBtn.style.display = 'none';
           input.value = '';
         });
 
         function updateClearBtn(){
+          // setImagePreview / change handler 會 innerHTML 重設 preview,叉叉可能被清掉
+          // 確保叉叉還在 preview 內
+          if(!preview.contains(clearBtn)) preview.appendChild(clearBtn);
           const hasImg = !!preview.querySelector('img');
           clearBtn.style.display = hasImg ? 'flex' : 'none';
         }
-        // 初始檢查
         setTimeout(updateClearBtn, 50);
 
         input.addEventListener('change', async e => {
@@ -4912,13 +4914,13 @@
           const reader = new FileReader();
           reader.onload = ev => {
             preview.innerHTML = `<img src="${ev.target.result}" alt="" />`;
+            preview.appendChild(clearBtn);
             clearBtn.style.display = 'flex';
           };
           reader.readAsDataURL(cropped);
           input.value = '';
         });
 
-        // 暴露給外部 (prefill 後 call) 更新叉叉
         wrap._updateClearBtn = updateClearBtn;
       });
     }
@@ -4965,6 +4967,9 @@
       const imgHtml = imgUrl
         ? `<img src="${esc(imgUrl)}" alt="" />`
         : `<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i></span>`;
+      const clearHtml = imgUrl
+        ? `<button type="button" class="st-img-clear" data-action="clear-img" title="移除圖片" style="position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;z-index:5;padding:0"><i class="fa-solid fa-xmark"></i></button>`
+        : '';
 
       const canUpload = !!currentCollab;
       const uploadBlocked = !canUpload ? ' subtable-img-disabled' : '';
@@ -4976,8 +4981,9 @@
 
       return `
         <div class="subtable-row-v2" data-idx="${idx}" data-type="${type}">
-          <div class="subtable-img${uploadBlocked}" data-aspect="${type === 'photo' ? '1:1' : type === 'package' ? '1:1' : '1:1'}">
+          <div class="subtable-img${uploadBlocked}" data-aspect="${type === 'photo' ? '1:1' : type === 'package' ? '1:1' : '1:1'}" style="position:relative">
             ${imgHtml}
+            ${clearHtml}
             <input type="file" accept="image/*" class="subtable-file-input" ${canUpload ? '' : 'disabled'} />
             ${!canUpload ? '<span class="subtable-img-hint">先存基本資料</span>' : ''}
           </div>
@@ -5095,9 +5101,34 @@
 
         imgWrap.addEventListener('click', e => {
           if(e.target.classList.contains('subtable-file-input')) return;
+          // 點到清除按鈕不開檔案選擇器
+          if(e.target.closest('.st-img-clear')) return;
           if(input.disabled) return;
           input.click();
         });
+
+        // 清除圖片按鈕
+        const clearBtn = imgWrap.querySelector('.st-img-clear');
+        if(clearBtn){
+          clearBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            e.preventDefault();
+            const row = imgWrap.closest('.subtable-row-v2');
+            const idx = Number(row.dataset.idx);
+            const liveArr = arr.filter(x => !x._deleted);
+            const item = liveArr[idx];
+            if(!item) return;
+            // 清掉資料
+            item._pendingFile = null;
+            item._previewBase64 = null;
+            item.image_url = null;
+            item.preview_image_url = null;
+            // 重 render 對應 list
+            if(arr === currentPackages) renderPkgList();
+            else if(arr === currentDesigns) renderDesignList();
+            else if(arr === currentPhotos) renderPhotoList();
+          });
+        }
 
         input.addEventListener('change', async e => {
           const file = e.target.files?.[0];
@@ -5216,6 +5247,27 @@
           ['label', 'preview_image_url', 'sort_order'], 'collab-design');
         await saveSubtable(client, 'collab_customer_photos', collabId, currentPhotos,
           ['image_url', 'caption', 'sort_order'], 'collab-photo');
+
+        // 同步:把客人照寫一份到 gallery_posts (分享牆),自動通過審核
+        // 只處理「新上傳的」(沒 _galleryPostId)
+        const brandName = val('cm_brand_name') || (currentCollab?.brand_name) || '聯名活動';
+        for(const photo of currentPhotos){
+          if(photo._deleted || photo._galleryPostId || !photo.image_url) continue;
+          try {
+            const { data: gpData, error: gpErr } = await client.from('gallery_posts').insert({
+              title: brandName + ' 客人分享',
+              type: 'photo',
+              customer_name: photo.caption || '匿名',
+              image_urls: [photo.image_url],
+              main_image_url: photo.image_url,
+              status: 'approved',
+              topic: brandName
+            }).select('id').single();
+            if(gpErr){ console.warn('[gallery_posts insert 失敗]', gpErr); continue; }
+            // 記錄已寫入,避免重複
+            photo._galleryPostId = gpData.id;
+          } catch(err){ console.warn('[gallery_posts insert 例外]', err); }
+        }
 
         toast('已儲存');
         // 不關 modal,留在編輯頁繼續編
@@ -5380,7 +5432,7 @@
     });
     $('collabSaveBtn').addEventListener('click', save);
     $('collabDeleteBtn').addEventListener('click', deleteCollab);
-    $('collabPreviewBtn').addEventListener('click', openPreview);
+    // preview btn removed
 
     function openPreview(){
       // 收集當前所有欄位 (跟 save 一致,但不上傳 + 不寫 DB)
