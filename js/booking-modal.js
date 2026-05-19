@@ -199,14 +199,16 @@
         `<div class="bm-sec-title">選擇銷售顧問</div>` +
         `<div class="bm-staff-grid">` +
           state.employees.map(e => {
-            const photo = e.photos && e.photos[0];
+            const rawPhoto = e.photos && e.photos[0];
+            /* 確認真的是有效的照片 URL（不是 null / 空字串 / 純空白） */
+            const photo = (rawPhoto && String(rawPhoto).trim()) ? rawPhoto : "";
             const avStyle = photo ? `style="background-image:url('${photo}')"` : "";
             const isActive = state.selectedEmployee && state.selectedEmployee.erpid === e.erpid;
             const role = (e.role || e.jobtitle || "").trim();
             const honor = (e.honor || "").trim();
             return (
               `<div class="bm-staff-pick ${isActive ? "active" : ""}" data-staff="${e.erpid}">` +
-                `<div class="bm-staff-pick-photo" ${avStyle}>` +
+                `<div class="bm-staff-pick-photo${photo ? "" : " no-photo"}" ${avStyle}>` +
                   (photo ? "" : `<i class="fa-regular fa-user"></i>`) +
                 `</div>` +
                 `<div class="bm-staff-pick-info">` +

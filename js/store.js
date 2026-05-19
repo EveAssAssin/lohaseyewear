@@ -608,7 +608,8 @@
   }
 
   function renderStaffCard(emp, isTop) {
-    const photo = emp.photos && emp.photos[0];
+    const rawPhoto = emp.photos && emp.photos[0];
+    const photo = (rawPhoto && String(rawPhoto).trim()) ? rawPhoto : "";
     const hasPhoto = !!photo;
 
     /* 職稱（role 優先，否則 jobtitle） */
