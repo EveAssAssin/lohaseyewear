@@ -1745,6 +1745,7 @@
     const wrap = document.getElementById('bmImageWrap');
     const preview = document.getElementById('bmImagePreview');
     const input = wrap?.querySelector('.img-upload-input');
+    const clearBtn = document.getElementById('bmImageClear');
     console.log('[Banner img bind]', { wrap: !!wrap, preview: !!preview, input: !!input, bound: wrap?.dataset?.bound });
 
     if (wrap && !wrap.dataset.bound) {
@@ -1752,6 +1753,18 @@
       preview?.addEventListener('click', () => {
         console.log('[Banner preview clicked]', !!input);
         input?.click();
+      });
+
+      // 清除按鈕：移除預覽圖、清掉 state
+      clearBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        BannerState.imageFile = null;
+        BannerState.imageBase64 = null;
+        BannerState.existingImageUrl = null;
+        preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(' +
+          (BANNER_POSITIONS[BannerState.currentPos]?.aspect || '16:9') + ')</span></span>';
+        clearBtn.style.display = 'none';
+        if (input) input.value = '';
       });
 
       input?.addEventListener('change', async e => {
@@ -1779,6 +1792,7 @@
         reader.onload = ev => {
           BannerState.imageBase64 = ev.target.result;
           preview.innerHTML = '<img src="' + ev.target.result + '" alt="" />';
+          if (clearBtn) clearBtn.style.display = 'flex';
         };
         reader.readAsDataURL(finalFile);
         input.value = '';
@@ -1858,6 +1872,7 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <button class="btn" data-banner-edit-id="${escapeHtml(b.id)}"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
+            <button class="btn btn-danger" data-banner-del-id="${escapeHtml(b.id)}"><i class="fa-regular fa-trash-can"></i>刪除</button>
           </div>
         </div>`;
     }).join('');
@@ -1870,6 +1885,9 @@
     wrap.querySelectorAll('[data-banner-edit-id]').forEach(b => {
       b.addEventListener('click', () => openBannerEdit(b.dataset.bannerEditId));
     });
+    wrap.querySelectorAll('[data-banner-del-id]').forEach(b => {
+      b.addEventListener('click', () => deleteBannerById(b.dataset.bannerDelId));
+    });
   }
 
   // 保留 global wrapper 給之前 inline 用過的程式碼相容
@@ -1880,46 +1898,65 @@
     const modal = document.getElementById('bannerEditModal');
     if (!modal) return;
 
-    BannerState.editing = id ? BannerState.list.find(b => b.id === id) : null;
+    // 先開 modal,避免中間任一行出錯就完全沒反應
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    // id 比對寬鬆 (number/string 都能對上)
+    BannerState.editing = id != null
+      ? BannerState.list.find(b => String(b.id) === String(id))
+      : null;
     BannerState.imageFile = null;
     BannerState.imageBase64 = null;
     BannerState.existingImageUrl = null;
 
     const cfg = BANNER_POSITIONS[BannerState.currentPos];
-    document.getElementById('bannerModalTitle').textContent =
-      (BannerState.editing ? '編輯' : '新增') + ' Banner — ' + cfg.label;
-    document.getElementById('bmAspectHint').textContent = '(' + cfg.aspect + ')';
-    document.getElementById('bmImageHint').textContent = cfg.size;
+    const titleEl = document.getElementById('bannerModalTitle');
+    if (titleEl) titleEl.textContent = (BannerState.editing ? '編輯' : '新增') + ' Banner — ' + cfg.label;
+
+    // bmAspectHint 是 placeholder 內的元素,被預覽圖蓋掉時不存在,要做保護
+    const aspectHintEl = document.getElementById('bmAspectHint');
+    if (aspectHintEl) aspectHintEl.textContent = '(' + cfg.aspect + ')';
+    const imageHintEl = document.getElementById('bmImageHint');
+    if (imageHintEl) imageHintEl.textContent = cfg.size;
 
     // 同步 aspect 到 wrap (給 cropper 用)
     const wrap = document.getElementById('bmImageWrap');
     if (wrap) wrap.dataset.aspect = cfg.aspect;
 
     // 顯隱排序 row
-    document.getElementById('bmSortRow').style.display = cfg.multi ? '' : 'none';
-    document.getElementById('bmDeleteBtn').style.display = BannerState.editing ? '' : 'none';
+    const sortRow = document.getElementById('bmSortRow');
+    if (sortRow) sortRow.style.display = cfg.multi ? '' : 'none';
+    const delBtn = document.getElementById('bmDeleteBtn');
+    if (delBtn) delBtn.style.display = BannerState.editing ? '' : 'none';
 
     // 填欄位
     const b = BannerState.editing || {};
-    document.getElementById('bmTitle').value = b.title || '';
-    document.getElementById('bmSubtitle').value = b.subtitle || '';
-    document.getElementById('bmCtaText').value = b.cta_text || '';
-    document.getElementById('bmLinkUrl').value = b.link_url || '';
-    document.getElementById('bmIsActive').checked = b.is_active !== false;
-    document.getElementById('bmSortOrder').value = b.sort_order != null ? b.sort_order : 0;
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+    setVal('bmTitle', b.title || '');
+    setVal('bmSubtitle', b.subtitle || '');
+    setVal('bmCtaText', b.cta_text || '');
+    setVal('bmLinkUrl', b.link_url || '');
+    const activeEl = document.getElementById('bmIsActive');
+    if (activeEl) activeEl.checked = b.is_active !== false;
+    setVal('bmSortOrder', b.sort_order != null ? b.sort_order : 0);
 
     // 圖片預覽
     const preview = document.getElementById('bmImagePreview');
-    if (b.image_url) {
-      preview.innerHTML = '<img src="' + escapeHtml(b.image_url) + '" alt="" />';
-      BannerState.existingImageUrl = b.image_url;
-    } else {
-      preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(' + cfg.aspect + ')</span></span>';
+    const clearBtn = document.getElementById('bmImageClear');
+    if (preview) {
+      if (b.image_url) {
+        preview.innerHTML = '<img src="' + escapeHtml(b.image_url) + '" alt="" />';
+        BannerState.existingImageUrl = b.image_url;
+        if (clearBtn) clearBtn.style.display = 'flex';
+      } else {
+        preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(' + cfg.aspect + ')</span></span>';
+        if (clearBtn) clearBtn.style.display = 'none';
+      }
     }
 
-    document.getElementById('bmHint').textContent = '';
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    const hintEl = document.getElementById('bmHint');
+    if (hintEl) hintEl.textContent = '';
   }
 
   function closeBannerModal() {
@@ -1999,6 +2036,19 @@
     const { error } = await sb.from('banners').delete().eq('id', BannerState.editing.id);
     if (error) { alert('刪除失敗: ' + error.message); return; }
     closeBannerModal();
+    loadBannerList(BannerState.currentPos);
+  }
+
+  // 列表卡片直接刪除 (不需開 modal)
+  async function deleteBannerById(id) {
+    if (!id) return;
+    const target = BannerState.list.find(b => String(b.id) === String(id));
+    const label = target?.title || '此 Banner';
+    if (!confirm('確定刪除「' + label + '」?\n此動作無法復原。')) return;
+    const sb = window.LohasSupabase?.getClient?.();
+    if (!sb) { alert('Supabase 未連線'); return; }
+    const { error } = await sb.from('banners').delete().eq('id', id);
+    if (error) { alert('刪除失敗: ' + error.message); return; }
     loadBannerList(BannerState.currentPos);
   }
 

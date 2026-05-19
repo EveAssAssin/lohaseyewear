@@ -153,6 +153,8 @@
       let current = 0;
       const slides = track.querySelectorAll('.hmb-slide');
       const dotBtns = dots.querySelectorAll('.hmb-dot');
+      const prevBtn = document.getElementById('homeMainBannerPrev');
+      const nextBtn = document.getElementById('homeMainBannerNext');
 
       function goTo(idx) {
         current = (idx + slides.length) % slides.length;
@@ -161,11 +163,24 @@
       }
 
       dotBtns.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+      if (prevBtn) {
+        prevBtn.style.display = '';
+        prevBtn.addEventListener('click', () => goTo(current - 1));
+      }
+      if (nextBtn) {
+        nextBtn.style.display = '';
+        nextBtn.addEventListener('click', () => goTo(current + 1));
+      }
 
       // 自動輪播
       setInterval(() => goTo(current + 1), 5000);
     } else {
       dots.innerHTML = '';
+      // 只有 1 張不顯示箭頭
+      const prevBtn = document.getElementById('homeMainBannerPrev');
+      const nextBtn = document.getElementById('homeMainBannerNext');
+      if (prevBtn) prevBtn.style.display = 'none';
+      if (nextBtn) nextBtn.style.display = 'none';
     }
   }
 
