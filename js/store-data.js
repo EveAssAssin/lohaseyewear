@@ -49,12 +49,29 @@
     return false;
   }
 
+  /* === Slogan fallback ===
+     後台 subname 是空字串時的預設 slogan（依店名對照）
+     未來若該店在後台填寫 subname，會自動覆蓋此處 */
+  const SLOGAN_FALLBACKS = {
+    "永和店": "巷弄裡的職人配鏡角落",
+    "中清店": "中港路上最暖的眼鏡站",
+    "北屯店": "隱身樓間的細緻配鏡所",
+    "大墩店": "七期繁華中的安靜對焦",
+    "大里店": "在地深耕的優雅配鏡空間"
+  };
+
+  function pickSlogan(rawSubname, storeName) {
+    const s = (rawSubname || "").trim();
+    if (s) return s;
+    return SLOGAN_FALLBACKS[storeName] || "";
+  }
+
   /* === 把 API getstoredatas 回傳的原始 store 物件正規化 ===
      輸出乾淨的 Store 物件 */
   function normalizeStore(raw) {
     if (!raw) return null;
     const region = getRegion(raw.city);
-    const slogan = (raw.subname || "").trim();   // 直接用 API subname，沒填就空字串
+    const slogan = pickSlogan(raw.subname, raw.name);   // 後台空白時用對照表 fallback
 
     return {
       // 識別
