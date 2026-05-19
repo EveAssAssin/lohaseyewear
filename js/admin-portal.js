@@ -5473,9 +5473,6 @@
           ? '<div class="creator-card-avatar" style="background-image:url(\'' + esc(cover) + '\');background-size:cover;background-position:center"></div>'
           : '<div class="creator-card-avatar" style="background:#F4F1EC;color:#9D7E3F"><i class="fa-regular fa-newspaper"></i></div>';
 
-        const homeTag = n.show_in_homepage
-          ? '<span class="creator-card-tag featured"><i class="fa-solid fa-house"></i> 首頁</span>' : '';
-
         const featuredTag = n.is_featured
           ? '<span class="creator-card-tag featured"><i class="fa-solid fa-star"></i> 本月精選</span>' : '';
 
@@ -5506,7 +5503,6 @@
                 }
                 return '<span class="creator-card-tag ' + cls + '">' + esc(label) + '</span>';
               })() +
-              homeTag +
               featuredTag +
             '</div>' +
             '<div class="creator-card-meta">' +
@@ -5521,12 +5517,65 @@
               ? '<button class="btn featured-on" data-act="toggle-news-featured" data-id="' + esc(n.id) + '"><i class="fa-solid fa-star"></i>取消精選</button>'
               : '<button class="btn featured-off" data-act="toggle-news-featured" data-id="' + esc(n.id) + '"><i class="fa-regular fa-star"></i>設為精選</button>') +
             '<button class="btn" data-act="edit-news" data-id="' + esc(n.id) + '"><i class="fa-regular fa-pen-to-square"></i>編輯</button>' +
+            (n.status === 'archived'
+              ? '<button class="btn" data-act="show-news" data-id="' + esc(n.id) + '"><i class="fa-solid fa-eye"></i>顯示</button>'
+              : '<button class="btn warn" data-act="hide-news" data-id="' + esc(n.id) + '"><i class="fa-solid fa-eye-slash"></i>隱藏</button>') +
+            '<button class="btn danger" data-act="delete-news" data-id="' + esc(n.id) + '" data-title="' + esc(n.title || '') + '"><i class="fa-regular fa-trash-can"></i>刪除</button>' +
           '</div>' +
         '</div>';
       }).join('');
 
       list.querySelectorAll('[data-act="edit-news"]').forEach(btn => {
         btn.addEventListener('click', () => openEdit(btn.dataset.id));
+      });
+
+      // 隱藏 (改 status='archived')
+      list.querySelectorAll('[data-act="hide-news"]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          const sb = window.LohasSupabase?.getClient?.();
+          if (!sb) return;
+          const { error } = await sb.from('news').update({ status: 'archived' }).eq('id', id);
+          if (error) { toast('隱藏失敗: ' + error.message); return; }
+          const item = allNews.find(x => x.id === id);
+          if (item) item.status = 'archived';
+          toast('已隱藏');
+          renderList();
+        });
+      });
+
+      // 顯示 (改回 published)
+      list.querySelectorAll('[data-act="show-news"]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          const sb = window.LohasSupabase?.getClient?.();
+          if (!sb) return;
+          const { error } = await sb.from('news').update({ status: 'published' }).eq('id', id);
+          if (error) { toast('恢復失敗: ' + error.message); return; }
+          const item = allNews.find(x => x.id === id);
+          if (item) item.status = 'published';
+          toast('已恢復顯示');
+          renderList();
+        });
+      });
+
+      // 刪除
+      list.querySelectorAll('[data-act="delete-news"]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          const title = btn.dataset.title || '';
+          if (!confirm(`確定要刪除消息「${title}」?\n\n此操作無法復原。`)) return;
+          const sb = window.LohasSupabase?.getClient?.();
+          if (!sb) return;
+          const { error } = await sb.from('news').delete().eq('id', id);
+          if (error) { toast('刪除失敗: ' + error.message); return; }
+          allNews = allNews.filter(x => x.id !== id);
+          toast('已刪除');
+          renderList();
+        });
       });
 
       // 設為精選 / 取消精選
@@ -5573,8 +5622,6 @@
        'news_author','news_published_at','news_content','news_homepage_link_url'].forEach(id => setVal(id, ''));
       setVal('news_status', 'draft');
       setVal('news_category', 'story');
-      setVal('news_show_in_homepage', false);
-      setVal('news_sort_order', 0);
       setVal('news_homepage_link_type', 'news_detail');
       updateLinkUrlVisibility();
 
@@ -5609,10 +5656,8 @@
       setVal('news_excerpt', n.excerpt);
       setVal('news_published_at', n.published_at);
       setVal('news_author', n.author);
-      setVal('news_show_in_homepage', n.show_in_homepage);
       setVal('news_homepage_tag', n.homepage_tag);
       setVal('news_homepage_subtitle', n.homepage_subtitle);
-      setVal('news_sort_order', n.sort_order);
       setVal('news_content', n.content);
       setVal('news_homepage_link_type', n.homepage_link_type || 'news_detail');
       setVal('news_homepage_link_url', n.homepage_link_url);
