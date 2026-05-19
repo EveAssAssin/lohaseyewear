@@ -1,0 +1,605 @@
+/* =============================================
+   LOHAS · vipstore.html · CSS
+   --------------------------------------------
+   結構：
+   - .vs-shell           外層
+   - .vs-subheader       頂部副標頭（標題 / 搜尋 / 類別 chip）
+   - .vs-layout          主版型：左卡片清單 / 右地圖
+   - .vs-list-panel      左側商店街店家列表
+   - .vs-place           單一店家卡（含類別、合作門市數、距離）
+   - .vs-map-panel       右側地圖
+   - .vs-store-pin       地圖上的 LOHAS 門市 marker（兩種狀態）
+   - .vs-pin-card        點 marker 後的浮層卡片
+   - .vs-view-tabs       手機底部 FAB
+   ============================================= */
+
+/* ===== Shell ===== */
+.vs-shell {
+  margin-top: 70px;
+  background: var(--bg-warm);
+}
+
+/* ===== Subheader ===== */
+.vs-subheader {
+  background: #fff;
+  border-bottom: 1px solid var(--lohas-bd);
+  position: sticky;
+  top: 70px;
+  z-index: 60;
+}
+.vs-subheader-inner {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 16px 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vs-subheader-title {
+  font-size: 13px;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.vs-subheader-title i {
+  color: var(--lohas-brand);
+  font-size: 14px;
+}
+.vs-subheader-title .accent {
+  color: var(--lohas-brand);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+}
+.vs-subheader-title b {
+  color: var(--lohas-brand);
+  font-weight: 600;
+}
+
+/* 搜尋 */
+.vs-search {
+  flex: 0 1 360px;
+  position: relative;
+}
+.vs-search input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-pill);
+  padding: 0 18px 0 42px;
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--bg-warm);
+  color: var(--text-main);
+  letter-spacing: 0.3px;
+  outline: none;
+  transition: all 0.15s;
+}
+.vs-search input:focus {
+  border-color: var(--lohas-brand);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(80, 66, 45, 0.08);
+}
+.vs-search i {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* 類別 chip 列 */
+.vs-cats {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 0 14px;
+  margin: 0 -32px;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+.vs-cats::-webkit-scrollbar { display: none; }
+
+.vs-chip {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--bg-soft);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vs-chip:hover {
+  background: var(--lohas-bd);
+  color: var(--lohas-brand);
+}
+.vs-chip.is-active {
+  background: var(--lohas-brand);
+  color: #fff;
+}
+.vs-chip i { font-size: 11px; }
+
+/* ===== Layout ===== */
+.vs-layout {
+  display: flex;
+  height: calc(100vh - 70px - 140px); /* header + subheader */
+  min-height: 600px;
+}
+
+/* ===== 左：商店街店家列表 ===== */
+.vs-list-panel {
+  width: 46%;
+  overflow-y: auto;
+  padding: 24px 32px 80px;
+  background: var(--bg-warm);
+  border-right: 1px solid var(--lohas-bd);
+}
+
+.vs-list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+.vs-list-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+  margin: 0 0 4px;
+}
+.vs-list-sub {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin: 0;
+}
+.vs-sort {
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-sub);
+  cursor: pointer;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vs-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.vs-loading {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* 單一店家卡 */
+.vs-place {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.vs-place:hover { transform: translateY(-2px); }
+.vs-place.is-active .vs-place-img {
+  outline: 2px solid var(--lohas-brand);
+  outline-offset: 4px;
+}
+
+.vs-place-img {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-md);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background-size: cover;
+  background-position: center;
+}
+.vs-place-img::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.2));
+  pointer-events: none;
+}
+.vs-place-fav {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #fff;
+  font-size: 18px;
+  z-index: 2;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
+  cursor: pointer;
+}
+.vs-place-fav.is-on { color: var(--favorite); }
+.vs-place-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #fff;
+  color: var(--lohas-brand);
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.vs-place-name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-main);
+  margin: 0 0 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.vs-place-intro {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin: 0 0 8px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.vs-place-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-sub);
+}
+.vs-place-stores {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vs-place-stores i {
+  color: var(--lohas-brand);
+  font-size: 11px;
+}
+.vs-place-stores--all i { color: var(--ok); }
+.vs-place-dist {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--lohas-brand);
+  font-weight: 500;
+}
+.vs-place-dist::before {
+  content: "📍";
+  font-size: 10px;
+}
+
+/* ===== 右：地圖 ===== */
+.vs-map-panel {
+  flex: 1;
+  position: relative;
+  background: #EAEAEA;
+}
+#vs-map-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* ===== 地圖門市 Pin ===== */
+.vs-store-pin-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+.vs-store-pin {
+  background: #fff;
+  color: var(--text-sub);
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-pill);
+  padding: 5px 10px 5px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(80, 66, 45, 0.15);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vs-store-pin i {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.vs-store-pin:hover {
+  transform: scale(1.05);
+  z-index: 1000;
+}
+/* 高亮狀態（選擇某店家後，其合作門市） */
+.vs-store-pin.is-highlight {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+  box-shadow: 0 4px 12px rgba(80, 66, 45, 0.4);
+  transform: scale(1.08);
+}
+.vs-store-pin.is-highlight i { color: var(--lohas-light); }
+
+/* ===== 地圖工具按鈕 ===== */
+.vs-map-tools {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vs-map-tool {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--text-main);
+  box-shadow: var(--sh-soft);
+  transition: background 0.15s;
+  font-size: 14px;
+}
+.vs-map-tool:hover {
+  background: var(--bg-soft);
+}
+
+/* ===== 地圖底部計數 ===== */
+.vs-map-count {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: var(--text-main);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--sh-card);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vs-map-count i {
+  color: var(--lohas-light);
+  font-size: 8px;
+}
+.vs-map-count b { font-weight: 700; }
+
+/* ===== 點門市 pin 後的浮層卡片 ===== */
+.vs-pin-card {
+  position: absolute;
+  z-index: 600;
+  top: 80px;
+  right: 16px;
+  width: 320px;
+  max-height: calc(100% - 160px);
+  background: #fff;
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-modal);
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+}
+.vs-pin-card.is-show { display: flex; }
+
+.vs-pin-card-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.vs-pin-card-head {
+  padding: 18px 16px 14px;
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--lohas-bd);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.vs-pin-card-head > i {
+  width: 36px;
+  height: 36px;
+  background: var(--lohas-brand);
+  color: #fff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.vs-pin-card-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--lohas-brand);
+  margin: 0 0 2px;
+}
+.vs-pin-card-head p {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.vs-pin-card-body {
+  padding: 14px 16px 18px;
+  overflow-y: auto;
+}
+.vs-pin-card-title {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin: 0 0 10px;
+}
+.vs-pin-card-title b {
+  color: var(--lohas-brand);
+  font-weight: 700;
+  margin: 0 2px;
+}
+.vs-pin-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vs-pin-card-list li {
+  padding: 10px 12px;
+  background: var(--bg-warm);
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.vs-pin-card-list li:hover {
+  background: #fff;
+  border-color: var(--lohas-brand);
+  transform: translateX(2px);
+}
+.vs-pin-card-list-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.vs-pin-card-list-cat {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.vs-pin-card-more {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ===== 手機底部 TAB（與 allstore 用同一套設計） ===== */
+.vs-view-tabs {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 700;
+  background: var(--text-main);
+  border-radius: var(--r-pill);
+  padding: 4px;
+  box-shadow: var(--sh-modal);
+}
+.vs-view-tab {
+  background: transparent;
+  border: 0;
+  padding: 10px 22px;
+  border-radius: var(--r-pill);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.vs-view-tab.is-active {
+  background: #fff;
+  color: var(--text-main);
+}
+
+/* ===== Tablet ===== */
+@media (max-width: 1024px) {
+  .vs-list { grid-template-columns: 1fr; }
+  .vs-list-panel { width: 40%; }
+  .vs-pin-card { width: 280px; }
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .vs-subheader-inner {
+    padding: 12px 16px 0;
+  }
+  .vs-cats {
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .vs-layout {
+    display: block;
+    height: calc(100vh - 70px - 140px);
+  }
+  .vs-list-panel,
+  .vs-map-panel {
+    width: 100%;
+    height: 100%;
+    border-right: 0;
+  }
+  .vs-list-panel {
+    padding: 16px 16px 96px;
+  }
+  .vs-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  /* 預設顯示列表 */
+  .vs-map-panel { display: none; }
+  body[data-vs-view="map"] .vs-list-panel { display: none; }
+  body[data-vs-view="map"] .vs-map-panel { display: block; }
+
+  .vs-view-tabs { display: flex; }
+
+  .vs-pin-card {
+    width: calc(100% - 32px);
+    top: auto;
+    bottom: 90px;
+    right: 16px;
+    left: 16px;
+    max-height: 50%;
+  }
+}
