@@ -4554,6 +4554,7 @@
                 <span class="creator-card-name">${esc(c.brand_name || '未命名')}</span>
                 <span class="creator-card-tag">${esc(CAT_LABEL[c.category] || c.category || '—')}</span>
                 <span class="creator-card-tag ${c.status === 'active' ? 'featured' : c.status === 'draft' ? 'suspended' : ''}">${esc(STATUS_LABEL[c.status] || c.status)}</span>
+                ${c.is_locked ? '<span class="creator-card-tag" style="background:#FFFBEC;color:#7A5A2B;border:1px solid #F0D87A"><i class="fa-solid fa-lock" style="font-size:10px"></i> 範例</span>' : ''}
               </div>
               <div class="creator-card-meta">
                 <code>/collab.html?id=${esc(c.slug)}</code>
@@ -4637,8 +4638,8 @@
       pendingFiles.story_image_url = null;
       pendingFiles.creator_avatar_url = null;
 
-      $('collabModalTitle').textContent = '編輯:' + (c.brand_name || c.slug);
-      $('collabDeleteBtn').style.display = '';
+      $('collabModalTitle').textContent = '編輯:' + (c.brand_name || c.slug) + (c.is_locked ? ' 🔒 範例' : '');
+      $('collabDeleteBtn').style.display = c.is_locked ? 'none' : '';
 
       setVal('cm_slug', c.slug);
       setVal('cm_status', c.status);
@@ -5187,6 +5188,10 @@
     // ====== 刪除 ======
     async function deleteCollab(){
       if(!currentCollab) return;
+      if(currentCollab.is_locked){
+        toast('這是範例聯名,不能刪除');
+        return;
+      }
       if(!confirm('確定刪除「' + currentCollab.brand_name + '」?\n所有套餐 / 設計 / 客人照都會一起刪除,無法復原。')) return;
 
       const client = sb();
