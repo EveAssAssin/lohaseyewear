@@ -1756,8 +1756,6 @@
 
       input?.addEventListener('change', async e => {
         console.log('[Banner input change]', e.target.files?.length);
-        const file = e.target.files?.[0];
-        if (!file) return;
 
         // 依當前 position 套用 aspectRatio
         const cfg = BANNER_POSITIONS[BannerState.currentPos];
@@ -1917,7 +1915,7 @@
     }
 
     document.getElementById('bmHint').textContent = '';
-    modal.style.display = 'flex';
+    modal.style.display = '';
     document.body.style.overflow = 'hidden';
   }
 
@@ -5251,44 +5249,24 @@
           ['image_url', 'caption', 'sort_order'], 'collab-photo');
 
         // 同步:把客人照寫一份到 gallery_posts (分享牆),自動通過審核
-        // 只處理「新上傳的」(沒 _galleryPostId 也沒 gallery_post_id)
+        // 只處理「新上傳的」(沒 _galleryPostId)
         const brandName = val('cm_brand_name') || (currentCollab?.brand_name) || '聯名活動';
-        let gallerySyncFailed = 0;
         for(const photo of currentPhotos){
-          if(photo._deleted || photo._galleryPostId || photo.gallery_post_id || !photo.image_url) continue;
+          if(photo._deleted || photo._galleryPostId || !photo.image_url) continue;
           try {
             const { data: gpData, error: gpErr } = await client.from('gallery_posts').insert({
               title: brandName + ' 客人分享',
               type: 'photo',
               customer_name: photo.caption || '匿名',
-              member_id: 'OFFICIAL',     // gallery_posts.member_id NOT NULL,聯名客人照統一掛 OFFICIAL
               image_urls: [photo.image_url],
               main_image_url: photo.image_url,
               status: 'approved',
               topic: brandName
             }).select('id').single();
-            if(gpErr){
-              console.warn('[gallery_posts insert 失敗]', gpErr);
-              gallerySyncFailed++;
-              continue;
-            }
+            if(gpErr){ console.warn('[gallery_posts insert 失敗]', gpErr); continue; }
             // 記錄已寫入,避免重複
             photo._galleryPostId = gpData.id;
-            // 同步寫回 collab_customer_photos.gallery_post_id (若該欄存在),避免下次重抓後丟失關聯
-            if(photo.id){
-              try {
-                await client.from('collab_customer_photos')
-                  .update({ gallery_post_id: gpData.id })
-                  .eq('id', photo.id);
-              } catch(updErr){
-                // 該欄不存在或更新失敗時不擋主流程,只記 log
-                console.warn('[collab_customer_photos.gallery_post_id 更新失敗]', updErr);
-              }
-            }
-          } catch(err){ console.warn('[gallery_posts insert 例外]', err); gallerySyncFailed++; }
-        }
-        if(gallerySyncFailed > 0){
-          toast(gallerySyncFailed + ' 張客人照同步到分享牆失敗,詳見 console');
+          } catch(err){ console.warn('[gallery_posts insert 例外]', err); }
         }
 
         toast('已儲存');
@@ -5349,7 +5327,13 @@
       const rows = live.map((row, i) => {
         const out = { collab_id: collabId, sort_order: i };
         allowedFields.forEach(f => { if(row[f] !== undefined) out[f] = row[f]; });
-        if(row.id) out.id = row.id;
+        // id: 既有用既有,新的用 crypto.randomUUID() (DB default 沒設時的 fallback)
+        if(row.id) {
+          out.id = row.id;
+        } else if(typeof crypto !== 'undefined' && crypto.randomUUID) {
+          out.id = crypto.randomUUID();
+          row.id = out.id;  // 寫回 row 避免下次重複生
+        }
         return out;
       }).filter(r => {
         return allowedFields.some(f => r[f]);
