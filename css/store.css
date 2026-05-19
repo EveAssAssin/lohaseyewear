@@ -456,9 +456,7 @@
   border-color: var(--collab-gold);
 }
 
-/* === 上半:照片真正滿版填滿卡片上半部 ===
-   用 aspect-ratio + inset:0 取代 padding-top hack,
-   避免 sub-pixel 漂移在頂部露出底色細縫 */
+/* === 上半:照片爆框填滿,寧可切到邊也不露白 === */
 .sd-staff-photo-wrap {
   position: relative;
   width: 100%;
@@ -475,6 +473,9 @@
   display: block;
   object-fit: cover;
   object-position: center top;
+  /* 放大 + 微偏,確保任何 sub-pixel 漂移都被吃掉,寧切勿露白 */
+  transform: scale(1.06);
+  transform-origin: center top;
 }
 
 /* 沒照片 fallback - 用大 icon */
