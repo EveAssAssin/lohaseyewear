@@ -376,24 +376,16 @@
   font-weight: 700;
   color: var(--text-main);
   cursor: pointer;
-  border: 3px solid transparent;
+  border: 1px solid transparent;
   font-family: inherit;
   transition: all 0.15s;
 }
 .bm-time-pick:hover:not(.full):not(.active) { background: var(--bg-soft); }
-/* 選中:3px 棕色實框 + 淡棕底 + 棕字 + 陰影,從邊框/底色/文字三個維度同時表達選中 */
 .bm-time-pick.active {
-  background: var(--lohas-bd);
-  color: var(--lohas-brand);
+  background: var(--lohas-brand);
+  color: #fff;
   border-color: var(--lohas-brand);
-  font-weight: 800;
-  box-shadow:
-    0 0 0 2px rgba(80, 66, 45, 0.15),
-    0 6px 14px rgba(80, 66, 45, 0.22);
-}
-.bm-time-pick.active:hover {
-  background: var(--lohas-bd);
-  border-color: var(--lohas-brand);
+  box-shadow: 0 0 0 2px var(--lohas-bd);
 }
 .bm-time-pick.full {
   opacity: 0.35;
