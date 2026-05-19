@@ -168,6 +168,12 @@
             '</div>',
           '</div>',
 
+          // 隱私權 / 使用條款 同意提示 (預設已同意,不需勾選)
+          '<div class="dum-terms">',
+            '<i class="fa-solid fa-circle-check"></i>',
+            '<span>送出設計即表示您已閱讀並同意 <a href="privacy.html" target="_blank" rel="noopener">隱私權政策</a> 與 <a href="terms.html" target="_blank" rel="noopener">使用條款</a>,並授權樂活眼鏡將您的作品用於商品展示與宣傳。</span>',
+          '</div>',
+
           // CTA
           '<div class="dum-actions">',
             '<button type="button" class="dum-btn-cancel" id="dumCancel">取 消</button>',
