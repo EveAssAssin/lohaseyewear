@@ -452,6 +452,14 @@
         state.selectedDate = el.dataset.date;
         state.selectedRoundId = null;
         renderInPlace();
+        /* re-render 後找到新的 .active 日期,捲到視野內。
+           inline:"nearest" 表示「已經在視野裡的不滾」,
+           只有選了被切到的最遠日期時才會真的捲動。 */
+        const root = getRoot();
+        const activeDate = root.querySelector(".bm-date-pick.active");
+        if (activeDate) {
+          activeDate.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+        }
       });
     });
 
