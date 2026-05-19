@@ -214,8 +214,7 @@
     flex-direction: column;
 }
 .grid-item:hover { transform: translateY(-5px); }
-.grid-img { background:#F4EEE3; aspect-ratio: 16/9; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-.grid-img img { width: 70%; height: 70%; object-fit: contain; }
+.grid-img img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
 .grid-text { padding: 20px; }
 .grid-text .tag { font-size: 10px; color: var(--lohas-light); letter-spacing: 1px; font-weight: bold; display: block; margin-bottom: 5px;}
 .grid-text h5 { color: var(--lohas-brand); font-size: 18px; margin-bottom: 12px;}
@@ -289,6 +288,32 @@
     background: var(--lohas-brand); 
     color: #fff; 
     border-color: var(--lohas-brand); 
+}
+
+/* KOL 卡按鈕並排 */
+.kol-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+.btn-more-outline {
+    display: inline-block;
+    text-decoration: none;
+    background: var(--lohas-brand);
+    border: 1px solid var(--lohas-brand);
+    color: #fff;
+    padding: 10px 22px;
+    font-size: 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: 0.3s;
+    width: fit-content;
+    font-weight: 400;
+}
+.btn-more-outline:hover {
+    background: #fff;
+    color: var(--lohas-brand);
 }
 
 /* 區塊五：FAQ */
