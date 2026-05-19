@@ -29,11 +29,12 @@
     setTimeout(function(){ ALERT_EL.classList.remove('show'); }, 2200);
   }
 
-  // ====== URL slug ======
+  // ====== URL slug / preview mode ======
   const urlParams = new URLSearchParams(window.location.search);
   const slug = urlParams.get('id') || urlParams.get('slug');
+  const isPreview = urlParams.get('preview') === '1';
 
-  if(!slug){
+  if(!slug && !isPreview){
     showNotFound();
     return;
   }
@@ -45,6 +46,31 @@
 
   // ====== 主流程 ======
   async function load(){
+    // PREVIEW 模式: 從 sessionStorage 讀,不打 DB
+    if(isPreview){
+      try {
+        const json = sessionStorage.getItem('lohas_collab_preview');
+        if(!json){
+          console.warn('[collab preview] sessionStorage 無資料');
+          showNotFound();
+          return;
+        }
+        const data = JSON.parse(json);
+        render(
+          data,
+          data.packages || [],
+          data.designs || [],
+          data.customer_photos || []
+        );
+        // 預覽標記
+        showPreviewBanner();
+      } catch(err) {
+        console.error('[collab preview] parse err', err);
+        showNotFound();
+      }
+      return;
+    }
+
     const sb = getClient();
     if(!sb){
       console.error('[collab] Supabase 未配置');
@@ -363,12 +389,8 @@
     } else if(c.preorder_link){
       btn.href = c.preorder_link;
     } else {
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        if(stage === 'upcoming') toast('將開啟上市通知訂閱表單,需登入會員');
-        else if(stage === 'on_sale') toast('將開啟線上購買 / 預約系統');
-        else toast('預約預購表單會開啟,需登入會員');
-      });
+      // 預設連門市頁
+      btn.href = 'allstore.html';
     }
   }
 
@@ -402,6 +424,15 @@
     LOADING.style.display = 'none';
     NOTFOUND.style.display = '';
     PAGE.style.opacity = '1';
+  }
+
+  function showPreviewBanner(){
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#F5C842;color:#3D3026;padding:10px 16px;text-align:center;font-size:13px;letter-spacing:1px;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.15)';
+    banner.innerHTML = '<i class="fa-solid fa-eye" style="margin-right:8px"></i> 預覽模式 · 此頁尚未儲存 · <a href="#" onclick="window.close();return false" style="color:#7A2754;text-decoration:underline;margin-left:10px">關閉預覽</a>';
+    document.body.appendChild(banner);
+    // 頂部 padding 補位
+    document.body.style.paddingTop = banner.offsetHeight + 'px';
   }
 
   // ====== Init ======

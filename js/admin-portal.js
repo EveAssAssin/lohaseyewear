@@ -4927,7 +4927,7 @@
     function renderPkgList(){
       const wrap = $('cm_pkgList');
       if(!currentPackages.length){
-        wrap.innerHTML = '<div class="subtable-empty">尚未新增套餐</div>';
+        wrap.innerHTML = '<div class="subtable-empty">尚未新增套餐內容</div>';
         return;
       }
       const fields = [
@@ -4943,7 +4943,7 @@
     function renderDesignList(){
       const wrap = $('cm_designList');
       if(!currentDesigns.length){
-        wrap.innerHTML = '<div class="subtable-empty">尚未新增設計</div>';
+        wrap.innerHTML = '<div class="subtable-empty">尚未新增設計刻圖</div>';
         return;
       }
       const fields = [
@@ -4961,7 +4961,7 @@
     function renderPhotoList(){
       const wrap = $('cm_photoList');
       if(!currentPhotos.length){
-        wrap.innerHTML = '<div class="subtable-empty">尚未新增客人照</div>';
+        wrap.innerHTML = '<div class="subtable-empty">尚未新增客人分享照片</div>';
         return;
       }
       const fields = [
