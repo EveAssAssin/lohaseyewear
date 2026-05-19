@@ -390,7 +390,7 @@
           (state.step < 3
             ? `<button class="bm-btn primary" data-next ${canNext ? "" : "disabled"}>` +
               `下一步 <i class="fa-solid fa-arrow-right"></i></button>`
-            : `<button class="bm-btn primary" data-submit ${canNext && !state.submitting ? "" : "disabled"}>` +
+            : `<button class="bm-btn primary" data-submit ${state.submitting ? "disabled" : ""}>` +
               (state.submitting
                 ? `<i class="fa-solid fa-spinner fa-spin"></i> 送出中…`
                 : `確認預約 <i class="fa-solid fa-check"></i>`) +
@@ -549,6 +549,23 @@
   /* === API：建立預約 === */
   async function submitReservation() {
     if (state.submitting) return;
+
+    /* 欄位檢查：缺哪個就提示哪個,並把焦點移到該欄位 */
+    const f = state.form;
+    const missing = [];
+    if (!f.memberName) missing.push({ field: "memberName", label: "姓名" });
+    if (!f.memberNumber) missing.push({ field: "memberNumber", label: "會員編號(若無請填手機末四碼)" });
+    if (!f.memberPhone) missing.push({ field: "memberPhone", label: "手機號碼" });
+    if (!f.memberBirthday) missing.push({ field: "memberBirthday", label: "生日" });
+
+    if (missing.length > 0) {
+      const labels = missing.map(m => m.label).join("、");
+      alert("請先填寫:" + labels);
+      const firstInput = getRoot().querySelector(`[data-field="${missing[0].field}"]`);
+      if (firstInput) firstInput.focus();
+      return;
+    }
+
     state.submitting = true;
     updateFooter();
     try {
