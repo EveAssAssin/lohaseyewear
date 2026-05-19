@@ -440,6 +440,37 @@
 
 /* CTA */
 .dum-actions{ display:flex; gap:10px; margin-top:auto }
+
+/* 隱私權 / 使用條款 同意提示 (預設已同意) */
+.dum-terms{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:12px 14px;
+  margin-top:18px;
+  background:#FAF6F0;
+  border:1px solid #E8DED1;
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.7;
+  color:#7A6B5C;
+  letter-spacing:0.3px;
+}
+.dum-terms i{
+  color:#9D7E3F;
+  font-size:14px;
+  margin-top:3px;
+  flex-shrink:0;
+}
+.dum-terms a{
+  color:#50422D;
+  text-decoration:underline;
+  text-decoration-color:#C9B98C;
+  text-underline-offset:2px;
+}
+.dum-terms a:hover{
+  color:#9D7E3F;
+}
 .dum-btn-cancel,
 .dum-btn-submit{
   height:44px;
