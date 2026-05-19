@@ -467,14 +467,15 @@
 }
 .sd-staff-photo {
   position: absolute;
-  /* 整張往下、往左右各擠出去,把頂部 / 邊緣的白邊推到容器外切掉 */
-  top: -8%;
-  left: -4%;
-  width: 108%;
-  height: 112%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
   object-fit: cover;
   object-position: center top;
+  /* 放大 + 微偏,確保任何 sub-pixel 漂移都被吃掉,寧切勿露白 */
+  transform: scale(1.06);
+  transform-origin: center top;
 }
 
 /* 沒照片 fallback - 用大 icon */
