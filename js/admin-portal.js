@@ -188,6 +188,7 @@
     if (page === 'review-designs') { loadDesignReview(); refreshReviewCounts(); }
     if (page === 'review-uploads') { loadReviewUploads(); refreshReviewCounts(); }
     if (page === 'cm-news') loadNews();
+    if (page === 'cm-banner') loadBannerModule();
     if (page === 'admin-upload') { initAdminUpload(); loadAdminUploadHistory(); }
     if (page === 'creators') loadCreatorsList();
     if (page === 'manage-designs') loadManageDesigns();
@@ -1670,6 +1671,308 @@
   /* =============================================================
      9. 最新消息 (CRUD)
      ============================================================= */
+
+  // ============================================
+  // Banner 管理模組
+  // ============================================
+  const BANNER_POSITIONS = {
+    home_main: { label: '首頁主打', aspect: '21:9', multi: true,  size: '建議 1920 × 820 px' },
+    home_hero: { label: '首頁 Hero', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
+    engraving: { label: '雷刻頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
+    market:    { label: '市集頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
+    gallery:   { label: '靈感分享牆', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' }
+  };
+
+  let BannerState = {
+    currentPos: 'home_main',
+    list: [],
+    editing: null,        // 當前編輯中的 banner
+    imageFile: null,
+    imageBase64: null,
+    existingImageUrl: null
+  };
+
+  async function loadBannerModule() {
+    bindBannerEvents();
+    await loadBannerList('home_main');
+  }
+
+  function bindBannerEvents() {
+    if (window.__bannerBound) return;
+    window.__bannerBound = true;
+
+    // tab 切換
+    document.querySelectorAll('.banner-tab').forEach(tab => {
+      tab.addEventListener('click', async () => {
+        document.querySelectorAll('.banner-tab').forEach(t => t.classList.remove('on'));
+        tab.classList.add('on');
+        const pos = tab.dataset.pos;
+        await loadBannerList(pos);
+      });
+    });
+
+    // modal close
+    document.getElementById('bannerModalClose')?.addEventListener('click', closeBannerModal);
+    document.getElementById('bmCancelBtn')?.addEventListener('click', closeBannerModal);
+    document.querySelector('#bannerEditModal .ag-modal-overlay')?.addEventListener('click', closeBannerModal);
+
+    // save / delete
+    document.getElementById('bmSaveBtn')?.addEventListener('click', saveBanner);
+    document.getElementById('bmDeleteBtn')?.addEventListener('click', deleteBanner);
+
+    // 圖片上傳
+    const imgBtn = document.getElementById('bmImageBtn');
+    const imgInput = document.getElementById('bmImageInput');
+    const imgPreview = document.getElementById('bmImagePreview');
+    imgBtn?.addEventListener('click', () => imgInput?.click());
+    imgPreview?.addEventListener('click', () => imgInput?.click());
+    document.getElementById('bmImageClear')?.addEventListener('click', e => {
+      e.stopPropagation();
+      BannerState.imageFile = null;
+      BannerState.imageBase64 = null;
+      BannerState.existingImageUrl = null;
+      imgPreview.style.backgroundImage = '';
+      imgPreview.classList.remove('has-image');
+      document.getElementById('bmImageClear').style.display = 'none';
+      if (imgInput) imgInput.value = '';
+    });
+
+    imgInput?.addEventListener('change', async e => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      // 依當前 position 套用 aspectRatio
+      const cfg = BANNER_POSITIONS[BannerState.currentPos];
+      let aspectRatio = 16/9;
+      if (cfg.aspect === '21:9') aspectRatio = 21/9;
+
+      let finalFile = file;
+      if (window.LohasCropper) {
+        const cropped = await window.LohasCropper.crop(file, {
+          aspectRatio: aspectRatio,
+          title: '裁切 Banner · ' + cfg.aspect
+        });
+        if (!cropped) { imgInput.value = ''; return; }
+        finalFile = cropped;
+      }
+      BannerState.imageFile = finalFile;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        BannerState.imageBase64 = ev.target.result;
+        imgPreview.style.backgroundImage = `url('${ev.target.result}')`;
+        imgPreview.classList.add('has-image');
+        document.getElementById('bmImageClear').style.display = 'flex';
+      };
+      reader.readAsDataURL(finalFile);
+      imgInput.value = '';
+    });
+  }
+
+  async function loadBannerList(position) {
+    BannerState.currentPos = position;
+    const wrap = document.getElementById('bannerListWrap');
+    if (!wrap) return;
+    wrap.innerHTML = '<div class="empty-state">載入中...</div>';
+
+    const sb = window.LohasSupabase?.getClient?.();
+    if (!sb) { wrap.innerHTML = '<div class="empty-state">Supabase 未連線</div>'; return; }
+
+    const { data, error } = await sb.from('banners')
+      .select('*')
+      .eq('position', position)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      wrap.innerHTML = '<div class="empty-state">載入失敗: ' + escapeHtml(error.message) + '</div>';
+      return;
+    }
+    BannerState.list = data || [];
+    renderBannerList();
+  }
+
+  function renderBannerList() {
+    const wrap = document.getElementById('bannerListWrap');
+    if (!wrap) return;
+    const cfg = BANNER_POSITIONS[BannerState.currentPos];
+    const list = BannerState.list;
+
+    const addBtn = `<button type="button" class="action-btn-solid" onclick="window.openBannerNew()" style="margin-top:14px">
+        <i class="fa-solid fa-plus"></i>新增 Banner
+      </button>`;
+
+    // 單張位置:已有 1 張時不再顯示「新增」
+    const showAdd = cfg.multi || list.length === 0;
+
+    if (list.length === 0) {
+      wrap.innerHTML = `
+        <div style="background:#FAF7F2;border:1px dashed #C9B98C;border-radius:10px;padding:40px 20px;text-align:center;color:var(--lohas-mute)">
+          <i class="fa-regular fa-image" style="font-size:36px;opacity:0.4;display:block;margin-bottom:14px"></i>
+          <p style="font-size:13px;letter-spacing:0.5px;margin:0 0 8px">尚未設定「${cfg.label}」Banner</p>
+          <p style="font-size:11px;color:var(--lohas-mute);margin:0 0 14px">${cfg.size}</p>
+          ${showAdd ? addBtn : ''}
+        </div>`;
+      return;
+    }
+
+    const cards = list.map(b => {
+      const img = b.image_url
+        ? `<div style="aspect-ratio:${cfg.aspect.replace(':','/')};background:url('${escapeHtml(b.image_url)}') center/cover;border-radius:8px"></div>`
+        : `<div style="aspect-ratio:${cfg.aspect.replace(':','/')};background:#F4F1EC;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9D7E3F"><i class="fa-regular fa-image" style="font-size:32px"></i></div>`;
+      const status = b.is_active
+        ? '<span class="creator-card-tag featured" style="background:#E8F5E0;color:#3D6B1E"><i class="fa-solid fa-eye"></i> 啟用中</span>'
+        : '<span class="creator-card-tag" style="background:#EEE;color:#888"><i class="fa-regular fa-eye-slash"></i> 已停用</span>';
+
+      return `
+        <div class="banner-card" style="background:#fff;border:1px solid var(--lohas-line);border-radius:12px;padding:14px;display:grid;grid-template-columns:180px 1fr auto;gap:16px;align-items:center;margin-bottom:12px" data-id="${escapeHtml(b.id)}">
+          <div>${img}</div>
+          <div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
+              ${status}
+              ${cfg.multi ? `<span class="creator-card-tag">順序 ${b.sort_order || 0}</span>` : ''}
+            </div>
+            <div style="font-size:14px;font-weight:600;color:var(--lohas-brown);margin-bottom:4px">${escapeHtml(b.title || '(未填標題)')}</div>
+            <div style="font-size:12px;color:var(--lohas-mute);margin-bottom:6px">${escapeHtml(b.subtitle || '')}</div>
+            ${b.link_url ? `<div style="font-size:11px;color:var(--lohas-mute);font-family:monospace">→ ${escapeHtml(b.link_url)}</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn" onclick="window.openBannerEdit('${escapeHtml(b.id)}')"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    wrap.innerHTML = cards + (showAdd ? addBtn : '');
+  }
+
+  window.openBannerNew = () => openBannerEdit(null);
+  window.openBannerEdit = (id) => openBannerEdit(id);
+
+  function openBannerEdit(id) {
+    const modal = document.getElementById('bannerEditModal');
+    if (!modal) return;
+
+    BannerState.editing = id ? BannerState.list.find(b => b.id === id) : null;
+    BannerState.imageFile = null;
+    BannerState.imageBase64 = null;
+    BannerState.existingImageUrl = null;
+
+    const cfg = BANNER_POSITIONS[BannerState.currentPos];
+    document.getElementById('bannerModalTitle').textContent =
+      (BannerState.editing ? '編輯' : '新增') + ' Banner — ' + cfg.label;
+    document.getElementById('bmAspectHint').textContent = cfg.aspect;
+    document.getElementById('bmImageHint').textContent = cfg.size;
+    document.getElementById('bmImagePreview').style.aspectRatio = cfg.aspect.replace(':', '/');
+
+    // 顯隱排序 row
+    document.getElementById('bmSortRow').style.display = cfg.multi ? '' : 'none';
+    document.getElementById('bmDeleteBtn').style.display = BannerState.editing ? '' : 'none';
+
+    // 填欄位
+    const b = BannerState.editing || {};
+    document.getElementById('bmTitle').value = b.title || '';
+    document.getElementById('bmSubtitle').value = b.subtitle || '';
+    document.getElementById('bmCtaText').value = b.cta_text || '';
+    document.getElementById('bmLinkUrl').value = b.link_url || '';
+    document.getElementById('bmIsActive').checked = b.is_active !== false;
+    document.getElementById('bmSortOrder').value = b.sort_order != null ? b.sort_order : 0;
+
+    const preview = document.getElementById('bmImagePreview');
+    const clearBtn = document.getElementById('bmImageClear');
+    if (b.image_url) {
+      preview.style.backgroundImage = `url('${escapeHtml(b.image_url)}')`;
+      preview.classList.add('has-image');
+      clearBtn.style.display = 'flex';
+      BannerState.existingImageUrl = b.image_url;
+    } else {
+      preview.style.backgroundImage = '';
+      preview.classList.remove('has-image');
+      clearBtn.style.display = 'none';
+    }
+
+    document.getElementById('bmHint').textContent = '';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeBannerModal() {
+    const modal = document.getElementById('bannerEditModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  async function saveBanner() {
+    const sb = window.LohasSupabase?.getClient?.();
+    if (!sb) return;
+    const hint = document.getElementById('bmHint');
+    const SUPABASE_BUCKET = window.LohasSupabase?.CONFIG?.STORAGE_BUCKET || 'gallery-uploads';
+
+    hint.style.color = 'var(--lohas-mute)';
+    hint.textContent = '儲存中...';
+
+    let imageUrl = BannerState.existingImageUrl;
+
+    // 有新圖檔 → 上傳
+    if (BannerState.imageFile) {
+      try {
+        hint.textContent = '上傳圖片中...';
+        const ext = (BannerState.imageFile.name || '').split('.').pop()?.toLowerCase() || 'jpg';
+        const filePath = `banners/${BannerState.currentPos}-${Date.now()}.${ext}`;
+        const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET)
+          .upload(filePath, BannerState.imageFile, { cacheControl: '3600', upsert: false });
+        if (upErr) { hint.style.color = 'var(--status-rejected)'; hint.textContent = '圖片上傳失敗: ' + upErr.message; return; }
+        const { data: urlData } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+        imageUrl = urlData.publicUrl;
+      } catch (err) {
+        hint.style.color = 'var(--status-rejected)';
+        hint.textContent = '上傳例外: ' + (err.message || err);
+        return;
+      }
+    }
+
+    const payload = {
+      position: BannerState.currentPos,
+      image_url: imageUrl,
+      title: document.getElementById('bmTitle').value.trim() || null,
+      subtitle: document.getElementById('bmSubtitle').value.trim() || null,
+      cta_text: document.getElementById('bmCtaText').value.trim() || null,
+      link_url: document.getElementById('bmLinkUrl').value.trim() || null,
+      is_active: document.getElementById('bmIsActive').checked,
+      sort_order: Number(document.getElementById('bmSortOrder').value) || 0
+    };
+
+    hint.textContent = '寫入資料庫...';
+    let error;
+    if (BannerState.editing) {
+      const r = await sb.from('banners').update(payload).eq('id', BannerState.editing.id);
+      error = r.error;
+    } else {
+      const r = await sb.from('banners').insert(payload);
+      error = r.error;
+    }
+
+    if (error) {
+      hint.style.color = 'var(--status-rejected)';
+      hint.textContent = '儲存失敗: ' + error.message;
+      return;
+    }
+
+    hint.style.color = 'var(--status-approved)';
+    hint.textContent = '✓ 已儲存';
+    setTimeout(() => {
+      closeBannerModal();
+      loadBannerList(BannerState.currentPos);
+    }, 600);
+  }
+
+  async function deleteBanner() {
+    if (!BannerState.editing) return;
+    if (!confirm('確定刪除這個 Banner?')) return;
+    const sb = window.LohasSupabase?.getClient?.();
+    const { error } = await sb.from('banners').delete().eq('id', BannerState.editing.id);
+    if (error) { alert('刪除失敗: ' + error.message); return; }
+    closeBannerModal();
+    loadBannerList(BannerState.currentPos);
+  }
+
 
   async function loadNews() {
     const tbody = root.querySelector('.content-page[data-page="cm-news"] .news-table tbody');

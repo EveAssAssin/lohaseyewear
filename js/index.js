@@ -26,10 +26,8 @@
     const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
-      .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt, homepage_link_type, homepage_link_url')
+      .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt, category, published_at')
       .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
-      .eq('show_in_homepage', true)
-      .order('sort_order', { ascending: true })
       .order('published_at', { ascending: false })
       .limit(4);
 
@@ -47,9 +45,7 @@
 
     const html = data.map(n => {
       const img = n.homepage_image_url || n.cover_image_url;
-      const href = (n.homepage_link_type === 'custom' && n.homepage_link_url)
-        ? escapeHtml(n.homepage_link_url)
-        : 'news-detail.html?id=' + escapeHtml(n.slug);
+      const href = 'news-detail.html?id=' + escapeHtml(n.slug);
       const tag = n.homepage_tag || '';
       const sub = n.homepage_subtitle || n.excerpt || '';
       return '<a href="' + href + '" class="owndays-item">' +
@@ -108,9 +104,75 @@
     }
   }
 
+  async function loadHomeMainBanner() {
+    const section = document.getElementById('homeMainBannerSection');
+    const track = document.getElementById('homeMainBannerTrack');
+    const dots = document.getElementById('homeMainBannerDots');
+    if (!section || !track) return;
+
+    const sb = window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
+    if (!sb) return;
+
+    const { data, error } = await sb.from('banners')
+      .select('*')
+      .eq('position', 'home_main')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error || !data || !data.length) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = '';
+
+    track.innerHTML = data.map((b, i) => {
+      const href = b.link_url || '#';
+      const target = b.link_url ? ' target="_blank" rel="noopener"' : '';
+      const cta = b.cta_text
+        ? `<a href="${escapeHtml(href)}" class="hmb-cta"${target}>${escapeHtml(b.cta_text)} <span>→</span></a>`
+        : '';
+      const overlay = (b.title || b.subtitle || b.cta_text)
+        ? `<div class="hmb-overlay">
+             ${b.title ? `<h2 class="hmb-title">${escapeHtml(b.title)}</h2>` : ''}
+             ${b.subtitle ? `<p class="hmb-subtitle">${escapeHtml(b.subtitle)}</p>` : ''}
+             ${cta}
+           </div>`
+        : '';
+      return `<div class="hmb-slide${i === 0 ? ' on' : ''}" data-idx="${i}">
+        ${b.image_url ? `<img src="${escapeHtml(b.image_url)}" alt="${escapeHtml(b.title || '')}">` : ''}
+        ${overlay}
+      </div>`;
+    }).join('');
+
+    if (data.length > 1) {
+      dots.innerHTML = data.map((_, i) =>
+        `<button class="hmb-dot${i === 0 ? ' on' : ''}" data-idx="${i}" aria-label="第 ${i+1} 張"></button>`
+      ).join('');
+
+      let current = 0;
+      const slides = track.querySelectorAll('.hmb-slide');
+      const dotBtns = dots.querySelectorAll('.hmb-dot');
+
+      function goTo(idx) {
+        current = (idx + slides.length) % slides.length;
+        slides.forEach((s, i) => s.classList.toggle('on', i === current));
+        dotBtns.forEach((d, i) => d.classList.toggle('on', i === current));
+      }
+
+      dotBtns.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+
+      // 自動輪播
+      setInterval(() => goTo(current + 1), 5000);
+    } else {
+      dots.innerHTML = '';
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     loadHomepageCards();
     bindScrollButtons();
+    loadHomeMainBanner();
   });
 })();
 
