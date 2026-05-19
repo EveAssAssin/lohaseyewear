@@ -35,6 +35,7 @@
         .from('collabs')
         .select('*')
         .in('status', ['active', 'upcoming', 'ended'])
+        .or('is_locked.is.null,is_locked.eq.false')  // 排除範例
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 

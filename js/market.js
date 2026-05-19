@@ -143,6 +143,7 @@
       .from('collabs')
       .select('id, slug, brand_name, hero_title, hero_subtitle, hero_image_url, lifecycle_status, status, sort_order')
       .in('status', ['active', 'upcoming'])
+      .or('is_locked.is.null,is_locked.eq.false')
       .order('sort_order', { ascending: true });
 
     if(error){ console.warn('[market] collabs 讀取失敗', error); State.collabs = []; }
@@ -154,6 +155,7 @@
       .select('id, slug, brand_name, hero_title, hero_image_url, creator_name, lifecycle_status, status, sort_order')
       .neq('status', 'draft')
       .neq('status', 'archived')
+      .or('is_locked.is.null,is_locked.eq.false')
       .order('sort_order', { ascending: true });
 
     if(allResp.error){ console.warn('[market] all collabs 讀取失敗', allResp.error); State.allCollabs = []; }
