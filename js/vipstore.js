@@ -270,37 +270,47 @@
 
     dom.list.innerHTML = state.filtered.map((u, i) => {
       const isActive = String(u.id) === String(state.activeUnitId);
+      const palette  = `p${(i % 8) + 1}`;  /* p1 ~ p8 漸層循環 */
 
-      const imgStyle = u.imgUrl
-        ? `style="background-image:url('${escapeAttr(u.imgUrl)}')"`
-        : `style="background:${gradientFor(i)}"`;
+      /* 圖區內容: 有 logo 就放 logo,沒則放類別 icon 大字 */
+      const catIcon = CAT_ICONS[u.categoryName] || CAT_ICONS.default;
+      const imgContent = u.imgUrl
+        ? `<img src="${escapeAttr(u.imgUrl)}" alt="${escapeAttr(u.name)} logo">`
+        : `<i class="fa-solid ${catIcon} vs-place-cat-icon"></i>`;
 
       /* 距離資訊 */
       let distLine = "";
       if (state.userPos) {
         const d = ssApi.nearestStoreDistance(u, state.userPos.lat, state.userPos.lng);
         if (d != null) {
-          distLine = `<span class="vs-place-dist">最近合作門市 ${d.toFixed(1)} km</span>`;
+          distLine = `<span class="vs-place-dist"><i class="fa-solid fa-location-dot"></i> ${d.toFixed(1)} km</span>`;
         }
       }
 
       /* 合作門市數 */
       const storeCount = (u.boundStores || []).length;
       const storeLine = storeCount
-        ? `<span class="vs-place-stores"><i class="fa-solid fa-store"></i> ${storeCount} 間合作門市</span>`
-        : `<span class="vs-place-stores vs-place-stores--all"><i class="fa-solid fa-globe"></i> 全門市通用</span>`;
+        ? `<span><i class="fa-solid fa-store"></i> ${storeCount} 間合作門市</span>`
+        : `<span><i class="fa-solid fa-globe"></i> 全門市通用</span>`;
 
       return `
-        <article class="vs-place ${isActive ? 'is-active' : ''}" data-unit-id="${escapeAttr(u.id)}">
-          <div class="vs-place-img" ${imgStyle}>
-            <span class="vs-place-badge">${escapeHtml(u.categoryName || '特約優惠')}</span>
-            <i class="fa-regular fa-heart vs-place-fav" data-action="fav"></i>
+        <article class="vs-place ${palette} ${isActive ? 'is-active' : ''}" data-unit-id="${escapeAttr(u.id)}">
+          <div class="vs-place-img">
+            ${u.categoryName ? `<span class="vs-place-badge">${escapeHtml(u.categoryName)}</span>` : ""}
+            <button type="button" class="vs-place-fav" data-action="fav" aria-label="收藏">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+            ${imgContent}
           </div>
-          <h3 class="vs-place-name">${escapeHtml(u.name)}</h3>
-          ${u.intro ? `<p class="vs-place-intro">${escapeHtml(u.intro)}</p>` : ""}
-          <div class="vs-place-meta">
-            ${storeLine}
-            ${distLine}
+          <div class="vs-place-info">
+            <div class="vs-place-row1">
+              <h3 class="vs-place-name">${escapeHtml(u.name)}</h3>
+            </div>
+            ${u.intro ? `<p class="vs-place-intro">${escapeHtml(u.intro)}</p>` : ""}
+            <div class="vs-place-meta">
+              ${storeLine}
+              ${distLine}
+            </div>
           </div>
         </article>
       `;
@@ -504,21 +514,6 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function escapeAttr(s) { return escapeHtml(s); }
-
-  /* 列表卡片無圖時的漸層池（呼應 LOHAS 配色暖棕系） */
-  const GRADIENTS = [
-    "linear-gradient(135deg,#E8DED1,#CDBEA2)",
-    "linear-gradient(135deg,#D4C5A8,#A89378)",
-    "linear-gradient(135deg,#EFE9F5,#C9B8DC)",
-    "linear-gradient(135deg,#F0E1D4,#C9A076)",
-    "linear-gradient(135deg,#D9D2C5,#9B8C77)",
-    "linear-gradient(135deg,#F4F1EC,#CDBEA2)",
-    "linear-gradient(135deg,#E0D4C2,#8A7558)",
-    "linear-gradient(135deg,#EDE3D3,#B59E7E)"
-  ];
-  function gradientFor(i) {
-    return GRADIENTS[i % GRADIENTS.length];
-  }
 
   /* === Mock 假資料（USE_MOCK=true 才用） ===
      門市座標取自 store-data.js 的旗艦店 erpid */
