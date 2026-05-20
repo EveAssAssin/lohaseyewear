@@ -323,7 +323,7 @@
 }
 
 /* 區塊五：FAQ */
-.engraving-faq { padding: 60px 0 80px; background: var(--bg-warm); }
+.engraving-faq { padding: 60px 0 80px; background: #fff; }
 .faq-container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
 .faq-item { margin-bottom: 30px; border-bottom: 1px solid #eaeaea; padding-bottom: 20px; }
 .faq-item h4 { color: var(--lohas-brand); margin-bottom: 12px; font-size: 18px; }

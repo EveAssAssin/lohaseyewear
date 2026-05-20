@@ -1232,3 +1232,8 @@ main{
   display:inline;
 }
 
+
+/* ===== 上傳區 CTA 背景改白 (覆寫 .lohas-cta 預設米色) ===== */
+#upload-area.lohas-cta{
+  background:#fff;
+}
