@@ -474,10 +474,14 @@
     const s = storeData.findStoreByErpid(state.allStores, erpid);
     if (!s) return;
     if (action === "navigate") {
-      const q = encodeURIComponent(s.address);
-      const url = s.lat && s.lng
-        ? `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`
-        : `https://www.google.com/maps/search/?api=1&query=${q}`;
+      /* 優先用 store-data 算好的 googleMapsUrl(有 cid 走商家頁,否則店名+地址搜尋) */
+      let url = s.googleMapsUrl;
+      if (!url) {
+        const q = encodeURIComponent(((s.name || "") + " " + (s.address || "")).trim());
+        url = s.lat && s.lng
+          ? `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`
+          : `https://www.google.com/maps/search/?api=1&query=${q}`;
+      }
       window.open(url, "_blank");
     } else if (action === "book") {
       window.location.href = `store.html?erpid=${encodeURIComponent(s.erpid)}#staff`;

@@ -772,10 +772,15 @@
   }
 
   function openNavigation(s) {
-    const q = encodeURIComponent(s.address);
-    const url = s.lat && s.lng
-      ? `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${q}`;
+    /* 優先用 store-data 算好的 googleMapsUrl(有 cid 走商家頁,沒 cid 走店名+地址搜尋)
+       fallback 處理舊資料或缺欄位的情況 */
+    let url = s.googleMapsUrl;
+    if (!url) {
+      const q = encodeURIComponent(((s.name || "") + " " + (s.address || "")).trim());
+      url = s.lat && s.lng
+        ? `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`
+        : `https://www.google.com/maps/search/?api=1&query=${q}`;
+    }
     window.open(url, "_blank");
   }
 

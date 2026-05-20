@@ -66,6 +66,74 @@
     return SLOGAN_FALLBACKS[storeName] || "";
   }
 
+  /* === Google Maps 商家 CID 對照表 ===
+     用法：填 cid(從 Google Maps iframe URL 取出,後段 16 進位轉 10 進位)
+     有 cid → 連結會直接打開該店的 Google 商家頁面(含照片、評論、評分)
+     沒填的店 → fallback 用「店名+地址」搜尋(精度比座標好)
+
+     如何取 cid：
+       1. Google Maps 找到店家 → 右上角分享 → 「嵌入地圖」→ 複製 iframe HTML
+       2. iframe URL 裡找到 !1s0xXXX:0xYYY 這段,0xYYY 就是 16 進位 cid
+       3. 用 parseInt("0xYYY", 16) 或 BigInt("0xYYY").toString() 轉成 10 進位
+     參考工具:https://www.findcid.com/ */
+  const STORE_CID_MAP = {
+    "高雄高美店":    "12320247946653000025",
+    "文化店":        "17053334741302631708",
+    "高雄新左營店":  "4841597431479412955",
+    "鼎山店":        "4899431815704409012",
+    "高雄文山店":    "9123924423165508500",
+    "熱河店":        "8107749224275590911",
+    "高應大店":      "3340253409062500047",
+    "高雄南京店":    "4704397589067798787"
+    /* TODO:其餘分店待補 */
+  };
+
+  /* 店名 normalize:後台店名可能寫「高雄高美店 / 高美店 / 高美旗艦店」,
+     比對 CID_MAP 時先去掉常見前綴/後綴 noise,再做包含關係 match */
+  function normalizeStoreNameForMatch(name) {
+    if (!name) return "";
+    return String(name)
+      .trim()
+      .replace(/^LOHAS\s*/i, "")
+      .replace(/^樂活眼鏡\s*/, "")
+      .replace(/旗艦店?$/, "店")
+      .replace(/\s+/g, "");
+  }
+
+  function getStoreCid(storeName) {
+    if (!storeName) return "";
+    /* 1. 完全比對 */
+    if (STORE_CID_MAP[storeName]) return STORE_CID_MAP[storeName];
+    /* 2. normalize 後比對(雙向包含) */
+    const target = normalizeStoreNameForMatch(storeName);
+    for (const key in STORE_CID_MAP) {
+      const k = normalizeStoreNameForMatch(key);
+      if (k === target || target.includes(k) || k.includes(target)) {
+        return STORE_CID_MAP[key];
+      }
+    }
+    return "";
+  }
+
+  /* 產生該店的 Google Maps 連結:
+     有 cid → 直接打開商家頁面(showing photos/reviews/rating)
+     沒 cid → fallback「店名+地址」搜尋(比座標精準) */
+  function buildGoogleMapsUrl(storeName, address, lat, lng) {
+    const cid = getStoreCid(storeName);
+    if (cid) {
+      return "https://www.google.com/maps?cid=" + cid;
+    }
+    const q = encodeURIComponent(
+      ((storeName || "") + " " + (address || "")).trim()
+    );
+    if (q) return "https://www.google.com/maps/search/?api=1&query=" + q;
+    /* 最後 fallback:座標 */
+    if (lat && lng) {
+      return "https://www.google.com/maps/search/?api=1&query=" + lat + "," + lng;
+    }
+    return "";
+  }
+
   /* === 把 API getstoredatas 回傳的原始 store 物件正規化 ===
      輸出乾淨的 Store 物件 */
   function normalizeStore(raw) {
@@ -93,6 +161,12 @@
       region,                            // { key, order, label }
       lat: parseFloat(raw.latitude) || null,
       lng: parseFloat(raw.longitude) || null,
+      googleMapsUrl: buildGoogleMapsUrl(
+        raw.name,
+        raw.address,
+        parseFloat(raw.latitude) || null,
+        parseFloat(raw.longitude) || null
+      ),
 
       // 排序與標籤
       sort: parseInt(raw.sort, 10) || 0,
