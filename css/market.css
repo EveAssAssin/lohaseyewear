@@ -670,58 +670,6 @@
   flex-shrink:0;
 }
 
-/* 雙 CTA */
-.cm .join-cta-row{
-  display:flex;
-  gap:12px;
-  justify-content:center;
-  align-items:center;
-  flex-wrap:wrap;
-}
-.cm .join-btn{
-  background:var(--lohas-brand);
-  color:#fff;
-  border:0;
-  padding:16px 44px;
-  border-radius:var(--r-pill);
-  font-family:inherit;
-  font-size:14px;
-  font-weight:600;
-  letter-spacing:1.5px;
-  cursor:pointer;
-  transition:all .2s;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-}
-.cm .join-btn:hover{
-  background:var(--lohas-hover);
-  transform:translateY(-1px);
-}
-.cm .join-btn-line{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  font-size:12px;
-  color:var(--lohas-brand);
-  letter-spacing:1px;
-  font-weight:600;
-  padding:14px 22px;
-  border:1px solid var(--lohas-light);
-  border-radius:var(--r-pill);
-  background:#fff;
-  text-decoration:none;
-  transition:all .2s;
-}
-.cm .join-btn-line i{ font-size:12px }
-.cm .join-btn-line i.fa-arrow-right{ font-size:10px }
-.cm .join-btn-line:hover{
-  border-color:var(--lohas-brand);
-  background:var(--lohas-brand);
-  color:#fff;
-}
-
 
 /* === Modal 詳情視窗 === */
 .cm .ovl{
@@ -1232,9 +1180,6 @@
   .cm .kpi-label{ font-size:9px; letter-spacing:1.2px; white-space:nowrap }
   .cm .kpi-divider{ display:none }
 
-  .cm .join-cta-row{ flex-direction:column; gap:10px }
-  .cm .join-btn{ width:100%; padding:14px 24px; font-size:13px }
-  .cm .join-btn-line{ width:100%; justify-content:center; padding:12px 18px }
 
   /* 手機浮鈕 - 縮小成圓形,藏文字 */
   .cm .scroll-to-join{

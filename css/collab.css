@@ -153,40 +153,6 @@
   margin-top: 8px;
 }
 
-/* CTA */
-.cb-cta-row {
-  display: flex;
-  gap: 14px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.cb-cta-p, .cb-cta-g {
-  display: inline-block;
-  padding: 16px 40px;
-  font-family: inherit;
-  font-size: 13px;
-  letter-spacing: 3px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: opacity .2s;
-}
-.cb-cta-p {
-  background: var(--cb-primary);
-  color: var(--cb-bg);
-  border: 0;
-}
-.cb-cta-p:hover { opacity: .85; }
-.cb-cta-g {
-  background: transparent;
-  color: var(--cb-primary);
-  border: 0.5px solid var(--cb-primary);
-  padding: 15px 32px;
-  letter-spacing: 2px;
-}
-.cb-cta-g:hover {
-  background: color-mix(in srgb, var(--cb-primary) 8%, transparent);
-}
-
 /* ====== Meta bar ====== */
 .cb-meta-bar {
   padding: 22px 32px;
@@ -472,61 +438,6 @@
   letter-spacing: 2px;
 }
 
-/* ====== Bottom CTA ====== */
-.cb-cta-bottom {
-  padding: 80px 32px;
-  text-align: center;
-  background: var(--cb-primary);
-  color: var(--cb-bg);
-}
-.cb-cta-inner {
-  max-width: 720px;
-  margin: 0 auto;
-}
-.cb-cta-eb {
-  font-size: 10px;
-  letter-spacing: 6px;
-  color: var(--cb-accent);
-  margin-bottom: 16px;
-}
-.cb-cta-bottom h2 {
-  font-size: 36px;
-  font-weight: 400;
-  margin: 0 0 18px;
-  letter-spacing: 2px;
-}
-.cb-cta-bottom p {
-  font-size: 14px;
-  color: var(--cb-accent);
-  margin: 0 0 34px;
-  line-height: 2;
-}
-.cb-cta-btns {
-  display: flex;
-  gap: 14px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.cb-cta-b {
-  padding: 16px 44px;
-  background: transparent;
-  border: 0.5px solid var(--cb-bg);
-  color: var(--cb-bg);
-  font-size: 13px;
-  letter-spacing: 3px;
-  font-family: inherit;
-  cursor: pointer;
-  text-decoration: none;
-  transition: opacity .2s;
-}
-.cb-cta-b.solid {
-  background: var(--cb-bg);
-  color: var(--cb-primary);
-}
-.cb-cta-b:hover {
-  opacity: .85;
-}
-
 /* ====== Alert toast ====== */
 .cb-alert {
   position: fixed;
@@ -560,12 +471,6 @@
   .cb-ct-num { font-size: 22px; }
   .cb-ct-lab { font-size: 8px; letter-spacing: 2px; }
 
-  .cb-cta-p, .cb-cta-g {
-    padding: 13px 28px;
-    font-size: 12px;
-    letter-spacing: 2px;
-  }
-
   .cb-meta-bar {
     padding: 18px 20px;
     gap: 16px 0;
@@ -593,8 +498,4 @@
   .cb-iv-av { margin: 0 auto; }
 
   .cb-gal-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-
-  .cb-cta-bottom { padding: 56px 20px; }
-  .cb-cta-bottom h2 { font-size: 26px; }
-  .cb-cta-b { padding: 13px 32px; font-size: 12px; letter-spacing: 2px; }
 }
