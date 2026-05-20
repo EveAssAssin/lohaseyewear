@@ -146,7 +146,12 @@
   }
 
   /* === 載入資料 ===
-     兩支 API 並行打，任一失敗都不會卡住另一邊 */
+     兩支 API 並行打，任一失敗都不會卡住另一邊
+     -----
+     B 方案說明:
+     API 23 (getUnitList) 不回類別,所以列表畫完後,
+     對每筆 unit 並行打 API 25 (getAppointedUnitByCode) 補類別。
+     用 throttle 限制並發數,避免一次打太多 request。 */
   async function loadAll() {
     showLoading();
 
@@ -187,13 +192,88 @@
     const units = unitsRaw.map(ssApi.normalizeUnit).filter(Boolean);
     state.units = ssApi.attachBoundStores(units, state.stores);
 
-    /* 渲染 */
+    /* 先渲染一次:列表會出來,但類別還沒 */
     renderCategories();
     renderStoreMarkers();
     refresh();
 
     /* 更新總計 */
     if (dom.totalCount) dom.totalCount.textContent = state.units.length;
+
+    /* === B 方案:背景補類別,完成後重新渲染 === */
+    if (!USE_MOCK) {
+      enrichCategoriesInBackground();
+    }
+  }
+
+  /* === 背景補類別 (B 方案 - 改良版) ===
+     策略: 不對 1075 筆店家各打一次 API 25,改用 category_id 反查
+     -----
+     1. 試 category_id 1~30,每個拿回該類別全部店家
+     2. 建 unit_name → {categoryId, categoryName} 對照表
+     3. 套回 state.units 補上類別
+     -----
+     優點:從 1075 次 request 降到 ~30 次
+     並發數限制為 5 以免被擋 */
+  async function enrichCategoriesInBackground() {
+    const targets = state.units.filter(u => u.name && !u.categoryName);
+    if (!targets.length) return;
+
+    console.log(`[vipstore] 背景補類別 ${targets.length} 筆,改用 category_id 反查...`);
+
+    /* 試所有可能的 category_id (1~30) */
+    const MAX_CAT = 30;
+    const CONCURRENCY = 5;
+    const nameToCategory = new Map();   // unit_name → {id, name}
+    let foundCategories = 0;
+
+    let cursor = 1;
+    async function worker() {
+      while (cursor <= MAX_CAT) {
+        const catId = cursor++;
+        try {
+          const r = await ssApi.getAppointedUnitByCode({
+            category_id: String(catId)
+          });
+          /* API 25 回的是陣列 */
+          const list = Array.isArray(r) ? r : (r ? [r] : []);
+          if (!list.length) continue;
+
+          foundCategories++;
+          list.forEach(item => {
+            if (item && item.unit_name) {
+              nameToCategory.set(item.unit_name, {
+                id:   String(item.category_id || catId),
+                name: item.category_name || ""
+              });
+            }
+          });
+        } catch (e) {
+          /* 該 category_id 沒資料,跳過 */
+        }
+      }
+    }
+
+    const workers = Array.from({ length: CONCURRENCY }, () => worker());
+    await Promise.all(workers);
+
+    /* 套對照表到 state.units */
+    let updated = 0;
+    state.units.forEach(u => {
+      const cat = nameToCategory.get(u.name);
+      if (cat) {
+        u.categoryId   = cat.id;
+        u.categoryName = cat.name;
+        updated++;
+      }
+    });
+
+    console.log(`[vipstore] 補類別完成: 找到 ${foundCategories} 個類別、${nameToCategory.size} 筆對照,套用 ${updated}/${targets.length} 筆店家`);
+
+    if (updated > 0) {
+      renderCategories();
+      renderList();
+    }
   }
 
   function showLoading() {
