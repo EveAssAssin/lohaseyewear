@@ -56,9 +56,14 @@
   }
 
   /* === HTTP POST → Supabase Edge Function ===
-     payload 用明文，BFF 會自動加密該加密的欄位 */
-  async function post(_host, payload) {
+     payload 用明文，BFF 會自動加密該加密的欄位
+     host 透過 x-lohas-host header 傳遞,讓 BFF 知道要轉發到哪個系統:
+       "map"    → map.lohasglasses.com (左手 API)
+       "sodian" → lohas.realtime.tw (即時互動／搜點子 API)
+     預設為 "map" 以維持舊呼叫相容性 */
+  async function post(host, payload) {
     const method = payload && payload.method;
+    const targetHost = host || "map";
     let response;
 
     try {
@@ -68,7 +73,8 @@
           "Content-Type": "application/json; charset=utf-8",
           "Authorization": "Bearer " + CONFIG.supabaseAnonKey,
           "apikey": CONFIG.supabaseAnonKey,
-          "x-lohas-mode": getMode()
+          "x-lohas-mode": getMode(),
+          "x-lohas-host": targetHost
         },
         body: JSON.stringify(payload)
       });
