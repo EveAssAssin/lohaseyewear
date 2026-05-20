@@ -31,9 +31,11 @@
   };
 
   /* === Mode 切換：test / prod ===
-     透過 header x-lohas-mode 傳給 BFF */
+     透過 header x-lohas-mode 傳給 BFF
+     預設 prod (一般訪客看到的是正式環境資料);
+     開發者可在 console 或 mode switcher 切到 test */
   function getMode() {
-    return localStorage.getItem("lohas_api_mode") || "test";
+    return localStorage.getItem("lohas_api_mode") || "prod";
   }
   function setMode(mode) {
     if (mode !== "prod" && mode !== "test") {
