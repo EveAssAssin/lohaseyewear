@@ -275,3 +275,172 @@
     max-height:92vh;
   }
 }
+
+/* =============================================
+   全站統一 CTA Block
+   --------------------------------------------
+   兩種範式:
+   .lohas-cta--apple  純文字置中 (極簡聚焦)
+   .lohas-cta--muji   雙欄圖文 (情境敘事)
+
+   通用結構:
+   <section class="lohas-cta lohas-cta--apple">
+     <div class="lohas-cta-inner">
+       <span class="lohas-cta-eb">ENGRAVED FOR YOU</span>
+       <h2 class="lohas-cta-title">...</h2>
+       <p class="lohas-cta-desc">...</p>
+       <div class="lohas-cta-btns">
+         <a class="lohas-cta-btn lohas-cta-btn--solid">...</a>
+         <a class="lohas-cta-btn lohas-cta-btn--ghost">...</a>
+       </div>
+     </div>
+   </section>
+   ============================================= */
+
+.lohas-cta{
+  width:100%;
+  background:var(--bg-warm);
+  padding:96px 24px;
+}
+.lohas-cta-inner{
+  max-width:1100px;
+  margin:0 auto;
+}
+
+/* ---- 共用文字元素 ---- */
+.lohas-cta-eb{
+  display:inline-block;
+  font-size:11px;
+  letter-spacing:4px;
+  color:var(--text-muted);
+  font-weight:500;
+  margin-bottom:18px;
+  text-transform:uppercase;
+}
+.lohas-cta-title{
+  font-size:34px;
+  font-weight:500;
+  color:var(--text-main);
+  line-height:1.35;
+  margin:0 0 16px;
+  letter-spacing:1px;
+}
+.lohas-cta-desc{
+  font-size:15px;
+  color:var(--text-sub);
+  line-height:1.85;
+  margin:0 0 36px;
+  letter-spacing:0.5px;
+}
+
+/* ---- 按鈕 ---- */
+.lohas-cta-btns{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.lohas-cta-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-width:200px;
+  padding:16px 38px;
+  font-size:14px;
+  font-weight:500;
+  letter-spacing:2px;
+  border-radius:var(--r-pill);
+  text-decoration:none;
+  border:1px solid transparent;
+  transition:all .25s ease;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.lohas-cta-btn--solid{
+  background:var(--lohas-brand);
+  color:#fff;
+  border-color:var(--lohas-brand);
+}
+.lohas-cta-btn--solid:hover{
+  background:var(--lohas-hover);
+  border-color:var(--lohas-hover);
+  transform:translateY(-1px);
+}
+.lohas-cta-btn--ghost{
+  background:transparent;
+  color:var(--lohas-brand);
+  border-color:var(--lohas-brand);
+}
+.lohas-cta-btn--ghost:hover{
+  background:var(--lohas-brand);
+  color:#fff;
+}
+.lohas-cta-btn i{font-size:13px}
+
+/* ============ Apple 式 · 純文字置中 ============ */
+.lohas-cta--apple .lohas-cta-inner{
+  max-width:680px;
+  text-align:center;
+}
+.lohas-cta--apple .lohas-cta-btns{
+  justify-content:center;
+}
+
+/* ============ Muji 式 · 雙欄圖文 ============ */
+.lohas-cta--muji{
+  padding:0;
+  background:var(--bg-soft);
+}
+.lohas-cta--muji .lohas-cta-inner{
+  max-width:none;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:stretch;
+  min-height:480px;
+}
+.lohas-cta-media{
+  overflow:hidden;
+}
+.lohas-cta-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.lohas-cta-body{
+  padding:80px 72px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.lohas-cta--muji .lohas-cta-title{
+  font-size:30px;
+}
+
+/* ============ 響應式 ============ */
+@media (max-width:768px){
+  .lohas-cta{padding:64px 20px}
+  .lohas-cta-title{font-size:24px;letter-spacing:0.5px}
+  .lohas-cta-desc{font-size:14px;margin-bottom:28px}
+  .lohas-cta-eb{font-size:10px;letter-spacing:3px;margin-bottom:14px}
+  .lohas-cta-btn{
+    min-width:auto;
+    width:100%;
+    padding:14px 24px;
+    font-size:13px;
+  }
+  .lohas-cta-btns{width:100%}
+
+  /* Muji 式手機版改上下堆疊 */
+  .lohas-cta--muji .lohas-cta-inner{
+    grid-template-columns:1fr;
+    min-height:auto;
+  }
+  .lohas-cta-media{
+    aspect-ratio:16/10;
+  }
+  .lohas-cta-body{
+    padding:48px 24px;
+  }
+  .lohas-cta--muji .lohas-cta-title{font-size:24px}
+}
