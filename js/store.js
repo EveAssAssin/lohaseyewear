@@ -176,12 +176,13 @@
     /* 為每位員工發起 2 支並行請求(detail + evaluation),共 2N 個 request 一起發 */
     const requests = realEmployees.map(e => ({
       emp: e,
-      detail: storeApi.getEmployeeDetail(e.erpid, 0),       // detail 不再要評價(amount=0)
-      evals:  storeApi.getEvaluationByEmployee(e.erpid, 500) // 評價 API 拉到 500(API 端會 cap)
+      detail: storeApi.getEmployeeDetail(e.erpid, 10),      // detail 用 amount=10 (避免 API 因 amount=0 整支失敗)
+      evals:  storeApi.getEvaluationByEmployee(e.erpid, 500) // 評價清單獨立打,可拉到大量
     }));
 
     await Promise.all(requests.map(async (r) => {
-      /* detail:介紹、照片、榮譽 */
+      /* detail:介紹、照片、榮譽 + 內建 evaluations(備案) */
+      let detailEvals = null;
       try {
         const dRes = await r.detail;
         const detail = storeData.normalizeEmployeeDetail(dRes);
@@ -189,19 +190,41 @@
           r.emp.introduction = detail.introduction || r.emp.introduction;
           r.emp.photos = detail.photos && detail.photos.length > 0 ? detail.photos : r.emp.photos;
           r.emp.honors = detail.honors && detail.honors.length > 0 ? detail.honors : r.emp.honors;
+          /* detail 內附的評論先存著,新 API 失敗時用 */
+          if (detail.evaluationList && detail.evaluationList.length > 0) {
+            detailEvals = {
+              averageScore: detail.averageScore,
+              evaluationList: detail.evaluationList
+            };
+          }
         }
       } catch (e) {
         console.warn("[store] detail 失敗", r.emp.name, e);
       }
-      /* evaluation:真實評論清單 + 平均分 */
+      /* evaluation:真實評論清單 + 平均分(新 API 為主) */
       try {
         const eRes = await r.evals;
         const evals = storeData.normalizeEvaluationResponse(eRes);
-        r.emp.averageScore = evals.averageScore;
-        r.emp.evaluationList = evals.evaluationList;
+        if (evals.evaluationList && evals.evaluationList.length > 0) {
+          r.emp.averageScore = evals.averageScore;
+          r.emp.evaluationList = evals.evaluationList;
+        } else if (detailEvals) {
+          /* 新 API 回空陣列 → fallback 到 detail 內附的評論 */
+          console.info("[store] evaluation 新 API 回空,用 detail 內附評論 fallback", r.emp.name);
+          r.emp.averageScore = detailEvals.averageScore;
+          r.emp.evaluationList = detailEvals.evaluationList;
+        } else {
+          r.emp.evaluationList = [];
+        }
       } catch (e) {
-        console.warn("[store] evaluation 失敗", r.emp.name, e);
-        r.emp.evaluationList = r.emp.evaluationList || [];
+        /* 新 API 失敗(BFF 不支援 rsv host 或網路錯)→ fallback */
+        console.warn("[store] evaluation 失敗,fallback 到 detail 內附評論", r.emp.name, e);
+        if (detailEvals) {
+          r.emp.averageScore = detailEvals.averageScore;
+          r.emp.evaluationList = detailEvals.evaluationList;
+        } else {
+          r.emp.evaluationList = r.emp.evaluationList || [];
+        }
       }
     }));
 
