@@ -623,29 +623,39 @@
   .vs-cats { gap: 20px; }
   .vs-chip i { font-size: 20px; }
 
-  .vs-layout {
-    flex-direction: column-reverse;
-    height: calc(100vh - 60px - 130px);
+  /* === 手機版 layout: browse / map 各自全屏 === */
+  .vs-layout[data-view="browse"] {
+    display: block;
+    height: auto;
+    min-height: calc(100vh - 60px - 138px);
+  }
+  .vs-layout[data-view="map"] {
+    display: block;
+    height: calc(100vh - 60px - 138px);
+    min-height: 500px;
+  }
+
+  /* 地圖 view 內部:單欄,先列表後地圖切換用 */
+  .vs-map-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
   }
   .vs-list-panel,
   .vs-map-panel {
-    flex: none;
+    flex: 1;
     width: 100%;
-    height: 50%;
+    height: 100%;
   }
-  .vs-list-panel {
-    padding: 20px 16px 80px;
-  }
+  /* 手機地圖 view 直接顯示地圖 (預設,因為使用者切到地圖通常想看地圖) */
+  .vs-map-view .vs-list-panel { display: none; }
+
   .vs-list { grid-template-columns: repeat(2, 1fr); gap: 16px 12px; }
   .vs-list-title { font-size: 18px; }
   .vs-place-name { font-size: 14px; }
 
-  /* 手機切換 list/map 全屏顯示 */
-  .vs-layout.show-list .vs-map-panel { display: none; }
-  .vs-layout.show-list .vs-list-panel { height: 100%; }
-  .vs-layout.show-map .vs-list-panel { display: none; }
-  .vs-layout.show-map .vs-map-panel { height: 100%; }
-
+  /* 底部 tabs 顯示 */
   .vs-view-tabs { display: block; }
 
   .vs-pin-card {
@@ -653,4 +663,387 @@
     left: 12px;
     width: auto;
   }
+}
+
+/* =============================================
+   View Switch (browse / map)
+   ============================================= */
+.vs-view-switch {
+  display: inline-flex;
+  background: var(--bg-soft);
+  border-radius: var(--r-pill);
+  padding: 3px;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+.vs-view-btn {
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  color: var(--text-sub);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
+}
+.vs-view-btn:hover {
+  color: var(--text-main);
+}
+.vs-view-btn.is-active {
+  background: #fff;
+  color: var(--lohas-brand);
+  box-shadow: 0 1px 3px rgba(80, 66, 45, 0.12);
+}
+.vs-view-btn i { font-size: 11px; }
+
+/* === Layout view 切換邏輯 === */
+.vs-layout[data-view="browse"] .vs-map-view { display: none; }
+.vs-layout[data-view="map"]    .vs-browse   { display: none; }
+.vs-layout[data-view="browse"] {
+  display: block;
+  height: auto;
+  min-height: calc(100vh - 70px - 138px);
+}
+
+/* =============================================
+   Browse View (列表瀏覽,類別分區 + 橫向滑卡)
+   ============================================= */
+.vs-browse {
+  background: #fff;
+  padding-bottom: 80px;
+}
+.vs-browse-inner {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 32px;
+}
+.vs-browse-loading {
+  padding: 80px 20px;
+  text-align: center;
+}
+
+/* 單一類別 section */
+.vs-sec {
+  margin-bottom: 44px;
+}
+.vs-sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 16px;
+  padding: 0 2px;
+  gap: 16px;
+}
+.vs-sec-l {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.vs-sec-eb {
+  font-size: 11px;
+  letter-spacing: 2.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.vs-sec-h {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.2px;
+}
+.vs-sec-cnt {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.vs-sec-more {
+  font-size: 13px;
+  color: var(--lohas-brand);
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 0;
+  white-space: nowrap;
+}
+.vs-sec-more:hover { color: var(--lohas-hover); }
+.vs-sec-more i { font-size: 11px; }
+
+/* 橫向滑卡列 (全部模式) */
+.vs-scroller {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: var(--lohas-light) transparent;
+}
+.vs-scroller::-webkit-scrollbar { height: 6px; }
+.vs-scroller::-webkit-scrollbar-thumb {
+  background: var(--lohas-light);
+  border-radius: var(--r-pill);
+}
+.vs-scroller::-webkit-scrollbar-track { background: transparent; }
+
+.vs-scroller .vs-place {
+  flex: 0 0 200px;
+  scroll-snap-align: start;
+}
+
+/* 大網格 (單一類別模式) */
+.vs-browse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px 16px;
+}
+
+/* 「看更多分類」按鈕 (全部模式下方) */
+.vs-browse-more {
+  display: block;
+  margin: 24px auto 0;
+  background: none;
+  border: 1px solid var(--lohas-bd);
+  color: var(--lohas-brand);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 28px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
+}
+.vs-browse-more:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+
+/* =============================================
+   詳情浮層 (點卡片開啟)
+   ============================================= */
+.vs-detail-ovl {
+  position: fixed;
+  inset: 0;
+  background: rgba(45, 37, 32, 0.55);
+  z-index: var(--z-modal);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.vs-detail-ovl.is-show {
+  display: flex;
+  opacity: 1;
+}
+.vs-detail-modal {
+  background: #fff;
+  border-radius: var(--r-lg);
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: var(--sh-modal);
+  display: flex;
+  flex-direction: column;
+}
+.vs-detail-img {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, #CDBEA2, #765F4A);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.vs-detail-img img {
+  max-width: 60%;
+  max-height: 75%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.2));
+}
+.vs-detail-img .vs-detail-cat-icon {
+  font-size: 64px;
+  color: rgba(255, 255, 255, 0.85);
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.2));
+}
+.vs-detail-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.vs-detail-close:hover {
+  background: #fff;
+  transform: scale(1.05);
+}
+.vs-detail-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--lohas-brand);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  letter-spacing: 0.5px;
+}
+.vs-detail-body {
+  padding: 24px 28px 28px;
+  overflow-y: auto;
+}
+.vs-detail-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
+}
+.vs-detail-code {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+.vs-detail-intro {
+  font-size: 14px;
+  color: var(--text-sub);
+  line-height: 1.7;
+  margin-bottom: 20px;
+  white-space: pre-line;
+}
+.vs-detail-stores {
+  border-top: 1px solid var(--lohas-bd);
+  padding-top: 18px;
+}
+.vs-detail-stores-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.vs-detail-stores-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.vs-detail-store-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-soft);
+  color: var(--text-main);
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--lohas-bd);
+}
+.vs-detail-store-chip i {
+  font-size: 10px;
+  color: var(--lohas-brand);
+}
+.vs-detail-all-stores {
+  background: var(--bg-soft);
+  color: var(--text-sub);
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  text-align: center;
+  letter-spacing: 0.3px;
+  margin-bottom: 20px;
+}
+.vs-detail-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.vs-detail-btn {
+  flex: 1;
+  min-width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--r-pill);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.vs-detail-btn--solid {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+.vs-detail-btn--solid:hover {
+  background: var(--lohas-hover);
+  border-color: var(--lohas-hover);
+}
+.vs-detail-btn--ghost {
+  background: transparent;
+  color: var(--lohas-brand);
+  border-color: var(--lohas-brand);
+}
+.vs-detail-btn--ghost:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+}
+
+/* =============================================
+   RWD: 手機版調整
+   ============================================= */
+@media (max-width: 768px) {
+  .vs-view-switch { display: none; }  /* 手機用底部 tabs */
+
+  .vs-browse-inner { padding: 20px 16px; }
+  .vs-sec { margin-bottom: 32px; }
+  .vs-sec-h { font-size: 17px; }
+  .vs-scroller .vs-place { flex: 0 0 150px; }
+  .vs-browse-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 12px;
+  }
+
+  .vs-detail-ovl { align-items: flex-end; padding: 0; }
+  .vs-detail-modal {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+  .vs-detail-img { height: 160px; }
+  .vs-detail-body { padding: 20px 20px 24px; }
+  .vs-detail-name { font-size: 18px; }
 }
