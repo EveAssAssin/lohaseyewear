@@ -732,6 +732,7 @@
   z-index: var(--z-modal);
   padding: 20px;
   animation: sd-rm-fade-in 0.2s ease;
+  overscroll-behavior: contain;
 }
 @keyframes sd-rm-fade-in {
   from { opacity: 0; }
@@ -908,13 +909,26 @@
   margin-top: 0;
 }
 
+/* 評論列表 body:防止捲到底後把背景頁面也帶動(行動裝置 scroll chaining)*/
+.sd-rm-body {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* 行動裝置適配 */
 @media (max-width: 600px) {
-  .sd-rm-overlay { padding: 0; }
+  .sd-rm-overlay {
+    padding: 0;
+    /* iOS Safari 的 100vh 包含網址列高度,實際可視更小 → 用 dvh(動態 viewport)
+       不支援 dvh 的舊瀏覽器仍 fallback 到 100vh */
+    height: 100vh;
+    height: 100dvh;
+  }
   .sd-rm-dialog {
     max-width: none;
-    max-height: 100vh;
-    height: 100vh;
+    /* dialog 撐滿可視高度,但用 100% 而非 100vh,避免被 overlay padding 二次計算 */
+    max-height: 100%;
+    height: 100%;
     border-radius: 0;
   }
   .sd-rm-head { padding: 14px 16px; gap: 10px; }
