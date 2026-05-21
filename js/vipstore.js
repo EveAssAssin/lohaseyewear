@@ -84,6 +84,10 @@
     dom.mapCount      = document.getElementById("vs-map-count");
     dom.totalCount    = document.getElementById("vsTotalCount");
     dom.listTitle     = document.querySelector(".vs-list-title");
+    /* KPI (手機版顯示) */
+    dom.kpiUnits      = document.getElementById("vsKpiUnits");
+    dom.kpiStores     = document.getElementById("vsKpiStores");
+    dom.kpiCats       = document.getElementById("vsKpiCats");
     /* 新增: browse view 與 view 切換 */
     dom.browse        = document.getElementById("vs-browse");
     dom.browseInner   = document.querySelector("#vs-browse .vs-browse-inner");
@@ -311,6 +315,7 @@
 
     /* 更新總計 */
     if (dom.totalCount) dom.totalCount.textContent = state.units.length;
+    updateKpi();
 
     /* === B 方案:背景補類別,完成後重新渲染 === */
     if (!USE_MOCK) {
@@ -386,6 +391,26 @@
       renderCategories();
       renderList();
       renderBrowse();   /* 新增: browse view 也要重渲染 */
+      updateKpi();      /* 類別數會變,更新 KPI */
+    }
+  }
+
+  /* === 更新手機版 KPI 三指標 === */
+  function updateKpi() {
+    if (dom.kpiUnits) dom.kpiUnits.textContent = state.units.length.toLocaleString();
+    if (dom.kpiStores) {
+      const usedStoreIds = new Set();
+      state.units.forEach(u => {
+        (u.boundStores || []).forEach(s => usedStoreIds.add(s.erpid));
+      });
+      const allStoreCount = state.stores.length;
+      const usedCount = usedStoreIds.size || allStoreCount;
+      dom.kpiStores.textContent = (usedCount >= 30) ? "30+" : usedCount;
+    }
+    if (dom.kpiCats) {
+      const cats = new Set();
+      state.units.forEach(u => { if (u.categoryId) cats.add(String(u.categoryId)); });
+      dom.kpiCats.textContent = cats.size || "--";
     }
   }
 
@@ -577,33 +602,50 @@
       return u.bindStore.map(String).includes(String(erpid));
     });
 
-    /* 渲染 popup */
+    /* 渲染 popup (版本 B: 白底 + 縮圖) */
+    const showCount = Math.min(matched.length, 8);
+    const listHtml = matched.slice(0, showCount).map((u, i) => {
+      const palette = (i % 8) + 1;
+      const catIcon = CAT_ICONS[u.categoryName] || CAT_ICONS.default;
+      return `
+        <li class="vs-pin-card-li" data-unit-id="${escapeAttr(u.id)}">
+          <div class="vs-pin-card-li-l">
+            <div class="vs-pin-card-li-thumb p${palette}">
+              <i class="fa-solid ${catIcon}"></i>
+            </div>
+            <div class="vs-pin-card-li-text">
+              <div class="vs-pin-card-li-name">${escapeHtml(u.name)}</div>
+              <div class="vs-pin-card-li-cat">${escapeHtml(u.categoryName || '未分類')}</div>
+            </div>
+          </div>
+          <i class="vs-pin-card-li-arr fa-solid fa-chevron-right"></i>
+        </li>
+      `;
+    }).join("");
+
     dom.pinCard.innerHTML = `
-      <button class="vs-pin-card-close" data-close>
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-      <div class="vs-pin-card-head">
-        <i class="fa-solid fa-store"></i>
-        <div>
-          <h3>${escapeHtml(store.name)}</h3>
-          <p>${escapeHtml(store.address || "")}</p>
+      <div class="vs-pin-card-h">
+        <div class="vs-pin-card-h-icon">
+          <i class="fa-solid fa-store"></i>
         </div>
+        <div class="vs-pin-card-h-text">
+          <div class="vs-pin-card-h-name">${escapeHtml(store.name)}</div>
+          ${store.address ? `<div class="vs-pin-card-h-addr">${escapeHtml(store.address)}</div>` : ""}
+        </div>
+        <button class="vs-pin-card-close" type="button" data-close aria-label="關閉">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
-      <div class="vs-pin-card-body">
-        <p class="vs-pin-card-title">
-          這間門市可以使用的特約優惠
-          <b>${matched.length}</b> 項
-        </p>
-        <ul class="vs-pin-card-list">
-          ${matched.slice(0, 8).map(u => `
-            <li data-unit-id="${escapeAttr(u.id)}">
-              <span class="vs-pin-card-list-name">${escapeHtml(u.name)}</span>
-              <span class="vs-pin-card-list-cat">${escapeHtml(u.categoryName || '')}</span>
-            </li>
-          `).join("")}
-        </ul>
-        ${matched.length > 8 ? `<p class="vs-pin-card-more">…還有 ${matched.length - 8} 項</p>` : ''}
+      <div class="vs-pin-card-stat">
+        <span class="vs-pin-card-stat-num">${matched.length}</span>
+        <span class="vs-pin-card-stat-lab">項<b>特約優惠</b>可在這裡使用</span>
       </div>
+      <ul class="vs-pin-card-list">${listHtml}</ul>
+      ${matched.length > 8 ? `
+        <div class="vs-pin-card-foot" data-show-all-units="${escapeAttr(erpid)}">
+          查看全部 ${matched.length} 項 <i class="fa-solid fa-arrow-right"></i>
+        </div>
+      ` : ""}
     `;
     dom.pinCard.classList.add("is-show");
 
@@ -613,9 +655,9 @@
       state.activeStoreErpid = null;
     });
 
-    /* 點 list item → 選該店家 */
-    dom.pinCard.querySelectorAll(".vs-pin-card-list li").forEach(li => {
-      li.addEventListener("click", () => selectUnit(li.dataset.unitId));
+    /* 點 list item → 開該店家詳情浮層 */
+    dom.pinCard.querySelectorAll(".vs-pin-card-li").forEach(li => {
+      li.addEventListener("click", () => openDetail(li.dataset.unitId));
     });
   }
 
