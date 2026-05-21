@@ -926,7 +926,7 @@
   }
 
   // ===== 查詢會員 / 升級身份 Modal =====
-  const PROXY_URL = 'https://lohas-proxy.onrender.com/api';
+  const PROXY_URL = 'https://lohas-proxy-nwad.onrender.com/api';
   const PROXY_KEY = 'bfjY2jssj9dDajq0';   // 跟前台 auth.js 共用
 
   // 查到的會員資料暫存
@@ -936,6 +936,8 @@
     const modal = document.getElementById('userAddModal');
     if(!modal) return;
     document.getElementById('uam_mobile').value = '';
+    const erpidInput = document.getElementById('uam_erpid');
+    if(erpidInput) erpidInput.value = '';
     document.getElementById('uam_result').style.display = 'none';
     document.getElementById('uam_error').style.display = 'none';
     const saveB = document.getElementById('uam_saveBtn');
@@ -1045,6 +1047,74 @@
     }
   }
 
+  // 查詢會員編號 (client_id): 打 /proxy/member/list 用 client_id
+  async function searchByErpId(){
+    clearAddError();
+    const erpid = (document.getElementById('uam_erpid').value || '').trim();
+    if(!erpid) return showAddError('請輸入會員編號');
+
+    const searchBtn = document.getElementById('uam_searchErpBtn');
+    searchBtn.disabled = true;
+    const oldText = searchBtn.innerHTML;
+    searchBtn.innerHTML = '查詢中...';
+
+    try {
+      const res = await fetch(`${PROXY_URL}/proxy/member/list`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: {
+            apikey: PROXY_KEY,
+            apiver: '0.1.0',
+            data: { client_id: erpid },
+          },
+        }),
+      });
+
+      if(!res.ok){
+        showAddError(`查詢失敗 (HTTP ${res.status})`);
+        return;
+      }
+
+      const json = await res.json();
+      const code = String(json.code || json.status || '');
+
+      if(code !== '200' && code !== '0'){
+        showAddError('找不到該會員編號。錯誤訊息:' + (json.message || json.errmessage || code || '未知'));
+        return;
+      }
+
+      let memberData = json.data;
+      if(Array.isArray(memberData)) memberData = memberData[0];
+      if(!memberData){
+        showAddError('找不到該會員編號');
+        return;
+      }
+
+      const foundErpid = memberData.client_id || memberData.erpid || memberData.erpId || erpid;
+      const name       = memberData.name || memberData.erpname || memberData.erpName || '';
+      const phone      = memberData.mobile || memberData.phone || '';
+
+      _foundMember = { erpid: String(foundErpid), name, mobile: phone };
+
+      document.getElementById('uam_resultName').textContent = name || '(未知姓名)';
+      document.getElementById('uam_resultMobile').textContent = phone || '—';
+      document.getElementById('uam_resultErpid').textContent = foundErpid;
+      document.getElementById('uam_result').style.display = 'block';
+      const saveB = document.getElementById('uam_saveBtn');
+      saveB.disabled = false;
+      saveB.style.opacity = '1';
+      saveB.style.cursor = 'pointer';
+
+    } catch (err) {
+      console.error('[會員編號查詢失敗]', err);
+      showAddError('查詢失敗,網路錯誤或 proxy 未開啟。錯誤:' + (err.message || err));
+    } finally {
+      searchBtn.disabled = false;
+      searchBtn.innerHTML = oldText;
+    }
+  }
+
   async function saveNewUser(){
     if(!_foundMember){
       return showAddError('請先查詢會員資料');
@@ -1118,6 +1188,14 @@
     const mobileInput = document.getElementById('uam_mobile');
     if(mobileInput) mobileInput.addEventListener('keydown', e => {
       if(e.key === 'Enter'){ e.preventDefault(); searchByMobile(); }
+    });
+
+    // 會員編號查詢
+    const searchErpBtn = document.getElementById('uam_searchErpBtn');
+    if(searchErpBtn) searchErpBtn.addEventListener('click', searchByErpId);
+    const erpidInput = document.getElementById('uam_erpid');
+    if(erpidInput) erpidInput.addEventListener('keydown', e => {
+      if(e.key === 'Enter'){ e.preventDefault(); searchByErpId(); }
     });
 
     const saveBtn = document.getElementById('uam_saveBtn');
