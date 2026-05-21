@@ -925,6 +925,206 @@
     }
   }
 
+  // ===== 查詢會員 / 升級身份 Modal =====
+  const PROXY_URL = 'https://lohas-proxy.onrender.com/api';
+  const PROXY_KEY = 'bfjY2jssj9dDajq0';   // 跟前台 auth.js 共用
+
+  // 查到的會員資料暫存
+  let _foundMember = null;
+
+  function openUserAddModal(){
+    const modal = document.getElementById('userAddModal');
+    if(!modal) return;
+    document.getElementById('uam_mobile').value = '';
+    document.getElementById('uam_result').style.display = 'none';
+    document.getElementById('uam_error').style.display = 'none';
+    document.getElementById('uam_saveBtn').disabled = true;
+    document.querySelector('input[name="uam_role"][value="member"]').checked = true;
+    _foundMember = null;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('uam_mobile').focus(), 100);
+  }
+
+  function closeUserAddModal(){
+    const modal = document.getElementById('userAddModal');
+    if(modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+    _foundMember = null;
+  }
+
+  function showAddError(msg){
+    const el = document.getElementById('uam_error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function clearAddError(){
+    document.getElementById('uam_error').style.display = 'none';
+  }
+
+  // 查詢手機: 試打 /proxy/member/list 用 mobile 作 filter
+  // (若不接受 mobile 參數,fallback 提示)
+  async function searchByMobile(){
+    clearAddError();
+    const mobile = (document.getElementById('uam_mobile').value || '').trim().replace(/\D/g, '');  // 只保留數字
+    if(!mobile) return showAddError('請輸入手機號碼');
+    if(mobile.length < 9) return showAddError('手機號碼格式不正確 (至少 9 碼)');
+
+    const searchBtn = document.getElementById('uam_searchBtn');
+    searchBtn.disabled = true;
+    const oldText = searchBtn.querySelector('span').textContent;
+    searchBtn.querySelector('span').textContent = '查詢中...';
+
+    try {
+      // 嘗試打 proxy: body 內帶 mobile
+      const res = await fetch(`${PROXY_URL}/proxy/member/list`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: {
+            apikey: PROXY_KEY,
+            apiver: '0.1.0',
+            data: { mobile: mobile },
+          },
+        }),
+      });
+
+      if(!res.ok){
+        showAddError(`查詢失敗 (HTTP ${res.status})。可能 proxy 不支援 mobile 篩選,需要請廠商加上。`);
+        return;
+      }
+
+      const json = await res.json();
+      const code = String(json.code || json.status || '');
+
+      if(code !== '200' && code !== '0'){
+        showAddError('找不到該手機號碼的會員。錯誤訊息:' + (json.message || json.errmessage || code || '未知'));
+        return;
+      }
+
+      // 解析資料 - data 可能是物件或陣列
+      let memberData = json.data;
+      if(Array.isArray(memberData)) memberData = memberData[0];
+      if(!memberData){
+        showAddError('找不到該手機號碼的會員');
+        return;
+      }
+
+      // 解析常見欄位
+      const erpid  = memberData.client_id || memberData.erpid || memberData.erpId || '';
+      const name   = memberData.name || memberData.erpname || memberData.erpName || '';
+      const phone  = memberData.mobile || memberData.phone || mobile;
+
+      if(!erpid){
+        showAddError('查詢成功但回傳缺少 ERP ID,請聯絡技術窗口');
+        return;
+      }
+
+      _foundMember = { erpid, name, mobile: phone };
+
+      // 顯示結果
+      document.getElementById('uam_resultName').textContent = name || '(未知姓名)';
+      document.getElementById('uam_resultMobile').textContent = phone;
+      document.getElementById('uam_resultErpid').textContent = erpid;
+      document.getElementById('uam_result').style.display = 'block';
+      document.getElementById('uam_saveBtn').disabled = false;
+
+    } catch (err) {
+      console.error('[手機查詢失敗]', err);
+      showAddError('查詢失敗,網路錯誤或 proxy 未開啟。錯誤:' + (err.message || err));
+    } finally {
+      searchBtn.disabled = false;
+      searchBtn.querySelector('span').textContent = oldText;
+    }
+  }
+
+  async function saveNewUser(){
+    if(!_foundMember){
+      return showAddError('請先查詢會員資料');
+    }
+    const { erpid, name } = _foundMember;
+    const role = document.querySelector('input[name="uam_role"]:checked')?.value || 'member';
+
+    const sb = getSb();
+    if(!sb) return alert('Supabase 連線失敗');
+
+    const saveBtn = document.getElementById('uam_saveBtn');
+    saveBtn.disabled = true;
+    const oldText = saveBtn.querySelector('span').textContent;
+    saveBtn.querySelector('span').textContent = '處理中...';
+
+    try {
+      if(role === 'creator'){
+        const { error } = await sb.from('creator_info').upsert({
+          member_id:    erpid,
+          display_name: name,
+          status:       'active',
+        }, { onConflict: 'member_id' });
+
+        if(error){
+          console.error(error);
+          showAddError('升級失敗:' + error.message);
+          return;
+        }
+        alert(`已將「${name}」升級為 Creator`);
+      } else {
+        const { error } = await sb.from('member_status').upsert({
+          member_id: erpid,
+          status:    'active',
+          reason:    '手動加入:' + name,
+        }, { onConflict: 'member_id' });
+
+        if(error){
+          console.error(error);
+          showAddError('加入失敗:' + error.message);
+          return;
+        }
+        alert(`已加入會員「${name}」`);
+      }
+
+      closeUserAddModal();
+      loadUsers();
+    } catch (err) {
+      console.error(err);
+      showAddError('處理失敗:' + (err.message || err));
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.querySelector('span').textContent = oldText;
+    }
+  }
+
+  // 綁定事件
+  document.addEventListener('DOMContentLoaded', () => {
+    const addBtn = document.getElementById('usersAddBtn');
+    if(addBtn) addBtn.addEventListener('click', openUserAddModal);
+
+    const closeBtn = document.getElementById('userAddClose');
+    if(closeBtn) closeBtn.addEventListener('click', closeUserAddModal);
+
+    const cancelBtn = document.getElementById('uam_cancelBtn');
+    if(cancelBtn) cancelBtn.addEventListener('click', closeUserAddModal);
+
+    const searchBtn = document.getElementById('uam_searchBtn');
+    if(searchBtn) searchBtn.addEventListener('click', searchByMobile);
+
+    // 手機 input enter 觸發查詢
+    const mobileInput = document.getElementById('uam_mobile');
+    if(mobileInput) mobileInput.addEventListener('keydown', e => {
+      if(e.key === 'Enter'){ e.preventDefault(); searchByMobile(); }
+    });
+
+    const saveBtn = document.getElementById('uam_saveBtn');
+    if(saveBtn) saveBtn.addEventListener('click', saveNewUser);
+
+    document.addEventListener('keydown', e => {
+      if(e.key === 'Escape'){
+        const modal = document.getElementById('userAddModal');
+        if(modal && modal.style.display === 'flex') closeUserAddModal();
+      }
+    });
+  });
+
   async function suspendUser(erpid, name) {
     const reason = prompt(`停權「${name}」的原因:`);
     if (reason === null) return; // 取消
@@ -1745,7 +1945,6 @@
     const wrap = document.getElementById('bmImageWrap');
     const preview = document.getElementById('bmImagePreview');
     const input = wrap?.querySelector('.img-upload-input');
-    const clearBtn = document.getElementById('bmImageClear');
     console.log('[Banner img bind]', { wrap: !!wrap, preview: !!preview, input: !!input, bound: wrap?.dataset?.bound });
 
     if (wrap && !wrap.dataset.bound) {
@@ -1755,23 +1954,8 @@
         input?.click();
       });
 
-      // 清除按鈕：移除預覽圖、清掉 state
-      clearBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        BannerState.imageFile = null;
-        BannerState.imageBase64 = null;
-        BannerState.existingImageUrl = null;
-        preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(' +
-          (BANNER_POSITIONS[BannerState.currentPos]?.aspect || '16:9') + ')</span></span>';
-        clearBtn.style.display = 'none';
-        if (input) input.value = '';
-      });
-
       input?.addEventListener('change', async e => {
         console.log('[Banner input change]', e.target.files?.length);
-
-        const file = e.target.files[0];
-        if (!file || !file.type.startsWith('image/')) return;
 
         // 依當前 position 套用 aspectRatio
         const cfg = BANNER_POSITIONS[BannerState.currentPos];
@@ -1792,7 +1976,6 @@
         reader.onload = ev => {
           BannerState.imageBase64 = ev.target.result;
           preview.innerHTML = '<img src="' + ev.target.result + '" alt="" />';
-          if (clearBtn) clearBtn.style.display = 'flex';
         };
         reader.readAsDataURL(finalFile);
         input.value = '';
@@ -1872,7 +2055,6 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <button class="btn" data-banner-edit-id="${escapeHtml(b.id)}"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
-            <button class="btn btn-danger" data-banner-del-id="${escapeHtml(b.id)}"><i class="fa-regular fa-trash-can"></i>刪除</button>
           </div>
         </div>`;
     }).join('');
@@ -1885,9 +2067,6 @@
     wrap.querySelectorAll('[data-banner-edit-id]').forEach(b => {
       b.addEventListener('click', () => openBannerEdit(b.dataset.bannerEditId));
     });
-    wrap.querySelectorAll('[data-banner-del-id]').forEach(b => {
-      b.addEventListener('click', () => deleteBannerById(b.dataset.bannerDelId));
-    });
   }
 
   // 保留 global wrapper 給之前 inline 用過的程式碼相容
@@ -1898,65 +2077,85 @@
     const modal = document.getElementById('bannerEditModal');
     if (!modal) return;
 
-    // 先開 modal,避免中間任一行出錯就完全沒反應
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-
-    // id 比對寬鬆 (number/string 都能對上)
-    BannerState.editing = id != null
-      ? BannerState.list.find(b => String(b.id) === String(id))
-      : null;
+    BannerState.editing = id ? BannerState.list.find(b => b.id === id) : null;
     BannerState.imageFile = null;
     BannerState.imageBase64 = null;
     BannerState.existingImageUrl = null;
 
     const cfg = BANNER_POSITIONS[BannerState.currentPos];
-    const titleEl = document.getElementById('bannerModalTitle');
-    if (titleEl) titleEl.textContent = (BannerState.editing ? '編輯' : '新增') + ' Banner — ' + cfg.label;
-
-    // bmAspectHint 是 placeholder 內的元素,被預覽圖蓋掉時不存在,要做保護
-    const aspectHintEl = document.getElementById('bmAspectHint');
-    if (aspectHintEl) aspectHintEl.textContent = '(' + cfg.aspect + ')';
-    const imageHintEl = document.getElementById('bmImageHint');
-    if (imageHintEl) imageHintEl.textContent = cfg.size;
+    document.getElementById('bannerModalTitle').textContent =
+      (BannerState.editing ? '編輯' : '新增') + ' Banner — ' + cfg.label;
+    document.getElementById('bmAspectHint').textContent = '(' + cfg.aspect + ')';
+    document.getElementById('bmImageHint').textContent = cfg.size;
 
     // 同步 aspect 到 wrap (給 cropper 用)
     const wrap = document.getElementById('bmImageWrap');
     if (wrap) wrap.dataset.aspect = cfg.aspect;
 
     // 顯隱排序 row
-    const sortRow = document.getElementById('bmSortRow');
-    if (sortRow) sortRow.style.display = cfg.multi ? '' : 'none';
-    const delBtn = document.getElementById('bmDeleteBtn');
-    if (delBtn) delBtn.style.display = BannerState.editing ? '' : 'none';
+    document.getElementById('bmSortRow').style.display = cfg.multi ? '' : 'none';
+    document.getElementById('bmDeleteBtn').style.display = BannerState.editing ? '' : 'none';
 
     // 填欄位
     const b = BannerState.editing || {};
-    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-    setVal('bmTitle', b.title || '');
-    setVal('bmSubtitle', b.subtitle || '');
-    setVal('bmCtaText', b.cta_text || '');
-    setVal('bmLinkUrl', b.link_url || '');
-    const activeEl = document.getElementById('bmIsActive');
-    if (activeEl) activeEl.checked = b.is_active !== false;
-    setVal('bmSortOrder', b.sort_order != null ? b.sort_order : 0);
+    document.getElementById('bmTitle').value = b.title || '';
+    document.getElementById('bmSubtitle').value = b.subtitle || '';
+    document.getElementById('bmCtaText').value = b.cta_text || '';
+    document.getElementById('bmLinkUrl').value = b.link_url || '';
+    document.getElementById('bmIsActive').checked = b.is_active !== false;
+    document.getElementById('bmSortOrder').value = b.sort_order != null ? b.sort_order : 0;
 
-    // 圖片預覽
-    const preview = document.getElementById('bmImagePreview');
-    const clearBtn = document.getElementById('bmImageClear');
-    if (preview) {
-      if (b.image_url) {
-        preview.innerHTML = '<img src="' + escapeHtml(b.image_url) + '" alt="" />';
-        BannerState.existingImageUrl = b.image_url;
-        if (clearBtn) clearBtn.style.display = 'flex';
-      } else {
-        preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(' + cfg.aspect + ')</span></span>';
-        if (clearBtn) clearBtn.style.display = 'none';
-      }
+    // 圖片預覽 + 重新建立 input 跟 listener (每次都新元素,避免 dataset.bound 卡住)
+    const wrapEl = document.getElementById('bmImageWrap');
+    if(wrapEl){
+      const imgHtml = b.image_url
+        ? '<img src="' + escapeHtml(b.image_url) + '" alt="" />'
+        : '<span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 (' + cfg.aspect + ')</span>';
+
+      wrapEl.innerHTML =
+        '<div class="img-upload-preview" id="bmImagePreview">' + imgHtml + '</div>' +
+        '<input type="file" accept="image/*" class="img-upload-input">';
+
+      BannerState.existingImageUrl = b.image_url || null;
+
+      const newPreview = wrapEl.querySelector('.img-upload-preview');
+      const newInput = wrapEl.querySelector('.img-upload-input');
+
+      newPreview.addEventListener('click', () => newInput.click());
+
+      newInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+
+        // 用裁切器
+        let aspectRatio = 16/9;
+        if(cfg.aspect === '21:9') aspectRatio = 21/9;
+        if(cfg.aspect === '16:7') aspectRatio = 16/7;
+
+        let finalFile = file;
+        if(window.LohasCropper){
+          const cropped = await window.LohasCropper.crop(file, {
+            aspectRatio: aspectRatio,
+            title: '裁切 Banner · ' + cfg.aspect
+          });
+          if(!cropped){ newInput.value = ''; return; }
+          finalFile = cropped;
+        }
+        BannerState.imageFile = finalFile;
+
+        const reader = new FileReader();
+        reader.onload = ev => {
+          BannerState.imageBase64 = ev.target.result;
+          newPreview.innerHTML = '<img src="' + ev.target.result + '" alt="" />';
+        };
+        reader.readAsDataURL(finalFile);
+        newInput.value = '';
+      });
     }
 
-    const hintEl = document.getElementById('bmHint');
-    if (hintEl) hintEl.textContent = '';
+    document.getElementById('bmHint').textContent = '';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
   }
 
   function closeBannerModal() {
@@ -2036,19 +2235,6 @@
     const { error } = await sb.from('banners').delete().eq('id', BannerState.editing.id);
     if (error) { alert('刪除失敗: ' + error.message); return; }
     closeBannerModal();
-    loadBannerList(BannerState.currentPos);
-  }
-
-  // 列表卡片直接刪除 (不需開 modal)
-  async function deleteBannerById(id) {
-    if (!id) return;
-    const target = BannerState.list.find(b => String(b.id) === String(id));
-    const label = target?.title || '此 Banner';
-    if (!confirm('確定刪除「' + label + '」?\n此動作無法復原。')) return;
-    const sb = window.LohasSupabase?.getClient?.();
-    if (!sb) { alert('Supabase 未連線'); return; }
-    const { error } = await sb.from('banners').delete().eq('id', id);
-    if (error) { alert('刪除失敗: ' + error.message); return; }
     loadBannerList(BannerState.currentPos);
   }
 
@@ -5999,8 +6185,7 @@
 
       $('newsModalTitle').textContent = '新增消息';
       $('newsDeleteBtn').style.display = 'none';
-      const _pbtnNew = $('newsPreviewBtn');
-      if (_pbtnNew) _pbtnNew.style.display = '';
+      $('newsPreviewBtn').style.display = '';
 
       ['news_slug','news_title','news_excerpt','news_homepage_tag','news_homepage_subtitle',
        'news_author','news_published_at','news_content','news_homepage_link_url'].forEach(id => setVal(id, ''));
@@ -6031,8 +6216,7 @@
 
       $('newsModalTitle').textContent = '編輯:' + (n.title || n.slug);
       $('newsDeleteBtn').style.display = '';
-      const _pbtnEdit = $('newsPreviewBtn');
-      if (_pbtnEdit) _pbtnEdit.style.display = '';
+      $('newsPreviewBtn').style.display = '';
 
       setVal('news_slug', n.slug);
       setVal('news_status', n.status);
@@ -6221,8 +6405,7 @@
     $('newsCancelBtn').addEventListener('click', closeModal);
     $('newsSaveBtn').addEventListener('click', save);
     $('newsDeleteBtn').addEventListener('click', deleteNews);
-    const previewBtn = $('newsPreviewBtn');
-    if (previewBtn) previewBtn.addEventListener('click', openNewsPreview);
+    $('newsPreviewBtn').addEventListener('click', openNewsPreview);
     $('news_slug').addEventListener('input', updateSlugPreview);
     $('news_homepage_link_type').addEventListener('change', updateLinkUrlVisibility);
 
