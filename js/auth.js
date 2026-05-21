@@ -4,7 +4,7 @@
   const Utils = window.LohasUtils;
 
   const CONFIG = {
-    PROXY_URL: 'https://lohas-proxy.onrender.com/api',
+    PROXY_URL: 'https://lohas-proxy-nwad.onrender.com/api',
     API_KEY: 'bfjY2jssj9dDajq0',
     API_VER: '0.1.0',
     STORAGE_KEY: 'lohasMember',
