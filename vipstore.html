@@ -41,6 +41,16 @@
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="search" id="vs-search" placeholder="搜尋店家名稱、類別、介紹">
           </div>
+
+          <!-- View 切換 (電腦版 ≥769px 顯示) -->
+          <div class="vs-view-switch" id="vs-view-switch">
+            <button class="vs-view-btn" data-view="map" type="button">
+              <i class="fa-solid fa-map-location-dot"></i><span>地圖</span>
+            </button>
+            <button class="vs-view-btn is-active" data-view="browse" type="button">
+              <i class="fa-solid fa-grip"></i><span>列表</span>
+            </button>
+          </div>
         </div>
 
         <!-- 類別 chip 列（橫向滾動） -->
@@ -54,53 +64,66 @@
       </div>
     </header>
 
-    <!-- 主體 -->
-    <div class="vs-layout" id="vs-layout">
+    <!-- 主體 (data-view 切換: browse=列表瀏覽 / map=地圖) -->
+    <div class="vs-layout" id="vs-layout" data-view="browse">
 
-      <!-- 左：店家列表 -->
-      <aside class="vs-list-panel">
+      <!-- ========= View 1: Browse (列表瀏覽,預設) ========= -->
+      <section class="vs-browse" id="vs-browse">
+        <div class="vs-browse-inner">
+          <div class="vs-browse-loading vs-loading">載入中…</div>
+          <!-- 類別 section 由 JS render -->
+        </div>
+      </section>
 
-        <div class="vs-list-head">
-          <div>
-            <h1 class="vs-list-title">特約店家</h1>
-            <p class="vs-list-sub">會員專屬·點店家可查看合作門市</p>
+      <!-- ========= View 2: Map (地圖) ========= -->
+      <div class="vs-map-view" id="vs-map-view">
+
+        <!-- 左：店家列表 -->
+        <aside class="vs-list-panel">
+
+          <div class="vs-list-head">
+            <div>
+              <h1 class="vs-list-title">特約店家</h1>
+              <p class="vs-list-sub">會員專屬·點店家可查看合作門市</p>
+            </div>
+            <button class="vs-sort" type="button" id="vs-sort">
+              <i class="fa-solid fa-arrow-down-wide-short"></i> 依距離
+            </button>
           </div>
-          <button class="vs-sort" type="button" id="vs-sort">
-            <i class="fa-solid fa-arrow-down-wide-short"></i> 依距離
-          </button>
+
+          <div class="vs-list" id="vs-list">
+            <div class="vs-loading">載入中…</div>
+          </div>
+
+        </aside>
+
+        <!-- 右：地圖 -->
+        <div class="vs-map-panel">
+
+          <div id="vs-map-canvas"></div>
+
+          <!-- 工具按鈕 -->
+          <div class="vs-map-tools">
+            <button class="vs-map-tool" type="button" data-action="locate" title="我的位置">
+              <i class="fa-solid fa-location-crosshairs"></i>
+            </button>
+            <button class="vs-map-tool" type="button" data-action="zoom-in" title="放大">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <button class="vs-map-tool" type="button" data-action="zoom-out" title="縮小">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+          </div>
+
+          <!-- 底部計數 -->
+          <div class="vs-map-count" id="vs-map-count">
+            <i class="fa-solid fa-circle"></i> 目前顯示 <b>--</b> 間特約店家
+          </div>
+
+          <!-- 點 pin 彈出的卡片 -->
+          <div class="vs-pin-card" id="vs-pin-card"></div>
+
         </div>
-
-        <div class="vs-list" id="vs-list">
-          <div class="vs-loading">載入中…</div>
-        </div>
-
-      </aside>
-
-      <!-- 右：地圖 -->
-      <div class="vs-map-panel">
-
-        <div id="vs-map-canvas"></div>
-
-        <!-- 工具按鈕 -->
-        <div class="vs-map-tools">
-          <button class="vs-map-tool" type="button" data-action="locate" title="我的位置">
-            <i class="fa-solid fa-location-crosshairs"></i>
-          </button>
-          <button class="vs-map-tool" type="button" data-action="zoom-in" title="放大">
-            <i class="fa-solid fa-plus"></i>
-          </button>
-          <button class="vs-map-tool" type="button" data-action="zoom-out" title="縮小">
-            <i class="fa-solid fa-minus"></i>
-          </button>
-        </div>
-
-        <!-- 底部計數 -->
-        <div class="vs-map-count" id="vs-map-count">
-          <i class="fa-solid fa-circle"></i> 目前顯示 <b>--</b> 間特約店家
-        </div>
-
-        <!-- 點 pin 彈出的卡片 -->
-        <div class="vs-pin-card" id="vs-pin-card"></div>
 
       </div>
 
@@ -108,10 +131,17 @@
 
   </div>
 
+  <!-- ========= 商家詳情浮層 (點卡片時開啟) ========= -->
+  <div class="vs-detail-ovl" id="vs-detail-ovl" aria-hidden="true">
+    <div class="vs-detail-modal" id="vs-detail-modal" role="dialog" aria-modal="true">
+      <!-- 內容由 JS render -->
+    </div>
+  </div>
+
   <!-- 手機底部 TAB（列表 / 地圖） -->
   <div class="vs-view-tabs" id="vs-view-tabs">
-    <button class="vs-view-tab is-active" data-view="list" type="button">
-      <i class="fa-solid fa-list-ul"></i>
+    <button class="vs-view-tab is-active" data-view="browse" type="button">
+      <i class="fa-solid fa-grip"></i>
       <span>列表</span>
     </button>
     <button class="vs-view-tab" data-view="map" type="button">
