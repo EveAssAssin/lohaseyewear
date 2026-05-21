@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="google" content="notranslate">
+<title>會員登入中...</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&display=swap">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background:#FAF7F2;
+    font-family:'Noto Serif TC',serif;
+    color:#50422D;
+  }
+  .sso-box{
+    text-align:center;
+    padding:48px 32px;
+    max-width:420px;
+  }
+  .sso-spinner{
+    width:48px;height:48px;
+    border:3px solid #E8DED1;
+    border-top-color:#9D7E3F;
+    border-radius:50%;
+    margin:0 auto 24px;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .sso-title{font-size:18px;letter-spacing:3px;margin-bottom:12px;font-weight:500}
+  .sso-msg{font-size:13px;color:#7A6B5C;letter-spacing:1px;line-height:1.7}
+  .sso-err{color:#A04030;font-size:13px;margin-top:18px;letter-spacing:1px}
+  .sso-btn{
+    display:inline-block;margin-top:24px;
+    padding:10px 28px;border:1px solid #50422D;
+    color:#50422D;text-decoration:none;
+    font-size:13px;letter-spacing:2px;
+    transition:all .2s;
+  }
+  .sso-btn:hover{background:#50422D;color:#fff}
+</style>
+</head>
+<body>
+  <div class="sso-box" id="ssoBox">
+    <div class="sso-spinner" id="ssoSpinner"></div>
+    <div class="sso-title">會 員 登 入 中</div>
+    <div class="sso-msg" id="ssoMsg">驗證身份中,請稍候...</div>
+  </div>
+
+<script>
+(async () => {
+  const SSO_VERIFY_URL = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/store-sso-verify';
+  const DEFAULT_NEXT   = '/market.html';
+
+  const url   = new URL(location.href);
+  const token = url.searchParams.get('token');
+  const next  = url.searchParams.get('next') || DEFAULT_NEXT;
+
+  const box     = document.getElementById('ssoBox');
+  const spinner = document.getElementById('ssoSpinner');
+  const msg     = document.getElementById('ssoMsg');
+
+  function fail(text, withButton){
+    spinner.style.display = 'none';
+    msg.classList.add('sso-err');
+    msg.textContent = text;
+    if (withButton){
+      const btn = document.createElement('a');
+      btn.href = '/member-portal.html';
+      btn.className = 'sso-btn';
+      btn.textContent = '前 往 登 入';
+      box.appendChild(btn);
+    }
+  }
+
+  if (!token) return fail('缺少 SSO token,請從 App 重新進入', true);
+
+  try {
+    const res = await fetch(SSO_VERIFY_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ token }),
+    });
+    const json = await res.json();
+
+    if (!res.ok || !json.ok){
+      return fail(json.error || '驗證失敗,請重新登入', true);
+    }
+
+    // ===== 寫 localStorage 完成登入 =====
+    // (跟 member-portal 用的 key 對齊;不確定的話,共用 LohasAuth 風格)
+    const member = {
+      erpid:   json.erpid,
+      erpname: json.erpname,
+      // 一些常見別名,免得不同頁面讀的 key 不同
+      erpId:   json.erpid,
+      erpName: json.erpname,
+      name:    json.erpname,
+    };
+    localStorage.setItem('lohas_member',    JSON.stringify(member));
+    localStorage.setItem('lohas_member_id', json.erpid);   // 給舊邏輯讀
+
+    msg.textContent = '登入成功,即將跳轉...';
+
+    // safe redirect: 只允許同站 path
+    const target = (next.startsWith('/') && !next.startsWith('//'))
+      ? next
+      : DEFAULT_NEXT;
+    setTimeout(() => { location.replace(target); }, 600);
+
+  } catch (e) {
+    console.error(e);
+    fail('網路錯誤,請稍後再試', true);
+  }
+})();
+</script>
+</body>
+</html>
