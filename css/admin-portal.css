@@ -1013,6 +1013,7 @@
 .ad .row-actions .promote:hover{
   background:#5a4a73;
   border-color:#5a4a73;
+  color:#fff;
 }
 .ad .row-actions .promote i{ color:#FFD86B; font-size:10px }
 
