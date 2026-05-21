@@ -894,12 +894,164 @@
     } else if (action === 'restore') {
       await restoreUser(erpid);
     } else if (action === 'view') {
-      alert(`查看會員: ${erpid}\n\n(個人頁待開發)`);
+      openUserViewModal(erpid);
     }
   }
 
+  // ===== 查看會員 Modal =====
+  async function openUserViewModal(erpid){
+    const modal = document.getElementById('userViewModal');
+    if(!modal) return;
+
+    // 重置
+    document.getElementById('uvm_loading').style.display = 'block';
+    document.getElementById('uvm_content').style.display = 'none';
+    document.getElementById('uvm_error').style.display = 'none';
+    document.getElementById('uvm_creatorLinkBlock').style.display = 'none';
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const sb = getSb();
+
+      // 1. 從 Supabase 撈會員身份相關資料
+      const [creatorRes, statusRes, adminRes, photoRes, designRes] = await Promise.all([
+        sb.from('creator_info').select('member_id, display_name, status, avatar_url, social_links').eq('member_id', erpid).maybeSingle(),
+        sb.from('member_status').select('status, reason, suspended_at').eq('member_id', erpid).maybeSingle(),
+        sb.from('admins').select('member_id, status').eq('member_id', erpid).maybeSingle(),
+        sb.from('gallery_posts').select('id', { count: 'exact', head: true }).eq('member_id', erpid),
+        sb.from('engraving_designs').select('id', { count: 'exact', head: true }).eq('creator_id', erpid)
+      ]);
+
+      const creatorInfo = creatorRes.data;
+      const memberStatus = statusRes.data;
+      const adminInfo = adminRes.data;
+      const photoCount = photoRes.count || 0;
+      const designCount = designRes.count || 0;
+
+      // 2. 從 ERP 撈中文名/手機/email (容錯,失敗就用 Supabase 資料)
+      let erpName = '', erpMobile = '', erpEmail = '', erpBirthday = '';
+      try {
+        const erpRes = await fetch(`${PROXY_URL}/proxy/member/list`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: {
+              apikey: PROXY_KEY,
+              apiver: '0.1.0',
+              data: { client_id: erpid },
+            },
+          }),
+        });
+        if(erpRes.ok){
+          const erpJson = await erpRes.json();
+          let d = erpJson.data;
+          if(Array.isArray(d)) d = d[0];
+          if(d){
+            erpName = d.name || d.erpname || d.erpName || '';
+            erpMobile = d.mobile || d.phone || '';
+            erpEmail = d.email || '';
+            erpBirthday = d.birthday || '';
+          }
+        }
+      } catch(e){ console.warn('[ERP 查詢失敗,使用 Supabase 資料]', e); }
+
+      // 3. 整理顯示名稱 (優先序: ERP > creator_info.display_name > ERP ID)
+      const displayName = erpName || creatorInfo?.display_name || erpid;
+
+      // 4. 若 ERP 查到名字但 creator_info 還沒寫,順手把名字寫回 (status 保持原樣或 'pending')
+      //    這樣下次會員列表就能顯示正確名字
+      if(erpName && (!creatorInfo || !creatorInfo.display_name)){
+        try {
+          await sb.from('creator_info').upsert({
+            member_id: erpid,
+            display_name: erpName,
+            status: creatorInfo?.status || 'pending'  // 沒記錄就建 pending,不誤升 creator
+          }, { onConflict: 'member_id' });
+          console.log('[補名字]', erpid, '→', erpName);
+        } catch(e){ console.warn('[補名字失敗]', e); }
+      }
+
+      // 填入資料
+      document.getElementById('uvm_name').textContent = displayName;
+      document.getElementById('uvm_erpid').textContent = erpid;
+      document.getElementById('uvm_mobile').textContent = erpMobile || '—';
+      document.getElementById('uvm_email').textContent = erpEmail || creatorInfo?.social_links?.email || '—';
+      document.getElementById('uvm_birthday').textContent = erpBirthday || '—';
+
+      // 身份
+      const isAdmin = !!(adminInfo && adminInfo.status === 'active');
+      const isCreator = !!(creatorInfo && creatorInfo.status === 'active');
+      let roleHtml;
+      if(isAdmin) roleHtml = '<span class="row-role-pill admin"><i class="fa-solid fa-shield-halved"></i>Admin</span>';
+      else if(isCreator) roleHtml = '<span class="row-role-pill creator"><i class="fa-solid fa-star"></i>Creator</span>';
+      else roleHtml = '<span class="row-role-pill member">Member</span>';
+      document.getElementById('uvm_role').innerHTML = roleHtml;
+
+      // 狀態
+      const isSuspended = memberStatus && memberStatus.status === 'suspended';
+      document.getElementById('uvm_status').innerHTML = isSuspended
+        ? '<span class="row-status suspended"><i class="fa-solid fa-ban"></i>已停權</span>'
+        : '<span class="row-status active"><i class="fa-solid fa-circle"></i>正常</span>';
+
+      // 統計
+      document.getElementById('uvm_photoCount').textContent = photoCount;
+      document.getElementById('uvm_designCount').textContent = designCount;
+
+      // 創作者頁連結 (只有 creator 才顯示)
+      if(isCreator){
+        const block = document.getElementById('uvm_creatorLinkBlock');
+        const link = document.getElementById('uvm_creatorLink');
+        link.href = `creator-public.html?id=${encodeURIComponent(erpid)}`;
+        block.style.display = 'block';
+      }
+
+      document.getElementById('uvm_loading').style.display = 'none';
+      document.getElementById('uvm_content').style.display = 'block';
+
+    } catch(err) {
+      console.error('[查看會員失敗]', err);
+      document.getElementById('uvm_loading').style.display = 'none';
+      const errEl = document.getElementById('uvm_error');
+      errEl.textContent = '查詢失敗: ' + (err.message || err);
+      errEl.style.display = 'block';
+    }
+  }
+
+  function closeUserViewModal(){
+    const modal = document.getElementById('userViewModal');
+    if(modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
   async function promoteToCreator(erpid, name) {
-    if (!confirm(`確定將「${name}」升級為 Creator?\n\n升級後可以:\n· 上架刻圖設計\n· 享 $100/次 分潤\n· 編輯創作者個人頁`)) return;
+    // 若 name 等於 erpid (代表沒有真實姓名,只是 fallback),先去 ERP 撈
+    let realName = name;
+    if(name === erpid || !name){
+      try {
+        const erpRes = await fetch(`${PROXY_URL}/proxy/member/list`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: {
+              apikey: PROXY_KEY,
+              apiver: '0.1.0',
+              data: { client_id: erpid },
+            },
+          }),
+        });
+        if(erpRes.ok){
+          const erpJson = await erpRes.json();
+          let d = erpJson.data;
+          if(Array.isArray(d)) d = d[0];
+          const erpName = d?.name || d?.erpname || d?.erpName;
+          if(erpName) realName = erpName;
+        }
+      } catch(e){ console.warn('[ERP 查詢失敗,用 erpid 當名字]', e); }
+    }
+
+    if (!confirm(`確定將「${realName}」升級為 Creator?\n\n升級後可以:\n· 上架刻圖設計\n· 享 $100/次 分潤\n· 編輯創作者個人頁`)) return;
 
     const sb = getSb();
     if (!sb) return alert('Supabase 連線失敗');
@@ -907,7 +1059,7 @@
     try {
       const { error } = await sb.from('creator_info').upsert({
         member_id: erpid,
-        display_name: name,
+        display_name: realName,
         status: 'active'
       }, { onConflict: 'member_id' });
 
@@ -917,7 +1069,7 @@
         return;
       }
 
-      alert(`「${name}」已升級為 Creator`);
+      alert(`「${realName}」已升級為 Creator`);
       loadUsers(); // 重新載入
 
     } catch (err) {
@@ -1201,10 +1353,18 @@
     const saveBtn = document.getElementById('uam_saveBtn');
     if(saveBtn) saveBtn.addEventListener('click', saveNewUser);
 
+    // 查看 modal 的關閉
+    const viewCloseBtn = document.getElementById('userViewClose');
+    if(viewCloseBtn) viewCloseBtn.addEventListener('click', closeUserViewModal);
+    const viewFooterCloseBtn = document.getElementById('uvm_closeBtn');
+    if(viewFooterCloseBtn) viewFooterCloseBtn.addEventListener('click', closeUserViewModal);
+
     document.addEventListener('keydown', e => {
       if(e.key === 'Escape'){
-        const modal = document.getElementById('userAddModal');
-        if(modal && modal.style.display === 'flex') closeUserAddModal();
+        const addModal = document.getElementById('userAddModal');
+        if(addModal && addModal.style.display === 'flex') closeUserAddModal();
+        const viewModal = document.getElementById('userViewModal');
+        if(viewModal && viewModal.style.display === 'flex') closeUserViewModal();
       }
     });
   });

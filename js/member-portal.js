@@ -2187,8 +2187,8 @@
       c.addEventListener('click', () => goTo(c.dataset.jump));
     });
 
-    // 快捷功能特殊動作
-    root.querySelectorAll('.shortcut-card[data-action]').forEach(c => {
+    // 快捷功能特殊動作 (shortcut-card 與 creator-onboard 的 cta 共用)
+    root.querySelectorAll('.shortcut-card[data-action], .creator-onboard [data-action]').forEach(c => {
       c.addEventListener('click', () => {
         const action = c.dataset.action;
         if (action === 'upload-photo') {
