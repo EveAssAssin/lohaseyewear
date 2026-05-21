@@ -775,6 +775,7 @@
 
     return (
       `<div class="sd-staff-review">` +
+        `<div class="sd-staff-review-title">顧 客 真 實 評 論</div>` +
         `<div class="sd-staff-review-quote">` +
           `<div class="sd-staff-review-text">${escapeHtml(content)}</div>` +
           `<div class="sd-staff-review-author">— ${escapeHtml(author)}</div>` +
@@ -797,20 +798,18 @@
       .replace(/'/g, "&#39;");
   }
 
-  /* ===== 員工評論彈窗(B2 樣式:篩選 + 分頁)===== */
+  /* ===== 員工評論彈窗(B3 樣式:無限滾動)===== */
   const reviewModalState = {
-    emp: null,        // 當前員工
-    filter: "all",    // "all" | "5" | "4" | "3" | "2" | "1"
-    page: 1,          // 當前頁(1-based)
-    perPage: 10       // 每頁 10 則
+    emp: null,         // 當前員工
+    loadedCount: 10,   // 已載入則數(初始 10,按一次「載入更多」+10)
+    perLoad: 10        // 每次載入 10 則
   };
 
   function openStaffReviewModal(erpid) {
     const emp = state.employees.find(e => String(e.erpid) === String(erpid));
     if (!emp) return;
     reviewModalState.emp = emp;
-    reviewModalState.filter = "all";
-    reviewModalState.page = 1;
+    reviewModalState.loadedCount = reviewModalState.perLoad;
     document.body.style.overflow = "hidden";
     renderReviewModal();
   }
@@ -822,39 +821,17 @@
     reviewModalState.emp = null;
   }
 
-  /* 取得當前篩選後的評論陣列 */
-  function getFilteredReviews() {
-    const list = (reviewModalState.emp && reviewModalState.emp.evaluationList) || [];
-    if (reviewModalState.filter === "all") return list;
-    const f = parseInt(reviewModalState.filter, 10);
-    return list.filter(ev => Math.round(ev.score) === f);
-  }
-
-  /* 各星等的計數(顯示在 filter chip) */
-  function getStarCounts() {
-    const list = (reviewModalState.emp && reviewModalState.emp.evaluationList) || [];
-    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    list.forEach(ev => {
-      const s = Math.round(ev.score);
-      if (counts[s] != null) counts[s]++;
-    });
-    return counts;
-  }
-
   function renderReviewModal() {
     const emp = reviewModalState.emp;
     if (!emp) return;
 
-    const filtered = getFilteredReviews();
-    const total = filtered.length;
-    const perPage = reviewModalState.perPage;
-    const totalPages = Math.max(1, Math.ceil(total / perPage));
-    const curPage = Math.min(reviewModalState.page, totalPages);
-    const start = (curPage - 1) * perPage;
-    const pageItems = filtered.slice(start, start + perPage);
+    const all = emp.evaluationList || [];
+    const total = all.length;
+    /* clamp loadedCount */
+    const loaded = Math.min(reviewModalState.loadedCount, total);
+    const items = all.slice(0, loaded);
+    const hasMore = loaded < total;
 
-    const counts = getStarCounts();
-    const totalAll = (emp.evaluationList || []).length;
     const avg = emp.averageScore != null ? emp.averageScore.toFixed(1) : "-";
 
     /* === 頭部 === */
@@ -876,24 +853,9 @@
         `<div class="sd-rm-stat">` +
           `<div class="sd-rm-stat-stars">${renderStars(emp.averageScore || 0)}</div>` +
           `<div class="sd-rm-stat-num">${avg}</div>` +
-          `<div class="sd-rm-stat-meta">${totalAll.toLocaleString()} 則</div>` +
+          `<div class="sd-rm-stat-meta">${total.toLocaleString()} 則</div>` +
         `</div>` +
         `<button class="sd-rm-close" type="button" data-action="rm-close">✕</button>` +
-      `</div>`;
-
-    /* === 篩選列 === */
-    const chip = (key, label, count) =>
-      `<span class="sd-rm-chip${reviewModalState.filter === key ? " active" : ""}" ` +
-            `data-rm-filter="${key}">${label}${count != null ? ` <b>${count.toLocaleString()}</b>` : ""}</span>`;
-    const filterBar =
-      `<div class="sd-rm-filter">` +
-        `<span class="sd-rm-filter-label">篩選</span>` +
-        chip("all", "全部", totalAll) +
-        chip("5", "5★", counts[5]) +
-        chip("4", "4★", counts[4]) +
-        chip("3", "3★", counts[3]) +
-        chip("2", "2★", counts[2]) +
-        chip("1", "1★", counts[1]) +
       `</div>`;
 
     /* === 評論列表 === */
@@ -902,10 +864,10 @@
       listHtml =
         `<div class="sd-rm-empty">` +
           `<i class="fa-regular fa-comments"></i>` +
-          `<div>此星等目前沒有評論</div>` +
+          `<div>目前還沒有評論</div>` +
         `</div>`;
     } else {
-      listHtml = pageItems.map(ev => {
+      listHtml = items.map(ev => {
         const stars = renderStars(ev.score);
         return (
           `<div class="sd-rm-review">` +
@@ -919,35 +881,25 @@
       }).join("");
     }
 
-    /* === 分頁器(預設顯示 1-6 頁,第七頁用 »,可前後翻)=== */
-    let pagerHtml = "";
-    if (total > perPage) {
-      const visiblePages = 6; // 預設顯示 6 個頁碼
-      const showRangeStart = Math.max(1, Math.min(curPage - 2, totalPages - visiblePages + 1));
-      const showRangeEnd = Math.min(totalPages, showRangeStart + visiblePages - 1);
-
-      const btns = [];
-      btns.push(`<span class="sd-rm-pg arrow${curPage === 1 ? " disabled" : ""}" data-rm-page="${curPage - 1}">‹</span>`);
-      /* 如果起始 > 1,顯示「1」+ 省略號 */
-      if (showRangeStart > 1) {
-        btns.push(`<span class="sd-rm-pg" data-rm-page="1">1</span>`);
-        if (showRangeStart > 2) {
-          btns.push(`<span class="sd-rm-pg disabled">…</span>`);
-        }
+    /* === 載入更多 footer (B3:無限滾動)===
+       還有更多 → 顯示載入鈕 + 進度條
+       已全部載入 → 顯示「已顯示全部 N 則」 */
+    let footerHtml = "";
+    if (total > 0) {
+      if (hasMore) {
+        footerHtml =
+          `<div class="sd-rm-scroll-foot">` +
+            `<button class="sd-rm-load-more" type="button" data-action="rm-load-more">` +
+              `<i class="fa-solid fa-circle-arrow-down"></i> 載入更多評價` +
+            `</button>` +
+            `<div class="sd-rm-scroll-info">已顯示 ${loaded.toLocaleString()} / ${total.toLocaleString()} 則</div>` +
+          `</div>`;
+      } else {
+        footerHtml =
+          `<div class="sd-rm-scroll-foot">` +
+            `<div class="sd-rm-scroll-info end">已顯示全部 ${total.toLocaleString()} 則評價</div>` +
+          `</div>`;
       }
-      for (let i = showRangeStart; i <= showRangeEnd; i++) {
-        btns.push(`<span class="sd-rm-pg${i === curPage ? " active" : ""}" data-rm-page="${i}">${i}</span>`);
-      }
-      /* 如果範圍結尾 < 總頁,顯示 »(跳尾頁)*/
-      if (showRangeEnd < totalPages) {
-        btns.push(`<span class="sd-rm-pg arrow" data-rm-page="${totalPages}" title="跳到最後一頁">»</span>`);
-      }
-      btns.push(`<span class="sd-rm-pg arrow${curPage >= totalPages ? " disabled" : ""}" data-rm-page="${curPage + 1}">›</span>`);
-      pagerHtml =
-        `<div class="sd-rm-pager">` +
-          btns.join("") +
-          `<span class="sd-rm-pg-info">第 ${curPage} / ${totalPages.toLocaleString()} 頁</span>` +
-        `</div>`;
     }
 
     /* === 組裝彈窗 === */
@@ -956,9 +908,7 @@
       `<div class="sd-rm-overlay" id="sd-review-modal" data-action="rm-bg">` +
         `<div class="sd-rm-dialog">` +
           head +
-          filterBar +
-          `<div class="sd-rm-body">${listHtml}</div>` +
-          pagerHtml +
+          `<div class="sd-rm-body">${listHtml}${footerHtml}</div>` +
         `</div>` +
       `</div>`;
 
@@ -984,28 +934,31 @@
         closeStaffReviewModal();
         return;
       }
-      /* 切換 filter */
-      const chipEl = t.closest("[data-rm-filter]");
-      if (chipEl) {
-        const f = chipEl.dataset.rmFilter;
-        if (f !== reviewModalState.filter) {
-          reviewModalState.filter = f;
-          reviewModalState.page = 1;
-          renderReviewModal();
-        }
-        return;
-      }
-      /* 翻頁 */
-      const pgEl = t.closest("[data-rm-page]");
-      if (pgEl && !pgEl.classList.contains("disabled")) {
-        const p = parseInt(pgEl.dataset.rmPage, 10);
-        if (!isNaN(p) && p !== reviewModalState.page) {
-          reviewModalState.page = p;
-          renderReviewModal();
-        }
+      /* 載入更多 */
+      const moreEl = t.closest("[data-action='rm-load-more']");
+      if (moreEl) {
+        reviewModalState.loadedCount += reviewModalState.perLoad;
+        renderReviewModal();
         return;
       }
     });
+
+    /* === 捲動到底自動載入更多 === */
+    const bodyEl = root.querySelector(".sd-rm-body");
+    if (bodyEl) {
+      let busy = false;
+      bodyEl.addEventListener("scroll", () => {
+        if (busy) return;
+        const list = (reviewModalState.emp && reviewModalState.emp.evaluationList) || [];
+        if (reviewModalState.loadedCount >= list.length) return;
+        const nearBottom = bodyEl.scrollTop + bodyEl.clientHeight >= bodyEl.scrollHeight - 120;
+        if (nearBottom) {
+          busy = true;
+          reviewModalState.loadedCount += reviewModalState.perLoad;
+          renderReviewModal();
+        }
+      });
+    }
   }
 
   /* === 獎章 SVG（緞帶 + 圓徽） === */
