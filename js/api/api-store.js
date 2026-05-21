@@ -43,16 +43,15 @@
   }
 
   /* ===== 29. 取得員工評價(獨立 API,可拿較大量)=====
-     endpoint:rsv.lohasglasses.com/_api/v1.ashx
+     endpoint:由 BFF 依 method 白名單自動分流至 rsv.lohasglasses.com
      參數:method=getevaluationbyemployee, employeeid(實為員工 ERP ID), amount
-     回傳:{ statecode, data:{ averagescore, evaluationlist:[...] }, message }
-     注意:BFF 需支援 host="rsv" 路由轉發 */
+     回傳:{ statecode, data:{ averagescore, evaluationlist:[...] }, message } */
   async function getEvaluationByEmployee(erpId, amount) {
     if (!erpId) throw new Error("[LohasApi.store] erpId is required");
-    return post("rsv", {
+    /* host 用預設 "map",BFF 看到 method 在 RSV_METHODS 會自動轉發到 rsv 站
+       employeeid 用明文(BFF ENCRYPTED_FIELDS 不包含此欄位) */
+    return post("map", {
       method: "getevaluationbyemployee",
-      /* 文件強調:參數名固定為 employeeid 但實為員工 ERP ID,不要 AES 加密
-         (參考文件範例,employeeid 直接用明文 "94") */
       employeeid: String(erpId),
       amount: String(amount == null ? 0 : amount)
     });
