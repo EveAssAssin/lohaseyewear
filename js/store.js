@@ -21,81 +21,29 @@
   const { store: storeApi } = window.LohasApi;
   const { data: storeData } = window.LohasStore;
 
-  /* === 混合範本評價（當該店真實評價不足時，從 pool 補上）===
-     每筆評價在顯示時會隨機指派為「該店其中一位店員」收到的評價。 */
-  const SAMPLE_REVIEW_POOL = [
-    /* 一般服務體驗 */
-    { score: 5, member: "陳小姐", content: "服務真的非常仔細，從驗光到挑框花了一整個下午陪我，最後配出來的眼鏡舒適到我幾乎忘記戴著。" },
-    { score: 5, member: "李先生", content: "第一次到樂活配眼鏡，講解專業不囉嗦，整個過程很舒服。鏡框選擇也很多，會推薦給朋友。" },
-    { score: 5, member: "張小姐", content: "超有耐心，我選擇困難症陪我試了快二十副框，最後選到的真的非常喜歡。" },
-    { score: 5, member: "王太太", content: "服務很好、空間舒適，連護眼茶都好喝。下次還會再來，也會推薦給家人朋友。" },
-    { score: 5, member: "林先生", content: "之前在別家配的眼鏡一直戴不舒服，來樂活重新驗光調整後完全不同，太晚認識你們了！" },
-    { score: 5, member: "黃小姐", content: "店員很細心、不會推銷高價方案。最後選的鏡片在電腦前用了一整天眼睛都不會酸。" },
-    { score: 5, member: "周小姐", content: "預約系統很方便，到店時店員已經備好我先前看過的鏡框，整個流程很順暢。" },
-    { score: 4, member: "蔡先生", content: "鏡框選擇蠻多，服務也算用心。等候時間稍長一點但可以接受。" },
-    { score: 5, member: "吳小姐", content: "幫我量身打造的多焦眼鏡完全沒適應期，看遠看近都清楚，太強了。" },
-    { score: 5, member: "鄭先生", content: "孩子第一次配眼鏡，店員講解得很清楚也很有耐心，孩子完全沒哭，超推。" },
-    { score: 5, member: "謝小姐", content: "從遠地慕名而來，沒讓我失望，服務、技術、空間都很到位。" },
-    { score: 5, member: "蕭先生", content: "驗光的儀器跟流程比別家眼鏡行多很多，難怪能配得這麼準。" },
-    { score: 4, member: "羅小姐", content: "鏡框設計感很好，店員也親切。價格中上但物有所值。" },
-    { score: 5, member: "簡先生", content: "店裡氣氛很放鬆，不會像有些眼鏡行壓力大。配完還會仔細調整鼻墊跟鏡腿，很貼心。" },
-    { score: 5, member: "潘小姐", content: "因為散光度數較深，特別找這裡的驗光師，果然配出來的鏡片完全沒暈眩感。" },
-    { score: 5, member: "高小姐", content: "AI 訂製鏡片的服務很神奇，配出來的視野超清晰，邊緣不會變形。" },
-    /* 更多面向：技術、產品、空間、回購、價格 */
-    { score: 5, member: "莊先生", content: "驗光過程比醫院還細，連我自己都不知道的散光軸度都驗出來，新眼鏡戴起來就是不一樣。" },
-    { score: 5, member: "曾小姐", content: "店員給的搭配建議很中肯，我臉型其實不太好挑框，他們耐心試到我滿意為止，沒有絲毫不耐。" },
-    { score: 5, member: "趙先生", content: "在這裡買第三副了，每次都有不同驚喜。這次的鈦金屬鏡腳真的輕到我以為自己沒戴眼鏡。" },
-    { score: 5, member: "宋小姐", content: "鏡片防藍光的效果很明顯，盯電腦一整天眼睛沒有以前那麼乾澀，超有感。" },
-    { score: 5, member: "馮先生", content: "幫長輩配老花鏡，店員放慢速度跟長輩解釋每個步驟，連我媽都被服務感動。" },
-    { score: 4, member: "韓小姐", content: "鏡框質感真的很好，雖然單價偏高但用久了就知道值得。" },
-    { score: 5, member: "杜先生", content: "預約準時、不用等。店內裝潢有質感，喝著拿鐵慢慢挑框，整個流程根本是享受。" },
-    { score: 5, member: "彭太太", content: "驗光師會主動關心我之前戴眼鏡頭痛的問題，調整瞳距後完全改善，太專業了。" },
-    { score: 5, member: "孫小姐", content: "鏡片是日本 Nikon 的，視野超廣超清晰，跟之前的鏡片完全不同等級。" },
-    { score: 5, member: "葉先生", content: "意外發現店員會手語，幫我聽障的姊姊配鏡完全沒有溝通障礙，很感動。" },
-    { score: 5, member: "白小姐", content: "從預約、驗光、選框、取貨都很流暢，整個體驗下來，連我老公都說下次他也要來。" },
-    { score: 4, member: "石先生", content: "鏡框種類齊全，從基本款到設計師款都有。店員不會硬推，會依據需求介紹。" },
-    { score: 5, member: "唐小姐", content: "我度數很深、有散光、又是高敏感族，被店員照顧得無微不至，配出來的眼鏡完全沒不適。" },
-    { score: 5, member: "丁先生", content: "雖然不是最便宜的，但服務的細緻度跟專業度真的值得這個價格，我很推薦。" },
-    { score: 5, member: "費小姐", content: "店裡的兒童區設計得很可愛，小朋友自己跑去玩，配鏡過程完全不哭鬧，超棒。" },
-    { score: 5, member: "魏先生", content: "鏡腳調整三次才滿意，店員一句抱怨都沒有，每次都笑著歡迎我回去。" },
-    { score: 5, member: "夏太太", content: "拿到眼鏡後不適應，回店重新調整鏡片度數，免費！這服務真的找不到第二家。" },
-    { score: 5, member: "袁小姐", content: "原本只是路過進來看看，結果被店員的專業度說服，當天就決定配新眼鏡。" },
-    { score: 4, member: "薛先生", content: "整體不錯，鏡片清晰度沒話說。只是建議可以多增加幾款圓框設計。" },
-    { score: 5, member: "陶小姐", content: "推薦給男友來配，他原本對眼鏡很挑剔，這次居然滿意到主動說要回來買第二副。" }
-  ];
-
-  /* 依 erpid 為 seed 做穩定的虛擬隨機（同一店每次重整都一樣）*/
-  function hashCode(str) {
-    let h = 0;
-    for (let i = 0; i < String(str).length; i++) {
-      h = (h << 5) - h + String(str).charCodeAt(i);
-      h |= 0;
-    }
-    return Math.abs(h);
-  }
-  function seededRandomInt(seed, min, max) {
-    const h = hashCode(String(seed));
-    return min + (h % (max - min + 1));
-  }
-  /* 從 pool 抓 n 筆，並隨機指派一位該店店員 */
-  function pickReviewsFromPool(employees, n, seed) {
-    const startIdx = hashCode(seed) % SAMPLE_REVIEW_POOL.length;
+  /* === 從所有員工的真實 evaluationList 蒐集評論,組成門市總評論列表 ===
+     每則評論加上 empName / empPhoto 以便顯示「給 XX 的評價」
+     輸出按 score 高→低、再按原始順序排列 */
+  function collectAllEvaluations(employees) {
     const out = [];
-    for (let i = 0; i < n; i++) {
-      const src = SAMPLE_REVIEW_POOL[(startIdx + i) % SAMPLE_REVIEW_POOL.length];
-      const emp = employees.length > 0
-        ? employees[(startIdx + i * 3) % employees.length]
-        : { name: "樂活顧問", photos: [] };
-      out.push({
-        score: src.score,
-        content: src.content,
-        memberName: src.member,
-        empName: emp.name,
-        empPhoto: (emp.photos && emp.photos[0]) || ""
+    (employees || []).forEach(emp => {
+      const list = emp.evaluationList || [];
+      const photo = (emp.photos && emp.photos[0]) || "";
+      list.forEach(ev => {
+        out.push({
+          score: ev.score,
+          content: ev.content,
+          memberName: ev.memberName,
+          empName: emp.name,
+          empPhoto: photo
+        });
       });
-    }
+    });
+    /* 高分優先 */
+    out.sort((a, b) => (b.score || 0) - (a.score || 0));
     return out;
   }
+
 
   /* === 解析 worktime 字串並判斷是否在營業時間 ===
      接受格式：「11:30~21:30」「11:30 ~ 21:30」「11：30~21：30」「11:30-21:30」「11:30 — 21:30」
@@ -213,38 +161,53 @@
     }
   }
 
-  /* === 並行抓每位員工的詳細資料（含評價）=== */
+  /* === 並行抓每位員工的詳細資料 + 真實評價 ===
+     兩支 API 並行:
+       getEmployeeDetail        → 拿員工介紹、照片、榮譽
+       getEvaluationByEmployee  → 拿真實評論清單(新 API,可拿較多筆) */
   async function loadEmployeeDetails() {
     if (!state.employees || state.employees.length === 0) return;
 
-    /* 為每位員工發起 detail 請求（不指定店員的不要打）*/
+    /* 不指定店員(9999999)的不要打 API */
     const realEmployees = state.employees.filter(e =>
-      e.erpid && !/^9{4,}\d*$/.test(e.erpid)  // 排除「9999999」這類不指定店員
+      e.erpid && !/^9{4,}\d*$/.test(e.erpid)
     );
 
-    const results = await Promise.allSettled(
-      realEmployees.map(e =>
-        storeApi.getEmployeeDetail(e.erpid, 5)   // 一次拿 5 則評價
-      )
-    );
+    /* 為每位員工發起 2 支並行請求(detail + evaluation),共 2N 個 request 一起發 */
+    const requests = realEmployees.map(e => ({
+      emp: e,
+      detail: storeApi.getEmployeeDetail(e.erpid, 0),       // detail 不再要評價(amount=0)
+      evals:  storeApi.getEvaluationByEmployee(e.erpid, 500) // 評價 API 拉到 500(API 端會 cap)
+    }));
 
-    /* 把詳細資料 merge 回 state.employees */
-    results.forEach((res, i) => {
-      if (res.status !== "fulfilled" || !res.value) return;
-      const detail = storeData.normalizeEmployeeDetail(res.value);
-      if (!detail) return;
-      const emp = realEmployees[i];
-      /* 用 detail 覆蓋（保留 short 已有的） */
-      emp.introduction = detail.introduction || emp.introduction;
-      emp.photos = detail.photos && detail.photos.length > 0 ? detail.photos : emp.photos;
-      emp.honors = detail.honors && detail.honors.length > 0 ? detail.honors : emp.honors;
-      emp.averageScore = detail.averageScore != null ? detail.averageScore : emp.averageScore;
-      emp.evaluationList = detail.evaluationList || [];
-    });
+    await Promise.all(requests.map(async (r) => {
+      /* detail:介紹、照片、榮譽 */
+      try {
+        const dRes = await r.detail;
+        const detail = storeData.normalizeEmployeeDetail(dRes);
+        if (detail) {
+          r.emp.introduction = detail.introduction || r.emp.introduction;
+          r.emp.photos = detail.photos && detail.photos.length > 0 ? detail.photos : r.emp.photos;
+          r.emp.honors = detail.honors && detail.honors.length > 0 ? detail.honors : r.emp.honors;
+        }
+      } catch (e) {
+        console.warn("[store] detail 失敗", r.emp.name, e);
+      }
+      /* evaluation:真實評論清單 + 平均分 */
+      try {
+        const eRes = await r.evals;
+        const evals = storeData.normalizeEvaluationResponse(eRes);
+        r.emp.averageScore = evals.averageScore;
+        r.emp.evaluationList = evals.evaluationList;
+      } catch (e) {
+        console.warn("[store] evaluation 失敗", r.emp.name, e);
+        r.emp.evaluationList = r.emp.evaluationList || [];
+      }
+    }));
 
-    /* 全部回來後，重新渲染（員工卡片 + 評價區）*/
+    /* 全部回來後重新渲染 */
     renderBody();
-    console.log("[store] 員工詳細資料載入完成", realEmployees.length, "位");
+    console.log("[store] 員工詳細資料 + 評價載入完成", realEmployees.length, "位");
   }
 
   /* === 渲染：總入口 === */
@@ -440,28 +403,25 @@
         `</section>`;
     }
 
-    /* === 評價彙整（純假評論，避免員工跨店歷史評論混入）===
-       1. 完全用 SAMPLE_REVIEW_POOL，依該店 erpid 為 seed 抽 12 則
-       2. 假評論的「給 XX 的評價」會分派給該店店員，看起來像該店評論
-       3. 總評價數用 200~500 的 seed 隨機數，每店穩定 */
-    const TARGET_REVIEWS = 12;
-    const displayEvals = pickReviewsFromPool(e, TARGET_REVIEWS, s.erpid);
+    /* === 評價彙整(全部來自真實 evaluation API)===
+       1. 從所有員工的 evaluationList 蒐集真實評論 (高分排前)
+       2. 總評論數 = 所有員工真實評論加總(門市總和)
+       3. UI 只展示前 12 則,其他用「查看全部」連結 */
+    const allEvals = collectAllEvaluations(e);
+    const totalReviews = allEvals.length;
+    const displayEvals = allEvals.slice(0, 12);
 
-    /* 分數分布 */
+    /* 分數分布(用全部資料而非展示的 12 則,反映門市整體口碑) */
     const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    displayEvals.forEach(ev => {
+    allEvals.forEach(ev => {
       const sc = Math.round(ev.score);
       if (sc >= 1 && sc <= 5) dist[sc]++;
     });
-    const dispCount = displayEvals.length;
-    const pct = (n) => dispCount > 0 ? Math.round((dist[n] / dispCount) * 100) : 0;
-
-    /* 總評價數（200~500 之間，依 erpid 穩定隨機）*/
-    const totalReviews = seededRandomInt(s.erpid, 200, 500);
+    const pct = (n) => totalReviews > 0 ? Math.round((dist[n] / totalReviews) * 100) : 0;
 
     /* Reviews block */
     let reviewsContent;
-    if (displayEvals.length === 0) {
+    if (totalReviews === 0) {
       reviewsContent =
         `<div class="store-state" style="padding:30px;">` +
           `<div class="store-state-icon"><i class="fa-regular fa-comments"></i></div>` +
@@ -469,10 +429,13 @@
           `<div class="store-state-msg">完成預約並體驗後，您也可以留下您的回饋</div>` +
         `</div>`;
     } else {
-      const list = displayEvals.slice(0, 12).map(renderReviewCard).join("");
+      const list = displayEvals.map(renderReviewCard).join("");
+      const moreLink = totalReviews > 12
+        ? `<div class="sd-review-more"><a href="#" data-action="show-all-reviews">查看全部 ${totalReviews} 則評價 <i class="fa-solid fa-arrow-right"></i></a></div>`
+        : "";
       reviewsContent =
         `<div class="sd-review-list">${list}</div>` +
-        `<div class="sd-review-more"><a href="#">查看全部 ${totalReviews} 則評價 <i class="fa-solid fa-arrow-right"></i></a></div>`;
+        moreLink;
     }
 
     const reviews =
@@ -694,17 +657,13 @@
       ? `<div class="sd-staff-flag"><i class="fa-solid fa-award"></i> 王 牌 顧 問</div>`
       : "";
 
-    /* 評分（真值優先，沒值就用 seed 假分數 4.7~4.9） */
-    const fakeScore = (seededRandomInt(emp.erpid || emp.name, 47, 49) / 10).toFixed(1);
+    /* 評分:真實平均分,沒有顯示「-」 */
     const score = emp.averageScore != null
       ? emp.averageScore.toFixed(1)
-      : fakeScore;
+      : "-";
 
-    /* 評價數(真值優先,沒足夠評論就用 seed 假數字 300~500) */
-    const realReviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
-    const reviewCount = realReviewCount >= 10
-      ? realReviewCount
-      : seededRandomInt(emp.erpid || emp.name, 300, 500);
+    /* 評論數:真實值,沒有就是 0 */
+    const reviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
 
     /* 簡介 ─ 完整顯示，不再切斷 */
     const intro = (emp.introduction || "").trim();

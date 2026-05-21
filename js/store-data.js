@@ -66,6 +66,51 @@
     return SLOGAN_FALLBACKS[storeName] || "";
   }
 
+  /* === 特約商家(暫時 demo 資料,未來改為即時互動 API)===
+     資料結構是「區域級」(以 region key 索引,本店所屬區的所有合作商家)
+     未來串 API:用 getPartnersByRegion(regionKey) 對接,目前回傳 demo 資料
+
+     schema:
+       category    類別(用於上方副標)
+       name        商家名稱
+       slogan      簡短一句話(編輯式描述,40 字內)
+       offer       優惠內容(顯示在卡片下方)
+       address     地址
+       image       商家照片 URL(空字串時 fallback 到品牌色 + icon)
+       icon        fallback 圖示(Font Awesome class)
+       googleCid   Google 商家 CID(可選,有的話卡片可連到商家頁)
+   */
+  const PARTNER_MERCHANTS = {
+    /* === 高雄區一 (示意資料) === */
+    "kaohsiung1": [
+      {
+        category: "CAFÉ · 鼓山",
+        name: "小巷弄咖啡",
+        slogan: "巷弄裡的手沖咖啡店,出示樂活會員享單品 9 折,並贈手工餅乾一片。",
+        offer: "單品咖啡 9 折",
+        address: "鼓山區七賢三路 23 號",
+        image: "",
+        icon: "fa-mug-saucer",
+        googleCid: ""
+      },
+      {
+        category: "RESTAURANT · 鼓山",
+        name: "老味道食堂",
+        slogan: "傳承三代的中式定食,主廚特選樂活套餐 88 折,週末限定。",
+        offer: "套餐 88 折",
+        address: "鼓山區明誠四路 88 號",
+        image: "",
+        icon: "fa-utensils",
+        googleCid: ""
+      }
+    ]
+    /* 其餘區域待補:north / hsinchu / taichung1 / taichung2 / kaohsiung2 / tainan / malaysia */
+  };
+
+  function getPartnersByRegion(regionKey) {
+    return PARTNER_MERCHANTS[regionKey] || [];
+  }
+
   /* === Google Maps 商家 CID 對照表 ===
      用法：填 cid(從 Google Maps iframe URL 取出,後段 16 進位轉 10 進位)
      有 cid → 連結會直接打開該店的 Google 商家頁面(含照片、評論、評分)
@@ -269,6 +314,23 @@
     };
   }
 
+  /* === 新 API:getevaluationbyemployee 的回應正規化 ===
+     回應結構:{ statecode, data:{ averagescore, evaluationlist:[...] }, message }
+     輸出:{ averageScore, evaluationList:[{ memberName, content, score }] }
+     格式與舊 detail 內的 evaluations 一致,可直接 merge 進 emp 物件 */
+  function normalizeEvaluationResponse(raw) {
+    if (!raw) return { averageScore: null, evaluationList: [] };
+    const data = raw.data || raw;  // 兼容 BFF 是否已剝外層
+    return {
+      averageScore: parseFloat(data.averagescore) || null,
+      evaluationList: (data.evaluationlist || []).map(e => ({
+        memberName: e.membername || "",
+        content: e.content || "",
+        score: parseInt(e.score, 10) || 0
+      }))
+    };
+  }
+
   /* === photos 欄位統一輸出陣列 === */
   function normalizePhotos(photos) {
     if (!photos) return [];
@@ -315,9 +377,11 @@
     normalizeStore,
     normalizeEmployeeShort,
     normalizeEmployeeDetail,
+    normalizeEvaluationResponse,
     normalizePhotos,
     groupByRegion,
-    findStoreByErpid
+    findStoreByErpid,
+    getPartnersByRegion
   };
 
 })(window);
