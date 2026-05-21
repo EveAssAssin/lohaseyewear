@@ -938,7 +938,10 @@
     document.getElementById('uam_mobile').value = '';
     document.getElementById('uam_result').style.display = 'none';
     document.getElementById('uam_error').style.display = 'none';
-    document.getElementById('uam_saveBtn').disabled = true;
+    const saveB = document.getElementById('uam_saveBtn');
+    saveB.disabled = true;
+    saveB.style.opacity = '0.5';
+    saveB.style.cursor = 'not-allowed';
     document.querySelector('input[name="uam_role"][value="member"]').checked = true;
     _foundMember = null;
     modal.style.display = 'flex';
@@ -973,8 +976,8 @@
 
     const searchBtn = document.getElementById('uam_searchBtn');
     searchBtn.disabled = true;
-    const oldText = searchBtn.querySelector('span').textContent;
-    searchBtn.querySelector('span').textContent = '查詢中...';
+    const oldText = searchBtn.innerHTML;
+    searchBtn.innerHTML = '查詢中...';
 
     try {
       // 嘗試打 proxy: body 內帶 mobile
@@ -1028,14 +1031,17 @@
       document.getElementById('uam_resultMobile').textContent = phone;
       document.getElementById('uam_resultErpid').textContent = erpid;
       document.getElementById('uam_result').style.display = 'block';
-      document.getElementById('uam_saveBtn').disabled = false;
+      const saveB = document.getElementById('uam_saveBtn');
+      saveB.disabled = false;
+      saveB.style.opacity = '1';
+      saveB.style.cursor = 'pointer';
 
     } catch (err) {
       console.error('[手機查詢失敗]', err);
       showAddError('查詢失敗,網路錯誤或 proxy 未開啟。錯誤:' + (err.message || err));
     } finally {
       searchBtn.disabled = false;
-      searchBtn.querySelector('span').textContent = oldText;
+      searchBtn.innerHTML = oldText;
     }
   }
 
@@ -1051,8 +1057,8 @@
 
     const saveBtn = document.getElementById('uam_saveBtn');
     saveBtn.disabled = true;
-    const oldText = saveBtn.querySelector('span').textContent;
-    saveBtn.querySelector('span').textContent = '處理中...';
+    const oldText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '處理中...';
 
     try {
       if(role === 'creator'){
@@ -1090,7 +1096,7 @@
       showAddError('處理失敗:' + (err.message || err));
     } finally {
       saveBtn.disabled = false;
-      saveBtn.querySelector('span').textContent = oldText;
+      saveBtn.innerHTML = oldText;
     }
   }
 
