@@ -124,6 +124,21 @@
         e.preventDefault();
         const employeeErpId = bookBtn.dataset.book; // 可帶員工 ERP，或 "any"
         openBookingModal(employeeErpId === "any" ? null : employeeErpId);
+        return;
+      }
+      /* 員工卡 → 查看 N 則完整評價 */
+      const revBtn = e.target.closest("[data-staff-reviews]");
+      if (revBtn) {
+        e.preventDefault();
+        openStaffReviewModal(revBtn.dataset.staffReviews);
+        return;
+      }
+    });
+
+    /* ESC 關閉評論彈窗 */
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && document.getElementById("sd-review-modal")) {
+        closeStaffReviewModal();
       }
     });
   }
@@ -176,8 +191,8 @@
     /* 為每位員工發起 2 支並行請求(detail + evaluation),共 2N 個 request 一起發 */
     const requests = realEmployees.map(e => ({
       emp: e,
-      detail: storeApi.getEmployeeDetail(e.erpid, 10),      // detail 用 amount=10 (避免 API 因 amount=0 整支失敗)
-      evals:  storeApi.getEvaluationByEmployee(e.erpid, 500) // 評價清單獨立打,可拉到大量
+      detail: storeApi.getEmployeeDetail(e.erpid, 10),      // detail 用 amount=10 (avoid amount=0 整支失敗)
+      evals:  storeApi.getEvaluationByEmployee(e.erpid, 99999) // 評價清單實質無上限
     }));
 
     await Promise.all(requests.map(async (r) => {
@@ -729,6 +744,8 @@
           (badges
             ? `<div class="sd-staff-honors">${badges}</div>`
             : "") +
+          /* === 評論精選(B 樣式:引文 + 查看 N 則按鈕)=== */
+          renderStaffReviewBlock(emp) +
           /* CTA */
           `<div class="sd-staff-foot">` +
             `<div class="sd-staff-foot-meta">線上立即預約</div>` +
@@ -739,6 +756,256 @@
         `</div>` +
       `</article>`
     );
+  }
+
+  /* === 員工評論精選 block(B 樣式) ===
+     精選引文取第一筆(score 高的優先,因為 collectAllEvaluations 與這裡都用 sort)
+     按鈕點下去 → openStaffReviewModal(erpid) 開彈窗 */
+  function renderStaffReviewBlock(emp) {
+    const list = emp.evaluationList || [];
+    if (list.length === 0) return "";
+
+    /* 取第一筆當精選引文(規格 a) */
+    const featured = list[0];
+    const content = (featured.content || "").trim();
+    if (!content) return "";
+
+    const author = featured.memberName || "顧客";
+    const total = list.length;
+
+    return (
+      `<div class="sd-staff-review">` +
+        `<div class="sd-staff-review-quote">` +
+          `<div class="sd-staff-review-text">${escapeHtml(content)}</div>` +
+          `<div class="sd-staff-review-author">— ${escapeHtml(author)}</div>` +
+        `</div>` +
+        `<button class="sd-staff-review-btn" type="button" ` +
+          `data-staff-reviews="${emp.erpid}">` +
+          `查看 ${total.toLocaleString()} 則完整評價` +
+        `</button>` +
+      `</div>`
+    );
+  }
+
+  /* HTML escape (避免評論裡的 < > & 等字符破壞 HTML 結構) */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  /* ===== 員工評論彈窗(B2 樣式:篩選 + 分頁)===== */
+  const reviewModalState = {
+    emp: null,        // 當前員工
+    filter: "all",    // "all" | "5" | "4" | "3" | "2" | "1"
+    page: 1,          // 當前頁(1-based)
+    perPage: 10       // 每頁 10 則
+  };
+
+  function openStaffReviewModal(erpid) {
+    const emp = state.employees.find(e => String(e.erpid) === String(erpid));
+    if (!emp) return;
+    reviewModalState.emp = emp;
+    reviewModalState.filter = "all";
+    reviewModalState.page = 1;
+    document.body.style.overflow = "hidden";
+    renderReviewModal();
+  }
+
+  function closeStaffReviewModal() {
+    const el = document.getElementById("sd-review-modal");
+    if (el) el.remove();
+    document.body.style.overflow = "";
+    reviewModalState.emp = null;
+  }
+
+  /* 取得當前篩選後的評論陣列 */
+  function getFilteredReviews() {
+    const list = (reviewModalState.emp && reviewModalState.emp.evaluationList) || [];
+    if (reviewModalState.filter === "all") return list;
+    const f = parseInt(reviewModalState.filter, 10);
+    return list.filter(ev => Math.round(ev.score) === f);
+  }
+
+  /* 各星等的計數(顯示在 filter chip) */
+  function getStarCounts() {
+    const list = (reviewModalState.emp && reviewModalState.emp.evaluationList) || [];
+    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    list.forEach(ev => {
+      const s = Math.round(ev.score);
+      if (counts[s] != null) counts[s]++;
+    });
+    return counts;
+  }
+
+  function renderReviewModal() {
+    const emp = reviewModalState.emp;
+    if (!emp) return;
+
+    const filtered = getFilteredReviews();
+    const total = filtered.length;
+    const perPage = reviewModalState.perPage;
+    const totalPages = Math.max(1, Math.ceil(total / perPage));
+    const curPage = Math.min(reviewModalState.page, totalPages);
+    const start = (curPage - 1) * perPage;
+    const pageItems = filtered.slice(start, start + perPage);
+
+    const counts = getStarCounts();
+    const totalAll = (emp.evaluationList || []).length;
+    const avg = emp.averageScore != null ? emp.averageScore.toFixed(1) : "-";
+
+    /* === 頭部 === */
+    const rawPhoto = emp.photos && emp.photos[0];
+    const photo = (rawPhoto && String(rawPhoto).trim()) ? rawPhoto : "";
+    const avatarBlock = photo
+      ? `<img class="sd-rm-avatar" src="${photo}" alt="${emp.name}" ` +
+          `onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` +
+        `<div class="sd-rm-avatar-fallback" style="display:none"><i class="fa-regular fa-user"></i></div>`
+      : `<div class="sd-rm-avatar-fallback"><i class="fa-regular fa-user"></i></div>`;
+
+    const head =
+      `<div class="sd-rm-head">` +
+        avatarBlock +
+        `<div class="sd-rm-head-info">` +
+          `<div class="sd-rm-name">${escapeHtml(emp.name || "")} 的顧客評價</div>` +
+          `<div class="sd-rm-sub">${escapeHtml((emp.role || emp.jobtitle || "").trim())}${state.store ? " · " + escapeHtml(state.store.name) : ""}</div>` +
+        `</div>` +
+        `<div class="sd-rm-stat">` +
+          `<div class="sd-rm-stat-stars">${renderStars(emp.averageScore || 0)}</div>` +
+          `<div class="sd-rm-stat-num">${avg}</div>` +
+          `<div class="sd-rm-stat-meta">${totalAll.toLocaleString()} 則</div>` +
+        `</div>` +
+        `<button class="sd-rm-close" type="button" data-action="rm-close">✕</button>` +
+      `</div>`;
+
+    /* === 篩選列 === */
+    const chip = (key, label, count) =>
+      `<span class="sd-rm-chip${reviewModalState.filter === key ? " active" : ""}" ` +
+            `data-rm-filter="${key}">${label}${count != null ? ` <b>${count.toLocaleString()}</b>` : ""}</span>`;
+    const filterBar =
+      `<div class="sd-rm-filter">` +
+        `<span class="sd-rm-filter-label">篩選</span>` +
+        chip("all", "全部", totalAll) +
+        chip("5", "5★", counts[5]) +
+        chip("4", "4★", counts[4]) +
+        chip("3", "3★", counts[3]) +
+        chip("2", "2★", counts[2]) +
+        chip("1", "1★", counts[1]) +
+      `</div>`;
+
+    /* === 評論列表 === */
+    let listHtml;
+    if (total === 0) {
+      listHtml =
+        `<div class="sd-rm-empty">` +
+          `<i class="fa-regular fa-comments"></i>` +
+          `<div>此星等目前沒有評論</div>` +
+        `</div>`;
+    } else {
+      listHtml = pageItems.map(ev => {
+        const stars = renderStars(ev.score);
+        return (
+          `<div class="sd-rm-review">` +
+            `<div class="sd-rm-rv-head">` +
+              `<span class="sd-rm-rv-name">${escapeHtml(ev.memberName || "顧客")}</span>` +
+              `<span class="sd-rm-rv-stars">${stars}</span>` +
+            `</div>` +
+            (ev.content ? `<div class="sd-rm-rv-content">${escapeHtml(ev.content)}</div>` : "") +
+          `</div>`
+        );
+      }).join("");
+    }
+
+    /* === 分頁器(預設顯示 1-6 頁,第七頁用 »,可前後翻)=== */
+    let pagerHtml = "";
+    if (total > perPage) {
+      const visiblePages = 6; // 預設顯示 6 個頁碼
+      const showRangeStart = Math.max(1, Math.min(curPage - 2, totalPages - visiblePages + 1));
+      const showRangeEnd = Math.min(totalPages, showRangeStart + visiblePages - 1);
+
+      const btns = [];
+      btns.push(`<span class="sd-rm-pg arrow${curPage === 1 ? " disabled" : ""}" data-rm-page="${curPage - 1}">‹</span>`);
+      /* 如果起始 > 1,顯示「1」+ 省略號 */
+      if (showRangeStart > 1) {
+        btns.push(`<span class="sd-rm-pg" data-rm-page="1">1</span>`);
+        if (showRangeStart > 2) {
+          btns.push(`<span class="sd-rm-pg disabled">…</span>`);
+        }
+      }
+      for (let i = showRangeStart; i <= showRangeEnd; i++) {
+        btns.push(`<span class="sd-rm-pg${i === curPage ? " active" : ""}" data-rm-page="${i}">${i}</span>`);
+      }
+      /* 如果範圍結尾 < 總頁,顯示 »(跳尾頁)*/
+      if (showRangeEnd < totalPages) {
+        btns.push(`<span class="sd-rm-pg arrow" data-rm-page="${totalPages}" title="跳到最後一頁">»</span>`);
+      }
+      btns.push(`<span class="sd-rm-pg arrow${curPage >= totalPages ? " disabled" : ""}" data-rm-page="${curPage + 1}">›</span>`);
+      pagerHtml =
+        `<div class="sd-rm-pager">` +
+          btns.join("") +
+          `<span class="sd-rm-pg-info">第 ${curPage} / ${totalPages.toLocaleString()} 頁</span>` +
+        `</div>`;
+    }
+
+    /* === 組裝彈窗 === */
+    const existing = document.getElementById("sd-review-modal");
+    const html =
+      `<div class="sd-rm-overlay" id="sd-review-modal" data-action="rm-bg">` +
+        `<div class="sd-rm-dialog">` +
+          head +
+          filterBar +
+          `<div class="sd-rm-body">${listHtml}</div>` +
+          pagerHtml +
+        `</div>` +
+      `</div>`;
+
+    if (existing) {
+      /* 已開啟 → 只替換內容,避免閃爍 */
+      existing.outerHTML = html;
+    } else {
+      document.body.insertAdjacentHTML("beforeend", html);
+    }
+
+    /* === 綁事件(每次重綁,因為 outerHTML 替換掉舊 DOM)=== */
+    const root = document.getElementById("sd-review-modal");
+    if (!root) return;
+    root.addEventListener("click", (e) => {
+      const t = e.target;
+      /* 點 overlay 背景關閉 */
+      if (t.dataset.action === "rm-bg") {
+        closeStaffReviewModal();
+        return;
+      }
+      /* 關閉按鈕 */
+      if (t.closest("[data-action='rm-close']")) {
+        closeStaffReviewModal();
+        return;
+      }
+      /* 切換 filter */
+      const chipEl = t.closest("[data-rm-filter]");
+      if (chipEl) {
+        const f = chipEl.dataset.rmFilter;
+        if (f !== reviewModalState.filter) {
+          reviewModalState.filter = f;
+          reviewModalState.page = 1;
+          renderReviewModal();
+        }
+        return;
+      }
+      /* 翻頁 */
+      const pgEl = t.closest("[data-rm-page]");
+      if (pgEl && !pgEl.classList.contains("disabled")) {
+        const p = parseInt(pgEl.dataset.rmPage, 10);
+        if (!isNaN(p) && p !== reviewModalState.page) {
+          reviewModalState.page = p;
+          renderReviewModal();
+        }
+        return;
+      }
+    });
   }
 
   /* === 獎章 SVG（緞帶 + 圓徽） === */
