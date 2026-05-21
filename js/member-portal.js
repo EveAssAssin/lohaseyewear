@@ -126,6 +126,48 @@
         if (!adminRes.error && adminRes.data) {
           State.isAdmin = true;
         }
+
+        // === 舊 designer 自動升級為 Creator ===
+        // 條件:1) 還不是 creator  2) 有中文名  3) engraving_designs 表內有 designer_name 等於中文名的記錄
+        if (!State.isCreator && member.name) {
+          try {
+            const orphanRes = await sb.from('engraving_designs')
+              .select('id')
+              .eq('designer_name', member.name)
+              .is('creator_id', null)
+              .limit(1);
+
+            if (!orphanRes.error && orphanRes.data && orphanRes.data.length > 0) {
+              console.log('[Auto-Creator] 偵測到舊作品,自動建立 creator_info:', member.name);
+
+              // 1. 補 engraving_designs.creator_id = erpid (所有同名 + 沒 creator_id 的)
+              await sb.from('engraving_designs')
+                .update({ creator_id: member.erpid })
+                .eq('designer_name', member.name)
+                .is('creator_id', null);
+
+              // 2. 插 creator_info (status=active)
+              const { data: newCreator, error: insErr } = await sb.from('creator_info')
+                .insert({
+                  member_id: member.erpid,
+                  display_name: member.name,
+                  status: 'active'
+                })
+                .select()
+                .maybeSingle();
+
+              if (!insErr) {
+                State.isCreator = true;
+                State.creatorInfo = newCreator || { member_id: member.erpid, display_name: member.name, status: 'active' };
+                console.log('[Auto-Creator] 升級成功');
+              } else {
+                console.warn('[Auto-Creator] creator_info insert 失敗:', insErr);
+              }
+            }
+          } catch (autoErr) {
+            console.warn('[Auto-Creator] 偵測失敗:', autoErr);
+          }
+        }
       } catch (err) {
         console.warn('[身份查詢失敗]', err);
       }
