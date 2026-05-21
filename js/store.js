@@ -498,21 +498,70 @@
         reviewsContent +
       `</section>`;
 
-    /* === 特約商家（資料在「即時互動」系統，非左手；待對接後串接）=== */
-    const partners =
+    /* === 特約商家(資料源:即時互動,目前用 store-data demo 資料) === */
+    const partners = renderPartnersSection(s);
+
+    dom.body.innerHTML = stats + gallery + staffSection + reviews + partners;
+  }
+
+  /* 特約商家 section:風格 B 雜誌編輯式
+     有資料 → 渲染卡片 grid;無資料 → 維持原本「即將上線」placeholder */
+  function renderPartnersSection(s) {
+    const list = (window.LohasStore && window.LohasStore.data &&
+                  typeof window.LohasStore.data.getPartnersByRegion === "function")
+      ? window.LohasStore.data.getPartnersByRegion(s.region.key)
+      : [];
+
+    if (!list || list.length === 0) {
+      return (
+        `<section class="sd-sec">` +
+          `<div class="sd-sec-head">` +
+            `<h2>區 域 特 約 商 家</h2>` +
+            `<span class="sd-sec-tag">即將上線</span>` +
+          `</div>` +
+          `<div class="sd-partners-placeholder">` +
+            `<i class="fa-solid fa-store-alt"></i>` +
+            `<div class="sd-partners-title">${s.region.label} 特約商家專區</div>` +
+            `<div class="sd-partners-msg">本店所屬區域的合作商家優惠資訊即將於此呈現</div>` +
+          `</div>` +
+        `</section>`
+      );
+    }
+
+    const cards = list.map(p => {
+      const imgBlock = p.image
+        ? `<div class="sd-partner-img" style="background-image:url('${p.image}')"></div>`
+        : `<div class="sd-partner-img sd-partner-img-fallback">` +
+            `<i class="fa-solid ${p.icon || "fa-store"}"></i>` +
+          `</div>`;
+      const link = p.googleCid
+        ? `href="https://www.google.com/maps?cid=${p.googleCid}" target="_blank" rel="noopener"`
+        : "";
+      return (
+        `<a class="sd-partner-card" ${link}>` +
+          imgBlock +
+          `<div class="sd-partner-body">` +
+            `<div class="sd-partner-cat">${p.category || ""}</div>` +
+            `<div class="sd-partner-name">${p.name || ""}</div>` +
+            `<div class="sd-partner-desc">${p.slogan || ""}</div>` +
+            `<div class="sd-partner-foot">` +
+              `<span class="sd-partner-offer">${p.offer || ""}</span>` +
+              (p.googleCid ? `<i class="fa-solid fa-arrow-right"></i>` : "") +
+            `</div>` +
+          `</div>` +
+        `</a>`
+      );
+    }).join("");
+
+    return (
       `<section class="sd-sec">` +
         `<div class="sd-sec-head">` +
           `<h2>區 域 特 約 商 家</h2>` +
-          `<span class="sd-sec-tag">即將上線</span>` +
+          `<span class="sd-sec-subtitle">${s.region.label} · 樂活會員專屬合作優惠</span>` +
         `</div>` +
-        `<div class="sd-partners-placeholder">` +
-          `<i class="fa-solid fa-store-alt"></i>` +
-          `<div class="sd-partners-title">${s.region.label} 特約商家專區</div>` +
-          `<div class="sd-partners-msg">本店所屬區域的合作商家優惠資訊即將於此呈現</div>` +
-        `</div>` +
-      `</section>`;
-
-    dom.body.innerHTML = stats + gallery + staffSection + reviews + partners;
+        `<div class="sd-partners-grid">${cards}</div>` +
+      `</section>`
+    );
   }
 
   /* === 渲染單則評價卡（顯示客人首字頭像，不顯示店員照） === */
@@ -651,11 +700,11 @@
       ? emp.averageScore.toFixed(1)
       : fakeScore;
 
-    /* 評價數（真值優先，沒足夠評論就用 seed 假數字 30~200） */
+    /* 評價數(真值優先,沒足夠評論就用 seed 假數字 300~500) */
     const realReviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
     const reviewCount = realReviewCount >= 10
       ? realReviewCount
-      : seededRandomInt(emp.erpid || emp.name, 30, 200);
+      : seededRandomInt(emp.erpid || emp.name, 300, 500);
 
     /* 簡介 ─ 完整顯示，不再切斷 */
     const intro = (emp.introduction || "").trim();
