@@ -693,7 +693,7 @@
   margin-left: 4px;
 }
 
-/* ===== 手機底部 TAB (沿用 allstore.css 樣式) ===== */
+/* ===== 手機底部 TAB (樣式抄電腦版 .vs-view-switch) ===== */
 .vs-view-tabs {
   display: none;
   position: fixed;
@@ -701,38 +701,36 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 900;
-  background: #fff;
-  padding: 4px;
+  background: var(--bg-soft);
   border-radius: var(--r-pill);
-  border: 1px solid var(--lohas-bd);
+  padding: 3px;
   box-shadow: 0 8px 24px rgba(80, 66, 45, 0.18);
-  gap: 2px;
 }
 .vs-view-tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-width: 96px;
-  padding: 10px 20px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
+  background: none;
   border: 0;
-  background: transparent;
-  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 14px;
   border-radius: var(--r-pill);
   cursor: pointer;
-  transition: all 0.2s ease;
+  color: var(--text-sub);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
 }
-.vs-view-tab i { font-size: 12px; opacity: 0.7; }
-.vs-view-tab:hover { color: var(--lohas-brand); }
+.vs-view-tab:hover {
+  color: var(--text-main);
+}
 .vs-view-tab.is-active {
-  background: var(--lohas-brand);
-  color: #fff;
+  background: #fff;
+  color: var(--lohas-brand);
+  box-shadow: 0 1px 3px rgba(80, 66, 45, 0.12);
 }
-.vs-view-tab.is-active i { opacity: 1; }
+.vs-view-tab i { font-size: 11px; }
 
 /* ===== RWD: 平板 ===== */
 @media (max-width: 1024px) {
