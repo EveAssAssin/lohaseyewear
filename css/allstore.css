@@ -609,15 +609,48 @@
 
 @media (max-width: 560px) {
   .as-store-card-name { font-size: 18px; letter-spacing: 1.5px; }
-  /* 地圖模式小卡:限制最大高度為「螢幕 - header(80) - FAB(90)」
-     內容超出時內部捲動,不會被 header 切到 */
+
+  /* === 手機版 pin-card 改為底部抽屜(Google Maps 風)===
+     固定佔螢幕下半部,不會頂到 header
+     上方加 grip 條暗示「抽屜」感
+     內部可捲動,完整保留所有區塊 */
   .as-pin-card {
-    width: calc(100% - 32px);
-    right: 16px;
-    bottom: 90px;
-    max-height: calc(100vh - 80px - 90px);
-    max-height: calc(100dvh - 80px - 90px);
+    width: auto;
+    left: 0;
+    right: 0;
+    bottom: 60px;                          /* 底部 FAB 高度 */
+    max-width: none;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;  /* 只上方圓角(抽屜) */
+    height: 50vh;
+    height: 50dvh;
+    max-height: 50vh;
+    max-height: 50dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 16px;                     /* 給 grip 條空間 */
+    transform: translateY(100%);           /* 從下方滑入 */
   }
+  .as-pin-card.show {
+    transform: translateY(0);
+  }
+  /* grip 條 — fixed 在 sheet 頂端正中(隨捲動跟著 sheet) */
+  .as-pin-card::before {
+    content: "";
+    position: sticky;
+    top: 0;
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 12px;
+    background: var(--lohas-light);
+    border-radius: 2px;
+    z-index: 2;
+  }
+  /* 抽屜模式照片變短 */
+  .as-pin-card-img {
+    aspect-ratio: auto;
+    height: 100px;
+  }
+  .as-pin-card-img > i { font-size: 36px; }
 }
