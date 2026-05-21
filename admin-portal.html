@@ -658,6 +658,68 @@
       </div>
     </div>
 
+    <!-- ============= 查看會員 Modal ============= -->
+    <div class="ag-modal-overlay" id="userViewModal" style="display:none">
+      <div class="ag-modal" style="max-width:520px">
+        <div class="ag-modal-header">
+          <h2 class="ag-modal-title">會員詳細資料</h2>
+          <button class="ag-modal-close" id="userViewClose" type="button" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="ag-modal-body" style="padding:24px" id="uvm_body">
+          <div id="uvm_loading" style="text-align:center;padding:30px;color:#7A6B5C">
+            <i class="fa-solid fa-spinner fa-spin"></i> 載入中...
+          </div>
+
+          <div id="uvm_content" style="display:none">
+            <!-- 基本資料 -->
+            <div style="padding:18px;background:#FAF7F2;border:1px solid #E8DED1;border-radius:8px;margin-bottom:18px">
+              <div style="font-size:20px;font-weight:600;color:#50422D;margin-bottom:8px" id="uvm_name">—</div>
+              <div style="display:grid;grid-template-columns:60px 1fr;gap:6px 12px;font-size:13px;color:#7A6B5C">
+                <div>ERP ID</div><div style="font-family:monospace" id="uvm_erpid">—</div>
+                <div>手機</div><div id="uvm_mobile">—</div>
+                <div>Email</div><div id="uvm_email">—</div>
+                <div>生日</div><div id="uvm_birthday">—</div>
+              </div>
+            </div>
+
+            <!-- 身份 / 狀態 -->
+            <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+              <div id="uvm_role">—</div>
+              <div id="uvm_status">—</div>
+            </div>
+
+            <!-- 統計 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+              <div style="padding:12px;background:#fff;border:1px solid #E8DED1;border-radius:6px;text-align:center">
+                <div style="font-size:24px;font-weight:600;color:#50422D" id="uvm_photoCount">0</div>
+                <div style="font-size:12px;color:#7A6B5C">上傳照片</div>
+              </div>
+              <div style="padding:12px;background:#fff;border:1px solid #E8DED1;border-radius:6px;text-align:center">
+                <div style="font-size:24px;font-weight:600;color:#50422D" id="uvm_designCount">0</div>
+                <div style="font-size:12px;color:#7A6B5C">刻圖設計</div>
+              </div>
+            </div>
+
+            <!-- 創作者頁連結 -->
+            <div id="uvm_creatorLinkBlock" style="display:none">
+              <a id="uvm_creatorLink" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;text-decoration:none;color:#50422D;font-size:13px">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟創作者個人頁
+              </a>
+            </div>
+          </div>
+
+          <div id="uvm_error" style="display:none;margin-top:14px;padding:10px 14px;background:#FDEDE8;border-left:3px solid #A04030;border-radius:4px;color:#A04030;font-size:13px"></div>
+        </div>
+
+        <div class="ag-modal-footer" style="padding:16px 24px;border-top:1px solid #E8DED1;display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="uvm_closeBtn" style="padding:9px 18px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;color:#50422D">關閉</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ============= 其他頁 placeholder ============= -->
     <!-- ============= 照片審核 (合併: photo + story) ============= -->
     <div class="content-page" data-page="review-uploads">
