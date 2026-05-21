@@ -960,16 +960,16 @@
       // 3. 整理顯示名稱 (優先序: ERP > creator_info.display_name > ERP ID)
       const displayName = erpName || creatorInfo?.display_name || erpid;
 
-      // 4. 若 ERP 查到名字但 creator_info 還沒寫,順手把名字寫回 (status 保持原樣或 'pending')
+      // 4. 若 ERP 查到名字、且跟現有 display_name 不同 (空/null/錯誤值如 erpid 都會觸發),就更新
       //    這樣下次會員列表就能顯示正確名字
-      if(erpName && (!creatorInfo || !creatorInfo.display_name)){
+      if(erpName && erpName !== creatorInfo?.display_name){
         try {
           await sb.from('creator_info').upsert({
             member_id: erpid,
             display_name: erpName,
             status: creatorInfo?.status || 'pending'  // 沒記錄就建 pending,不誤升 creator
           }, { onConflict: 'member_id' });
-          console.log('[補名字]', erpid, '→', erpName);
+          console.log('[補名字]', erpid, '→', erpName, '(原:', creatorInfo?.display_name || '無', ')');
         } catch(e){ console.warn('[補名字失敗]', e); }
       }
 
