@@ -458,6 +458,9 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <button class="action-btn-solid" id="newsSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
             <button class="btn" id="newsCancelBtn">關閉</button>
+            <button type="button" class="btn" id="newsPreviewBtn">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>預覽前台
+            </button>
             <div class="spacer"></div>
             <button class="btn btn-danger" id="newsDeleteBtn" style="display:none">
               <i class="fa-solid fa-trash"></i>刪除消息
@@ -473,6 +476,11 @@
         <div>
           <h1 class="page-title">會員列表</h1>
           <div class="page-sub">所有註冊會員,可篩選身份、停權帳號、手動升級為 Creator</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+          <button class="action-btn-solid" id="usersAddBtn" type="button">
+            <i class="fa-solid fa-user-plus"></i>新增 / 升級會員
+          </button>
         </div>
       </div>
 
@@ -576,6 +584,78 @@
       </div>
     </div>
 
+    <!-- ============= 新增 / 升級會員 Modal ============= -->
+    <div class="ag-modal-overlay" id="userAddModal" style="display:none">
+      <div class="ag-modal" style="max-width:560px">
+        <div class="ag-modal-header">
+          <h2 class="ag-modal-title">查詢會員 / 升級身份</h2>
+          <button class="ag-modal-close" id="userAddClose" type="button" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="ag-modal-body">
+          <p style="color:var(--lohas-mute);font-size:13px;line-height:1.7;margin-bottom:18px;padding:12px 14px;background:#FAF7F2;border-radius:8px;border-left:3px solid #C9B98C">
+            <i class="fa-solid fa-circle-info" style="color:#9D7E3F;margin-right:6px"></i>
+            輸入會員手機號碼搜尋,確認資料後可加入會員列表並可選擇升級為 Creator。
+          </p>
+
+          <!-- 搜尋區 -->
+          <div class="editor-row">
+            <div class="editor-col" style="width:100%">
+              <label class="editor-label">會員手機號碼 <span style="color:#A04030">*</span></label>
+              <div style="display:flex;gap:8px">
+                <input type="tel" class="editor-input" id="uam_mobile" placeholder="例:0910768736" autocomplete="off" style="flex:1" />
+                <button class="action-btn-solid" id="uam_searchBtn" type="button"><i class="fa-solid fa-magnifying-glass"></i><span>查詢</span></button>
+              </div>
+              <p class="editor-hint">輸入後點查詢,從樂活 ERP 系統取得會員資料</p>
+            </div>
+          </div>
+
+          <!-- 查詢結果區 -->
+          <div id="uam_result" style="display:none;margin-top:18px">
+            <div style="padding:14px 16px;background:#fff;border:1px solid var(--lohas-line);border-radius:10px">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+                <div>
+                  <div id="uam_resultName" style="font-size:16px;font-weight:600;color:var(--lohas-brown);margin-bottom:4px">—</div>
+                  <div id="uam_resultMobile" style="font-size:12px;color:var(--lohas-mute)">—</div>
+                </div>
+                <span class="role-pill" id="uam_resultStatus" style="background:#E8F5E0;color:#3D6B1E;padding:4px 10px;border-radius:12px;font-size:11px">已找到</span>
+              </div>
+              <div style="display:flex;gap:12px;font-size:11px;color:var(--lohas-mute);padding-top:10px;border-top:1px dashed var(--lohas-line)">
+                <span><strong>ERP ID:</strong> <span id="uam_resultErpid" style="font-family:monospace">—</span></span>
+              </div>
+            </div>
+
+            <!-- 升級選項 -->
+            <div class="editor-row" style="margin-top:18px">
+              <div class="editor-col" style="width:100%">
+                <label class="editor-label">設定身份</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                  <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;background:#fff;border:1px solid var(--lohas-line);border-radius:8px;cursor:pointer;font-size:13px">
+                    <input type="radio" name="uam_role" value="member" checked>
+                    <span>加入會員列表</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;background:#fff;border:1px solid var(--lohas-line);border-radius:8px;cursor:pointer;font-size:13px">
+                    <input type="radio" name="uam_role" value="creator">
+                    <span>⭐ 升級為 Creator</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 錯誤訊息區 -->
+          <div id="uam_error" style="display:none;margin-top:14px;padding:12px 14px;background:#FDEDE8;border:1px solid #E8A89A;border-left:3px solid #A04030;border-radius:8px;color:#A04030;font-size:13px"></div>
+        </div>
+
+        <div class="ag-modal-footer">
+          <button class="action-btn-solid" id="uam_saveBtn" disabled><i class="fa-solid fa-check"></i><span>確認加入</span></button>
+          <button class="btn" id="uam_cancelBtn">取消</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ============= 其他頁 placeholder ============= -->
     <!-- ============= 照片審核 (合併: photo + story) ============= -->
     <div class="content-page" data-page="review-uploads">
@@ -661,9 +741,6 @@
                   <div class="img-upload-preview" id="bmImagePreview">
                     <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(16:9)</span></span>
                   </div>
-                  <button type="button" class="img-upload-clear" id="bmImageClear" aria-label="移除圖片" style="display:none">
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
                   <input type="file" accept="image/*" class="img-upload-input">
                 </div>
                 <p class="editor-hint" id="bmImageHint">建議尺寸 1920 × 1080 px</p>
@@ -715,14 +792,12 @@
 
           <!-- footer (固定底部) -->
           <div class="ag-modal-footer">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
-              <button class="btn" id="bmCancelBtn">關閉</button>
-              <div class="spacer"></div>
-              <button class="btn btn-danger" id="bmDeleteBtn" style="display:none">
-                <i class="fa-solid fa-trash"></i>刪除 Banner
-              </button>
-            </div>
+            <button class="btn danger" id="bmDeleteBtn" style="display:none">
+              <i class="fa-regular fa-trash-can"></i>刪除
+            </button>
+            <div style="flex:1"></div>
+            <button class="btn" id="bmCancelBtn">取消</button>
+            <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i>儲存</button>
             <div class="form-hint" id="bmHint" style="width:100%;margin-top:8px;text-align:right"></div>
           </div>
         </div>
@@ -1625,7 +1700,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260518-3items"></script>
+<script src="js/admin-portal.js?v=20260518-mobsearch"></script>
 
 </body>
 </html>
