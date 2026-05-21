@@ -729,7 +729,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9000;
+  z-index: var(--z-modal);
   padding: 20px;
   animation: sd-rm-fade-in 0.2s ease;
 }
