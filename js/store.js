@@ -934,16 +934,15 @@
         closeStaffReviewModal();
         return;
       }
-      /* 載入更多 */
+      /* 載入更多(append 模式,不重畫整個 modal)*/
       const moreEl = t.closest("[data-action='rm-load-more']");
       if (moreEl) {
-        reviewModalState.loadedCount += reviewModalState.perLoad;
-        renderReviewModal();
+        appendMoreReviews();
         return;
       }
     });
 
-    /* === 捲動到底自動載入更多 === */
+    /* === 捲動到底自動載入更多(用 append 模式避免閃爍)=== */
     const bodyEl = root.querySelector(".sd-rm-body");
     if (bodyEl) {
       let busy = false;
@@ -952,12 +951,68 @@
         const list = (reviewModalState.emp && reviewModalState.emp.evaluationList) || [];
         if (reviewModalState.loadedCount >= list.length) return;
         const nearBottom = bodyEl.scrollTop + bodyEl.clientHeight >= bodyEl.scrollHeight - 120;
-        if (nearBottom) {
-          busy = true;
-          reviewModalState.loadedCount += reviewModalState.perLoad;
-          renderReviewModal();
-        }
+        if (!nearBottom) return;
+
+        busy = true;
+        appendMoreReviews();
+        /* 短暫節流,避免一次捲動觸發兩次 */
+        setTimeout(() => { busy = false; }, 200);
       });
+    }
+  }
+
+  /* === 增量 append:不重畫整個 modal,只把新的評論插進 list 末尾 ===
+     這樣使用者捲動位置不會跳掉、頁面不會閃 */
+  function appendMoreReviews() {
+    const emp = reviewModalState.emp;
+    if (!emp) return;
+    const list = emp.evaluationList || [];
+    const prevLoaded = reviewModalState.loadedCount;
+    const nextLoaded = Math.min(prevLoaded + reviewModalState.perLoad, list.length);
+    if (nextLoaded <= prevLoaded) return;
+
+    reviewModalState.loadedCount = nextLoaded;
+    const newItems = list.slice(prevLoaded, nextLoaded);
+
+    const root = document.getElementById("sd-review-modal");
+    if (!root) return;
+    const bodyEl = root.querySelector(".sd-rm-body");
+    const footEl = root.querySelector(".sd-rm-scroll-foot");
+    if (!bodyEl) return;
+
+    /* 把新評論插到 footer 之前(若無 footer 就 append 到 body 末尾)*/
+    const newHtml = newItems.map(ev => {
+      const stars = renderStars(ev.score);
+      return (
+        `<div class="sd-rm-review">` +
+          `<div class="sd-rm-rv-head">` +
+            `<span class="sd-rm-rv-name">${escapeHtml(ev.memberName || "顧客")}</span>` +
+            `<span class="sd-rm-rv-stars">${stars}</span>` +
+          `</div>` +
+          (ev.content ? `<div class="sd-rm-rv-content">${escapeHtml(ev.content)}</div>` : "") +
+        `</div>`
+      );
+    }).join("");
+
+    if (footEl) {
+      footEl.insertAdjacentHTML("beforebegin", newHtml);
+    } else {
+      bodyEl.insertAdjacentHTML("beforeend", newHtml);
+    }
+
+    /* 更新 footer 狀態 */
+    if (footEl) {
+      const hasMore = nextLoaded < list.length;
+      if (hasMore) {
+        footEl.innerHTML =
+          `<button class="sd-rm-load-more" type="button" data-action="rm-load-more">` +
+            `<i class="fa-solid fa-circle-arrow-down"></i> 載入更多評價` +
+          `</button>` +
+          `<div class="sd-rm-scroll-info">已顯示 ${nextLoaded.toLocaleString()} / ${list.length.toLocaleString()} 則</div>`;
+      } else {
+        footEl.innerHTML =
+          `<div class="sd-rm-scroll-info end">已顯示全部 ${list.length.toLocaleString()} 則評價</div>`;
+      }
     }
   }
 
