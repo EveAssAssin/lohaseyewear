@@ -609,5 +609,15 @@
 
 @media (max-width: 560px) {
   .as-store-card-name { font-size: 18px; letter-spacing: 1.5px; }
-  .as-pin-card { width: calc(100% - 32px); right: 16px; bottom: 90px; }
+  /* 地圖模式小卡:限制最大高度為「螢幕 - header(80) - FAB(90)」
+     內容超出時內部捲動,不會被 header 切到 */
+  .as-pin-card {
+    width: calc(100% - 32px);
+    right: 16px;
+    bottom: 90px;
+    max-height: calc(100vh - 80px - 90px);
+    max-height: calc(100dvh - 80px - 90px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
