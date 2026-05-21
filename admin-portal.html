@@ -597,7 +597,7 @@
         <div class="ag-modal-body" style="padding:24px">
 
           <p style="color:#7A6B5C;font-size:13px;line-height:1.7;margin-bottom:20px">
-            輸入會員手機號碼搜尋,從樂活 ERP 取得會員資料後,可選擇加入會員列表或升級為 Creator。
+            輸入會員手機號碼或會員編號搜尋,從樂活 ERP 取得會員資料後,可選擇加入會員列表或升級為 Creator。
           </p>
 
           <!-- 搜尋區 -->
@@ -606,6 +606,17 @@
             <div style="display:flex;gap:8px">
               <input type="tel" class="editor-input" id="uam_mobile" placeholder="例:0910768736" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff" />
               <button type="button" id="uam_searchBtn" style="height:40px;padding:0 18px;background:#50422D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;letter-spacing:1px">
+                <i class="fa-solid fa-magnifying-glass"></i> 查詢
+              </button>
+            </div>
+          </div>
+
+          <!-- 或用會員編號 -->
+          <div style="margin-bottom:18px">
+            <label class="editor-label" style="display:block;margin-bottom:6px">或用 會員編號 (ERP ID)</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" class="editor-input" id="uam_erpid" placeholder="例:28211088" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff;font-family:monospace" />
+              <button type="button" id="uam_searchErpBtn" style="height:40px;padding:0 18px;background:#50422D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;letter-spacing:1px">
                 <i class="fa-solid fa-magnifying-glass"></i> 查詢
               </button>
             </div>
