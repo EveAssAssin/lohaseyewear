@@ -84,6 +84,13 @@
     dom.mapCount      = document.getElementById("vs-map-count");
     dom.totalCount    = document.getElementById("vsTotalCount");
     dom.listTitle     = document.querySelector(".vs-list-title");
+    /* 新增: browse view 與 view 切換 */
+    dom.browse        = document.getElementById("vs-browse");
+    dom.browseInner   = document.querySelector("#vs-browse .vs-browse-inner");
+    dom.viewSwitch    = document.getElementById("vs-view-switch");
+    /* 新增: 詳情浮層 */
+    dom.detailOvl     = document.getElementById("vs-detail-ovl");
+    dom.detailModal   = document.getElementById("vs-detail-modal");
   }
 
   function bindEvents() {
@@ -96,12 +103,14 @@
       state.activeCat = chip.dataset.cat;
       clearActiveUnit();
       refresh();
+      renderBrowse();   /* browse view 也要更新 */
     });
 
     /* 搜尋 */
     dom.search.addEventListener("input", debounce(e => {
       state.keyword = e.target.value.trim().toLowerCase();
       refresh();
+      renderBrowse();
     }, 250));
 
     /* 列表點擊 */
@@ -135,14 +144,116 @@
       dom.viewTabs.addEventListener("click", e => {
         const tab = e.target.closest(".vs-view-tab");
         if (!tab) return;
-        dom.viewTabs.querySelectorAll(".vs-view-tab").forEach(t => t.classList.remove("is-active"));
-        tab.classList.add("is-active");
-        document.body.dataset.vsView = tab.dataset.view;
-        if (tab.dataset.view === "map") {
-          setTimeout(() => state.map.invalidateSize(), 50);
+        switchView(tab.dataset.view);
+      });
+    }
+
+    /* 電腦版 view 切換 */
+    if (dom.viewSwitch) {
+      dom.viewSwitch.addEventListener("click", e => {
+        const btn = e.target.closest(".vs-view-btn");
+        if (!btn) return;
+        switchView(btn.dataset.view);
+      });
+    }
+
+    /* Browse view 委派點擊 */
+    if (dom.browseInner) {
+      dom.browseInner.addEventListener("click", e => {
+        /* 看全部 → 切換到單一類別 */
+        const more = e.target.closest(".vs-sec-more");
+        if (more) {
+          const catId = more.dataset.cat;
+          activateCategory(catId);
+          return;
+        }
+        /* 看更多分類 → 滾到下方 */
+        const moreCats = e.target.closest(".vs-browse-more");
+        if (moreCats) {
+          const all = dom.browseInner.querySelectorAll(".vs-sec");
+          if (all.length) all[all.length - 1].scrollIntoView({ behavior: "smooth" });
+          return;
+        }
+        /* 收藏按鈕 */
+        const fav = e.target.closest("[data-action='fav']");
+        if (fav) {
+          e.stopPropagation();
+          const icon = fav.querySelector("i");
+          fav.classList.toggle("is-on");
+          if (icon) {
+            icon.classList.toggle("fa-regular");
+            icon.classList.toggle("fa-solid");
+          }
+          return;
+        }
+        /* 點卡 → 開詳情浮層 */
+        const card = e.target.closest(".vs-place");
+        if (card) {
+          openDetail(card.dataset.unitId);
         }
       });
     }
+
+    /* 詳情浮層關閉 */
+    if (dom.detailOvl) {
+      dom.detailOvl.addEventListener("click", e => {
+        if (e.target === dom.detailOvl) closeDetail();
+        const closeBtn = e.target.closest("[data-action='detail-close']");
+        if (closeBtn) closeDetail();
+        const mapBtn = e.target.closest("[data-action='detail-show-on-map']");
+        if (mapBtn) {
+          const unitId = mapBtn.dataset.unitId;
+          closeDetail();
+          switchView("map");
+          /* 等 view 切換完再 selectUnit (避免 map 還沒 render) */
+          setTimeout(() => selectUnit(unitId), 100);
+        }
+      });
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && dom.detailOvl.classList.contains("is-show")) {
+          closeDetail();
+        }
+      });
+    }
+  }
+
+  /* === View 切換 === */
+  function switchView(view) {
+    if (view !== "browse" && view !== "map") return;
+    dom.layout.dataset.view = view;
+
+    /* 同步兩組切換按鈕的 active 狀態 */
+    if (dom.viewSwitch) {
+      dom.viewSwitch.querySelectorAll(".vs-view-btn").forEach(b => {
+        b.classList.toggle("is-active", b.dataset.view === view);
+      });
+    }
+    if (dom.viewTabs) {
+      dom.viewTabs.querySelectorAll(".vs-view-tab").forEach(t => {
+        t.classList.toggle("is-active", t.dataset.view === view);
+      });
+    }
+
+    /* 切到地圖時要重新計算 Leaflet 尺寸 */
+    if (view === "map" && state.map) {
+      setTimeout(() => state.map.invalidateSize(), 50);
+    }
+  }
+
+  /* === 啟用特定類別 (從 browse 「看全部」點過來) === */
+  function activateCategory(catId) {
+    /* 找對應 chip 並切換 */
+    const chip = dom.cats.querySelector(`.vs-chip[data-cat="${cssEscape(catId)}"]`);
+    if (chip) {
+      dom.cats.querySelectorAll(".vs-chip").forEach(c => c.classList.remove("is-active"));
+      chip.classList.add("is-active");
+    }
+    state.activeCat = catId;
+    clearActiveUnit();
+    refresh();
+    renderBrowse();   /* browse view 也要更新 */
+    /* 平滑滾到頂 */
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   /* === 載入資料 ===
@@ -196,6 +307,7 @@
     renderCategories();
     renderStoreMarkers();
     refresh();
+    renderBrowse();    /* 新增: browse view 也要渲染 */
 
     /* 更新總計 */
     if (dom.totalCount) dom.totalCount.textContent = state.units.length;
@@ -273,6 +385,7 @@
     if (updated > 0) {
       renderCategories();
       renderList();
+      renderBrowse();   /* 新增: browse view 也要重渲染 */
     }
   }
 
@@ -341,60 +454,13 @@
     updateCount();
   }
 
-  /* === 渲染列表 === */
+  /* === 渲染列表 (地圖 view 左側用) === */
   function renderList() {
     if (!state.filtered.length) {
       dom.list.innerHTML = '<div class="vs-loading">這個類別目前沒有特約店家</div>';
       return;
     }
-
-    dom.list.innerHTML = state.filtered.map((u, i) => {
-      const isActive = String(u.id) === String(state.activeUnitId);
-      const palette  = `p${(i % 8) + 1}`;  /* p1 ~ p8 漸層循環 */
-
-      /* 圖區內容: 有 logo 就放 logo,沒則放類別 icon 大字 */
-      const catIcon = CAT_ICONS[u.categoryName] || CAT_ICONS.default;
-      const imgContent = u.imgUrl
-        ? `<img src="${escapeAttr(u.imgUrl)}" alt="${escapeAttr(u.name)} logo">`
-        : `<i class="fa-solid ${catIcon} vs-place-cat-icon"></i>`;
-
-      /* 距離資訊 */
-      let distLine = "";
-      if (state.userPos) {
-        const d = ssApi.nearestStoreDistance(u, state.userPos.lat, state.userPos.lng);
-        if (d != null) {
-          distLine = `<span class="vs-place-dist"><i class="fa-solid fa-location-dot"></i> ${d.toFixed(1)} km</span>`;
-        }
-      }
-
-      /* 合作門市數 */
-      const storeCount = (u.boundStores || []).length;
-      const storeLine = storeCount
-        ? `<span><i class="fa-solid fa-store"></i> ${storeCount} 間合作門市</span>`
-        : `<span><i class="fa-solid fa-globe"></i> 全門市通用</span>`;
-
-      return `
-        <article class="vs-place ${palette} ${isActive ? 'is-active' : ''}" data-unit-id="${escapeAttr(u.id)}">
-          <div class="vs-place-img">
-            ${u.categoryName ? `<span class="vs-place-badge">${escapeHtml(u.categoryName)}</span>` : ""}
-            <button type="button" class="vs-place-fav" data-action="fav" aria-label="收藏">
-              <i class="fa-regular fa-heart"></i>
-            </button>
-            ${imgContent}
-          </div>
-          <div class="vs-place-info">
-            <div class="vs-place-row1">
-              <h3 class="vs-place-name">${escapeHtml(u.name)}</h3>
-            </div>
-            ${u.intro ? `<p class="vs-place-intro">${escapeHtml(u.intro)}</p>` : ""}
-            <div class="vs-place-meta">
-              ${storeLine}
-              ${distLine}
-            </div>
-          </div>
-        </article>
-      `;
-    }).join("");
+    dom.list.innerHTML = state.filtered.map((u, i) => renderPlaceCard(u, i)).join("");
   }
 
   /* === 地圖：建立門市 marker（所有門市一次建好）=== */
@@ -594,6 +660,287 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function escapeAttr(s) { return escapeHtml(s); }
+
+  /* === CSS 屬性選擇器安全跳脫 === */
+  function cssEscape(s) {
+    if (typeof CSS !== "undefined" && CSS.escape) return CSS.escape(String(s));
+    return String(s == null ? "" : s).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  }
+
+  /* === 渲染單一店家卡 (共用,給 list / browse / grid 用) ===
+     i 用來決定漸層配色 (p1~p8) */
+  function renderPlaceCard(u, i) {
+    const palette  = `p${(i % 8) + 1}`;
+    const isActive = String(u.id) === String(state.activeUnitId);
+
+    /* 圖區內容:有 logo 就放 logo,沒則放類別 icon 大字 */
+    const catIcon = CAT_ICONS[u.categoryName] || CAT_ICONS.default;
+    const imgContent = u.imgUrl
+      ? `<img src="${escapeAttr(u.imgUrl)}" alt="${escapeAttr(u.name)} logo">`
+      : `<i class="fa-solid ${catIcon} vs-place-cat-icon"></i>`;
+
+    /* 距離資訊 */
+    let distLine = "";
+    if (state.userPos) {
+      const d = ssApi.nearestStoreDistance(u, state.userPos.lat, state.userPos.lng);
+      if (d != null) {
+        distLine = `<span class="vs-place-dist"><i class="fa-solid fa-location-dot"></i> ${d.toFixed(1)} km</span>`;
+      }
+    }
+
+    /* 合作門市數 */
+    const storeCount = (u.boundStores || []).length;
+    const storeLine = storeCount
+      ? `<span><i class="fa-solid fa-store"></i> ${storeCount} 間合作門市</span>`
+      : `<span><i class="fa-solid fa-globe"></i> 全門市通用</span>`;
+
+    return `
+      <article class="vs-place ${palette} ${isActive ? 'is-active' : ''}" data-unit-id="${escapeAttr(u.id)}">
+        <div class="vs-place-img">
+          ${u.categoryName ? `<span class="vs-place-badge">${escapeHtml(u.categoryName)}</span>` : ""}
+          <button type="button" class="vs-place-fav" data-action="fav" aria-label="收藏">
+            <i class="fa-regular fa-heart"></i>
+          </button>
+          ${imgContent}
+        </div>
+        <div class="vs-place-info">
+          <div class="vs-place-row1">
+            <h3 class="vs-place-name">${escapeHtml(u.name)}</h3>
+          </div>
+          ${u.intro ? `<p class="vs-place-intro">${escapeHtml(u.intro)}</p>` : ""}
+          <div class="vs-place-meta">
+            ${storeLine}
+            ${distLine}
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  /* === 渲染 Browse view (列表瀏覽) ===
+     state.activeCat === "all"  → 顯示前 5 大類別,每類橫向滑卡
+     state.activeCat === 其他   → 顯示該類別全部店家 (大網格)
+     有搜尋關鍵字時:跨類別搜尋,顯示為大網格 */
+  function renderBrowse() {
+    if (!dom.browseInner) return;
+
+    /* 載入中狀態:state.units 還沒準備好 */
+    if (!state.units || !state.units.length) {
+      dom.browseInner.innerHTML = '<div class="vs-loading">載入中…</div>';
+      return;
+    }
+
+    /* 過濾後的單元 (套用搜尋關鍵字) */
+    const matchKeyword = (u) => {
+      if (!state.keyword) return true;
+      const text = (u.name + u.intro + u.categoryName).toLowerCase();
+      return text.includes(state.keyword);
+    };
+
+    /* ====== 模式 1: 單一類別模式 (大網格) ====== */
+    if (state.activeCat !== "all") {
+      const list = state.units.filter(u =>
+        String(u.categoryId) === String(state.activeCat) && matchKeyword(u)
+      );
+      const sorted = list.slice().sort((a, b) => (b.sort || 0) - (a.sort || 0));
+      const catName = (sorted[0] && sorted[0].categoryName) || "此分類";
+
+      if (!sorted.length) {
+        dom.browseInner.innerHTML = `
+          <div class="vs-loading">這個類別目前沒有特約店家</div>
+        `;
+        return;
+      }
+
+      dom.browseInner.innerHTML = `
+        <div class="vs-sec">
+          <div class="vs-sec-head">
+            <div class="vs-sec-l">
+              <span class="vs-sec-eb">— CATEGORY</span>
+              <h3 class="vs-sec-h">${escapeHtml(catName)}</h3>
+              <span class="vs-sec-cnt">${sorted.length} 間</span>
+            </div>
+          </div>
+          <div class="vs-browse-grid">
+            ${sorted.map((u, i) => renderPlaceCard(u, i)).join("")}
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    /* ====== 模式 2: 搜尋中跨類別 (大網格) ====== */
+    if (state.keyword) {
+      const list = state.units.filter(matchKeyword);
+      const sorted = list.slice().sort((a, b) => (b.sort || 0) - (a.sort || 0));
+
+      if (!sorted.length) {
+        dom.browseInner.innerHTML = `
+          <div class="vs-loading">找不到符合的店家</div>
+        `;
+        return;
+      }
+
+      dom.browseInner.innerHTML = `
+        <div class="vs-sec">
+          <div class="vs-sec-head">
+            <div class="vs-sec-l">
+              <span class="vs-sec-eb">— SEARCH</span>
+              <h3 class="vs-sec-h">搜尋結果</h3>
+              <span class="vs-sec-cnt">${sorted.length} 間</span>
+            </div>
+          </div>
+          <div class="vs-browse-grid">
+            ${sorted.map((u, i) => renderPlaceCard(u, i)).join("")}
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    /* ====== 模式 3: 全部 (前 5 大類別 + 橫向滑卡) ====== */
+    /* 統計每個類別的店家數,只取有 categoryId 的 */
+    const catStats = new Map();   // catId → { name, items: [] }
+    state.units.forEach(u => {
+      if (!u.categoryId) return;
+      const key = String(u.categoryId);
+      if (!catStats.has(key)) {
+        catStats.set(key, { name: u.categoryName || "其他", items: [] });
+      }
+      catStats.get(key).items.push(u);
+    });
+
+    /* 沒類別 (B 方案還沒跑完) → fallback: 顯示前 24 筆 */
+    if (catStats.size === 0) {
+      const top = state.units.slice(0, 24);
+      dom.browseInner.innerHTML = `
+        <div class="vs-sec">
+          <div class="vs-sec-head">
+            <div class="vs-sec-l">
+              <span class="vs-sec-eb">— ALL</span>
+              <h3 class="vs-sec-h">特約店家</h3>
+              <span class="vs-sec-cnt">${state.units.length} 間</span>
+            </div>
+          </div>
+          <div class="vs-browse-grid">
+            ${top.map((u, i) => renderPlaceCard(u, i)).join("")}
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    /* 排序類別 (店家數多→少),取前 5 */
+    const topCats = Array.from(catStats.entries())
+      .sort((a, b) => b[1].items.length - a[1].items.length)
+      .slice(0, 5);
+
+    const sections = topCats.map(([catId, info]) => {
+      const sortedItems = info.items.slice()
+        .sort((a, b) => (b.sort || 0) - (a.sort || 0))
+        .slice(0, 10);   /* 每類最多露 10 張 */
+      return `
+        <div class="vs-sec">
+          <div class="vs-sec-head">
+            <div class="vs-sec-l">
+              <span class="vs-sec-eb">— CATEGORY</span>
+              <h3 class="vs-sec-h">${escapeHtml(info.name)}</h3>
+              <span class="vs-sec-cnt">${info.items.length} 間</span>
+            </div>
+            <button class="vs-sec-more" type="button" data-cat="${escapeAttr(catId)}">
+              看全部 <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+          <div class="vs-scroller">
+            ${sortedItems.map((u, i) => renderPlaceCard(u, i)).join("")}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    /* 如果類別超過 5 個,加「看更多分類」按鈕 */
+    const moreBtn = catStats.size > 5
+      ? `<button class="vs-browse-more" type="button">看更多分類 (共 ${catStats.size} 類)</button>`
+      : "";
+
+    dom.browseInner.innerHTML = sections + moreBtn;
+  }
+
+  /* === 開啟商家詳情浮層 === */
+  function openDetail(unitId) {
+    const u = state.units.find(x => String(x.id) === String(unitId));
+    if (!u || !dom.detailOvl) return;
+
+    const catIcon = CAT_ICONS[u.categoryName] || CAT_ICONS.default;
+    const imgContent = u.imgUrl
+      ? `<img src="${escapeAttr(u.imgUrl)}" alt="${escapeAttr(u.name)} logo">`
+      : `<i class="fa-solid ${catIcon} vs-detail-cat-icon"></i>`;
+
+    const boundStores = u.boundStores || [];
+    const storesHtml = boundStores.length
+      ? `
+        <div class="vs-detail-stores">
+          <p class="vs-detail-stores-title">合作門市 · ${boundStores.length} 間</p>
+          <div class="vs-detail-stores-list">
+            ${boundStores.map(s => `
+              <span class="vs-detail-store-chip">
+                <i class="fa-solid fa-location-dot"></i> ${escapeHtml(s.name)}
+              </span>
+            `).join("")}
+          </div>
+        </div>
+      `
+      : `
+        <div class="vs-detail-all-stores">
+          <i class="fa-solid fa-globe"></i> 全門市通用 · 任一間樂活門市皆可使用
+        </div>
+      `;
+
+    const introClean = (u.intro || "").trim();
+    const showIntro = introClean && !/^特約編號[::]/.test(introClean);
+
+    const code = u._raw && (u._raw.appointed_unit_code || u._raw.id) || u.id;
+
+    dom.detailModal.innerHTML = `
+      <div class="vs-detail-img">
+        ${u.categoryName ? `<span class="vs-detail-badge">${escapeHtml(u.categoryName)}</span>` : ""}
+        <button class="vs-detail-close" type="button" data-action="detail-close" aria-label="關閉">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        ${imgContent}
+      </div>
+      <div class="vs-detail-body">
+        <h2 class="vs-detail-name">${escapeHtml(u.name)}</h2>
+        <p class="vs-detail-code">特約編號:${escapeHtml(code)}</p>
+        ${showIntro ? `<p class="vs-detail-intro">${escapeHtml(introClean)}</p>` : ""}
+        ${storesHtml}
+        <div class="vs-detail-actions">
+          ${boundStores.length ? `
+            <button class="vs-detail-btn vs-detail-btn--solid" type="button"
+              data-action="detail-show-on-map" data-unit-id="${escapeAttr(u.id)}">
+              <i class="fa-solid fa-map-location-dot"></i>
+              在地圖上看
+            </button>
+          ` : ""}
+          <a class="vs-detail-btn vs-detail-btn--ghost"
+            href="https://line.me/R/ti/p/@lohas" target="_blank" rel="noopener">
+            <i class="fa-brands fa-line"></i>
+            LINE 詢問優惠
+          </a>
+        </div>
+      </div>
+    `;
+    dom.detailOvl.classList.add("is-show");
+    dom.detailOvl.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeDetail() {
+    if (!dom.detailOvl) return;
+    dom.detailOvl.classList.remove("is-show");
+    dom.detailOvl.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
 
   /* === Mock 假資料（USE_MOCK=true 才用） ===
      門市座標取自 store-data.js 的旗艦店 erpid */
