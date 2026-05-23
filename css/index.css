@@ -520,14 +520,10 @@
 /* RWD */
 @media (max-width: 768px) {
   .home-main-banner {
-    height: 50vh;
-    margin-top: 24px;
-    margin-bottom: 24px;
-  }
-  /* 若該 slide 有手機版專屬圖,改 4:5 直式 */
-  .home-main-banner:has(.hmb-slide.has-mobile-img) {
     height: auto;
     aspect-ratio: 4 / 5;
+    margin-top: 24px;
+    margin-bottom: 24px;
   }
   .home-main-banner-arrow {
     display: none !important;
