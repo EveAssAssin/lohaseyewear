@@ -2120,7 +2120,7 @@
   // Banner 管理模組
   // ============================================
   const BANNER_POSITIONS = {
-    home_main: { label: '首頁主打', aspect: '21:9', multi: true,  size: '建議 1920 × 820 px' },
+    home_main: { label: '首頁主打', aspect: '16:9', multi: true,  size: '建議 1920 × 1080 px' },
     home_hero: { label: '首頁 Hero', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
     engraving: { label: '雷刻頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
     market:    { label: '刻圖市集頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
