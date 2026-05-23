@@ -219,7 +219,7 @@
     position: relative;
     flex: 0 0 680px;
     min-width: 0;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     scroll-snap-align: start;
     text-decoration: none;
