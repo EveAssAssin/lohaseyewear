@@ -569,6 +569,7 @@
     state.submitting = true;
     updateFooter();
     try {
+      /* === Step 1:建立暫時預約單 === */
       const data = await bookingApi.createReservation({
         groupErpId: state.store.erpid,
         employeeErpId: state.selectedEmployee.erpid,
@@ -586,6 +587,22 @@
       if (data && data.reservationid) {
         reservationId = bookingApi.decryptReservationId(data.reservationid);
       }
+      if (!reservationId) {
+        throw new Error("建立暫時預約單失敗:後端沒有回傳 reservationid");
+      }
+
+      /* === Step 2:暫時預約單轉正式預約(orderid 傳空字串,純預約沒有訂單)===
+         若沒呼叫這支,門市端不會收到預約通知 */
+      console.log("[booking] createReservation 成功,reservationId =", reservationId);
+      try {
+        const finishResult = await bookingApi.finishReservation(reservationId, "");
+        console.log("[booking] finishReservation 結果:", finishResult);
+      } catch (finishErr) {
+        /* finishReservation 失敗:暫時單已建立但沒轉成正式,門市看不到 */
+        console.error("[booking] finishReservation 失敗:", finishErr);
+        throw new Error("預約最終確認失敗:" + (finishErr.message || "請聯絡客服或重試"));
+      }
+
       state.successData = { reservationId };
       state.step = 4;
     } catch (err) {
