@@ -2294,19 +2294,21 @@
           : '';
 
         return `
-          <div class="banner-card" style="background:#fff;border:1px solid var(--lohas-line);border-radius:12px;padding:14px;display:grid;grid-template-columns:180px 1fr auto;gap:16px;align-items:center;margin-bottom:12px" data-id="${escapeHtml(b.id)}">
-            <div>${img}</div>
-            <div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
-                ${status}
-                ${mobileTag}
-                ${cfg.multi ? `<span class="creator-card-tag">順序 ${b.sort_order || 0}</span>` : ''}
+          <div class="banner-card" style="background:#fff;border:1px solid var(--lohas-line);border-radius:12px;padding:14px;margin-bottom:12px" data-id="${escapeHtml(b.id)}">
+            <div style="display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:center;margin-bottom:12px">
+              <div>${img}</div>
+              <div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
+                  ${status}
+                  ${mobileTag}
+                  ${cfg.multi ? `<span class="creator-card-tag">順序 ${b.sort_order || 0}</span>` : ''}
+                </div>
+                <div style="font-size:14px;font-weight:600;color:var(--lohas-brown);margin-bottom:4px">${escapeHtml(b.title || '(未填標題)')}</div>
+                <div style="font-size:12px;color:var(--lohas-mute);margin-bottom:6px">${escapeHtml(b.subtitle || '')}</div>
+                ${b.link_url ? `<div style="font-size:11px;color:var(--lohas-mute);font-family:monospace">→ ${escapeHtml(b.link_url)}</div>` : ''}
               </div>
-              <div style="font-size:14px;font-weight:600;color:var(--lohas-brown);margin-bottom:4px">${escapeHtml(b.title || '(未填標題)')}</div>
-              <div style="font-size:12px;color:var(--lohas-mute);margin-bottom:6px">${escapeHtml(b.subtitle || '')}</div>
-              ${b.link_url ? `<div style="font-size:11px;color:var(--lohas-mute);font-family:monospace">→ ${escapeHtml(b.link_url)}</div>` : ''}
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
+            <div class="creator-card-actions" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;border-top:1px solid var(--lohas-line);padding-top:12px">
               ${b.image_url ? `<a class="btn" href="${escapeHtml(b.image_url)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i>查看圖</a>` : ''}
               <button class="btn" data-banner-edit-id="${escapeHtml(b.id)}"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
               ${b.is_active
