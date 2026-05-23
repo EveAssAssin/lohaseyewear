@@ -345,22 +345,16 @@
           <h3 class="editor-panel-h"><i class="fa-regular fa-heart"></i>與樂活的緣分</h3>
           <div class="editor-row">
             <div class="editor-label">圖片</div>
-            <div>
-              <div class="creator-photo-wrap">
-                <div class="creator-photo-preview" id="creatorJoiningPhotoPreview">
-                  <i class="fa-regular fa-image"></i>
-                  <span>3:4 直式</span>
-                </div>
-                <button class="creator-photo-clear" id="creatorJoiningPhotoClear" type="button" aria-label="移除緣分照片" style="display:none">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-                <button class="creator-photo-upload-btn" id="creatorJoiningPhotoBtn" type="button">
-                  <i class="fa-solid fa-camera"></i>更換圖片
-                </button>
-                <input type="file" id="creatorJoiningPhotoInput" class="visually-hidden" accept="image/*">
-                <input type="hidden" id="creatorJoiningPhoto"/>
+            <div class="img-upload-wrap" data-field="joining_photo" data-aspect="4:5" id="creatorJoiningPhotoWrap" style="max-width:200px">
+              <div class="img-upload-preview" id="creatorJoiningPhotoPreview">
+                <span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>
               </div>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">3:4 直式照片,顯示在文字左側</div>
+              <button type="button" class="img-upload-clear" id="creatorJoiningPhotoClear" aria-label="移除緣分照片" style="display:none">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <input type="file" id="creatorJoiningPhotoInput" accept="image/*" class="img-upload-input">
+              <input type="hidden" id="creatorJoiningPhoto"/>
+              <p class="editor-hint">4:5 直式照片,顯示在文字左側 · 建議尺寸 800 × 1000 px</p>
             </div>
           </div>
           <div class="editor-row">
