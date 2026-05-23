@@ -2487,7 +2487,6 @@
     const mobileAspectRatio = mobileAspectParts[0] / mobileAspectParts[1];
 
     const wrapMobile = document.getElementById('bmImageMobileWrap');
-    const clearMobileBtn = document.getElementById('bmImageMobileClearBtn');
     if(wrapMobile){
       // 同步 aspect 到 wrap (給樣式用)
       wrapMobile.dataset.aspect = mobileAspect;
@@ -2498,18 +2497,15 @@
 
       wrapMobile.innerHTML =
         '<div class="img-upload-preview" id="bmImageMobilePreview">' + imgHtmlMobile + '</div>' +
+        '<button type="button" class="img-upload-clear" id="bmImageMobileClearBtn" aria-label="移除手機版圖" style="display:' + (b.image_url_mobile ? 'flex' : 'none') + '"><i class="fa-solid fa-xmark"></i></button>' +
         '<input type="file" accept="image/*" class="img-upload-input">' +
         '<p class="editor-hint" id="bmImageMobileHint">選填 · 建議比例 ' + mobileAspect + ' · ' + mobileSize + ' · 未上傳時手機版會用上方桌機版圖</p>';
 
       BannerState.existingImageMobileUrl = b.image_url_mobile || null;
 
-      // 有舊圖才顯示移除按鈕
-      if(clearMobileBtn){
-        clearMobileBtn.style.display = b.image_url_mobile ? '' : 'none';
-      }
-
       const newPreviewM = wrapMobile.querySelector('.img-upload-preview');
       const newInputM = wrapMobile.querySelector('.img-upload-input');
+      const newClearM = wrapMobile.querySelector('#bmImageMobileClearBtn');
 
       newPreviewM.addEventListener('click', () => newInputM.click());
 
@@ -2527,36 +2523,30 @@
           finalFile = cropped;
         }
         BannerState.imageMobileFile = finalFile;
-        BannerState.removeMobileImage = false; // 重新上傳就取消「移除」標記
+        BannerState.removeMobileImage = false;
 
         const reader = new FileReader();
         reader.onload = ev => {
           BannerState.imageMobileBase64 = ev.target.result;
           newPreviewM.innerHTML = '<img src="' + ev.target.result + '" alt="" />';
-          if(clearMobileBtn) clearMobileBtn.style.display = '';
+          if(newClearM) newClearM.style.display = 'flex';
         };
         reader.readAsDataURL(finalFile);
         newInputM.value = '';
       });
-    }
 
-    // 移除手機版圖按鈕 (用 dataset.bound 防重綁)
-    if(clearMobileBtn && !clearMobileBtn.dataset.bound){
-      clearMobileBtn.dataset.bound = '1';
-      clearMobileBtn.addEventListener('click', () => {
-        if(!confirm('確定移除手機版圖?移除後,手機版會用桌機版圖顯示。')) return;
-        BannerState.imageMobileFile = null;
-        BannerState.imageMobileBase64 = null;
-        BannerState.removeMobileImage = true;
-        const previewM = document.getElementById('bmImageMobilePreview');
-        if(previewM){
-          // 用當下 currentPos 的 mobileAspect 重設 placeholder
-          const curCfg = BANNER_POSITIONS[BannerState.currentPos];
-          const ma = curCfg.mobileAspect || '4:5';
-          previewM.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (' + ma + ')</span>';
-        }
-        clearMobileBtn.style.display = 'none';
-      });
+      // 點叉叉移除手機版圖
+      if(newClearM){
+        newClearM.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if(!confirm('確定移除手機版圖?移除後,手機版會用桌機版圖顯示。')) return;
+          BannerState.imageMobileFile = null;
+          BannerState.imageMobileBase64 = null;
+          BannerState.removeMobileImage = true;
+          newPreviewM.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (' + mobileAspect + ')</span>';
+          newClearM.style.display = 'none';
+        });
+      }
     }
 
     document.getElementById('bmHint').textContent = '';
