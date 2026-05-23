@@ -810,6 +810,21 @@
                 <p class="editor-hint" id="bmImageHint">建議尺寸 1920 × 1080 px</p>
               </div>
 
+              <!-- 手機版上傳區 (4:5,選填) -->
+              <div class="editor-row" id="bmImageMobileRow">
+                <label class="editor-label">Banner 圖 (手機版)</label>
+                <div class="img-upload-wrap" data-field="banner_image_mobile" data-aspect="4:5" id="bmImageMobileWrap" style="max-width:280px">
+                  <div class="img-upload-preview" id="bmImageMobilePreview">
+                    <span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (4:5)</span>
+                  </div>
+                  <input type="file" accept="image/*" class="img-upload-input">
+                </div>
+                <p class="editor-hint">選填 · 建議比例 4:5 · 建議尺寸 800 × 1000 px · 未上傳時手機版會用上方桌機版圖</p>
+                <button type="button" class="btn" id="bmImageMobileClearBtn" style="margin-top:8px;display:none">
+                  <i class="fa-regular fa-trash-can"></i>移除手機版圖
+                </button>
+              </div>
+
               <div class="editor-row">
                 <label class="editor-label">啟用狀態</label>
                 <label class="editor-check">
