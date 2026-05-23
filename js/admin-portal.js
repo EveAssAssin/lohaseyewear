@@ -2121,7 +2121,7 @@
   // ============================================
   const BANNER_POSITIONS = {
     home_main: { label: '首頁主打', aspect: '16:9', multi: true,  size: '建議 1920 × 1080 px',
-                 mobileAspect: '4:3', mobileSize: '建議 800 × 600 px' },
+                 mobileAspect: '3:4', mobileSize: '建議 600 × 800 px' },
     home_hero: { label: '首頁 Hero', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px',
                  mobileAspect: '4:5', mobileSize: '建議 800 × 1000 px' },
     engraving: { label: '雷刻頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px',
