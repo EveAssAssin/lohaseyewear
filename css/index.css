@@ -375,7 +375,9 @@
 .home-main-banner {
   position: relative;
   width: 100%;
-  height: 66.67vh;
+  aspect-ratio: 16 / 9;
+  max-height: 1080px;   /* 超寬螢幕防止過高 */
+  min-height: 400px;    /* 超窄視窗防止過扁 */
   overflow: hidden;
   background: #FAF7F2;
   margin-top: 40px;
@@ -520,7 +522,7 @@
 /* RWD */
 @media (max-width: 768px) {
   .home-main-banner {
-    height: 50vh;
+    min-height: 240px;
     margin-top: 24px;
     margin-bottom: 24px;
   }
