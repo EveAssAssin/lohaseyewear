@@ -2120,7 +2120,7 @@
   // Banner 管理模組
   // ============================================
   const BANNER_POSITIONS = {
-    home_main: { label: '首頁主打', aspect: '21:9', multi: true,  size: '建議 1920 × 820 px · 檔案 300KB 以下' },
+    home_main: { label: '首頁主打', aspect: '21:9', multi: true,  size: '建議 1920 × 820 px' },
     home_hero: { label: '首頁 Hero', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
     engraving: { label: '雷刻頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
     market:    { label: '刻圖市集頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
@@ -2133,7 +2133,12 @@
     editing: null,        // 當前編輯中的 banner
     imageFile: null,
     imageBase64: null,
-    existingImageUrl: null
+    existingImageUrl: null,
+    // 手機版圖
+    imageMobileFile: null,
+    imageMobileBase64: null,
+    existingImageMobileUrl: null,
+    removeMobileImage: false   // 標記是否要在 save 時清掉資料庫的 image_url_mobile
   };
 
   async function loadBannerModule() {
@@ -2271,46 +2276,58 @@
           <p style="font-size:11px;color:var(--lohas-mute);margin:0 0 14px">${cfg.size}</p>
           ${showAdd ? addBtn : ''}
         </div>`;
-      // bind 新增按鈕
-      const btn = document.getElementById('bannerAddBtn');
-      if(btn) btn.addEventListener('click', () => openBannerEdit(null));
-      return;
+    } else {
+      const cards = list.map(b => {
+        const img = b.image_url
+          ? `<div style="aspect-ratio:${cfg.aspect.replace(':','/')};background:url('${escapeHtml(b.image_url)}') center/cover;border-radius:8px"></div>`
+          : `<div style="aspect-ratio:${cfg.aspect.replace(':','/')};background:#F4F1EC;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9D7E3F"><i class="fa-regular fa-image" style="font-size:32px"></i></div>`;
+        const status = b.is_active
+          ? '<span class="creator-card-tag featured" style="background:#E8F5E0;color:#3D6B1E"><i class="fa-solid fa-eye"></i> 啟用中</span>'
+          : '<span class="creator-card-tag" style="background:#EEE;color:#888"><i class="fa-regular fa-eye-slash"></i> 已停用</span>';
+        const mobileTag = b.image_url_mobile
+          ? '<span class="creator-card-tag" style="background:#E8F0F8;color:#2A5A8C"><i class="fa-solid fa-mobile-screen"></i> 含手機圖</span>'
+          : '';
+
+        return `
+          <div class="banner-card" style="background:#fff;border:1px solid var(--lohas-line);border-radius:12px;padding:14px;display:grid;grid-template-columns:180px 1fr auto;gap:16px;align-items:center;margin-bottom:12px" data-id="${escapeHtml(b.id)}">
+            <div>${img}</div>
+            <div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
+                ${status}
+                ${mobileTag}
+                ${cfg.multi ? `<span class="creator-card-tag">順序 ${b.sort_order || 0}</span>` : ''}
+              </div>
+              <div style="font-size:14px;font-weight:600;color:var(--lohas-brown);margin-bottom:4px">${escapeHtml(b.title || '(未填標題)')}</div>
+              <div style="font-size:12px;color:var(--lohas-mute);margin-bottom:6px">${escapeHtml(b.subtitle || '')}</div>
+              ${b.link_url ? `<div style="font-size:11px;color:var(--lohas-mute);font-family:monospace">→ ${escapeHtml(b.link_url)}</div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button class="btn" data-banner-edit-id="${escapeHtml(b.id)}"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      wrap.innerHTML = cards + (showAdd ? addBtn : '');
     }
 
-    const cards = list.map(b => {
-      const img = b.image_url
-        ? `<div style="aspect-ratio:${cfg.aspect.replace(':','/')};background:url('${escapeHtml(b.image_url)}') center/cover;border-radius:8px"></div>`
-        : `<div style="aspect-ratio:${cfg.aspect.replace(':','/')};background:#F4F1EC;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9D7E3F"><i class="fa-regular fa-image" style="font-size:32px"></i></div>`;
-      const status = b.is_active
-        ? '<span class="creator-card-tag featured" style="background:#E8F5E0;color:#3D6B1E"><i class="fa-solid fa-eye"></i> 啟用中</span>'
-        : '<span class="creator-card-tag" style="background:#EEE;color:#888"><i class="fa-regular fa-eye-slash"></i> 已停用</span>';
-
-      return `
-        <div class="banner-card" style="background:#fff;border:1px solid var(--lohas-line);border-radius:12px;padding:14px;display:grid;grid-template-columns:180px 1fr auto;gap:16px;align-items:center;margin-bottom:12px" data-id="${escapeHtml(b.id)}">
-          <div>${img}</div>
-          <div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
-              ${status}
-              ${cfg.multi ? `<span class="creator-card-tag">順序 ${b.sort_order || 0}</span>` : ''}
-            </div>
-            <div style="font-size:14px;font-weight:600;color:var(--lohas-brown);margin-bottom:4px">${escapeHtml(b.title || '(未填標題)')}</div>
-            <div style="font-size:12px;color:var(--lohas-mute);margin-bottom:6px">${escapeHtml(b.subtitle || '')}</div>
-            ${b.link_url ? `<div style="font-size:11px;color:var(--lohas-mute);font-family:monospace">→ ${escapeHtml(b.link_url)}</div>` : ''}
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn" data-banner-edit-id="${escapeHtml(b.id)}"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
-          </div>
-        </div>`;
-    }).join('');
-
-    wrap.innerHTML = cards + (showAdd ? addBtn : '');
-
-    // bind
-    const addBtnEl = document.getElementById('bannerAddBtn');
-    if(addBtnEl) addBtnEl.addEventListener('click', () => openBannerEdit(null));
-    wrap.querySelectorAll('[data-banner-edit-id]').forEach(b => {
-      b.addEventListener('click', () => openBannerEdit(b.dataset.bannerEditId));
-    });
+    // event delegation: 綁在 wrap 上,只綁一次
+    if (!wrap.dataset.delegationBound) {
+      wrap.dataset.delegationBound = '1';
+      wrap.addEventListener('click', (e) => {
+        const addEl = e.target.closest('#bannerAddBtn');
+        if (addEl) {
+          console.log('[Banner] add clicked');
+          openBannerEdit(null);
+          return;
+        }
+        const editEl = e.target.closest('[data-banner-edit-id]');
+        if (editEl) {
+          console.log('[Banner] edit clicked', editEl.dataset.bannerEditId);
+          openBannerEdit(editEl.dataset.bannerEditId);
+          return;
+        }
+      });
+    }
   }
 
   // 保留 global wrapper 給之前 inline 用過的程式碼相容
@@ -2325,11 +2342,17 @@
     BannerState.imageFile = null;
     BannerState.imageBase64 = null;
     BannerState.existingImageUrl = null;
+    // 重置手機圖 state
+    BannerState.imageMobileFile = null;
+    BannerState.imageMobileBase64 = null;
+    BannerState.existingImageMobileUrl = null;
+    BannerState.removeMobileImage = false;
 
     const cfg = BANNER_POSITIONS[BannerState.currentPos];
     document.getElementById('bannerModalTitle').textContent =
       (BannerState.editing ? '編輯' : '新增') + ' Banner — ' + cfg.label;
-    document.getElementById('bmAspectHint').textContent = '(' + cfg.aspect + ')';
+    // 注意: 不要在這裡設 bmAspectHint.textContent,因為下方 wrapEl.innerHTML 會整個重寫,
+    // 第二次打開時 bmAspectHint 已被刪掉,設 null.textContent 會 throw 導致 modal 開不起來
     document.getElementById('bmImageHint').textContent = cfg.size;
 
     // 同步 aspect 到 wrap (給 cropper 用)
@@ -2349,7 +2372,7 @@
     document.getElementById('bmIsActive').checked = b.is_active !== false;
     document.getElementById('bmSortOrder').value = b.sort_order != null ? b.sort_order : 0;
 
-    // 圖片預覽 + 重新建立 input 跟 listener (每次都新元素,避免 dataset.bound 卡住)
+    // ====== 桌機版圖片上傳 ======
     const wrapEl = document.getElementById('bmImageWrap');
     if(wrapEl){
       const imgHtml = b.image_url
@@ -2397,6 +2420,73 @@
       });
     }
 
+    // ====== 手機版圖片上傳 (4:5,選填) ======
+    const wrapMobile = document.getElementById('bmImageMobileWrap');
+    const clearMobileBtn = document.getElementById('bmImageMobileClearBtn');
+    if(wrapMobile){
+      const imgHtmlMobile = b.image_url_mobile
+        ? '<img src="' + escapeHtml(b.image_url_mobile) + '" alt="" />'
+        : '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (4:5)</span>';
+
+      wrapMobile.innerHTML =
+        '<div class="img-upload-preview" id="bmImageMobilePreview">' + imgHtmlMobile + '</div>' +
+        '<input type="file" accept="image/*" class="img-upload-input">';
+
+      BannerState.existingImageMobileUrl = b.image_url_mobile || null;
+
+      // 有舊圖才顯示移除按鈕
+      if(clearMobileBtn){
+        clearMobileBtn.style.display = b.image_url_mobile ? '' : 'none';
+      }
+
+      const newPreviewM = wrapMobile.querySelector('.img-upload-preview');
+      const newInputM = wrapMobile.querySelector('.img-upload-input');
+
+      newPreviewM.addEventListener('click', () => newInputM.click());
+
+      newInputM.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+
+        let finalFile = file;
+        if(window.LohasCropper){
+          const cropped = await window.LohasCropper.crop(file, {
+            aspectRatio: 4/5,
+            title: '裁切 Banner (手機版) · 4:5'
+          });
+          if(!cropped){ newInputM.value = ''; return; }
+          finalFile = cropped;
+        }
+        BannerState.imageMobileFile = finalFile;
+        BannerState.removeMobileImage = false; // 重新上傳就取消「移除」標記
+
+        const reader = new FileReader();
+        reader.onload = ev => {
+          BannerState.imageMobileBase64 = ev.target.result;
+          newPreviewM.innerHTML = '<img src="' + ev.target.result + '" alt="" />';
+          if(clearMobileBtn) clearMobileBtn.style.display = '';
+        };
+        reader.readAsDataURL(finalFile);
+        newInputM.value = '';
+      });
+    }
+
+    // 移除手機版圖按鈕 (用 dataset.bound 防重綁)
+    if(clearMobileBtn && !clearMobileBtn.dataset.bound){
+      clearMobileBtn.dataset.bound = '1';
+      clearMobileBtn.addEventListener('click', () => {
+        if(!confirm('確定移除手機版圖?移除後,手機版會用桌機版圖顯示。')) return;
+        BannerState.imageMobileFile = null;
+        BannerState.imageMobileBase64 = null;
+        BannerState.removeMobileImage = true;
+        const previewM = document.getElementById('bmImageMobilePreview');
+        if(previewM){
+          previewM.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (4:5)</span>';
+        }
+        clearMobileBtn.style.display = 'none';
+      });
+    }
+
     document.getElementById('bmHint').textContent = '';
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -2406,6 +2496,16 @@
     const modal = document.getElementById('bannerEditModal');
     if (modal) modal.style.display = 'none';
     document.body.style.overflow = '';
+    // 保險:清掉任何可能殘留的全屏遮罩(cropper modal、舊 overlay)
+    document.body.style.pointerEvents = '';
+    document.body.style.removeProperty('pointer-events');
+    // 若 cropper modal 還留在 is-open,強制關掉
+    const cropModal = document.querySelector('.lohas-crop-modal.is-open');
+    if (cropModal) {
+      cropModal.classList.remove('is-open');
+      cropModal.setAttribute('inert', '');
+    }
+    console.log('[Banner] modal closed, body styles reset');
   }
 
   async function saveBanner() {
@@ -2418,8 +2518,9 @@
     hint.textContent = '儲存中...';
 
     let imageUrl = BannerState.existingImageUrl;
+    let imageUrlMobile = BannerState.existingImageMobileUrl;
 
-    // 有新圖檔 → 上傳
+    // 有新桌機圖 → 上傳
     if (BannerState.imageFile) {
       try {
         hint.textContent = '上傳圖片中...';
@@ -2437,9 +2538,33 @@
       }
     }
 
+    // 有新手機圖 → 上傳
+    if (BannerState.imageMobileFile) {
+      try {
+        hint.textContent = '上傳手機版圖片中...';
+        const ext = (BannerState.imageMobileFile.name || '').split('.').pop()?.toLowerCase() || 'jpg';
+        const filePath = `banners/${BannerState.currentPos}-mobile-${Date.now()}.${ext}`;
+        const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET)
+          .upload(filePath, BannerState.imageMobileFile, { cacheControl: '3600', upsert: false });
+        if (upErr) { hint.style.color = 'var(--status-rejected)'; hint.textContent = '手機版圖上傳失敗: ' + upErr.message; return; }
+        const { data: urlData } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+        imageUrlMobile = urlData.publicUrl;
+      } catch (err) {
+        hint.style.color = 'var(--status-rejected)';
+        hint.textContent = '手機版上傳例外: ' + (err.message || err);
+        return;
+      }
+    }
+
+    // 標記要移除手機圖 → 清為 null
+    if (BannerState.removeMobileImage) {
+      imageUrlMobile = null;
+    }
+
     const payload = {
       position: BannerState.currentPos,
       image_url: imageUrl,
+      image_url_mobile: imageUrlMobile,
       title: document.getElementById('bmTitle').value.trim() || null,
       subtitle: document.getElementById('bmSubtitle').value.trim() || null,
       cta_text: document.getElementById('bmCtaText').value.trim() || null,

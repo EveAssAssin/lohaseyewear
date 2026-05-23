@@ -139,8 +139,24 @@
              ${cta}
            </div>`
         : '';
-      return `<div class="hmb-slide${i === 0 ? ' on' : ''}" data-idx="${i}">
-        ${b.image_url ? `<img src="${escapeHtml(b.image_url)}" alt="${escapeHtml(b.title || '')}">` : ''}
+
+      // 圖片:有手機版圖時用 picture 切換,沒有就單一 img
+      let imgHtml = '';
+      if (b.image_url) {
+        if (b.image_url_mobile) {
+          imgHtml = `<picture>
+            <source media="(max-width: 768px)" srcset="${escapeHtml(b.image_url_mobile)}">
+            <img src="${escapeHtml(b.image_url)}" alt="${escapeHtml(b.title || '')}">
+          </picture>`;
+        } else {
+          imgHtml = `<img src="${escapeHtml(b.image_url)}" alt="${escapeHtml(b.title || '')}">`;
+        }
+      }
+
+      // 有手機圖時,slide 加 class 讓 CSS 切換 aspect-ratio
+      const hasMobileImg = b.image_url_mobile ? ' has-mobile-img' : '';
+      return `<div class="hmb-slide${i === 0 ? ' on' : ''}${hasMobileImg}" data-idx="${i}">
+        ${imgHtml}
         ${overlay}
       </div>`;
     }).join('');
