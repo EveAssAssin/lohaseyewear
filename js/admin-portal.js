@@ -6554,7 +6554,8 @@
 
       $('newsModalTitle').textContent = '新增消息';
       $('newsDeleteBtn').style.display = 'none';
-      $('newsPreviewBtn').style.display = '';
+      const _pbtnNew = $('newsPreviewBtn');
+      if (_pbtnNew) _pbtnNew.style.display = '';
 
       ['news_slug','news_title','news_excerpt','news_homepage_tag','news_homepage_subtitle',
        'news_author','news_published_at','news_content','news_homepage_link_url'].forEach(id => setVal(id, ''));
@@ -6585,7 +6586,8 @@
 
       $('newsModalTitle').textContent = '編輯:' + (n.title || n.slug);
       $('newsDeleteBtn').style.display = '';
-      $('newsPreviewBtn').style.display = '';
+      const _pbtnEdit = $('newsPreviewBtn');
+      if (_pbtnEdit) _pbtnEdit.style.display = '';
 
       setVal('news_slug', n.slug);
       setVal('news_status', n.status);
@@ -6774,7 +6776,8 @@
     $('newsCancelBtn').addEventListener('click', closeModal);
     $('newsSaveBtn').addEventListener('click', save);
     $('newsDeleteBtn').addEventListener('click', deleteNews);
-    $('newsPreviewBtn').addEventListener('click', openNewsPreview);
+    const _previewBtn = $('newsPreviewBtn');
+    if (_previewBtn) _previewBtn.addEventListener('click', openNewsPreview);
     $('news_slug').addEventListener('input', updateSlugPreview);
     $('news_homepage_link_type').addEventListener('change', updateLinkUrlVisibility);
 
