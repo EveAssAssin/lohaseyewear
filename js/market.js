@@ -141,7 +141,7 @@
     // 進行中 (顯示在上方 market block) - active/upcoming
     var { data, error } = await sb
       .from('collabs')
-      .select('id, slug, brand_name, hero_title, hero_subtitle, hero_image_url, lifecycle_status, status, sort_order')
+      .select('id, slug, brand_name, hero_title, hero_subtitle, hero_image_url, story_image_url, lifecycle_status, status, sort_order')
       .in('status', ['active', 'upcoming'])
       .or('is_locked.is.null,is_locked.eq.false')
       .order('sort_order', { ascending: true });
@@ -152,7 +152,7 @@
     // 全部聯名 (顯示在下方授權聯名牆) - 含已結束
     var allResp = await sb
       .from('collabs')
-      .select('id, slug, brand_name, hero_title, hero_image_url, creator_name, lifecycle_status, status, sort_order')
+      .select('id, slug, brand_name, hero_title, hero_image_url, story_image_url, creator_name, lifecycle_status, status, sort_order')
       .neq('status', 'draft')
       .neq('status', 'archived')
       .or('is_locked.is.null,is_locked.eq.false')
@@ -363,8 +363,9 @@
     grid.innerHTML = list.map(function(c){
       var stage = c.lifecycle_status || 'preorder';
       var stageLabel = STAGE_LABEL[stage] || stage;
-      var img = c.hero_image_url
-        ? '<img src="' + escapeHtml(c.hero_image_url) + '" alt="' + escapeHtml(c.brand_name) + '" loading="lazy" />'
+      var cardImg = c.story_image_url || c.hero_image_url;
+      var img = cardImg
+        ? '<img src="' + escapeHtml(cardImg) + '" alt="' + escapeHtml(c.brand_name) + '" loading="lazy" />'
         : '<div class="collab-card-no-img"></div>';
       return '<a class="design-card collab-card" href="collab.html?id=' + escapeHtml(c.slug) + '">'
         + '<div class="design-card-img collab-card-img">' + img
@@ -394,8 +395,9 @@
       var stage = c.lifecycle_status || 'preorder';
       var isEnded = (stage === 'ended' || stage === 'sold_out');
       var coverContent;
-      if(c.hero_image_url){
-        coverContent = '<img src="' + escapeHtml(c.hero_image_url) + '" alt="' + escapeHtml(c.brand_name || '') + '" loading="lazy" />';
+      var cardImg2 = c.story_image_url || c.hero_image_url;
+      if(cardImg2){
+        coverContent = '<img src="' + escapeHtml(cardImg2) + '" alt="' + escapeHtml(c.brand_name || '') + '" loading="lazy" />';
       } else {
         // 沒圖時用品牌名大字
         var displayName = (c.brand_name || c.hero_title || '?')

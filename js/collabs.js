@@ -92,8 +92,9 @@
   }
 
   function renderCard(c){
-    const heroImg = c.hero_image_url
-      ? `<img src="${esc(c.hero_image_url)}" alt="${esc(c.brand_name)}">`
+    const cardImg = c.story_image_url || c.hero_image_url;
+    const heroImg = cardImg
+      ? `<img src="${esc(cardImg)}" alt="${esc(c.brand_name)}">`
       : `<div class="cl-card-img-fallback" style="background:${esc(c.theme_accent || '#F8E4ED')};color:${esc(c.theme_primary || '#7A2754')}">${esc(c.brand_name)}</div>`;
 
     const STATUS_LABEL = { active: '進行中', upcoming: '即將推出', ended: '已結束' };
