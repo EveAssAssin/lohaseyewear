@@ -802,21 +802,24 @@
                   <div class="img-upload-preview" id="bmImagePreview">
                     <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(16:9)</span></span>
                   </div>
+                  <button type="button" class="img-upload-clear" id="bmImageClear" aria-label="移除圖片" style="display:none">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
                   <input type="file" accept="image/*" class="img-upload-input">
+                  <p class="editor-hint" id="bmImageHint">建議比例 16:9 · 建議尺寸 1920 × 1080 px</p>
                 </div>
-                <p class="editor-hint" id="bmImageHint">建議尺寸 1920 × 1080 px</p>
               </div>
 
-              <!-- 手機版上傳區 (4:5,選填) -->
+              <!-- 手機版上傳區 (依 position 動態 aspect,選填) -->
               <div class="editor-row" id="bmImageMobileRow">
                 <label class="editor-label">Banner 圖 (手機版)</label>
-                <div class="img-upload-wrap" data-field="banner_image_mobile" data-aspect="4:5" id="bmImageMobileWrap" style="max-width:280px">
+                <div class="img-upload-wrap" data-field="banner_image_mobile" data-aspect="3:4" id="bmImageMobileWrap">
                   <div class="img-upload-preview" id="bmImageMobilePreview">
-                    <span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (4:5)</span>
+                    <span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (3:4)</span>
                   </div>
                   <input type="file" accept="image/*" class="img-upload-input">
+                  <p class="editor-hint" id="bmImageMobileHint">選填 · 未上傳時手機版會用上方桌機版圖</p>
                 </div>
-                <p class="editor-hint">選填 · 建議比例 4:5 · 建議尺寸 800 × 1000 px · 未上傳時手機版會用上方桌機版圖</p>
                 <button type="button" class="btn" id="bmImageMobileClearBtn" style="margin-top:8px;display:none">
                   <i class="fa-regular fa-trash-can"></i>移除手機版圖
                 </button>
@@ -868,12 +871,14 @@
 
           <!-- footer (固定底部) -->
           <div class="ag-modal-footer">
-            <button class="btn danger" id="bmDeleteBtn" style="display:none">
-              <i class="fa-regular fa-trash-can"></i>刪除
-            </button>
-            <div style="flex:1"></div>
-            <button class="btn" id="bmCancelBtn">取消</button>
-            <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i>儲存</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
+              <button class="btn" id="bmCancelBtn">關閉</button>
+              <div class="spacer"></div>
+              <button class="btn btn-danger" id="bmDeleteBtn" style="display:none">
+                <i class="fa-solid fa-trash"></i>刪除 Banner
+              </button>
+            </div>
             <div class="form-hint" id="bmHint" style="width:100%;margin-top:8px;text-align:right"></div>
           </div>
         </div>
