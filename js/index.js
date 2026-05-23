@@ -26,7 +26,7 @@
     const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
-      .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt, category, published_at')
+      .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt, category, published_at, homepage_link_type, homepage_link_url')
       .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
       .order('published_at', { ascending: false })
       .limit(4);
@@ -45,10 +45,16 @@
 
     const html = data.map(n => {
       const img = n.homepage_image_url || n.cover_image_url;
-      const href = 'news-detail.html?id=' + escapeHtml(n.slug);
+      // 連結:後台指定「custom」且填了 link_url 就用,否則跳 news-detail
+      let href;
+      if (n.homepage_link_type === 'custom' && n.homepage_link_url) {
+        href = n.homepage_link_url;
+      } else {
+        href = 'news-detail.html?id=' + escapeHtml(n.slug);
+      }
       const tag = n.homepage_tag || '';
       const sub = n.homepage_subtitle || n.excerpt || '';
-      return '<a href="' + href + '" class="home-carousel-card">' +
+      return '<a href="' + escapeHtml(href) + '" class="home-carousel-card">' +
         '<div class="card-overlay">' +
           (tag ? '<span class="tag">' + escapeHtml(tag) + '</span>' : '') +
           '<h2>' + escapeHtml(n.title) + '</h2>' +
