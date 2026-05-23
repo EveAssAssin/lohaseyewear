@@ -468,14 +468,14 @@
     display: flex;
     flex-direction: column;
     border-radius: 14px;
-    box-shadow: none;
     background: #fff;
-    border: 0.5px solid var(--news-line);
+    border: 1px solid rgba(80, 66, 45, 0.18);
+    box-shadow: 0 6px 16px rgba(80, 66, 45, 0.05);
   }
 
   .news-card:hover {
     transform: none;
-    box-shadow: none;
+    box-shadow: 0 6px 16px rgba(80, 66, 45, 0.05);
   }
 
   .news-card__image {
@@ -525,19 +525,20 @@
     overflow: hidden;
   }
 
-  /* 直向卡:READ MORE 改回正常文字 link 在卡片底,不再用右側 → 符號 */
+  /* 直向卡:READ MORE 文字 + 底線 + 箭頭 */
   .card-readmore {
     position: static;
     transform: none;
     margin-top: 14px;
     font-size: 11px;
     letter-spacing: 0.14em;
-    padding: 0;
-    border: 0;
+    padding: 2px 0 4px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     color: var(--news-brand);
+    border-bottom: 1px solid currentColor;
+    width: fit-content;
   }
 
   .card-readmore span {
@@ -582,7 +583,7 @@
 ========================= */
 
 .news-breadcrumb-section {
-  padding: 32px 0 0;
+  padding: 32px 0 24px;
   background: #fff;
 }
 
@@ -620,7 +621,7 @@
 /* 手機版 breadcrumb 縮小邊距 */
 @media (max-width: 768px) {
   .news-breadcrumb-section {
-    padding: 20px 0 0;
+    padding: 20px 0 16px;
   }
   .news-breadcrumb {
     font-size: 11px;
