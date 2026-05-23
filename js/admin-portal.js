@@ -2356,9 +2356,11 @@
     const cfg = BANNER_POSITIONS[BannerState.currentPos];
     document.getElementById('bannerModalTitle').textContent =
       (BannerState.editing ? '編輯' : '新增') + ' Banner — ' + cfg.label;
-    // 注意: 不要在這裡設 bmAspectHint.textContent,因為下方 wrapEl.innerHTML 會整個重寫,
-    // 第二次打開時 bmAspectHint 已被刪掉,設 null.textContent 會 throw 導致 modal 開不起來
-    document.getElementById('bmImageHint').textContent = cfg.size;
+    // 注意:bmImageHint / bmAspectHint 都在 wrap 內,下方 wrapEl.innerHTML 會整個重寫,
+    // 所以這裡先不設文字,等 wrapEl.innerHTML 重建時一起放正確的 hint。
+    // 為了避免第二次打開時 element 已被刪掉導致 throw,改用條件設定。
+    const _bmImageHint = document.getElementById('bmImageHint');
+    if (_bmImageHint) _bmImageHint.textContent = '建議比例 ' + cfg.aspect + ' · ' + cfg.size;
 
     // 同步 aspect 到 wrap (給 cropper 用)
     const wrap = document.getElementById('bmImageWrap');
@@ -2386,7 +2388,8 @@
 
       wrapEl.innerHTML =
         '<div class="img-upload-preview" id="bmImagePreview">' + imgHtml + '</div>' +
-        '<input type="file" accept="image/*" class="img-upload-input">';
+        '<input type="file" accept="image/*" class="img-upload-input">' +
+        '<p class="editor-hint" id="bmImageHint">建議比例 ' + cfg.aspect + ' · ' + cfg.size + '</p>';
 
       BannerState.existingImageUrl = b.image_url || null;
 
@@ -2438,18 +2441,14 @@
       // 同步 aspect 到 wrap (給樣式用)
       wrapMobile.dataset.aspect = mobileAspect;
 
-      // 更新手機版區的提示文字
-      const mobileHintEl = wrapMobile.parentElement?.querySelector('.editor-hint');
-      if(mobileHintEl) mobileHintEl.textContent =
-        '選填 · 建議比例 ' + mobileAspect + ' · ' + mobileSize + ' · 未上傳時手機版會用上方桌機版圖';
-
       const imgHtmlMobile = b.image_url_mobile
         ? '<img src="' + escapeHtml(b.image_url_mobile) + '" alt="" />'
         : '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (' + mobileAspect + ')</span>';
 
       wrapMobile.innerHTML =
         '<div class="img-upload-preview" id="bmImageMobilePreview">' + imgHtmlMobile + '</div>' +
-        '<input type="file" accept="image/*" class="img-upload-input">';
+        '<input type="file" accept="image/*" class="img-upload-input">' +
+        '<p class="editor-hint" id="bmImageMobileHint">選填 · 建議比例 ' + mobileAspect + ' · ' + mobileSize + ' · 未上傳時手機版會用上方桌機版圖</p>';
 
       BannerState.existingImageMobileUrl = b.image_url_mobile || null;
 
