@@ -3462,6 +3462,7 @@
 }
 /* 預覽框比例跟父層的 data-aspect 連動 */
 .img-upload-wrap[data-aspect="4:3"] .img-upload-preview { aspect-ratio: 4/3; }
+.img-upload-wrap[data-aspect="3:4"] .img-upload-preview { aspect-ratio: 3/4; }
 .img-upload-wrap[data-aspect="4:5"] .img-upload-preview { aspect-ratio: 4/5; }
 .img-upload-wrap[data-aspect="1:1"] .img-upload-preview { aspect-ratio: 1/1; }
 .img-upload-wrap[data-aspect="16:7"] .img-upload-preview { aspect-ratio: 16/7; }

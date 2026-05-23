@@ -629,7 +629,7 @@
 /* RWD */
 @media (max-width: 768px) {
   .home-main-banner {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 3 / 4;
     margin-top: 24px;
     margin-bottom: 24px;
   }
