@@ -293,8 +293,7 @@
       const joiningPhotoPreview = document.getElementById('creatorJoiningPhotoPreview');
       const joiningPhotoClear = document.getElementById('creatorJoiningPhotoClear');
       if (joiningPhotoPreview && ci.joining_photo_url) {
-        joiningPhotoPreview.style.backgroundImage = `url('${ci.joining_photo_url}')`;
-        joiningPhotoPreview.classList.add('has-image');
+        joiningPhotoPreview.innerHTML = `<img src="${ci.joining_photo_url}" alt="" />`;
         if (joiningPhotoClear) joiningPhotoClear.style.display = 'flex';
       }
       if (joiningStory) joiningStory.value = ci.joining_story || '';
@@ -1398,8 +1397,7 @@
       if (jp) jp.value = '';
       const preview = document.getElementById('creatorJoiningPhotoPreview');
       if (preview) {
-        preview.style.backgroundImage = '';
-        preview.classList.remove('has-image');
+        preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>';
       }
       const clearBtn = document.getElementById('creatorJoiningPhotoClear');
       if (clearBtn) clearBtn.style.display = 'none';
@@ -1914,22 +1912,19 @@
   }
 
   function bindCreatorJoiningPhoto() {
-    const btn = document.getElementById('creatorJoiningPhotoBtn');
     const preview = document.getElementById('creatorJoiningPhotoPreview');
     const input = document.getElementById('creatorJoiningPhotoInput');
     const hidden = document.getElementById('creatorJoiningPhoto');
     const clearBtn = document.getElementById('creatorJoiningPhotoClear');
 
     if (preview && input) preview.addEventListener('click', () => input.click());
-    if (btn && input) btn.addEventListener('click', () => input.click());
 
     // ✕ 移除按鈕
     if (clearBtn) {
       clearBtn.addEventListener('click', e => {
         e.stopPropagation();
         if (preview) {
-          preview.style.backgroundImage = '';
-          preview.classList.remove('has-image');
+          preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>';
         }
         if (hidden) hidden.value = '';
         if (input) input.value = '';
@@ -1947,11 +1942,10 @@
         }
         const reader = new FileReader();
         reader.onload = function (ev) {
-          // 先開裁切 modal (3:4 比例)
-          openCropModal(ev.target.result, 3 / 4, (croppedDataUrl) => {
+          // 4:5 裁切
+          openCropModal(ev.target.result, 4 / 5, (croppedDataUrl) => {
             if (preview) {
-              preview.style.backgroundImage = `url('${croppedDataUrl}')`;
-              preview.classList.add('has-image');
+              preview.innerHTML = `<img src="${croppedDataUrl}" alt="" />`;
             }
             if (hidden) hidden.value = croppedDataUrl;
             // 顯示 ✕
@@ -2042,18 +2036,18 @@
         </div>
         <div class="editor-row">
           <div class="editor-label">圖片</div>
-          <div>
-            <div class="creator-photo-wrap">
-              <div class="creator-photo-preview cb-photo-preview ${hasImage ? 'has-image' : ''}" ${hasImage ? `style="background-image:url('${escapeHtml(data.image)}')"` : ''}>
-                <i class="fa-regular fa-image"></i>
-                <span>選填</span>
-              </div>
-              <button class="creator-photo-clear cb-photo-clear" type="button" aria-label="移除圖片" style="${hasImage ? 'display:flex' : 'display:none'}">
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-              <input type="file" class="visually-hidden cb-photo-input" accept="image/*">
-              <input type="hidden" class="cb-image" value="${escapeHtml(data.image || '')}"/>
+          <div class="img-upload-wrap cb-photo-wrap" data-field="cb_image" data-aspect="4:5" style="max-width:200px">
+            <div class="img-upload-preview cb-photo-preview">
+              ${hasImage
+                ? `<img src="${escapeHtml(data.image)}" alt="" />`
+                : `<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 選填 (4:5)</span>`}
             </div>
+            <button type="button" class="img-upload-clear cb-photo-clear" aria-label="移除圖片" style="${hasImage ? 'display:flex' : 'display:none'}">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <input type="file" class="img-upload-input cb-photo-input" accept="image/*">
+            <input type="hidden" class="cb-image" value="${escapeHtml(data.image || '')}"/>
+            <p class="editor-hint">建議比例 4:5 · 建議尺寸 800 × 1000 px</p>
           </div>
         </div>
         <div class="editor-row">
@@ -2072,7 +2066,7 @@
         renumberCustomBlocks();
       }
     });
-    // 圖片上傳 (跟緣分區一樣加 3:4 裁切)
+    // 圖片上傳 (4:5 裁切)
     const photoPreview = blockEl.querySelector('.cb-photo-preview');
     const photoInput = blockEl.querySelector('.cb-photo-input');
     const photoHidden = blockEl.querySelector('.cb-image');
@@ -2084,10 +2078,9 @@
         if (!file || !file.type.startsWith('image/')) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          // 開裁切 modal (3:4 比例, 跟緣分區一致)
-          openCropModal(ev.target.result, 3 / 4, (croppedDataUrl) => {
-            photoPreview.style.backgroundImage = `url('${croppedDataUrl}')`;
-            photoPreview.classList.add('has-image');
+          // 4:5 裁切 (跟緣分區一致)
+          openCropModal(ev.target.result, 4 / 5, (croppedDataUrl) => {
+            photoPreview.innerHTML = `<img src="${croppedDataUrl}" alt="" />`;
             if (photoHidden) photoHidden.value = croppedDataUrl;
             if (photoClear) photoClear.style.display = 'flex';
           });
@@ -2101,8 +2094,7 @@
       photoClear.addEventListener('click', e => {
         e.stopPropagation();
         if (photoPreview) {
-          photoPreview.style.backgroundImage = '';
-          photoPreview.classList.remove('has-image');
+          photoPreview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 選填 (4:5)</span>';
         }
         if (photoHidden) photoHidden.value = '';
         if (photoInput) photoInput.value = '';

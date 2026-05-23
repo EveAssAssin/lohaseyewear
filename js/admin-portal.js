@@ -2121,7 +2121,7 @@
   // ============================================
   const BANNER_POSITIONS = {
     home_main: { label: '首頁主打', aspect: '16:9', multi: true,  size: '建議 1920 × 1080 px',
-                 mobileAspect: '3:4', mobileSize: '建議 600 × 800 px' },
+                 mobileAspect: '4:5', mobileSize: '建議 800 × 1000 px' },
     home_hero: { label: '首頁 Hero', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px',
                  mobileAspect: '4:5', mobileSize: '建議 800 × 1000 px' },
     engraving: { label: '雷刻頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px',
@@ -3317,25 +3317,20 @@
     }
 
     // 緣分照片上傳
-    const joiningBtn = document.getElementById('agJoiningPhotoBtn');
     const joiningInput = document.getElementById('agJoiningPhotoInput');
 
-    if (joiningBtn && !joiningBtn.dataset.bound) {
-      joiningBtn.dataset.bound = '1';
-      joiningBtn.addEventListener('click', () => joiningInput?.click());
-    }
     if (joiningInput && !joiningInput.dataset.bound) {
       joiningInput.dataset.bound = '1';
       joiningInput.addEventListener('change', async e => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // 3:4 裁切
+        // 4:5 裁切
         let finalFile = file;
         if (window.LohasCropper) {
           const cropped = await window.LohasCropper.crop(file, {
-            aspectRatio: 3 / 4,
-            title: '裁切緣分照片 · 3:4 直式'
+            aspectRatio: 4 / 5,
+            title: '裁切緣分照片 · 4:5 直式'
           });
           if (!cropped) { joiningInput.value = ''; return; }
           finalFile = cropped;
@@ -3347,8 +3342,7 @@
           AGState.joiningPhotoBase64 = ev.target.result;
           const preview = document.getElementById('agJoiningPhotoPreview');
           if (preview) {
-            preview.style.backgroundImage = `url('${ev.target.result}')`;
-            preview.classList.add('has-image');
+            preview.innerHTML = `<img src="${ev.target.result}" alt="" />`;
           }
           // 顯示 ✕ 按鈕
           const clearBtn = document.getElementById('agJoiningPhotoClear');
@@ -3359,7 +3353,7 @@
       });
     }
 
-    // 緣分照片預覽框點擊也觸發上傳
+    // 緣分照片預覽框點擊觸發上傳
     const joiningPreview = document.getElementById('agJoiningPhotoPreview');
     if (joiningPreview && !joiningPreview.dataset.bound) {
       joiningPreview.dataset.bound = '1';
@@ -3374,11 +3368,10 @@
         e.stopPropagation();
         AGState.joiningPhotoFile = null;
         AGState.joiningPhotoBase64 = null;
-        AGState.existingJoiningPhotoUrl = null;  // 清掉編輯模式的原圖
+        AGState.existingJoiningPhotoUrl = null;
         const preview = document.getElementById('agJoiningPhotoPreview');
         if (preview) {
-          preview.style.backgroundImage = '';
-          preview.classList.remove('has-image');
+          preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>';
         }
         joiningClear.style.display = 'none';
         if (joiningInput) joiningInput.value = '';
@@ -3413,13 +3406,8 @@
       addCbBtn.addEventListener('click', agAddCustomBlock);
     }
 
-    // KOL 配鏡分享主圖上傳 (1:1 裁切)
-    const kolBtn = document.getElementById('agKolMainBtn');
+    // KOL 配鏡分享主圖上傳 (4:5 裁切)
     const kolInput = document.getElementById('agKolMainInput');
-    if (kolBtn && !kolBtn.dataset.bound) {
-      kolBtn.dataset.bound = '1';
-      kolBtn.addEventListener('click', () => kolInput?.click());
-    }
     if (kolInput && !kolInput.dataset.bound) {
       kolInput.dataset.bound = '1';
       kolInput.addEventListener('change', async e => {
@@ -3428,8 +3416,8 @@
         let finalFile = file;
         if (window.LohasCropper) {
           const cropped = await window.LohasCropper.crop(file, {
-            aspectRatio: 1,
-            title: '裁切 KOL 配鏡分享主圖 · 1:1 正方'
+            aspectRatio: 4 / 5,
+            title: '裁切 KOL 配鏡分享主圖 · 4:5 直式'
           });
           if (!cropped) { kolInput.value = ''; return; }
           finalFile = cropped;
@@ -3440,8 +3428,7 @@
           AGState.kolMainBase64 = ev.target.result;
           const preview = document.getElementById('agKolMainPreview');
           if (preview) {
-            preview.style.backgroundImage = `url('${ev.target.result}')`;
-            preview.classList.add('has-image');
+            preview.innerHTML = `<img src="${ev.target.result}" alt="" />`;
           }
           const clearBtn = document.getElementById('agKolMainClear');
           if (clearBtn) clearBtn.style.display = 'flex';
@@ -3465,8 +3452,7 @@
         AGState.existingKolMainUrl = null;
         const preview = document.getElementById('agKolMainPreview');
         if (preview) {
-          preview.style.backgroundImage = '';
-          preview.classList.remove('has-image');
+          preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>';
         }
         kolClear.style.display = 'none';
         if (kolInput) kolInput.value = '';
@@ -3508,8 +3494,7 @@
     AGState.existingKolMainUrl = null;
     const kp = document.getElementById('agKolMainPreview');
     if (kp) {
-      kp.style.backgroundImage = '';
-      kp.classList.remove('has-image');
+      kp.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>';
     }
     const kc = document.getElementById('agKolMainClear');
     if (kc) kc.style.display = 'none';
@@ -3532,8 +3517,7 @@
     AGState.joiningPhotoFile = null;
     const preview = document.getElementById('agJoiningPhotoPreview');
     if (preview) {
-      preview.style.backgroundImage = '';
-      preview.classList.remove('has-image');
+      preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>';
     }
     const joiningClear = document.getElementById('agJoiningPhotoClear');
     if (joiningClear) joiningClear.style.display = 'none';
@@ -4116,10 +4100,21 @@
     let done = 0;
     for (const file of files) {
       try {
-        const ext = (file.name || '').split('.').pop()?.toLowerCase() || 'jpg';
+        // 強制裁切成 4:5 (800x1000)
+        let finalFile = file;
+        if (window.LohasCropper) {
+          const cropped = await window.LohasCropper.crop(file, {
+            aspectRatio: 1,
+            title: '裁切分享照片 · 1:1'
+          });
+          if (!cropped) { continue; }  // 使用者取消這張就跳過
+          finalFile = cropped;
+        }
+
+        const ext = (finalFile.name || file.name || '').split('.').pop()?.toLowerCase() || 'jpg';
         const filePath = `creator-photos/${mid}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await sb.storage.from(SUPABASE_BUCKET)
-          .upload(filePath, file, { cacheControl: '3600', upsert: false });
+          .upload(filePath, finalFile, { cacheControl: '3600', upsert: false });
         if (upErr) { console.error('[照片上傳失敗]', upErr); continue; }
         const { data: urlData } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
         const photoUrl = urlData.publicUrl;
@@ -4227,8 +4222,7 @@
     if (c.joining_photo_url) {
       const preview = document.getElementById('agJoiningPhotoPreview');
       if (preview) {
-        preview.style.backgroundImage = `url('${escapeHtml(c.joining_photo_url)}')`;
-        preview.classList.add('has-image');
+        preview.innerHTML = `<img src="${escapeHtml(c.joining_photo_url)}" alt="" />`;
       }
       const clearBtn = document.getElementById('agJoiningPhotoClear');
       if (clearBtn) clearBtn.style.display = 'flex';
@@ -4256,8 +4250,7 @@
     if (c.kol_main_image_url) {
       const preview = document.getElementById('agKolMainPreview');
       if (preview) {
-        preview.style.backgroundImage = `url('${escapeHtml(c.kol_main_image_url)}')`;
-        preview.classList.add('has-image');
+        preview.innerHTML = `<img src="${escapeHtml(c.kol_main_image_url)}" alt="" />`;
       }
       const clearBtn = document.getElementById('agKolMainClear');
       if (clearBtn) clearBtn.style.display = 'flex';
@@ -4308,20 +4301,19 @@
         </div>
         <div class="editor-row">
           <div class="editor-label">圖片</div>
-          <div>
-            <div class="creator-photo-wrap">
-              <div class="creator-photo-preview cb-photo-preview ${hasImage ? 'has-image' : ''}" ${hasImage ? `style="background-image:url('${escapeHtml(data.image)}')"` : ''}>
-                <i class="fa-regular fa-image"></i>
-                <span>選填 3:4</span>
-              </div>
-              <button class="creator-photo-clear cb-photo-clear" type="button" aria-label="移除圖片" style="${hasImage ? 'display:flex' : 'display:none'}">
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-              <input type="file" class="visually-hidden cb-photo-input" accept="image/*">
-              <input type="hidden" class="cb-image" value="${escapeHtml(data.image || '')}"/>
-              <input type="hidden" class="cb-image-base64" value=""/>
+          <div class="img-upload-wrap cb-photo-wrap" data-field="cb_image" data-aspect="4:5" style="max-width:200px">
+            <div class="img-upload-preview cb-photo-preview">
+              ${hasImage
+                ? `<img src="${escapeHtml(data.image)}" alt="" />`
+                : `<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 選填 (4:5)</span>`}
             </div>
-            <div style="font-size:11px;color:var(--lohas-mute);margin-top:6px;letter-spacing:0.3px">建議比例 3:4 · 建議尺寸 600 × 800 px</div>
+            <button type="button" class="img-upload-clear cb-photo-clear" aria-label="移除圖片" style="${hasImage ? 'display:flex' : 'display:none'}">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <input type="file" class="img-upload-input cb-photo-input" accept="image/*">
+            <input type="hidden" class="cb-image" value="${escapeHtml(data.image || '')}"/>
+            <input type="hidden" class="cb-image-base64" value=""/>
+            <p class="editor-hint">建議比例 4:5 · 建議尺寸 800 × 1000 px</p>
           </div>
         </div>
         <div class="editor-row">
@@ -4341,7 +4333,7 @@
       }
     });
 
-    // 圖片上傳 (3:4 裁切)
+    // 圖片上傳 (4:5 裁切)
     const photoPreview = blockEl.querySelector('.cb-photo-preview');
     const photoInput = blockEl.querySelector('.cb-photo-input');
     const photoHidden = blockEl.querySelector('.cb-image');
@@ -4354,12 +4346,12 @@
         const file = e.target.files[0];
         if (!file || !file.type.startsWith('image/')) return;
 
-        // 3:4 裁切
+        // 4:5 裁切
         let finalFile = file;
         if (window.LohasCropper) {
           const cropped = await window.LohasCropper.crop(file, {
-            aspectRatio: 3 / 4,
-            title: '裁切自訂區塊圖 · 3:4'
+            aspectRatio: 4 / 5,
+            title: '裁切自訂區塊圖 · 4:5'
           });
           if (!cropped) { photoInput.value = ''; return; }
           finalFile = cropped;
@@ -4367,8 +4359,7 @@
 
         const reader = new FileReader();
         reader.onload = ev => {
-          photoPreview.style.backgroundImage = `url('${ev.target.result}')`;
-          photoPreview.classList.add('has-image');
+          photoPreview.innerHTML = `<img src="${ev.target.result}" alt="" />`;
           if (photoBase64Hidden) photoBase64Hidden.value = ev.target.result;
           // 顯示 ✕
           if (photoClear) photoClear.style.display = 'flex';
@@ -4383,8 +4374,7 @@
     if (photoClear) {
       photoClear.addEventListener('click', e => {
         e.stopPropagation();
-        photoPreview.style.backgroundImage = '';
-        photoPreview.classList.remove('has-image');
+        photoPreview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 選填 (4:5)</span>';
         if (photoHidden) photoHidden.value = '';
         if (photoBase64Hidden) photoBase64Hidden.value = '';
         if (photoInput) {
