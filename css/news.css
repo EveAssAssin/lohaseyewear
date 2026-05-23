@@ -572,6 +572,57 @@
 }
 
 /* =========================
+   News Breadcrumb
+========================= */
+
+.news-breadcrumb-section {
+  padding: 32px 0 0;
+  background: #fff;
+}
+
+.news-breadcrumb {
+  font-size: 12px;
+  color: #888;
+  letter-spacing: 0.5px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.news-breadcrumb a {
+  color: #888;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.news-breadcrumb a:hover {
+  color: var(--news-brand);
+}
+
+.news-breadcrumb .news-breadcrumb-sep {
+  color: #C9BFB1;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.news-breadcrumb .current {
+  color: var(--news-brand);
+  font-weight: 600;
+}
+
+/* 手機版 breadcrumb 縮小邊距 */
+@media (max-width: 768px) {
+  .news-breadcrumb-section {
+    padding: 20px 0 0;
+  }
+  .news-breadcrumb {
+    font-size: 11px;
+    gap: 6px;
+  }
+}
+
+/* =========================
    News Search
 ========================= */
 
