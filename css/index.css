@@ -286,7 +286,7 @@
     color: #000;
 }
 
-/* --- 手機版 RWD (風格 B · 圖文分離白底卡片) --- */
+/* --- 手機版 RWD (風格 B 簡化 · pill 疊圖左上 / 圖下只有 VIEW MORE) --- */
 @media (max-width: 768px) {
     /* 卡片改直向佈局,圖文分離 */
     .home-carousel-card {
@@ -300,6 +300,7 @@
         box-shadow: 0 8px 24px rgba(80, 66, 45, 0.06);
         overflow: hidden;
         border-radius: 12px;
+        position: relative;       /* pill absolute 用 */
     }
 
     /* 圖片區塊獨立、固定 4:3 */
@@ -309,52 +310,49 @@
         aspect-ratio: 4 / 3;
         object-fit: cover;
         display: block;
-        order: 1;                 /* 圖在上 */
+        order: 1;
     }
 
-    /* 文字區塊改成卡片下方獨立區、白底深色字 */
+    /* 文字區塊只剩 VIEW MORE */
     .home-carousel-card .card-overlay {
         position: static;
         width: 100%;
         height: auto;
-        padding: 16px 18px 18px;
+        padding: 12px 18px 14px;
         background: transparent;
         color: #3D3026;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        order: 2;                 /* 文字在下 */
+        align-items: flex-start;
+        order: 2;
     }
 
+    /* pill 變絕對定位,疊在圖左上 */
     .home-carousel-card .card-overlay .tag {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        z-index: 2;
         display: inline-block;
         width: fit-content;
         font-size: 10px;
         letter-spacing: 1.5px;
         font-weight: 500;
-        padding: 3px 10px;
-        margin-bottom: 10px;
-        background: #F1E8DC;
+        padding: 4px 12px;
+        margin: 0;
+        background: rgba(255, 255, 255, 0.92);
         color: #50422D;
         border-radius: 999px;
     }
 
-    .home-carousel-card .card-overlay h2 {
-        font-size: 16px;
-        font-weight: 600;
-        line-height: 1.4;
-        color: #3D3026;
-        margin: 0 0 6px;
-    }
-
+    /* 主標跟副標手機版隱藏 */
+    .home-carousel-card .card-overlay h2,
     .home-carousel-card .card-overlay p {
-        font-size: 12px;
-        color: #7A6B5C;
-        line-height: 1.6;
-        margin: 0 0 12px;
+        display: none;
     }
 
-    /* VIEW MORE 改成下劃線 link 樣式,不再是白色框按鈕 */
+    /* VIEW MORE 下劃線 link 樣式 */
     .home-carousel-card .btn-more {
         font-size: 11px;
         font-weight: 500;
@@ -368,7 +366,7 @@
     }
 
     .home-carousel-card:hover img {
-        transform: none;          /* 手機版不要 hover 放大 */
+        transform: none;
     }
 
     .home-carousel-card:hover .btn-more {
