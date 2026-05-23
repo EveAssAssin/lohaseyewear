@@ -375,9 +375,7 @@
 .home-main-banner {
   position: relative;
   width: 100%;
-  aspect-ratio: 21 / 9;
-  max-height: 820px;    /* 超寬螢幕防止過高 */
-  min-height: 320px;    /* 超窄視窗防止過扁 */
+  height: 66.67vh;
   overflow: hidden;
   background: #FAF7F2;
   margin-top: 40px;
@@ -522,9 +520,14 @@
 /* RWD */
 @media (max-width: 768px) {
   .home-main-banner {
-    min-height: 180px;
+    height: 50vh;
     margin-top: 24px;
     margin-bottom: 24px;
+  }
+  /* 若該 slide 有手機版專屬圖,改 4:5 直式 */
+  .home-main-banner:has(.hmb-slide.has-mobile-img) {
+    height: auto;
+    aspect-ratio: 4 / 5;
   }
   .home-main-banner-arrow {
     display: none !important;
