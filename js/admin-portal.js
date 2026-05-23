@@ -2306,8 +2306,13 @@
               <div style="font-size:12px;color:var(--lohas-mute);margin-bottom:6px">${escapeHtml(b.subtitle || '')}</div>
               ${b.link_url ? `<div style="font-size:11px;color:var(--lohas-mute);font-family:monospace">→ ${escapeHtml(b.link_url)}</div>` : ''}
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
+              ${b.image_url ? `<a class="btn" href="${escapeHtml(b.image_url)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i>查看圖</a>` : ''}
               <button class="btn" data-banner-edit-id="${escapeHtml(b.id)}"><i class="fa-regular fa-pen-to-square"></i>編輯</button>
+              ${b.is_active
+                ? `<button class="btn warn" data-banner-hide-id="${escapeHtml(b.id)}"><i class="fa-solid fa-eye-slash"></i>隱藏</button>`
+                : `<button class="btn" data-banner-show-id="${escapeHtml(b.id)}"><i class="fa-solid fa-eye"></i>顯示</button>`}
+              <button class="btn danger" data-banner-delete-id="${escapeHtml(b.id)}"><i class="fa-regular fa-trash-can"></i>刪除</button>
             </div>
           </div>`;
       }).join('');
@@ -2331,7 +2336,51 @@
           openBannerEdit(editEl.dataset.bannerEditId);
           return;
         }
+        const hideEl = e.target.closest('[data-banner-hide-id]');
+        if (hideEl) {
+          toggleBannerActive(hideEl.dataset.bannerHideId, false);
+          return;
+        }
+        const showEl = e.target.closest('[data-banner-show-id]');
+        if (showEl) {
+          toggleBannerActive(showEl.dataset.bannerShowId, true);
+          return;
+        }
+        const delEl = e.target.closest('[data-banner-delete-id]');
+        if (delEl) {
+          deleteBannerById(delEl.dataset.bannerDeleteId);
+          return;
+        }
       });
+    }
+  }
+
+  // 切換 banner is_active
+  async function toggleBannerActive(id, active) {
+    const sb = getSb();
+    if (!sb) return;
+    try {
+      const { error } = await sb.from('banners').update({ is_active: active }).eq('id', id);
+      if (error) { alert('更新失敗: ' + error.message); return; }
+      await loadBannerList(BannerState.currentPos);
+    } catch (err) {
+      alert('更新失敗: ' + err.message);
+    }
+  }
+
+  // 直接從列表刪 banner
+  async function deleteBannerById(id) {
+    const b = BannerState.list.find(x => String(x.id) === String(id));
+    const label = b ? (b.title || '(未填標題)') : '';
+    if (!confirm('確定刪除「' + label + '」?\n\n此動作無法復原。')) return;
+    const sb = getSb();
+    if (!sb) return;
+    try {
+      const { error } = await sb.from('banners').delete().eq('id', id);
+      if (error) { alert('刪除失敗: ' + error.message); return; }
+      await loadBannerList(BannerState.currentPos);
+    } catch (err) {
+      alert('刪除失敗: ' + err.message);
     }
   }
 
