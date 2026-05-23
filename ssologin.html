@@ -20,18 +20,8 @@
     padding:48px 32px;
     max-width:420px;
   }
-
-  /* === 雙圈 + 呼吸點動畫 (淺色版) === */
-  .sso-mark{
-    width:72px;height:72px;
-    margin:0 auto 32px;
-    position:relative;
-  }
-  .sso-mark .ring{
-    position:absolute;inset:0;
-    border:1px solid var(--lohas-bd);
-    border-radius:50%;
-  }
+  .sso-mark{width:72px;height:72px;margin:0 auto 32px;position:relative}
+  .sso-mark .ring{position:absolute;inset:0;border:1px solid var(--lohas-bd);border-radius:50%}
   .sso-mark .arc{
     position:absolute;inset:0;
     border:1.5px solid transparent;
@@ -53,56 +43,29 @@
     0%,100%{opacity:.3;transform:translate(-50%,-50%) scale(.85)}
     50%{opacity:.75;transform:translate(-50%,-50%) scale(1.15)}
   }
-
-  /* === 文字 === */
   .sso-title{
-    font-size:17px;
-    letter-spacing:8px;
+    font-size:17px;letter-spacing:8px;
     color:var(--lohas-hover);
-    font-weight:500;
-    padding-left:8px;
-    margin-bottom:18px;
+    font-weight:500;padding-left:8px;margin-bottom:18px;
   }
-  .sso-divider{
-    width:28px;height:1px;
-    background:var(--lohas-bd);
-    margin:0 auto 18px;
-  }
+  .sso-divider{width:28px;height:1px;background:var(--lohas-bd);margin:0 auto 18px}
   .sso-msg{
-    font-size:12px;
-    letter-spacing:3px;
+    font-size:12px;letter-spacing:3px;
     color:var(--text-muted);
-    line-height:1.8;
-    font-weight:400;
-    padding-left:3px;
+    line-height:1.8;font-weight:400;padding-left:3px;
   }
-
-  /* === 錯誤狀態 === */
-  .sso-msg.is-err{
-    color:var(--err);
-    letter-spacing:2px;
-  }
-
-  /* === 前往登入 按鈕 === */
+  .sso-msg.is-err{color:var(--err);letter-spacing:2px}
   .sso-btn{
-    display:inline-block;
-    margin-top:28px;
+    display:inline-block;margin-top:28px;
     padding:11px 32px;
     border:1px solid var(--lohas-brand);
-    color:var(--lohas-brand);
-    background:transparent;
+    color:var(--lohas-brand);background:transparent;
     text-decoration:none;
-    font-size:12px;
-    letter-spacing:4px;
-    font-weight:500;
+    font-size:12px;letter-spacing:4px;font-weight:500;
     border-radius:var(--r-pill);
-    transition:all .25s ease;
-    padding-left:36px;
+    transition:all .25s ease;padding-left:36px;
   }
-  .sso-btn:hover{
-    background:var(--lohas-brand);
-    color:#fff;
-  }
+  .sso-btn:hover{background:var(--lohas-brand);color:#fff}
 </style>
 </head>
 <body>
@@ -119,8 +82,11 @@
 
 <script>
 (async () => {
-  const SSO_VERIFY_URL = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/store-sso-verify';
-  const DEFAULT_NEXT   = '/market.html';
+  const SSO_VERIFY_URL    = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/store-sso-verify';
+  const PROFILE_API_URL   = 'https://lohas-proxy-nwad.onrender.com/api/proxy/member/list';
+  const PROXY_API_KEY     = 'bfjY2jssj9dDajq0';
+  const PROXY_API_VER     = '0.1.0';
+  const DEFAULT_NEXT      = '/market.html';
 
   const url   = new URL(location.href);
   const token = url.searchParams.get('token');
@@ -136,7 +102,7 @@
     msg.textContent = text;
     if (withButton){
       const btn = document.createElement('a');
-      btn.href = '/member-portal.html';
+      btn.href = '/login.html';
       btn.className = 'sso-btn';
       btn.textContent = '前 往 登 入';
       box.appendChild(btn);
@@ -146,37 +112,75 @@
   if (!token) return fail('缺少 SSO token,請從 App 重新進入', true);
 
   try {
-    const res = await fetch(SSO_VERIFY_URL, {
+    // ===== Step 1: 驗證 SSO token,拿到 erpid + erpname =====
+    const verifyRes = await fetch(SSO_VERIFY_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ token }),
     });
-    const json = await res.json();
+    const verifyJson = await verifyRes.json();
 
-    if (!res.ok || !json.ok){
-      return fail(json.error || '驗證失敗,請重新登入', true);
+    if (!verifyRes.ok || !verifyJson.ok){
+      return fail(verifyJson.error || '驗證失敗,請重新登入', true);
     }
 
-    // ===== 寫 localStorage 完成登入 =====
-    const member = {
-      erpid:   json.erpid,
-      erpname: json.erpname,
-      erpId:   json.erpid,
-      erpName: json.erpname,
-      name:    json.erpname,
-    };
-    localStorage.setItem('lohas_member',    JSON.stringify(member));
-    localStorage.setItem('lohas_member_id', json.erpid);
+    const erpid   = verifyJson.erpid;
+    const erpname = verifyJson.erpname;
+
+    // ===== Step 2: 拿完整 member profile (跟帳密登入流程一致) =====
+    // 若 profile API 失敗,退回最小 member 物件(讓使用者至少能用)
+    let member;
+    try {
+      const profileRes = await fetch(PROFILE_API_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: {
+            apikey: PROXY_API_KEY,
+            apiver: PROXY_API_VER,
+            data: { client_id: Number(erpid) }
+          }
+        }),
+      });
+      const profileJson = await profileRes.json();
+      const code = String(profileJson.code || '');
+
+      if (code === '200' && profileJson.data) {
+        member = {
+          erpid:    profileJson.data.client_id || erpid,
+          name:     profileJson.data.name || erpname || '',
+          mobile:   profileJson.data.mobile   || '',
+          email:    profileJson.data.email    || '',
+          birthday: profileJson.data.birthday || '',
+        };
+      } else {
+        throw new Error('profile not found');
+      }
+    } catch (profileError) {
+      console.warn('[SSO] 會員資料讀取失敗,改用 SSO token 帶來的最小資料', profileError);
+      member = {
+        erpid:    erpid,
+        name:     erpname || '',
+        mobile:   '',
+        email:    '',
+        birthday: '',
+      };
+    }
+
+    // ===== Step 3: 寫入 localStorage (對齊 auth.js STORAGE_KEY = 'lohasMember') =====
+    localStorage.setItem('lohasMember', JSON.stringify(member));
+    localStorage.setItem('lohasLoginAt', String(Date.now()));   // P1 過期機制
 
     msg.textContent = '登 入 成 功 , 即 將 跳 轉';
 
+    // safe redirect: 只允許同站 path
     const target = (next.startsWith('/') && !next.startsWith('//'))
       ? next
       : DEFAULT_NEXT;
     setTimeout(() => { location.replace(target); }, 600);
 
   } catch (e) {
-    console.error(e);
+    console.error('[SSO]', e);
     fail('網路錯誤,請稍後再試', true);
   }
 })();
