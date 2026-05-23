@@ -72,14 +72,13 @@
 
   /* ===== 4. 暫時預約單轉正式預約 =====
      @param reservationId  暫時預約單 ID（從 createReservation 拿到，AES 解密後使用）
-     @param orderId        賞鏡網站訂單編號（用來連結訂單詳情 iframe） */
+     @param orderId        賞鏡網站訂單編號（用來連結訂單詳情 iframe;純預約沒有訂單時可傳空字串）*/
   async function finishReservation(reservationId, orderId) {
     if (!reservationId) throw new Error("[LohasApi.booking] reservationId is required");
-    if (!orderId) throw new Error("[LohasApi.booking] orderId is required");
     return post("rsv", {
       method: "finishreservate",
       reservationid: aesEncrypt(reservationId),
-      orderid: String(orderId)
+      orderid: String(orderId || "")
     });
   }
 
