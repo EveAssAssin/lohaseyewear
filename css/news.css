@@ -463,12 +463,14 @@
     gap: 12px;
   }
 
+  /* 手機版 news-card 改直向 (圖在上、文字在下) */
   .news-card {
-    display: grid;
-    grid-template-columns: 36% 1fr;
+    display: flex;
+    flex-direction: column;
     border-radius: 14px;
     box-shadow: none;
-    align-items: start;
+    background: #fff;
+    border: 0.5px solid var(--news-line);
   }
 
   .news-card:hover {
@@ -488,7 +490,7 @@
 
   .news-card__body {
     position: relative;
-    padding: 14px 38px 14px 14px;
+    padding: 14px 16px 16px;
   }
 
   .news-card .post-meta {
@@ -523,20 +525,24 @@
     overflow: hidden;
   }
 
+  /* 直向卡:READ MORE 改回正常文字 link 在卡片底,不再用右側 → 符號 */
   .card-readmore {
-    position: absolute;
-    top: 50%;
-    right: 14px;
-    margin: 0;
+    position: static;
+    transform: none;
+    margin-top: 14px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
     padding: 0;
     border: 0;
-    transform: translateY(-50%);
-    font-size: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--news-brand);
   }
 
   .card-readmore span {
-    font-size: 24px;
-    font-weight: 300;
+    font-size: 14px;
+    font-weight: 400;
   }
 
   .news-load-more-wrap {
