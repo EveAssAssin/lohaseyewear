@@ -1778,6 +1778,17 @@
   background-size:cover;
   background-position:center;
 }
+/* news 列表的 4:3 矩形縮圖 */
+.ad .news-thumb{
+  width:64px;
+  aspect-ratio:4/3;
+  border-radius:6px;
+  background:linear-gradient(135deg,var(--lohas-light-brown),var(--lohas-brown));
+  flex-shrink:0;
+  background-size:cover;
+  background-position:center;
+  overflow:hidden;
+}
 .ad .creator-card-body{
   flex:1; min-width:0;
 }
