@@ -1297,57 +1297,84 @@ body {
 }
 .mp .ed-avatar-camera:hover{ background:var(--lohas-hover) }
 
-/* 配鏡照片上傳 (緣分區) */
-.mp .creator-photo-wrap{
-  display:inline-block;
+/* 圖片上傳區 (緣分照片 / 自訂區塊) — 與後台統一 */
+.mp .img-upload-wrap{
+  display:block;
+  margin-bottom:4px;
   position:relative;
+  max-width:360px;
 }
-.mp .creator-photo-preview{
-  width:160px;
-  aspect-ratio:3/4;
-  border:2px dashed var(--lohas-light-brown);
-  border-radius:10px;
-  background:var(--lohas-tip);
+.mp .img-upload-clear{
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:rgba(0,0,0,0.55);
+  color:#fff;
+  border:0;
+  cursor:pointer;
   display:flex;
-  flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:8px;
-  color:var(--lohas-mute);
-  font-size:11px;
-  letter-spacing:1.5px;
-  background-size:cover;
-  background-position:center;
+  font-size:13px;
+  z-index:2;
+  transition:background .2s, transform .2s;
+  padding:0;
+}
+.mp .img-upload-clear:hover{
+  background:rgba(196,60,60,0.92);
+  transform:scale(1.08);
+}
+.mp .img-upload-preview{
+  width:100%;
+  max-width:360px;
+  aspect-ratio:16/9;
+  background:var(--lohas-tip, #FAF7F2);
+  border:2px dashed var(--lohas-light-brown, #E8DED1);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
   overflow:hidden;
-  cursor:pointer;
-  transition:border-color .15s;
+  transition:border-color .2s;
 }
-.mp .creator-photo-preview:hover{
-  border-color:var(--lohas-brown);
+/* 預覽框比例跟父層的 data-aspect 連動 */
+.mp .img-upload-wrap[data-aspect="4:3"] .img-upload-preview { aspect-ratio:4/3; }
+.mp .img-upload-wrap[data-aspect="3:4"] .img-upload-preview { aspect-ratio:3/4; }
+.mp .img-upload-wrap[data-aspect="4:5"] .img-upload-preview { aspect-ratio:4/5; }
+.mp .img-upload-wrap[data-aspect="1:1"] .img-upload-preview { aspect-ratio:1/1; }
+.mp .img-upload-preview:hover{
+  border-color:var(--lohas-brown, #50422D);
 }
-.mp .creator-photo-preview i{ font-size:22px; opacity:0.6 }
-.mp .creator-photo-preview.has-image{
-  border-style:solid;
-  border-color:var(--lohas-line);
+.mp .img-upload-preview img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
 }
-.mp .creator-photo-preview.has-image i,
-.mp .creator-photo-preview.has-image span{ display:none }
-.mp .creator-photo-upload-btn{
-  display:inline-flex; align-items:center; gap:6px;
-  margin-top:8px;
-  padding:7px 14px;
-  background:#fff;
-  color:var(--lohas-text);
-  border:1px solid var(--lohas-line);
-  border-radius:8px;
-  font-family:inherit; font-size:12px;
+.mp .img-upload-placeholder{
+  color:var(--lohas-mute, #b8a584);
+  font-size:13px;
+  letter-spacing:1px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  pointer-events:none;
+}
+.mp .img-upload-placeholder i{
+  font-size:24px;
+}
+.mp .img-upload-input{
+  display:none;
+}
+.mp .editor-hint{
+  font-size:11px;
+  color:var(--lohas-mute, #b8a584);
+  margin:6px 0 0;
   letter-spacing:0.3px;
-  cursor:pointer;
-  transition:all .15s;
-}
-.mp .creator-photo-upload-btn:hover{
-  border-color:var(--lohas-brown);
-  color:var(--lohas-brown);
 }
 
 /* 自訂內容區塊 */
@@ -2515,7 +2542,7 @@ body {
     gap:6px;
     word-break:break-word;
   }
-  .mp .creator-photo-wrap{
+  .mp .img-upload-wrap{
     max-width:100%;
   }
 }
