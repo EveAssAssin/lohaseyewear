@@ -312,7 +312,7 @@
         order: 1;
     }
 
-    /* 文字區塊: pill + 主標 + CTA */
+    /* 文字區塊: meta(pill + 日期) + 主標 + CTA */
     .home-carousel-card .card-overlay {
         position: static;
         width: 100%;
@@ -327,6 +327,15 @@
         order: 2;
     }
 
+    /* meta row: pill + 日期 (仿本月精選) */
+    .home-carousel-card .card-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+
     /* pill (本月精選風格 · 米色底深褐字藥丸) */
     .home-carousel-card .card-overlay .tag {
         display: inline-flex;
@@ -334,13 +343,21 @@
         justify-content: center;
         min-height: 26px;
         padding: 3px 12px;
-        margin: 0 0 10px;
+        margin: 0;
         background: #F1E8DC;
         color: #50422D;
         font-size: 11px;
         font-weight: 500;
         letter-spacing: 0.06em;
         border-radius: 999px;
+        white-space: nowrap;
+    }
+
+    /* 日期 (仿本月精選 .post-date) */
+    .home-carousel-card .card-date {
+        font-size: 11px;
+        color: #9D8E7D;
+        letter-spacing: 0.06em;
         white-space: nowrap;
     }
 
@@ -358,23 +375,29 @@
         margin: 0 0 12px;
     }
 
-    /* CTA 帶箭頭 (參考本月精選 .post-readmore 樣式) */
+    /* CTA 容器 (無底線,inline-flex 放文字 + 箭頭) */
     .home-carousel-card .btn-more {
         width: fit-content;
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        padding-bottom: 4px;
+        padding: 0;
         border: 0;
-        border-bottom: 1px solid currentColor;
-        color: #50422D;
         background: transparent;
+        color: #50422D;
         font-size: 11px;
         font-weight: 500;
         letter-spacing: 0.14em;
         transition: gap 0.25s ease, color 0.25s ease;
     }
-    /* CTA 後綴箭頭 */
+
+    /* 只有文字部分有底線 */
+    .home-carousel-card .btn-more-text {
+        border-bottom: 1px solid currentColor;
+        padding-bottom: 4px;
+    }
+
+    /* CTA 後綴箭頭 (無底線) */
     .home-carousel-card .btn-more::after {
         content: "→";
         display: inline-block;
@@ -456,11 +479,12 @@
 }
 
 
-/* ===== 本月主打活動 Banner (Hero 下方, 高度 = Hero 2/3) ===== */
+/* ===== 本月主打活動 Banner ===== */
+/* 電腦版 16:9 = 1920x1080,手機版 4:3 = 800x600 */
 .home-main-banner {
   position: relative;
   width: 100%;
-  height: 66.67vh;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: #FAF7F2;
   margin-top: 40px;
@@ -605,8 +629,7 @@
 /* RWD */
 @media (max-width: 768px) {
   .home-main-banner {
-    height: auto;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 4 / 3;
     margin-top: 24px;
     margin-bottom: 24px;
   }
