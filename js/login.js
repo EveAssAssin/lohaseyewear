@@ -47,11 +47,14 @@
   }
 
   async function handleLogin() {
+    if (loginBtn?.disabled) return;   // 防連按 / Enter 連送
+
     const account = accountInput?.value.trim() || '';
-    const password = passwordInput?.value.trim() || '';
+    // 密碼不 trim — 使用者若密碼前後有空白,trim 後永遠登不進來
+    const password = passwordInput?.value || '';
 
     if (!account || !password) {
-      showError('請輸入 APP帳號與密碼');
+      showError('請輸入 APP 帳號與密碼');
       return;
     }
 

@@ -239,7 +239,8 @@ avatarInput?.addEventListener('change', function (event) {
     const storedMember = Auth.getStoredMember();
 
     if (!storedMember || !storedMember.erpid) {
-      Auth.setRedirect?.('member.html');
+      // 改成直接寫 redirectAfterLogin,target 改成 member-portal.html (member.html 不存在)
+      localStorage.setItem('redirectAfterLogin', 'member-portal.html');
       window.location.href = 'login.html';
       return;
     }
