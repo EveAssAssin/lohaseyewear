@@ -286,55 +286,126 @@
     color: #000;
 }
 
-/* --- 手機版 RWD --- */
+/* --- 手機版 RWD (風格 B · 圖文分離白底卡片) --- */
 @media (max-width: 768px) {
+    /* 卡片改直向佈局,圖文分離 */
     .home-carousel-card {
-        flex: 0 0 85%; /* 手機上一張圖佔 90%，旁邊露出下一張圖的邊緣 */
-        aspect-ratio: 4 / 3; /* 手機版通常比例會縮一點 */
-        scroll-snap-align: center; /* 關鍵：滑動停止時，卡片會精準對齊我們在容器設定的 padding 位置 */
+        flex: 0 0 85%;
+        aspect-ratio: auto;       /* 取消強制 4:3,讓內容自然撐高 */
+        scroll-snap-align: center;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border: 0.5px solid rgba(80, 66, 45, 0.12);
+        box-shadow: 0 8px 24px rgba(80, 66, 45, 0.06);
+        overflow: hidden;
+        border-radius: 12px;
     }
+
+    /* 圖片區塊獨立、固定 4:3 */
+    .home-carousel-card img {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        display: block;
+        order: 1;                 /* 圖在上 */
+    }
+
+    /* 文字區塊改成卡片下方獨立區、白底深色字 */
     .home-carousel-card .card-overlay {
-        padding: 20px;
-        justify-content: flex-end; 
+        position: static;
+        width: 100%;
+        height: auto;
+        padding: 16px 18px 18px;
+        background: transparent;
+        color: #3D3026;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        order: 2;                 /* 文字在下 */
     }
-    
+
+    .home-carousel-card .card-overlay .tag {
+        display: inline-block;
+        width: fit-content;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        font-weight: 500;
+        padding: 3px 10px;
+        margin-bottom: 10px;
+        background: #F1E8DC;
+        color: #50422D;
+        border-radius: 999px;
+    }
+
+    .home-carousel-card .card-overlay h2 {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.4;
+        color: #3D3026;
+        margin: 0 0 6px;
+    }
+
+    .home-carousel-card .card-overlay p {
+        font-size: 12px;
+        color: #7A6B5C;
+        line-height: 1.6;
+        margin: 0 0 12px;
+    }
+
+    /* VIEW MORE 改成下劃線 link 樣式,不再是白色框按鈕 */
+    .home-carousel-card .btn-more {
+        font-size: 11px;
+        font-weight: 500;
+        color: #50422D;
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid #50422D;
+        padding: 2px 0 4px;
+        width: fit-content;
+        letter-spacing: 1px;
+    }
+
+    .home-carousel-card:hover img {
+        transform: none;          /* 手機版不要 hover 放大 */
+    }
+
+    .home-carousel-card:hover .btn-more {
+        background: transparent;
+        color: #50422D;
+        opacity: 0.7;
+    }
+
     .home-carousel-track {
-        padding-right: 30px; /* 增加右側留白感 */
+        padding-right: 30px;
         padding-bottom: 20px;
     }
 
-    .card-overlay h2 {
-        font-size: 18px;
-        margin-bottom: 2px;
-    }
-    .card-overlay p {
-        /* 縮小描述文字下方的 margin，讓按鈕更靠近底部 */
-        margin-bottom: 10px; 
-    }
     .home-carousel-section {
         padding-top: 20px !important;
-        padding-bottom: 20px; /* 原本是 40px，減去內層的 20px，讓上下視覺總和都是 40px */
+        padding-bottom: 20px;
     }
 }
 
-/* 針對母親節與商店街卡片修改文字為樂活標準色 */
-.mother-day .card-overlay,
-.shopping-street-style .card-overlay {
-    color: var(--lohas-brand); 
-}
+/* === 電腦版 (>768px) 母親節 / 商店街 覆寫 (限定電腦版,手機版走風格 B) === */
+@media (min-width: 769px) {
+    .mother-day .card-overlay,
+    .shopping-street-style .card-overlay {
+        color: var(--lohas-brand);
+    }
 
-/* 將按鈕的邊框與文字也改為深褐色 */
-.mother-day .btn-more,
-.shopping-street-style .btn-more {
-    border: 1px solid var(--lohas-brand);
-    color: var(--lohas-brand);
-}
+    .mother-day .btn-more,
+    .shopping-street-style .btn-more {
+        border: 1px solid var(--lohas-brand);
+        color: var(--lohas-brand);
+    }
 
-/* 滑鼠移過去時，按鈕變成深褐底白字 */
-.mother-day:hover .btn-more,
-.shopping-street-style:hover .btn-more {
-    background: var(--lohas-brand);
-    color: #ffffff;
+    .mother-day:hover .btn-more,
+    .shopping-street-style:hover .btn-more {
+        background: var(--lohas-brand);
+        color: #ffffff;
+    }
 }
 
 /* --- 底部滿版橫幅 (Secondary Banner) --- */
