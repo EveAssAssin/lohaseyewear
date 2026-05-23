@@ -5,8 +5,8 @@
    --------------------------------------------
    包含:
    - Hero Banner (.hero-banner / .hero-bg / .hero-content / .hero-title)
-   - 內容區 (.content / .owndays-grid-section / .owndays-wrapper)
-   - OWNDAYS 商品卡 grid (.owndays-container / .owndays-item)
+   - 內容區 (.content / .home-carousel-section / .home-carousel-wrapper)
+   - OWNDAYS 商品卡 grid (.home-carousel-track / .home-carousel-card)
    - 滑動箭頭按鈕 (.scroll-btn / .prev-btn / .next-btn)
    - 底部橫幅 (Secondary Banner)
    - 門市據點區塊
@@ -128,14 +128,14 @@
     text-align: center;
 }
 
-.owndays-grid-section {
+.home-carousel-section {
     padding: 40px 0;
     background-color: #fff;
     overflow: hidden;
 }
 
 /* 包含 header 控制 + scroll container,左對齊 1400px 容器 */
-.owndays-wrapper {
+.home-carousel-wrapper {
     position: relative;
     max-width: 1400px;
     margin: 0 auto;
@@ -143,7 +143,7 @@
 }
 
 /* scroll 容器突破 wrapper 右邊界,延伸到視窗右邊 */
-.owndays-container {
+.home-carousel-track {
     display: flex;
     gap: 15px;
     overflow-x: auto;
@@ -157,14 +157,14 @@
 }
 
 /* --- 新增：卡片區塊頂部的排版 --- */
-.owndays-header {
+.home-carousel-header {
     display: flex;
     justify-content: flex-end; /* 讓內容（按鈕）靠右對齊 */
     padding: 0 20px;
     margin-bottom: 15px;       /* 與下方的卡片保持一點距離 */
 }
 
-.owndays-controls {
+.home-carousel-controls {
     display: flex;
     gap: 12px; /* 兩個圈圈箭頭並排時的距離 */
 }
@@ -211,11 +211,11 @@
 }
 
 /* 隱藏捲軸 */
-.owndays-container::-webkit-scrollbar {
+.home-carousel-track::-webkit-scrollbar {
     display: none;
 }
 
-.owndays-item {
+.home-carousel-card {
     position: relative;
     flex: 0 0 680px;
     min-width: 0;
@@ -226,7 +226,7 @@
     border-radius: 8px;
 }
 
-.owndays-item img {
+.home-carousel-card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -234,7 +234,7 @@
 }
 
 /* 文字遮罩層 */
-.item-overlay {
+.card-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -249,20 +249,20 @@
     z-index: 2;
 }
 
-.item-overlay .tag {
+.card-overlay .tag {
     font-size: 12px;
     letter-spacing: 2px;
     margin-bottom: 10px;
     font-weight: bold;
 }
 
-.item-overlay h2 {
+.card-overlay h2 {
     font-size: 24px;
     margin-bottom: 5px;
     font-weight: 800;
 }
 
-.item-overlay p {
+.card-overlay p {
     font-size: 14px;
     margin-bottom: 15px;
 }
@@ -277,49 +277,49 @@
 }
 
 /* 滑過效果 */
-.owndays-item:hover img {
+.home-carousel-card:hover img {
     transform: scale(1.05);
 }
 
-.owndays-item:hover .btn-more {
+.home-carousel-card:hover .btn-more {
     background: #fff;
     color: #000;
 }
 
 /* --- 手機版 RWD --- */
 @media (max-width: 768px) {
-    .owndays-item {
+    .home-carousel-card {
         flex: 0 0 85%; /* 手機上一張圖佔 90%，旁邊露出下一張圖的邊緣 */
         aspect-ratio: 4 / 3; /* 手機版通常比例會縮一點 */
         scroll-snap-align: center; /* 關鍵：滑動停止時，卡片會精準對齊我們在容器設定的 padding 位置 */
     }
-    .owndays-item .item-overlay {
+    .home-carousel-card .card-overlay {
         padding: 20px;
         justify-content: flex-end; 
     }
     
-    .owndays-container {
+    .home-carousel-track {
         padding-right: 30px; /* 增加右側留白感 */
         padding-bottom: 20px;
     }
 
-    .item-overlay h2 {
+    .card-overlay h2 {
         font-size: 18px;
         margin-bottom: 2px;
     }
-    .item-overlay p {
+    .card-overlay p {
         /* 縮小描述文字下方的 margin，讓按鈕更靠近底部 */
         margin-bottom: 10px; 
     }
-    .owndays-grid-section {
+    .home-carousel-section {
         padding-top: 20px !important;
         padding-bottom: 20px; /* 原本是 40px，減去內層的 20px，讓上下視覺總和都是 40px */
     }
 }
 
 /* 針對母親節與商店街卡片修改文字為樂活標準色 */
-.mother-day .item-overlay,
-.shopping-street-style .item-overlay {
+.mother-day .card-overlay,
+.shopping-street-style .card-overlay {
     color: var(--lohas-brand); 
 }
 

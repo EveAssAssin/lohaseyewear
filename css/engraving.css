@@ -7,7 +7,7 @@
    - 雷刻服務頁本身 (.engraving-service-page / .engraving-hero / .engraving-process / .engraving-faq)
    - 載體選擇 (.engraving-carrier-section / .carrier-info-grid / .carrier-info-card)
    - 規格說明 (.specs-container / .spec-card)
-   - JINS Coordinate 復刻區塊 (.jins-style-page / .coord-*)
+   - Coordinate 復刻區塊 (.coord-page / .coord-*)
    - KOL split banners (.kol-split-banners / .split-item)
    - 雷刻載體選擇彈窗 (.market-modal / .market-modal-content / 等 - 沿用舊命名)
    ============================================= */
@@ -380,9 +380,9 @@
     }
 }
 
-/* --- JINS Coordinate 1:1 復刻樣式 --- */
+/* --- Coordinate 1:1 復刻樣式 --- */
 
-.jins-style-page {
+.coord-page {
     /* 使用乾淨的無襯線字體 */
     font-family: "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
     color: #000;
@@ -430,7 +430,7 @@
     color: #000;
 }
 
-/* JINS 經典的粗黑底線 */
+/* 經典的粗黑底線 */
 .top-tabs a.active::after {
     content: '';
     position: absolute;
@@ -448,7 +448,7 @@
 }
 
 /* 左側篩選欄 */
-.jins-sidebar {
+.coord-sidebar {
     width: 220px;
     flex-shrink: 0;
     margin-right: 50px;
@@ -485,7 +485,7 @@
     gap: 8px;
 }
 
-/* 強制將 JINS 表單元素變為黑色系 */
+/* 強制將表單元素變為黑色系 */
 .filter-list input[type="radio"], 
 .filter-list input[type="checkbox"] {
     accent-color: #000;
@@ -542,12 +542,12 @@
 }
 
 .coord-item:hover {
-    opacity: 0.7; /* JINS 特有的懸浮淡化效果 */
+    opacity: 0.7; /* 懸浮淡化效果 */
 }
 
 .coord-img {
     width: 100%;
-    aspect-ratio: 3 / 4; /* JINS 愛用的直立相片比例 */
+    aspect-ratio: 3 / 4; /* 直立相片比例 */
     object-fit: cover;
     margin-bottom: 12px;
     background-color: #f9f9f9;
@@ -579,16 +579,16 @@
     line-height: 1.4;
 }
 
-/* 底部 JINS 風格分頁器 */
-.jins-pagination {
+/* 底部分頁器 */
+.coord-pagination {
     display: flex;
     justify-content: center;
     gap: 5px;
     margin-top: 60px;
 }
 
-.jins-pagination a, 
-.jins-pagination span {
+.coord-pagination a, 
+.coord-pagination span {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -600,11 +600,11 @@
     border: 1px solid transparent;
 }
 
-.jins-pagination a:hover {
+.coord-pagination a:hover {
     border-color: #ddd;
 }
 
-.jins-pagination span.current {
+.coord-pagination span.current {
     background-color: #000;
     color: #fff;
 }
@@ -623,8 +623,8 @@
         flex-direction: column;
     }
 
-    /* 手機版將側邊欄搬到底部或折疊 (這裡採取 JINS 常用的排列方式：先圖片後篩選) */
-    .jins-sidebar {
+    /* 手機版將側邊欄搬到底部或折疊 (這裡採取常用的排列方式：先圖片後篩選) */
+    .coord-sidebar {
         width: 100%;
         margin-right: 0;
         margin-top: 40px;

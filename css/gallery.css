@@ -200,7 +200,7 @@ main{
    Filter
 ========================= */
 
-.jins-filter-area{
+.gallery-filter-area{
   max-width:1200px;
   margin:0 auto;
   padding:34px 20px 0;
@@ -208,7 +208,7 @@ main{
   border-bottom:1px solid #f0ece7;
 }
 
-.jins-filter-top{
+.gallery-filter-top{
   display:flex;
   justify-content:space-between;
   align-items:flex-end;
@@ -770,7 +770,7 @@ main{
     white-space:nowrap;
   }
 
-  .jins-filter-area{
+  .gallery-filter-area{
     display:none;
   }
 
@@ -1061,7 +1061,7 @@ main{
 /* =============================================
    只看有故事的 (Toggle Story Filter)
    --------------------------------------------
-   位置: gallery.html · .jins-filter-top
+   位置: gallery.html · .gallery-filter-top
    切換: aria-pressed="true" 變實心棕底白字
    ============================================= */
 .toggle-story-btn{
