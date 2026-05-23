@@ -6408,8 +6408,8 @@
       list.innerHTML = arr.map(n => {
         const cover = n.cover_image_url || n.homepage_image_url;
         const avatarHtml = cover
-          ? '<div class="creator-card-avatar" style="background-image:url(\'' + esc(cover) + '\');background-size:cover;background-position:center"></div>'
-          : '<div class="creator-card-avatar" style="background:#F4F1EC;color:#9D7E3F"><i class="fa-regular fa-newspaper"></i></div>';
+          ? '<div class="news-thumb" style="background-image:url(\'' + esc(cover) + '\');background-size:cover;background-position:center"></div>'
+          : '<div class="news-thumb" style="background:#F4F1EC;color:#9D7E3F;display:flex;align-items:center;justify-content:center;font-size:18px"><i class="fa-regular fa-newspaper"></i></div>';
 
         const featuredTag = n.is_featured
           ? '<span class="creator-card-tag featured"><i class="fa-solid fa-star"></i> 本月精選</span>' : '';
