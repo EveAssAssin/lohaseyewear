@@ -612,10 +612,10 @@
   z-index: 2;
 }
 .home-main-banner .hmb-dot {
-  width: 28px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255,255,255,0.4);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
   border: 0;
   cursor: pointer;
   padding: 0;
@@ -623,7 +623,8 @@
 }
 .home-main-banner .hmb-dot.on {
   background: #fff;
-  width: 44px;
+  width: 8px;
+  transform: scale(1.3);
 }
 
 /* RWD */
@@ -634,7 +635,15 @@
     margin-bottom: 24px;
   }
   .home-main-banner-arrow {
-    display: none !important;
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+  .home-main-banner-arrow.prev {
+    left: 12px;
+  }
+  .home-main-banner-arrow.next {
+    right: 12px;
   }
   .home-main-banner .hmb-overlay {
     padding: 0 6%;
