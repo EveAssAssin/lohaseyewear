@@ -2120,11 +2120,16 @@
   // Banner 管理模組
   // ============================================
   const BANNER_POSITIONS = {
-    home_main: { label: '首頁主打', aspect: '21:9', multi: true,  size: '建議 1920 × 820 px' },
-    home_hero: { label: '首頁 Hero', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
-    engraving: { label: '雷刻頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
-    market:    { label: '刻圖市集頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' },
-    gallery:   { label: '靈感分享牆', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px' }
+    home_main: { label: '首頁主打', aspect: '16:9', multi: true,  size: '建議 1920 × 1080 px',
+                 mobileAspect: '4:3', mobileSize: '建議 800 × 600 px' },
+    home_hero: { label: '首頁 Hero', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px',
+                 mobileAspect: '4:5', mobileSize: '建議 800 × 1000 px' },
+    engraving: { label: '雷刻頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px',
+                 mobileAspect: '4:5', mobileSize: '建議 800 × 1000 px' },
+    market:    { label: '刻圖市集頁',   aspect: '16:9', multi: false, size: '建議 1920 × 1080 px',
+                 mobileAspect: '4:5', mobileSize: '建議 800 × 1000 px' },
+    gallery:   { label: '靈感分享牆', aspect: '16:9', multi: false, size: '建議 1920 × 1080 px',
+                 mobileAspect: '4:5', mobileSize: '建議 800 × 1000 px' }
   };
 
   let BannerState = {
@@ -2420,13 +2425,27 @@
       });
     }
 
-    // ====== 手機版圖片上傳 (4:5,選填) ======
+    // ====== 手機版圖片上傳 (依 position 不同,動態 aspect,選填) ======
+    const mobileAspect = cfg.mobileAspect || '4:5';
+    const mobileSize = cfg.mobileSize || '建議 800 × 1000 px';
+    // 解析 aspect 字串為數字 (給 cropper 用)
+    const mobileAspectParts = mobileAspect.split(':').map(Number);
+    const mobileAspectRatio = mobileAspectParts[0] / mobileAspectParts[1];
+
     const wrapMobile = document.getElementById('bmImageMobileWrap');
     const clearMobileBtn = document.getElementById('bmImageMobileClearBtn');
     if(wrapMobile){
+      // 同步 aspect 到 wrap (給樣式用)
+      wrapMobile.dataset.aspect = mobileAspect;
+
+      // 更新手機版區的提示文字
+      const mobileHintEl = wrapMobile.parentElement?.querySelector('.editor-hint');
+      if(mobileHintEl) mobileHintEl.textContent =
+        '選填 · 建議比例 ' + mobileAspect + ' · ' + mobileSize + ' · 未上傳時手機版會用上方桌機版圖';
+
       const imgHtmlMobile = b.image_url_mobile
         ? '<img src="' + escapeHtml(b.image_url_mobile) + '" alt="" />'
-        : '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (4:5)</span>';
+        : '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (' + mobileAspect + ')</span>';
 
       wrapMobile.innerHTML =
         '<div class="img-upload-preview" id="bmImageMobilePreview">' + imgHtmlMobile + '</div>' +
@@ -2451,8 +2470,8 @@
         let finalFile = file;
         if(window.LohasCropper){
           const cropped = await window.LohasCropper.crop(file, {
-            aspectRatio: 4/5,
-            title: '裁切 Banner (手機版) · 4:5'
+            aspectRatio: mobileAspectRatio,
+            title: '裁切 Banner (手機版) · ' + mobileAspect
           });
           if(!cropped){ newInputM.value = ''; return; }
           finalFile = cropped;
@@ -2481,7 +2500,10 @@
         BannerState.removeMobileImage = true;
         const previewM = document.getElementById('bmImageMobilePreview');
         if(previewM){
-          previewM.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (4:5)</span>';
+          // 用當下 currentPos 的 mobileAspect 重設 placeholder
+          const curCfg = BANNER_POSITIONS[BannerState.currentPos];
+          const ma = curCfg.mobileAspect || '4:5';
+          previewM.innerHTML = '<span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (' + ma + ')</span>';
         }
         clearMobileBtn.style.display = 'none';
       });

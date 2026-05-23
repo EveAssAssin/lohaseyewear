@@ -43,6 +43,18 @@
       return;
     }
 
+    // 格式化日期 yyyy.MM.dd
+    function fmtDate(d) {
+      if (!d) return '';
+      try {
+        const dt = new Date(d);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, '0');
+        const day = String(dt.getDate()).padStart(2, '0');
+        return y + '.' + m + '.' + day;
+      } catch { return ''; }
+    }
+
     const html = data.map(n => {
       const img = n.homepage_image_url || n.cover_image_url;
       // 連結:後台指定「custom」且填了 link_url 就用,否則跳 news-detail
@@ -54,12 +66,16 @@
       }
       const tag = n.homepage_tag || '';
       const sub = n.homepage_subtitle || n.excerpt || '';
+      const date = fmtDate(n.published_at);
       return '<a href="' + escapeHtml(href) + '" class="home-carousel-card">' +
         '<div class="card-overlay">' +
-          (tag ? '<span class="tag">' + escapeHtml(tag) + '</span>' : '') +
+          '<div class="card-meta">' +
+            (tag ? '<span class="tag">' + escapeHtml(tag) + '</span>' : '') +
+            (date ? '<span class="card-date">' + date + '</span>' : '') +
+          '</div>' +
           '<h2>' + escapeHtml(n.title) + '</h2>' +
           (sub ? '<p>' + escapeHtml(sub) + '</p>' : '') +
-          '<span class="btn-more">VIEW MORE</span>' +
+          '<span class="btn-more"><span class="btn-more-text">VIEW MORE</span></span>' +
         '</div>' +
         (img ? '<img src="' + escapeHtml(img) + '" alt="' + escapeHtml(n.title) + '">' : '') +
       '</a>';
