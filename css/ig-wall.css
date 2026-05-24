@@ -1,11 +1,11 @@
 /* ============================================================
    Instagram Wall · 樂活眼鏡首頁
+   方案 A3：主打左大 + 右側 2×2 + 下方 4 欄
    ============================================================ */
 
 .lohas-ig-wall {
   background: #FAF7F2;
   padding: 64px 24px 72px;
-  /* 全寬邊界保護：永遠不超過視窗 */
   max-width: 100%;
   overflow-x: hidden;
 }
@@ -44,28 +44,60 @@
   margin: 0;
 }
 
-/* ===== 主打 IG（保留完整，置中） ===== */
+/* ===== 主版型：上半 (主打 + 4 KOL) ===== */
+.lohas-ig-wall__top {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* 主打：佔左半，視窗高度跟右側 2×2 拉齊 */
 .lohas-ig-wall__featured {
   position: relative;
-  max-width: 540px;
-  margin: 0 auto 44px;
-  min-height: 200px;
+  width: 100%;
+  /* 高度跟右側對齊：右側 2×2 = (一格高度) × 2 + gap
+     一格 padding-top = 50% + 90px(縮小版) → 視窗高 ≈ (1/2 寬 + 90px) × 2 + 20px
+     主打整則完整呈現所以不剪裁
+  */
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 1px 0 rgba(0,0,0,0.5), 0 1px 10px 0 rgba(0,0,0,0.08);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
 }
 
-.lohas-ig-wall__featured .instagram-media {
-  max-width: 540px !important;
+.lohas-ig-wall__featured .instagram-media,
+.lohas-ig-wall__featured > blockquote {
   width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 
-/* ===== 8 KOL 牆（4 欄） ===== */
-.lohas-ig-wall__grid {
+/* 右側 2×2 KOL */
+.lohas-ig-wall__top-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ===== 下半：4 欄補後 4 張 ===== */
+.lohas-ig-wall__bottom-grid {
+  max-width: 1280px;
+  margin: 20px auto 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  max-width: 1280px;
-  margin: 0 auto;
 }
 
+/* ===== KOL 卡片視窗（剪裁掉長內文） ===== */
 .lohas-ig-wall__cell {
   position: relative;
   display: block;
@@ -78,7 +110,8 @@
 }
 
 .lohas-ig-wall__cell .instagram-media,
-.lohas-ig-wall__cell iframe {
+.lohas-ig-wall__cell iframe,
+.lohas-ig-wall__cell > blockquote {
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
@@ -105,6 +138,20 @@
   background-size: 200% 100%, 100% 100% !important;
   animation: lohasIgShimmer 1.6s infinite;
   height: 100% !important;
+}
+
+/* 主打 loading 骨架 */
+.lohas-ig-wall__featured .instagram-media:not(.instagram-media-rendered) {
+  min-height: 600px;
+  background:
+    linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.6) 50%,
+      rgba(255,255,255,0) 100%
+    ),
+    #e8dcc5 !important;
+  background-size: 200% 100%, 100% 100% !important;
+  animation: lohasIgShimmer 1.6s infinite;
 }
 
 @keyframes lohasIgShimmer {
@@ -136,9 +183,18 @@
 
 /* ===== RWD ===== */
 @media (max-width: 1024px) {
-  .lohas-ig-wall__grid {
+  .lohas-ig-wall__top {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .lohas-ig-wall__top-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
+    gap: 16px;
+  }
+  .lohas-ig-wall__bottom-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 16px;
   }
 }
 
@@ -155,47 +211,16 @@
     font-size: 13px;
   }
 
-  /* ========================================
-     手機版主打 — 強制打掉內聯 min-width:326px
-     ======================================== */
-  .lohas-ig-wall__featured {
-    max-width: 100%;
-    width: 100%;
-    margin-bottom: 28px;
-    overflow: hidden;
-  }
-
-  .lohas-ig-wall__featured .instagram-media,
-  .lohas-ig-wall__featured > blockquote {
-    max-width: 100% !important;
-    min-width: 0 !important;
-    width: 100% !important;
-  }
-
-  .lohas-ig-wall__featured iframe {
-    max-width: 100% !important;
-    min-width: 0 !important;
-    width: 100% !important;
-  }
-
-  .lohas-ig-wall__grid {
+  .lohas-ig-wall__top,
+  .lohas-ig-wall__top-grid,
+  .lohas-ig-wall__bottom-grid {
     grid-template-columns: 1fr;
     gap: 14px;
-    max-width: 100%;
-  }
-
-  /* 8 張卡片也強制不超寬 */
-  .lohas-ig-wall__cell .instagram-media,
-  .lohas-ig-wall__cell > blockquote,
-  .lohas-ig-wall__cell iframe {
-    min-width: 0 !important;
-    max-width: 100% !important;
   }
 }
 
 /* ========================================
-   全域保險：任何裝置都不允許 IG embed 超出容器
-   （蓋過 IG 內聯 min-width:326px）
+   全域保險：IG embed 內聯 min-width:326px 強制覆寫
    ======================================== */
 .lohas-ig-wall .instagram-media {
   min-width: 0 !important;
