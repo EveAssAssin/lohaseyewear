@@ -609,18 +609,24 @@
   margin: 24px auto 0;
   padding: 0 16px;
 }
-.home-main-banner .hmb-dot {
+.home-main-banner-dots .hmb-dot {
   width: 16px;
   height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: rgba(80, 66, 45, 0.25);
   border: 0;
   cursor: pointer;
   padding: 0;
-  transition: all .25s;
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: transform .25s ease, background-color .25s ease;
   flex-shrink: 0;
 }
-.home-main-banner .hmb-dot.on {
+.home-main-banner-dots .hmb-dot.on {
   background: var(--lohas-brand, #50422D);
   transform: scale(1.3);
 }
