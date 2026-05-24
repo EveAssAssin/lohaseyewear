@@ -252,6 +252,10 @@
     if(c.launch_date_text && (stage === 'upcoming' || stage === 'preorder')){
       items.push({ lab:'上 市', val: c.launch_date_text });
     }
+    // 活動期間 (日期區間文字,例如 MAY 20 — JUNE 30)
+    if(c.date_range_text){
+      items.push({ lab:'活 動 期 間', val: c.date_range_text });
+    }
     if(c.available_stores){
       items.push({ lab:'限 定 門 市', val: c.available_stores });
     }

@@ -189,7 +189,7 @@
     if (page === 'review-uploads') { loadReviewUploads(); refreshReviewCounts(); }
     if (page === 'cm-news') loadNews();
     if (page === 'cm-banner') loadBannerModule();
-    if (page === 'admin-upload') { initAdminUpload(); }
+    if (page === 'admin-upload') { initAdminUpload(); loadAdminUploadHistory(); }
     if (page === 'creators') loadCreatorsList();
     if (page === 'manage-designs') loadManageDesigns();
     if (page === 'manage-shares') loadManageShares();
@@ -3201,7 +3201,7 @@
       hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})`;
 
       adminUploadReset();
-      alert(`✓ 上傳成功!\n\n已上傳 ${uploadedUrls.length} 張圖片並自動通過審核。\n類型: ${type === 'story' ? '故事' : '照片'}`);
+      loadAdminUploadHistory();
 
     } catch (err) {
       hint.style.color = 'var(--status-rejected)';
@@ -5124,7 +5124,13 @@
       if(!el) return;
       if(el.type === 'checkbox'){ el.checked = !!v; return; }
       if(el.type === 'datetime-local' && v){
-        try { el.value = new Date(v).toISOString().slice(0, 16); } catch(e){ el.value = ''; }
+        try {
+          // 用本地時區轉換 (不能用 toISOString,那會變 UTC,造成顯示時間少 8 小時)
+          const d = new Date(v);
+          const pad = n => String(n).padStart(2, '0');
+          el.value = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+                   + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        } catch(e){ el.value = ''; }
         return;
       }
       el.value = v == null ? '' : v;
@@ -6365,7 +6371,13 @@
       if(!el) return;
       if(el.type === 'checkbox'){ el.checked = !!v; return; }
       if(el.type === 'datetime-local' && v){
-        try { el.value = new Date(v).toISOString().slice(0, 16); } catch(e){ el.value = ''; }
+        try {
+          // 用本地時區轉換 (不能用 toISOString,那會變 UTC,造成顯示時間少 8 小時)
+          const d = new Date(v);
+          const pad = n => String(n).padStart(2, '0');
+          el.value = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+                   + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        } catch(e){ el.value = ''; }
         return;
       }
       el.value = v == null ? '' : v;
