@@ -1,6 +1,6 @@
 /* ============================================================
    Instagram Wall · 樂活眼鏡首頁
-   本月主打 + 8 KOL 官方 embed 牆
+   本月主打（保留完整）+ KOL 8 則（壓短：只剩圖+頭像+帳號）
    ============================================================ */
 
 .lohas-ig-wall {
@@ -38,12 +38,11 @@
   margin: 0;
 }
 
-/* ===== 主打 IG（大張，置中） ===== */
+/* ===== 主打 IG（保留完整，置中） ===== */
 .lohas-ig-wall__featured {
   position: relative;
   max-width: 540px;
   margin: 0 auto 44px;
-  /* IG embed 至少高 600+，先給最小高度避免載入時跳版 */
   min-height: 200px;
 }
 
@@ -102,16 +101,81 @@
   margin: 0 auto;
 }
 
+/*
+  關鍵：把 IG embed 內的 iframe 用 CSS 切掉下半。
+  IG 官方 embed 渲染後是一個 iframe，內容由上至下：
+    [Header 60px] [圖片 ~正方形] [互動按鈕區 ~46px] [按讚數 ~25px]
+    [內文文字]   [留言]         [時間]              [open in IG]
+  我們只保留前 3 段（Header + 圖 + 互動按鈕區），下方全部裁掉。
+
+  cell 用固定外框高度做「視窗」，iframe 內部位置 top 不動，超出 hidden。
+*/
+
 .lohas-ig-wall__cell {
-  min-height: 480px; /* 給 embed 載入前的佔位高度，避免布局跳動 */
-  display: flex;
-  justify-content: center;
+  position: relative;
+  display: block;
+  width: 100%;
+  /* 視窗高度 = header(60) + 圖(寬正方形約 = cell 寬度) + 互動列(46) */
+  /* 用 aspect-ratio 動態算：cell 是正方形 + 上下 106px */
+  padding-top: calc(100% + 106px);
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 1px 0 rgba(0,0,0,0.5), 0 1px 10px 0 rgba(0,0,0,0.08);
 }
 
-.lohas-ig-wall__cell .instagram-media {
-  margin: 0 !important;
-  min-width: 0 !important;
+.lohas-ig-wall__cell .instagram-media,
+.lohas-ig-wall__cell iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
   width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* iframe 高度刻意拉很高、讓內部完整渲染，超出視窗被切掉 */
+.lohas-ig-wall__cell iframe {
+  height: 900px !important;
+}
+
+/* embed 載入中骨架 */
+.lohas-ig-wall__cell .instagram-media:not(.instagram-media-rendered) {
+  background:
+    linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.6) 50%,
+      rgba(255,255,255,0) 100%
+    ),
+    #f0e8db !important;
+  background-size: 200% 100%, 100% 100% !important;
+  animation: lohasIgShimmer 1.6s infinite;
+  height: 100% !important;
+}
+
+@keyframes lohasIgShimmer {
+  0%   { background-position: -150% 0, 0 0; }
+  100% { background-position: 150% 0, 0 0; }
+}
+
+/* 整張卡可點：覆蓋一層透明 overlay 連到 IG 貼文 */
+.lohas-ig-wall__cell-link {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: block;
+  text-decoration: none;
+  /* hover 時上方淡淡的漸層，提示可點 */
+  background: linear-gradient(180deg, rgba(0,0,0,0) 70%, rgba(0,0,0,0.08) 100%);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.lohas-ig-wall__cell:hover .lohas-ig-wall__cell-link {
+  opacity: 1;
 }
 
 /* ===== KOL 帳號 fallback 列表 ===== */
@@ -170,25 +234,6 @@
   opacity: 0.7;
 }
 
-/* ===== 載入中的骨架佔位（給未渲染的 .instagram-media） ===== */
-.lohas-ig-wall .instagram-media:not(.instagram-media-rendered) {
-  position: relative;
-  background:
-    linear-gradient(90deg,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,0.5) 50%,
-      rgba(255,255,255,0) 100%
-    ),
-    #f0e8db !important;
-  background-size: 200% 100%, 100% 100% !important;
-  animation: lohasIgShimmer 1.6s infinite;
-}
-
-@keyframes lohasIgShimmer {
-  0%   { background-position: -150% 0, 0 0; }
-  100% { background-position: 150% 0, 0 0; }
-}
-
 /* ===== RWD ===== */
 @media (max-width: 1024px) {
   .lohas-ig-wall__grid {
@@ -226,10 +271,6 @@
     grid-template-columns: 1fr;
     gap: 14px;
     max-width: 540px;
-  }
-
-  .lohas-ig-wall__cell {
-    min-height: 420px;
   }
 
   .lohas-ig-wall__kols {
