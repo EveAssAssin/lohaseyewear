@@ -154,6 +154,7 @@
     'admin-upload': '樂活官方上傳',
     'manage-designs': '刻圖管理',
     'manage-shares': '分享牆管理',
+    'cm-footer': '頁尾管理',
     'users': '會員列表',
     'creators': '創作者管理',
     'ip': '授權聯名管理'
