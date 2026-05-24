@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   initFooterAccordion();
   initCookieBanner();
   initMemberLink();
+
+  // 啟動：嘗試從 Supabase 拿動態頁尾資料覆蓋
+  applyDynamicFooter();
 });
 
 /* 自動載入 legal-modal.js + legal.css (隱私權 / 服務條款 modal)
@@ -44,6 +47,90 @@ async function loadLayout() {
     const footer = await fetch("components/footer.html").then(res => res.text());
     footerTarget.innerHTML = footer;
   }
+}
+
+/* === 動態頁尾：fetch footer.html 後從 Supabase site_settings 撈最新資料覆蓋 === */
+async function applyDynamicFooter() {
+  // 1. 確認 Supabase SDK 跟 client 都載好
+  const sb = window.LohasSupabase
+    && window.LohasSupabase.getClient
+    && window.LohasSupabase.getClient();
+  if (!sb) return; // 沒 supabase 就用 footer.html 的靜態內容
+
+  try {
+    const { data, error } = await sb
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'footer')
+      .maybeSingle();
+    if (error || !data || !data.value) return;
+    renderFooter(data.value);
+  } catch (e) {
+    console.warn('[layout] 動態頁尾載入失敗:', e);
+  }
+}
+
+function renderFooter(cfg) {
+  const wrap = document.querySelector('.main-footer .footer-container');
+  if (!wrap) return;
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function isExternal(url) {
+    return /^https?:\/\//i.test(url) && !/lohasglasses\.com/i.test(url);
+  }
+
+  // 社群
+  const socialHtml = (cfg.social || [])
+    .filter(s => s && s.enabled !== false && s.url && s.url !== '#')
+    .map(s => {
+      const ext = isExternal(s.url);
+      const target = ext ? ' target="_blank" rel="noopener"' : '';
+      return `<a href="${esc(s.url)}" class="social-link"${target}>
+        <i class="${esc(s.icon || 'fas fa-link')}"></i> ${esc(s.label)}
+      </a>`;
+    }).join('');
+
+  // 欄位
+  const columnsHtml = (cfg.columns || []).map(col => {
+    const links = (col.links || [])
+      .filter(l => l && l.label)
+      .map(l => {
+        const url = l.url || '#';
+        const ext = isExternal(url);
+        const target = ext ? ' target="_blank" rel="noopener"' : '';
+        return `<li><a href="${esc(url)}"${target}>${esc(l.label)}</a></li>`;
+      }).join('');
+    return `<div class="footer-column">
+      <h3>${esc(col.title)}</h3>
+      <ul>${links}</ul>
+    </div>`;
+  }).join('');
+
+  // 法規連結
+  const legalLinks = cfg.legal || [];
+  const legalHtml = legalLinks.map((l, i) => {
+    const dataAttr = l.data_legal ? ` data-legal="${esc(l.data_legal)}"` : '';
+    const sep = i < legalLinks.length - 1 ? '<span class="footer-legal-sep">·</span>' : '';
+    return `<a href="${esc(l.url || '#')}"${dataAttr}>${esc(l.label)}</a>${sep}`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="footer-links">
+      <div class="footer-social-wrap">${socialHtml}</div>
+      <div class="footer-columns-wrap">${columnsHtml}</div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-legal-links">${legalHtml}</div>
+      <p>${esc(cfg.copyright || '')}</p>
+    </div>
+  `;
+
+  // footer 內容換掉了，原本綁的手機 accordion 失效，重新綁
+  initFooterAccordion();
 }
 
 /* 會員專區：已登入進 member.html，未登入進 login.html */
@@ -141,6 +228,10 @@ function initFooterAccordion() {
   const footerHeaders = document.querySelectorAll(".footer-column h3");
 
   footerHeaders.forEach(header => {
+    // 避免重複綁
+    if (header.dataset.accordionBound) return;
+    header.dataset.accordionBound = "1";
+
     header.addEventListener("click", function () {
       if (window.innerWidth <= 768) {
         this.parentElement.classList.toggle("active");
