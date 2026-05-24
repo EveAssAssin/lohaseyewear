@@ -1230,7 +1230,7 @@
 }
 .collab-card-img {
   position: relative;
-  aspect-ratio: 16/10;
+  aspect-ratio: 4/3;
   background: #FAF7F2;
   overflow: hidden;
 }
@@ -1390,7 +1390,7 @@
   font-size: 9px;
 }
 .collab-wall-cover {
-  aspect-ratio: 1/1;
+  aspect-ratio: 4/3;
   display: flex;
   align-items: center;
   justify-content: center;

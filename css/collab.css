@@ -92,7 +92,7 @@
   letter-spacing: 1.5px;
 }
 .cb-hero-img {
-  aspect-ratio: 16/7;
+  aspect-ratio: 4/3;
   background: var(--cb-bg);
   border: 0.5px solid var(--cb-primary);
   display: flex;
