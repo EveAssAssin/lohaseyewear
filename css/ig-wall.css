@@ -105,7 +105,7 @@
 }
 
 /* ============================================
-   下半：4 欄 KOL（跟上方 2×2 一樣高）
+   下半：4 欄 KOL（更高，顯示按讚數和部分內文）
    ============================================ */
 .lohas-ig-wall__bottom-grid {
   max-width: 1280px;
@@ -115,6 +115,11 @@
   gap: 20px;
 }
 
+/* 下方卡片獨立加高 */
+.lohas-ig-wall__bottom-grid .lohas-ig-wall__cell {
+  padding-top: calc(100% + 200px);
+}
+
 /* ============================================
    KOL 卡（裁切版）：只顯示 header(65) + 圖 + 互動列(46)
    ============================================ */
@@ -122,7 +127,6 @@
   position: relative;
   display: block;
   width: 100%;
-  /* 視窗高 = cell 寬度(圖正方形) + header(65) + 互動列(46) ≈ +111 */
   padding-top: calc(100% + 111px);
   background: #fff;
   border-radius: 8px;
