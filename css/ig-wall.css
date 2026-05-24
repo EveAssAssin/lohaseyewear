@@ -1,6 +1,6 @@
 /* ============================================================
    Instagram Wall · 樂活眼鏡首頁
-   方案 A3：主打左大 + 右側 2×2 + 下方 4 欄
+   方案 2：IG embed 在左 + 手寫文字宣傳在右
    ============================================================ */
 
 .lohas-ig-wall {
@@ -44,125 +44,103 @@
   margin: 0;
 }
 
-/* ===== 主版型：上半 (主打 + 4 KOL) ===== */
-.lohas-ig-wall__top {
-  max-width: 1280px;
+/* ============================================
+   主版型：左 IG embed + 右文字宣傳
+   ============================================ */
+.lohas-ig-wall__split {
+  max-width: 1080px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: 540px 1fr;
+  gap: 48px;
+  align-items: center;
 }
 
-/* 主打：佔左半，視窗高度跟右側 2×2 拉齊 */
-.lohas-ig-wall__featured {
+/* === 左：IG embed === */
+.lohas-ig-wall__split-media {
   position: relative;
   width: 100%;
-  /* 高度跟右側對齊：右側 2×2 = (一格高度) × 2 + gap
-     一格 padding-top = 50% + 90px(縮小版) → 視窗高 ≈ (1/2 寬 + 90px) × 2 + 20px
-     主打整則完整呈現所以不剪裁
-  */
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 0 1px 0 rgba(0,0,0,0.5), 0 1px 10px 0 rgba(0,0,0,0.08);
+  min-height: 200px;
+}
+
+.lohas-ig-wall__split-media .instagram-media,
+.lohas-ig-wall__split-media > blockquote {
+  width: 100% !important;
+  max-width: 540px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+/* === 右：宣傳文字 === */
+.lohas-ig-wall__split-body {
+  padding: 8px 0;
+}
+
+.lohas-ig-wall__split-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  color: #d85a30;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.lohas-ig-wall__split-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #3D3026;
+  line-height: 1.3;
+  letter-spacing: 0.5px;
+  margin: 0 0 18px;
+}
+
+.lohas-ig-wall__split-desc {
+  font-size: 14px;
+  color: #6B5E4F;
+  line-height: 1.85;
+  margin: 0 0 28px;
+}
+
+.lohas-ig-wall__split-btns {
   display: flex;
-  align-items: stretch;
-  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.lohas-ig-wall__featured .instagram-media,
-.lohas-ig-wall__featured > blockquote {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
+.lohas-ig-wall__split-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: #3D3026;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  transition: background 0.2s, transform 0.2s;
 }
 
-/* 右側 2×2 KOL */
-.lohas-ig-wall__top-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 20px;
+.lohas-ig-wall__split-btn:hover {
+  background: #50422D;
+  transform: translateY(-2px);
 }
 
-/* ===== 下半：4 欄補後 4 張 ===== */
-.lohas-ig-wall__bottom-grid {
-  max-width: 1280px;
-  margin: 20px auto 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+.lohas-ig-wall__split-btn--outline {
+  background: transparent;
+  color: #3D3026;
+  border: 1px solid rgba(80, 66, 45, 0.3);
 }
 
-/* ===== KOL 卡片視窗（剪裁掉長內文） ===== */
-.lohas-ig-wall__cell {
-  position: relative;
-  display: block;
-  width: 100%;
-  padding-top: calc(100% + 180px);
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 0 1px 0 rgba(0,0,0,0.5), 0 1px 10px 0 rgba(0,0,0,0.08);
-}
-
-.lohas-ig-wall__cell .instagram-media,
-.lohas-ig-wall__cell iframe,
-.lohas-ig-wall__cell > blockquote {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-}
-
-.lohas-ig-wall__cell iframe {
-  height: 1000px !important;
-}
-
-.lohas-ig-wall__cell .instagram-media:not(.instagram-media-rendered) {
-  background:
-    linear-gradient(90deg,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,0.6) 50%,
-      rgba(255,255,255,0) 100%
-    ),
-    #f0e8db !important;
-  background-size: 200% 100%, 100% 100% !important;
-  animation: lohasIgShimmer 1.6s infinite;
-  height: 100% !important;
-}
-
-/* 主打 loading 骨架 */
-.lohas-ig-wall__featured .instagram-media:not(.instagram-media-rendered) {
-  min-height: 600px;
-  background:
-    linear-gradient(90deg,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,0.6) 50%,
-      rgba(255,255,255,0) 100%
-    ),
-    #e8dcc5 !important;
-  background-size: 200% 100%, 100% 100% !important;
-  animation: lohasIgShimmer 1.6s infinite;
-}
-
-@keyframes lohasIgShimmer {
-  0%   { background-position: -150% 0, 0 0; }
-  100% { background-position: 150% 0, 0 0; }
+.lohas-ig-wall__split-btn--outline:hover {
+  background: rgba(80, 66, 45, 0.05);
+  border-color: #3D3026;
 }
 
 /* ===== Footer 追蹤 CTA ===== */
 .lohas-ig-wall__follow {
   text-align: center;
-  margin-top: 40px;
+  margin-top: 44px;
 }
 
 .lohas-ig-wall__follow a {
@@ -181,24 +159,10 @@
   opacity: 0.7;
 }
 
-/* ===== RWD ===== */
-@media (max-width: 1024px) {
-  .lohas-ig-wall__top {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  .lohas-ig-wall__top-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-  .lohas-ig-wall__bottom-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-top: 16px;
-  }
-}
-
-@media (max-width: 600px) {
+/* ============================================
+   RWD：< 900px 自動上下堆疊
+   ============================================ */
+@media (max-width: 900px) {
   .lohas-ig-wall {
     padding: 44px 16px 56px;
   }
@@ -211,17 +175,34 @@
     font-size: 13px;
   }
 
-  .lohas-ig-wall__top,
-  .lohas-ig-wall__top-grid,
-  .lohas-ig-wall__bottom-grid {
+  .lohas-ig-wall__split {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 28px;
+    max-width: 540px;
+  }
+
+  .lohas-ig-wall__split-body {
+    text-align: center;
+  }
+
+  .lohas-ig-wall__split-title {
+    font-size: 24px;
+  }
+
+  .lohas-ig-wall__split-btns {
+    justify-content: center;
+  }
+
+  .lohas-ig-wall__split-media .instagram-media,
+  .lohas-ig-wall__split-media > blockquote,
+  .lohas-ig-wall__split-media iframe {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
   }
 }
 
-/* ========================================
-   全域保險：IG embed 內聯 min-width:326px 強制覆寫
-   ======================================== */
+/* 全域保險：覆寫 IG 內聯 min-width:326px */
 .lohas-ig-wall .instagram-media {
   min-width: 0 !important;
 }
