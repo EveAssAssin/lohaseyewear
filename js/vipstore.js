@@ -219,6 +219,43 @@
         }
       });
     }
+
+    /* 浮動快速導引按鈕 (滾動 240px 後浮現,智慧切換) */
+    bindScrollToCta();
+  }
+
+  /* === 浮動快速導引按鈕 === */
+  function bindScrollToCta() {
+    const btn = document.getElementById("vsScrollToCta");
+    const target = document.getElementById("vsCtaBlock");
+    if (!btn || !target) return;
+
+    const label = btn.querySelector(".vs-scroll-label");
+
+    function onScroll() {
+      /* 滾動 240px 後浮現 */
+      const scrolled = window.scrollY > 240;
+      btn.classList.toggle("is-show", scrolled);
+
+      /* 進入 CTA 範圍 60% 時切換成「回到頂部」 */
+      const rect = target.getBoundingClientRect();
+      const inCta = rect.top < window.innerHeight * 0.6;
+      btn.classList.toggle("is-at-bottom", inCta);
+
+      if (label) label.textContent = inCta ? "回到頂部" : "申請特約";
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    /* 點擊:依當前狀態決定捲到 CTA 或頂部 */
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (btn.classList.contains("is-at-bottom")) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
   }
 
   /* === View 切換 === */
