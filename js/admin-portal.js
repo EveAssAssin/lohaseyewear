@@ -189,7 +189,7 @@
     if (page === 'review-uploads') { loadReviewUploads(); refreshReviewCounts(); }
     if (page === 'cm-news') loadNews();
     if (page === 'cm-banner') loadBannerModule();
-    if (page === 'admin-upload') { initAdminUpload(); loadAdminUploadHistory(); }
+    if (page === 'admin-upload') { initAdminUpload(); }
     if (page === 'creators') loadCreatorsList();
     if (page === 'manage-designs') loadManageDesigns();
     if (page === 'manage-shares') loadManageShares();
@@ -3201,7 +3201,7 @@
       hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})`;
 
       adminUploadReset();
-      loadAdminUploadHistory();
+      alert(`✓ 上傳成功!\n\n已上傳 ${uploadedUrls.length} 張圖片並自動通過審核。\n類型: ${type === 'story' ? '故事' : '照片'}`);
 
     } catch (err) {
       hint.style.color = 'var(--status-rejected)';
