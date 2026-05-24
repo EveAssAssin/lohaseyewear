@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
   <link rel="stylesheet" href="css/admin-portal.css?v=20260510-1720">
+  <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260524">
 
 </head>
 <body>
@@ -94,6 +95,9 @@
     </button>
     <button class="nav-link" data-page="manage-shares">
       <i class="fa-solid fa-images"></i><span>分享牆管理</span>
+    </button>
+    <button class="nav-link" data-page="cm-footer">
+      <i class="fa-solid fa-shoe-prints"></i><span>頁尾管理</span>
     </button>
   </div>
 
@@ -919,6 +923,12 @@
         <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
       </div>
     </div>
+
+    <!-- ============= 頁尾管理 ============= -->
+    <div class="content-page" data-page="cm-footer">
+      <!-- 內容由 js/admin-portal-footer.js 動態渲染 -->
+    </div>
+
     <!-- ============= 授權聯名管理 ============= -->
     <div class="content-page" data-page="ip">
       <div class="page-head">
@@ -1763,6 +1773,7 @@
 
 <!-- 後台主邏輯 -->
 <script src="js/admin-portal.js?v=20260518-modalfix"></script>
+<script src="js/admin-portal-footer.js?v=20260524"></script>
 
 </body>
 </html>
