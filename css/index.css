@@ -605,23 +605,23 @@
 .home-main-banner-dots {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin: 16px auto 0;
+  gap: 14px;
+  margin: 20px auto 0;
   padding: 0 16px;
 }
 .home-main-banner .hmb-dot {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: rgba(80, 66, 45, 0.25);   /* 換成樂活咖啡色,因為現在是淺色背景 */
+  background: rgba(80, 66, 45, 0.25);
   border: 0;
   cursor: pointer;
   padding: 0;
   transition: all .25s;
+  flex-shrink: 0;
 }
 .home-main-banner .hmb-dot.on {
   background: var(--lohas-brand, #50422D);
-  width: 8px;
   transform: scale(1.3);
 }
 
