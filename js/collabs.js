@@ -92,7 +92,7 @@
   }
 
   function renderCard(c){
-    const cardImg = c.story_image_url || c.hero_image_url;
+    const cardImg = c.hero_image_url || c.story_image_url;
     const heroImg = cardImg
       ? `<img src="${esc(cardImg)}" alt="${esc(c.brand_name)}">`
       : `<div class="cl-card-img-fallback" style="background:${esc(c.theme_accent || '#F8E4ED')};color:${esc(c.theme_primary || '#7A2754')}">${esc(c.brand_name)}</div>`;

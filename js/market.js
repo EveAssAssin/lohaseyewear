@@ -363,7 +363,7 @@
     grid.innerHTML = list.map(function(c){
       var stage = c.lifecycle_status || 'preorder';
       var stageLabel = STAGE_LABEL[stage] || stage;
-      var cardImg = c.story_image_url || c.hero_image_url;
+      var cardImg = c.hero_image_url || c.story_image_url;
       var img = cardImg
         ? '<img src="' + escapeHtml(cardImg) + '" alt="' + escapeHtml(c.brand_name) + '" loading="lazy" />'
         : '<div class="collab-card-no-img"></div>';
@@ -395,7 +395,7 @@
       var stage = c.lifecycle_status || 'preorder';
       var isEnded = (stage === 'ended' || stage === 'sold_out');
       var coverContent;
-      var cardImg2 = c.story_image_url || c.hero_image_url;
+      var cardImg2 = c.hero_image_url || c.story_image_url;
       if(cardImg2){
         coverContent = '<img src="' + escapeHtml(cardImg2) + '" alt="' + escapeHtml(c.brand_name || '') + '" loading="lazy" />';
       } else {
