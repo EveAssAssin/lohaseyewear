@@ -664,4 +664,14 @@
     padding: 12px 24px;
     font-size: 13px;
   }
+  .home-main-banner-dots {
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .home-main-banner-dots .hmb-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
+  }
 }
