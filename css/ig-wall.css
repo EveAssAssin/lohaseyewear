@@ -1,0 +1,240 @@
+/* ============================================================
+   Instagram Wall · 樂活眼鏡首頁
+   本月主打 + 8 KOL 官方 embed 牆
+   ============================================================ */
+
+.lohas-ig-wall {
+  background: #FAF7F2;
+  padding: 64px 24px 72px;
+}
+
+.lohas-ig-wall__head {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 36px;
+}
+
+.lohas-ig-wall__eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: #50422D;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.lohas-ig-wall__title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #3D3026;
+  letter-spacing: 1px;
+  margin: 0 0 10px;
+  line-height: 1.25;
+}
+
+.lohas-ig-wall__desc {
+  font-size: 14px;
+  color: #6B5E4F;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ===== 主打 IG（大張，置中） ===== */
+.lohas-ig-wall__featured {
+  position: relative;
+  max-width: 540px;
+  margin: 0 auto 44px;
+  /* IG embed 至少高 600+，先給最小高度避免載入時跳版 */
+  min-height: 200px;
+}
+
+.lohas-ig-wall__featured-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: #d85a30;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  padding: 6px 18px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(216, 90, 48, 0.25);
+  white-space: nowrap;
+}
+
+.lohas-ig-wall__featured .instagram-media {
+  max-width: 540px !important;
+  width: 100% !important;
+}
+
+/* ===== 中間分隔線 ===== */
+.lohas-ig-wall__divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 720px;
+  margin: 0 auto 32px;
+}
+
+.lohas-ig-wall__divider > span:first-child,
+.lohas-ig-wall__divider > span:last-child {
+  flex: 1;
+  height: 1px;
+  background: rgba(80, 66, 45, 0.2);
+}
+
+.lohas-ig-wall__divider-label {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: #50422D;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ===== 8 KOL 牆（4 欄） ===== */
+.lohas-ig-wall__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.lohas-ig-wall__cell {
+  min-height: 480px; /* 給 embed 載入前的佔位高度，避免布局跳動 */
+  display: flex;
+  justify-content: center;
+}
+
+.lohas-ig-wall__cell .instagram-media {
+  margin: 0 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+/* ===== KOL 帳號 fallback 列表 ===== */
+.lohas-ig-wall__kols {
+  max-width: 1100px;
+  margin: 36px auto 0;
+  padding: 18px 22px;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  font-size: 13px;
+}
+
+.lohas-ig-wall__kols-label {
+  color: #9D8E7D;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-right: 6px;
+}
+
+.lohas-ig-wall__kols a {
+  color: #50422D;
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.lohas-ig-wall__kols a:hover {
+  border-bottom-color: #50422D;
+}
+
+/* ===== Footer 追蹤 CTA ===== */
+.lohas-ig-wall__follow {
+  text-align: center;
+  margin-top: 28px;
+}
+
+.lohas-ig-wall__follow a {
+  display: inline-block;
+  color: #50422D;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-decoration: none;
+  border-bottom: 1px solid #50422D;
+  padding-bottom: 4px;
+  transition: opacity 0.2s;
+}
+
+.lohas-ig-wall__follow a:hover {
+  opacity: 0.7;
+}
+
+/* ===== 載入中的骨架佔位（給未渲染的 .instagram-media） ===== */
+.lohas-ig-wall .instagram-media:not(.instagram-media-rendered) {
+  position: relative;
+  background:
+    linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.5) 50%,
+      rgba(255,255,255,0) 100%
+    ),
+    #f0e8db !important;
+  background-size: 200% 100%, 100% 100% !important;
+  animation: lohasIgShimmer 1.6s infinite;
+}
+
+@keyframes lohasIgShimmer {
+  0%   { background-position: -150% 0, 0 0; }
+  100% { background-position: 150% 0, 0 0; }
+}
+
+/* ===== RWD ===== */
+@media (max-width: 1024px) {
+  .lohas-ig-wall__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .lohas-ig-wall {
+    padding: 44px 16px 56px;
+  }
+
+  .lohas-ig-wall__title {
+    font-size: 24px;
+  }
+
+  .lohas-ig-wall__desc {
+    font-size: 13px;
+  }
+
+  .lohas-ig-wall__featured {
+    margin-bottom: 36px;
+  }
+
+  .lohas-ig-wall__divider {
+    margin-bottom: 24px;
+  }
+
+  .lohas-ig-wall__divider-label {
+    font-size: 11px;
+  }
+
+  .lohas-ig-wall__grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    max-width: 540px;
+  }
+
+  .lohas-ig-wall__cell {
+    min-height: 420px;
+  }
+
+  .lohas-ig-wall__kols {
+    font-size: 12px;
+    padding: 14px 16px;
+    gap: 6px 10px;
+  }
+}
