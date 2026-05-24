@@ -1,0 +1,408 @@
+/* ============================================================
+   樂活管理後台 · 頁尾管理 (cm-footer) 樣式
+   ============================================================ */
+
+/* 整體布局：左編輯 + 右預覽 */
+.cm-footer-grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 20px;
+  margin-top: 16px;
+}
+
+@media (max-width: 1280px) {
+  .cm-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === 卡片區塊 === */
+.cm-card {
+  background: #fff;
+  border: 1px solid #ECE7DC;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.cm-card-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3D3026;
+  margin: 0 0 14px;
+  letter-spacing: 0.5px;
+}
+
+.cm-card-h i {
+  color: #9D8E7D;
+}
+
+.cm-card-h .cm-add-btn {
+  margin-left: auto;
+}
+
+/* === 通用按鈕 === */
+.cm-add-btn,
+.cm-add-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px dashed #C9BDA3;
+  color: #50422D;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cm-add-btn:hover,
+.cm-add-link-btn:hover {
+  background: #FAF7F2;
+  border-color: #50422D;
+}
+
+.cm-add-link-btn {
+  margin-top: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* === Input === */
+.cm-input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 11px;
+  border: 1px solid #E5DCC8;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #3D3026;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.cm-input:focus {
+  outline: 0;
+  border-color: #50422D;
+  box-shadow: 0 0 0 3px rgba(80, 66, 45, 0.1);
+}
+
+/* === 社群連結 === */
+.cm-social-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F4EFE4;
+}
+
+.cm-social-row:last-child {
+  border-bottom: 0;
+}
+
+.cm-social-icon {
+  width: 22px;
+  text-align: center;
+  color: #50422D;
+  font-size: 14px;
+}
+
+.cm-social-label {
+  width: 80px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3D3026;
+}
+
+.cm-social-url {
+  flex: 1;
+}
+
+/* === 開關 Switch === */
+.cm-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.cm-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cm-switch-slider {
+  position: absolute;
+  inset: 0;
+  background: #C9BDA3;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cm-switch-slider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  top: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.cm-switch input:checked + .cm-switch-slider {
+  background: #50422D;
+}
+
+.cm-switch input:checked + .cm-switch-slider::before {
+  transform: translateX(16px);
+}
+
+/* === 欄位區塊 === */
+.cm-col {
+  background: #FAF7F2;
+  border: 1px solid #ECE7DC;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.cm-col:last-child {
+  margin-bottom: 0;
+}
+
+.cm-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cm-drag-btn {
+  background: transparent;
+  border: 0;
+  color: #C9BDA3;
+  cursor: grab;
+  padding: 4px 6px;
+  font-size: 14px;
+}
+
+.cm-col-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.cm-col-up,
+.cm-col-down,
+.cm-col-del {
+  background: transparent;
+  border: 1px solid #E5DCC8;
+  color: #6B5E4F;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cm-col-up:hover,
+.cm-col-down:hover {
+  background: #fff;
+  color: #50422D;
+}
+
+.cm-col-del:hover {
+  background: #fff5f0;
+  border-color: #d85a30;
+  color: #d85a30;
+}
+
+.cm-col-up:disabled,
+.cm-col-down:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* === 連結 row === */
+.cm-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.cm-link-grip {
+  color: #C9BDA3;
+  font-size: 12px;
+  cursor: grab;
+  width: 14px;
+  text-align: center;
+}
+
+.cm-link-label {
+  flex: 0 0 38%;
+}
+
+.cm-link-url {
+  flex: 1;
+}
+
+.cm-link-del {
+  background: transparent;
+  border: 0;
+  color: #C9BDA3;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cm-link-del:hover {
+  background: #fff5f0;
+  color: #d85a30;
+}
+
+/* === 法規連結 === */
+.cm-legal-list .cm-link-row {
+  padding: 4px 0;
+}
+
+/* === Empty === */
+.cm-empty {
+  padding: 24px;
+  text-align: center;
+  color: #9D8E7D;
+  font-size: 13px;
+  background: #FAF7F2;
+  border-radius: 8px;
+}
+
+/* ============================================================
+   預覽區
+   ============================================================ */
+.cm-footer-preview {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+}
+
+@media (max-width: 1280px) {
+  .cm-footer-preview {
+    position: static;
+  }
+}
+
+.cm-preview-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B5E4F;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+}
+
+.cm-preview-tag {
+  margin-left: auto;
+  background: #d85a30;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+}
+
+.cm-preview-box {
+  background: #3D3026;
+  color: #E5DCC8;
+  border-radius: 12px;
+  padding: 20px 18px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.cm-pv-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+}
+
+.cm-pv-social a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #C9BDA3;
+  font-size: 11px;
+}
+
+.cm-pv-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 14px;
+}
+
+.cm-pv-col-h {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.cm-pv-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cm-pv-col li {
+  font-size: 10px;
+  color: #B8A890;
+  line-height: 1.7;
+}
+
+.cm-pv-bottom {
+  text-align: center;
+}
+
+.cm-pv-legal {
+  font-size: 10px;
+  color: #C9BDA3;
+  margin-bottom: 4px;
+}
+
+.cm-pv-legal .sep {
+  margin: 0 6px;
+  color: #6B5E4F;
+}
+
+.cm-pv-copy {
+  font-size: 10px;
+  color: #6B5E4F;
+}
+
+.cm-pv-empty {
+  color: #6B5E4F;
+  font-style: italic;
+  font-size: 10px;
+}
