@@ -127,6 +127,7 @@
   }
 
   async function loadHomeMainBanner() {
+    const wrap = document.getElementById('homeMainBannerWrap');
     const section = document.getElementById('homeMainBannerSection');
     const track = document.getElementById('homeMainBannerTrack');
     const dots = document.getElementById('homeMainBannerDots');
@@ -142,11 +143,11 @@
       .order('sort_order', { ascending: true });
 
     if (error || !data || !data.length) {
-      section.style.display = 'none';
+      if (wrap) wrap.style.display = 'none';
       return;
     }
 
-    section.style.display = '';
+    if (wrap) wrap.style.display = '';
 
     track.innerHTML = data.map((b, i) => {
       const href = b.link_url || '#';
@@ -184,6 +185,7 @@
     }).join('');
 
     if (data.length > 1) {
+      dots.style.display = '';
       dots.innerHTML = data.map((_, i) =>
         `<button class="hmb-dot${i === 0 ? ' on' : ''}" data-idx="${i}" aria-label="第 ${i+1} 張"></button>`
       ).join('');
@@ -214,6 +216,7 @@
       setInterval(() => goTo(current + 1), 5000);
     } else {
       dots.innerHTML = '';
+      dots.style.display = 'none';
       // 只有 1 張不顯示箭頭
       const prevBtn = document.getElementById('homeMainBannerPrev');
       const nextBtn = document.getElementById('homeMainBannerNext');
