@@ -406,3 +406,168 @@
   font-style: italic;
   font-size: 10px;
 }
+
+/* ============================================================
+   手機 RWD：< 768px 修正擠壓 / 切邊
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* 整體：撐到滿、不超出 */
+  .cm-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 12px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .cm-footer-edit,
+  .cm-footer-preview {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* 卡片內 padding 縮 */
+  .cm-card {
+    padding: 14px 12px;
+    margin-bottom: 12px;
+  }
+
+  .cm-card-h {
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .cm-card-h .cm-add-btn {
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+
+  /* === 社群連結 row：圖示+標籤+輸入框 直接從橫排改成兩行 === */
+  .cm-social-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 0;
+  }
+
+  .cm-social-label {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .cm-social-url {
+    flex: 1 1 100%;
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  /* === 欄位卡片 === */
+  .cm-col {
+    padding: 12px 10px;
+  }
+
+  .cm-col-head {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* 標題輸入框獨佔一行 */
+  .cm-col-title {
+    flex: 1 1 100%;
+    order: -1;
+    min-width: 0;
+  }
+
+  /* 拖曳、上下、刪除按鈕排在標題下方 */
+  .cm-drag-btn,
+  .cm-col-up,
+  .cm-col-down,
+  .cm-col-del {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  /* === 連結 row：兩個輸入框並排太擠，改一行一個 === */
+  .cm-link-row {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 0;
+    align-items: stretch;
+  }
+
+  .cm-link-grip {
+    display: none;
+  }
+
+  .cm-link-label,
+  .cm-link-url {
+    flex: 1 1 100%;
+    min-width: 0;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .cm-link-del {
+    position: absolute;
+    right: 0;
+    top: 0;
+    align-self: flex-start;
+  }
+
+  /* 為了 .cm-link-del 絕對定位，外層要 relative */
+  .cm-link-row {
+    position: relative;
+    padding-right: 30px;
+  }
+
+  /* 法規連結 row 同樣處理 */
+  .cm-legal-list .cm-link-row {
+    padding-right: 30px;
+  }
+
+  /* Input 統一 */
+  .cm-input {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  /* === 預覽區：縮小、避免溢出 === */
+  .cm-preview-box {
+    padding: 16px 14px;
+    font-size: 11px;
+  }
+
+  .cm-pv-cols {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* === Page head：手機版按鈕換行 === */
+  .content-page[data-page="cm-footer"] .page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .content-page[data-page="cm-footer"] .page-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .content-page[data-page="cm-footer"] .page-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* 更窄的手機 (< 480px) */
+@media (max-width: 480px) {
+  .cm-pv-cols {
+    grid-template-columns: 1fr;
+  }
+}
