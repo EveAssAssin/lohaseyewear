@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/ig-wall.css?v=20260524">
 
 </head>
 <body data-banner-pos="home_hero">
@@ -37,6 +38,12 @@
 </picture>
     </div>
 </section>
+
+<!-- ===========================================================
+  Instagram Wall · 本月主打 + 8 KOL（全官方 embed）
+  動態載入 components/ig-wall.html
+=========================================================== -->
+<div id="lohas-ig-wall-mount"></div>
 
 <!-- 本月主打活動 banner (從 banners 表抓 position=home_main,可多張輪播) -->
 <div class="home-main-banner-wrap" id="homeMainBannerWrap" style="display:none">
@@ -142,7 +149,6 @@
 
 
 
-
 <div id="cookie-banner" class="cookie-banner">
     <div class="cookie-container">
         <div class="cookie-content">
@@ -162,5 +168,19 @@
   <script src="js/supabase.js"></script>
   <script src="js/page-banner.js?v=20260518" defer></script>
   <script src="js/index.js?v=20260517"></script>
+
+  <!-- Instagram Wall · 將 components/ig-wall.html 注入 #lohas-ig-wall-mount -->
+  <script>
+    fetch('components/ig-wall.html')
+      .then(function (r) { return r.text(); })
+      .then(function (html) {
+        var mount = document.getElementById('lohas-ig-wall-mount');
+        if (mount) mount.outerHTML = html;
+        if (window.lohasIgWall && typeof window.lohasIgWall.process === 'function') {
+          window.lohasIgWall.process();
+        }
+      });
+  </script>
+  <script src="js/ig-wall.js?v=20260524" defer></script>
 </body>
 </html>
