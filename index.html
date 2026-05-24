@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/index.css">
-  <link rel="stylesheet" href="css/ig-wall.css?v=20260524f">
+  <link rel="stylesheet" href="css/ig-wall.css?v=20260524g">
 
 </head>
 <body data-banner-pos="home_hero">
@@ -39,7 +39,7 @@
 </section>
 
 <!-- ===========================================================
-  Instagram · 方案 2：左 IG embed + 右文案
+  Instagram · 方案 1A：CSS 切兩半 (左圖 + 右文)
 =========================================================== -->
 <section class="lohas-ig-wall" id="lohas-ig-wall" aria-label="Instagram 動態">
   <div class="lohas-ig-wall__head">
@@ -48,32 +48,31 @@
     <p class="lohas-ig-wall__desc">本月主打 · 大學生實戴分享</p>
   </div>
 
-  <div class="lohas-ig-wall__split">
+  <div class="lohas-ig-wall__hsplit-wrap">
 
-    <div class="lohas-ig-wall__split-media">
-      <blockquote class="instagram-media"
-        data-instgrm-captioned
-        data-instgrm-permalink="https://www.instagram.com/reel/DYhTMxOPn2I/"
-        data-instgrm-version="14"
-        style="background:#FFF;border:0;border-radius:3px;margin:0 auto;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>
-    </div>
+    <div class="lohas-ig-wall__hsplit">
 
-    <div class="lohas-ig-wall__split-body">
-      <div class="lohas-ig-wall__split-eyebrow">STUDENT · 大學生日常</div>
-      <h3 class="lohas-ig-wall__split-title">英棋戴樂活<br>大學生的眼鏡選擇</h3>
-      <p class="lohas-ig-wall__split-desc">
-        「一天 100 元過生活」的英棋，把每一塊錢都花在喜歡的事上。<br>
-        樂活學生專案 1,000 元配到好，是她推薦給同學的選擇。
-      </p>
-      <div class="lohas-ig-wall__split-btns">
-        <a href="https://www.instagram.com/reel/DYhTMxOPn2I/" target="_blank" rel="noopener" class="lohas-ig-wall__split-btn">
-          <i class="fab fa-instagram"></i> 前往 Instagram 觀看
-        </a>
-        <a href="https://student.lohasglasses.com/" target="_blank" rel="noopener" class="lohas-ig-wall__split-btn lohas-ig-wall__split-btn--outline">
-          看大學生專案 →
-        </a>
+      <div class="lohas-ig-wall__hsplit-view lohas-ig-wall__hsplit-img">
+        <blockquote class="instagram-media"
+          data-instgrm-captioned
+          data-instgrm-permalink="https://www.instagram.com/reel/DYhTMxOPn2I/"
+          data-instgrm-version="14"
+          style="background:#FFF;border:0;border-radius:0;margin:0;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>
       </div>
+
+      <div class="lohas-ig-wall__hsplit-view lohas-ig-wall__hsplit-text">
+        <blockquote class="instagram-media"
+          data-instgrm-captioned
+          data-instgrm-permalink="https://www.instagram.com/reel/DYhTMxOPn2I/"
+          data-instgrm-version="14"
+          style="background:#FFF;border:0;border-radius:0;margin:0;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>
+      </div>
+
     </div>
+
+    <a href="https://www.instagram.com/reel/DYhTMxOPn2I/" target="_blank" rel="noopener" class="lohas-ig-wall__hsplit-cta">
+      <i class="fab fa-instagram"></i> 在 Instagram 上觀看 →
+    </a>
 
   </div>
 
