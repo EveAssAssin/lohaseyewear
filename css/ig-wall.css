@@ -1,11 +1,17 @@
 /* ============================================================
    Instagram Wall · 樂活眼鏡首頁
-   本月主打 + KOL 8 則
    ============================================================ */
 
 .lohas-ig-wall {
   background: #FAF7F2;
   padding: 64px 24px 72px;
+  /* 全寬邊界保護：永遠不超過視窗 */
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.lohas-ig-wall * {
+  box-sizing: border-box;
 }
 
 .lohas-ig-wall__head {
@@ -60,16 +66,10 @@
   margin: 0 auto;
 }
 
-/*
-  把 IG embed 內的 iframe 用 CSS 切掉下半。
-  cell 是「視窗」: header(60) + 圖(正方形 = cell 寬度) + 互動列 + 按讚 + 一點內文
-  iframe 內部不動，超出視窗的部分被 hidden 切掉。
-*/
 .lohas-ig-wall__cell {
   position: relative;
   display: block;
   width: 100%;
-  /* 視窗總高 = cell 寬度（圖正方形）+ 上下額外 180px（含 header + 互動 + 按讚 + 部分內文） */
   padding-top: calc(100% + 180px);
   background: #fff;
   border-radius: 8px;
@@ -90,12 +90,10 @@
   border-radius: 0 !important;
 }
 
-/* iframe 高度刻意拉很高、讓內部完整渲染，超出視窗被切掉 */
 .lohas-ig-wall__cell iframe {
   height: 1000px !important;
 }
 
-/* embed 載入中骨架 */
 .lohas-ig-wall__cell .instagram-media:not(.instagram-media-rendered) {
   background:
     linear-gradient(90deg,
@@ -157,13 +155,27 @@
     font-size: 13px;
   }
 
-  /* 手機版主打 → 寬度跟下方 8 張一致 */
+  /* ========================================
+     手機版主打 — 強制打掉內聯 min-width:326px
+     ======================================== */
   .lohas-ig-wall__featured {
     max-width: 100%;
+    width: 100%;
     margin-bottom: 28px;
+    overflow: hidden;
   }
-  .lohas-ig-wall__featured .instagram-media {
+
+  .lohas-ig-wall__featured .instagram-media,
+  .lohas-ig-wall__featured > blockquote {
     max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .lohas-ig-wall__featured iframe {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
   }
 
   .lohas-ig-wall__grid {
@@ -171,4 +183,20 @@
     gap: 14px;
     max-width: 100%;
   }
+
+  /* 8 張卡片也強制不超寬 */
+  .lohas-ig-wall__cell .instagram-media,
+  .lohas-ig-wall__cell > blockquote,
+  .lohas-ig-wall__cell iframe {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ========================================
+   全域保險：任何裝置都不允許 IG embed 超出容器
+   （蓋過 IG 內聯 min-width:326px）
+   ======================================== */
+.lohas-ig-wall .instagram-media {
+  min-width: 0 !important;
 }
