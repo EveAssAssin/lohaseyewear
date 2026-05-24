@@ -605,13 +605,13 @@
 .home-main-banner-dots {
   display: flex;
   justify-content: center;
-  gap: 14px;
-  margin: 20px auto 0;
+  gap: 18px;
+  margin: 24px auto 0;
   padding: 0 16px;
 }
 .home-main-banner .hmb-dot {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: rgba(80, 66, 45, 0.25);
   border: 0;
