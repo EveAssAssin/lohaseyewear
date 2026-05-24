@@ -128,19 +128,49 @@
         }
 
         // === 舊 designer 自動升級為 Creator ===
-        // 條件:1) 還不是 creator  2) 有中文名  3) engraving_designs 表內有 designer_name 等於中文名的記錄
+        // 條件:1) 還不是 creator  2) 有中文名
+        // 來源順序:
+        //   A. engraving_designs 已有但沒掛 creator_id 的孤兒作品
+        //   B. icons.json (legacy 來源,即時匯入 → 變成 A)
         if (!State.isCreator && member.name) {
           try {
+            // --- A. 先查 Supabase 既有孤兒作品 ---
             const orphanRes = await sb.from('engraving_designs')
               .select('id')
               .eq('designer_name', member.name)
               .is('creator_id', null)
               .limit(1);
 
-            if (!orphanRes.error && orphanRes.data && orphanRes.data.length > 0) {
+            let hasOrphan = !orphanRes.error && orphanRes.data && orphanRes.data.length > 0;
+
+            // --- B. 若 Supabase 沒有孤兒,改試 icons.json ---
+            if (!hasOrphan && window.LohasLegacyIcons) {
+              try {
+                const importResult = await window.LohasLegacyIcons.importForMember(sb, member);
+                if (importResult && importResult.imported > 0) {
+                  console.log('[Auto-Creator] icons.json 匯入完成:', importResult);
+                  hasOrphan = true; // 剛剛 insert 進去的 creator_id 已經是 erpid,不需要再 update
+                } else if (importResult && importResult.skipped > 0) {
+                  // 全都已存在 (應該不會走到這條,因為 A 沒查到)
+                  // 但保險:重查一次看 creator_id 是否已被綁
+                  const reCheck = await sb.from('engraving_designs')
+                    .select('id, creator_id')
+                    .eq('designer_name', member.name)
+                    .limit(1);
+                  if (!reCheck.error && reCheck.data && reCheck.data.length > 0) {
+                    hasOrphan = true;
+                  }
+                }
+              } catch (legacyErr) {
+                console.warn('[Auto-Creator] icons.json fallback 失敗:', legacyErr);
+              }
+            }
+
+            if (hasOrphan) {
               console.log('[Auto-Creator] 偵測到舊作品,自動建立 creator_info:', member.name);
 
               // 1. 補 engraving_designs.creator_id = erpid (所有同名 + 沒 creator_id 的)
+              //    (icons.json 匯入時已直接帶 creator_id,但 Supabase 既有資料可能沒帶,一律 update 一次)
               await sb.from('engraving_designs')
                 .update({ creator_id: member.erpid })
                 .eq('designer_name', member.name)
@@ -293,7 +323,8 @@
       const joiningPhotoPreview = document.getElementById('creatorJoiningPhotoPreview');
       const joiningPhotoClear = document.getElementById('creatorJoiningPhotoClear');
       if (joiningPhotoPreview && ci.joining_photo_url) {
-        joiningPhotoPreview.innerHTML = `<img src="${ci.joining_photo_url}" alt="" />`;
+        joiningPhotoPreview.style.backgroundImage = `url('${ci.joining_photo_url}')`;
+        joiningPhotoPreview.classList.add('has-image');
         if (joiningPhotoClear) joiningPhotoClear.style.display = 'flex';
       }
       if (joiningStory) joiningStory.value = ci.joining_story || '';
@@ -1397,7 +1428,8 @@
       if (jp) jp.value = '';
       const preview = document.getElementById('creatorJoiningPhotoPreview');
       if (preview) {
-        preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>';
+        preview.style.backgroundImage = '';
+        preview.classList.remove('has-image');
       }
       const clearBtn = document.getElementById('creatorJoiningPhotoClear');
       if (clearBtn) clearBtn.style.display = 'none';
@@ -1912,19 +1944,22 @@
   }
 
   function bindCreatorJoiningPhoto() {
+    const btn = document.getElementById('creatorJoiningPhotoBtn');
     const preview = document.getElementById('creatorJoiningPhotoPreview');
     const input = document.getElementById('creatorJoiningPhotoInput');
     const hidden = document.getElementById('creatorJoiningPhoto');
     const clearBtn = document.getElementById('creatorJoiningPhotoClear');
 
     if (preview && input) preview.addEventListener('click', () => input.click());
+    if (btn && input) btn.addEventListener('click', () => input.click());
 
     // ✕ 移除按鈕
     if (clearBtn) {
       clearBtn.addEventListener('click', e => {
         e.stopPropagation();
         if (preview) {
-          preview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>';
+          preview.style.backgroundImage = '';
+          preview.classList.remove('has-image');
         }
         if (hidden) hidden.value = '';
         if (input) input.value = '';
@@ -1942,10 +1977,11 @@
         }
         const reader = new FileReader();
         reader.onload = function (ev) {
-          // 4:5 裁切
-          openCropModal(ev.target.result, 4 / 5, (croppedDataUrl) => {
+          // 先開裁切 modal (3:4 比例)
+          openCropModal(ev.target.result, 3 / 4, (croppedDataUrl) => {
             if (preview) {
-              preview.innerHTML = `<img src="${croppedDataUrl}" alt="" />`;
+              preview.style.backgroundImage = `url('${croppedDataUrl}')`;
+              preview.classList.add('has-image');
             }
             if (hidden) hidden.value = croppedDataUrl;
             // 顯示 ✕
@@ -2036,18 +2072,18 @@
         </div>
         <div class="editor-row">
           <div class="editor-label">圖片</div>
-          <div class="img-upload-wrap cb-photo-wrap" data-field="cb_image" data-aspect="4:5" style="max-width:200px">
-            <div class="img-upload-preview cb-photo-preview">
-              ${hasImage
-                ? `<img src="${escapeHtml(data.image)}" alt="" />`
-                : `<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 選填 (4:5)</span>`}
+          <div>
+            <div class="creator-photo-wrap">
+              <div class="creator-photo-preview cb-photo-preview ${hasImage ? 'has-image' : ''}" ${hasImage ? `style="background-image:url('${escapeHtml(data.image)}')"` : ''}>
+                <i class="fa-regular fa-image"></i>
+                <span>選填</span>
+              </div>
+              <button class="creator-photo-clear cb-photo-clear" type="button" aria-label="移除圖片" style="${hasImage ? 'display:flex' : 'display:none'}">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <input type="file" class="visually-hidden cb-photo-input" accept="image/*">
+              <input type="hidden" class="cb-image" value="${escapeHtml(data.image || '')}"/>
             </div>
-            <button type="button" class="img-upload-clear cb-photo-clear" aria-label="移除圖片" style="${hasImage ? 'display:flex' : 'display:none'}">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-            <input type="file" class="img-upload-input cb-photo-input" accept="image/*">
-            <input type="hidden" class="cb-image" value="${escapeHtml(data.image || '')}"/>
-            <p class="editor-hint">建議比例 4:5 · 建議尺寸 800 × 1000 px</p>
           </div>
         </div>
         <div class="editor-row">
@@ -2066,7 +2102,7 @@
         renumberCustomBlocks();
       }
     });
-    // 圖片上傳 (4:5 裁切)
+    // 圖片上傳 (跟緣分區一樣加 3:4 裁切)
     const photoPreview = blockEl.querySelector('.cb-photo-preview');
     const photoInput = blockEl.querySelector('.cb-photo-input');
     const photoHidden = blockEl.querySelector('.cb-image');
@@ -2078,9 +2114,10 @@
         if (!file || !file.type.startsWith('image/')) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          // 4:5 裁切 (跟緣分區一致)
-          openCropModal(ev.target.result, 4 / 5, (croppedDataUrl) => {
-            photoPreview.innerHTML = `<img src="${croppedDataUrl}" alt="" />`;
+          // 開裁切 modal (3:4 比例, 跟緣分區一致)
+          openCropModal(ev.target.result, 3 / 4, (croppedDataUrl) => {
+            photoPreview.style.backgroundImage = `url('${croppedDataUrl}')`;
+            photoPreview.classList.add('has-image');
             if (photoHidden) photoHidden.value = croppedDataUrl;
             if (photoClear) photoClear.style.display = 'flex';
           });
@@ -2094,7 +2131,8 @@
       photoClear.addEventListener('click', e => {
         e.stopPropagation();
         if (photoPreview) {
-          photoPreview.innerHTML = '<span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 選填 (4:5)</span>';
+          photoPreview.style.backgroundImage = '';
+          photoPreview.classList.remove('has-image');
         }
         if (photoHidden) photoHidden.value = '';
         if (photoInput) photoInput.value = '';
