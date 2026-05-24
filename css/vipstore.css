@@ -1198,3 +1198,75 @@
   .vs-detail-body { padding: 20px 20px 24px; }
   .vs-detail-name { font-size: 18px; }
 }
+
+
+/* =============================================
+   浮動快速導引按鈕 (滾動 240px 後浮現)
+   參考 market.html 同類元件,改用 vs- namespace
+   ============================================= */
+.vs-scroll-to-cta {
+  position: fixed;
+  right: 24px;
+  bottom: 32px;
+  z-index: 150;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--lohas-brand);
+  color: #fff;
+  padding: 12px 18px 12px 16px;
+  border-radius: var(--r-pill);
+  text-decoration: none;
+  font-size: 12px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(80, 66, 45, 0.25);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease;
+}
+.vs-scroll-to-cta.is-show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.vs-scroll-to-cta:hover {
+  background: var(--lohas-hover);
+  transform: translateY(-2px);
+}
+.vs-scroll-to-cta i {
+  font-size: 11px;
+  /* 上下擺動,引導下捲視覺 */
+  animation: vsScrollHint 1.8s ease-in-out infinite;
+}
+.vs-scroll-label {
+  white-space: nowrap;
+}
+
+/* 已捲到 CTA 後,變成「回到頂部」狀態 */
+.vs-scroll-to-cta.is-at-bottom i {
+  transform: rotate(180deg);
+  animation: none;
+}
+
+@keyframes vsScrollHint {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+/* 手機:縮成圓形 FAB, 隱藏文字, 避開底部 TAB */
+@media (max-width: 768px) {
+  .vs-scroll-to-cta {
+    right: 16px;
+    bottom: 80px; /* 避開底部 vs-view-tabs */
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    justify-content: center;
+  }
+  .vs-scroll-label { display: none; }
+  .vs-scroll-to-cta i { font-size: 14px; }
+}
