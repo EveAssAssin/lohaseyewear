@@ -248,70 +248,52 @@
   font-family: inherit;
 }
 .sd-hero-action:hover { background: rgba(255, 255, 255, 0.25); }
-/* === Hero content:不對稱網格構圖
-     上排:左 LOHAS EYEWEAR / 右 地區英文
-     下排:左 門市大字 / 右 slogan 區塊(右對齊 + 左側細線分隔) */
 .sd-hero-content {
   position: absolute;
-  inset: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 80px 32px 48px;  /* top 80 留給返回按鈕呼吸 */
+  padding: 0 32px 48px;
   color: #fff;
   z-index: 1;
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  grid-template-rows: auto 1fr auto;
-  gap: 8px;
-  box-sizing: border-box;
 }
-.sd-hero-topmeta {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.sd-hero-eyebrow {
   font-size: 11px;
   letter-spacing: 4px;
   color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 14px;
   text-transform: uppercase;
   font-weight: 500;
 }
-.sd-hero-topmeta-left b {
+.sd-hero-eyebrow b {
   color: var(--collab-gold);
   font-weight: 600;
   margin-right: 6px;
 }
-.sd-hero-topmeta-right {
+.sd-hero-eyebrow span {
   letter-spacing: 4px;
 }
 .sd-hero h1 {
-  grid-column: 1;
-  grid-row: 3;
   font-family: var(--font-tc);
   font-size: 64px;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 6px;
-  margin: 0;
-  line-height: 0.95;
-  align-self: end;
+  margin-bottom: 14px;
+  line-height: 1.05;
 }
-.sd-hero-slogan-block {
-  grid-column: 2;
-  grid-row: 3;
-  align-self: end;
-  text-align: right;
-  margin-bottom: 6px;
-}
-.sd-hero-slogan-text {
+.sd-hero-slogan {
   font-family: var(--font-tc);
-  font-size: 15px;
+  font-size: 17px;
+  opacity: 0.92;
   letter-spacing: 2px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+  max-width: 540px;
+  line-height: 1.55;
 }
-.sd-hero-slogan-text::before { content: "「"; opacity: 0.6; }
-.sd-hero-slogan-text::after { content: "」"; opacity: 0.6; }
+.sd-hero-slogan::before { content: "「"; opacity: 0.6; }
+.sd-hero-slogan::after { content: "」"; opacity: 0.6; }
 
 /* === 內容 body === */
 .sd-body {
@@ -1206,86 +1188,104 @@
   letter-spacing: 0.8px;
   font-weight: 500;
 }
-.sd-partners-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
+/* === 特約商家 · 風格 2 列表清單 === */
+.sd-partners-loading {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }
-.sd-partner-card {
-  background: #fff;
-  border: 1px solid var(--lohas-bd);
-  border-radius: var(--r-lg);
-  overflow: hidden;
+.sd-partners-loading i {
+  margin-right: 8px;
+}
+.sd-partners-list {
   display: flex;
   flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.2s, box-shadow 0.2s;
+  gap: 10px;
 }
-.sd-partner-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(80, 66, 45, 0.12);
+.sd-partner-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-radius: 10px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.sd-partner-img {
-  height: 140px;
+.sd-partner-row:hover {
+  border-color: var(--lohas-hover);
+  box-shadow: 0 4px 14px rgba(80, 66, 45, 0.08);
+}
+.sd-partner-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
   background-size: cover;
   background-position: center;
   background-color: var(--bg-warm);
+  flex-shrink: 0;
 }
-.sd-partner-img-fallback {
+.sd-partner-thumb-fallback {
   background: linear-gradient(135deg, var(--lohas-light) 0%, var(--lohas-hover) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 38px;
+  font-size: 26px;
 }
-.sd-partner-body {
-  padding: 16px 18px 18px;
+.sd-partner-info {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  flex: 1;
-}
-.sd-partner-cat {
-  font-size: 10.5px;
-  letter-spacing: 1.5px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  font-weight: 500;
+  gap: 5px;
 }
 .sd-partner-name {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-main);
-  margin-bottom: 8px;
   font-family: var(--font-tc);
+  letter-spacing: 0.5px;
+  line-height: 1.3;
 }
 .sd-partner-desc {
   font-size: 12.5px;
   color: var(--text-sub);
-  line-height: 1.7;
-  margin-bottom: 14px;
-  flex: 1;
+  line-height: 1.55;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.sd-partner-foot {
-  padding-top: 12px;
-  border-top: 1px solid var(--bg-soft);
-  display: flex;
-  justify-content: space-between;
+
+/* 「逛全部商店街」連結 */
+.sd-partners-more {
+  display: inline-flex;
   align-items: center;
-  font-size: 12px;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 10px 18px;
+  border: 1px solid var(--lohas-bd);
+  border-radius: 999px;
   color: var(--lohas-brand);
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-decoration: none;
+  transition: all 0.15s;
 }
-.sd-partner-foot i {
+.sd-partners-more:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+.sd-partners-more i {
   font-size: 11px;
-  color: var(--text-muted);
-  transition: transform 0.2s;
+  transition: transform 0.15s;
 }
-.sd-partner-card:hover .sd-partner-foot i {
+.sd-partners-more:hover i {
   transform: translateX(3px);
-  color: var(--lohas-brand);
 }
 
 /* === 響應式 === */
@@ -1332,33 +1332,8 @@
   .sd-breadcrumb .current { flex-shrink: 0; }
   .sd-breadcrumb i.sep { flex-shrink: 0; }
   .sd-hero { height: 360px; }
-  /* 手機:不對稱網格改回單欄垂直堆疊,避免文字擠在一起 */
-  .sd-hero-content {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto auto;
-    padding: 70px 20px 28px;
-    gap: 8px;
-  }
-  .sd-hero-topmeta {
-    flex-direction: column;
-    gap: 4px;
-    font-size: 10px;
-    letter-spacing: 3px;
-  }
-  .sd-hero h1 {
-    grid-column: 1;
-    grid-row: 3;
-    font-size: 38px;
-    letter-spacing: 3px;
-  }
-  .sd-hero-slogan-block {
-    grid-column: 1;
-    grid-row: 4;
-    text-align: left;
-    margin-top: 10px;
-    margin-bottom: 0;
-  }
-  .sd-hero-slogan-text { font-size: 13px; letter-spacing: 1px; }
+  .sd-hero h1 { font-size: 36px; letter-spacing: 3px; }
+  .sd-hero-slogan { font-size: 14px; letter-spacing: 1px; }
   .sd-hero-back { top: 16px; left: 16px; padding: 7px 13px; font-size: 12px; }
   .sd-info-strip-inner {
     grid-template-columns: 1fr;
@@ -1372,4 +1347,15 @@
   .sd-q-stat:nth-child(3) { border-left: 0; }
   .sd-partners-placeholder { padding: 36px 18px; }
   .sd-partners-placeholder i { font-size: 30px; }
+  /* 風格 2 列表清單 - 手機縮圖縮小 */
+  .sd-partner-row {
+    grid-template-columns: 64px 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+  .sd-partner-thumb { width: 64px; height: 64px; }
+  .sd-partner-thumb-fallback { font-size: 22px; }
+  .sd-partner-name { font-size: 14px; }
+  .sd-partner-desc { font-size: 12px; }
+  .sd-partners-more { width: 100%; justify-content: center; }
 }
