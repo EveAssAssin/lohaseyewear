@@ -3483,7 +3483,7 @@
 
   function agReset() {
     document.getElementById('agDisplayName').value = 'LOHAS 企劃部';
-    ['agTagline','agBio','agJoiningStory','agEngravingQuote','agVideoUrl','agVideoTitle','agIg','agFb','agWebsite','agLine','agEmail'].forEach(id => {
+    ['agTagline','agBio','agJoiningStory','agEngravingQuote','agVideoUrl','agVideoTitle','agIg','agFeaturedIgUrl','agFb','agWebsite','agLine','agEmail'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -3554,6 +3554,7 @@
     const video_url = document.getElementById('agVideoUrl').value.trim();
     const video_title = document.getElementById('agVideoTitle').value.trim();
     const ig = document.getElementById('agIg').value.trim();
+    const featuredIgUrl = document.getElementById('agFeaturedIgUrl').value.trim();
     const fb = document.getElementById('agFb').value.trim();
     const website = document.getElementById('agWebsite').value.trim();
     const line = document.getElementById('agLine').value.trim();
@@ -3629,6 +3630,7 @@
         video_title: video_title || null,
         social_links: social_links,
         custom_blocks: customBlocks,
+        featured_ig_post_url: featuredIgUrl || null,
         status: 'active'
       };
 
@@ -4455,6 +4457,7 @@
     // 社群連結
     const sl = c.social_links || {};
     document.getElementById('agIg').value = sl.instagram || '';
+    document.getElementById('agFeaturedIgUrl').value = c.featured_ig_post_url || '';
     document.getElementById('agFb').value = sl.facebook || '';
     document.getElementById('agWebsite').value = sl.website || '';
     document.getElementById('agLine').value = sl.line || '';

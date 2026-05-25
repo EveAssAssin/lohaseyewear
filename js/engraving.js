@@ -35,7 +35,7 @@
       // 抓所有 active 創作者(含必要欄位)
       const { data, error } = await sb
         .from('creator_info')
-        .select('member_id, display_name, tagline, avatar_url, kol_main_image_url, engraving_quote, social_links, status')
+        .select('member_id, display_name, tagline, avatar_url, kol_main_image_url, engraving_quote, social_links, featured_ig_post_url, status')
         .eq('status', 'active')
         .not('engraving_quote', 'is', null)
         .neq('engraving_quote', '');
@@ -81,7 +81,8 @@
     const tag = escHtml((c.tagline || 'DESIGNER').toUpperCase());
     const quote = escHtml(c.engraving_quote || '');
     const profileLink = 'creator-public.html?id=' + encodeURIComponent(c.member_id || '');
-    const igLink = escAttr((c.social_links && c.social_links.instagram) || '');
+    // 「查看完整分享」優先用 IG 精選貼文 URL，沒填則 fallback 到 IG 主頁
+    const igLink = escAttr(c.featured_ig_post_url || (c.social_links && c.social_links.instagram) || '');
 
     const shareBtn = igLink
       ? '<a href="' + igLink + '" class="btn-more-simple" target="_blank" rel="noopener">查看完整分享</a>'
