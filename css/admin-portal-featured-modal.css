@@ -233,13 +233,57 @@
   border-top: 1px solid #F0EBE0;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 10px;
   background: #FAF7F2;
 }
 
-.featured-modal-foot .btn {
-  min-width: 84px;
+.featured-modal-foot .btn,
+.featured-modal-foot .action-btn-solid {
+  min-width: 96px;
+  height: 38px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+
+.featured-modal-foot .btn {
+  background: #fff;
+  border: 1px solid #E5DCC8;
+  color: #50422D;
+}
+
+.featured-modal-foot .btn:hover {
+  background: #F4EFE4;
+  border-color: #50422D;
+}
+
+.featured-modal-foot .action-btn-solid {
+  background: #50422D;
+  border: 1px solid #50422D;
+  color: #fff;
+}
+
+.featured-modal-foot .action-btn-solid:hover {
+  background: #3D3026;
+  border-color: #3D3026;
+}
+
+.featured-modal-foot .action-btn-solid:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.featured-modal-foot i {
+  font-size: 13px;
 }
 
 /* === 手機 RWD === */
