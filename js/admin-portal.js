@@ -3768,7 +3768,7 @@
 
     const { data, error } = await sb
       .from('creator_info')
-      .select('member_id, display_name, tagline, bio, avatar_url, status, created_at')
+      .select('member_id, display_name, tagline, bio, avatar_url, status, created_at, is_homepage_featured, homepage_exposure_order, featured_ig_post_url')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -3802,6 +3802,154 @@
   function currentMonth() {
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  /* ===========================================================
+     新版：2 種精選功能（直接寫入 creator_info 欄位）
+       1. is_homepage_featured     首頁 IG 主打 (全站 1 位)
+       2. homepage_exposure_order  首頁曝光 4 小 IG (1~4)
+     ※ 市集本月精選保留原邏輯，使用 featured_creators 表
+     =========================================================== */
+
+  // 從本地 CreatorsState 快取拿創作者
+  function getCreatorFromState(creatorId) {
+    return (CreatorsState.items || []).find(c => c.member_id === creatorId);
+  }
+
+  // 檢查創作者有沒有填 IG 貼文 URL
+  function ensureIgPostUrl(creator) {
+    if (creator && creator.featured_ig_post_url) return true;
+    alert(
+      '此創作者尚未設定「IG 精選貼文 URL」。\n\n' +
+      '請先點「編輯」打開創作者表單，填上要顯示的 IG 貼文 URL\n' +
+      '例如：https://www.instagram.com/p/xxxx/'
+    );
+    return false;
+  }
+
+  // 通用：切換單一布林欄位（全站只能 1 位）
+  async function toggleSingleFeatured(creatorId, fieldName, label) {
+    const sb = getSb();
+    if (!sb) return;
+
+    const creator = getCreatorFromState(creatorId);
+    if (!creator) return alert('找不到此創作者');
+
+    // 取消：直接 update false
+    if (creator[fieldName]) {
+      if (!confirm(`取消「${label}」？\n\n${creator.display_name || creatorId}`)) return;
+      const { error } = await sb.from('creator_info')
+        .update({ [fieldName]: false })
+        .eq('member_id', creatorId);
+      if (error) return alert('取消失敗：' + error.message);
+      // 同步本地
+      creator[fieldName] = false;
+      applyCreatorsFilter();
+      return;
+    }
+
+    // 啟用：先檢查 IG URL
+    if (!ensureIgPostUrl(creator)) return;
+
+    if (!confirm(`設為「${label}」？\n\n${creator.display_name || creatorId}\n\n全站只能有 1 位，原本被選的會自動取消。`)) return;
+
+    // 先把所有人這欄位設 false（保險）
+    await sb.from('creator_info')
+      .update({ [fieldName]: false })
+      .eq(fieldName, true);
+
+    const { error } = await sb.from('creator_info')
+      .update({ [fieldName]: true })
+      .eq('member_id', creatorId);
+
+    if (error) return alert('設定失敗：' + error.message);
+
+    // 同步本地
+    (CreatorsState.items || []).forEach(c => c[fieldName] = (c.member_id === creatorId));
+    applyCreatorsFilter();
+  }
+
+  // 1. 首頁主打
+  function toggleHomepageFeatured(creatorId) {
+    return toggleSingleFeatured(creatorId, 'is_homepage_featured', '首頁主打 IG');
+  }
+
+  // 2. 首頁曝光（4 個小 IG，1~4 排序）
+  async function toggleHomepageExposure(creatorId) {
+    const sb = getSb();
+    if (!sb) return;
+
+    const creator = getCreatorFromState(creatorId);
+    if (!creator) return alert('找不到此創作者');
+
+    // 已在曝光中 → 取消
+    if (creator.homepage_exposure_order != null) {
+      if (!confirm(`取消「首頁曝光」？\n\n${creator.display_name || creatorId}`)) return;
+      const { error } = await sb.from('creator_info')
+        .update({ homepage_exposure_order: null })
+        .eq('member_id', creatorId);
+      if (error) return alert('取消失敗：' + error.message);
+      creator.homepage_exposure_order = null;
+      applyCreatorsFilter();
+      return;
+    }
+
+    // 加入：先檢查 IG URL
+    if (!ensureIgPostUrl(creator)) return;
+
+    // 算目前已有幾位
+    const currentExposed = (CreatorsState.items || []).filter(c => c.homepage_exposure_order != null);
+    if (currentExposed.length >= 4) {
+      alert('首頁曝光已達 4 位上限。\n\n請先取消其中一位，再加入新的。');
+      return;
+    }
+
+    // 找出下一個可用順序 1~4
+    const usedOrders = new Set(currentExposed.map(c => c.homepage_exposure_order));
+    let nextOrder = 1;
+    for (let i = 1; i <= 4; i++) {
+      if (!usedOrders.has(i)) { nextOrder = i; break; }
+    }
+
+    if (!confirm(`設為「首頁曝光 ${nextOrder} / 4」？\n\n${creator.display_name || creatorId}`)) return;
+
+    const { error } = await sb.from('creator_info')
+      .update({ homepage_exposure_order: nextOrder })
+      .eq('member_id', creatorId);
+
+    if (error) return alert('設定失敗：' + error.message);
+
+    creator.homepage_exposure_order = nextOrder;
+    applyCreatorsFilter();
+  }
+
+  // ===== IG 貼文 URL 快速編輯 modal =====
+  function openIgPostUrlEditor(creatorId) {
+    const creator = getCreatorFromState(creatorId);
+    if (!creator) return;
+
+    const current = creator.featured_ig_post_url || '';
+    const url = prompt(
+      `編輯「${creator.display_name || creatorId}」的精選 IG 貼文 URL\n\n` +
+      '貼上完整 IG 貼文／Reel URL\n' +
+      '例如：https://www.instagram.com/p/DYhTMxOPn2I/\n' +
+      '清空可移除。',
+      current
+    );
+
+    if (url === null) return; // 取消
+    const trimmed = (url || '').trim();
+    const finalUrl = trimmed || null;
+
+    const sb = getSb();
+    sb.from('creator_info')
+      .update({ featured_ig_post_url: finalUrl })
+      .eq('member_id', creatorId)
+      .then(({ error }) => {
+        if (error) return alert('儲存失敗：' + error.message);
+        creator.featured_ig_post_url = finalUrl;
+        applyCreatorsFilter();
+      });
   }
 
 
@@ -3889,6 +4037,9 @@
         : `<div class="creator-card-avatar">${escapeHtml(initials)}</div>`;
       const isSuspended = c.status !== 'active';
       const isFeatured = featuredCreatorId === c.member_id;
+      const isHpFeatured = c.is_homepage_featured === true;
+      const exposureOrder = c.homepage_exposure_order;
+      const hasIgUrl = !!c.featured_ig_post_url;
 
       const publicUrl = `${window.location.origin}${window.location.pathname.replace('admin-portal.html', 'creator-public.html')}?id=${c.member_id}`;
 
@@ -3899,6 +4050,8 @@
             <div class="creator-card-name-row">
               <span class="creator-card-name">${escapeHtml(c.display_name || '未命名')}</span>
               ${isFeatured ? '<span class="creator-card-tag featured"><i class="fa-solid fa-star"></i>本月精選</span>' : ''}
+              ${isHpFeatured ? '<span class="creator-card-tag" style="background:#fff4e6;color:#d85a30"><i class="fa-solid fa-house"></i>首頁主打</span>' : ''}
+              ${exposureOrder != null ? `<span class="creator-card-tag" style="background:#e0f2ff;color:#1e6fbb"><i class="fa-solid fa-thumbtack"></i>首頁曝光 ${exposureOrder}/4</span>` : ''}
               ${isVirt ? '<span class="creator-card-tag virt">樂活官方建立</span>' : '<span class="creator-card-tag">會員</span>'}
               ${isSuspended ? '<span class="creator-card-tag suspended">已隱藏</span>' : ''}
             </div>
@@ -3906,14 +4059,24 @@
               <code>${escapeHtml(c.member_id)}</code>
               ${c.tagline ? ` · ${escapeHtml(c.tagline)}` : ''}
               ${c.created_at ? ` · 建立 ${formatTime(c.created_at)}` : ''}
+              ${hasIgUrl ? ` · <a href="${escapeHtml(c.featured_ig_post_url)}" target="_blank" rel="noopener" style="color:#d85a30;text-decoration:none"><i class="fa-brands fa-instagram"></i> 已設精選貼文</a>` : ' · <span style="color:#bbb">尚未設精選貼文</span>'}
             </div>
           </div>
           <div class="creator-card-actions">
             <a class="btn" href="${publicUrl}" target="_blank" rel="noopener" title="開啟個人頁">
               <i class="fa-solid fa-arrow-up-right-from-square"></i>查看
             </a>
-            <button class="btn ${isFeatured ? 'featured-on' : 'featured-off'}" data-act="toggle-featured" data-id="${escapeHtml(c.member_id)}" title="${isFeatured ? '本月精選 (點擊取消)' : '設為本月精選'}">
+            <button class="btn" data-act="edit-ig-url" data-id="${escapeHtml(c.member_id)}" title="設定要顯示的 IG 貼文 URL">
+              <i class="fa-brands fa-instagram"></i>IG 貼文
+            </button>
+            <button class="btn ${isFeatured ? 'featured-on' : 'featured-off'}" data-act="toggle-featured" data-id="${escapeHtml(c.member_id)}" title="${isFeatured ? '本月精選 (點擊取消)' : '設為本月精選 (市集)'}">
               <i class="fa-solid fa-star"></i>${isFeatured ? '取消精選' : '本月精選'}
+            </button>
+            <button class="btn ${isHpFeatured ? 'featured-on' : 'featured-off'}" data-act="toggle-hp-featured" data-id="${escapeHtml(c.member_id)}" title="${isHpFeatured ? '首頁主打中 (點擊取消)' : '設為首頁 IG 主打'}">
+              <i class="fa-solid fa-house"></i>${isHpFeatured ? '取消首頁主打' : '首頁主打'}
+            </button>
+            <button class="btn ${exposureOrder != null ? 'featured-on' : 'featured-off'}" data-act="toggle-hp-exposure" data-id="${escapeHtml(c.member_id)}" title="${exposureOrder != null ? `首頁曝光 ${exposureOrder}/4 (點擊取消)` : '加入首頁曝光 (最多 4 位)'}">
+              <i class="fa-solid fa-thumbtack"></i>${exposureOrder != null ? `取消曝光` : '首頁曝光'}
             </button>
             <button class="btn" data-act="edit" data-id="${escapeHtml(c.member_id)}">
               <i class="fa-regular fa-pen-to-square"></i>編輯
@@ -3940,6 +4103,15 @@
     });
     list.querySelectorAll('[data-act="toggle-featured"]').forEach(b => {
       b.addEventListener('click', () => toggleFeaturedCreator(b.dataset.id));
+    });
+    list.querySelectorAll('[data-act="toggle-hp-featured"]').forEach(b => {
+      b.addEventListener('click', () => toggleHomepageFeatured(b.dataset.id));
+    });
+    list.querySelectorAll('[data-act="toggle-hp-exposure"]').forEach(b => {
+      b.addEventListener('click', () => toggleHomepageExposure(b.dataset.id));
+    });
+    list.querySelectorAll('[data-act="edit-ig-url"]').forEach(b => {
+      b.addEventListener('click', () => openIgPostUrlEditor(b.dataset.id));
     });
   }
 
