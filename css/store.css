@@ -301,8 +301,6 @@
   grid-row: 3;
   align-self: end;
   text-align: right;
-  border-right: 1px solid rgba(255, 255, 255, 0.4);
-  padding-right: 16px;
   margin-bottom: 6px;
 }
 .sd-hero-slogan-text {
@@ -312,6 +310,8 @@
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.95);
 }
+.sd-hero-slogan-text::before { content: "「"; opacity: 0.6; }
+.sd-hero-slogan-text::after { content: "」"; opacity: 0.6; }
 
 /* === 內容 body === */
 .sd-body {
@@ -1355,10 +1355,6 @@
     grid-column: 1;
     grid-row: 4;
     text-align: left;
-    border-right: none;
-    border-left: 1px solid rgba(255, 255, 255, 0.4);
-    padding-right: 0;
-    padding-left: 12px;
     margin-top: 10px;
     margin-bottom: 0;
   }
