@@ -39,7 +39,7 @@
 </section>
 
 <!-- ===========================================================
-  Instagram · 主打 + 4 小 IG（由 js/homepage-ig.js 從 creator_info 抓取）
+  Instagram · 主打 + 4 小 IG（從 Supabase creator_info 動態載入）
 =========================================================== -->
 <section class="lohas-ig-wall" id="lohas-ig-wall" aria-label="Instagram 動態">
   <div class="lohas-ig-wall__head">
@@ -48,6 +48,7 @@
     <p class="lohas-ig-wall__desc">本月主打 × KOL 配戴日常</p>
   </div>
 
+  <!-- 上半：主打 + 右側 2×2 KOL -->
   <div class="lohas-ig-wall__top">
     <div class="lohas-ig-wall__featured" id="igFeaturedSlot">
       <!-- 由 homepage-ig.js 依「首頁主打」創作者填入 -->
@@ -64,7 +65,7 @@
   </div>
 </section>
 <script async src="https://www.instagram.com/embed.js"></script>
-<script src="js/homepage-ig.js?v=20260524"></script>
+<script src="js/homepage-ig.js?v=20260525"></script>
 
 <div class="home-main-banner-wrap" id="homeMainBannerWrap" style="display:none">
   <section class="home-main-banner" id="homeMainBannerSection">
