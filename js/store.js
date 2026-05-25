@@ -176,11 +176,10 @@
     }
   }
 
-  /* === 並行抓每位員工的詳細資料 + 真實評價 + 粉絲數 ===
-     三支 API 並行:
+  /* === 並行抓每位員工的詳細資料 + 真實評價 ===
+     兩支 API 並行:
        getEmployeeDetail        → 拿員工介紹、照片、榮譽
-       getEvaluationByEmployee  → 拿真實評論清單(新 API,可拿較多筆)
-       getSalesMenTrackSum      → 拿銷售人員追蹤數(包裝成「粉絲數」) */
+       getEvaluationByEmployee  → 拿真實評論清單(新 API,可拿較多筆) */
   async function loadEmployeeDetails() {
     if (!state.employees || state.employees.length === 0) return;
 
@@ -189,12 +188,11 @@
       e.erpid && !/^9{4,}\d*$/.test(e.erpid)
     );
 
-    /* 為每位員工發起 3 支並行請求(detail + evaluation + trackSum),共 3N 個 request 一起發 */
+    /* 為每位員工發起 2 支並行請求(detail + evaluation),共 2N 個 request 一起發 */
     const requests = realEmployees.map(e => ({
       emp: e,
-      detail: storeApi.getEmployeeDetail(e.erpid, 10),       // detail 用 amount=10
-      evals:  storeApi.getEvaluationByEmployee(e.erpid, 99999), // 評價清單實質無上限
-      track:  storeApi.getSalesMenTrackSum(e.erpid)          // 追蹤數 (粉絲數)
+      detail: storeApi.getEmployeeDetail(e.erpid, 10),      // detail 用 amount=10 (avoid amount=0 整支失敗)
+      evals:  storeApi.getEvaluationByEmployee(e.erpid, 99999) // 評價清單實質無上限
     }));
 
     await Promise.all(requests.map(async (r) => {
@@ -243,29 +241,11 @@
           r.emp.evaluationList = r.emp.evaluationList || [];
         }
       }
-      /* trackSum:追蹤數 → 粉絲數
-         API 回 { code:"200", data:[{ totalSum: 100 }] } 或 BFF normalize 後直接是 array */
-      try {
-        const tRes = await r.track;
-        let total = null;
-        if (tRes) {
-          const arr = Array.isArray(tRes) ? tRes : (Array.isArray(tRes.data) ? tRes.data : null);
-          if (arr && arr.length > 0 && arr[0].totalSum != null) {
-            total = parseInt(arr[0].totalSum, 10);
-          } else if (tRes.totalSum != null) {
-            total = parseInt(tRes.totalSum, 10);
-          }
-        }
-        r.emp.fanCount = (total != null && !isNaN(total)) ? total : null;
-      } catch (e) {
-        console.warn("[store] trackSum 失敗(BFF 可能尚未支援)", r.emp.name, e.message);
-        r.emp.fanCount = null;
-      }
     }));
 
     /* 全部回來後重新渲染 */
     renderBody();
-    console.log("[store] 員工詳細資料 + 評價 + 粉絲數載入完成", realEmployees.length, "位");
+    console.log("[store] 員工詳細資料 + 評價載入完成", realEmployees.length, "位");
   }
 
   /* === 渲染：總入口 === */
@@ -313,12 +293,21 @@
       `<a href="allstore.html" class="sd-hero-back" data-back>` +
         `<i class="fa-solid fa-arrow-left"></i> 返回門市列表` +
       `</a>` +
+      /* 不對稱網格:左下大字店名 + 右下 slogan 區塊 */
       `<div class="sd-hero-content">` +
-        `<div class="sd-hero-eyebrow">` +
-          `<b>● LOHAS EYEWEAR</b> <span>${regionEn}</span>` +
+        /* 頂部 meta:左品牌 / 右地區 */
+        `<div class="sd-hero-topmeta">` +
+          `<div class="sd-hero-topmeta-left"><b>● LOHAS EYEWEAR</b></div>` +
+          `<div class="sd-hero-topmeta-right">${regionEn}</div>` +
         `</div>` +
+        /* 左下:門市名 */
         `<h1>${s.name}</h1>` +
-        (s.slogan ? `<div class="sd-hero-slogan">${s.slogan}</div>` : "") +
+        /* 右下:slogan 區塊 */
+        (s.slogan
+          ? `<div class="sd-hero-slogan-block">` +
+              `<div class="sd-hero-slogan-text">${s.slogan}</div>` +
+            `</div>`
+          : "") +
       `</div>`;
   }
 
@@ -723,10 +712,6 @@
     /* 評論數:真實值,沒有就是 0 */
     const reviewCount = (emp.evaluationList && emp.evaluationList.length) || 0;
 
-    /* 粉絲數(來自 trackSum API)— 千分位顯示,沒值就不顯示 */
-    const fanCount = (typeof emp.fanCount === "number" && emp.fanCount >= 0) ? emp.fanCount : null;
-    const fanCountText = fanCount != null ? fanCount.toLocaleString() : null;
-
     /* 簡介 ─ 完整顯示，不再切斷 */
     const intro = (emp.introduction || "").trim();
 
@@ -747,24 +732,16 @@
 
         /* === 下半：內容區 === */
         `<div class="sd-staff-body">` +
-          /* 姓名 + 評分 + 粉絲數一行 */
+          /* 姓名 + 評分一行 */
           `<div class="sd-staff-head">` +
             `<div class="sd-staff-name">${emp.name || ""}</div>` +
-            `<div class="sd-staff-meta">` +
-              (score
-                ? `<div class="sd-staff-rating">` +
-                    `<i class="fa-solid fa-star"></i>` +
-                    `<span class="num">${score}</span>` +
-                    (reviewCount > 0 ? `<span class="count">(${reviewCount})</span>` : "") +
-                  `</div>`
-                : "") +
-              (fanCountText
-                ? `<div class="sd-staff-fans" title="粉絲數">` +
-                    `<i class="fa-solid fa-heart"></i>` +
-                    `<span class="num">${fanCountText}</span>` +
-                  `</div>`
-                : "") +
-            `</div>` +
+            (score
+              ? `<div class="sd-staff-rating">` +
+                  `<i class="fa-solid fa-star"></i>` +
+                  `<span class="num">${score}</span>` +
+                  (reviewCount > 0 ? `<span class="count">(${reviewCount})</span>` : "") +
+                `</div>`
+              : "") +
           `</div>` +
           /* 職稱 */
           (roleText ? `<div class="sd-staff-role">${roleText}</div>` : "") +
