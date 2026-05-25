@@ -39,7 +39,7 @@
 </section>
 
 <!-- ===========================================================
-  Instagram · 方案 A2-B：主打完整 + KOL 裁切
+  Instagram · 主打 + 4 小 IG（由 js/homepage-ig.js 從 creator_info 抓取）
 =========================================================== -->
 <section class="lohas-ig-wall" id="lohas-ig-wall" aria-label="Instagram 動態">
   <div class="lohas-ig-wall__head">
@@ -48,53 +48,13 @@
     <p class="lohas-ig-wall__desc">本月主打 × KOL 配戴日常</p>
   </div>
 
-  <!-- 上半：主打 + 右側 2×2 KOL -->
   <div class="lohas-ig-wall__top">
-
-    <div class="lohas-ig-wall__featured">
-      <blockquote class="instagram-media"
-        data-instgrm-captioned
-        data-instgrm-permalink="https://www.instagram.com/reel/DYhTMxOPn2I/"
-        data-instgrm-version="14"
-        style="background:#FFF;border:0;border-radius:0;margin:0 auto;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>
+    <div class="lohas-ig-wall__featured" id="igFeaturedSlot">
+      <!-- 由 homepage-ig.js 依「首頁主打」創作者填入 -->
     </div>
-
-    <div class="lohas-ig-wall__top-grid">
-
-      <div class="lohas-ig-wall__cell">
-        <blockquote class="instagram-media"
-          data-instgrm-captioned
-          data-instgrm-permalink="https://www.instagram.com/p/DTSkVBEEQnP/"
-          data-instgrm-version="14"
-          style="background:#FFF;border:0;border-radius:0;margin:0;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>
-      </div>
-
-      <div class="lohas-ig-wall__cell">
-        <blockquote class="instagram-media"
-          data-instgrm-captioned
-          data-instgrm-permalink="https://www.instagram.com/p/DSKVyXoExqr/"
-          data-instgrm-version="14"
-          style="background:#FFF;border:0;border-radius:0;margin:0;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>
-      </div>
-
-      <div class="lohas-ig-wall__cell">
-        <blockquote class="instagram-media"
-          data-instgrm-captioned
-          data-instgrm-permalink="https://www.instagram.com/p/DTSWEsqEzp9/"
-          data-instgrm-version="14"
-          style="background:#FFF;border:0;border-radius:0;margin:0;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>
-      </div>
-
-      <div class="lohas-ig-wall__cell">
-        <blockquote class="instagram-media"
-          data-instgrm-captioned
-          data-instgrm-permalink="https://www.instagram.com/p/DUryaDsDzAq/"
-          data-instgrm-version="14"
-          style="background:#FFF;border:0;border-radius:0;margin:0;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>
-      </div>
-
+    <div class="lohas-ig-wall__top-grid" id="igExposureSlot">
+      <!-- 由 homepage-ig.js 依「首頁曝光」4 位創作者填入 -->
     </div>
-
   </div>
 
   <div class="lohas-ig-wall__follow">
@@ -104,6 +64,7 @@
   </div>
 </section>
 <script async src="https://www.instagram.com/embed.js"></script>
+<script src="js/homepage-ig.js?v=20260524"></script>
 
 <div class="home-main-banner-wrap" id="homeMainBannerWrap" style="display:none">
   <section class="home-main-banner" id="homeMainBannerSection">
