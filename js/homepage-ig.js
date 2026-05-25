@@ -2,7 +2,9 @@
    樂活眼鏡 · 首頁 IG 區塊動態載入器
    ------------------------------------------------------------
    讀取 Supabase creator_info 表，依後台「首頁主打 / 首頁曝光」
-   設定，把對應的 IG 貼文 URL 填進 #igFeaturedSlot 與 #igExposureSlot。
+   設定，把對應的 IG 貼文 URL 填進
+     #igFeaturedSlot (主打 — 完整 embed)
+     #igExposureSlot (4 小 — 用 .lohas-ig-wall__cell 裁切版)
    ------------------------------------------------------------
    依賴：js/supabase.js
    ============================================================ */
@@ -22,7 +24,7 @@
       data-instgrm-captioned
       data-instgrm-permalink="${esc(url)}"
       data-instgrm-version="14"
-      style="background:#FFF;border:0;border-radius:0;margin:0;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>`;
+      style="background:#FFF;border:0;border-radius:0;margin:0 auto;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>`;
   }
 
   function processIgEmbeds() {
@@ -65,7 +67,6 @@
     const featured = creators.find(c => c.is_homepage_featured === true);
 
     if (!featured || !featured.featured_ig_post_url) {
-      // 沒設定 → 隱藏整個主打位（讓右側 2×2 排版自動調整）
       slot.style.display = 'none';
       return;
     }
@@ -109,9 +110,10 @@
       return;
     }
 
-    // 延遲一下確保 embed.js 載完
+    // 延遲讓 embed.js 接手
     setTimeout(processIgEmbeds, 100);
     setTimeout(processIgEmbeds, 800);
+    setTimeout(processIgEmbeds, 2000);
   }
 
   if (document.readyState === 'loading') {
