@@ -1,10 +1,10 @@
 /* =============================================
    LOHAS API · Shopping Street
    --------------------------------------------
-   商店街相關 API（共 5 支，打「即時互動 / 搜點子」 host）
+   商店街相關 API（共 5 支，打「即時互動」 host）
    依賴：js/api/api-core.js
    --------------------------------------------
-   涵蓋 API 文件「即時互動科技_搜點子 API 串接文件 v2.0.8」：
+   涵蓋 API 文件「即時互動科技 API 串接文件 v2.0.8」：
    22. getCarouselStoreList         取得廣告輪播圖列表（含 bindstore）
    23. getUnitList                  取得特約單位列表
    25. getAppointedUnitByCode       特約廠商查詢（單筆，含 img_path）
@@ -12,8 +12,8 @@
    31. save-svg                     上傳雕刻 LOGO（雷刻服務用，本頁不使用）
    --------------------------------------------
    重要：
-   - host 名稱用 "sodian"（搜點子），請後端 BFF 對應到
-     https://lohas.realtime.tw/webapi/v010/officialWed/
+   - host 名稱用 "realtime"（即時互動），BFF 對應到
+     https://lohas.realtime.tw/webapi/v010/...
    - 此 API 不含 lat/lng/address，地圖座標靠 bindstore 欄位
      對應到 LohasApi.store.getAllStores() 取得的 LOHAS 門市座標
    ============================================= */
@@ -31,7 +31,7 @@
      回傳含 bindstore（字串型陣列，如 "[120035,120046]"）
      可依目前選擇的門市過濾顯示 */
   async function getCarouselStoreList() {
-    return post("sodian", { method: "getCarouselStoreList" });
+    return post("realtime", { method: "getCarouselStoreList" });
   }
 
   /* ===== 23. 取得特約單位列表 =====
@@ -46,7 +46,7 @@
       if (opts.page != null)      payload.page      = Number(opts.page);
       if (opts.paginate != null)  payload.paginate  = Number(opts.paginate);
     }
-    return post("sodian", payload);
+    return post("realtime", payload);
   }
 
   /* ===== 25. 特約廠商查詢（單筆） =====
@@ -60,7 +60,7 @@
     const payload = { method: "getAppointedUnitByCode" };
     if (opts.appointed_unit_code) payload.appointed_unit_code = String(opts.appointed_unit_code);
     if (opts.category_id)         payload.category_id         = String(opts.category_id);
-    return post("sodian", payload);
+    return post("realtime", payload);
   }
 
   /* ===== 28. 商店街會員登入 =====
@@ -71,7 +71,7 @@
     if (!account || !password) {
       throw new Error("[LohasApi.vipstore] account and password required");
     }
-    return post("sodian", {
+    return post("realtime", {
       method: "login",
       account: String(account),
       password: String(password)

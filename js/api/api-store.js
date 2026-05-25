@@ -57,6 +57,22 @@
     });
   }
 
+  /* ===== 6. 取得銷售人員追蹤數量(用作員工卡「粉絲數」)=====
+     endpoint:lohas.realtime.tw/webapi/v010/member/getSalesMenTrackSum
+     參數:method=getSalesMenTrackSum, sell_man_id(必填), month(選填 "YYYY-MM")
+     回傳(不帶 month):{ code:"200", data:[{ totalSum: 100 }] }
+     回傳(帶 month):  { code:"200", data:[{ date:"2023-06-24", difference:101 }] }
+     注意:此 API 在即時互動的 /member/ 路徑下,BFF 走 realtime host */
+  async function getSalesMenTrackSum(erpId, month) {
+    if (!erpId) throw new Error("[LohasApi.store] erpId is required");
+    const payload = {
+      method: "getSalesMenTrackSum",
+      sell_man_id: String(erpId)
+    };
+    if (month) payload.month = month;
+    return post("realtime", payload);
+  }
+
   /* ===== 8. 取得全部地區 ===== */
   async function getAreas() {
     return post("map", { method: "getareas" });
@@ -156,6 +172,7 @@
     getAllStores,
     getEmployeeDetail,
     getEvaluationByEmployee,
+    getSalesMenTrackSum,
     getAreas,
     getGroupsByArea,
     getEmployeesByGroup,
