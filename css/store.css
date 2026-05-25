@@ -248,52 +248,70 @@
   font-family: inherit;
 }
 .sd-hero-action:hover { background: rgba(255, 255, 255, 0.25); }
+/* === Hero content:不對稱網格構圖
+     上排:左 LOHAS EYEWEAR / 右 地區英文
+     下排:左 門市大字 / 右 slogan 區塊(右對齊 + 左側細線分隔) */
 .sd-hero-content {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 32px 48px;
+  padding: 80px 32px 48px;  /* top 80 留給返回按鈕呼吸 */
   color: #fff;
   z-index: 1;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  box-sizing: border-box;
 }
-.sd-hero-eyebrow {
+.sd-hero-topmeta {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   font-size: 11px;
   letter-spacing: 4px;
   color: rgba(255, 255, 255, 0.78);
-  margin-bottom: 14px;
   text-transform: uppercase;
   font-weight: 500;
 }
-.sd-hero-eyebrow b {
+.sd-hero-topmeta-left b {
   color: var(--collab-gold);
   font-weight: 600;
   margin-right: 6px;
 }
-.sd-hero-eyebrow span {
+.sd-hero-topmeta-right {
   letter-spacing: 4px;
 }
 .sd-hero h1 {
+  grid-column: 1;
+  grid-row: 3;
   font-family: var(--font-tc);
   font-size: 64px;
-  font-weight: 700;
-  letter-spacing: 6px;
-  margin-bottom: 14px;
-  line-height: 1.05;
-}
-.sd-hero-slogan {
-  font-family: var(--font-tc);
-  font-size: 17px;
-  opacity: 0.92;
-  letter-spacing: 2px;
   font-weight: 500;
-  max-width: 540px;
-  line-height: 1.55;
+  letter-spacing: 6px;
+  margin: 0;
+  line-height: 0.95;
+  align-self: end;
 }
-.sd-hero-slogan::before { content: "「"; opacity: 0.6; }
-.sd-hero-slogan::after { content: "」"; opacity: 0.6; }
+.sd-hero-slogan-block {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: end;
+  text-align: right;
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+  padding-right: 16px;
+  margin-bottom: 6px;
+}
+.sd-hero-slogan-text {
+  font-family: var(--font-tc);
+  font-size: 15px;
+  letter-spacing: 2px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.95);
+}
 
 /* === 內容 body === */
 .sd-body {
@@ -562,30 +580,6 @@
   font-weight: 400;
   font-size: 12px;
 }
-
-/* meta wrapper(評分 + 粉絲數並排) */
-.sd-staff-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-/* 粉絲數(包裝追蹤數) */
-.sd-staff-fans {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-main);
-  flex-shrink: 0;
-}
-.sd-staff-fans i {
-  font-size: 11px;
-  color: #d96b8a;
-}
-.sd-staff-fans .num { color: var(--text-main); }
 
 /* 職稱 */
 .sd-staff-role {
@@ -1338,8 +1332,37 @@
   .sd-breadcrumb .current { flex-shrink: 0; }
   .sd-breadcrumb i.sep { flex-shrink: 0; }
   .sd-hero { height: 360px; }
-  .sd-hero h1 { font-size: 36px; letter-spacing: 3px; }
-  .sd-hero-slogan { font-size: 14px; letter-spacing: 1px; }
+  /* 手機:不對稱網格改回單欄垂直堆疊,避免文字擠在一起 */
+  .sd-hero-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    padding: 70px 20px 28px;
+    gap: 8px;
+  }
+  .sd-hero-topmeta {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+    letter-spacing: 3px;
+  }
+  .sd-hero h1 {
+    grid-column: 1;
+    grid-row: 3;
+    font-size: 38px;
+    letter-spacing: 3px;
+  }
+  .sd-hero-slogan-block {
+    grid-column: 1;
+    grid-row: 4;
+    text-align: left;
+    border-right: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.4);
+    padding-right: 0;
+    padding-left: 12px;
+    margin-top: 10px;
+    margin-bottom: 0;
+  }
+  .sd-hero-slogan-text { font-size: 13px; letter-spacing: 1px; }
   .sd-hero-back { top: 16px; left: 16px; padding: 7px 13px; font-size: 12px; }
   .sd-info-strip-inner {
     grid-template-columns: 1fr;
