@@ -1,0 +1,254 @@
+/* ============================================================
+   創作者「精選設定」Modal
+   admin-portal 頁專用
+   ============================================================ */
+
+.featured-modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(40, 30, 20, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: featuredModalFadeIn 0.2s ease;
+}
+
+@keyframes featuredModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.featured-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: featuredModalSlideIn 0.22s ease;
+  overflow: hidden;
+}
+
+@keyframes featuredModalSlideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.featured-modal-h {
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid #F0EBE0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.featured-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #3D3026;
+  letter-spacing: 0.5px;
+}
+
+.featured-modal-sub {
+  font-size: 12px;
+  color: #9D8E7D;
+  margin-top: 2px;
+}
+
+.featured-modal-x {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: #9D8E7D;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.featured-modal-x:hover {
+  background: #F4EFE4;
+  color: #3D3026;
+}
+
+.featured-modal-body {
+  padding: 18px 22px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.featured-modal-section {
+  margin-bottom: 22px;
+}
+
+.featured-modal-section:last-child {
+  margin-bottom: 0;
+}
+
+.featured-modal-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3D3026;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.featured-modal-label i {
+  margin-right: 6px;
+  color: #d85a30;
+}
+
+.featured-modal-hint {
+  font-size: 11px;
+  color: #9D8E7D;
+  font-weight: 400;
+  line-height: 1.6;
+  margin-left: 8px;
+}
+
+.featured-modal-label .featured-modal-hint {
+  display: block;
+  margin: 4px 0 0;
+  font-weight: 400;
+}
+
+.featured-modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #E5DCC8;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #3D3026;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.featured-modal-input:focus {
+  outline: 0;
+  border-color: #50422D;
+  box-shadow: 0 0 0 3px rgba(80, 66, 45, 0.1);
+}
+
+/* === 勾選項 === */
+.featured-modal-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: #FAF7F2;
+  border: 1px solid #ECE7DC;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.featured-modal-check:hover {
+  background: #F4EFE4;
+}
+
+.featured-modal-check:last-child {
+  margin-bottom: 0;
+}
+
+.featured-modal-check input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #50422D;
+}
+
+.featured-modal-check input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.featured-modal-check input[type="checkbox"]:disabled + div {
+  opacity: 0.5;
+}
+
+.featured-modal-check-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3D3026;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+
+.featured-modal-check-desc {
+  font-size: 11px;
+  color: #6B5E4F;
+  line-height: 1.55;
+}
+
+.featured-modal-tag {
+  background: #E5DCC8;
+  color: #50422D;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+}
+
+.featured-modal-warn {
+  color: #c44;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* === 底部按鈕 === */
+.featured-modal-foot {
+  padding: 14px 22px;
+  border-top: 1px solid #F0EBE0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #FAF7F2;
+}
+
+.featured-modal-foot .btn {
+  min-width: 84px;
+  justify-content: center;
+}
+
+/* === 手機 RWD === */
+@media (max-width: 600px) {
+  .featured-modal-mask {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .featured-modal {
+    max-width: 100%;
+    border-radius: 14px 14px 0 0;
+    max-height: 92vh;
+  }
+
+  .featured-modal-h {
+    padding: 16px 18px 12px;
+  }
+
+  .featured-modal-body {
+    padding: 16px 18px;
+  }
+
+  .featured-modal-foot {
+    padding: 12px 18px;
+  }
+}
