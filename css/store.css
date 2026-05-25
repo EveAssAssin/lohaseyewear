@@ -563,6 +563,30 @@
   font-size: 12px;
 }
 
+/* meta wrapper(評分 + 粉絲數並排) */
+.sd-staff-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* 粉絲數(包裝追蹤數) */
+.sd-staff-fans {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  flex-shrink: 0;
+}
+.sd-staff-fans i {
+  font-size: 11px;
+  color: #d96b8a;
+}
+.sd-staff-fans .num { color: var(--text-main); }
+
 /* 職稱 */
 .sd-staff-role {
   font-size: 12.5px;
