@@ -76,7 +76,8 @@
   const state = {
     erpid: null,
     store: null,
-    employees: []
+    employees: [],
+    partners: null   /* 特約商家:null = 未載入,[] = 載入完無資料,[{...}] = 有資料 */
   };
 
   const dom = {};
@@ -169,10 +170,50 @@
       /* 先渲染（員工詳細評價還沒下載完，先空白）*/
       renderAll();
 
-      /* 背景：並行抓每位員工的詳細評價，邊抓邊更新 */
+      /* 背景:並行抓每位員工的詳細評價,邊抓邊更新 */
       loadEmployeeDetails();
+
+      /* 背景:抓特約商家(透過 getUnitList),回來後重新渲染 partners section */
+      loadPartners();
     } catch (err) {
       renderError(err);
+    }
+  }
+
+  /* === 載入特約商家 ===
+     呼叫即時互動 API 23 getUnitList,拿到後依當前門市 erpid 篩選 */
+  async function loadPartners() {
+    if (!state.store) return;
+    const ssApi = window.LohasApi && window.LohasApi.vipstore;
+    if (!ssApi) {
+      console.warn("[store] api-vipstore 未載入,跳過特約商家");
+      state.partners = [];
+      renderBody();
+      return;
+    }
+    try {
+      const r = await ssApi.getUnitList({ paginate: 3000 });
+      const raw = (r && r.info) ? r.info : (Array.isArray(r) ? r : []);
+      const allUnits = raw.map(ssApi.normalizeUnit).filter(Boolean);
+
+      /* 篩出 bindStore 包含當前門市 erpid 的 unit
+         bindStore 是 erpid 陣列(數字或字串都可能)*/
+      const myErpid = String(state.store.erpid);
+      const mine = allUnits.filter(u => {
+        if (!u.bindStore || u.bindStore.length === 0) return false;
+        return u.bindStore.some(id => String(id) === myErpid);
+      });
+
+      /* 依 sort 排序(由小到大)*/
+      mine.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+
+      state.partners = mine;
+      console.log("[store] 特約商家載入完成", mine.length, "家(全部", allUnits.length, "家)");
+      renderBody();
+    } catch (err) {
+      console.warn("[store] loadPartners 失敗", err);
+      state.partners = [];  // 失敗也標記成空,避免一直顯示 placeholder
+      renderBody();
     }
   }
 
@@ -293,21 +334,12 @@
       `<a href="allstore.html" class="sd-hero-back" data-back>` +
         `<i class="fa-solid fa-arrow-left"></i> 返回門市列表` +
       `</a>` +
-      /* 不對稱網格:左下大字店名 + 右下 slogan 區塊 */
       `<div class="sd-hero-content">` +
-        /* 頂部 meta:左品牌 / 右地區 */
-        `<div class="sd-hero-topmeta">` +
-          `<div class="sd-hero-topmeta-left"><b>● LOHAS EYEWEAR</b></div>` +
-          `<div class="sd-hero-topmeta-right">${regionEn}</div>` +
+        `<div class="sd-hero-eyebrow">` +
+          `<b>● LOHAS EYEWEAR</b> <span>${regionEn}</span>` +
         `</div>` +
-        /* 左下:門市名 */
         `<h1>${s.name}</h1>` +
-        /* 右下:slogan 區塊 */
-        (s.slogan
-          ? `<div class="sd-hero-slogan-block">` +
-              `<div class="sd-hero-slogan-text">${s.slogan}</div>` +
-            `</div>`
-          : "") +
+        (s.slogan ? `<div class="sd-hero-slogan">${s.slogan}</div>` : "") +
       `</div>`;
   }
 
@@ -514,15 +546,29 @@
     dom.body.innerHTML = stats + gallery + staffSection + reviews + partners;
   }
 
-  /* 特約商家 section:風格 B 雜誌編輯式
-     有資料 → 渲染卡片 grid;無資料 → 維持原本「即將上線」placeholder */
+  /* 特約商家 section:風格 1 橫向滑卡
+     state.partners 三種狀態:
+       null  → 載入中,顯示 skeleton placeholder
+       []    → 載入完無資料,顯示「即將上線」
+       [...] → 有資料,渲染橫向滑卡 */
   function renderPartnersSection(s) {
-    const list = (window.LohasStore && window.LohasStore.data &&
-                  typeof window.LohasStore.data.getPartnersByRegion === "function")
-      ? window.LohasStore.data.getPartnersByRegion(s.region.key)
-      : [];
+    /* 載入中:用之前的 placeholder + loading 字樣 */
+    if (state.partners === null) {
+      return (
+        `<section class="sd-sec">` +
+          `<div class="sd-sec-head">` +
+            `<h2>區 域 特 約 商 家</h2>` +
+            `<span class="sd-sec-subtitle">${s.region.label} · 樂活會員專屬合作</span>` +
+          `</div>` +
+          `<div class="sd-partners-loading">` +
+            `<i class="fa-solid fa-circle-notch fa-spin"></i> 載入中…` +
+          `</div>` +
+        `</section>`
+      );
+    }
 
-    if (!list || list.length === 0) {
+    /* 無資料:維持原本的「即將上線」placeholder */
+    if (!state.partners || state.partners.length === 0) {
       return (
         `<section class="sd-sec">` +
           `<div class="sd-sec-head">` +
@@ -538,28 +584,25 @@
       );
     }
 
-    const cards = list.map(p => {
-      const imgBlock = p.image
-        ? `<div class="sd-partner-img" style="background-image:url('${p.image}')"></div>`
-        : `<div class="sd-partner-img sd-partner-img-fallback">` +
-            `<i class="fa-solid ${p.icon || "fa-store"}"></i>` +
+    /* 有資料:風格 2 列表清單 — 80×80 縮圖 + 名稱 + introduce 摘要
+       拿掉原預覽的「折扣大字 / 類別標籤 / 區域」(API 無對應欄位) */
+    const rows = state.partners.map(p => {
+      const imgBlock = p.imgUrl
+        ? `<div class="sd-partner-thumb" style="background-image:url('${escapeAttr(p.imgUrl)}')"></div>`
+        : `<div class="sd-partner-thumb sd-partner-thumb-fallback">` +
+            `<i class="fa-solid fa-store"></i>` +
           `</div>`;
-      const link = p.googleCid
-        ? `href="https://www.google.com/maps?cid=${p.googleCid}" target="_blank" rel="noopener"`
-        : "";
+      /* introduce 第一行當摘要,過長截斷 */
+      const introFirst = (p.intro || "").split(/\r?\n/)[0].trim();
+      const intro = introFirst.length > 50 ? introFirst.slice(0, 48) + "…" : introFirst;
       return (
-        `<a class="sd-partner-card" ${link}>` +
+        `<div class="sd-partner-row">` +
           imgBlock +
-          `<div class="sd-partner-body">` +
-            `<div class="sd-partner-cat">${p.category || ""}</div>` +
-            `<div class="sd-partner-name">${p.name || ""}</div>` +
-            `<div class="sd-partner-desc">${p.slogan || ""}</div>` +
-            `<div class="sd-partner-foot">` +
-              `<span class="sd-partner-offer">${p.offer || ""}</span>` +
-              (p.googleCid ? `<i class="fa-solid fa-arrow-right"></i>` : "") +
-            `</div>` +
+          `<div class="sd-partner-info">` +
+            `<div class="sd-partner-name">${escapeHtml(p.name || "")}</div>` +
+            (intro ? `<div class="sd-partner-desc">${escapeHtml(intro)}</div>` : "") +
           `</div>` +
-        `</a>`
+        `</div>`
       );
     }).join("");
 
@@ -567,11 +610,27 @@
       `<section class="sd-sec">` +
         `<div class="sd-sec-head">` +
           `<h2>區 域 特 約 商 家</h2>` +
-          `<span class="sd-sec-subtitle">${s.region.label} · 樂活會員專屬合作優惠</span>` +
+          `<span class="sd-sec-subtitle">${s.region.label} · 樂活會員專屬合作 · 共 ${state.partners.length} 家</span>` +
         `</div>` +
-        `<div class="sd-partners-grid">${cards}</div>` +
+        `<div class="sd-partners-list">${rows}</div>` +
+        `<a class="sd-partners-more" href="vipstore.html">` +
+          `逛全部商店街 <i class="fa-solid fa-arrow-right"></i>` +
+        `</a>` +
       `</section>`
     );
+  }
+
+  /* HTML escape 工具(避免 introduce / name 內含 HTML 特殊字元破版)*/
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+  function escapeAttr(str) {
+    return String(str).replace(/'/g, "%27").replace(/"/g, "%22");
   }
 
   /* === 渲染單則評價卡（顯示客人首字頭像，不顯示店員照） === */
