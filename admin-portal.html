@@ -1227,7 +1227,20 @@
           <!-- 套餐子表 -->
           <div class="editor-panel">
             <h3 class="editor-panel-title">套餐項目</h3>
-            <p class="editor-hint">建議比例 1:1 · 建議尺寸 800 × 800 px · 先儲存聯名後,才能上傳套餐圖片</p>
+
+            <!-- 套餐合照 (顯示在前台「套餐內容」標題下,套餐 grid 上方) -->
+            <div class="editor-row">
+              <label class="editor-label">套餐合照 (全家福)</label>
+              <div class="img-upload-wrap" data-field="packages_group_photo_url" data-aspect="4:3">
+                <div class="img-upload-preview" id="cm_packages_group_photo_preview" style="aspect-ratio:4/3">
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
+                </div>
+                <input type="file" accept="image/*" class="img-upload-input">
+                <p class="editor-hint">建議比例 4:3 · 建議尺寸 1200 × 900 px · 顯示在「套餐內容」標題下方,套餐項目上方</p>
+              </div>
+            </div>
+
+            <p class="editor-hint">以下為個別套餐項目 · 建議比例 1:1 · 建議尺寸 800 × 800 px · 先儲存聯名後,才能上傳套餐圖片</p>
             <div class="subtable-list" id="cm_pkgList"></div>
             <button class="btn-mini" id="cm_addPkg" type="button">+ 新增套餐內容</button>
           </div>
