@@ -5560,6 +5560,7 @@
       resetImagePreview('cm_hero_image_preview');
       resetImagePreview('cm_story_image_preview');
       resetImagePreview('cm_creator_avatar_preview', true);
+      resetImagePreview('cm_packages_group_photo_preview');
       renderSubtables();
 
       modal.style.display = 'flex';
