@@ -634,9 +634,15 @@
 /* RWD */
 @media (max-width: 768px) {
   .home-main-banner {
-    aspect-ratio: 3 / 4;
+    /* 配合後台上傳的 800x1000 直式圖（4:5）→ 圖完整呈現、不裁切左右 */
+    aspect-ratio: 4 / 5;
     margin-top: 24px;
     margin-bottom: 24px;
+  }
+  .home-main-banner .hmb-slide img {
+    /* 同時用 cover 但比例已對齊，所以不會切到 */
+    object-fit: cover;
+    object-position: center;
   }
   .home-main-banner-arrow {
     width: 36px;
