@@ -249,8 +249,8 @@
 
 /* ====== Package ====== */
 .cb-pkg-group-photo {
-  aspect-ratio: 4/3;
-  max-width: 800px;
+  aspect-ratio: 16/9;
+  max-width: 960px;
   margin: 0 auto 32px;
   overflow: hidden;
   background: var(--cb-bg);
