@@ -30,7 +30,25 @@
   function processIgEmbeds() {
     if (window.instgrm && window.instgrm.Embeds && typeof window.instgrm.Embeds.process === 'function') {
       try { window.instgrm.Embeds.process(); } catch (e) { /* ignore */ }
+      return true;
     }
+    return false;
+  }
+
+  // 等 embed.js 載入完才能呼叫 .Embeds.process()
+  function waitForIgScript(maxMs) {
+    return new Promise(resolve => {
+      const startedAt = Date.now();
+      const timer = setInterval(() => {
+        if (processIgEmbeds()) {
+          clearInterval(timer);
+          resolve(true);
+        } else if (Date.now() - startedAt > (maxMs || 8000)) {
+          clearInterval(timer);
+          resolve(false);
+        }
+      }, 100);
+    });
   }
 
   async function fetchCreators() {
@@ -89,11 +107,14 @@
     }
 
     slot.style.display = '';
-    slot.innerHTML = exposed.map(c => `
-      <div class="lohas-ig-wall__cell">
-        ${blockquote(c.featured_ig_post_url)}
-      </div>
-    `).join('');
+    slot.innerHTML = exposed.map(c => {
+      const isReel = /\/reel\//i.test(c.featured_ig_post_url);
+      return `
+        <div class="lohas-ig-wall__cell ${isReel ? 'is-reel' : ''}">
+          ${blockquote(c.featured_ig_post_url)}
+        </div>
+      `;
+    }).join('');
   }
 
   async function init() {
@@ -110,10 +131,9 @@
       return;
     }
 
-    // 延遲讓 embed.js 接手
-    setTimeout(processIgEmbeds, 100);
-    setTimeout(processIgEmbeds, 800);
-    setTimeout(processIgEmbeds, 2000);
+    // 等 IG embed.js 真的載入完再 process
+    // 因為動態塞進 DOM 的 blockquote，embed.js 不會自動掃，要主動呼叫 process()
+    waitForIgScript(8000);
   }
 
   if (document.readyState === 'loading') {

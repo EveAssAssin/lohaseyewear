@@ -3875,20 +3875,24 @@
                 </div>
               </label>
 
-              <label class="featured-modal-check">
-                <input type="checkbox" id="featuredChkHomepage" ${isHpFeatured ? 'checked' : ''}>
+              <label class="featured-modal-check ${hpOwner ? 'is-locked' : ''}">
+                <input type="checkbox" id="featuredChkHomepage"
+                       ${isHpFeatured ? 'checked' : ''}
+                       ${hpOwner ? 'disabled' : ''}>
                 <div>
                   <div class="featured-modal-check-title">
                     <i class="fa-solid fa-house" style="color:#d85a30"></i> 首頁主打 IG
-                    ${hpOwner ? `<span class="featured-modal-warn">⚠ 目前由 ${escapeHtml(hpOwner.display_name || hpOwner.member_id)} 佔用</span>` : ''}
+                    ${hpOwner ? `<span class="featured-modal-warn">🔒 已被 ${escapeHtml(hpOwner.display_name || hpOwner.member_id)} 占用</span>` : ''}
                   </div>
                   <div class="featured-modal-check-desc">
-                    首頁 IG 區大圖嵌入（全站 1 位，勾選後會自動取代既有主打）
+                    ${hpOwner
+                      ? '請先到該創作者的精選設定取消「首頁主打」，才能改設這位。'
+                      : '首頁 IG 區大圖嵌入（全站 1 位）'}
                   </div>
                 </div>
               </label>
 
-              <label class="featured-modal-check">
+              <label class="featured-modal-check ${exposureOrder == null && exposureCount >= 4 ? 'is-locked' : ''}">
                 <input type="checkbox" id="featuredChkExposure"
                        ${exposureOrder != null ? 'checked' : ''}
                        ${exposureOrder == null && exposureCount >= 4 ? 'disabled' : ''}>
@@ -3899,7 +3903,7 @@
                     ${exposureOrder != null
                       ? `<span class="featured-modal-tag">目前位置 ${exposureOrder} / 4</span>`
                       : exposureCount >= 4
-                        ? '<span class="featured-modal-warn">⚠ 已達 4 位上限</span>'
+                        ? '<span class="featured-modal-warn">🔒 已達 4 位上限</span>'
                         : `<span class="featured-modal-tag">目前 ${exposureCount} / 4</span>`}
                   </div>
                   <div class="featured-modal-check-desc">
@@ -3914,8 +3918,8 @@
 
           <div class="featured-modal-foot">
             <button type="button" class="btn" id="featuredModalCancel">取消</button>
-            <button type="button" class="btn primary" id="featuredModalSave">
-              <i class="fa-solid fa-floppy-disk"></i> 儲存
+            <button type="button" class="action-btn-solid" id="featuredModalSave">
+              <i class="fa-solid fa-floppy-disk"></i><span>儲存</span>
             </button>
           </div>
         </div>
@@ -3936,7 +3940,7 @@
     document.getElementById('featuredModalSave').onclick = async () => {
       const btn = document.getElementById('featuredModalSave');
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 儲存中...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>儲存中...</span>';
 
       const newUrl = (document.getElementById('featuredIgUrl').value || '').trim() || null;
       const wantMarket = document.getElementById('featuredChkMarket').checked;
@@ -3946,7 +3950,7 @@
       // 首頁主打 / 曝光需要有 IG URL
       if ((wantHomepage || wantExposure) && !newUrl) {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> 儲存';
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存</span>';
         return alert('勾選「首頁主打」或「首頁曝光」需要先填 IG 貼文 URL');
       }
 
@@ -3962,7 +3966,7 @@
       } catch (e) {
         alert('儲存失敗：' + (e.message || '未知錯誤'));
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> 儲存';
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存</span>';
       }
     };
   }
@@ -4148,8 +4152,8 @@
             <div class="creator-card-name-row">
               <span class="creator-card-name">${escapeHtml(c.display_name || '未命名')}</span>
               ${isMarketFeatured ? '<span class="creator-card-tag featured"><i class="fa-solid fa-star"></i>市集精選</span>' : ''}
-              ${isHpFeatured ? '<span class="creator-card-tag" style="background:#fff4e6;color:#d85a30"><i class="fa-solid fa-house"></i>首頁主打</span>' : ''}
-              ${exposureOrder != null ? `<span class="creator-card-tag" style="background:#e0f2ff;color:#1e6fbb"><i class="fa-solid fa-thumbtack"></i>首頁曝光 ${exposureOrder}/4</span>` : ''}
+              ${isHpFeatured ? '<span class="creator-card-tag featured"><i class="fa-solid fa-house"></i>首頁主打</span>' : ''}
+              ${exposureOrder != null ? `<span class="creator-card-tag featured"><i class="fa-solid fa-thumbtack"></i>首頁曝光 ${exposureOrder}/4</span>` : ''}
               ${isVirt ? '<span class="creator-card-tag virt">樂活官方建立</span>' : '<span class="creator-card-tag">會員</span>'}
               ${isSuspended ? '<span class="creator-card-tag suspended">已隱藏</span>' : ''}
             </div>
