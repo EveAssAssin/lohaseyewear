@@ -5351,6 +5351,7 @@
       hero_image_url: null,
       story_image_url: null,
       creator_avatar_url: null,
+      packages_group_photo_url: null,
       // 子表的圖檔用 row 內 _pendingFile 屬性
     };
 
@@ -5524,6 +5525,7 @@
       pendingFiles.hero_image_url = null;
       pendingFiles.story_image_url = null;
       pendingFiles.creator_avatar_url = null;
+      pendingFiles.packages_group_photo_url = null;
 
       $('collabModalTitle').textContent = '新增聯名';
       $('collabDeleteBtn').style.display = 'none';
@@ -5576,6 +5578,7 @@
       pendingFiles.hero_image_url = null;
       pendingFiles.story_image_url = null;
       pendingFiles.creator_avatar_url = null;
+      pendingFiles.packages_group_photo_url = null;
 
       $('collabModalTitle').textContent = '編輯:' + (c.brand_name || c.slug) + (c.is_locked ? ' 🔒 範例' : '');
       $('collabDeleteBtn').style.display = c.is_locked ? 'none' : '';
@@ -5617,6 +5620,7 @@
       updateThemePreview();
       setImagePreview('cm_hero_image_preview', c.hero_image_url);
       setImagePreview('cm_story_image_preview', c.story_image_url);
+      setImagePreview('cm_packages_group_photo_preview', c.packages_group_photo_url);
       setImagePreview('cm_creator_avatar_preview', c.creator_avatar_url, true);
 
       // 子表
@@ -6113,6 +6117,7 @@
       let heroUrl = currentCollab?.hero_image_url || null;
       let storyUrl = currentCollab?.story_image_url || null;
       let avatarUrl = currentCollab?.creator_avatar_url || null;
+      let pkgGroupPhotoUrl = currentCollab?.packages_group_photo_url || null;
 
       const saveBtn = $('collabSaveBtn');
       saveBtn.disabled = true;
@@ -6127,6 +6132,9 @@
         }
         if(pendingFiles.creator_avatar_url){
           avatarUrl = await uploadFile(pendingFiles.creator_avatar_url, 'collab-avatar');
+        }
+        if(pendingFiles.packages_group_photo_url){
+          pkgGroupPhotoUrl = await uploadFile(pendingFiles.packages_group_photo_url, 'collab-pkg-group');
         }
 
         saveBtn.textContent = '儲存中...';
@@ -6153,6 +6161,7 @@
           available_stores: val('cm_available_stores'),
           story_image_url: storyUrl,
           story_paragraphs: paragraphs,
+          packages_group_photo_url: pkgGroupPhotoUrl,
           creator_name: val('cm_creator_name'),
           creator_subtitle: val('cm_creator_subtitle'),
           creator_avatar_url: avatarUrl,
@@ -6390,6 +6399,7 @@
         hero_image_url: currentCollab?.hero_image_url || null,
         story_image_url: currentCollab?.story_image_url || null,
         creator_avatar_url: currentCollab?.creator_avatar_url || null,
+        packages_group_photo_url: currentCollab?.packages_group_photo_url || null,
         // 子表用 currentCollab 帶過去 (modal 內已綁定到 state)
         packages: collectSubtable('packages'),
         designs: collectSubtable('designs'),

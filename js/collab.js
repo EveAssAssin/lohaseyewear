@@ -160,8 +160,8 @@
     }
 
     // ====== Package ======
-    if(packages.length){
-      renderPackages(packages);
+    if(packages.length || collab.packages_group_photo_url){
+      renderPackages(packages, collab.packages_group_photo_url);
       showSection('pkgSec');
     }
 
@@ -284,7 +284,19 @@
     setHTML('storyContent', html);
   }
 
-  function renderPackages(packages){
+  function renderPackages(packages, groupPhotoUrl){
+    // 套餐合照 (套餐 grid 上方)
+    const groupEl = $('pkgGroupPhoto');
+    if(groupEl){
+      if(groupPhotoUrl){
+        groupEl.innerHTML = '<img src="' + escapeHTML(groupPhotoUrl) + '" alt="套餐合照" />';
+        groupEl.style.display = '';
+      } else {
+        groupEl.innerHTML = '';
+        groupEl.style.display = 'none';
+      }
+    }
+
     const grid = $('pkgGrid');
     grid.innerHTML = packages.map(function(p){
       const img = p.image_url
