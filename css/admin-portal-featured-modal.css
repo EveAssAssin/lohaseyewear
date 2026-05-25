@@ -179,6 +179,21 @@
   opacity: 0.5;
 }
 
+/* 鎖定狀態（被其他人佔用 / 已達上限）*/
+.featured-modal-check.is-locked {
+  background: #F2EBDC;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.featured-modal-check.is-locked:hover {
+  background: #F2EBDC;
+}
+
+.featured-modal-check.is-locked > div {
+  opacity: 0.55;
+}
+
 .featured-modal-check-title {
   font-size: 13px;
   font-weight: 600;

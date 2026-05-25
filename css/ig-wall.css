@@ -134,6 +134,13 @@
   box-shadow: 0 0 1px 0 rgba(0,0,0,0.5), 0 1px 10px 0 rgba(0,0,0,0.08);
 }
 
+/* Reel 是直式 9:16，圖比正方形高很多
+   視窗：header(65) + 圖區(寬 × 16/9) + 互動列(46) ≈ width × 1.78 + 111
+   實測 IG Reel 圖區大約是 cell 寬度的 1.25× 高 */
+.lohas-ig-wall__cell.is-reel {
+  padding-top: calc(125% + 111px);
+}
+
 .lohas-ig-wall__cell .instagram-media,
 .lohas-ig-wall__cell iframe,
 .lohas-ig-wall__cell > blockquote {
