@@ -22,9 +22,25 @@
     if (!url) return '';
     return `<blockquote class="instagram-media"
       data-instgrm-captioned
-      data-instgrm-permalink="${esc(url)}"
+      data-instgrm-permalink="${esc(normalizeIgUrl(url))}"
       data-instgrm-version="14"
       style="background:#FFF;border:0;border-radius:0;margin:0 auto;max-width:540px;min-width:326px;padding:0;width:100%;"></blockquote>`;
+  }
+
+  // 把 IG URL 正規化成 embed.js 認得的格式
+  // - /reels/ → /reel/ (複數 IG 不認)
+  // - 移除 query string (?utm_source=... 等)
+  // - 確保結尾有 /
+  function normalizeIgUrl(url) {
+    if (!url) return url;
+    let u = String(url).trim();
+    // 拿掉 query string + hash
+    u = u.split('?')[0].split('#')[0];
+    // /reels/ → /reel/
+    u = u.replace(/\/reels\//i, '/reel/');
+    // 確保結尾有 /
+    if (!u.endsWith('/')) u += '/';
+    return u;
   }
 
   function processIgEmbeds() {
@@ -108,7 +124,8 @@
 
     slot.style.display = '';
     slot.innerHTML = exposed.map(c => {
-      const isReel = /\/reel\//i.test(c.featured_ig_post_url);
+      const normalized = normalizeIgUrl(c.featured_ig_post_url);
+      const isReel = /\/reel\//i.test(normalized);
       return `
         <div class="lohas-ig-wall__cell ${isReel ? 'is-reel' : ''}">
           ${blockquote(c.featured_ig_post_url)}
