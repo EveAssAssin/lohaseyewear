@@ -504,8 +504,27 @@
     });
   }
 
+  // 是否已展開全部 creator 作品(避免重複展開造成 DOM 抖動)
+  function ensureAllCreatorRendered(){
+    var grid = root.querySelector('.design-grid[data-grid="creator"]');
+    if(!grid) return;
+    var creatorList = State.designs.filter(function(d){ return d.tier === 'creator'; });
+    var currentCount = grid.querySelectorAll('.design-card').length;
+    // 已經是全部就不重 render
+    if(currentCount >= creatorList.length) return;
+    renderGrid('creator', creatorList);
+    // 隱藏「顯示全部」按鈕(已經顯示全部了)
+    var seeAllBtn = root.querySelector('.market-block[data-section="creator"] .see-all');
+    if(seeAllBtn) seeAllBtn.style.display = 'none';
+  }
+
   function applySearch(){
     var term = State.searchTerm.toLowerCase();
+    // 一旦輸入搜尋詞,自動展開全部 creator 作品再過濾
+    // (不展開的話只能搜到前 9 件已 render 的 DOM)
+    if(term){
+      ensureAllCreatorRendered();
+    }
     root.querySelectorAll('.design-card').forEach(function(card){
       if(!term){ card.style.display = ''; return; }
       var id = card.dataset.id;
