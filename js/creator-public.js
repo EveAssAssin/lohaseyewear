@@ -65,7 +65,7 @@
     // 抓上架設計
     const { data: designs } = await sb
       .from('engraving_designs')
-      .select('id, name, image_url, design_type')
+      .select('id, name, image_url, image_url_png, category')
       .eq('creator_id', erpid)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
@@ -130,7 +130,7 @@
                 ${d.image_url ? '' : escapeHtml(d.name || '')}
               </div>
               <div class="pf-design-name">${escapeHtml(d.name || '未命名')}</div>
-              <div class="pf-design-meta">${escapeHtml(d.design_type || '圖案')}</div>
+              <div class="pf-design-meta">${escapeHtml(d.category || '圖案')}</div>
             </div>`;
         }).join('')
       : '<p class="empty-text" style="grid-column:1/-1">還沒上架任何設計</p>';
