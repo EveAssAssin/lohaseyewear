@@ -1,0 +1,457 @@
+/* =============================================
+   LOHAS · vipstore-partner.html
+   --------------------------------------------
+   特約商家招募 landing page
+   全部套用 LOHAS 設計系統 token (lohas-tokens.css)
+   命名前綴:vsp- (vipstore-partner)
+   依賴:lohas-tokens / lohas-base / lohas-components
+   ============================================= */
+
+.vsp-shell {
+  background: var(--bg-warm);
+  margin-top: 70px;
+}
+
+/* ===== 共用 Section ===== */
+.vsp-section {
+  padding: 80px 24px;
+}
+.vsp-section--alt {
+  background: #fff;
+}
+.vsp-section-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.vsp-section-head {
+  text-align: center;
+  margin-bottom: 56px;
+}
+.vsp-section-eb {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+.vsp-section-title {
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--text-main);
+  margin: 0 0 14px;
+  letter-spacing: 1px;
+}
+.vsp-section-desc {
+  font-size: 15px;
+  color: var(--text-sub);
+  line-height: 1.9;
+  margin: 0 auto;
+  max-width: 560px;
+  letter-spacing: 0.3px;
+}
+.vsp-section-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 24px;
+  letter-spacing: 1px;
+}
+
+/* ===== Hero ===== */
+.vsp-hero {
+  padding: 100px 24px 80px;
+  background: #fff;
+  border-bottom: 1px solid var(--lohas-bd);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.vsp-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 15% 30%, rgba(205, 190, 162, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 85% 70%, rgba(205, 190, 162, 0.12) 0%, transparent 45%);
+  pointer-events: none;
+}
+.vsp-hero-inner {
+  position: relative;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.vsp-hero-eb {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+.vsp-hero-title {
+  font-size: 44px;
+  font-weight: 500;
+  color: var(--text-main);
+  line-height: 1.3;
+  margin: 0 0 24px;
+  letter-spacing: 2px;
+}
+.vsp-hero-title .accent {
+  color: var(--lohas-brand);
+  font-weight: 600;
+}
+.vsp-hero-desc {
+  font-size: 16px;
+  color: var(--text-sub);
+  line-height: 2;
+  margin: 0 0 40px;
+  letter-spacing: 0.5px;
+}
+.vsp-hero-btns {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ===== Hero 按鈕 ===== */
+.vsp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 220px;
+  padding: 16px 38px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  border-radius: var(--r-pill);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.vsp-btn--solid {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+.vsp-btn--solid:hover {
+  background: var(--lohas-hover);
+  border-color: var(--lohas-hover);
+  transform: translateY(-1px);
+}
+.vsp-btn--ghost {
+  background: transparent;
+  color: var(--lohas-brand);
+  border-color: var(--lohas-brand);
+}
+.vsp-btn--ghost:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+}
+
+/* ===== KPI ===== */
+.vsp-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.vsp-kpi {
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-md);
+  padding: 36px 28px;
+  text-align: center;
+  box-shadow: var(--sh-soft);
+  transition: transform 0.2s;
+}
+.vsp-kpi:hover {
+  transform: translateY(-2px);
+}
+.vsp-kpi-num {
+  font-size: 44px;
+  font-weight: 600;
+  color: var(--lohas-brand);
+  line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+.vsp-kpi-num small {
+  font-size: 18px;
+  font-weight: 500;
+  margin-left: 4px;
+  color: var(--lohas-light);
+}
+.vsp-kpi-label {
+  font-size: 14px;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+  line-height: 1.5;
+}
+
+/* ===== 三大效益 ===== */
+.vsp-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.vsp-benefit {
+  background: var(--bg-warm);
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-md);
+  padding: 36px 28px;
+  text-align: center;
+}
+.vsp-benefit-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--lohas-brand);
+  margin-bottom: 20px;
+}
+.vsp-benefit-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 12px;
+  letter-spacing: 1px;
+}
+.vsp-benefit-desc {
+  font-size: 14px;
+  color: var(--text-sub);
+  line-height: 1.85;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+/* ===== 適合誰加入 ===== */
+.vsp-cats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.vsp-cat {
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-md);
+  padding: 24px 16px;
+  text-align: center;
+  transition: all 0.2s;
+}
+.vsp-cat:hover {
+  border-color: var(--lohas-brand);
+  transform: translateY(-2px);
+}
+.vsp-cat i {
+  font-size: 28px;
+  color: var(--lohas-brand);
+  margin-bottom: 12px;
+  display: block;
+}
+.vsp-cat-name {
+  font-size: 13px;
+  color: var(--text-main);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.vsp-cat-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
+/* ===== 申請四步驟 ===== */
+.vsp-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  position: relative;
+}
+.vsp-steps::before {
+  content: "";
+  position: absolute;
+  top: 36px;
+  left: 80px;
+  right: 80px;
+  height: 1px;
+  background: var(--lohas-bd);
+  z-index: 0;
+}
+.vsp-step {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.vsp-step-num {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--lohas-brand);
+  color: var(--lohas-brand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+.vsp-step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 8px;
+  letter-spacing: 0.8px;
+}
+.vsp-step-desc {
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.7;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+/* ===== 見證 ===== */
+.vsp-testimonials {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+.vsp-testimonial {
+  background: var(--bg-warm);
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-md);
+  padding: 32px 28px;
+}
+.vsp-testimonial-quote {
+  font-size: 15px;
+  color: var(--text-main);
+  line-height: 1.9;
+  margin: 0 0 24px;
+  letter-spacing: 0.3px;
+  font-style: italic;
+}
+.vsp-testimonial-quote::before {
+  content: "\201C";
+  font-size: 48px;
+  color: var(--lohas-light);
+  line-height: 0;
+  margin-right: 6px;
+  vertical-align: -16px;
+}
+.vsp-testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--lohas-bd);
+}
+.vsp-testimonial-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--lohas-brand);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.vsp-testimonial-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 2px;
+}
+.vsp-testimonial-role {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ===== FAQ ===== */
+.vsp-faq-list {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.vsp-faq-item {
+  border-bottom: 1px solid var(--lohas-bd);
+  padding: 24px 0;
+}
+.vsp-faq-q {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+.vsp-faq-q i {
+  color: var(--lohas-brand);
+  font-size: 14px;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.vsp-faq-item.is-open .vsp-faq-q i {
+  transform: rotate(45deg);
+}
+.vsp-faq-a {
+  font-size: 14px;
+  color: var(--text-sub);
+  line-height: 1.9;
+  margin: 16px 0 0;
+  letter-spacing: 0.3px;
+  display: none;
+}
+.vsp-faq-item.is-open .vsp-faq-a {
+  display: block;
+}
+
+/* ===== 響應式 ===== */
+@media (max-width: 1024px) {
+  .vsp-cats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .vsp-kpis, .vsp-benefits {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .vsp-cats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .vsp-testimonials { grid-template-columns: 1fr; }
+  .vsp-steps {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 20px;
+  }
+  .vsp-steps::before { display: none; }
+}
+@media (max-width: 600px) {
+  .vsp-hero { padding: 60px 20px 50px; }
+  .vsp-hero-title { font-size: 30px; letter-spacing: 1.5px; }
+  .vsp-hero-desc { font-size: 14px; }
+  .vsp-section { padding: 56px 20px; }
+  .vsp-section-title { font-size: 24px; }
+  .vsp-kpis, .vsp-benefits, .vsp-cats, .vsp-steps {
+    grid-template-columns: 1fr;
+  }
+  .vsp-hero-btns { flex-direction: column; }
+  .vsp-btn { width: 100%; min-width: 0; }
+}
