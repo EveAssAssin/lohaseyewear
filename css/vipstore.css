@@ -1273,13 +1273,27 @@
 
 
 /* =============================================
-   vipstore 頁面 · 消除 CTA 與 footer 之間的白縫
+   vipstore 頁面 · 徹底消除 CTA 與 footer 之間的白縫
    --------------------------------------------
-   問題:body 預設白底,當 main 結束後到 footer 之間
-   會看到一條白色橫線(其實是 body 背景透出來)。
-   解法:讓 body 在 vipstore 頁時背景跟 CTA 同色,
-   配合 [data-page="vipstore"] 不污染其他頁面。
+   白縫成因可能來自:
+   1. body 預設白底透出
+   2. #site-footer 容器在 layout.js 注入前的空白
+   3. user agent 預設 margin
+
+   解法:全部蓋掉 (三道保險)
    ============================================= */
+/* 1. body 整體背景跟 CTA 同色 */
 body[data-page="vipstore"] {
   background: var(--bg-warm);
+}
+
+/* 2. #site-footer 容器底色設為 footer 棕色,
+      即使 layout.js 還沒注入也不會有白色透出 */
+body[data-page="vipstore"] #site-footer {
+  background: var(--lohas-brand);
+}
+
+/* 3. CTA 區的下緣 margin 強制 0,確保跟 footer 緊貼 */
+body[data-page="vipstore"] .lohas-cta {
+  margin-bottom: 0;
 }
