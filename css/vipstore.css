@@ -1273,11 +1273,13 @@
 
 
 /* =============================================
-   vipstore 頁面的 CTA 區覆蓋
+   vipstore 頁面 · 消除 CTA 與 footer 之間的白縫
    --------------------------------------------
-   讓 CTA 區跟 footer 之間沒有色差(原 .lohas-cta 用 --bg-warm 暖底,
-   會跟白底 footer 之間產生視覺空隙)
+   問題:body 預設白底,當 main 結束後到 footer 之間
+   會看到一條白色橫線(其實是 body 背景透出來)。
+   解法:讓 body 在 vipstore 頁時背景跟 CTA 同色,
+   配合 [data-page="vipstore"] 不污染其他頁面。
    ============================================= */
-.vs-shell .lohas-cta {
-  background: #fff;
+body[data-page="vipstore"] {
+  background: var(--bg-warm);
 }
