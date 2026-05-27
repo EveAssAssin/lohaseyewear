@@ -1,0 +1,269 @@
+/* =============================================
+   LOHAS · Vipstore Coming Soon Pages
+   --------------------------------------------
+   共用樣式: vipstore-guide.html / vipstore-partner.html
+   命名: vsc- (vipstore-coming)
+   設計理念: 留白 + 中央集中 + 暖棕色調呼應整站
+   ============================================= */
+
+.vsc-shell {
+  min-height: calc(100vh - 70px); /* 扣掉 header 高度 */
+  background: var(--bg-warm);
+  display: flex;
+  flex-direction: column;
+  margin-top: 70px;
+}
+
+.vsc-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 100px;
+  position: relative;
+}
+
+/* 背景裝飾(微妙的格紋) */
+.vsc-center::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(205, 190, 162, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(205, 190, 162, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.vsc-inner {
+  position: relative;
+  max-width: 580px;
+  width: 100%;
+  text-align: center;
+}
+
+/* 麵包屑 */
+.vsc-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 40px;
+  letter-spacing: 1px;
+}
+.vsc-crumb a {
+  color: var(--lohas-brand);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.vsc-crumb a:hover {
+  color: var(--lohas-hover);
+  text-decoration: underline;
+}
+.vsc-crumb i {
+  font-size: 9px;
+  color: var(--text-light);
+}
+.vsc-crumb span {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+/* 主視覺 icon */
+.vsc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  box-shadow: var(--sh-soft);
+  margin-bottom: 32px;
+  font-size: 38px;
+  color: var(--lohas-brand);
+}
+
+/* Eyebrow text */
+.vsc-eb {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 18px;
+  text-transform: uppercase;
+}
+
+/* 標題 */
+.vsc-title {
+  font-size: 38px;
+  font-weight: 500;
+  color: var(--text-main);
+  line-height: 1.35;
+  margin: 0 0 24px;
+  letter-spacing: 2px;
+}
+
+/* 描述 */
+.vsc-desc {
+  font-size: 15px;
+  color: var(--text-sub);
+  line-height: 2;
+  margin: 0 0 36px;
+  letter-spacing: 0.5px;
+}
+
+/* 重點清單 */
+.vsc-list {
+  list-style: none;
+  margin: 0 auto 40px;
+  padding: 24px 28px;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-md);
+  max-width: 460px;
+  text-align: left;
+  box-shadow: var(--sh-soft);
+}
+.vsc-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--text-main);
+  letter-spacing: 0.3px;
+  border-bottom: 1px dashed var(--lohas-bd);
+}
+.vsc-list li:last-child {
+  border-bottom: 0;
+}
+.vsc-list i {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  color: var(--lohas-brand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* CTA 按鈕區 */
+.vsc-btns {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.vsc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 220px;
+  padding: 16px 38px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  border-radius: var(--r-pill);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.vsc-btn--solid {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+}
+.vsc-btn--solid:hover {
+  background: var(--lohas-hover);
+  border-color: var(--lohas-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--sh-soft);
+}
+.vsc-btn--ghost {
+  background: transparent;
+  color: var(--lohas-brand);
+  border-color: var(--lohas-brand);
+}
+.vsc-btn--ghost:hover {
+  background: var(--lohas-brand);
+  color: #fff;
+}
+.vsc-btn i {
+  font-size: 13px;
+}
+
+/* 底部小提示 */
+.vsc-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.8;
+  letter-spacing: 0.3px;
+}
+.vsc-hint a {
+  color: var(--lohas-brand);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(80, 66, 45, 0.3);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s;
+}
+.vsc-hint a:hover {
+  text-decoration-color: var(--lohas-brand);
+}
+
+/* ===== Tablet ===== */
+@media (max-width: 768px) {
+  .vsc-center {
+    padding: 56px 20px 80px;
+  }
+  .vsc-icon {
+    width: 80px;
+    height: 80px;
+    font-size: 32px;
+    margin-bottom: 24px;
+  }
+  .vsc-title {
+    font-size: 28px;
+    letter-spacing: 1.5px;
+  }
+  .vsc-desc {
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .vsc-list {
+    padding: 20px 22px;
+  }
+  .vsc-list li {
+    font-size: 13px;
+  }
+  .vsc-btns {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .vsc-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 14px 24px;
+  }
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 480px) {
+  .vsc-title {
+    font-size: 24px;
+  }
+  .vsc-crumb {
+    margin-bottom: 28px;
+  }
+}
