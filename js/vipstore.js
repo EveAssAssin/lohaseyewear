@@ -64,6 +64,30 @@
     "default":  "fa-store"
   };
 
+  /* ===== 特約類型判斷 =====
+     依「綁定門市」與「類別」判斷出三種特約類型,
+     讓 UI 顯示對應的標籤、icon 與引導文案。
+
+     - "stores"   : 綁定特定門市,任何 LOHAS 會員到該門市即可享優惠
+     - "employee" : 無綁定 + 學校/企業/社團類別,
+                    需先到 /Approval 完成員工身份綁定才可享優惠
+     - "universal": 無綁定 + 一般商店類別,所有會員到任一門市皆可享優惠
+  ============================================= */
+  const EMPLOYEE_CATEGORIES = new Set([
+    "學校", "教育", "公司行號", "企業", "社團組織", "政府機關", "醫療", "金融"
+  ]);
+  function unitAccessType(u) {
+    const hasBound = u && u.bindStore && u.bindStore.length > 0;
+    if (hasBound) return "stores";
+    if (u && u.categoryName && EMPLOYEE_CATEGORIES.has(u.categoryName)) {
+      return "employee";
+    }
+    return "universal";
+  }
+
+  /* 特約廠商人員申請連結(會員綁定特約身份用) */
+  const APPROVAL_URL = "https://lohas.realtime.tw/Approval";
+
   const dom = {};
 
   document.addEventListener("DOMContentLoaded", async () => {
@@ -633,10 +657,12 @@
     const store = state.storesByErpid.get(String(erpid));
     if (!store) return;
 
-    /* 找所有「綁定到這間門市 OR 沒綁定（全門市通用）」的特約店家 */
+    /* 找所有「綁定到這間門市 OR 全門市通用(非員工專屬)」的特約店家 */
     const matched = state.units.filter(u => {
-      if (!u.bindStore || u.bindStore.length === 0) return true; // 全門市通用
-      return u.bindStore.map(String).includes(String(erpid));
+      const t = unitAccessType(u);
+      if (t === "stores") return u.bindStore.map(String).includes(String(erpid));
+      if (t === "universal") return true;
+      return false; // employee 類型不在此列(需先綁定身份)
     });
 
     /* 渲染 popup (版本 B: 白底 + 縮圖) */
@@ -767,11 +793,17 @@
       }
     }
 
-    /* 合作門市數 */
-    const storeCount = (u.boundStores || []).length;
-    const storeLine = storeCount
-      ? `<span><i class="fa-solid fa-store"></i> ${storeCount} 間合作門市</span>`
-      : `<span><i class="fa-solid fa-globe"></i> 全門市通用</span>`;
+    /* 合作門市資訊 (依特約類型顯示) */
+    const accessType = unitAccessType(u);
+    let storeLine;
+    if (accessType === "stores") {
+      const storeCount = (u.boundStores || []).length;
+      storeLine = `<span class="vs-place-access vs-place-access--stores"><i class="fa-solid fa-store"></i> ${storeCount} 間合作門市</span>`;
+    } else if (accessType === "employee") {
+      storeLine = `<span class="vs-place-access vs-place-access--employee"><i class="fa-solid fa-id-badge"></i> 員工專屬・需綁定</span>`;
+    } else {
+      storeLine = `<span class="vs-place-access vs-place-access--universal"><i class="fa-solid fa-globe"></i> 全門市通用</span>`;
+    }
 
     return `
       <article class="vs-place ${palette} ${isActive ? 'is-active' : ''}" data-unit-id="${escapeAttr(u.id)}">
@@ -956,8 +988,10 @@
       : `<i class="fa-solid ${catIcon} vs-detail-cat-icon"></i>`;
 
     const boundStores = u.boundStores || [];
-    const storesHtml = boundStores.length
-      ? `
+    const accessType = unitAccessType(u);
+    let storesHtml;
+    if (accessType === "stores") {
+      storesHtml = `
         <div class="vs-detail-stores">
           <p class="vs-detail-stores-title">合作門市 · ${boundStores.length} 間</p>
           <div class="vs-detail-stores-list">
@@ -968,12 +1002,32 @@
             `).join("")}
           </div>
         </div>
-      `
-      : `
+      `;
+    } else if (accessType === "employee") {
+      storesHtml = `
+        <div class="vs-detail-employee">
+          <div class="vs-detail-employee-head">
+            <i class="fa-solid fa-id-badge"></i>
+            <div>
+              <p class="vs-detail-employee-title">員工專屬優惠</p>
+              <p class="vs-detail-employee-sub">需先完成身份綁定才能享優惠</p>
+            </div>
+          </div>
+          <ol class="vs-detail-employee-steps">
+            <li>跟貴單位索取「特約廠商代碼」</li>
+            <li>完成 LOHAS APP 註冊,取得「會員編號」</li>
+            <li>到下方連結完成綁定</li>
+            <li>到任一 LOHAS 門市,告知會員編號即可享優惠</li>
+          </ol>
+        </div>
+      `;
+    } else {
+      storesHtml = `
         <div class="vs-detail-all-stores">
           <i class="fa-solid fa-globe"></i> 全門市通用 · 任一間樂活門市皆可使用
         </div>
       `;
+    }
 
     const introClean = (u.intro || "").trim();
     const showIntro = introClean && !/^特約編號[::]/.test(introClean);
@@ -994,12 +1048,19 @@
         ${showIntro ? `<p class="vs-detail-intro">${escapeHtml(introClean)}</p>` : ""}
         ${storesHtml}
         <div class="vs-detail-actions">
-          ${boundStores.length ? `
+          ${accessType === "stores" ? `
             <button class="vs-detail-btn vs-detail-btn--solid" type="button"
               data-action="detail-show-on-map" data-unit-id="${escapeAttr(u.id)}">
               <i class="fa-solid fa-map-location-dot"></i>
               在地圖上看
             </button>
+          ` : ""}
+          ${accessType === "employee" ? `
+            <a class="vs-detail-btn vs-detail-btn--solid"
+              href="${APPROVAL_URL}" target="_blank" rel="noopener noreferrer">
+              <i class="fa-solid fa-id-badge"></i>
+              立即綁定身份
+            </a>
           ` : ""}
           <a class="vs-detail-btn vs-detail-btn--ghost"
             href="https://line.me/R/ti/p/@lohas" target="_blank" rel="noopener">
