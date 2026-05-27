@@ -1273,27 +1273,12 @@
 
 
 /* =============================================
-   vipstore 頁面 · 徹底消除 CTA 與 footer 之間的白縫
+   消除 CTA 與 footer 之間的白色空隙
    --------------------------------------------
-   白縫成因可能來自:
-   1. body 預設白底透出
-   2. #site-footer 容器在 layout.js 注入前的空白
-   3. user agent 預設 margin
-
-   解法:全部蓋掉 (三道保險)
+   CTA 放在 .vs-browse 內,但 .vs-browse 有 padding-bottom: 80px,
+   且 .vs-browse 是白底,造成 CTA 結束後有一塊 80px 白色空隙才接到 footer。
+   解法:vipstore 頁面把這個 padding 歸 0。
    ============================================= */
-/* 1. body 整體背景跟 CTA 同色 */
-body[data-page="vipstore"] {
-  background: var(--bg-warm);
-}
-
-/* 2. #site-footer 容器底色設為 footer 棕色,
-      即使 layout.js 還沒注入也不會有白色透出 */
-body[data-page="vipstore"] #site-footer {
-  background: var(--lohas-brand);
-}
-
-/* 3. CTA 區的下緣 margin 強制 0,確保跟 footer 緊貼 */
-body[data-page="vipstore"] .lohas-cta {
-  margin-bottom: 0;
+body[data-page="vipstore"] .vs-browse {
+  padding-bottom: 0;
 }
