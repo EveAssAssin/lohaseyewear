@@ -10,18 +10,6 @@
 .vsp-shell {
   background: var(--bg-warm);
   margin-top: 70px;
-  font-family: var(--font-tc);
-}
-.vsp-shell h1,
-.vsp-shell h2,
-.vsp-shell h3,
-.vsp-shell p,
-.vsp-shell span,
-.vsp-shell a,
-.vsp-shell button,
-.vsp-shell li,
-.vsp-shell ol {
-  font-family: var(--font-tc);
 }
 
 /* ===== 共用 Section ===== */
@@ -112,8 +100,7 @@
   letter-spacing: 2px;
 }
 .vsp-hero-title .accent {
-  color: var(--lohas-brand);
-  font-weight: 600;
+  /* 維持與其他字完全一致,不強調 */
 }
 .vsp-hero-desc {
   font-size: 16px;
