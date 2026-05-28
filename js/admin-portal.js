@@ -4800,7 +4800,7 @@
       const showOn = isShow === '上架';
       // 只有「已通過」且非垃圾桶的圖才能切上下架
       const showToggle = inTrash
-        ? '<span class="md-switch disabled">🗑 垃圾桶</span>'
+        ? '<span class="md-switch disabled">垃圾桶</span>'
         : (d.status === 'approved'
           ? '<button class="md-switch ' + (showOn ? 'on' : 'off') + '" data-act="toggle-show" title="' + (showOn ? '點擊下架' : '點擊上架') + '">' +
               '<span class="md-switch-label">' + (showOn ? '上架' : '下架') + '</span>' +
