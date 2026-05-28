@@ -99,10 +99,11 @@ body { margin:0; padding:24px; background:#F9F8F6; min-height:100vh; font-family
     .lh .pf-designs{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
     .lh .pf-design{cursor:pointer;transition:transform .2s}
     .lh .pf-design:hover{transform:translateY(-3px)}
-    .lh .pf-design-img{aspect-ratio:1/1;background:linear-gradient(135deg,#E5DDC8,#CDBEA2);background-size:cover;background-position:center;border-radius:12px;display:flex;align-items:center;justify-content:center;color:rgba(80,66,45,.4);font-size:13px;font-weight:600;margin-bottom:10px;text-align:center;padding:12px}
-    .lh .pf-design-img.g2{background:linear-gradient(135deg,#CDBEA2,#A8927A)}
-    .lh .pf-design-img.g3{background:linear-gradient(135deg,#D4C5AC,#9D8868)}
-    .lh .pf-design-img.g4{background:linear-gradient(135deg,#A8927A,#765F4A);color:rgba(255,255,255,.55)}
+    .lh .pf-design-img{aspect-ratio:1/1;background:#fff;border:1px solid #ece7db;background-size:cover;background-position:center;border-radius:12px;display:flex;align-items:center;justify-content:center;color:rgba(80,66,45,.4);font-size:13px;font-weight:600;margin-bottom:10px;text-align:center;padding:12px;overflow:hidden}
+    .lh .pf-design-img img{max-width:72%;max-height:72%;width:auto;height:auto;object-fit:contain}
+    .lh .pf-design-img.g2{background:#fff}
+    .lh .pf-design-img.g3{background:#fff}
+    .lh .pf-design-img.g4{background:#fff}
     .lh .pf-design-name{font-size:14px;font-weight:600;color:var(--lohas-brown);margin-bottom:3px;letter-spacing:0.3px}
     .lh .pf-design-meta{font-size:11px;color:var(--lohas-mute);letter-spacing:0.5px}
 
