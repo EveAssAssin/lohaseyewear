@@ -65,7 +65,7 @@
     // 抓上架設計
     const { data: designs } = await sb
       .from('engraving_designs')
-      .select('id, name, image_url, image_url_png, category')
+      .select('id, name, image_url, image_url_png, image_url_svg, category')
       .eq('creator_id', erpid)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
@@ -124,10 +124,12 @@
     const designsHtml = (designs && designs.length > 0)
       ? designs.slice(0, 8).map((d, i) => {
           const grad = grads[i % grads.length];
+          // 跟 market.js 一致:svg → png → jpg fallback
+          const imgUrl = d.image_url_svg || d.image_url_png || d.image_url || '';
           return `
             <div class="pf-design">
-              <div class="pf-design-img ${grad}" ${d.image_url ? `style="background-image:url('${escapeHtml(d.image_url)}')"` : ''}>
-                ${d.image_url ? '' : escapeHtml(d.name || '')}
+              <div class="pf-design-img ${grad}" ${imgUrl ? `style="background-image:url('${escapeHtml(imgUrl)}')"` : ''}>
+                ${imgUrl ? '' : escapeHtml(d.name || '')}
               </div>
               <div class="pf-design-name">${escapeHtml(d.name || '未命名')}</div>
               <div class="pf-design-meta">${escapeHtml(d.category || '圖案')}</div>
