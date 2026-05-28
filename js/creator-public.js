@@ -128,8 +128,8 @@
           const imgUrl = d.image_url_svg || d.image_url_png || d.image_url || '';
           return `
             <div class="pf-design">
-              <div class="pf-design-img ${grad}" ${imgUrl ? `style="background-image:url('${escapeHtml(imgUrl)}')"` : ''}>
-                ${imgUrl ? '' : escapeHtml(d.name || '')}
+              <div class="pf-design-img ${grad}">
+                ${imgUrl ? `<img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(d.name || '')}" loading="lazy">` : escapeHtml(d.name || '')}
               </div>
               <div class="pf-design-name">${escapeHtml(d.name || '未命名')}</div>
               <div class="pf-design-meta">${escapeHtml(d.category || '圖案')}</div>
