@@ -4726,6 +4726,7 @@
 
     document.getElementById('mdFilterStatus')?.addEventListener('change', mdApplyFilters);
     document.getElementById('mdFilterType')?.addEventListener('change', mdApplyFilters);
+    document.getElementById('mdFilterShow')?.addEventListener('change', mdApplyFilters);
     document.getElementById('mdSearch')?.addEventListener('input', debounce(mdApplyFilters, 200));
 
     // 批次改價
@@ -4748,11 +4749,18 @@
   function mdApplyFilters() {
     const status = document.getElementById('mdFilterStatus')?.value || '';
     const type   = document.getElementById('mdFilterType')?.value || '';
+    const show   = document.getElementById('mdFilterShow')?.value || '';
     const q      = (document.getElementById('mdSearch')?.value || '').toLowerCase().trim();
 
     mdState.filtered = mdState.designs.filter(d => {
       if (status && d.status !== status) return false;
       if (type && d.type !== type) return false;
+      if (show) {
+        // is_show 預設沒值視為「上架」;值為「上架」或「下架」
+        const isOn = (d.is_show || '上架') === '上架';
+        if (show === 'on' && !isOn) return false;
+        if (show === 'off' && isOn) return false;
+      }
       if (q) {
         const hay = [d.name, d.slogan, d.designer_name, d.category, d.keywords]
           .map(s => (s || '').toString().toLowerCase())
