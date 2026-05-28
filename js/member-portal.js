@@ -1083,7 +1083,7 @@
 
     const { data, error } = await sb
       .from('engraving_designs')
-      .select('id, name, slogan, category, keywords, image_url, image_url_png, image_url_svg, status, reject_reason, created_at')
+      .select('id, name, slogan, category, keywords, image_url, image_url_png, image_url_svg, status, is_show, reject_reason, created_at')
       .eq('creator_id', State.member.erpid)
       .order('created_at', { ascending: false });
 
@@ -1092,7 +1092,8 @@
       return;
     }
 
-    const designs = data || [];
+    // 排除垃圾桶 (會員自己刪除的不顯示在清單)
+    const designs = (data || []).filter(d => (d.is_show || '上架') !== '垃圾桶');
 
     // Creator 即使沒設計也顯示「+」上傳框 (不顯示 onboard CTA)
     if (designs.length === 0) {
@@ -1117,6 +1118,7 @@
       const grad = grads[i % grads.length];
       const isApproved = d.status === 'approved';
       const isPending = d.status === 'pending';
+      const isOff = isApproved && (d.is_show || '上架') === '下架';  // 已通過但被下架
       // 優先 PNG (透明) → image_url(原始) → SVG
       var coverImg = '';
       var candidates = [d.image_url_png, d.image_url, d.image_url_svg];
@@ -1127,8 +1129,9 @@
           break;
         }
       }
-      const statusLabel = isApproved ? '已 上 架' : isPending ? '審 核 中' : '未 通 過';
-      const statusIcon  = isApproved ? 'check' : isPending ? 'clock' : 'xmark';
+      const statusLabel = isOff ? '已 下 架' : isApproved ? '已 上 架' : isPending ? '審 核 中' : '未 通 過';
+      const statusIcon  = isOff ? 'eye-slash' : isApproved ? 'check' : isPending ? 'clock' : 'xmark';
+      const badgeClass  = isOff ? 'archived' : d.status;
       const wishCount   = wishCounts[d.id] || 0;
       return `
         <div class="photo-card" data-design-id="${d.id}">
@@ -1139,12 +1142,13 @@
                data-category="${escapeHtml(d.category || '')}"
                data-keywords="${escapeHtml(d.keywords || '')}"
                data-status="${d.status}"
+               data-show="${escapeHtml(d.is_show || '上架')}"
                data-wish="${wishCount}"
                data-cover-img="${escapeHtml(coverImg || '')}"
                data-reason="${escapeHtml(d.reject_reason || '')}"
                data-created="${escapeHtml(formatDate(d.created_at))}"
                ${coverImg ? `style="background-image:url('${coverImg}');background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff"` : ''}>
-            <span class="status-badge ${d.status}">
+            <span class="status-badge ${badgeClass}">
               <i class="fa-solid fa-${statusIcon}"></i>${statusLabel}
             </span>
             <div class="photo-cover-dim"></div>
@@ -1152,7 +1156,7 @@
           </div>
           <div class="photo-info">
             <div class="photo-name">${escapeHtml(d.name || '')}</div>
-            <div class="photo-date">${isApproved ? `<i class="fa-solid fa-pencil"></i>被加入我的最愛刻圖 ${wishCount} 次` : (isPending ? '審核通過後開放收藏' : '未通過審核')}</div>
+            <div class="photo-date">${isOff ? '已被管理員下架' : isApproved ? `<i class="fa-solid fa-pencil"></i>被加入我的最愛刻圖 ${wishCount} 次` : (isPending ? '審核通過後開放收藏' : '未通過審核')}</div>
           </div>
         </div>`;
     }).join('') + `
@@ -1175,10 +1179,12 @@
     const name      = cover.dataset.name || '(未命名)';
     const slogan    = cover.dataset.slogan || '';
     const status    = cover.dataset.status || 'pending';
+    const showState = cover.dataset.show || '上架';   // 上架 / 下架 / 垃圾桶
     const wish      = parseInt(cover.dataset.wish, 10) || 0;
     const reason    = cover.dataset.reason || '';
     const created   = cover.dataset.created || '';
     const coverImg  = cover.dataset.coverImg || '';
+    const isOff     = status === 'approved' && showState === '下架';  // 已通過但被下架
 
     // 共用 photo modal 的 DOM 元素
     const modalBg          = document.getElementById('modalBg');
@@ -1204,10 +1210,10 @@
     }
 
     // 狀態 pill
-    const statusLabel = { approved:'已 上 架', pending:'審 核 中', rejected:'未 通 過' }[status] || status;
-    const statusIcon  = { approved:'check',   pending:'clock',     rejected:'xmark'    }[status] || 'circle-info';
+    const statusLabel = isOff ? '已 下 架' : ({ approved:'已 上 架', pending:'審 核 中', rejected:'未 通 過' }[status] || status);
+    const statusIcon  = isOff ? 'eye-slash' : ({ approved:'check',   pending:'clock',     rejected:'xmark'    }[status] || 'circle-info');
     if (modalStatus) {
-      modalStatus.className = 'modal-status ' + status;
+      modalStatus.className = 'modal-status ' + (isOff ? 'archived' : status);
       modalStatus.innerHTML = `<i class="fa-solid fa-${statusIcon}"></i>${statusLabel}`;
     }
 
@@ -1236,6 +1242,16 @@
     if (status === 'rejected') {
       html += '<button class="btn warn" data-action="re-upload-design"><i class="fa-solid fa-rotate"></i> 重新上傳</button>';
     }
+    // 編輯 (所有狀態都可)
+    html += '<button class="btn" data-action="edit-design"><i class="fa-solid fa-pen"></i> 編輯</button>';
+    // 上下架切換 (只有已通過可切)
+    if (status === 'approved') {
+      html += isOff
+        ? '<button class="btn" data-action="toggle-show"><i class="fa-solid fa-eye"></i> 重新上架</button>'
+        : '<button class="btn secondary" data-action="toggle-show"><i class="fa-solid fa-eye-slash"></i> 下架</button>';
+    }
+    // 刪除 (軟刪除到垃圾桶)
+    html += '<button class="btn danger" data-action="trash-design"><i class="fa-solid fa-trash"></i> 刪除</button>';
     html += '<button class="btn secondary" id="designModalCloseBtn">關閉</button>';
     if (modalActions) modalActions.innerHTML = html;
 
@@ -1272,6 +1288,79 @@
           window.LohasUploadDesign.openModalForEdit(design);
         } else if (window.LohasUploadDesign.openModal) {
           window.LohasUploadDesign.openModal();
+        }
+      });
+    }
+
+    // 編輯 (沿用上傳模組的編輯模式)
+    const editBtn = modalActions?.querySelector('[data-action="edit-design"]');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
+        const design = {
+          id, name, slogan,
+          category: cover.dataset.category || '',
+          keywords: cover.dataset.keywords || '',
+          image_url: coverImg,
+          status,
+          reject_reason: reason,
+        };
+        modalBg.classList.remove('on');
+        if (!window.LohasUploadDesign) {
+          alert('編輯模組未載入,請重新整理頁面再試');
+          return;
+        }
+        if (window.LohasUploadDesign.openModalForEdit) {
+          window.LohasUploadDesign.openModalForEdit(design);
+        } else if (window.LohasUploadDesign.openModal) {
+          window.LohasUploadDesign.openModal();
+        }
+      });
+    }
+
+    // 上下架切換
+    const toggleBtn = modalActions?.querySelector('[data-action="toggle-show"]');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', async () => {
+        const sb = getSupabase();
+        if (!sb) return;
+        const newShow = isOff ? '上架' : '下架';
+        toggleBtn.disabled = true;
+        try {
+          const { error } = await sb.from('engraving_designs')
+            .update({ is_show: newShow })
+            .eq('id', id);
+          if (error) throw error;
+          modalBg.classList.remove('on');
+          loadMyDesigns();
+          if (typeof loadAnalytics === 'function') loadAnalytics();
+        } catch (err) {
+          console.error('[my-designs] 上下架失敗:', err);
+          alert('操作失敗:' + err.message);
+          toggleBtn.disabled = false;
+        }
+      });
+    }
+
+    // 刪除 (軟刪除 → 移到垃圾桶)
+    const trashBtn = modalActions?.querySelector('[data-action="trash-design"]');
+    if (trashBtn) {
+      trashBtn.addEventListener('click', async () => {
+        if (!confirm(`確定刪除「${name}」?\n\n· 會從市集下架\n· 移至垃圾桶 (保留資料)\n· 如需復原請聯繫管理員`)) return;
+        const sb = getSupabase();
+        if (!sb) return;
+        trashBtn.disabled = true;
+        try {
+          const { error } = await sb.from('engraving_designs')
+            .update({ is_show: '垃圾桶' })
+            .eq('id', id);
+          if (error) throw error;
+          modalBg.classList.remove('on');
+          loadMyDesigns();
+          if (typeof loadAnalytics === 'function') loadAnalytics();
+        } catch (err) {
+          console.error('[my-designs] 刪除失敗:', err);
+          alert('刪除失敗:' + err.message);
+          trashBtn.disabled = false;
         }
       });
     }
@@ -1571,12 +1660,13 @@
     const totalUsed = (orders || []).length;
     const totalRoyalty = (orders || []).reduce((sum, o) => sum + Number(o.royalty_amount || 0), 0);
 
-    // 上架設計數
-    const { count: listedCount } = await sb
+    // 上架設計數 (只算真正上架的:is_show 非「下架」;NULL 視為上架)
+    const { data: listedRows } = await sb
       .from('engraving_designs')
-      .select('id', { count: 'exact', head: true })
+      .select('id, is_show')
       .eq('creator_id', State.member.erpid)
       .eq('status', 'approved');
+    const listedCount = (listedRows || []).filter(d => (d.is_show || '上架') === '上架').length;
 
     // 套到 KPI
     document.querySelectorAll('[data-stat="usedCount"]').forEach(el => el.textContent = totalUsed);
@@ -1616,7 +1706,7 @@
     if (designPerf) {
       const { data: designs } = await sb
         .from('engraving_designs')
-        .select('id, name, image_url, listed_at, created_at')
+        .select('id, name, image_url, is_show, listed_at, created_at')
         .eq('creator_id', State.member.erpid)
         .eq('status', 'approved');
 
@@ -1645,15 +1735,19 @@
         const thumbs = ['', 't2', 't3'];
         designPerf.innerHTML = designs.map((d, i) => {
           const stats = designStats[d.id];
+          const isOff = (d.is_show || '上架') === '下架';
           const days = d.listed_at
             ? Math.floor((Date.now() - new Date(d.listed_at)) / (1000 * 60 * 60 * 24))
             : 0;
+          const statusMeta = isOff
+            ? '<span style="color:#c0392b">● 已下架</span>'
+            : `已上架 ${days} 天`;
           return `
-            <div class="design-perf-row">
+            <div class="design-perf-row"${isOff ? ' style="opacity:.6"' : ''}>
               <div class="perf-thumb ${thumbs[i % thumbs.length]}"></div>
               <div class="perf-info">
                 <div class="perf-name">${escapeHtml(d.name)}</div>
-                <div class="perf-meta">已上架 ${days} 天 · 被加入我的最愛刻圖 ${wishCounts[d.id]} 次</div>
+                <div class="perf-meta">${statusMeta} · 被加入我的最愛刻圖 ${wishCounts[d.id]} 次</div>
               </div>
               <div class="perf-stats">
                 <div><div class="perf-stat-num purple">${stats.used}</div><div class="perf-stat-lbl">被 使 用</div></div>

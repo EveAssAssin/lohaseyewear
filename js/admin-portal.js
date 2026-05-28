@@ -4753,14 +4753,20 @@
     const q      = (document.getElementById('mdSearch')?.value || '').toLowerCase().trim();
 
     mdState.filtered = mdState.designs.filter(d => {
+      const showVal = d.is_show || '上架';  // NULL 視為上架
+      const inTrash = showVal === '垃圾桶';
+
+      // 垃圾桶篩選:只顯示垃圾桶的;其餘篩選一律排除垃圾桶
+      if (show === 'trash') {
+        if (!inTrash) return false;
+      } else {
+        if (inTrash) return false;  // 平常清單排除垃圾桶
+        if (show === 'on'  && showVal !== '上架') return false;
+        if (show === 'off' && showVal !== '下架') return false;
+      }
+
       if (status && d.status !== status) return false;
       if (type && d.type !== type) return false;
-      if (show) {
-        // is_show 預設沒值視為「上架」;值為「上架」或「下架」
-        const isOn = (d.is_show || '上架') === '上架';
-        if (show === 'on' && !isOn) return false;
-        if (show === 'off' && isOn) return false;
-      }
       if (q) {
         const hay = [d.name, d.slogan, d.designer_name, d.category, d.keywords]
           .map(s => (s || '').toString().toLowerCase())
@@ -4790,14 +4796,17 @@
       const typeLabel = { legacy:'舊官網', member:'官網上傳', store:'門市上傳' }[d.type] || d.type || '--';
       const designer = d.designer_name || '匿名';
       const isShow = d.is_show || '上架';
+      const inTrash = isShow === '垃圾桶';
       const showOn = isShow === '上架';
-      // 只有「已通過」的圖才能切上下架,改用滑桿
-      const showToggle = d.status === 'approved'
-        ? '<button class="md-switch ' + (showOn ? 'on' : 'off') + '" data-act="toggle-show" title="' + (showOn ? '點擊下架' : '點擊上架') + '">' +
-            '<span class="md-switch-label">' + (showOn ? '上架' : '下架') + '</span>' +
-            '<span class="md-switch-track"><span class="md-switch-thumb"></span></span>' +
-          '</button>'
-        : '<span class="md-switch disabled">—</span>';
+      // 只有「已通過」且非垃圾桶的圖才能切上下架
+      const showToggle = inTrash
+        ? '<span class="md-switch disabled">🗑 垃圾桶</span>'
+        : (d.status === 'approved'
+          ? '<button class="md-switch ' + (showOn ? 'on' : 'off') + '" data-act="toggle-show" title="' + (showOn ? '點擊下架' : '點擊上架') + '">' +
+              '<span class="md-switch-label">' + (showOn ? '上架' : '下架') + '</span>' +
+              '<span class="md-switch-track"><span class="md-switch-thumb"></span></span>' +
+            '</button>'
+          : '<span class="md-switch disabled">—</span>');
       // 售價顯示
       const priceText = (d.price && Number(d.price) > 0)
         ? '<span class="md-card-price">$' + Number(d.price) + '</span>'
@@ -4825,11 +4834,16 @@
               '<div class="md-card-likes"><i class="fa-regular fa-heart"></i>' + (d.like_count || 0) + '</div>' +
             '</div>' +
           '</div>' +
-          // 底部按鈕 (icon+文字,常駐)
+          // 底部按鈕 (垃圾桶:只剩永久刪除;一般:編輯+SVG+移至垃圾桶)
           '<div class="md-card-actions">' +
-            '<button class="md-act-btn" data-act="edit"><i class="fa-solid fa-pen"></i> 編輯</button>' +
-            (d.image_url_svg ? '<button class="md-act-btn" data-act="download-svg"><i class="fa-solid fa-file-arrow-down"></i> SVG</button>' : '') +
-            '<button class="md-act-btn danger" data-act="delete"><i class="fa-solid fa-trash"></i> 刪除</button>' +
+            (inTrash
+              ? '<button class="md-act-btn danger" data-act="purge"><i class="fa-solid fa-trash-can"></i> 永久刪除</button>'
+              : (
+                '<button class="md-act-btn" data-act="edit"><i class="fa-solid fa-pen"></i> 編輯</button>' +
+                (d.image_url_svg ? '<button class="md-act-btn" data-act="download-svg"><i class="fa-solid fa-file-arrow-down"></i> SVG</button>' : '') +
+                '<button class="md-act-btn danger" data-act="delete"><i class="fa-solid fa-trash"></i> 刪除</button>'
+              )
+            ) +
           '</div>' +
         '</div>'
       );
@@ -4842,8 +4856,12 @@
         const id  = card.dataset.id;
         if (act === 'edit')         { mdOpenEditModal(id); return; }
         if (act === 'delete')       { mdDeleteDesign(id); return; }
+        if (act === 'purge')        { mdPurgeDesign(id); return; }
         if (act === 'toggle-show')  { mdToggleShow(id); return; }
         if (act === 'download-svg') { mdDownloadSvg(id); return; }
+        // 垃圾桶的卡:點其他地方不開編輯
+        const dd = mdState.designs.find(x => String(x.id) === String(id));
+        if (dd && (dd.is_show || '上架') === '垃圾桶') return;
         // 點卡片其他地方 → 直接開編輯 Modal
         mdOpenEditModal(id);
       });
@@ -5040,11 +5058,38 @@
     }
   }
 
+  // 軟刪除:移到垃圾桶 (is_show = '垃圾桶'),資料與圖檔都保留
   async function mdDeleteDesign(id) {
     const d = mdState.designs.find(x => String(x.id) === String(id));
     if (!d) return;
 
-    if (!confirm(`確定刪除「${d.name || '(未命名)'}」?\n\n⚠️ 這個動作會永久刪除:\n· 資料庫紀錄\n· Storage 內的圖檔(PNG + SVG)\n\n無法復原`)) return;
+    if (!confirm(`確定將「${d.name || '(未命名)'}」移至垃圾桶?\n\n· 會從市集下架\n· 可在「垃圾桶」篩選中找到\n· 資料與圖檔都保留`)) return;
+
+    const sb = getSb();
+    if (!sb) return;
+
+    try {
+      const { error } = await sb.from('engraving_designs')
+        .update({ is_show: '垃圾桶' })
+        .eq('id', id);
+      if (error) throw error;
+
+      d.is_show = '垃圾桶';
+      mdApplyFilters();
+      alert('已移至垃圾桶');
+
+    } catch (err) {
+      console.error('[manage-designs] 移至垃圾桶失敗:', err);
+      alert('操作失敗:' + err.message);
+    }
+  }
+
+  // 永久刪除:真的從資料庫 + Storage 移除 (只有垃圾桶內的才能用)
+  async function mdPurgeDesign(id) {
+    const d = mdState.designs.find(x => String(x.id) === String(id));
+    if (!d) return;
+
+    if (!confirm(`確定永久刪除「${d.name || '(未命名)'}」?\n\n⚠️ 這個動作會永久刪除:\n· 資料庫紀錄\n· Storage 內的圖檔(PNG + SVG)\n\n無法復原!`)) return;
 
     const sb = getSb();
     if (!sb) return;
@@ -5076,10 +5121,10 @@
       // 3. 同步本地狀態
       mdState.designs = mdState.designs.filter(x => String(x.id) !== String(id));
       mdApplyFilters();
-      alert('已刪除');
+      alert('已永久刪除');
 
     } catch (err) {
-      console.error('[manage-designs] 刪除失敗:', err);
+      console.error('[manage-designs] 永久刪除失敗:', err);
       alert('刪除失敗:' + err.message);
     }
   }

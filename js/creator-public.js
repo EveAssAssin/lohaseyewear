@@ -63,12 +63,15 @@
     } catch (e) { console.warn('[計數失敗]', e); }
 
     // 抓上架設計
-    const { data: designs } = await sb
+    const { data: designsRaw } = await sb
       .from('engraving_designs')
-      .select('id, name, image_url, image_url_png, image_url_svg, category')
+      .select('id, name, image_url, image_url_png, image_url_svg, category, is_show')
       .eq('creator_id', erpid)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
+
+    // 排除已下架 / 垃圾桶 (is_show NULL 視為上架)
+    const designs = (designsRaw || []).filter(d => (d.is_show || '上架') === '上架');
 
     // 抓累計使用次數
     let totalUsed = 0;

@@ -95,7 +95,7 @@
       .select(`
         id, legacy_id, name, slogan, keywords, designer_name, category,
         image_url, image_url_png, image_url_svg, like_count, share_count, collect_count,
-        detail_url, type, status, created_at, creator_id
+        detail_url, type, status, is_show, created_at, creator_id
       `)
       .eq('status', 'approved')
       .order('created_at', { ascending: false })
@@ -103,8 +103,13 @@
 
     if(error) throw error;
 
+    // 排除已下架 / 垃圾桶 (is_show NULL 視為上架)
+    var rows = (data || []).filter(function(d){
+      return (d.is_show || '上架') === '上架';
+    });
+
     // 整理 → 統一資料結構
-    State.designs = (data || []).map(function(d){
+    State.designs = rows.map(function(d){
       return {
         id: d.id,
         legacyId: d.legacy_id,
