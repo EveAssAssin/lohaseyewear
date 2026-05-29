@@ -1323,11 +1323,24 @@
       toggleBtn.addEventListener('click', async () => {
         const sb = getSupabase();
         if (!sb) return;
-        const newShow = isOff ? '上架' : '下架';
+
+        // 下架 → 上架:要重走審核流程
+        // 上架 → 下架:直接下架
+        let updates;
+        if (isOff) {
+          // 重新上架 → 重走審核
+          if (!confirm(`確定要重新上架「${name}」?\n\n· 重新上架需要重新走刻圖審核流程\n· 通過後才會再次出現在市集`)) return;
+          updates = { status: 'pending', is_show: '上架' };
+        } else {
+          // 下架
+          if (!confirm(`確定下架「${name}」?\n\n· 會從市集隱藏\n· 重新上架需重新走審核流程`)) return;
+          updates = { is_show: '下架' };
+        }
+
         toggleBtn.disabled = true;
         try {
           const { error } = await sb.from('engraving_designs')
-            .update({ is_show: newShow })
+            .update(updates)
             .eq('id', id);
           if (error) throw error;
           modalBg.classList.remove('on');
@@ -1345,7 +1358,7 @@
     const trashBtn = modalActions?.querySelector('[data-action="trash-design"]');
     if (trashBtn) {
       trashBtn.addEventListener('click', async () => {
-        if (!confirm(`確定刪除「${name}」?\n\n· 會從市集下架\n· 刪除後無法自行恢復`)) return;
+        if (!confirm(`確定刪除「${name}」?\n\n· 會從市集下架\n· 刪除後永久無法恢復上架`)) return;
         const sb = getSupabase();
         if (!sb) return;
         trashBtn.disabled = true;
