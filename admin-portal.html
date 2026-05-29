@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
   <link rel="stylesheet" href="css/admin-portal.css?v=20260510-1720">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260524b">
+  <link rel="stylesheet" href="css/admin-portal-categories.css?v=20260528">
   <link rel="stylesheet" href="css/admin-portal-featured-modal.css?v=20260525">
 
 </head>
@@ -99,6 +100,9 @@
     </button>
     <button class="nav-link" data-page="cm-footer">
       <i class="fa-regular fa-window-maximize"></i><span>頁尾管理</span>
+    </button>
+    <button class="nav-link" data-page="cm-categories">
+      <i class="fa-solid fa-tags"></i><span>分類管理</span>
     </button>
   </div>
 
@@ -928,6 +932,30 @@
     <!-- ============= 頁尾管理 ============= -->
     <div class="content-page" data-page="cm-footer">
       <!-- 內容由 js/admin-portal-footer.js 動態渲染 -->
+    </div>
+
+    <!-- ============= 分類管理 ============= -->
+    <div class="content-page" data-page="cm-categories">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">分類管理</h1>
+          <div class="page-sub" id="catListSub">— 個主分類</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn-primary" id="catAddMainBtn">
+            <i class="fa-solid fa-plus"></i> 新增主分類
+          </button>
+        </div>
+      </div>
+
+      <div class="cat-hint">
+        <i class="fa-solid fa-circle-info"></i>
+        分類用於 market 刻圖市集、gallery 等所有頁面。停用的分類不會出現在前台,但歷史資料仍保留對應。
+      </div>
+
+      <div id="catList" class="cat-list">
+        <div class="cat-loading">載入中…</div>
+      </div>
     </div>
 
     <!-- ============= 授權聯名管理 ============= -->
@@ -1808,6 +1836,7 @@
 <!-- 後台主邏輯 -->
 <script src="js/admin-portal.js?v=20260518-modalfix"></script>
 <script src="js/admin-portal-footer.js?v=20260524"></script>
+<script src="js/admin-portal-categories.js?v=20260528"></script>
 
 </body>
 </html>
