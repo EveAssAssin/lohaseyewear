@@ -6945,9 +6945,7 @@
       setVal('news_category', 'story');
       setVal('news_homepage_link_type', 'news_detail');
       // CTA checkbox 重置
-      const ctaStore = document.getElementById('news_cta_store');
       const ctaStudent = document.getElementById('news_cta_student');
-      if (ctaStore) ctaStore.checked = false;
       if (ctaStudent) ctaStudent.checked = false;
       updateLinkUrlVisibility();
 
@@ -6992,9 +6990,7 @@
 
       // 載入 CTA 設定 (從 cta_buttons 陣列讀)
       const ctaList = Array.isArray(n.cta_buttons) ? n.cta_buttons : [];
-      const ctaStore = document.getElementById('news_cta_store');
       const ctaStudent = document.getElementById('news_cta_student');
-      if (ctaStore) ctaStore.checked = ctaList.includes('store');
       if (ctaStudent) ctaStudent.checked = ctaList.includes('student');
 
       setImagePreview('news_cover_preview', n.cover_image_url);
@@ -7113,9 +7109,8 @@
           console.log('[news save] homepage 上傳成功:', homepageImgUrl);
         }
 
-        // 收集 CTA 按鈕 (chechbox)
+        // 收集 CTA 按鈕 (門市永遠有,這裡只記大學生)
         const ctaButtons = [];
-        if (document.getElementById('news_cta_store')?.checked) ctaButtons.push('store');
         if (document.getElementById('news_cta_student')?.checked) ctaButtons.push('student');
 
         const payload = {
@@ -7198,7 +7193,6 @@
         homepage_link_url: val('news_homepage_link_url'),
         cta_buttons: (() => {
           const arr = [];
-          if (document.getElementById('news_cta_store')?.checked) arr.push('store');
           if (document.getElementById('news_cta_student')?.checked) arr.push('student');
           return arr;
         })(),

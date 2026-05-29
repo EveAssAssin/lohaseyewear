@@ -145,35 +145,19 @@
     const btnWrap = document.getElementById('ndCtaBtns');
     if (!section || !btnWrap) return;
 
-    if (!ctaList || ctaList.length === 0) {
-      section.style.display = 'none';
-      return;
-    }
+    // 門市永遠顯示, 大學生依後台勾選決定
+    const showStudent = Array.isArray(ctaList) && ctaList.includes('student');
 
-    const CTA_DEFS = {
-      store: {
-        href: 'allstore.html',
-        icon: 'fa-solid fa-location-dot',
-        label: '門市據點',
-        target: ''
-      },
-      student: {
-        href: 'https://student.lohasglasses.com/',
-        icon: 'fa-solid fa-graduation-cap',
-        label: '大學生入口',
-        target: '_blank'
-      }
-    };
-
-    const html = ctaList.map((key, i) => {
-      const cfg = CTA_DEFS[key];
-      if (!cfg) return '';
-      const btnClass = i === 0 ? 'lohas-cta-btn lohas-cta-btn--solid' : 'lohas-cta-btn lohas-cta-btn--outline';
-      const targetAttr = cfg.target ? ` target="${cfg.target}" rel="noopener"` : '';
-      return `<a href="${cfg.href}" class="${btnClass}"${targetAttr}>
-        <i class="${cfg.icon}"></i>${cfg.label}
+    // 第一顆: 門市 (solid)
+    let html = `<a href="allstore.html" class="lohas-cta-btn lohas-cta-btn--solid">
+      <i class="fa-solid fa-location-dot"></i>門市據點
+    </a>`;
+    // 第二顆: 大學生 (ghost)
+    if (showStudent) {
+      html += `<a href="https://student.lohasglasses.com/" class="lohas-cta-btn lohas-cta-btn--ghost" target="_blank" rel="noopener">
+        <i class="fa-solid fa-graduation-cap"></i>大學生入口
       </a>`;
-    }).join('');
+    }
 
     btnWrap.innerHTML = html;
     section.style.display = '';
