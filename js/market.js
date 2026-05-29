@@ -25,6 +25,10 @@
     activeTier: 'all',
     searchTerm: '',
     member: null,
+    // 主題分類 (categories 表)
+    categories: [],        // [{id, name, subs:[{id,name}]}]
+    activeMainCat: '',     // 選中的主分類 name ('' = 全部)
+    activeSubCat: '',      // 選中的子分類 name ('' = 該主分類全部)
   };
 
   var root, ovl, toast;
@@ -67,6 +71,13 @@
       console.log('[market] 載入', State.collabs.length, '個聯名');
     } catch(e) {
       console.warn('[market] 聯名載入失敗:', e);
+    }
+
+    try {
+      await loadCategories();
+      renderTopicFilter();
+    } catch(e) {
+      console.warn('[market] 主題分類載入失敗:', e);
     }
 
     await renderFeatured();
@@ -471,6 +482,127 @@
   }
 
 
+  // ===== 主題分類 (categories 表) =====
+  async function loadCategories(){
+    var sb = window.LohasSupabase?.getClient?.()
+          || window.LohasApi?.supabase
+          || window.supabase;
+    if(!sb) return;
+
+    var { data, error } = await sb
+      .from('categories')
+      .select('id, parent_id, name, sort_order, is_active')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+    if(error) throw error;
+
+    var mains = [], subsByParent = {};
+    (data || []).forEach(function(c){
+      if(c.parent_id == null) mains.push({ id:c.id, name:c.name, subs:[] });
+      else (subsByParent[c.parent_id] = subsByParent[c.parent_id] || []).push(c);
+    });
+    mains.forEach(function(m){
+      m.subs = (subsByParent[m.id] || []).sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
+    });
+    State.categories = mains;
+  }
+
+  function renderTopicFilter(){
+    var box = document.getElementById('topicFilter');
+    if(!box) return;
+
+    if(!State.categories.length){
+      box.innerHTML = '<div class="topic-loading">尚無分類</div>';
+      return;
+    }
+
+    var html = '';
+    // 「全部主題」
+    html += '<button class="topic-main ' + (State.activeMainCat === '' ? 'on' : '') + '" data-main="">全部主題</button>';
+
+    State.categories.forEach(function(m){
+      var isOpen = State.activeMainCat === m.name;
+      html += '<div class="topic-group ' + (isOpen ? 'open' : '') + '">';
+      html += '<button class="topic-main ' + (isOpen ? 'on' : '') + '" data-main="' + escapeHtml(m.name) + '">' +
+                escapeHtml(m.name) +
+                (m.subs.length ? '<i class="fa-solid fa-chevron-down topic-arrow"></i>' : '') +
+              '</button>';
+      if(m.subs.length){
+        html += '<div class="topic-subs">';
+        // 該主分類「全部」
+        html += '<button class="topic-sub ' + (isOpen && State.activeSubCat === '' ? 'on' : '') + '" data-main="' + escapeHtml(m.name) + '" data-sub="">全部</button>';
+        m.subs.forEach(function(s){
+          html += '<button class="topic-sub ' + (isOpen && State.activeSubCat === s.name ? 'on' : '') + '" data-main="' + escapeHtml(m.name) + '" data-sub="' + escapeHtml(s.name) + '">' + escapeHtml(s.name) + '</button>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+
+    box.innerHTML = html;
+    bindTopicFilter();
+  }
+
+  function bindTopicFilter(){
+    var box = document.getElementById('topicFilter');
+    if(!box) return;
+
+    box.querySelectorAll('.topic-main').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var main = btn.dataset.main;
+        if(State.activeMainCat === main){
+          // 再點一次收合 (回到全部)
+          if(main !== ''){ State.activeMainCat = ''; State.activeSubCat = ''; }
+        } else {
+          State.activeMainCat = main;
+          State.activeSubCat = '';
+        }
+        renderTopicFilter();
+        applyTopicFilter();
+      });
+    });
+
+    box.querySelectorAll('.topic-sub').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        State.activeMainCat = btn.dataset.main;
+        State.activeSubCat = btn.dataset.sub;
+        renderTopicFilter();
+        applyTopicFilter();
+      });
+    });
+  }
+
+  // 套用主題分類篩選 (category=主分類、keywords=子分類)
+  function applyTopicFilter(){
+    // 有選主題就要展開全部 creator 作品 (否則只篩到已 render 的前 9 件)
+    if(State.activeMainCat){
+      ensureAllCreatorRendered();
+    }
+    root.querySelectorAll('.design-card').forEach(function(card){
+      var id = card.dataset.id;
+      var d = State.designs.find(function(x){ return String(x.id) === String(id); });
+      if(!d){ return; }
+
+      var show = true;
+      if(State.activeMainCat){
+        show = (d.category === State.activeMainCat);
+        if(show && State.activeSubCat){
+          // keywords 可能是逗號分隔,用包含判斷
+          var kw = (d.keywords || '');
+          show = kw.split(',').map(function(s){ return s.trim(); }).indexOf(State.activeSubCat) >= 0
+                 || kw === State.activeSubCat;
+        }
+      }
+      // 跟搜尋條件一起 (兩者都要滿足)
+      if(show && State.searchTerm){
+        var hay = [d.name, d.slogan, d.keywords, d.designer, d.category].join(' ').toLowerCase();
+        show = hay.indexOf(State.searchTerm.toLowerCase()) >= 0;
+      }
+      card.style.display = show ? '' : 'none';
+    });
+  }
+
+
   // ===== Sidebar 分類切換 =====
   function bindCategoryFilter(){
     root.querySelectorAll('.cat-btn').forEach(function(btn){
@@ -524,21 +656,11 @@
   }
 
   function applySearch(){
-    var term = State.searchTerm.toLowerCase();
-    // 一旦輸入搜尋詞,自動展開全部 creator 作品再過濾
-    // (不展開的話只能搜到前 9 件已 render 的 DOM)
-    if(term){
+    // 統一走 applyTopicFilter (它同時處理主題分類 + 搜尋)
+    if(State.searchTerm){
       ensureAllCreatorRendered();
     }
-    root.querySelectorAll('.design-card').forEach(function(card){
-      if(!term){ card.style.display = ''; return; }
-      var id = card.dataset.id;
-      var d = State.designs.find(function(x){ return String(x.id) === String(id); });
-      if(!d){ card.style.display = 'none'; return; }
-      var haystack = [d.name, d.slogan, d.keywords, d.designer, d.category]
-        .join(' ').toLowerCase();
-      card.style.display = haystack.indexOf(term) >= 0 ? '' : 'none';
-    });
+    applyTopicFilter();
   }
 
 
