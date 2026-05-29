@@ -518,25 +518,12 @@
 
     var html = '';
     // 「全部主題」
-    html += '<button class="topic-main ' + (State.activeMainCat === '' ? 'on' : '') + '" data-main="">全部主題</button>';
+    html += '<button class="topic-main ' + (State.activeMainCat === '' ? 'on' : '') + '" data-main="">全部</button>';
 
+    // 只列主分類 (不展開子分類)
     State.categories.forEach(function(m){
-      var isOpen = State.activeMainCat === m.name;
-      html += '<div class="topic-group ' + (isOpen ? 'open' : '') + '">';
-      html += '<button class="topic-main ' + (isOpen ? 'on' : '') + '" data-main="' + escapeHtml(m.name) + '">' +
-                escapeHtml(m.name) +
-                (m.subs.length ? '<i class="fa-solid fa-chevron-down topic-arrow"></i>' : '') +
-              '</button>';
-      if(m.subs.length){
-        html += '<div class="topic-subs">';
-        // 該主分類「全部」
-        html += '<button class="topic-sub ' + (isOpen && State.activeSubCat === '' ? 'on' : '') + '" data-main="' + escapeHtml(m.name) + '" data-sub="">全部</button>';
-        m.subs.forEach(function(s){
-          html += '<button class="topic-sub ' + (isOpen && State.activeSubCat === s.name ? 'on' : '') + '" data-main="' + escapeHtml(m.name) + '" data-sub="' + escapeHtml(s.name) + '">' + escapeHtml(s.name) + '</button>';
-        });
-        html += '</div>';
-      }
-      html += '</div>';
+      var on = State.activeMainCat === m.name;
+      html += '<button class="topic-main ' + (on ? 'on' : '') + '" data-main="' + escapeHtml(m.name) + '">' + escapeHtml(m.name) + '</button>';
     });
 
     box.innerHTML = html;
@@ -549,23 +536,8 @@
 
     box.querySelectorAll('.topic-main').forEach(function(btn){
       btn.addEventListener('click', function(){
-        var main = btn.dataset.main;
-        if(State.activeMainCat === main){
-          // 再點一次收合 (回到全部)
-          if(main !== ''){ State.activeMainCat = ''; State.activeSubCat = ''; }
-        } else {
-          State.activeMainCat = main;
-          State.activeSubCat = '';
-        }
-        renderTopicFilter();
-        applyTopicFilter();
-      });
-    });
-
-    box.querySelectorAll('.topic-sub').forEach(function(btn){
-      btn.addEventListener('click', function(){
         State.activeMainCat = btn.dataset.main;
-        State.activeSubCat = btn.dataset.sub;
+        State.activeSubCat = '';   // 只用主分類篩選
         renderTopicFilter();
         applyTopicFilter();
       });
