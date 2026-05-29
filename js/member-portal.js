@@ -1248,7 +1248,7 @@
     if (status === 'approved') {
       html += isOff
         ? '<button class="btn" data-action="toggle-show"><i class="fa-solid fa-eye"></i> 重新上架</button>'
-        : '<button class="btn secondary" data-action="toggle-show"><i class="fa-solid fa-eye-slash"></i> 下架</button>';
+        : '<button class="btn" data-action="toggle-show"><i class="fa-solid fa-eye-slash"></i> 下架</button>';
     }
     // 刪除 (軟刪除到垃圾桶)
     html += '<button class="btn danger" data-action="trash-design"><i class="fa-solid fa-trash"></i> 刪除</button>';
@@ -1345,7 +1345,7 @@
     const trashBtn = modalActions?.querySelector('[data-action="trash-design"]');
     if (trashBtn) {
       trashBtn.addEventListener('click', async () => {
-        if (!confirm(`確定刪除「${name}」?\n\n· 會從市集下架\n· 移至垃圾桶 (保留資料)\n· 如需復原請聯繫管理員`)) return;
+        if (!confirm(`確定刪除「${name}」?\n\n· 會從市集下架\n· 刪除後無法自行恢復`)) return;
         const sb = getSupabase();
         if (!sb) return;
         trashBtn.disabled = true;
