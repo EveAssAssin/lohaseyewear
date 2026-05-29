@@ -397,18 +397,16 @@
 }
 .cm .cat-btn.on .cat-count{ color:rgba(255,255,255,0.7) }
 
-/* ===== 主題分類 (categories) ===== */
-.cm .market-sidebar .sidebar-title + .topic-filter{ margin-top:0 }
-.cm #topicFilter ~ .sidebar-title,
-.cm .sidebar-title:nth-of-type(2){ margin-top:24px }
+/* ===== 主題分類 (categories,只顯示主分類) ===== */
+.cm .sidebar-title.topic-title{ margin-top:36px; padding-top:20px; border-top:1px solid var(--lohas-line, #ece7db) }
 .cm .topic-loading{ font-size:13px; color:var(--tmu); padding:8px 6px }
 
-.cm .topic-filter{ display:flex; flex-direction:column; gap:2px }
+.cm .topic-filter{ display:flex; flex-direction:column; gap:4px }
 
 .cm .topic-main{
   display:flex; align-items:center; justify-content:space-between;
   width:100%;
-  padding:10px 16px;
+  padding:11px 16px;
   background:transparent; border:0;
   color:var(--lohas-text);
   font-family:inherit; font-size:14px; font-weight:500;
@@ -416,34 +414,7 @@
   transition:all .15s; text-align:left; letter-spacing:0.3px;
 }
 .cm .topic-main:hover{ background:var(--bg-soft); color:var(--lohas-brand) }
-.cm .topic-main.on{ color:var(--lohas-brand); font-weight:600 }
-
-.cm .topic-arrow{
-  font-size:10px; color:var(--tmu);
-  transition:transform .2s;
-}
-.cm .topic-group.open .topic-arrow{ transform:rotate(180deg); color:var(--lohas-brand) }
-
-.cm .topic-subs{
-  display:none;
-  flex-direction:column; gap:1px;
-  padding:2px 0 6px 14px;
-  margin-left:8px;
-  border-left:1px solid var(--lohas-line, #ece7db);
-}
-.cm .topic-group.open .topic-subs{ display:flex }
-
-.cm .topic-sub{
-  width:100%; text-align:left;
-  padding:7px 12px;
-  background:transparent; border:0;
-  color:var(--lohas-text-soft, #6b6358);
-  font-family:inherit; font-size:13px; font-weight:400;
-  cursor:pointer; border-radius:6px;
-  transition:all .15s;
-}
-.cm .topic-sub:hover{ background:var(--bg-soft); color:var(--lohas-brand) }
-.cm .topic-sub.on{ background:var(--lohas-brand); color:#fff; font-weight:500 }
+.cm .topic-main.on{ background:var(--lohas-brand); color:#fff; font-weight:600 }
 
 .cm .market-content{ min-width:0 }
 .cm .market-block{ margin-bottom:48px }
@@ -1203,6 +1174,37 @@
     border-color:var(--lohas-brand);
   }
   .cm .cat-btn .cat-count{ display:none }
+
+  /* 手機版主題分類:標題顯示當分隔、按鈕橫向捲動 chip */
+  .cm .sidebar-title.topic-title{
+    display:block;
+    margin-top:18px;
+    margin-bottom:10px;
+  }
+  .cm .topic-filter{
+    flex-direction:row;
+    overflow-x:auto;
+    gap:8px;
+    padding-bottom:6px;
+    scrollbar-width:none;
+  }
+  .cm .topic-filter::-webkit-scrollbar{ display:none }
+  .cm .topic-main{
+    height:36px;
+    padding:0 16px;
+    border:1px solid var(--lohas-line);
+    border-radius:var(--r-pill);
+    background:#fff;
+    font-size:13px;
+    white-space:nowrap;
+    width:auto;
+    flex-shrink:0;
+  }
+  .cm .topic-main.on{
+    background:var(--lohas-brand);
+    color:#fff;
+    border-color:var(--lohas-brand);
+  }
 
   .cm .design-grid{ grid-template-columns:repeat(2, 1fr); gap:12px }
   .cm .design-cover img{ max-width:78%; max-height:78% }
