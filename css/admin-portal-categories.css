@@ -1,0 +1,188 @@
+/* ============================================================
+   admin-portal-categories.css · 分類管理頁面樣式
+   ============================================================ */
+
+.cat-hint {
+  background: #fafaf7;
+  border: 1px solid #e4e0d6;
+  border-left: 3px solid var(--lohas-brand, #c89f5c);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.7;
+}
+.cat-hint i { color: var(--lohas-brand, #c89f5c); margin-right: 6px; }
+
+.cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 40px;
+}
+
+.cat-loading, .cat-empty {
+  text-align: center;
+  color: #999;
+  padding: 60px 20px;
+  font-size: 14px;
+}
+
+/* === 主分類卡 === */
+.cat-block {
+  background: #fff;
+  border: 1px solid #e4e0d6;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+.cat-block.inactive { opacity: .55; background: #fafafa; }
+.cat-block:hover { box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+
+.cat-main-row {
+  display: flex; align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #faf6ea;
+  border-bottom: 1px solid #e4e0d6;
+}
+
+.cat-toggle {
+  width: 28px; height: 28px;
+  background: transparent; border: none;
+  color: #888; cursor: pointer;
+  border-radius: 4px;
+  transition: transform .2s, background .15s;
+}
+.cat-toggle:hover { background: rgba(0,0,0,.05); color: #444; }
+.cat-block.collapsed .cat-toggle { transform: rotate(-90deg); }
+.cat-block.collapsed .cat-subs { display: none; }
+
+.cat-main-info {
+  flex: 1;
+  display: flex; align-items: center; gap: 12px;
+  min-width: 0;
+}
+.cat-main-info .cat-name-input {
+  font-size: 15px; font-weight: 700;
+  color: #222;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 6px;
+  flex: 1; min-width: 0;
+  max-width: 320px;
+  outline: none;
+  transition: background .15s, border-color .15s;
+}
+.cat-main-info .cat-name-input:hover { background: rgba(255,255,255,.6); }
+.cat-main-info .cat-name-input:focus { background: #fff; border-color: var(--lohas-brand, #c89f5c); }
+
+.cat-meta {
+  font-size: 12px; color: #888;
+  white-space: nowrap;
+}
+
+/* === 操作按鈕區 === */
+.cat-actions {
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+}
+.cat-move, .cat-del {
+  width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #fff; border: 1px solid #e4e0d6;
+  color: #666; cursor: pointer;
+  border-radius: 6px; font-size: 11px;
+  transition: all .15s;
+}
+.cat-move:hover:not(:disabled) { border-color: var(--lohas-brand, #c89f5c); color: var(--lohas-brand, #c89f5c); }
+.cat-move:disabled { opacity: .35; cursor: not-allowed; }
+.cat-del:hover { border-color: #c62828; color: #c62828; background: rgba(231,76,60,.05); }
+
+/* 啟用/停用切換 (mini switch) */
+.cat-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px; height: 20px;
+  flex-shrink: 0;
+}
+.cat-switch input { opacity: 0; width: 0; height: 0; }
+.cat-switch span {
+  position: absolute; cursor: pointer;
+  inset: 0;
+  background: #ccc;
+  border-radius: 20px;
+  transition: background .2s;
+}
+.cat-switch span::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+}
+.cat-switch input:checked + span { background: var(--lohas-brand, #c89f5c); }
+.cat-switch input:checked + span::before { transform: translateX(16px); }
+
+/* === 子分類 === */
+.cat-subs {
+  padding: 8px 12px 12px 50px;
+  display: flex; flex-direction: column;
+  gap: 6px;
+}
+
+.cat-sub-row {
+  display: flex; align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background .15s;
+}
+.cat-sub-row:hover { background: #fafaf7; }
+.cat-sub-row.inactive { opacity: .55; }
+.cat-sub-row .cat-name-input {
+  font-size: 13.5px;
+  color: #444;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 5px 8px;
+  border-radius: 5px;
+  flex: 1; min-width: 0;
+  max-width: 280px;
+  outline: none;
+  transition: background .15s, border-color .15s;
+}
+.cat-sub-row .cat-name-input:hover { background: #fff; }
+.cat-sub-row .cat-name-input:focus { background: #fff; border-color: var(--lohas-brand, #c89f5c); }
+
+.cat-add-sub {
+  display: inline-flex; align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px dashed #d4cfc0;
+  color: #888;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 4px;
+  transition: all .15s;
+}
+.cat-add-sub:hover {
+  border-color: var(--lohas-brand, #c89f5c);
+  color: var(--lohas-brand, #c89f5c);
+  background: rgba(200, 159, 92, 0.05);
+}
+
+/* === RWD === */
+@media (max-width: 720px) {
+  .cat-subs { padding-left: 24px; }
+  .cat-main-info .cat-name-input { max-width: 180px; font-size: 14px; }
+  .cat-sub-row .cat-name-input { max-width: 160px; }
+  .cat-meta { display: none; }
+}
