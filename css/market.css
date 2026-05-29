@@ -397,6 +397,54 @@
 }
 .cm .cat-btn.on .cat-count{ color:rgba(255,255,255,0.7) }
 
+/* ===== 主題分類 (categories) ===== */
+.cm .market-sidebar .sidebar-title + .topic-filter{ margin-top:0 }
+.cm #topicFilter ~ .sidebar-title,
+.cm .sidebar-title:nth-of-type(2){ margin-top:24px }
+.cm .topic-loading{ font-size:13px; color:var(--tmu); padding:8px 6px }
+
+.cm .topic-filter{ display:flex; flex-direction:column; gap:2px }
+
+.cm .topic-main{
+  display:flex; align-items:center; justify-content:space-between;
+  width:100%;
+  padding:10px 16px;
+  background:transparent; border:0;
+  color:var(--lohas-text);
+  font-family:inherit; font-size:14px; font-weight:500;
+  cursor:pointer; border-radius:var(--r-sm, 8px);
+  transition:all .15s; text-align:left; letter-spacing:0.3px;
+}
+.cm .topic-main:hover{ background:var(--bg-soft); color:var(--lohas-brand) }
+.cm .topic-main.on{ color:var(--lohas-brand); font-weight:600 }
+
+.cm .topic-arrow{
+  font-size:10px; color:var(--tmu);
+  transition:transform .2s;
+}
+.cm .topic-group.open .topic-arrow{ transform:rotate(180deg); color:var(--lohas-brand) }
+
+.cm .topic-subs{
+  display:none;
+  flex-direction:column; gap:1px;
+  padding:2px 0 6px 14px;
+  margin-left:8px;
+  border-left:1px solid var(--lohas-line, #ece7db);
+}
+.cm .topic-group.open .topic-subs{ display:flex }
+
+.cm .topic-sub{
+  width:100%; text-align:left;
+  padding:7px 12px;
+  background:transparent; border:0;
+  color:var(--lohas-text-soft, #6b6358);
+  font-family:inherit; font-size:13px; font-weight:400;
+  cursor:pointer; border-radius:6px;
+  transition:all .15s;
+}
+.cm .topic-sub:hover{ background:var(--bg-soft); color:var(--lohas-brand) }
+.cm .topic-sub.on{ background:var(--lohas-brand); color:#fff; font-weight:500 }
+
 .cm .market-content{ min-width:0 }
 .cm .market-block{ margin-bottom:48px }
 .cm .market-block:last-child{ margin-bottom:0 }
