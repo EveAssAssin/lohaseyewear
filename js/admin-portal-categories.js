@@ -11,9 +11,9 @@
 (function () {
   'use strict';
 
-  // 取得 Supabase client
+  // 取得 Supabase client (跟 admin-portal-footer 一致)
   function getSb() {
-    return (window.LohasApi && window.LohasApi.supabase) || window.supabase || null;
+    return window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
   }
 
   // 容器
