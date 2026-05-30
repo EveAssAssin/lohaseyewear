@@ -3915,10 +3915,18 @@
 
 /* ===== 客服對話視窗 ===== */
 .ad .md-btn-chat{
+  position:relative;
   background:#fff; border:1px solid var(--lohas-brand, #c89f5c);
   color:var(--lohas-brand, #c89f5c);
 }
 .ad .md-btn-chat:hover{ background:rgba(200,159,92,.08) }
+.ad .md-btn-chat .cs-btn-dot{
+  position:absolute; top:-6px; right:-6px;
+  min-width:18px; height:18px; padding:0 5px;
+  background:#e5484d; color:#fff; border:2px solid #fff;
+  border-radius:9px; font-size:10.5px; font-weight:700; line-height:14px;
+  display:flex; align-items:center; justify-content:center;
+}
 .ad .md-foot-spacer{ flex:1 }
 
 .ad .cs-chat-modal{ max-width:520px; width:92vw; display:flex; flex-direction:column; max-height:86vh }
