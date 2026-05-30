@@ -2539,8 +2539,6 @@
       return;
     }
 
-    // 畫面中間載入提示
-    showCsLoading(true);
     try {
       const resp = await fetch(CS_BFF_URL, {
         method: 'POST',
@@ -2561,8 +2559,6 @@
     } catch (err) {
       console.error('[客服] 開啟失敗:', err);
       alert('開啟客服失敗,請稍後再試');
-    } finally {
-      showCsLoading(false);
     }
   }
 
@@ -2618,7 +2614,7 @@
         if (ld) ld.classList.add('done');
       };
       frameEl.addEventListener('load', hideLoading);
-      setTimeout(hideLoading, 2500);   // 最多 2.5 秒一定隱藏
+      setTimeout(hideLoading, 20000);   // 最多 20 秒一定隱藏
 
       document.getElementById('csPanelClose').addEventListener('click', function () {
         panel.classList.remove('open');
@@ -2632,7 +2628,7 @@
       if (frame && frame.src !== url) {
         if (ld) ld.classList.remove('done');
         frame.src = url;
-        setTimeout(function () { if (ld) ld.classList.add('done'); }, 2500);
+        setTimeout(function () { if (ld) ld.classList.add('done'); }, 20000);
       }
     }
     // 觸發動畫
