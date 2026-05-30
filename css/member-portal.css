@@ -2945,3 +2945,24 @@ body {
   }
 }
 
+
+/* ===== 我的刻圖卡片:客服對話按鈕 ===== */
+.mp .design-chat-btn{
+  width:calc(100% - 32px); margin:0 16px 14px;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  padding:9px 0; border-radius:9px; cursor:pointer;
+  background:#fff; border:1px solid var(--lohas-brand, #c89f5c);
+  color:var(--lohas-brand, #c89f5c); font-family:inherit; font-size:13.5px; font-weight:600;
+  transition:background .15s;
+}
+.mp .design-chat-btn:hover{ background:rgba(200,159,92,.08) }
+.mp .design-chat-btn i{ font-size:14px }
+
+/* 「我的刻圖設計」nav 未讀紅點 */
+.mp .nav-link[data-page="my-designs"], .mp-drawer .drawer-item[data-page="my-designs"]{ position:relative }
+.cs-nav-dot{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:18px; height:18px; padding:0 5px; margin-left:6px;
+  background:#e5484d; color:#fff; border-radius:9px;
+  font-size:11px; font-weight:700; line-height:1;
+}
