@@ -1518,11 +1518,6 @@
                </button>
                <button class="reject" data-act="delete" data-id="${d.id}" data-name="${escapeHtml(d.name)}"><i class="fa-solid fa-trash"></i>永 久 刪 除</button>
              </div>`
-          : isApprovedView
-          ? `<div class="rcard-actions">
-               <span class="rcard-approved-tag"><i class="fa-solid fa-circle-check"></i>已上架</span>
-               <button class="rcard-chat-btn" data-act="chat" data-erpid="${escapeHtml(d.creator_id || '')}" data-name="${escapeHtml(d.name)}"><i class="fa-regular fa-comments"></i>對 話</button>
-             </div>`
           : `<div class="rcard-actions">
                <button class="approve" data-act="approve"
                        data-id="${d.id}"
@@ -1532,7 +1527,7 @@
                  <i class="fa-solid fa-pen-to-square"></i>開 始 審 核
                </button>
                <button class="reject" data-act="reject" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-by="${escapeHtml(d.creator_id)}"><i class="fa-solid fa-xmark"></i>駁 回</button>
-               <button class="rcard-chat-btn" data-act="chat" data-erpid="${escapeHtml(d.creator_id || '')}" data-name="${escapeHtml(d.name)}"><i class="fa-regular fa-comments"></i>對 話</button>
+               <button class="rcard-chat-btn" data-act="chat" data-erpid="${escapeHtml(d.creator_id || '')}" data-name="${escapeHtml(d.name)}" title="客服對話"><i class="fa-regular fa-comments"></i></button>
              </div>`;
 
         // 駁回理由顯示
@@ -1552,7 +1547,7 @@
               <div class="rcard-by">by <b>${escapeHtml(d.creator_id)}</b> <span class="role-pill ${rolePillCls}">${rolePillContent}</span></div>
               ${d.description ? `<div class="rcard-quote">${escapeHtml(d.description)}</div>` : ''}
               ${rejectInfo}
-              <div class="rcard-meta"><i class="fa-regular fa-clock"></i>${isRejectedView ? '駁回於 ' + formatTime(d.reviewed_at || d.created_at) : isApprovedView ? '通過於 ' + formatTime(d.reviewed_at || d.created_at) : '送審 ' + formatTime(d.created_at)}</div>
+              <div class="rcard-meta"><i class="fa-regular fa-clock"></i>${isRejectedView ? '駁回於 ' + formatTime(d.reviewed_at || d.created_at) : '送審 ' + formatTime(d.created_at)}</div>
               ${actions}
             </div>
           </div>`;
@@ -1632,7 +1627,6 @@
 
     modal.hidden = false;
     setTimeout(() => document.getElementById('apErpNumber').focus(), 50);
-    refreshCsAdminBadges();   // 顯示該作者未讀對話紅點
   }
 
   function closeApproveModal() {
