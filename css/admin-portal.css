@@ -3967,3 +3967,33 @@
   .ad .cs-chat-modal{ width:96vw; max-height:90vh }
   .ad .cs-bubble{ max-width:85% }
 }
+
+/* ===== 客服訊息收件匣 ===== */
+.ad .cs-inbox-list{ display:flex; flex-direction:column; gap:8px; max-width:680px }
+.ad .cs-inbox-item{
+  display:flex; align-items:center; gap:14px;
+  width:100%; padding:14px 16px; text-align:left;
+  background:#fff; border:1px solid var(--lohas-line, #e8e2d5); border-radius:12px;
+  cursor:pointer; transition:border-color .15s, box-shadow .15s; font-family:inherit;
+}
+.ad .cs-inbox-item:hover{ border-color:var(--lohas-brand, #c89f5c); box-shadow:0 2px 12px rgba(0,0,0,.06) }
+.ad .cs-inbox-item.unread{ background:#fffdf8; border-color:#ecd9b0 }
+.ad .cs-inbox-avatar{
+  flex-shrink:0; width:42px; height:42px; border-radius:50%;
+  background:#f0ebe0; color:#b09a6e;
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.ad .cs-inbox-main{ flex:1; min-width:0 }
+.ad .cs-inbox-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:3px }
+.ad .cs-inbox-id{ font-weight:600; font-size:14px; color:#333 }
+.ad .cs-inbox-time{ font-size:11.5px; color:#aaa; flex-shrink:0 }
+.ad .cs-inbox-preview{ font-size:13px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.ad .cs-inbox-item.unread .cs-inbox-preview{ color:#555; font-weight:500 }
+.ad .cs-inbox-dot{
+  flex-shrink:0; min-width:20px; height:20px; padding:0 6px;
+  background:#e5484d; color:#fff; border-radius:10px;
+  font-size:11px; font-weight:700; line-height:20px; text-align:center;
+}
+@media (max-width:600px){
+  .ad .cs-inbox-list{ max-width:100% }
+}
