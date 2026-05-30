@@ -451,19 +451,6 @@
             </div>
           </div>
 
-          <!-- CTA 按鈕管理 (顯示在文章底部) -->
-          <div class="editor-panel">
-            <h3 class="editor-panel-title">文章底部 CTA 按鈕</h3>
-            <p class="editor-hint" style="margin:-4px 0 12px">「門市據點」按鈕會自動顯示在所有最新消息底部。下方為選配按鈕。</p>
-            <div class="editor-row">
-              <label class="editor-label">
-                <input type="checkbox" id="news_cta_student" style="margin-right:6px;vertical-align:middle"/>
-                加上「大學生入口」按鈕
-              </label>
-              <p class="editor-hint" style="margin-left:24px">連結:https://student.lohasglasses.com/</p>
-            </div>
-          </div>
-
           <!-- 內文 -->
           <div class="editor-panel">
             <h3 class="editor-panel-title">內文</h3>
@@ -1560,8 +1547,33 @@
           </div>
         </div>
         <div class="md-modal-foot">
+          <button class="md-btn md-btn-chat" id="apOpenChat" type="button"><i class="fa-regular fa-comments"></i> 與顧客對話</button>
+          <span class="md-foot-spacer"></span>
           <button class="md-btn md-btn-cancel" id="apCancel">取消</button>
           <button class="md-btn md-btn-save"   id="apSubmit">完成審核</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 客服對話視窗 (UI 框架,API 待接) ===== -->
+    <div class="md-modal-overlay" id="csChatModal" hidden>
+      <div class="md-modal cs-chat-modal">
+        <div class="md-modal-head">
+          <h2><i class="fa-regular fa-comments"></i> 與顧客對話 <span class="cs-chat-who" id="csChatWho"></span></h2>
+          <button class="md-modal-close" id="csChatClose" type="button"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="md-modal-body cs-chat-body">
+          <div class="cs-chat-notice" id="csChatNotice">
+            <i class="fa-solid fa-circle-info"></i> 對話功能準備中,讀取歷史訊息的 API 待串接。目前可送出訊息給顧客。
+          </div>
+          <div class="cs-chat-stream" id="csChatStream">
+            <!-- 對話氣泡動態渲染 -->
+            <div class="cs-chat-empty">尚無對話紀錄</div>
+          </div>
+        </div>
+        <div class="md-modal-foot cs-chat-foot">
+          <textarea id="csChatInput" class="cs-chat-input" rows="2" placeholder="輸入要傳給顧客的訊息..." maxlength="1000"></textarea>
+          <button class="md-btn md-btn-save" id="csChatSend" type="button"><i class="fa-solid fa-paper-plane"></i> 送出</button>
         </div>
       </div>
     </div>
