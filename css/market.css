@@ -1145,8 +1145,8 @@
   .cm .featured-quote{ font-size:14px }
   .cm .featured-foot{ flex-direction:column; align-items:flex-start; gap:14px }
 
-  .cm .market-layout{ grid-template-columns:1fr; gap:0; padding:32px 20px }
-  .cm .market-sidebar{ position:relative; top:0; margin-bottom:24px }
+  .cm .market-layout{ grid-template-columns:1fr; gap:0; padding:32px 20px; max-width:100%; overflow-x:hidden }
+  .cm .market-sidebar{ position:relative; top:0; margin-bottom:24px; min-width:0; max-width:100%; overflow:hidden }
   .cm .sidebar-search{ margin-bottom:14px }
   .cm .sidebar-title{ display:none }
   .cm .category-list{
@@ -1155,6 +1155,8 @@
     gap:8px;
     padding-bottom:6px;
     scrollbar-width:none;
+    max-width:100%;
+    min-width:0;
   }
   .cm .category-list::-webkit-scrollbar{ display:none }
   .cm .category-list li{ margin-bottom:0 }
@@ -1180,6 +1182,8 @@
     display:block;
     margin-top:18px;
     margin-bottom:10px;
+    padding-top:0;
+    border-top:0;
   }
   .cm .topic-filter{
     flex-direction:row;
@@ -1187,6 +1191,8 @@
     gap:8px;
     padding-bottom:6px;
     scrollbar-width:none;
+    max-width:100%;
+    min-width:0;
   }
   .cm .topic-filter::-webkit-scrollbar{ display:none }
   .cm .topic-main{
