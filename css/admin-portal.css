@@ -3998,16 +3998,15 @@
   .ad .cs-inbox-list{ max-width:100% }
 }
 
-/* ===== 審核卡片對話按鈕 ===== */
+/* ===== 審核卡片對話按鈕 (純 icon) ===== */
 .ad .rcard-chat-btn{
-  display:inline-flex; align-items:center; gap:5px;
-  padding:7px 14px; border-radius:8px; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:38px; height:38px; flex-shrink:0; border-radius:8px; cursor:pointer;
   background:#fff; border:1px solid var(--lohas-brand, #c89f5c);
-  color:var(--lohas-brand, #c89f5c); font-family:inherit; font-size:13px; font-weight:600;
+  color:var(--lohas-brand, #c89f5c); font-size:15px;
   transition:background .15s;
 }
 .ad .rcard-chat-btn:hover{ background:rgba(200,159,92,.08) }
-.ad .rcard-chat-btn i{ font-size:13px }
 .ad .rcard-approved-tag{
   display:inline-flex; align-items:center; gap:5px;
   color:#3a9d5d; font-size:13px; font-weight:600; margin-right:auto;
