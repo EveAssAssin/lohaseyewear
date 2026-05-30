@@ -2611,12 +2611,14 @@
         '</div>';
       document.body.appendChild(panel);
 
-      // iframe 載入完成 → 隱藏過場提示
+      // 隱藏過場提示:load 事件 + 計時器雙保險 (跨網域 iframe load 可能不觸發)
       const frameEl = document.getElementById('csChatFrame');
-      frameEl.addEventListener('load', function () {
+      const hideLoading = function () {
         const ld = document.getElementById('csFrameLoading');
         if (ld) ld.classList.add('done');
-      });
+      };
+      frameEl.addEventListener('load', hideLoading);
+      setTimeout(hideLoading, 2500);   // 最多 2.5 秒一定隱藏
 
       document.getElementById('csPanelClose').addEventListener('click', function () {
         panel.classList.remove('open');
@@ -2628,8 +2630,9 @@
       const frame = document.getElementById('csChatFrame');
       const ld = document.getElementById('csFrameLoading');
       if (frame && frame.src !== url) {
-        if (ld) ld.classList.remove('done');   // 重新載入時再顯示提示
+        if (ld) ld.classList.remove('done');
         frame.src = url;
+        setTimeout(function () { if (ld) ld.classList.add('done'); }, 2500);
       }
     }
     // 觸發動畫
