@@ -149,6 +149,7 @@
     'dashboard': '首頁',
     'review-designs': '刻圖審核',
     'review-uploads': '上傳審核',
+    'cs-inbox': '客服訊息',
     'cm-banner': '首頁與分頁 Banner',
     'cm-news': '最新消息',
     'admin-upload': '樂活官方上傳',
@@ -189,6 +190,7 @@
     if (page === 'users') loadUsers();
     if (page === 'review-designs') { loadDesignReview(); refreshReviewCounts(); }
     if (page === 'review-uploads') { loadReviewUploads(); refreshReviewCounts(); }
+    if (page === 'cs-inbox') loadCsInbox();
     if (page === 'cm-news') loadNews();
     if (page === 'cm-banner') loadBannerModule();
     if (page === 'admin-upload') { initAdminUpload(); loadAdminUploadHistory(); }
@@ -373,6 +375,14 @@
       // sidebar 兩個 badge (上傳合併)
       updateBadge('review-designs', dCount);
       updateBadge('review-uploads', pCount + sCount);
+
+      // 客服未讀 (會員發的未讀)
+      try {
+        const cs = await sb.from('cs_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('sender', 'member').eq('is_read', false);
+        setCsInboxBadge(cs.count || 0);
+      } catch (e) { /* 靜默 */ }
 
       // page-sub 文字
       const designsSub = root.querySelector('#reviewDesignsSub');
@@ -1757,6 +1767,79 @@
         || (window.Supabase && window.Supabase.client) || null;
   }
 
+  // 載入客服收件匣:依會員聚合,顯示最後一則 + 未讀數
+  async function loadCsInbox() {
+    const sb = csGetSb();
+    const listEl = document.getElementById('csInboxList');
+    if (!sb || !listEl) return;
+    listEl.innerHTML = '<div class="empty-page"><div class="empty-page-title">載入中...</div></div>';
+    try {
+      // 撈全部訊息(時間新→舊),前端聚合成每個會員一條
+      const { data, error } = await sb.from('cs_messages')
+        .select('member_erpid, sender, message, is_read, created_at')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+
+      const rows = data || [];
+      const byMember = {};
+      rows.forEach(function (m) {
+        const k = m.member_erpid;
+        if (!byMember[k]) {
+          byMember[k] = { erpid: k, last: m, unread: 0 };
+        }
+        // 會員發的未讀 = 後台要處理的
+        if (m.sender === 'member' && !m.is_read) byMember[k].unread++;
+      });
+
+      const members = Object.values(byMember);
+      // 未讀的排前面,其次照最後訊息時間
+      members.sort(function (a, b) {
+        if ((b.unread > 0) !== (a.unread > 0)) return (b.unread > 0) ? 1 : -1;
+        return new Date(b.last.created_at) - new Date(a.last.created_at);
+      });
+
+      const totalUnread = members.reduce((s, m) => s + m.unread, 0);
+      setCsInboxBadge(totalUnread);
+
+      if (!members.length) {
+        listEl.innerHTML = '<div class="empty-page"><i class="fa-regular fa-comments"></i><div class="empty-page-title">目前沒有客服訊息</div></div>';
+        return;
+      }
+
+      listEl.innerHTML = members.map(function (m) {
+        const t = new Date(m.last.created_at);
+        const when = (t.getMonth() + 1) + '/' + t.getDate() + ' ' +
+                     String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+        const preview = (m.last.sender === 'staff' ? '你: ' : '') + (m.last.message || '');
+        return '<button type="button" class="cs-inbox-item' + (m.unread ? ' unread' : '') + '" data-erpid="' + escapeHtml(m.erpid) + '">' +
+                 '<div class="cs-inbox-avatar"><i class="fa-regular fa-user"></i></div>' +
+                 '<div class="cs-inbox-main">' +
+                   '<div class="cs-inbox-top"><span class="cs-inbox-id">會員 ' + escapeHtml(m.erpid) + '</span><span class="cs-inbox-time">' + when + '</span></div>' +
+                   '<div class="cs-inbox-preview">' + escapeHtml(preview.slice(0, 40)) + '</div>' +
+                 '</div>' +
+                 (m.unread ? '<span class="cs-inbox-dot">' + (m.unread > 99 ? '99+' : m.unread) + '</span>' : '') +
+               '</button>';
+      }).join('');
+
+      listEl.querySelectorAll('.cs-inbox-item').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openCsChat(btn.dataset.erpid, '');
+        });
+      });
+    } catch (e) {
+      console.warn('[客服收件匣] 載入失敗:', e);
+      listEl.innerHTML = '<div class="empty-page"><div class="empty-page-title">載入失敗</div></div>';
+    }
+  }
+
+  function setCsInboxBadge(n) {
+    const b = document.getElementById('badgeCsInbox');
+    if (!b) return;
+    b.textContent = n > 99 ? '99+' : String(n);
+    b.style.display = n > 0 ? '' : 'none';
+  }
+
   async function openCsChat(erpId, customerName) {
     if (!erpId) { alert('此作品沒有對應的會員編號,無法對話'); return; }
     csChat.erpId = String(erpId);
@@ -1794,7 +1877,9 @@
     if (input) input.value = '';
     const sb = csGetSb();
     if (sb && csChat.ch) { sb.removeChannel(csChat.ch); csChat.ch = null; }
-    refreshCsAdminBadges();   // 關閉後刷新審核列表紅點
+    refreshCsAdminBadges();   // 刷新審核視窗按鈕紅點
+    // 若正在客服收件匣頁,重載列表更新未讀
+    if (document.querySelector('.content-page[data-page="cs-inbox"].on')) loadCsInbox();
   }
 
   // 載入對話 + 把會員未讀標已讀
