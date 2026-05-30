@@ -1626,18 +1626,16 @@
   const NOTIFY_BFF_URL = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/lohas-api-proxy';
   const NOTIFY_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxZG15eHhyc2t2bGxrY2VkeWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzkxMDIsImV4cCI6MjA5MzExNTEwMn0.OsHmLXwgQvxxZ2MTCULxhYmDt3fMO6x9RXohn_eP1RM';
 
-  async function sendApprovalNotice(memberErpId, designName, designId) {
-    const link = designId
-      ? 'https://www.lohasglasses.com/market.html?design=' + encodeURIComponent(designId)
-      : 'https://www.lohasglasses.com/market.html';
+  // 發送 CSLeftMessagePush (即時互動明文 → 進「樂活訊息」,可帶 link)
+  async function pushLohasMessage(clientId, title, message, link) {
     const payload = {
       method: 'CSLeftMessagePush',
-      client_id: String(memberErpId),   // 會員編號 ERP ID (明文)
-      title: '刻圖審核通過通知',
-      message: `恭喜!您的刻圖「${designName}」已通過審核並上架創作者市集,可至市集查看。`,
-      view_status: 2,                   // 2 = 顯示在 App 樂活訊息列表
-      link: link,
+      client_id: String(clientId),
+      title: title,
+      message: message,
+      view_status: 2,
     };
+    if (link) payload.link = link;
 
     const resp = await fetch(NOTIFY_BFF_URL, {
       method: 'POST',
@@ -1646,22 +1644,96 @@
         'Authorization': 'Bearer ' + NOTIFY_ANON_KEY,
         'apikey': NOTIFY_ANON_KEY,
         'x-lohas-mode': localStorage.getItem('lohas_api_mode') || 'prod',
-        'x-lohas-host': 'realtime',  // 即時互動明文 API
+        'x-lohas-host': 'realtime',
       },
       body: JSON.stringify(payload),
     });
-
     if (!resp.ok) {
-      const errText = await resp.text().catch(() => '');
-      throw new Error('BFF HTTP ' + resp.status + ' ' + errText);
+      const t = await resp.text().catch(() => '');
+      throw new Error('CSLeftMessagePush HTTP ' + resp.status + ' ' + t);
     }
     const result = await resp.json().catch(() => ({}));
-    console.log('[客服通知] 已送出:', result);
-    // statecode 非 0 代表即時互動端拒絕,也視為失敗讓使用者看到
     if (result && result.statecode != null && String(result.statecode) !== '0') {
-      throw new Error('即時互動回 statecode=' + result.statecode + ' / ' + (result.message || ''));
+      throw new Error('CSLeftMessagePush statecode=' + result.statecode + ' / ' + (result.message || ''));
     }
     return result;
+  }
+
+  // 發送 customerservicepush (左手 rsv 站 → 進「客服對話」,memberId 由 BFF 自動 AES 加密)
+  async function pushCustomerService(memberId, title, message) {
+    const payload = {
+      method: 'customerservicepush',
+      memberId: String(memberId),    // BFF 會 AES 加密
+      message: message,
+    };
+    if (title) payload.title = title;
+    // employeeErpId 不填 → 由系統指定人員發起
+
+    const resp = await fetch(NOTIFY_BFF_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': 'Bearer ' + NOTIFY_ANON_KEY,
+        'apikey': NOTIFY_ANON_KEY,
+        'x-lohas-mode': localStorage.getItem('lohas_api_mode') || 'prod',
+        'x-lohas-host': 'map',   // 走 map/rsv;BFF 看 method 在 RSV_METHODS 自動轉 rsv 站
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      const t = await resp.text().catch(() => '');
+      throw new Error('customerservicepush HTTP ' + resp.status + ' ' + t);
+    }
+    const result = await resp.json().catch(() => ({}));
+    if (result && result.statecode != null && String(result.statecode) !== '0') {
+      throw new Error('customerservicepush statecode=' + result.statecode + ' / ' + (result.message || ''));
+    }
+    return result;
+  }
+
+  // 審核通過:同時發兩支 (樂活訊息可跳單品 + 客服對話)
+  async function sendApprovalNotice(memberErpId, designName, designId) {
+    const link = designId
+      ? 'https://www.lohasglasses.com/market.html?design=' + encodeURIComponent(designId)
+      : 'https://www.lohasglasses.com/market.html';
+    const title = '刻圖審核通過通知';
+    const message = `恭喜!您的刻圖「${designName}」已通過審核並上架創作者市集,可至市集查看。`;
+
+    // 兩支各自獨立發,其中一支失敗不影響另一支
+    const results = await Promise.allSettled([
+      pushLohasMessage(memberErpId, title, message, link),
+      pushCustomerService(memberErpId, title, message),
+    ]);
+    results.forEach((r, i) => {
+      const which = i === 0 ? '樂活訊息' : '客服對話';
+      if (r.status === 'fulfilled') console.log(`[審核通知·${which}] 已送出:`, r.value);
+      else console.warn(`[審核通知·${which}] 失敗:`, r.reason);
+    });
+    // 兩支都失敗才視為整體失敗
+    if (results.every(r => r.status === 'rejected')) {
+      throw new Error('兩支推播都失敗');
+    }
+    return results;
+  }
+
+  // 審核駁回:同時發兩支 (樂活訊息 + 客服對話)
+  async function sendRejectNotice(memberErpId, designName, reason) {
+    const title = '刻圖審核結果通知';
+    const message = `您的刻圖「${designName}」未通過審核。\n原因:${reason}\n歡迎修改後重新投稿,如有疑問可直接回覆此訊息。`;
+
+    const results = await Promise.allSettled([
+      pushLohasMessage(memberErpId, title, message, 'https://www.lohasglasses.com/member-portal.html'),
+      pushCustomerService(memberErpId, title, message),
+    ]);
+    results.forEach((r, i) => {
+      const which = i === 0 ? '樂活訊息' : '客服對話';
+      if (r.status === 'fulfilled') console.log(`[駁回通知·${which}] 已送出:`, r.value);
+      else console.warn(`[駁回通知·${which}] 失敗:`, r.reason);
+    });
+    if (results.every(r => r.status === 'rejected')) {
+      throw new Error('兩支推播都失敗');
+    }
+    return results;
   }
 
   // ===== 客服對話視窗 (UI 框架,讀歷史 API 待接) =====
@@ -1739,28 +1811,7 @@
     sendBtn.innerHTML = '送出中...';
 
     try {
-      const payload = {
-        method: 'CSLeftMessagePush',
-        client_id: String(csChat.erpId),
-        title: 'LOHAS 客服訊息',
-        message: text,
-        view_status: 2,
-      };
-      const resp = await fetch(NOTIFY_BFF_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer ' + NOTIFY_ANON_KEY,
-          'apikey': NOTIFY_ANON_KEY,
-          'x-lohas-mode': localStorage.getItem('lohas_api_mode') || 'prod',
-          'x-lohas-host': 'realtime',
-        },
-        body: JSON.stringify(payload),
-      });
-      const result = await resp.json().catch(() => ({}));
-      if (!resp.ok || (result.statecode != null && String(result.statecode) !== '0')) {
-        throw new Error(result.message || ('HTTP ' + resp.status));
-      }
+      await pushCustomerService(csChat.erpId, 'LOHAS 客服訊息', text);
 
       // 樂觀更新:把剛送的訊息加進畫面
       const stream = document.getElementById('csChatStream');
@@ -2301,6 +2352,21 @@
       .eq('id', targetId);
 
     if (error) return alert('駁回失敗: ' + error.message);
+
+    // 刻圖駁回 → 通知作者 (兩支:樂活訊息 + 客服對話),失敗不影響駁回
+    if (targetType === 'design') {
+      try {
+        const { data: row } = await sb.from('engraving_designs')
+          .select('creator_id, name')
+          .eq('id', targetId)
+          .single();
+        if (row && row.creator_id) {
+          await sendRejectNotice(row.creator_id, row.name || '您的刻圖', reason);
+        }
+      } catch (notifyErr) {
+        console.warn('[駁回通知] 發送失敗(不影響駁回):', notifyErr);
+      }
+    }
 
     // 立刻從 DOM 移除這張卡 (避免使用者覺得駁回沒反應)
     const cardSelectors = [
