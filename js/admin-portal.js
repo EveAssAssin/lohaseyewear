@@ -155,6 +155,7 @@
     'manage-designs': '刻圖管理',
     'manage-shares': '分享牆管理',
     'cm-footer': '頁尾管理',
+    'cm-categories': '分類管理',
     'users': '會員列表',
     'creators': '創作者管理',
     'ip': '授權聯名管理'
@@ -190,7 +191,7 @@
     if (page === 'review-uploads') { loadReviewUploads(); refreshReviewCounts(); }
     if (page === 'cm-news') loadNews();
     if (page === 'cm-banner') loadBannerModule();
-    if (page === 'admin-upload') { initAdminUpload(); }
+    if (page === 'admin-upload') { initAdminUpload(); loadAdminUploadHistory(); }
     if (page === 'creators') loadCreatorsList();
     if (page === 'manage-designs') loadManageDesigns();
     if (page === 'manage-shares') loadManageShares();
@@ -1618,6 +1619,43 @@
     if (modal) modal.hidden = true;
   }
 
+  // ===== 客服通知:刻圖審核通過時推播到會員 App =====
+  // API: 左手客服聊天推播 CSLeftMessagePush (即時互動,明文 JSON,不用 AES)
+  // 端點: lohas.realtime.tw/webapi/v010/message/CSLeftMessagePush
+  // 走 BFF (Supabase Edge Function) 的 realtime host 轉發
+  const NOTIFY_BFF_URL = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/lohas-api-proxy';
+  const NOTIFY_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxZG15eHhyc2t2bGxrY2VkeWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzkxMDIsImV4cCI6MjA5MzExNTEwMn0.OsHmLXwgQvxxZ2MTCULxhYmDt3fMO6x9RXohn_eP1RM';
+
+  async function sendApprovalNotice(memberErpId, designName) {
+    const payload = {
+      method: 'CSLeftMessagePush',
+      client_id: String(memberErpId),   // 會員編號 ERP ID (明文)
+      title: '刻圖審核通過通知',
+      message: `恭喜!您的刻圖「${designName}」已通過審核並上架創作者市集,可至市集查看。`,
+      view_status: 2,                   // 2 = 顯示在 App 樂活訊息列表
+      link: 'https://www.lohasglasses.com/market.html',
+    };
+
+    const resp = await fetch(NOTIFY_BFF_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': 'Bearer ' + NOTIFY_ANON_KEY,
+        'apikey': NOTIFY_ANON_KEY,
+        'x-lohas-mode': localStorage.getItem('lohas_api_mode') || 'prod',
+        'x-lohas-host': 'realtime',  // 即時互動明文 API
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resp.ok) {
+      throw new Error('BFF 回應 HTTP ' + resp.status);
+    }
+    const result = await resp.json().catch(() => ({}));
+    console.log('[客服通知] 已送出:', result);
+    return result;
+  }
+
   async function submitApproval() {
     const id         = document.getElementById('apDesignId').value;
     const name       = document.getElementById('apName').value.trim();
@@ -1654,6 +1692,21 @@
         .eq('id', id);
 
       if (error) throw error;
+
+      // 審核通過後,發客服通知給會員 (失敗不影響審核)
+      try {
+        const { data: row } = await sb.from('engraving_designs')
+          .select('creator_id, name')
+          .eq('id', id)
+          .single();
+        if (row && row.creator_id) {
+          await sendApprovalNotice(row.creator_id, row.name || name);
+        } else {
+          console.warn('[客服通知] 此作品無 creator_id,略過通知');
+        }
+      } catch (notifyErr) {
+        console.warn('[客服通知] 發送失敗(不影響審核):', notifyErr);
+      }
 
       alert('已通過審核');
       closeApproveModal();
@@ -3202,7 +3255,7 @@
       hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})`;
 
       adminUploadReset();
-      alert(`✓ 上傳成功!\n\n已上傳 ${uploadedUrls.length} 張圖片並自動通過審核。\n類型: ${type === 'story' ? '故事' : '照片'}`);
+      loadAdminUploadHistory();
 
     } catch (err) {
       hint.style.color = 'var(--status-rejected)';
@@ -6944,9 +6997,6 @@
       setVal('news_status', 'draft');
       setVal('news_category', 'story');
       setVal('news_homepage_link_type', 'news_detail');
-      // CTA checkbox 重置
-      const ctaStudent = document.getElementById('news_cta_student');
-      if (ctaStudent) ctaStudent.checked = false;
       updateLinkUrlVisibility();
 
       resetImagePreview('news_cover_preview');
@@ -6987,11 +7037,6 @@
       setVal('news_homepage_link_type', n.homepage_link_type || 'news_detail');
       setVal('news_homepage_link_url', n.homepage_link_url);
       updateLinkUrlVisibility();
-
-      // 載入 CTA 設定 (從 cta_buttons 陣列讀)
-      const ctaList = Array.isArray(n.cta_buttons) ? n.cta_buttons : [];
-      const ctaStudent = document.getElementById('news_cta_student');
-      if (ctaStudent) ctaStudent.checked = ctaList.includes('student');
 
       setImagePreview('news_cover_preview', n.cover_image_url);
       setImagePreview('news_homepage_image_preview', n.homepage_image_url);
@@ -7109,10 +7154,6 @@
           console.log('[news save] homepage 上傳成功:', homepageImgUrl);
         }
 
-        // 收集 CTA 按鈕 (門市永遠有,這裡只記大學生)
-        const ctaButtons = [];
-        if (document.getElementById('news_cta_student')?.checked) ctaButtons.push('student');
-
         const payload = {
           slug,
           status: status,
@@ -7127,7 +7168,6 @@
           homepage_image_url: homepageImgUrl,
           homepage_link_type: val('news_homepage_link_type') || 'news_detail',
           homepage_link_url: val('news_homepage_link_url'),
-          cta_buttons: ctaButtons,
           sort_order: val('news_sort_order') || 0,
           published_at: val('news_published_at'),
           author: val('news_author'),
@@ -7191,11 +7231,6 @@
         homepage_subtitle: val('news_homepage_subtitle'),
         homepage_link_type: val('news_homepage_link_type') || 'news_detail',
         homepage_link_url: val('news_homepage_link_url'),
-        cta_buttons: (() => {
-          const arr = [];
-          if (document.getElementById('news_cta_student')?.checked) arr.push('student');
-          return arr;
-        })(),
         sort_order: val('news_sort_order') || 0,
         published_at: val('news_published_at') || new Date().toISOString(),
         author: val('news_author'),
