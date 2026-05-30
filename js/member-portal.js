@@ -2517,6 +2517,49 @@
      Init
      ============================================================= */
 
+  // ===== 浮動客服按鈕 → 開左手客服頁 =====
+  const CS_BFF_URL = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/lohas-api-proxy';
+  const CS_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxZG15eHhyc2t2bGxrY2VkeWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzkxMDIsImV4cCI6MjA5MzExNTEwMn0.OsHmLXwgQvxxZ2MTCULxhYmDt3fMO6x9RXohn_eP1RM';
+  const CS_PAGE_BASE = 'https://rsv.lohasglasses.com/Message/_Visitor/CustomerServicePage.aspx';
+
+  function bindCsFloat() {
+    const btn = document.getElementById('csFloatBtn');
+    if (!btn) return;
+    btn.addEventListener('click', openCustomerService);
+  }
+
+  async function openCustomerService() {
+    const btn = document.getElementById('csFloatBtn');
+    const erpid = State.member && State.member.erpid;
+    if (!erpid) { alert('請先登入'); return; }
+
+    if (btn) btn.classList.add('loading');
+    try {
+      // 跟 BFF 要 AES 加密後的會員編號
+      const resp = await fetch(CS_BFF_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Bearer ' + CS_ANON_KEY,
+          'apikey': CS_ANON_KEY,
+        },
+        body: JSON.stringify({ method: 'encryptMemberId', memberId: String(erpid) }),
+      });
+      const json = await resp.json().catch(() => ({}));
+      const enc = json && json.data && json.data.encrypted;
+      if (!resp.ok || String(json.statecode) !== '0' || !enc) {
+        throw new Error(json.message || ('HTTP ' + resp.status));
+      }
+      const url = CS_PAGE_BASE + '?MemberId=' + encodeURIComponent(enc);
+      window.open(url, '_blank', 'noopener');
+    } catch (err) {
+      console.error('[客服] 開啟失敗:', err);
+      alert('開啟客服失敗,請稍後再試');
+    } finally {
+      if (btn) btn.classList.remove('loading');
+    }
+  }
+
   async function init() {
     const ok = await loadIdentity();
     if (!ok) return;
@@ -2530,6 +2573,7 @@
     bindPreviewCreator();
     bindSaveCreatorInfo();
     bindBankForm();
+    bindCsFloat();
 
     // 一進來就先計算一次駁回數量, 顯示側邊欄紅圓圓
     refreshPhotoRejectBadge();
