@@ -3912,3 +3912,50 @@
     justify-content: flex-end;
   }
 }
+
+/* ===== 客服對話視窗 ===== */
+.ad .md-btn-chat{
+  background:#fff; border:1px solid var(--lohas-brand, #c89f5c);
+  color:var(--lohas-brand, #c89f5c);
+}
+.ad .md-btn-chat:hover{ background:rgba(200,159,92,.08) }
+.ad .md-foot-spacer{ flex:1 }
+
+.ad .cs-chat-modal{ max-width:520px; width:92vw; display:flex; flex-direction:column; max-height:86vh }
+.ad .cs-chat-who{ font-size:13px; font-weight:400; color:#999; margin-left:6px }
+
+.ad .cs-chat-body{ display:flex; flex-direction:column; gap:0; padding:0; overflow:hidden; flex:1; min-height:0 }
+.ad .cs-chat-notice{
+  background:#fafaf7; border-bottom:1px solid #ece7dc;
+  padding:10px 16px; font-size:12.5px; color:#888; line-height:1.6;
+}
+.ad .cs-chat-notice i{ color:var(--lohas-brand, #c89f5c); margin-right:5px }
+
+.ad .cs-chat-stream{
+  flex:1; min-height:240px; max-height:46vh; overflow-y:auto;
+  padding:16px; display:flex; flex-direction:column; gap:10px;
+  background:#f7f5f0;
+}
+.ad .cs-chat-empty{ text-align:center; color:#bbb; font-size:13px; margin:auto 0 }
+
+.ad .cs-bubble{ max-width:78%; padding:9px 13px; border-radius:14px; font-size:13.5px; line-height:1.5; word-break:break-word }
+.ad .cs-bubble-text{ white-space:pre-wrap }
+.ad .cs-bubble-time{ font-size:10.5px; opacity:.6; margin-top:3px }
+/* 客服(我方)發的:靠右、品牌色 */
+.ad .cs-bubble-out{ align-self:flex-end; background:var(--lohas-brand, #c89f5c); color:#fff; border-bottom-right-radius:4px }
+/* 顧客發的:靠左、白底 */
+.ad .cs-bubble-in{ align-self:flex-start; background:#fff; color:#333; border:1px solid #ece7dc; border-bottom-left-radius:4px }
+
+.ad .cs-chat-foot{ display:flex; gap:10px; align-items:flex-end; padding:12px 16px; border-top:1px solid #ece7dc }
+.ad .cs-chat-input{
+  flex:1; resize:none; border:1px solid #ddd6c8; border-radius:10px;
+  padding:9px 12px; font-family:inherit; font-size:13.5px; line-height:1.5;
+  outline:none; transition:border-color .15s; max-height:120px;
+}
+.ad .cs-chat-input:focus{ border-color:var(--lohas-brand, #c89f5c) }
+.ad .cs-chat-foot .md-btn-save{ flex-shrink:0 }
+
+@media (max-width:600px){
+  .ad .cs-chat-modal{ width:96vw; max-height:90vh }
+  .ad .cs-bubble{ max-width:85% }
+}
