@@ -2603,9 +2603,20 @@
           '</div>' +
         '</div>' +
         '<div class="cs-chat-panel-body">' +
+          '<div class="cs-frame-loading" id="csFrameLoading">' +
+            '<div class="cs-loading-spinner"></div>' +
+            '<div class="cs-loading-text">進入客服對話中...</div>' +
+          '</div>' +
           '<iframe id="csChatFrame" src="' + url + '" frameborder="0"></iframe>' +
         '</div>';
       document.body.appendChild(panel);
+
+      // iframe 載入完成 → 隱藏過場提示
+      const frameEl = document.getElementById('csChatFrame');
+      frameEl.addEventListener('load', function () {
+        const ld = document.getElementById('csFrameLoading');
+        if (ld) ld.classList.add('done');
+      });
 
       document.getElementById('csPanelClose').addEventListener('click', function () {
         panel.classList.remove('open');
@@ -2615,7 +2626,11 @@
       });
     } else {
       const frame = document.getElementById('csChatFrame');
-      if (frame && frame.src !== url) frame.src = url;
+      const ld = document.getElementById('csFrameLoading');
+      if (frame && frame.src !== url) {
+        if (ld) ld.classList.remove('done');   // 重新載入時再顯示提示
+        frame.src = url;
+      }
     }
     // 觸發動畫
     requestAnimationFrame(function () { panel.classList.add('open'); });

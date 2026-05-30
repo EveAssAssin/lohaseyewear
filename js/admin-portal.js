@@ -1739,26 +1739,37 @@
   // ===== 客服對話視窗 (UI 框架,讀歷史 API 待接) =====
   const csChat = { erpId: null, name: '' };
 
-  function openCsChat(erpId, customerName) {
-    csChat.erpId = erpId ? String(erpId) : null;
-    csChat.name = customerName || '';
+  // 後台「與顧客對話」→ 開左手客服系統 (帶該作者加密 MemberId)
+  const CS_PAGE_BASE = 'https://rsv.lohasglasses.com/Message/_Visitor/CustomerServicePage.aspx';
 
-    const modal = document.getElementById('csChatModal');
-    if (!modal) return;
-
-    const who = document.getElementById('csChatWho');
-    if (who) who.textContent = csChat.name ? ('· ' + csChat.name + (csChat.erpId ? ' (' + csChat.erpId + ')' : '')) : '';
-
-    if (!csChat.erpId) {
+  async function openCsChat(erpId, customerName) {
+    if (!erpId) {
       alert('此作品沒有對應的會員編號,無法對話');
       return;
     }
 
-    modal.hidden = false;
-    document.body.style.overflow = 'hidden';
-
-    // 讀歷史對話 (API 待接)
-    loadCsChatHistory();
+    try {
+      // 跟 BFF 要 AES 加密後的會員編號
+      const resp = await fetch(NOTIFY_BFF_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Bearer ' + NOTIFY_ANON_KEY,
+          'apikey': NOTIFY_ANON_KEY,
+        },
+        body: JSON.stringify({ method: 'encryptMemberId', memberId: String(erpId) }),
+      });
+      const json = await resp.json().catch(() => ({}));
+      const enc = json && json.data && json.data.encrypted;
+      if (!resp.ok || String(json.statecode) !== '0' || !enc) {
+        throw new Error(json.message || ('HTTP ' + resp.status));
+      }
+      const url = CS_PAGE_BASE + '?MemberId=' + encodeURIComponent(enc);
+      window.open(url, '_blank', 'noopener');
+    } catch (err) {
+      console.error('[客服] 開啟失敗:', err);
+      alert('開啟客服失敗,請稍後再試');
+    }
   }
 
   function closeCsChat() {
