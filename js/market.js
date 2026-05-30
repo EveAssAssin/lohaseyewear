@@ -88,6 +88,30 @@
     window.addEventListener('lohas:design-upload-success', function(){
       showToast('設計已送出審核,通過後會出現在市集');
     });
+
+    // 若網址帶 ?design={id},自動彈出該作品 modal (供推播連結直達單品)
+    openDesignFromUrl();
+  }
+
+  // 讀網址 ?design={id} 自動開啟對應作品的 modal
+  function openDesignFromUrl(){
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var did = params.get('design');
+      if(!did) return;
+
+      // 先確保全部 creator 作品都 render 了 (才找得到)
+      ensureAllCreatorRendered();
+
+      var design = State.designs.find(function(x){ return String(x.id) === String(did); });
+      if(design){
+        openModal(design);
+      } else {
+        console.warn('[market] 網址指定的作品不存在或未上架:', did);
+      }
+    } catch(e) {
+      console.warn('[market] openDesignFromUrl 失敗:', e);
+    }
   }
 
 

@@ -1626,14 +1626,17 @@
   const NOTIFY_BFF_URL = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/lohas-api-proxy';
   const NOTIFY_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxZG15eHhyc2t2bGxrY2VkeWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzkxMDIsImV4cCI6MjA5MzExNTEwMn0.OsHmLXwgQvxxZ2MTCULxhYmDt3fMO6x9RXohn_eP1RM';
 
-  async function sendApprovalNotice(memberErpId, designName) {
+  async function sendApprovalNotice(memberErpId, designName, designId) {
+    const link = designId
+      ? 'https://www.lohasglasses.com/market.html?design=' + encodeURIComponent(designId)
+      : 'https://www.lohasglasses.com/market.html';
     const payload = {
       method: 'CSLeftMessagePush',
       client_id: String(memberErpId),   // 會員編號 ERP ID (明文)
       title: '刻圖審核通過通知',
       message: `恭喜!您的刻圖「${designName}」已通過審核並上架創作者市集,可至市集查看。`,
       view_status: 2,                   // 2 = 顯示在 App 樂活訊息列表
-      link: 'https://www.lohasglasses.com/market.html',
+      link: link,
     };
 
     const resp = await fetch(NOTIFY_BFF_URL, {
@@ -1649,12 +1652,170 @@
     });
 
     if (!resp.ok) {
-      throw new Error('BFF 回應 HTTP ' + resp.status);
+      const errText = await resp.text().catch(() => '');
+      throw new Error('BFF HTTP ' + resp.status + ' ' + errText);
     }
     const result = await resp.json().catch(() => ({}));
     console.log('[客服通知] 已送出:', result);
+    // statecode 非 0 代表即時互動端拒絕,也視為失敗讓使用者看到
+    if (result && result.statecode != null && String(result.statecode) !== '0') {
+      throw new Error('即時互動回 statecode=' + result.statecode + ' / ' + (result.message || ''));
+    }
     return result;
   }
+
+  // ===== 客服對話視窗 (UI 框架,讀歷史 API 待接) =====
+  const csChat = { erpId: null, name: '' };
+
+  function openCsChat(erpId, customerName) {
+    csChat.erpId = erpId ? String(erpId) : null;
+    csChat.name = customerName || '';
+
+    const modal = document.getElementById('csChatModal');
+    if (!modal) return;
+
+    const who = document.getElementById('csChatWho');
+    if (who) who.textContent = csChat.name ? ('· ' + csChat.name + (csChat.erpId ? ' (' + csChat.erpId + ')' : '')) : '';
+
+    if (!csChat.erpId) {
+      alert('此作品沒有對應的會員編號,無法對話');
+      return;
+    }
+
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+
+    // 讀歷史對話 (API 待接)
+    loadCsChatHistory();
+  }
+
+  function closeCsChat() {
+    const modal = document.getElementById('csChatModal');
+    if (modal) modal.hidden = true;
+    document.body.style.overflow = '';
+    const input = document.getElementById('csChatInput');
+    if (input) input.value = '';
+  }
+
+  // 讀對話歷史 — TODO: 接即時互動「取得會員對話紀錄」API
+  // 目前 API 規格未定,先顯示提示。等拿到 API 後在這裡撈訊息 render 成氣泡。
+  async function loadCsChatHistory() {
+    const stream = document.getElementById('csChatStream');
+    if (!stream) return;
+    stream.innerHTML = '<div class="cs-chat-empty">對話歷史 API 尚未串接,目前僅能送出訊息</div>';
+    // 未來: const msgs = await fetchCsMessages(csChat.erpId); renderCsMessages(msgs);
+  }
+
+  // 渲染對話氣泡 (供未來接 API 用)
+  function renderCsMessages(messages) {
+    const stream = document.getElementById('csChatStream');
+    if (!stream) return;
+    if (!messages || !messages.length) {
+      stream.innerHTML = '<div class="cs-chat-empty">尚無對話紀錄</div>';
+      return;
+    }
+    stream.innerHTML = messages.map(function (m) {
+      // m: { from:'cs'|'member', text, time }
+      const side = m.from === 'cs' ? 'cs-bubble-out' : 'cs-bubble-in';
+      return '<div class="cs-bubble ' + side + '">' +
+               '<div class="cs-bubble-text">' + escapeHtml(m.text || '') + '</div>' +
+               (m.time ? '<div class="cs-bubble-time">' + escapeHtml(m.time) + '</div>' : '') +
+             '</div>';
+    }).join('');
+    stream.scrollTop = stream.scrollHeight;
+  }
+
+  // 送出訊息給顧客 (用 CSLeftMessagePush,進 App 訊息)
+  async function sendCsMessage() {
+    const input = document.getElementById('csChatInput');
+    const sendBtn = document.getElementById('csChatSend');
+    if (!input || !csChat.erpId) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    sendBtn.disabled = true;
+    const oldHtml = sendBtn.innerHTML;
+    sendBtn.innerHTML = '送出中...';
+
+    try {
+      const payload = {
+        method: 'CSLeftMessagePush',
+        client_id: String(csChat.erpId),
+        title: 'LOHAS 客服訊息',
+        message: text,
+        view_status: 2,
+      };
+      const resp = await fetch(NOTIFY_BFF_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Bearer ' + NOTIFY_ANON_KEY,
+          'apikey': NOTIFY_ANON_KEY,
+          'x-lohas-mode': localStorage.getItem('lohas_api_mode') || 'prod',
+          'x-lohas-host': 'realtime',
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await resp.json().catch(() => ({}));
+      if (!resp.ok || (result.statecode != null && String(result.statecode) !== '0')) {
+        throw new Error(result.message || ('HTTP ' + resp.status));
+      }
+
+      // 樂觀更新:把剛送的訊息加進畫面
+      const stream = document.getElementById('csChatStream');
+      if (stream) {
+        const empty = stream.querySelector('.cs-chat-empty');
+        if (empty) stream.innerHTML = '';
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        stream.insertAdjacentHTML('beforeend',
+          '<div class="cs-bubble cs-bubble-out"><div class="cs-bubble-text">' + escapeHtml(text) +
+          '</div><div class="cs-bubble-time">' + hh + ' 已送出</div></div>');
+        stream.scrollTop = stream.scrollHeight;
+      }
+      input.value = '';
+
+    } catch (err) {
+      alert('送出失敗:' + (err && err.message ? err.message : err));
+      console.warn('[客服對話] 送出失敗:', err);
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = oldHtml;
+    }
+  }
+
+  // 綁定客服對話視窗按鈕 (只綁一次)
+  (function bindCsChatOnce() {
+    if (window.__csChatBound) return;
+    window.__csChatBound = true;
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('apOpenChat')?.addEventListener('click', function () {
+        const did = document.getElementById('apDesignId')?.value;
+        const name = document.getElementById('apName')?.value?.trim();
+        // 優先從資料找 creator_id;找不到再退回 label 文字
+        let erpId = null;
+        const d = (typeof mdState !== 'undefined' && mdState.designs)
+          ? mdState.designs.find(x => String(x.id) === String(did)) : null;
+        if (d && d.creator_id) {
+          erpId = d.creator_id;
+        } else {
+          const label = document.getElementById('apCreatorIdLabel')?.textContent?.trim();
+          if (label && label !== '--' && label !== '匿名') erpId = label;
+        }
+        openCsChat(erpId, name);
+      });
+      document.getElementById('csChatClose')?.addEventListener('click', closeCsChat);
+      document.getElementById('csChatSend')?.addEventListener('click', sendCsMessage);
+      document.getElementById('csChatModal')?.addEventListener('click', function (e) {
+        if (e.target.id === 'csChatModal') closeCsChat();
+      });
+      // Enter 送出 (Shift+Enter 換行)
+      document.getElementById('csChatInput')?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCsMessage(); }
+      });
+    });
+  })();
 
   async function submitApproval() {
     const id         = document.getElementById('apDesignId').value;
@@ -1700,7 +1861,7 @@
           .eq('id', id)
           .single();
         if (row && row.creator_id) {
-          await sendApprovalNotice(row.creator_id, row.name || name);
+          await sendApprovalNotice(row.creator_id, row.name || name, id);
         } else {
           console.warn('[客服通知] 此作品無 creator_id,略過通知');
         }
