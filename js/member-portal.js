@@ -2529,13 +2529,19 @@
   }
 
   async function openCustomerService() {
-    const btn = document.getElementById('csFloatBtn');
     const erpid = State.member && State.member.erpid;
     if (!erpid) { alert('請先登入'); return; }
 
-    if (btn) btn.classList.add('loading');
+    // 已開著就只切換顯示,不重打 API
+    const existing = document.getElementById('csChatPanel');
+    if (existing) {
+      existing.classList.add('open');
+      return;
+    }
+
+    // 畫面中間載入提示
+    showCsLoading(true);
     try {
-      // 跟 BFF 要 AES 加密後的會員編號
       const resp = await fetch(CS_BFF_URL, {
         method: 'POST',
         headers: {
@@ -2551,13 +2557,68 @@
         throw new Error(json.message || ('HTTP ' + resp.status));
       }
       const url = CS_PAGE_BASE + '?MemberId=' + encodeURIComponent(enc);
-      window.open(url, '_blank', 'noopener');
+      openCsPanel(url);
     } catch (err) {
       console.error('[客服] 開啟失敗:', err);
       alert('開啟客服失敗,請稍後再試');
     } finally {
-      if (btn) btn.classList.remove('loading');
+      showCsLoading(false);
     }
+  }
+
+  // 畫面中間的載入遮罩
+  function showCsLoading(show) {
+    let el = document.getElementById('csLoadingMask');
+    if (show) {
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'csLoadingMask';
+        el.className = 'cs-loading-mask';
+        el.innerHTML =
+          '<div class="cs-loading-box">' +
+          '<div class="cs-loading-spinner"></div>' +
+          '<div class="cs-loading-text">進入客服對話,請稍後...</div>' +
+          '</div>';
+        document.body.appendChild(el);
+      }
+      el.style.display = 'flex';
+    } else if (el) {
+      el.style.display = 'none';
+    }
+  }
+
+  // 右下角彈出 iframe 迷你對話視窗
+  function openCsPanel(url) {
+    let panel = document.getElementById('csChatPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'csChatPanel';
+      panel.className = 'cs-chat-panel';
+      panel.innerHTML =
+        '<div class="cs-chat-panel-head">' +
+          '<span class="cs-chat-panel-title"><i class="fa-regular fa-comment-dots"></i> 客服對話</span>' +
+          '<div class="cs-chat-panel-actions">' +
+            '<button type="button" class="cs-chat-panel-btn" id="csPanelOpenNew" title="開新分頁"><i class="fa-solid fa-up-right-from-square"></i></button>' +
+            '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cs-chat-panel-body">' +
+          '<iframe id="csChatFrame" src="' + url + '" frameborder="0"></iframe>' +
+        '</div>';
+      document.body.appendChild(panel);
+
+      document.getElementById('csPanelClose').addEventListener('click', function () {
+        panel.classList.remove('open');
+      });
+      document.getElementById('csPanelOpenNew').addEventListener('click', function () {
+        window.open(url, '_blank', 'noopener');
+      });
+    } else {
+      const frame = document.getElementById('csChatFrame');
+      if (frame && frame.src !== url) frame.src = url;
+    }
+    // 觸發動畫
+    requestAnimationFrame(function () { panel.classList.add('open'); });
   }
 
   async function init() {
