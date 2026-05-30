@@ -2517,74 +2517,87 @@
      Init
      ============================================================= */
 
-  // ===== 浮動客服按鈕 → 開左手客服頁 =====
-  const CS_BFF_URL = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/lohas-api-proxy';
-  const CS_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxZG15eHhyc2t2bGxrY2VkeWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzkxMDIsImV4cCI6MjA5MzExNTEwMn0.OsHmLXwgQvxxZ2MTCULxhYmDt3fMO6x9RXohn_eP1RM';
-  const CS_PAGE_BASE = 'https://rsv.lohasglasses.com/Message/_Visitor/CustomerServicePage.aspx';
+  // ===== 自建客服對話系統 (站內,存 Supabase cs_messages) =====
+  const CS_GID_POLL = 15000;   // 未讀輪詢間隔(ms)
+  let csState = { open: false, realtimeCh: null, pollTimer: null };
 
   function bindCsFloat() {
     const btn = document.getElementById('csFloatBtn');
     if (!btn) return;
-    btn.addEventListener('click', openCustomerService);
+    btn.addEventListener('click', toggleCsPanel);
+    // 進來先查一次未讀、並開輪詢 + Realtime
+    refreshCsUnread();
+    startCsUnreadWatch();
   }
 
-  async function openCustomerService() {
-    const erpid = State.member && State.member.erpid;
+  function csErpid() {
+    return State.member && State.member.erpid ? String(State.member.erpid) : null;
+  }
+
+  // 查未讀(後台回覆 staff 且未讀) → 浮動鈕紅點
+  async function refreshCsUnread() {
+    const erpid = csErpid();
+    const sb = getSupabase();
+    if (!erpid || !sb) return;
+    try {
+      const { count } = await sb.from('cs_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('member_erpid', erpid)
+        .eq('sender', 'staff')
+        .eq('is_read', false);
+      setCsFabDot(count || 0);
+    } catch (e) { /* 靜默 */ }
+  }
+
+  function setCsFabDot(n) {
+    const btn = document.getElementById('csFloatBtn');
+    if (!btn) return;
+    let dot = btn.querySelector('.mp-cs-fab-dot');
+    if (n > 0) {
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'mp-cs-fab-dot';
+        btn.appendChild(dot);
+      }
+      dot.textContent = n > 99 ? '99+' : String(n);
+    } else if (dot) {
+      dot.remove();
+    }
+  }
+
+  function startCsUnreadWatch() {
+    const sb = getSupabase();
+    const erpid = csErpid();
+    if (!sb || !erpid) return;
+    // Realtime: 這個會員的訊息有變動就刷新
+    try {
+      if (csState.realtimeCh) sb.removeChannel(csState.realtimeCh);
+      csState.realtimeCh = sb.channel('cs_member_' + erpid)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'cs_messages', filter: 'member_erpid=eq.' + erpid },
+          function () {
+            if (csState.open) loadCsMessages();
+            else refreshCsUnread();
+          })
+        .subscribe();
+    } catch (e) { /* Realtime 失敗就靠輪詢 */ }
+    // 輪詢備援
+    if (csState.pollTimer) clearInterval(csState.pollTimer);
+    csState.pollTimer = setInterval(function () {
+      if (!csState.open) refreshCsUnread();
+    }, CS_GID_POLL);
+  }
+
+  function toggleCsPanel() {
+    const panel = document.getElementById('csChatPanel');
+    if (panel && panel.classList.contains('open')) { closeCsPanel(); return; }
+    openCsPanel();
+  }
+
+  function openCsPanel() {
+    const erpid = csErpid();
     if (!erpid) { alert('請先登入'); return; }
 
-    // 已開著就只切換顯示,不重打 API
-    const existing = document.getElementById('csChatPanel');
-    if (existing) {
-      existing.classList.add('open');
-      return;
-    }
-
-    try {
-      const resp = await fetch(CS_BFF_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer ' + CS_ANON_KEY,
-          'apikey': CS_ANON_KEY,
-        },
-        body: JSON.stringify({ method: 'encryptMemberId', memberId: String(erpid) }),
-      });
-      const json = await resp.json().catch(() => ({}));
-      const enc = json && json.data && json.data.encrypted;
-      if (!resp.ok || String(json.statecode) !== '0' || !enc) {
-        throw new Error(json.message || ('HTTP ' + resp.status));
-      }
-      const url = CS_PAGE_BASE + '?MemberId=' + encodeURIComponent(enc);
-      openCsPanel(url);
-    } catch (err) {
-      console.error('[客服] 開啟失敗:', err);
-      alert('開啟客服失敗,請稍後再試');
-    }
-  }
-
-  // 畫面中間的載入遮罩
-  function showCsLoading(show) {
-    let el = document.getElementById('csLoadingMask');
-    if (show) {
-      if (!el) {
-        el = document.createElement('div');
-        el.id = 'csLoadingMask';
-        el.className = 'cs-loading-mask';
-        el.innerHTML =
-          '<div class="cs-loading-box">' +
-          '<div class="cs-loading-spinner"></div>' +
-          '<div class="cs-loading-text">進入客服對話,請稍後...</div>' +
-          '</div>';
-        document.body.appendChild(el);
-      }
-      el.style.display = 'flex';
-    } else if (el) {
-      el.style.display = 'none';
-    }
-  }
-
-  // 右下角彈出 iframe 迷你對話視窗
-  function openCsPanel(url) {
     let panel = document.getElementById('csChatPanel');
     if (!panel) {
       panel = document.createElement('div');
@@ -2593,47 +2606,99 @@
       panel.innerHTML =
         '<div class="cs-chat-panel-head">' +
           '<span class="cs-chat-panel-title"><i class="fa-regular fa-comment-dots"></i> 客服對話</span>' +
-          '<div class="cs-chat-panel-actions">' +
-            '<button type="button" class="cs-chat-panel-btn" id="csPanelOpenNew" title="開新分頁"><i class="fa-solid fa-up-right-from-square"></i></button>' +
-            '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
-          '</div>' +
+          '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>' +
-        '<div class="cs-chat-panel-body">' +
-          '<div class="cs-frame-loading" id="csFrameLoading">' +
-            '<div class="cs-loading-spinner"></div>' +
-            '<div class="cs-loading-text">進入客服對話中...</div>' +
-          '</div>' +
-          '<iframe id="csChatFrame" src="' + url + '" frameborder="0"></iframe>' +
+        '<div class="cs-chat-stream" id="csChatStream">' +
+          '<div class="cs-chat-empty">載入中...</div>' +
+        '</div>' +
+        '<div class="cs-chat-foot">' +
+          '<textarea id="csChatInput" class="cs-chat-input" rows="1" placeholder="輸入訊息..." maxlength="1000"></textarea>' +
+          '<button type="button" class="cs-chat-send" id="csChatSend"><i class="fa-solid fa-paper-plane"></i></button>' +
         '</div>';
       document.body.appendChild(panel);
 
-      // 隱藏過場提示:load 事件 + 計時器雙保險 (跨網域 iframe load 可能不觸發)
-      const frameEl = document.getElementById('csChatFrame');
-      const hideLoading = function () {
-        const ld = document.getElementById('csFrameLoading');
-        if (ld) ld.classList.add('done');
-      };
-      frameEl.addEventListener('load', hideLoading);
-      setTimeout(hideLoading, 20000);   // 最多 20 秒一定隱藏
-
-      document.getElementById('csPanelClose').addEventListener('click', function () {
-        panel.classList.remove('open');
+      document.getElementById('csPanelClose').addEventListener('click', closeCsPanel);
+      document.getElementById('csChatSend').addEventListener('click', sendCsMessage);
+      document.getElementById('csChatInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCsMessage(); }
       });
-      document.getElementById('csPanelOpenNew').addEventListener('click', function () {
-        window.open(url, '_blank', 'noopener');
-      });
-    } else {
-      const frame = document.getElementById('csChatFrame');
-      const ld = document.getElementById('csFrameLoading');
-      if (frame && frame.src !== url) {
-        if (ld) ld.classList.remove('done');
-        frame.src = url;
-        setTimeout(function () { if (ld) ld.classList.add('done'); }, 20000);
-      }
     }
-    // 觸發動畫
+    csState.open = true;
     requestAnimationFrame(function () { panel.classList.add('open'); });
+    loadCsMessages();
   }
+
+  function closeCsPanel() {
+    const panel = document.getElementById('csChatPanel');
+    if (panel) panel.classList.remove('open');
+    csState.open = false;
+  }
+
+  // 載入對話 + 把 staff 未讀標已讀
+  async function loadCsMessages() {
+    const erpid = csErpid();
+    const sb = getSupabase();
+    const stream = document.getElementById('csChatStream');
+    if (!erpid || !sb || !stream) return;
+    try {
+      const { data, error } = await sb.from('cs_messages')
+        .select('id, sender, message, created_at')
+        .eq('member_erpid', erpid)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      renderCsMessages(data || []);
+
+      // 把後台發的未讀標成已讀
+      await sb.from('cs_messages')
+        .update({ is_read: true })
+        .eq('member_erpid', erpid)
+        .eq('sender', 'staff')
+        .eq('is_read', false);
+      setCsFabDot(0);
+    } catch (e) {
+      stream.innerHTML = '<div class="cs-chat-empty">載入失敗</div>';
+    }
+  }
+
+  function renderCsMessages(list) {
+    const stream = document.getElementById('csChatStream');
+    if (!stream) return;
+    if (!list.length) {
+      stream.innerHTML = '<div class="cs-chat-empty">還沒有對話,有問題歡迎留言給客服</div>';
+      return;
+    }
+    stream.innerHTML = list.map(function (m) {
+      const mine = m.sender === 'member';
+      const t = new Date(m.created_at);
+      const hh = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+      return '<div class="cs-bubble ' + (mine ? 'cs-bubble-out' : 'cs-bubble-in') + '">' +
+               '<div class="cs-bubble-text">' + escapeHtml(m.message || '') + '</div>' +
+               '<div class="cs-bubble-time">' + hh + '</div>' +
+             '</div>';
+    }).join('');
+    stream.scrollTop = stream.scrollHeight;
+  }
+
+  async function sendCsMessage() {
+    const erpid = csErpid();
+    const sb = getSupabase();
+    const input = document.getElementById('csChatInput');
+    if (!erpid || !sb || !input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    try {
+      const { error } = await sb.from('cs_messages').insert({
+        member_erpid: erpid, sender: 'member', message: text, is_read: false
+      });
+      if (error) throw error;
+      loadCsMessages();
+    } catch (e) {
+      alert('送出失敗,請稍後再試');
+      input.value = text;
+    }
+  }
+
 
   async function init() {
     const ok = await loadIdentity();

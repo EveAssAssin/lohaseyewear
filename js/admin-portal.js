@@ -1612,6 +1612,7 @@
 
     modal.hidden = false;
     setTimeout(() => document.getElementById('apErpNumber').focus(), 50);
+    refreshCsAdminBadges();   // 顯示該作者未讀對話紅點
   }
 
   function closeApproveModal() {
@@ -1699,76 +1700,89 @@
     const title = '刻圖審核通過通知';
     const message = `恭喜!您的刻圖「${designName}」已通過審核並上架創作者市集,可至市集查看。`;
 
-    // 兩支各自獨立發,其中一支失敗不影響另一支
+    // (1) App 推播 (進樂活訊息) (2) 站內寫一筆系統訊息到 cs_messages
     const results = await Promise.allSettled([
       pushLohasMessage(memberErpId, title, message, link),
-      pushCustomerService(memberErpId, title, message),
+      writeCsSystemMessage(memberErpId, message),
     ]);
     results.forEach((r, i) => {
-      const which = i === 0 ? '樂活訊息' : '客服對話';
-      if (r.status === 'fulfilled') console.log(`[審核通知·${which}] 已送出:`, r.value);
+      const which = i === 0 ? 'App推播' : '站內訊息';
+      if (r.status === 'fulfilled') console.log(`[審核通知·${which}] OK`);
       else console.warn(`[審核通知·${which}] 失敗:`, r.reason);
     });
-    // 兩支都失敗才視為整體失敗
     if (results.every(r => r.status === 'rejected')) {
-      throw new Error('兩支推播都失敗');
+      throw new Error('通知全部失敗');
     }
     return results;
   }
 
-  // 審核駁回:同時發兩支 (樂活訊息 + 客服對話)
+  // 審核駁回:App 推播 + 站內系統訊息
   async function sendRejectNotice(memberErpId, designName, reason) {
     const title = '刻圖審核結果通知';
-    const message = `您的刻圖「${designName}」未通過審核。\n原因:${reason}\n歡迎修改後重新投稿,如有疑問可直接回覆此訊息。`;
+    const message = `您的刻圖「${designName}」未通過審核。\n原因:${reason}\n歡迎修改後重新投稿,如有疑問可直接在此留言給客服。`;
 
     const results = await Promise.allSettled([
       pushLohasMessage(memberErpId, title, message, 'https://www.lohasglasses.com/member-portal.html'),
-      pushCustomerService(memberErpId, title, message),
+      writeCsSystemMessage(memberErpId, message),
     ]);
     results.forEach((r, i) => {
-      const which = i === 0 ? '樂活訊息' : '客服對話';
-      if (r.status === 'fulfilled') console.log(`[駁回通知·${which}] 已送出:`, r.value);
+      const which = i === 0 ? 'App推播' : '站內訊息';
+      if (r.status === 'fulfilled') console.log(`[駁回通知·${which}] OK`);
       else console.warn(`[駁回通知·${which}] 失敗:`, r.reason);
     });
     if (results.every(r => r.status === 'rejected')) {
-      throw new Error('兩支推播都失敗');
+      throw new Error('通知全部失敗');
     }
     return results;
   }
 
-  // ===== 客服對話視窗 (UI 框架,讀歷史 API 待接) =====
-  const csChat = { erpId: null, name: '' };
+  // 寫一筆系統訊息到 cs_messages (sender=staff,會員會在客服對話框看到)
+  async function writeCsSystemMessage(memberErpId, message) {
+    const sb = (window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient())
+            || (window.Supabase && window.Supabase.client) || null;
+    if (!sb) throw new Error('no supabase');
+    const { error } = await sb.from('cs_messages').insert({
+      member_erpid: String(memberErpId), sender: 'staff', message: message, is_read: false
+    });
+    if (error) throw error;
+    return true;
+  }
 
-  // 後台「與顧客對話」→ 開左手客服系統 (帶該作者加密 MemberId)
-  const CS_PAGE_BASE = 'https://rsv.lohasglasses.com/Message/_Visitor/CustomerServicePage.aspx';
+  // ===== 客服對話視窗 (UI 框架,讀歷史 API 待接) =====
+  // ===== 後台客服對話 (自建,讀寫 Supabase cs_messages) =====
+  const csChat = { erpId: null, name: '', ch: null };
+
+  function csGetSb() {
+    return (window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient())
+        || (window.Supabase && window.Supabase.client) || null;
+  }
 
   async function openCsChat(erpId, customerName) {
-    if (!erpId) {
-      alert('此作品沒有對應的會員編號,無法對話');
-      return;
-    }
+    if (!erpId) { alert('此作品沒有對應的會員編號,無法對話'); return; }
+    csChat.erpId = String(erpId);
+    csChat.name = customerName || '';
 
-    try {
-      // 跟 BFF 要 AES 加密後的會員編號
-      const resp = await fetch(NOTIFY_BFF_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer ' + NOTIFY_ANON_KEY,
-          'apikey': NOTIFY_ANON_KEY,
-        },
-        body: JSON.stringify({ method: 'encryptMemberId', memberId: String(erpId) }),
-      });
-      const json = await resp.json().catch(() => ({}));
-      const enc = json && json.data && json.data.encrypted;
-      if (!resp.ok || String(json.statecode) !== '0' || !enc) {
-        throw new Error(json.message || ('HTTP ' + resp.status));
-      }
-      const url = CS_PAGE_BASE + '?MemberId=' + encodeURIComponent(enc);
-      window.open(url, '_blank', 'noopener');
-    } catch (err) {
-      console.error('[客服] 開啟失敗:', err);
-      alert('開啟客服失敗,請稍後再試');
+    const modal = document.getElementById('csChatModal');
+    if (!modal) return;
+    const who = document.getElementById('csChatWho');
+    if (who) who.textContent = csChat.name ? ('· ' + csChat.name + ' (' + csChat.erpId + ')') : ('· ' + csChat.erpId);
+
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+
+    loadCsChatHistory();
+
+    // Realtime: 會員回訊即時顯示
+    const sb = csGetSb();
+    if (sb) {
+      try {
+        if (csChat.ch) sb.removeChannel(csChat.ch);
+        csChat.ch = sb.channel('cs_admin_' + csChat.erpId)
+          .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'cs_messages', filter: 'member_erpid=eq.' + csChat.erpId },
+            function () { loadCsChatHistory(); })
+          .subscribe();
+      } catch (e) { /* 靠手動刷新 */ }
     }
   }
 
@@ -1778,74 +1792,115 @@
     document.body.style.overflow = '';
     const input = document.getElementById('csChatInput');
     if (input) input.value = '';
+    const sb = csGetSb();
+    if (sb && csChat.ch) { sb.removeChannel(csChat.ch); csChat.ch = null; }
+    refreshCsAdminBadges();   // 關閉後刷新審核列表紅點
   }
 
-  // 讀對話歷史 — TODO: 接即時互動「取得會員對話紀錄」API
-  // 目前 API 規格未定,先顯示提示。等拿到 API 後在這裡撈訊息 render 成氣泡。
+  // 載入對話 + 把會員未讀標已讀
   async function loadCsChatHistory() {
+    const sb = csGetSb();
     const stream = document.getElementById('csChatStream');
-    if (!stream) return;
-    stream.innerHTML = '<div class="cs-chat-empty">對話歷史 API 尚未串接,目前僅能送出訊息</div>';
-    // 未來: const msgs = await fetchCsMessages(csChat.erpId); renderCsMessages(msgs);
+    if (!sb || !stream || !csChat.erpId) return;
+    try {
+      const { data, error } = await sb.from('cs_messages')
+        .select('id, sender, message, created_at')
+        .eq('member_erpid', csChat.erpId)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      renderCsMessages(data || []);
+
+      await sb.from('cs_messages')
+        .update({ is_read: true })
+        .eq('member_erpid', csChat.erpId)
+        .eq('sender', 'member')
+        .eq('is_read', false);
+    } catch (e) {
+      stream.innerHTML = '<div class="cs-chat-empty">載入失敗</div>';
+    }
   }
 
-  // 渲染對話氣泡 (供未來接 API 用)
-  function renderCsMessages(messages) {
+  function renderCsMessages(list) {
     const stream = document.getElementById('csChatStream');
     if (!stream) return;
-    if (!messages || !messages.length) {
+    if (!list || !list.length) {
       stream.innerHTML = '<div class="cs-chat-empty">尚無對話紀錄</div>';
       return;
     }
-    stream.innerHTML = messages.map(function (m) {
-      // m: { from:'cs'|'member', text, time }
-      const side = m.from === 'cs' ? 'cs-bubble-out' : 'cs-bubble-in';
-      return '<div class="cs-bubble ' + side + '">' +
-               '<div class="cs-bubble-text">' + escapeHtml(m.text || '') + '</div>' +
-               (m.time ? '<div class="cs-bubble-time">' + escapeHtml(m.time) + '</div>' : '') +
+    stream.innerHTML = list.map(function (m) {
+      // 後台視角:staff(自己)靠右、member(顧客)靠左
+      const out = m.sender === 'staff';
+      const t = new Date(m.created_at);
+      const hh = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+      return '<div class="cs-bubble ' + (out ? 'cs-bubble-out' : 'cs-bubble-in') + '">' +
+               '<div class="cs-bubble-text">' + escapeHtml(m.message || '') + '</div>' +
+               '<div class="cs-bubble-time">' + hh + '</div>' +
              '</div>';
     }).join('');
     stream.scrollTop = stream.scrollHeight;
   }
 
-  // 送出訊息給顧客 (用 CSLeftMessagePush,進 App 訊息)
   async function sendCsMessage() {
+    const sb = csGetSb();
     const input = document.getElementById('csChatInput');
     const sendBtn = document.getElementById('csChatSend');
-    if (!input || !csChat.erpId) return;
-
+    if (!sb || !input || !csChat.erpId) return;
     const text = input.value.trim();
     if (!text) return;
 
     sendBtn.disabled = true;
-    const oldHtml = sendBtn.innerHTML;
-    sendBtn.innerHTML = '送出中...';
-
+    input.value = '';
     try {
-      await pushCustomerService(csChat.erpId, 'LOHAS 客服訊息', text);
-
-      // 樂觀更新:把剛送的訊息加進畫面
-      const stream = document.getElementById('csChatStream');
-      if (stream) {
-        const empty = stream.querySelector('.cs-chat-empty');
-        if (empty) stream.innerHTML = '';
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-        stream.insertAdjacentHTML('beforeend',
-          '<div class="cs-bubble cs-bubble-out"><div class="cs-bubble-text">' + escapeHtml(text) +
-          '</div><div class="cs-bubble-time">' + hh + ' 已送出</div></div>');
-        stream.scrollTop = stream.scrollHeight;
-      }
-      input.value = '';
-
+      const { error } = await sb.from('cs_messages').insert({
+        member_erpid: csChat.erpId, sender: 'staff', message: text, is_read: false
+      });
+      if (error) throw error;
+      loadCsChatHistory();
     } catch (err) {
-      alert('送出失敗:' + (err && err.message ? err.message : err));
-      console.warn('[客服對話] 送出失敗:', err);
+      alert('送出失敗,請稍後再試');
+      input.value = text;
     } finally {
       sendBtn.disabled = false;
-      sendBtn.innerHTML = oldHtml;
     }
   }
+
+  // 後台審核「與顧客對話」按鈕紅點:該作者有未讀(member 發的)就顯示
+  async function refreshCsAdminBadges() {
+    const sb = csGetSb();
+    const btn = document.getElementById('apOpenChat');
+    if (!sb || !btn) return;
+    const did = document.getElementById('apDesignId')?.value;
+    let erpId = null;
+    const d = (typeof mdState !== 'undefined' && mdState.designs)
+      ? mdState.designs.find(x => String(x.id) === String(did)) : null;
+    if (d && d.creator_id) erpId = String(d.creator_id);
+    if (!erpId) { setCsChatBtnDot(0); return; }
+    try {
+      const { count } = await sb.from('cs_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('member_erpid', erpId)
+        .eq('sender', 'member')
+        .eq('is_read', false);
+      setCsChatBtnDot(count || 0);
+    } catch (e) { /* 靜默 */ }
+  }
+
+  function setCsChatBtnDot(n) {
+    const btn = document.getElementById('apOpenChat');
+    if (!btn) return;
+    let dot = btn.querySelector('.cs-btn-dot');
+    if (n > 0) {
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'cs-btn-dot';
+        btn.appendChild(dot);
+      }
+      dot.textContent = n > 99 ? '99+' : String(n);
+    } else if (dot) {
+      dot.remove();
+    }
+  }
+
 
   // 綁定客服對話視窗按鈕 (只綁一次)
   (function bindCsChatOnce() {
