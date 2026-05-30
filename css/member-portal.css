@@ -2826,6 +2826,7 @@ body {
   box-sizing:border-box;
   letter-spacing:0;
   flex-shrink:0;
+}
 
 /* ===== 右下角浮動客服按鈕 ===== */
 .mp-cs-fab{
