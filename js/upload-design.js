@@ -222,13 +222,63 @@
 
 
   // ===== 主類別清單 (對齊 gallery workCategory) =====
+  // 寫死的後備分類 (Supabase categories 表撈不到時才用)
   var CATEGORIES = [
     '愛情紀念','家人親情','寵物回憶','心靈寄託','個人簽名',
     '生日節慶','企業團體','開運祝福','客製圖案'
   ];
 
-  function renderCategories(){
-    els.categoryRow.innerHTML = CATEGORIES.map(function(c){
+  // 從 categories 表載入的分類快取 (與後台分類管理共用同一份)
+  // 結構: { mains: ['愛情紀念',...], subs: { '愛情紀念': ['交往紀念日',...] } }
+  var catCache = null;
+
+  async function loadCategoriesFromDB(){
+    if(catCache) return catCache;
+    try{
+      var sb = window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
+      if(!sb) throw new Error('no supabase');
+
+      var res = await sb.from('categories')
+        .select('id, parent_id, name, sort_order, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if(res.error) throw res.error;
+
+      var rows = res.data || [];
+      var mains = [], subsById = {}, subs = {};
+      // 先收主分類
+      rows.forEach(function(c){
+        if(c.parent_id == null){ mains.push(c); subs[c.name] = []; }
+      });
+      // 再收子分類,掛到對應主分類名下
+      var nameById = {};
+      mains.forEach(function(m){ nameById[m.id] = m.name; });
+      rows.forEach(function(c){
+        if(c.parent_id != null && nameById[c.parent_id]){
+          subs[nameById[c.parent_id]].push(c.name);
+        }
+      });
+
+      catCache = {
+        mains: mains.map(function(m){ return m.name; }),
+        subs: subs,
+      };
+      return catCache;
+    }catch(e){
+      console.warn('[upload] 分類從 DB 載入失敗,改用內建後備:', e);
+      // fallback: 用寫死的
+      var fb = { mains: CATEGORIES.slice(), subs: {} };
+      CATEGORIES.forEach(function(c){
+        fb.subs[c] = (window.LohasSubcategories || {})[c] || [];
+      });
+      catCache = fb;
+      return catCache;
+    }
+  }
+
+  async function renderCategories(){
+    var data = await loadCategoriesFromDB();
+    els.categoryRow.innerHTML = data.mains.map(function(c){
       return '<button type="button" class="dum-chip" data-cat="' + escAttr(c) + '">' + escHtml(c) + '</button>';
     }).join('');
 
@@ -237,7 +287,6 @@
         var cat = btn.dataset.cat;
         state.selectedCategory = cat;
         state.selectedTags = [];   // 切主題 → 清空子標籤
-        // toggle UI
         els.categoryRow.querySelectorAll('.dum-chip').forEach(function(b){ b.classList.toggle('on', b === btn); });
         renderSubcategories(cat);
       });
@@ -246,11 +295,12 @@
 
 
   function renderSubcategories(category){
-    var tags = (window.LohasSubcategories || {})[category] || [];
+    var tags = (catCache && catCache.subs[category]) || (window.LohasSubcategories || {})[category] || [];
     if(!tags.length){
       els.subcatWrap.hidden = true;
       return;
     }
+    els.subcatWrap.hidden = false;
 
     els.subcatMeta.textContent = category + ' · 可複選';
     els.subcatRow.innerHTML = tags.map(function(t){
@@ -726,15 +776,16 @@
 
 
   // ===== Open / Close =====
-  function openModal(){
+  async function openModal(){
     ensureModalInjected();
     resetForm();
-    renderCategories();
+    await renderCategories();
     els.title.textContent = '新增刻圖設計';
     els.submit.querySelector('span').textContent = '送 出 審 核';
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    scrollDialogTop();
     setTimeout(function(){
       els.name.focus();
       syncSquareBoxes();   // 等 modal 顯示後再算
@@ -742,10 +793,10 @@
   }
 
 
-  function openModalForEdit(design){
+  async function openModalForEdit(design){
     ensureModalInjected();
     resetForm();
-    renderCategories();
+    await renderCategories();
 
     state.editId = design.id;
     els.title.textContent = '重新編輯設計';
@@ -787,8 +838,21 @@
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    scrollDialogTop();
   }
 
+
+  // 把 modal 捲到最上面 (手機版 .dum-dialog 是捲動容器;桌機是 .dum-left/.dum-right)
+  function scrollDialogTop(){
+    setTimeout(function(){
+      var dialog = modal && modal.querySelector('.dum-dialog');
+      if(dialog) dialog.scrollTop = 0;
+      var left = modal && modal.querySelector('.dum-left');
+      if(left) left.scrollTop = 0;
+      var right = modal && modal.querySelector('.dum-right');
+      if(right) right.scrollTop = 0;
+    }, 0);
+  }
 
   function closeModal(){
     if(!modal) return;

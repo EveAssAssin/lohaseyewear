@@ -74,9 +74,54 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ============== 子標籤 chip 渲染 (按主類切換) ============== */
+  // 從 categories 表載入分類 (與後台分類管理 / 刻圖上傳共用同一份)
+  // catCache = { mains:[...], subs:{ '主分類': ['子分類',...] } }
+  let catCache = null;
+
+  async function loadCategoriesFromDB() {
+    if (catCache) return catCache;
+    try {
+      const sb = window.LohasSupabase?.getClient?.();
+      if (!sb) throw new Error("no supabase");
+
+      const res = await sb.from("categories")
+        .select("id, parent_id, name, sort_order, is_active")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (res.error) throw res.error;
+
+      const rows = res.data || [];
+      const mains = [], subs = {}, nameById = {};
+      rows.forEach(c => { if (c.parent_id == null) { mains.push(c.name); subs[c.name] = []; nameById[c.id] = c.name; } });
+      rows.forEach(c => { if (c.parent_id != null && nameById[c.parent_id]) subs[nameById[c.parent_id]].push(c.name); });
+
+      catCache = { mains, subs };
+      return catCache;
+    } catch (e) {
+      console.warn("[分享牆上傳] 分類從 DB 載入失敗,改用內建後備:", e);
+      catCache = null;
+      return null;
+    }
+  }
+
+  // 用 DB 分類填 workCategory 下拉 (撈不到就保留 HTML 寫死的 options)
+  async function populateCategorySelect() {
+    if (!workCategory) return;
+    const data = await loadCategoriesFromDB();
+    if (!data || !data.mains.length) return;
+
+    const prev = workCategory.value;
+    workCategory.innerHTML = data.mains.map(c =>
+      `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`
+    ).join("");
+    if (prev && data.mains.indexOf(prev) >= 0) workCategory.value = prev;
+    selectedSubtags.clear();
+    renderSubtags(workCategory.value);
+  }
+
   function renderSubtags(topic) {
     if (!subtagChips) return;
-    const tags = (window.LohasSubcategories || {})[topic] || [];
+    const tags = (catCache && catCache.subs[topic]) || (window.LohasSubcategories || {})[topic] || [];
 
     if (!tags.length) {
       if (subtagRow) subtagRow.style.display = 'none';
@@ -124,6 +169,14 @@ document.addEventListener("DOMContentLoaded", () => {
     uploadModal.classList.add("is-open");
     uploadModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+
+    // 捲到最上面 (手機版)
+    setTimeout(function () {
+      const body = uploadModal.querySelector(".modal-body");
+      if (body) body.scrollTop = 0;
+      const content = uploadModal.querySelector(".modal-content");
+      if (content) content.scrollTop = 0;
+    }, 0);
   }
 
   function closeModal() {
@@ -582,8 +635,11 @@ document.addEventListener("DOMContentLoaded", () => {
       renderSubtags(workCategory.value);
     });
 
-    // 初次 render (預設主題)
-    if (workCategory) renderSubtags(workCategory.value);
+    // 初次 render: 從 DB 載入分類填下拉 + 子標籤 (失敗則用 HTML 寫死的)
+    if (workCategory) {
+      renderSubtags(workCategory.value);  // 先用現有的擋著
+      populateCategorySelect();           // 再非同步換成 DB 版
+    }
 
     workTitle?.addEventListener("input", () => {
       if (workTitleError) {
