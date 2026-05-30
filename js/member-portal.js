@@ -1158,6 +1158,7 @@
             <div class="photo-name">${escapeHtml(d.name || '')}</div>
             <div class="photo-date">${isOff ? '已被管理員下架' : isApproved ? `<i class="fa-solid fa-pencil"></i>被加入我的最愛刻圖 ${wishCount} 次` : (isPending ? '審核通過後開放收藏' : '未通過審核')}</div>
           </div>
+          ${(isPending || isApproved) ? `<button class="design-chat-btn" data-design-name="${escapeHtml(d.name || '')}"><i class="fa-regular fa-comments"></i>客服對話</button>` : ''}
         </div>`;
     }).join('') + `
       <button class="add-tile" id="addDesignBtn"><i class="fa-solid fa-plus"></i><span>上 傳 新 設 計</span></button>`;
@@ -1167,6 +1168,13 @@
     // 綁卡片點擊 → 開 design modal
     list.querySelectorAll('.design-cover-img').forEach(cover => {
       cover.addEventListener('click', () => openDesignModal(cover));
+    });
+    // 綁對話按鈕 → 開客服對話 (標題帶刻圖名)
+    list.querySelectorAll('.design-chat-btn').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openCsChat(btn.dataset.designName);
+      });
     });
   }
 
@@ -2517,24 +2525,20 @@
      Init
      ============================================================= */
 
-  // ===== 自建客服對話系統 (站內,存 Supabase cs_messages) =====
-  const CS_GID_POLL = 15000;   // 未讀輪詢間隔(ms)
-  let csState = { open: false, realtimeCh: null, pollTimer: null };
-
-  function bindCsFloat() {
-    const btn = document.getElementById('csFloatBtn');
-    if (!btn) return;
-    btn.addEventListener('click', toggleCsPanel);
-    // 進來先查一次未讀、並開輪詢 + Realtime
-    refreshCsUnread();
-    startCsUnreadWatch();
-  }
+  // ===== 自建客服對話系統 (站內,存 cs_messages;入口=刻圖卡片對話按鈕) =====
+  const CS_POLL = 15000;
+  let csState = { open: false, ch: null, pollTimer: null };
 
   function csErpid() {
     return State.member && State.member.erpid ? String(State.member.erpid) : null;
   }
 
-  // 查未讀(後台回覆 staff 且未讀) → 浮動鈕紅點
+  // 進會員中心:查未讀 + 開輪詢/Realtime,未讀紅點顯示在「我的刻圖」nav
+  function initCsWatch() {
+    refreshCsUnread();
+    startCsUnreadWatch();
+  }
+
   async function refreshCsUnread() {
     const erpid = csErpid();
     const sb = getSupabase();
@@ -2545,34 +2549,34 @@
         .eq('member_erpid', erpid)
         .eq('sender', 'staff')
         .eq('is_read', false);
-      setCsFabDot(count || 0);
+      setCsNavDot(count || 0);
     } catch (e) { /* 靜默 */ }
   }
 
-  function setCsFabDot(n) {
-    const btn = document.getElementById('csFloatBtn');
-    if (!btn) return;
-    let dot = btn.querySelector('.mp-cs-fab-dot');
-    if (n > 0) {
-      if (!dot) {
-        dot = document.createElement('span');
-        dot.className = 'mp-cs-fab-dot';
-        btn.appendChild(dot);
+  // 紅點顯示在側邊欄「我的刻圖設計」nav
+  function setCsNavDot(n) {
+    document.querySelectorAll('.nav-link[data-page="my-designs"], .drawer-item[data-page="my-designs"]').forEach(function (nav) {
+      let dot = nav.querySelector('.cs-nav-dot');
+      if (n > 0) {
+        if (!dot) {
+          dot = document.createElement('span');
+          dot.className = 'cs-nav-dot';
+          nav.appendChild(dot);
+        }
+        dot.textContent = n > 99 ? '99+' : String(n);
+      } else if (dot) {
+        dot.remove();
       }
-      dot.textContent = n > 99 ? '99+' : String(n);
-    } else if (dot) {
-      dot.remove();
-    }
+    });
   }
 
   function startCsUnreadWatch() {
     const sb = getSupabase();
     const erpid = csErpid();
     if (!sb || !erpid) return;
-    // Realtime: 這個會員的訊息有變動就刷新
     try {
-      if (csState.realtimeCh) sb.removeChannel(csState.realtimeCh);
-      csState.realtimeCh = sb.channel('cs_member_' + erpid)
+      if (csState.ch) sb.removeChannel(csState.ch);
+      csState.ch = sb.channel('cs_member_' + erpid)
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'cs_messages', filter: 'member_erpid=eq.' + erpid },
           function () {
@@ -2580,21 +2584,15 @@
             else refreshCsUnread();
           })
         .subscribe();
-    } catch (e) { /* Realtime 失敗就靠輪詢 */ }
-    // 輪詢備援
+    } catch (e) { /* 靠輪詢 */ }
     if (csState.pollTimer) clearInterval(csState.pollTimer);
     csState.pollTimer = setInterval(function () {
       if (!csState.open) refreshCsUnread();
-    }, CS_GID_POLL);
+    }, CS_POLL);
   }
 
-  function toggleCsPanel() {
-    const panel = document.getElementById('csChatPanel');
-    if (panel && panel.classList.contains('open')) { closeCsPanel(); return; }
-    openCsPanel();
-  }
-
-  function openCsPanel() {
+  // 開對話框 (標題帶刻圖名;底層仍是該會員同一條對話)
+  function openCsChat(designName) {
     const erpid = csErpid();
     if (!erpid) { alert('請先登入'); return; }
 
@@ -2605,12 +2603,10 @@
       panel.className = 'cs-chat-panel';
       panel.innerHTML =
         '<div class="cs-chat-panel-head">' +
-          '<span class="cs-chat-panel-title"><i class="fa-regular fa-comment-dots"></i> 客服對話</span>' +
+          '<span class="cs-chat-panel-title" id="csChatTitle"><i class="fa-regular fa-comment-dots"></i> 客服對話</span>' +
           '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>' +
-        '<div class="cs-chat-stream" id="csChatStream">' +
-          '<div class="cs-chat-empty">載入中...</div>' +
-        '</div>' +
+        '<div class="cs-chat-stream" id="csChatStream"><div class="cs-chat-empty">載入中...</div></div>' +
         '<div class="cs-chat-foot">' +
           '<textarea id="csChatInput" class="cs-chat-input" rows="1" placeholder="輸入訊息..." maxlength="1000"></textarea>' +
           '<button type="button" class="cs-chat-send" id="csChatSend"><i class="fa-solid fa-paper-plane"></i></button>' +
@@ -2623,6 +2619,12 @@
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCsMessage(); }
       });
     }
+    // 標題帶刻圖名
+    const title = document.getElementById('csChatTitle');
+    if (title) {
+      const label = designName ? (designName + ' 客服對話') : '客服對話';
+      title.innerHTML = '<i class="fa-regular fa-comment-dots"></i> ' + escapeHtml(label);
+    }
     csState.open = true;
     requestAnimationFrame(function () { panel.classList.add('open'); });
     loadCsMessages();
@@ -2634,7 +2636,6 @@
     csState.open = false;
   }
 
-  // 載入對話 + 把 staff 未讀標已讀
   async function loadCsMessages() {
     const erpid = csErpid();
     const sb = getSupabase();
@@ -2647,14 +2648,12 @@
         .order('created_at', { ascending: true });
       if (error) throw error;
       renderCsMessages(data || []);
-
-      // 把後台發的未讀標成已讀
       await sb.from('cs_messages')
         .update({ is_read: true })
         .eq('member_erpid', erpid)
         .eq('sender', 'staff')
         .eq('is_read', false);
-      setCsFabDot(0);
+      setCsNavDot(0);
     } catch (e) {
       stream.innerHTML = '<div class="cs-chat-empty">載入失敗</div>';
     }
@@ -2699,7 +2698,6 @@
     }
   }
 
-
   async function init() {
     const ok = await loadIdentity();
     if (!ok) return;
@@ -2713,7 +2711,7 @@
     bindPreviewCreator();
     bindSaveCreatorInfo();
     bindBankForm();
-    bindCsFloat();
+    initCsWatch();
 
     // 一進來就先計算一次駁回數量, 顯示側邊欄紅圓圓
     refreshPhotoRejectBadge();

@@ -149,7 +149,6 @@
     'dashboard': '首頁',
     'review-designs': '刻圖審核',
     'review-uploads': '上傳審核',
-    'cs-inbox': '客服訊息',
     'cm-banner': '首頁與分頁 Banner',
     'cm-news': '最新消息',
     'admin-upload': '樂活官方上傳',
@@ -190,7 +189,6 @@
     if (page === 'users') loadUsers();
     if (page === 'review-designs') { loadDesignReview(); refreshReviewCounts(); }
     if (page === 'review-uploads') { loadReviewUploads(); refreshReviewCounts(); }
-    if (page === 'cs-inbox') loadCsInbox();
     if (page === 'cm-news') loadNews();
     if (page === 'cm-banner') loadBannerModule();
     if (page === 'admin-upload') { initAdminUpload(); loadAdminUploadHistory(); }
@@ -1482,6 +1480,8 @@
       if (designs.length === 0) {
         const emptyText = status === 'rejected'
           ? '目前沒有已駁回的設計'
+          : status === 'approved'
+          ? '目前沒有審核通過的設計'
           : '目前沒有待審核設計';
         grid.innerHTML = '<p class="empty-text" style="grid-column:1/-1;text-align:center;padding:60px;color:var(--lohas-mute)">' + emptyText + '</p>';
         return;
@@ -1489,6 +1489,7 @@
 
       const grads = ['', 'g2', 'g3', 'g4', 'g5', 'g6'];
       const isRejectedView = status === 'rejected';
+      const isApprovedView = status === 'approved';
 
       grid.innerHTML = designs.map((d, i) => {
         const grad = grads[i % grads.length];
@@ -1517,6 +1518,11 @@
                </button>
                <button class="reject" data-act="delete" data-id="${d.id}" data-name="${escapeHtml(d.name)}"><i class="fa-solid fa-trash"></i>永 久 刪 除</button>
              </div>`
+          : isApprovedView
+          ? `<div class="rcard-actions">
+               <span class="rcard-approved-tag"><i class="fa-solid fa-circle-check"></i>已上架</span>
+               <button class="rcard-chat-btn" data-act="chat" data-erpid="${escapeHtml(d.creator_id || '')}" data-name="${escapeHtml(d.name)}"><i class="fa-regular fa-comments"></i>對 話</button>
+             </div>`
           : `<div class="rcard-actions">
                <button class="approve" data-act="approve"
                        data-id="${d.id}"
@@ -1526,6 +1532,7 @@
                  <i class="fa-solid fa-pen-to-square"></i>開 始 審 核
                </button>
                <button class="reject" data-act="reject" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-by="${escapeHtml(d.creator_id)}"><i class="fa-solid fa-xmark"></i>駁 回</button>
+               <button class="rcard-chat-btn" data-act="chat" data-erpid="${escapeHtml(d.creator_id || '')}" data-name="${escapeHtml(d.name)}"><i class="fa-regular fa-comments"></i>對 話</button>
              </div>`;
 
         // 駁回理由顯示
@@ -1545,7 +1552,7 @@
               <div class="rcard-by">by <b>${escapeHtml(d.creator_id)}</b> <span class="role-pill ${rolePillCls}">${rolePillContent}</span></div>
               ${d.description ? `<div class="rcard-quote">${escapeHtml(d.description)}</div>` : ''}
               ${rejectInfo}
-              <div class="rcard-meta"><i class="fa-regular fa-clock"></i>${isRejectedView ? '駁回於 ' + formatTime(d.reviewed_at || d.created_at) : '送審 ' + formatTime(d.created_at)}</div>
+              <div class="rcard-meta"><i class="fa-regular fa-clock"></i>${isRejectedView ? '駁回於 ' + formatTime(d.reviewed_at || d.created_at) : isApprovedView ? '通過於 ' + formatTime(d.reviewed_at || d.created_at) : '送審 ' + formatTime(d.created_at)}</div>
               ${actions}
             </div>
           </div>`;
@@ -1562,6 +1569,9 @@
       });
       grid.querySelectorAll('[data-act="reject"]').forEach(b => {
         b.addEventListener('click', () => openRejectModal('design', b.dataset.id, { name: b.dataset.name, by: b.dataset.by }));
+      });
+      grid.querySelectorAll('[data-act="chat"]').forEach(b => {
+        b.addEventListener('click', () => openCsChat(b.dataset.erpid, '', b.dataset.name));
       });
       // 駁回模式: 重新開放 / 永久刪除
       grid.querySelectorAll('[data-act="reopen"]').forEach(b => {
@@ -1840,15 +1850,21 @@
     b.style.display = n > 0 ? '' : 'none';
   }
 
-  async function openCsChat(erpId, customerName) {
+  async function openCsChat(erpId, customerName, designName) {
     if (!erpId) { alert('此作品沒有對應的會員編號,無法對話'); return; }
     csChat.erpId = String(erpId);
     csChat.name = customerName || '';
 
     const modal = document.getElementById('csChatModal');
     if (!modal) return;
-    const who = document.getElementById('csChatWho');
-    if (who) who.textContent = csChat.name ? ('· ' + csChat.name + ' (' + csChat.erpId + ')') : ('· ' + csChat.erpId);
+
+    // 標題:刻圖名 + 客服對話
+    const titleH2 = modal.querySelector('.md-modal-head h2');
+    if (titleH2) {
+      const label = designName ? (designName + ' 客服對話') : '客服對話';
+      titleH2.innerHTML = '<i class="fa-regular fa-comments"></i> ' + escapeHtml(label) +
+        ' <span class="cs-chat-who" id="csChatWho">· 會員 ' + escapeHtml(csChat.erpId) + '</span>';
+    }
 
     modal.hidden = false;
     document.body.style.overflow = 'hidden';
