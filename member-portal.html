@@ -534,12 +534,6 @@
     </div>
   </main>
 
-  <!-- ====== 右下角浮動客服按鈕 ====== -->
-  <button class="mp-cs-fab" id="csFloatBtn" type="button" title="聯絡客服" aria-label="聯絡客服">
-    <i class="fa-regular fa-comment-dots"></i>
-    <span class="mp-cs-fab-label">客服</span>
-  </button>
-
   <!-- ====== 手機版底部 Tab Bar (只在手機顯示) ====== -->
   <nav class="mp-mobile-tabbar">
     <a class="tab-item active" data-tab="home" data-page="home">
@@ -709,6 +703,12 @@
 </div>
 
 <div id="toast" class="toast">已完成</div>
+
+<!-- ====== 右下角浮動客服按鈕 (放 body 直屬,不在 .mp grid 內) ====== -->
+<button class="mp-cs-fab" id="csFloatBtn" type="button" title="聯絡客服" aria-label="聯絡客服">
+  <i class="fa-regular fa-comment-dots"></i>
+  <span class="mp-cs-fab-label">客服</span>
+</button>
 
 <!-- 刻圖上傳 (LohasUploadDesign) 依賴 -->
 <link rel="stylesheet" href="css/upload-design.css?v=20260514">
