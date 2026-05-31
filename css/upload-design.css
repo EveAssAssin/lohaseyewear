@@ -894,6 +894,3 @@
 }
 .dum-subchip-d:hover{ border-color:var(--lohas-light, #CDBEA2); color:var(--lohas-brand, #50422D) }
 .dum-subchip-d.on{ background:var(--lohas-brand, #50422D); color:#fff; border-color:var(--lohas-brand, #50422D); font-weight:600 }
-
-/* === 步驟3:眼鏡模擬框限寬(置中,別撐滿) === */
-#dumMockFrame2{ max-width:380px; margin:0 auto 18px }
