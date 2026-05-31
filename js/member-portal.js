@@ -2588,12 +2588,27 @@
     const sb = getSupabase();
     if (!erpid || !sb) return;
     try {
-      const { count } = await sb.from('cs_messages')
-        .select('id', { count: 'exact', head: true })
+      // 撈該會員所有未讀的後台訊息(含 design_id)
+      const { data, error } = await sb.from('cs_messages')
+        .select('design_id')
         .eq('member_erpid', erpid)
         .eq('sender', 'staff')
         .eq('is_read', false);
-      setCsNavDot(count || 0);
+      if (error) throw error;
+
+      const rows = data || [];
+      // 取出有 design_id 的,比對刻圖是否還存在(孤兒不算)
+      const designIds = [...new Set(rows.map(r => r.design_id).filter(Boolean))];
+      let validIds = new Set();
+      if (designIds.length) {
+        const { data: designs } = await sb.from('engraving_designs')
+          .select('id')
+          .in('id', designIds);
+        validIds = new Set((designs || []).map(d => String(d.id)));
+      }
+      // 只算「design 還存在」的未讀(design_id 為 null 的舊資料也算進來)
+      const count = rows.filter(r => !r.design_id || validIds.has(String(r.design_id))).length;
+      setCsNavDot(count);
     } catch (e) { /* 靜默 */ }
   }
 
