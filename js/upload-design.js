@@ -249,24 +249,17 @@
               '<div class="dum-carriers-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 刻在不同載體上的樣子(示意)</div>',
               '<div class="dum-carrier-grid" id="dumCarrierGrid"></div>',
             '</div>',
-            // 條款 1:分潤
-            '<div class="dum-terms">',
-              '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
-              '<div class="dum-terms-text">',
-                '上傳即同意樂活雷雕服務條款,作品被使用一次將獲得 <b>$100 分潤</b>,月底結算。首件通過審核後自動開通創作者身份。',
-              '</div>',
-            '</div>',
-            // 條款 2:隱私權 / 使用條款
+            // 條款:隱私權 / 使用條款
             '<div class="dum-terms">',
               '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
               '<div class="dum-terms-text">',
                 '送出設計即表示您已閱讀並同意 <a href="https://www.lohasglasses.com/privacy.html" target="_blank" rel="noopener">隱私權政策</a> 與 <a href="https://www.lohasglasses.com/terms.html" target="_blank" rel="noopener">使用條款</a>,並授權樂活眼鏡將您的作品用於商品展示與宣傳。',
               '</div>',
             '</div>',
-            // 審核流程
+            // 審核流程 (含分潤說明)
             '<div class="dum-flow-info">',
               '<div class="dum-flow-label">審 核 流 程</div>',
-              '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集</div>',
+              '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。作品每被使用一次可獲得 <b>$100 分潤</b>,月底結算;首件通過審核後自動開通創作者身份。</div>',
             '</div>',
             '<div class="dum-error" id="dumError2" hidden><i class="fa-solid fa-circle-exclamation"></i> <span class="dum-error-text"></span></div>',
             '<div class="dum-step-nav">',
