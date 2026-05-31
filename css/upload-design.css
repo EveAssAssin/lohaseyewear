@@ -770,3 +770,47 @@
 }
 .dum-gpt-hint i{ color:var(--lohas-brand, #c89f5c); animation:dum-arrow-bounce 1s ease-in-out infinite }
 @keyframes dum-arrow-bounce{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
+
+/* ===== 風格範例圖預覽 ===== */
+.dum-style-sample[hidden]{ display:none }
+.dum-style-sample{
+  margin-bottom:16px; padding:14px; background:#faf8f3;
+  border:1px solid #ece7dc; border-radius:14px;
+}
+.dum-sample-label{ font-size:12.5px; font-weight:700; color:#7a6a52; margin-bottom:10px }
+.dum-sample-single img{ width:100%; max-width:220px; border-radius:10px; display:block; margin:0 auto; border:1px solid #ece7dc }
+.dum-sample-pair{ display:flex; align-items:center; justify-content:center; gap:14px }
+.dum-sample-fig{ margin:0; text-align:center; flex:1; max-width:180px }
+.dum-sample-fig img{ width:100%; border-radius:10px; border:1px solid #ece7dc; display:block }
+.dum-sample-fig figcaption{ font-size:11.5px; color:#998b76; margin-top:5px }
+.dum-sample-ph{
+  aspect-ratio:1/1; background:#f0ece3; border:1px dashed #d8cfb8; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; color:#b3a888; font-size:13px;
+}
+.dum-sample-arrow{ color:#c89f5c; font-size:18px; flex-shrink:0 }
+
+/* ===== 六大載體模擬 ===== */
+.dum-carriers[hidden]{ display:none }
+.dum-carriers{ margin-top:20px }
+.dum-carriers-label{
+  font-size:13.5px; font-weight:700; color:#7a6a52; margin-bottom:12px;
+  display:flex; align-items:center; gap:7px;
+}
+.dum-carriers-label i{ color:#c89f5c }
+.dum-carrier-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px }
+.dum-carrier{ margin:0 }
+.dum-carrier-stage{
+  position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
+  background:#f4f1ec; border:1px solid #ece7dc;
+}
+.dum-carrier-bg{ width:100%; height:100%; object-fit:cover; display:block }
+.dum-carrier-engrave{
+  position:absolute; transform:translate(-50%,-50%);
+  mix-blend-mode:multiply; opacity:.92; pointer-events:none;
+}
+.dum-carrier figcaption{
+  text-align:center; font-size:12px; color:#7a6a52; margin-top:6px; font-weight:600;
+}
+@media (max-width:680px){
+  .dum-carrier-grid{ grid-template-columns:repeat(2,1fr) }
+}
