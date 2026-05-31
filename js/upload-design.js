@@ -161,6 +161,10 @@
             '<h3 class="dum-step-title">想做什麼主題的刻圖?</h3>',
             '<p class="dum-step-sub">選一個主題,下一步我們提供對應的 AI 生圖提示詞</p>',
             '<div class="dum-theme-grid" id="dumThemeGrid"></div>',
+            '<div class="dum-theme-subs" id="dumThemeSubs" hidden>',
+              '<div class="dum-theme-subs-head">細部標籤 <span class="dum-theme-subs-meta">可複選</span></div>',
+              '<div class="dum-theme-subs-row" id="dumThemeSubsRow"></div>',
+            '</div>',
             '<div class="dum-step-nav">',
               '<span></span>',
               '<button type="button" class="dum-btn-next" id="dumToStep2" disabled>下一步 <i class="fa-solid fa-arrow-right"></i></button>',
@@ -225,6 +229,9 @@
                     '</div>',
                   '</div>',
                 '</div>',
+                '<div class="dum-tip">',
+                  '<b>小提示:</b> 上傳後可裁切,通過審核後會自動轉換成雷雕用透明底版本',
+                '</div>',
               '</div>',
               // 右:名稱 + 描述
               '<div class="dum-d3-form">',
@@ -239,10 +246,38 @@
                 '<div class="dum-d3-themetag" id="dumD3ThemeTag"></div>',
               '</div>',
             '</div>',
+            // 眼鏡模擬框 (上傳後才顯示,比照快速模式)
+            '<div class="dum-mock-frame" id="dumMockFrame2" hidden>',
+              '<div class="dum-mock-label">刻 在 眼 鏡 上 的 樣 子</div>',
+              '<div class="dum-mock-stage">',
+                '<div class="dum-mock-engrave" id="dumMockEngrave2">',
+                  '<img alt="刻圖模擬" id="dumMockImg2">',
+                '</div>',
+              '</div>',
+            '</div>',
             // 六大載體模擬 (上傳後才顯示)
             '<div class="dum-carriers" id="dumCarriers" hidden>',
               '<div class="dum-carriers-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 刻在不同載體上的樣子(示意)</div>',
               '<div class="dum-carrier-grid" id="dumCarrierGrid"></div>',
+            '</div>',
+            // 條款 1:分潤
+            '<div class="dum-terms">',
+              '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
+              '<div class="dum-terms-text">',
+                '上傳即同意樂活雷雕服務條款,作品被使用一次將獲得 <b>$100 分潤</b>,月底結算。首件通過審核後自動開通創作者身份。',
+              '</div>',
+            '</div>',
+            // 條款 2:隱私權 / 使用條款
+            '<div class="dum-terms">',
+              '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
+              '<div class="dum-terms-text">',
+                '送出設計即表示您已閱讀並同意 <a href="https://www.lohasglasses.com/privacy.html" target="_blank" rel="noopener">隱私權政策</a> 與 <a href="https://www.lohasglasses.com/terms.html" target="_blank" rel="noopener">使用條款</a>,並授權樂活眼鏡將您的作品用於商品展示與宣傳。',
+              '</div>',
+            '</div>',
+            // 審核流程
+            '<div class="dum-flow-info">',
+              '<div class="dum-flow-label">審 核 流 程</div>',
+              '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集</div>',
             '</div>',
             '<div class="dum-error" id="dumError2" hidden><i class="fa-solid fa-circle-exclamation"></i> <span class="dum-error-text"></span></div>',
             '<div class="dum-step-nav">',
@@ -388,6 +423,8 @@
     els.previewImg  = modal.querySelector('#dumPreviewImg');
     els.mockFrame   = modal.querySelector('#dumMockFrame');
     els.mockImg     = modal.querySelector('#dumMockImg');
+    els.mockFrame2  = modal.querySelector('#dumMockFrame2');
+    els.mockImg2    = modal.querySelector('#dumMockImg2');
     els.title       = modal.querySelector('#dumTitle');
     els.name        = modal.querySelector('#dumName');
     els.slogan      = modal.querySelector('#dumSlogan');
@@ -557,7 +594,7 @@
 
 
   // ===== 設計師模式 =====
-  var dz = { theme: null, style: null };   // 當前選的主題/風格
+  var dz = { theme: null, style: null, route: null, subs: [] };   // 當前選的主題/風格/路線/子標籤
 
   function bindDesignerMode(){
     // tab 切換
@@ -631,10 +668,33 @@
         card.classList.add('on');
         dz.theme = card.dataset.theme;   // 存分類名稱字串
         dz.style = null;
+        dz.subs = [];                    // 換主題清空子標籤
         modal.querySelector('#dumToStep2').disabled = false;
+        renderThemeSubs();
         renderStyles();
       });
     });
+  }
+
+  // 渲染選定主分類的子分類(可複選)
+  function renderThemeSubs(){
+    var wrap = modal.querySelector('#dumThemeSubs');
+    var row = modal.querySelector('#dumThemeSubsRow');
+    if(!wrap || !row) return;
+    var subs = (catCache && catCache.subs && catCache.subs[dz.theme]) || [];
+    if(!subs.length){ wrap.hidden = true; row.innerHTML = ''; return; }
+    row.innerHTML = subs.map(function(name){
+      return '<button type="button" class="dum-subchip-d" data-sub="' + escAttr(name) + '">' + escHtml(name) + '</button>';
+    }).join('');
+    row.querySelectorAll('.dum-subchip-d').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        var name = chip.dataset.sub;
+        var i = dz.subs.indexOf(name);
+        if(i >= 0){ dz.subs.splice(i, 1); chip.classList.remove('on'); }
+        else { dz.subs.push(name); chip.classList.add('on'); }
+      });
+    });
+    wrap.hidden = false;
   }
 
   function renderStyles(){
@@ -820,9 +880,11 @@
     // 把設計師模式的欄位灌進主流程用的欄位,沿用 submit()
     if(els.name)   els.name.value = name;
     if(els.slogan) els.slogan.value = slogan;
-    // 主題 → category;風格名 → keywords
+    // 主題 → category;子標籤 + 風格名 → tags
     state.selectedCategory = dz.theme || '';
-    state.selectedTags = dz.style ? [dz.style.name] : [];
+    var tags = (dz.subs || []).slice();
+    if(dz.style && dz.style.name) tags.push(dz.style.name);
+    state.selectedTags = tags;
 
     submit();
   }
@@ -1091,6 +1153,11 @@
       if(empty2) empty2.hidden = true;
       up2.classList.add('has-file');
     }
+    // 同步第三步眼鏡模擬 (比照快速模式)
+    if(els.mockImg2 && els.mockFrame2){
+      els.mockImg2.src = state.previewUrl;
+      els.mockFrame2.hidden = false;
+    }
     // 渲染六大載體模擬
     renderCarriers(state.previewUrl);
   }
@@ -1171,6 +1238,11 @@
       var empty2 = up2.querySelector('.dum-uploader-empty');
       if(empty2) empty2.hidden = false;
       up2.classList.remove('has-file');
+    }
+    // 清第三步眼鏡模擬
+    if(els.mockImg2 && els.mockFrame2){
+      els.mockImg2.src = '';
+      els.mockFrame2.hidden = true;
     }
     // 清六大載體模擬
     renderCarriers(null);
