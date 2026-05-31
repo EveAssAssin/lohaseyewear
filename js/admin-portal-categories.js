@@ -62,14 +62,14 @@
     const subCount = m.subs.length;
     const activeSubs = m.subs.filter(s => s.is_active).length;
     return '' +
-      '<div class="cm-card cat-block ' + (m.is_active ? '' : 'inactive') + '" data-id="' + m.id + '" data-type="main" draggable="true">' +
+      '<div class="cat-block ' + (m.is_active ? '' : 'inactive') + '" data-id="' + m.id + '" data-type="main" draggable="true">' +
         '<div class="cat-main-row">' +
           '<span class="cat-drag" title="拖曳排序"><i class="fa-solid fa-grip-vertical"></i></span>' +
           '<button class="cat-toggle" data-act="toggle-expand" title="展開/收合"><i class="fa-solid fa-chevron-down"></i></button>' +
           '<input type="text" class="cat-name-input cat-name-main" value="' + escapeHtml(m.name) + '" data-act="rename" data-id="' + m.id + '" data-old="' + escapeHtml(m.name) + '">' +
           '<span class="cat-meta">子分類 ' + activeSubs + '/' + subCount + '</span>' +
           '<div class="cat-actions">' +
-            '<button class="cat-prompt-btn" data-act="edit-prompts" data-id="' + m.id + '" title="設計師模式提示詞"><i class="fa-solid fa-wand-magic-sparkles"></i></button>' +
+            '<button class="cat-prompt-btn" data-act="edit-prompts" data-id="' + m.id + '" title="設計師模式提示詞"><i class="fa-solid fa-wand-magic-sparkles"></i> 提示詞</button>' +
             '<label class="cat-switch" title="' + (m.is_active ? '點擊停用' : '點擊啟用') + '"><input type="checkbox" ' + (m.is_active ? 'checked' : '') + ' data-act="toggle-active" data-id="' + m.id + '"><span></span></label>' +
             '<button class="cat-del" data-act="delete-main" data-id="' + m.id + '" title="刪除"><i class="fa-solid fa-trash"></i></button>' +
           '</div>' +
