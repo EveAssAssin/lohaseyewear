@@ -39,14 +39,19 @@
   // 主題改用 categories 表(動態,跟快速模式/後台同一份)
   // 提示詞用「分類名稱」對應;沒對應到的分類 → 用 _default 通用提示詞
   // 每個分類有兩條路線:scratch(無中生有) / material(素材改造)
+  //
+  // 【範例圖欄位(選填,留空就不顯示預覽)】
+  //   無中生有 scratch:  sample: '圖片URL'          → 顯示一張「成品範例」
+  //   素材改造 material: before: 'URL', after: 'URL' → 顯示「改造前 → 改造後」兩張
+  //   之後把圖傳到 Storage 或圖床,把網址填進對應欄位即可
   var PROMPT_MAP = {
     '_default': {
       scratch: [
-        { id: 's-line', name: '極簡線條', desc: '單線勾勒、乾淨俐落',
+        { id: 's-line', name: '極簡線條', desc: '單線勾勒、乾淨俐落', sample: '',
           prompt: '請畫一個「{主題}」主題的圖案,使用極簡單線條風格(single line art / minimalist line drawing),純黑線條、白色背景,無陰影、無填色,線條粗細一致,適合做成雷射雕刻圖案。正方形構圖,主體置中。' },
-        { id: 's-cute', name: '可愛手繪', desc: '圓潤討喜、童趣感',
+        { id: 's-cute', name: '可愛手繪', desc: '圓潤討喜、童趣感', sample: '',
           prompt: '請畫一個「{主題}」主題的圖案,使用圓潤的手繪卡通風格(cute hand-drawn cartoon),粗黑外框線、簡單造型,黑白色調為主,白色背景,適合雷射雕刻。正方形構圖。' },
-        { id: 's-geo', name: '幾何圖形', desc: '線條與形狀構成',
+        { id: 's-geo', name: '幾何圖形', desc: '線條與形狀構成', sample: '',
           prompt: '請用幾何圖形(geometric shapes)組合出一個「{主題}」主題的圖案,黑色線條白底,扁平風格無漸層,適合雷射雕刻。正方形置中構圖。' },
       ],
       material: [
@@ -83,8 +88,14 @@
     },
   };
 
-  // 依分類名稱取得提示詞組 (找不到 → _default)
+  // 依分類名稱取得提示詞組
+  // 優先序:後台分類編輯器設的 → 前端 PROMPT_MAP 客製 → _default 通用
   function getPromptSet(catName){
+    // 後台設的(categories.designer_prompts,經 loadCategoriesFromDB 帶進 catCache.prompts)
+    if(catCache && catCache.prompts && catCache.prompts[catName]){
+      var p = catCache.prompts[catName];
+      if((p.scratch && p.scratch.length) || (p.material && p.material.length)) return p;
+    }
     return PROMPT_MAP[catName] || PROMPT_MAP['_default'];
   }
 
@@ -174,6 +185,7 @@
                 '<div class="dum-style-list" id="dumMaterialList"></div>',
               '</div>',
             '</div>',
+            '<div class="dum-style-sample" id="dumStyleSample" hidden></div>',
             '<div class="dum-prompt-box" id="dumPromptBox" hidden>',
               '<div class="dum-prompt-head">',
                 '<span class="dum-prompt-label"><i class="fa-solid fa-quote-left"></i> 提示詞</span>',
@@ -226,6 +238,11 @@
                 '</div>',
                 '<div class="dum-d3-themetag" id="dumD3ThemeTag"></div>',
               '</div>',
+            '</div>',
+            // 六大載體模擬 (上傳後才顯示)
+            '<div class="dum-carriers" id="dumCarriers" hidden>',
+              '<div class="dum-carriers-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 刻在不同載體上的樣子(示意)</div>',
+              '<div class="dum-carrier-grid" id="dumCarrierGrid"></div>',
             '</div>',
             '<div class="dum-error" id="dumError2" hidden><i class="fa-solid fa-circle-exclamation"></i> <span class="dum-error-text"></span></div>',
             '<div class="dum-step-nav">',
@@ -403,16 +420,19 @@
       if(!sb) throw new Error('no supabase');
 
       var res = await sb.from('categories')
-        .select('id, parent_id, name, sort_order, is_active')
+        .select('id, parent_id, name, sort_order, is_active, designer_prompts')
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
       if(res.error) throw res.error;
 
       var rows = res.data || [];
-      var mains = [], subsById = {}, subs = {};
+      var mains = [], subsById = {}, subs = {}, prompts = {};
       // 先收主分類
       rows.forEach(function(c){
-        if(c.parent_id == null){ mains.push(c); subs[c.name] = []; }
+        if(c.parent_id == null){
+          mains.push(c); subs[c.name] = [];
+          if(c.designer_prompts) prompts[c.name] = c.designer_prompts;
+        }
       });
       // 再收子分類,掛到對應主分類名下
       var nameById = {};
@@ -426,6 +446,7 @@
       catCache = {
         mains: mains.map(function(m){ return m.name; }),
         subs: subs,
+        prompts: prompts,   // 分類名稱 → designer_prompts (後台設的)
       };
       return catCache;
     }catch(e){
@@ -658,11 +679,45 @@
     if(!box || !ta || !dz.style) return;
     ta.value = dz.style.prompt || '';
     box.hidden = false;
+    // 範例圖預覽
+    renderStyleSample();
     // 重置引導(換風格重來)
     var gpt = modal.querySelector('#dumOpenGpt');
     if(gpt) gpt.classList.remove('guide');
     var hint = modal.querySelector('#dumGptHint');
     if(hint) hint.hidden = true;
+  }
+
+  // 選風格後顯示範例圖:無中生有=1張;素材改造=改造前後2張
+  function renderStyleSample(){
+    var wrap = modal.querySelector('#dumStyleSample');
+    if(!wrap) return;
+    var s = dz.style || {};
+    if(dz.route === 'material'){
+      var before = s.before || '', after = s.after || '';
+      if(!before && !after){ wrap.hidden = true; wrap.innerHTML = ''; return; }
+      wrap.innerHTML =
+        '<div class="dum-sample-label">範例:改造前 → 改造後</div>' +
+        '<div class="dum-sample-pair">' +
+          '<figure class="dum-sample-fig">' +
+            (before ? '<img src="' + escAttr(before) + '" alt="改造前">' : '<div class="dum-sample-ph">改造前</div>') +
+            '<figcaption>改造前</figcaption>' +
+          '</figure>' +
+          '<i class="fa-solid fa-arrow-right dum-sample-arrow"></i>' +
+          '<figure class="dum-sample-fig">' +
+            (after ? '<img src="' + escAttr(after) + '" alt="改造後">' : '<div class="dum-sample-ph">改造後</div>') +
+            '<figcaption>改造後</figcaption>' +
+          '</figure>' +
+        '</div>';
+      wrap.hidden = false;
+    } else {
+      var sample = s.sample || '';
+      if(!sample){ wrap.hidden = true; wrap.innerHTML = ''; return; }
+      wrap.innerHTML =
+        '<div class="dum-sample-label">這個風格的成品範例</div>' +
+        '<div class="dum-sample-single"><img src="' + escAttr(sample) + '" alt="範例"></div>';
+      wrap.hidden = false;
+    }
   }
 
   async function copyPrompt(){
@@ -1033,6 +1088,36 @@
       if(empty2) empty2.hidden = true;
       up2.classList.add('has-file');
     }
+    // 渲染六大載體模擬
+    renderCarriers(state.previewUrl);
+  }
+
+  // 六大載體設定:底圖 + 刻圖疊放位置(%,相對底圖)
+  var CARRIERS = [
+    { name: '光學鏡片', img: 'images/lens-01.jpg',    x: 50, y: 50, w: 26 },
+    { name: '鏡框',     img: 'images/frame-01.jpg',   x: 50, y: 46, w: 16 },
+    { name: '眼鏡盒',   img: 'images/box-01.jpg',     x: 50, y: 50, w: 30 },
+    { name: '眼鏡布',   img: 'images/cloth-01.jpg',   x: 50, y: 50, w: 34 },
+    { name: '周邊配件', img: 'images/merch-01.jpg',   x: 50, y: 50, w: 30 },
+    { name: '鼻墊',     img: 'images/nosepad-01.jpg', x: 50, y: 50, w: 22 },
+  ];
+
+  function renderCarriers(imgUrl){
+    var box = modal.querySelector('#dumCarriers');
+    var grid = modal.querySelector('#dumCarrierGrid');
+    if(!box || !grid) return;
+    if(!imgUrl){ box.hidden = true; grid.innerHTML = ''; return; }
+    grid.innerHTML = CARRIERS.map(function(c){
+      return '<figure class="dum-carrier">' +
+               '<div class="dum-carrier-stage">' +
+                 '<img class="dum-carrier-bg" src="' + escAttr(c.img) + '" alt="' + escAttr(c.name) + '">' +
+                 '<img class="dum-carrier-engrave" src="' + escAttr(imgUrl) + '" ' +
+                   'style="left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%">' +
+               '</div>' +
+               '<figcaption>' + escHtml(c.name) + '</figcaption>' +
+             '</figure>';
+    }).join('');
+    box.hidden = false;
   }
 
 
@@ -1084,6 +1169,8 @@
       if(empty2) empty2.hidden = false;
       up2.classList.remove('has-file');
     }
+    // 清六大載體模擬
+    renderCarriers(null);
   }
 
 
