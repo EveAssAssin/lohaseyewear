@@ -1061,12 +1061,56 @@
      Designs · 我的刻圖設計 (Creator only)
      ============================================================= */
 
+  // 載入會員通知 (下架等),顯示在「我的刻圖」上方,只顯示未關閉的
+  async function loadMdNotices() {
+    const box = document.getElementById('mdNotices');
+    const sb = getSupabase();
+    const erpid = State.member && State.member.erpid;
+    if (!box || !sb || !erpid) return;
+    try {
+      const { data, error } = await sb.from('member_notices')
+        .select('id, message, created_at')
+        .eq('member_erpid', String(erpid))
+        .eq('is_dismissed', false)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (!data || !data.length) { box.innerHTML = ''; return; }
+      box.innerHTML = data.map(function (n) {
+        return '<div class="md-notice" data-id="' + n.id + '">' +
+                 '<i class="fa-solid fa-circle-info"></i>' +
+                 '<span class="md-notice-text">' + escapeHtml(n.message || '') + '</span>' +
+                 '<button class="md-notice-close" data-dismiss="' + n.id + '" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
+               '</div>';
+      }).join('');
+      box.querySelectorAll('[data-dismiss]').forEach(function (btn) {
+        btn.addEventListener('click', function () { dismissMdNotice(btn.dataset.dismiss); });
+      });
+    } catch (e) {
+      console.warn('[通知] 載入失敗:', e);
+    }
+  }
+
+  async function dismissMdNotice(id) {
+    const sb = getSupabase();
+    if (!sb || !id) return;
+    // 先從畫面移除 (即時)
+    const el = document.querySelector('.md-notice[data-id="' + id + '"]');
+    if (el) el.remove();
+    try {
+      await sb.from('member_notices').update({ is_dismissed: true }).eq('id', id);
+    } catch (e) {
+      console.warn('[通知] 關閉失敗:', e);
+    }
+  }
+
   async function loadMyDesigns() {
     const list = document.getElementById('myDesignList');
     const designsBlock = document.getElementById('myDesignsBlock');
     const becomeBlock = document.getElementById('becomeCreatorBlock');
 
     if (!list || !State.member) return;
+
+    loadMdNotices();   // 載入下架等通知
 
     // Member (非 Creator) 看到 onboard CTA
     if (!State.isCreator) {

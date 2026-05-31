@@ -5419,6 +5419,21 @@
       d.is_show = newShow;
       mdApplyFilters();
 
+      // 下架 → 通知會員 (出現在會員「我的刻圖」上方,看過關掉就不再出現)
+      if (newShow === '下架' && d.creator_id) {
+        try {
+          await sb.from('member_notices').insert({
+            member_erpid: String(d.creator_id),
+            design_id: id,
+            type: 'unlist',
+            message: `您的刻圖「${d.name || '(未命名)'}」已被下架,如有疑問請聯繫客服。`,
+            is_dismissed: false,
+          });
+        } catch (nErr) {
+          console.warn('[manage-designs] 下架通知寫入失敗(不影響):', nErr);
+        }
+      }
+
     } catch (err) {
       console.error('[manage-designs] 切換上架失敗:', err);
       alert('切換失敗:' + err.message);
@@ -5560,6 +5575,13 @@
         .eq('id', id);
 
       if (error) throw error;
+
+      // 2.5 連這張刻圖的客服對話一起刪 (避免孤兒對話 → 會員端紅點消不掉)
+      try {
+        await sb.from('cs_messages').delete().eq('design_id', id);
+      } catch (csErr) {
+        console.warn('[manage-designs] 刪除對話失敗(不影響):', csErr);
+      }
 
       // 3. 同步本地狀態
       mdState.designs = mdState.designs.filter(x => String(x.id) !== String(id));
