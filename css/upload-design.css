@@ -265,6 +265,8 @@
   line-height:1.7;
 }
 .dum-tip b{ color:var(--lohas-brand, #50422D); font-weight:600 }
+/* 設計師第三步:小提示與上方上傳圖拉開 */
+.dum-d3-upload .dum-tip{ margin-top:12px }
 
 
 /* === 眼鏡模擬框 (上傳後才顯示) === */
