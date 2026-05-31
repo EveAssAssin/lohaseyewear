@@ -35,6 +35,59 @@
     INK_COLOR:        '#2F2A24',           // 雷雕用深棕黑色
   };
 
+  // ===== 設計師模式:提示詞對照表 =====
+  // 主題改用 categories 表(動態,跟快速模式/後台同一份)
+  // 提示詞用「分類名稱」對應;沒對應到的分類 → 用 _default 通用提示詞
+  // 每個分類有兩條路線:scratch(無中生有) / material(素材改造)
+  var PROMPT_MAP = {
+    '_default': {
+      scratch: [
+        { id: 's-line', name: '極簡線條', desc: '單線勾勒、乾淨俐落',
+          prompt: '請畫一個「{主題}」主題的圖案,使用極簡單線條風格(single line art / minimalist line drawing),純黑線條、白色背景,無陰影、無填色,線條粗細一致,適合做成雷射雕刻圖案。正方形構圖,主體置中。' },
+        { id: 's-cute', name: '可愛手繪', desc: '圓潤討喜、童趣感',
+          prompt: '請畫一個「{主題}」主題的圖案,使用圓潤的手繪卡通風格(cute hand-drawn cartoon),粗黑外框線、簡單造型,黑白色調為主,白色背景,適合雷射雕刻。正方形構圖。' },
+        { id: 's-geo', name: '幾何圖形', desc: '線條與形狀構成',
+          prompt: '請用幾何圖形(geometric shapes)組合出一個「{主題}」主題的圖案,黑色線條白底,扁平風格無漸層,適合雷射雕刻。正方形置中構圖。' },
+      ],
+      material: [
+        { id: 'm-photo', name: '照片轉線稿', desc: '把照片變線條圖',
+          prompt: '我會上傳一張「{主題}」相關的照片,請把它轉換成極簡單線條插畫(line art),只保留輪廓與必要特徵,純黑線條、白色背景,無陰影無填色,適合雷射雕刻。正方形構圖。' },
+        { id: 'm-sketch', name: '手繪轉乾淨線稿', desc: '把手稿描成俐落線條',
+          prompt: '我會上傳一張手繪草稿,請幫我重新描繪成乾淨俐落的黑色線條圖,去除雜線與陰影,白色背景,線條流暢一致,適合雷射雕刻。正方形構圖。' },
+      ],
+    },
+    // ===== 以下針對特定分類客製(分類名稱要跟 categories 表一致) =====
+    '文字標語': {
+      scratch: [
+        { id: 's-script', name: '手寫花體', desc: '優雅手寫字',
+          prompt: '請把文字設計成優雅的手寫花體字(elegant hand-lettering script),黑色字、白色背景,線條流暢有粗細變化,適合雷射雕刻。正方形構圖,文字置中。' },
+        { id: 's-stamp', name: '印章風格', desc: '方框 + 文字',
+          prompt: '請把文字設計成印章風格(stamp / seal design),方形或圓形外框內含文字,黑白配色,復古質感,適合雷射雕刻。正方形構圖。' },
+      ],
+      material: [
+        { id: 'm-handwrite', name: '手寫字跡轉向量', desc: '把親筆字變乾淨刻圖',
+          prompt: '我會上傳一張親筆手寫字的照片,請幫我把字跡轉成乾淨的黑色向量線條,保留原本筆跡的個性,去背成白色背景,適合雷射雕刻。正方形構圖,文字置中。' },
+      ],
+    },
+    '星座生肖': {
+      scratch: [
+        { id: 's-constellation', name: '星座連線', desc: '星點連線圖',
+          prompt: '請畫出星座的星點連線圖(constellation line art),小圓點代表星星、細線連接,純黑線白底,簡潔現代,適合雷射雕刻。正方形構圖。' },
+        { id: 's-totem', name: '符號圖騰', desc: '象徵性圖騰',
+          prompt: '請設計一個星座/生肖的象徵圖騰(zodiac symbol icon),簡化的線條圖騰、黑白配色,對稱美感,適合雷射雕刻。正方形構圖置中。' },
+      ],
+      material: [
+        { id: 'm-ref', name: '參考圖轉刻圖', desc: '拿無版權插圖改造',
+          prompt: '我會上傳一張無版權的參考插圖,請以它為靈感重新繪製成簡潔的黑色線條刻圖,純黑線白底、無陰影,適合雷射雕刻。正方形構圖。' },
+      ],
+    },
+  };
+
+  // 依分類名稱取得提示詞組 (找不到 → _default)
+  function getPromptSet(catName){
+    return PROMPT_MAP[catName] || PROMPT_MAP['_default'];
+  }
+
   // ===== State =====
   var state = {
     file:           null,    // 原始 (裁切後) Blob - JPG/PNG 原檔
@@ -74,6 +127,116 @@
       '<div class="dum-bg"></div>',
       '<div class="dum-dialog" role="dialog" aria-modal="true">',
         '<button class="dum-close" type="button" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button>',
+
+        // ===== 模式切換 Tab =====
+        '<div class="dum-tabs">',
+          '<button type="button" class="dum-tab on" data-mode="designer"><i class="fa-solid fa-wand-magic-sparkles"></i> 設計師模式</button>',
+          '<button type="button" class="dum-tab" data-mode="quick"><i class="fa-solid fa-bolt"></i> 快速模式</button>',
+        '</div>',
+
+        // ===== 設計師模式:3 步驟 =====
+        '<div class="dum-designer" id="dumDesigner">',
+          // 步驟指示
+          '<div class="dum-steps">',
+            '<div class="dum-step on" data-step="1"><span class="dum-step-n">1</span><span class="dum-step-t">選主題</span></div>',
+            '<div class="dum-step-line"></div>',
+            '<div class="dum-step" data-step="2"><span class="dum-step-n">2</span><span class="dum-step-t">選風格 · 生成</span></div>',
+            '<div class="dum-step-line"></div>',
+            '<div class="dum-step" data-step="3"><span class="dum-step-n">3</span><span class="dum-step-t">上傳作品</span></div>',
+          '</div>',
+
+          // --- 步驟 1:選主題 ---
+          '<div class="dum-stepview on" data-stepview="1">',
+            '<h3 class="dum-step-title">想做什麼主題的刻圖?</h3>',
+            '<p class="dum-step-sub">選一個主題,下一步我們提供對應的 AI 生圖提示詞</p>',
+            '<div class="dum-theme-grid" id="dumThemeGrid"></div>',
+            '<div class="dum-step-nav">',
+              '<span></span>',
+              '<button type="button" class="dum-btn-next" id="dumToStep2" disabled>下一步 <i class="fa-solid fa-arrow-right"></i></button>',
+            '</div>',
+          '</div>',
+
+          // --- 步驟 2:選風格 + 提示詞 ---
+          '<div class="dum-stepview" data-stepview="2">',
+            '<h3 class="dum-step-title">選一個風格,用 AI 生成圖案</h3>',
+            '<p class="dum-step-sub">複製提示詞 → 貼到 ChatGPT 生成圖片 → 存下來,下一步上傳</p>',
+            '<div class="dum-routes">',
+              // 路線 1:無中生有
+              '<div class="dum-route">',
+                '<div class="dum-route-head"><span class="dum-route-badge a">A</span>無中生有</div>',
+                '<div class="dum-route-desc">直接用文字描述,讓 AI 從零生成</div>',
+                '<div class="dum-style-list" id="dumScratchList"></div>',
+              '</div>',
+              // 路線 2:素材改造
+              '<div class="dum-route">',
+                '<div class="dum-route-head"><span class="dum-route-badge b">B</span>用現有素材改造</div>',
+                '<div class="dum-route-desc">上傳手寫字、照片、無版權插圖,請 AI 改成刻圖</div>',
+                '<div class="dum-style-list" id="dumMaterialList"></div>',
+              '</div>',
+            '</div>',
+            '<div class="dum-prompt-box" id="dumPromptBox" hidden>',
+              '<div class="dum-prompt-head">',
+                '<span class="dum-prompt-label"><i class="fa-solid fa-quote-left"></i> 提示詞</span>',
+                '<div class="dum-prompt-actions">',
+                  '<button type="button" class="dum-prompt-btn" id="dumCopyPrompt"><i class="fa-solid fa-copy"></i> 複製</button>',
+                  '<button type="button" class="dum-prompt-btn primary" id="dumOpenGpt"><i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟 ChatGPT</button>',
+                '</div>',
+              '</div>',
+              '<textarea class="dum-prompt-text" id="dumPromptText" readonly rows="4"></textarea>',
+              '<div class="dum-gpt-hint" id="dumGptHint" hidden><i class="fa-solid fa-arrow-up"></i> 提示詞已複製!點上方「開啟 ChatGPT」貼上送出,生成你的圖案</div>',
+              '<div class="dum-prompt-tip"><i class="fa-solid fa-lightbulb"></i> 小提示:生成後可以再請 ChatGPT 調整,例如「線條再細一點」「背景純白」。滿意後右鍵存圖,回來上傳。</div>',
+            '</div>',
+            '<div class="dum-step-nav">',
+              '<button type="button" class="dum-btn-back" data-back="1"><i class="fa-solid fa-arrow-left"></i> 上一步</button>',
+              '<button type="button" class="dum-btn-next" id="dumToStep3">下一步 <i class="fa-solid fa-arrow-right"></i></button>',
+            '</div>',
+          '</div>',
+
+          // --- 步驟 3:上傳 + 名稱 + 描述 ---
+          '<div class="dum-stepview" data-stepview="3">',
+            '<h3 class="dum-step-title">上傳你的作品</h3>',
+            '<p class="dum-step-sub">上傳剛生成的圖,填寫名稱與簡單描述</p>',
+            '<div class="dum-d3-grid">',
+              // 左:上傳區 (沿用同一套 uploader,id 不同)
+              '<div class="dum-d3-upload">',
+                '<div class="dum-uploader" id="dumUploader2" tabindex="0" role="button">',
+                  '<div class="dum-uploader-empty">',
+                    '<div class="dum-uploader-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>',
+                    '<div class="dum-uploader-h">點擊或拖曳上傳</div>',
+                    '<div class="dum-uploader-p">PNG / JPG / SVG · 最大 ' + CONFIG.MAX_SIZE_MB + 'MB</div>',
+                  '</div>',
+                  '<div class="dum-uploader-preview" id="dumPreview2" hidden>',
+                    '<img alt="預覽" id="dumPreviewImg2">',
+                    '<div class="dum-preview-actions">',
+                      '<button type="button" class="dum-preview-btn" data-action="re-crop2"><i class="fa-solid fa-crop"></i> 重新裁切</button>',
+                      '<button type="button" class="dum-preview-btn danger" data-action="remove2"><i class="fa-solid fa-xmark"></i> 移除</button>',
+                    '</div>',
+                  '</div>',
+                '</div>',
+              '</div>',
+              // 右:名稱 + 描述
+              '<div class="dum-d3-form">',
+                '<div class="dum-field">',
+                  '<label for="dumName2">作品名稱 <span class="req">*</span></label>',
+                  '<input type="text" id="dumName2" maxlength="20" placeholder="例如:愛笑貓咪" autocomplete="off">',
+                '</div>',
+                '<div class="dum-field">',
+                  '<label for="dumSlogan2">簡單描述 <span class="req">*</span></label>',
+                  '<input type="text" id="dumSlogan2" maxlength="40" placeholder="一句話介紹這個作品" autocomplete="off">',
+                '</div>',
+                '<div class="dum-d3-themetag" id="dumD3ThemeTag"></div>',
+              '</div>',
+            '</div>',
+            '<div class="dum-error" id="dumError2" hidden><i class="fa-solid fa-circle-exclamation"></i> <span class="dum-error-text"></span></div>',
+            '<div class="dum-step-nav">',
+              '<button type="button" class="dum-btn-back" data-back="2"><i class="fa-solid fa-arrow-left"></i> 上一步</button>',
+              '<button type="button" class="dum-btn-submit" id="dumSubmit2"><span>送 出 審 核</span></button>',
+            '</div>',
+          '</div>',
+        '</div>',
+
+        // ===== 快速模式:現有左右兩欄 =====
+        '<div class="dum-quick" id="dumQuick" hidden>',
 
         // ===== 左欄:上傳區 =====
         '<div class="dum-left">',
@@ -183,6 +346,7 @@
           '</div>',
 
         '</div>',
+        '</div>',  // /dum-quick
 
         // Loading overlay (透明轉換用)
         '<div class="dum-loading" aria-hidden="true">',
@@ -329,6 +493,8 @@
     els.cancel.addEventListener('click', closeModal);
     document.addEventListener('keydown', onKeydown);
 
+    bindDesignerMode();
+
     // 點上傳區 → 開啟檔案選取器
     els.uploader.addEventListener('click', function(e){
       // 點到「重新裁切/移除」按鈕不要觸發
@@ -366,6 +532,248 @@
     });
 
     els.submit.addEventListener('click', submit);
+  }
+
+
+  // ===== 設計師模式 =====
+  var dz = { theme: null, style: null };   // 當前選的主題/風格
+
+  function bindDesignerMode(){
+    // tab 切換
+    modal.querySelectorAll('.dum-tab').forEach(function(tab){
+      tab.addEventListener('click', function(){
+        switchMode(tab.dataset.mode);
+      });
+    });
+
+    renderThemes();
+
+    // 步驟導航
+    var toStep2 = modal.querySelector('#dumToStep2');
+    var toStep3 = modal.querySelector('#dumToStep3');
+    if(toStep2) toStep2.addEventListener('click', function(){ gotoStep(2); });
+    if(toStep3) toStep3.addEventListener('click', function(){ gotoStep(3); });
+    modal.querySelectorAll('[data-back]').forEach(function(b){
+      b.addEventListener('click', function(){ gotoStep(parseInt(b.dataset.back, 10)); });
+    });
+
+    // 複製提示詞
+    var copyBtn = modal.querySelector('#dumCopyPrompt');
+    if(copyBtn) copyBtn.addEventListener('click', copyPrompt);
+    // 開 ChatGPT
+    var gptBtn = modal.querySelector('#dumOpenGpt');
+    if(gptBtn) gptBtn.addEventListener('click', function(){
+      window.open('https://chatgpt.com', '_blank', 'noopener');
+    });
+
+    // 第三步上傳 (另一套 uploader)
+    bindUploader2();
+
+    // 第三步送出
+    var submit2 = modal.querySelector('#dumSubmit2');
+    if(submit2) submit2.addEventListener('click', submitDesigner);
+  }
+
+  function switchMode(mode){
+    modal.querySelectorAll('.dum-tab').forEach(function(t){
+      t.classList.toggle('on', t.dataset.mode === mode);
+    });
+    var designer = modal.querySelector('#dumDesigner');
+    var quick = modal.querySelector('#dumQuick');
+    if(mode === 'quick'){
+      designer.hidden = true; quick.hidden = false;
+    } else {
+      designer.hidden = false; quick.hidden = true;
+    }
+  }
+
+  async function renderThemes(){
+    var grid = modal.querySelector('#dumThemeGrid');
+    if(!grid) return;
+    grid.innerHTML = '<div class="dum-style-empty" style="grid-column:1/-1">載入主題中...</div>';
+
+    var data = await loadCategoriesFromDB();
+    var mains = (data && data.mains) || [];
+    if(!mains.length){
+      grid.innerHTML = '<div class="dum-style-empty" style="grid-column:1/-1">尚無分類,請先到後台分類管理新增</div>';
+      return;
+    }
+    grid.innerHTML = mains.map(function(name){
+      return '<button type="button" class="dum-theme-card" data-theme="' + escAttr(name) + '">' +
+               '<span class="dum-theme-emoji"><i class="fa-solid fa-shapes"></i></span>' +
+               '<span class="dum-theme-name">' + escHtml(name) + '</span>' +
+             '</button>';
+    }).join('');
+    grid.querySelectorAll('.dum-theme-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        grid.querySelectorAll('.dum-theme-card').forEach(function(c){ c.classList.remove('on'); });
+        card.classList.add('on');
+        dz.theme = card.dataset.theme;   // 存分類名稱字串
+        dz.style = null;
+        modal.querySelector('#dumToStep2').disabled = false;
+        renderStyles();
+      });
+    });
+  }
+
+  function renderStyles(){
+    var scratchList = modal.querySelector('#dumScratchList');
+    var materialList = modal.querySelector('#dumMaterialList');
+    var box = modal.querySelector('#dumPromptBox');
+    if(!scratchList || !materialList || !dz.theme) return;
+    if(box) box.hidden = true;
+    dz.style = null;
+
+    var promptSet = getPromptSet(dz.theme);   // 依分類名稱取提示詞組
+
+    function cardHtml(s){
+      return '<button type="button" class="dum-style-card" data-style="' + s.id + '">' +
+               '<span class="dum-style-name">' + escHtml(s.name) + '</span>' +
+               '<span class="dum-style-desc">' + escHtml(s.desc || '') + '</span>' +
+             '</button>';
+    }
+    scratchList.innerHTML = (promptSet.scratch || []).map(cardHtml).join('') ||
+      '<div class="dum-style-empty">此主題暫無</div>';
+    materialList.innerHTML = (promptSet.material || []).map(cardHtml).join('') ||
+      '<div class="dum-style-empty">此主題暫無</div>';
+
+    // 跨兩路線單選:所有 style 集中
+    var allStyles = (promptSet.scratch || []).concat(promptSet.material || []);
+    modal.querySelectorAll('#dumScratchList .dum-style-card, #dumMaterialList .dum-style-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        modal.querySelectorAll('#dumScratchList .dum-style-card, #dumMaterialList .dum-style-card')
+          .forEach(function(c){ c.classList.remove('on'); });
+        card.classList.add('on');
+        dz.style = allStyles.find(function(x){ return x.id === card.dataset.style; });
+        // 記錄路線:卡片在哪個 list
+        dz.route = card.closest('#dumMaterialList') ? 'material' : 'scratch';
+        showPrompt();
+      });
+    });
+  }
+
+  function showPrompt(){
+    var box = modal.querySelector('#dumPromptBox');
+    var ta = modal.querySelector('#dumPromptText');
+    if(!box || !ta || !dz.style) return;
+    ta.value = dz.style.prompt || '';
+    box.hidden = false;
+    // 重置引導(換風格重來)
+    var gpt = modal.querySelector('#dumOpenGpt');
+    if(gpt) gpt.classList.remove('guide');
+    var hint = modal.querySelector('#dumGptHint');
+    if(hint) hint.hidden = true;
+  }
+
+  async function copyPrompt(){
+    var ta = modal.querySelector('#dumPromptText');
+    if(!ta) return;
+    var done = function(){
+      var btn = modal.querySelector('#dumCopyPrompt');
+      if(btn){
+        var old = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> 已複製';
+        setTimeout(function(){ btn.innerHTML = old; }, 1800);
+      }
+      // 引導:高亮「開啟 ChatGPT」鈕 + 顯示箭頭提示(依路線不同文案)
+      var gpt = modal.querySelector('#dumOpenGpt');
+      if(gpt) gpt.classList.add('guide');
+      var hint = modal.querySelector('#dumGptHint');
+      if(hint){
+        var txt;
+        if(dz.route === 'material'){
+          txt = '提示詞已複製!點上方「開啟 ChatGPT」→ 在對話框<b>上傳你的素材圖</b>(手寫字/照片/插圖)→ 貼上提示詞送出,生成刻圖';
+        } else {
+          txt = '提示詞已複製!點上方「開啟 ChatGPT」→ 直接<b>貼上提示詞送出</b>,生成你的圖案';
+        }
+        hint.innerHTML = '<i class="fa-solid fa-arrow-up"></i> <span>' + txt + '</span>';
+        hint.hidden = false;
+      }
+    };
+    try {
+      await navigator.clipboard.writeText(ta.value);
+      done();
+    } catch(e){
+      ta.select(); document.execCommand('copy'); done();
+    }
+  }
+
+  function gotoStep(n){
+    // 步驟驗證
+    if(n === 2 && !dz.theme){ return; }
+    // 切步驟指示
+    modal.querySelectorAll('.dum-step').forEach(function(s){
+      var sn = parseInt(s.dataset.step, 10);
+      s.classList.toggle('on', sn === n);
+      s.classList.toggle('done', sn < n);
+    });
+    // 切步驟內容
+    modal.querySelectorAll('.dum-stepview').forEach(function(v){
+      v.classList.toggle('on', parseInt(v.dataset.stepview, 10) === n);
+    });
+    // 進第三步時,顯示選的主題標籤
+    if(n === 3){
+      var tag = modal.querySelector('#dumD3ThemeTag');
+      if(tag && dz.theme){
+        tag.innerHTML = '<i class="fa-solid fa-tag"></i> 主題:' + escHtml(dz.theme) +
+          (dz.style ? ' · ' + escHtml(dz.style.name) : '');
+      }
+    }
+  }
+
+  // 第三步的上傳器 (沿用 handleFile 同套處理,但獨立預覽)
+  function bindUploader2(){
+    var up = modal.querySelector('#dumUploader2');
+    var fileInput = els.fileInput;   // 共用同一個 file input
+    if(!up) return;
+    up.addEventListener('click', function(e){
+      if(e.target.closest('.dum-preview-btn')) return;
+      fileInput.click();
+    });
+    ['dragenter','dragover'].forEach(function(ev){
+      up.addEventListener(ev, function(e){ e.preventDefault(); up.classList.add('drag'); });
+    });
+    ['dragleave','drop'].forEach(function(ev){
+      up.addEventListener(ev, function(e){ e.preventDefault(); up.classList.remove('drag'); });
+    });
+    up.addEventListener('drop', function(e){
+      var f = e.dataTransfer?.files?.[0];
+      if(f) handleFile(f);
+    });
+    // 第三步的移除/重裁
+    modal.addEventListener('click', function(e){
+      var act = e.target.closest('[data-action]')?.dataset?.action;
+      if(act === 're-crop2') reCropCurrent();
+      if(act === 'remove2')  removeFile();
+    });
+  }
+
+  // 設計師模式送出 (用第三步的名稱/描述欄位)
+  async function submitDesigner(){
+    var nameEl = modal.querySelector('#dumName2');
+    var sloganEl = modal.querySelector('#dumSlogan2');
+    var name = (nameEl?.value || '').trim();
+    var slogan = (sloganEl?.value || '').trim();
+
+    if(!state.file && !state.svgString){ return showError2('請先上傳作品圖'); }
+    if(!name){ return showError2('請填寫作品名稱'); }
+    if(!slogan){ return showError2('請填一句簡單描述'); }
+
+    // 把設計師模式的欄位灌進主流程用的欄位,沿用 submit()
+    if(els.name)   els.name.value = name;
+    if(els.slogan) els.slogan.value = slogan;
+    // 主題 → category;風格名 → keywords
+    state.selectedCategory = dz.theme || '';
+    state.selectedTags = dz.style ? [dz.style.name] : [];
+
+    submit();
+  }
+
+  function showError2(msg){
+    var box = modal.querySelector('#dumError2');
+    if(!box) return;
+    box.querySelector('.dum-error-text').textContent = msg;
+    box.hidden = false;
   }
 
 
@@ -613,6 +1021,18 @@
     els.mockImg.src = state.previewUrl;
     els.mockFrame.hidden = false;
     syncSquareBoxes();
+
+    // 同步第三步(設計師模式)的預覽
+    var up2 = modal.querySelector('#dumUploader2');
+    var pv2 = modal.querySelector('#dumPreview2');
+    var pi2 = modal.querySelector('#dumPreviewImg2');
+    if(up2 && pv2 && pi2){
+      pi2.src = state.previewUrl;
+      pv2.hidden = false;
+      var empty2 = up2.querySelector('.dum-uploader-empty');
+      if(empty2) empty2.hidden = true;
+      up2.classList.add('has-file');
+    }
   }
 
 
@@ -652,6 +1072,18 @@
     // 隱藏眼鏡模擬框
     els.mockImg.src = '';
     els.mockFrame.hidden = true;
+
+    // 同步清第三步預覽
+    var up2 = modal.querySelector('#dumUploader2');
+    var pv2 = modal.querySelector('#dumPreview2');
+    var pi2 = modal.querySelector('#dumPreviewImg2');
+    if(up2 && pv2 && pi2){
+      pi2.src = '';
+      pv2.hidden = true;
+      var empty2 = up2.querySelector('.dum-uploader-empty');
+      if(empty2) empty2.hidden = false;
+      up2.classList.remove('has-file');
+    }
   }
 
 
