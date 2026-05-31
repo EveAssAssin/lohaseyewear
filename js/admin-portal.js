@@ -1527,7 +1527,6 @@
                  <i class="fa-solid fa-pen-to-square"></i>開 始 審 核
                </button>
                <button class="reject" data-act="reject" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-by="${escapeHtml(d.creator_id)}"><i class="fa-solid fa-xmark"></i>駁 回</button>
-               <button class="rcard-chat-btn" data-act="chat" data-erpid="${escapeHtml(d.creator_id || '')}" data-name="${escapeHtml(d.name)}" title="客服對話"><i class="fa-regular fa-comments"></i></button>
              </div>`;
 
         // 駁回理由顯示
@@ -1564,9 +1563,6 @@
       });
       grid.querySelectorAll('[data-act="reject"]').forEach(b => {
         b.addEventListener('click', () => openRejectModal('design', b.dataset.id, { name: b.dataset.name, by: b.dataset.by }));
-      });
-      grid.querySelectorAll('[data-act="chat"]').forEach(b => {
-        b.addEventListener('click', () => openCsChat(b.dataset.erpid, '', b.dataset.name));
       });
       // 駁回模式: 重新開放 / 永久刪除
       grid.querySelectorAll('[data-act="reopen"]').forEach(b => {
@@ -1844,25 +1840,43 @@
     b.style.display = n > 0 ? '' : 'none';
   }
 
+  // 開對話 (用會員平台同款 cs-chat-panel 氣泡框,右下角彈出)
   async function openCsChat(erpId, customerName, designName) {
     if (!erpId) { alert('此作品沒有對應的會員編號,無法對話'); return; }
     csChat.erpId = String(erpId);
-    csChat.name = customerName || '';
 
-    const modal = document.getElementById('csChatModal');
-    if (!modal) return;
+    let panel = document.getElementById('csChatPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'csChatPanel';
+      panel.className = 'cs-chat-panel';
+      panel.innerHTML =
+        '<div class="cs-chat-panel-head">' +
+          '<span class="cs-chat-panel-title" id="csChatTitle"><i class="fa-regular fa-comment-dots"></i> 客服對話</span>' +
+          '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>' +
+        '<div class="cs-chat-stream" id="csChatStream"><div class="cs-chat-empty">載入中...</div></div>' +
+        '<div class="cs-chat-foot">' +
+          '<textarea id="csChatInput" class="cs-chat-input" rows="1" placeholder="輸入訊息..." maxlength="1000"></textarea>' +
+          '<button type="button" class="cs-chat-send" id="csChatSend"><i class="fa-solid fa-paper-plane"></i></button>' +
+        '</div>';
+      document.body.appendChild(panel);
 
-    // 標題:刻圖名 + 客服對話
-    const titleH2 = modal.querySelector('.md-modal-head h2');
-    if (titleH2) {
-      const label = designName ? (designName + ' 客服對話') : '客服對話';
-      titleH2.innerHTML = '<i class="fa-regular fa-comments"></i> ' + escapeHtml(label) +
-        ' <span class="cs-chat-who" id="csChatWho">· 會員 ' + escapeHtml(csChat.erpId) + '</span>';
+      document.getElementById('csPanelClose').addEventListener('click', closeCsChat);
+      document.getElementById('csChatSend').addEventListener('click', sendCsMessage);
+      document.getElementById('csChatInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCsMessage(); }
+      });
     }
-
-    modal.hidden = false;
-    document.body.style.overflow = 'hidden';
-
+    // 標題帶刻圖名
+    const title = document.getElementById('csChatTitle');
+    if (title) {
+      const label = designName ? (designName + ' 客服對話') : '客服對話';
+      title.innerHTML = '<i class="fa-regular fa-comment-dots"></i> ' + escapeHtml(label) +
+        ' <span class="cs-chat-who">· 會員 ' + escapeHtml(csChat.erpId) + '</span>';
+    }
+    csChat.open = true;
+    requestAnimationFrame(function () { panel.classList.add('open'); });
     loadCsChatHistory();
 
     // Realtime: 會員回訊即時顯示
@@ -1880,19 +1894,13 @@
   }
 
   function closeCsChat() {
-    const modal = document.getElementById('csChatModal');
-    if (modal) modal.hidden = true;
-    document.body.style.overflow = '';
-    const input = document.getElementById('csChatInput');
-    if (input) input.value = '';
+    const panel = document.getElementById('csChatPanel');
+    if (panel) panel.classList.remove('open');
+    csChat.open = false;
     const sb = csGetSb();
     if (sb && csChat.ch) { sb.removeChannel(csChat.ch); csChat.ch = null; }
-    refreshCsAdminBadges();   // 刷新審核視窗按鈕紅點
-    // 若正在客服收件匣頁,重載列表更新未讀
-    if (document.querySelector('.content-page[data-page="cs-inbox"].on')) loadCsInbox();
   }
 
-  // 載入對話 + 把會員未讀標已讀
   async function loadCsChatHistory() {
     const sb = csGetSb();
     const stream = document.getElementById('csChatStream');
@@ -1904,7 +1912,6 @@
         .order('created_at', { ascending: true });
       if (error) throw error;
       renderCsMessages(data || []);
-
       await sb.from('cs_messages')
         .update({ is_read: true })
         .eq('member_erpid', csChat.erpId)
@@ -1923,8 +1930,7 @@
       return;
     }
     stream.innerHTML = list.map(function (m) {
-      // 後台視角:staff(自己)靠右、member(顧客)靠左
-      const out = m.sender === 'staff';
+      const out = m.sender === 'staff';   // 後台視角:自己(staff)靠右
       const t = new Date(m.created_at);
       const hh = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
       return '<div class="cs-bubble ' + (out ? 'cs-bubble-out' : 'cs-bubble-in') + '">' +
@@ -1938,12 +1944,9 @@
   async function sendCsMessage() {
     const sb = csGetSb();
     const input = document.getElementById('csChatInput');
-    const sendBtn = document.getElementById('csChatSend');
     if (!sb || !input || !csChat.erpId) return;
     const text = input.value.trim();
     if (!text) return;
-
-    sendBtn.disabled = true;
     input.value = '';
     try {
       const { error } = await sb.from('cs_messages').insert({
@@ -1954,10 +1957,9 @@
     } catch (err) {
       alert('送出失敗,請稍後再試');
       input.value = text;
-    } finally {
-      sendBtn.disabled = false;
     }
   }
+
 
   // 後台審核「與顧客對話」按鈕紅點:該作者有未讀(member 發的)就顯示
   async function refreshCsAdminBadges() {
@@ -2015,7 +2017,7 @@
           const label = document.getElementById('apCreatorIdLabel')?.textContent?.trim();
           if (label && label !== '--' && label !== '匿名') erpId = label;
         }
-        openCsChat(erpId, name);
+        openCsChat(erpId, '', name);
       });
       document.getElementById('csChatClose')?.addEventListener('click', closeCsChat);
       document.getElementById('csChatSend')?.addEventListener('click', sendCsMessage);
