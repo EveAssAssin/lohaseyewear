@@ -1184,7 +1184,7 @@
     { name: '鏡框',     img: 'images/carrier-frame.jpg',   x: 50, y: 40, w: 7 },
     { name: '眼鏡盒',   img: 'images/carrier-box.jpg',     x: 50, y: 45, w: 10 },
     { name: '眼鏡布',   img: 'images/carrier-cloth.jpg',   x: 72, y: 60, w: 11 },
-    { name: '周邊配件', img: 'images/carrier-merch.jpg',   x: 53, y: 57, w: 10 },
+    { name: '周邊配件', img: 'images/carrier-merch.jpg',   x: 51, y: 57, w: 10 },
     { name: '鼻墊',     img: 'images/carrier-nosepad.jpg', x: 34, y: 45, w: 8 },
     { name: '眼鏡袋',   img: 'images/carrier-pouch.jpg',   x: 45, y: 72, w: 11 },
   ];
