@@ -617,3 +617,156 @@
   color:var(--lohas-muted, #9B9186);
   letter-spacing:0.5px;
 }
+
+/* ============================================================
+   設計師模式 / 快速模式 (tab + 3 步驟)
+   ============================================================ */
+.dum-tabs{
+  display:flex; gap:8px; padding:0 0 4px; margin-bottom:18px;
+  border-bottom:1px solid var(--lohas-bd, #e8e2d5);
+}
+.dum-tab{
+  flex:1; padding:12px 0; border:0; background:transparent; cursor:pointer;
+  font-family:inherit; font-size:14px; font-weight:600; color:#999;
+  border-bottom:2px solid transparent; margin-bottom:-1px;
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  transition:color .15s, border-color .15s;
+}
+.dum-tab:hover{ color:var(--lohas-brand, #c89f5c) }
+.dum-tab.on{ color:var(--lohas-brand, #c89f5c); border-bottom-color:var(--lohas-brand, #c89f5c) }
+
+/* ===== 步驟指示 ===== */
+.dum-steps{ display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:26px }
+.dum-step{ display:flex; align-items:center; gap:8px; opacity:.45; transition:opacity .2s }
+.dum-step.on, .dum-step.done{ opacity:1 }
+.dum-step-n{
+  width:28px; height:28px; border-radius:50%; flex-shrink:0;
+  background:#e8e2d5; color:#8a7a5e; font-size:13px; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.dum-step.on .dum-step-n{ background:var(--lohas-brand, #c89f5c); color:#fff }
+.dum-step.done .dum-step-n{ background:#7aa56a; color:#fff }
+.dum-step-t{ font-size:13px; font-weight:600; color:#5d5346; white-space:nowrap }
+.dum-step-line{ width:36px; height:2px; background:#e8e2d5; flex-shrink:0 }
+
+/* ===== 步驟內容切換 ===== */
+.dum-stepview{ display:none }
+.dum-stepview.on{ display:block }
+.dum-step-title{ font-size:19px; font-weight:700; color:#3a3226; margin:0 0 6px; text-align:center }
+.dum-step-sub{ font-size:13px; color:#998b76; margin:0 0 22px; text-align:center; line-height:1.6 }
+
+/* ===== 步驟導航按鈕 ===== */
+.dum-step-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:26px; gap:12px }
+.dum-btn-next, .dum-btn-back{
+  padding:11px 22px; border-radius:10px; cursor:pointer; font-family:inherit;
+  font-size:14px; font-weight:600; display:inline-flex; align-items:center; gap:7px;
+  transition:all .15s;
+}
+.dum-btn-next{ background:var(--lohas-brand, #c89f5c); color:#fff; border:0 }
+.dum-btn-next:hover{ filter:brightness(1.05) }
+.dum-btn-next:disabled{ background:#ddd6c8; cursor:not-allowed }
+.dum-btn-back{ background:#fff; color:#8a7a5e; border:1px solid #ddd6c8 }
+.dum-btn-back:hover{ background:#faf8f3 }
+
+/* ===== 步驟1:主題格 ===== */
+.dum-theme-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px }
+.dum-theme-card{
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:22px 10px; border-radius:14px; cursor:pointer;
+  background:#fff; border:2px solid #ece7dc; font-family:inherit;
+  transition:all .15s;
+}
+.dum-theme-card:hover{ border-color:var(--lohas-brand, #c89f5c); transform:translateY(-2px) }
+.dum-theme-card.on{ border-color:var(--lohas-brand, #c89f5c); background:#fdf8ef }
+.dum-theme-emoji{ font-size:34px; line-height:1 }
+.dum-theme-name{ font-size:14px; font-weight:600; color:#3a3226 }
+
+/* ===== 步驟2:風格卡 + 提示詞 ===== */
+.dum-style-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:20px }
+.dum-style-card{
+  display:flex; flex-direction:column; gap:4px; text-align:left;
+  padding:14px 16px; border-radius:12px; cursor:pointer;
+  background:#fff; border:2px solid #ece7dc; font-family:inherit; transition:all .15s;
+}
+.dum-style-card:hover{ border-color:var(--lohas-brand, #c89f5c) }
+.dum-style-card.on{ border-color:var(--lohas-brand, #c89f5c); background:#fdf8ef }
+.dum-style-name{ font-size:14.5px; font-weight:700; color:#3a3226 }
+.dum-style-desc{ font-size:12px; color:#998b76 }
+
+.dum-prompt-box{
+  background:#faf8f3; border:1px solid #ece7dc; border-radius:14px; padding:16px;
+}
+.dum-prompt-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px; flex-wrap:wrap }
+.dum-prompt-label{ font-size:13px; font-weight:700; color:#7a6a52 }
+.dum-prompt-actions{ display:flex; gap:8px }
+.dum-prompt-btn{
+  padding:7px 13px; border-radius:8px; cursor:pointer; font-family:inherit;
+  font-size:12.5px; font-weight:600; border:1px solid var(--lohas-brand, #c89f5c);
+  background:#fff; color:var(--lohas-brand, #c89f5c);
+  display:inline-flex; align-items:center; gap:5px; transition:all .15s;
+}
+.dum-prompt-btn:hover{ background:rgba(200,159,92,.08) }
+.dum-prompt-btn.primary{ background:var(--lohas-brand, #c89f5c); color:#fff }
+.dum-prompt-btn.primary:hover{ filter:brightness(1.05) }
+.dum-prompt-text{
+  width:100%; box-sizing:border-box; resize:vertical; min-height:80px;
+  border:1px solid #ddd6c8; border-radius:10px; padding:12px;
+  font-family:inherit; font-size:13.5px; line-height:1.6; color:#3a3226; background:#fff;
+}
+.dum-prompt-tip{
+  margin-top:12px; font-size:12px; color:#998b76; line-height:1.6;
+  display:flex; gap:7px; align-items:flex-start;
+}
+.dum-prompt-tip i{ color:#d9a441; margin-top:2px }
+
+/* ===== 步驟3:上傳 + 表單 ===== */
+.dum-d3-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px }
+.dum-d3-upload .dum-uploader{ width:100%; aspect-ratio:1/1 }
+.dum-d3-form{ display:flex; flex-direction:column; gap:16px }
+.dum-d3-themetag{
+  font-size:12.5px; color:#7a6a52; background:#fdf8ef; border:1px solid #ecdcc0;
+  border-radius:8px; padding:8px 12px; display:inline-flex; align-items:center; gap:6px;
+}
+
+/* ===== 設計師模式 RWD ===== */
+@media (max-width:680px){
+  .dum-theme-grid{ grid-template-columns:repeat(2,1fr) }
+  .dum-d3-grid{ grid-template-columns:1fr }
+  .dum-step-t{ display:none }
+  .dum-step-line{ width:24px }
+}
+
+/* ===== 步驟2 兩路線並列 ===== */
+.dum-routes{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px }
+.dum-route{ background:#faf8f3; border:1px solid #ece7dc; border-radius:14px; padding:16px }
+.dum-route-head{ display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; color:#3a3226; margin-bottom:4px }
+.dum-route-badge{ width:24px; height:24px; border-radius:50%; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff }
+.dum-route-badge.a{ background:var(--lohas-brand, #c89f5c) }
+.dum-route-badge.b{ background:#7a6a52 }
+.dum-route-desc{ font-size:12px; color:#998b76; margin-bottom:12px; line-height:1.5 }
+.dum-route .dum-style-list{ grid-template-columns:1fr; gap:8px; margin-bottom:0 }
+.dum-style-empty{ font-size:12px; color:#bbb; padding:8px; text-align:center }
+
+@media (max-width:680px){
+  .dum-routes{ grid-template-columns:1fr }
+}
+
+/* ===== 複製後引導:ChatGPT 鈕高亮 + 箭頭提示 ===== */
+.dum-prompt-btn.primary.guide{
+  animation:dum-gpt-pulse 1.4s ease-in-out infinite;
+  box-shadow:0 0 0 0 rgba(200,159,92,.5);
+}
+@keyframes dum-gpt-pulse{
+  0%{ box-shadow:0 0 0 0 rgba(200,159,92,.5) }
+  70%{ box-shadow:0 0 0 8px rgba(200,159,92,0) }
+  100%{ box-shadow:0 0 0 0 rgba(200,159,92,0) }
+}
+.dum-gpt-hint[hidden]{ display:none }
+.dum-gpt-hint{
+  margin-top:12px; padding:10px 14px; border-radius:10px;
+  background:#fdf3e7; border:1px solid #f0d9b5; color:#8a6d3b;
+  font-size:13px; line-height:1.5; font-weight:600;
+  display:flex; gap:8px; align-items:center;
+}
+.dum-gpt-hint i{ color:var(--lohas-brand, #c89f5c); animation:dum-arrow-bounce 1s ease-in-out infinite }
+@keyframes dum-arrow-bounce{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
