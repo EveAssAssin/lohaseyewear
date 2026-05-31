@@ -739,8 +739,54 @@
       toggleWishlist(d.id);
     };
 
+    // 分享這張刻圖
+    var shareBtn = document.getElementById('shareBtn');
+    if(shareBtn){
+      shareBtn.onclick = function(){ shareDesign(d); };
+    }
+
     ovl.classList.add('show');
     ovl.setAttribute('aria-hidden', 'false');
+  }
+
+  // 分享刻圖:產生專屬連結,手機用系統分享、桌機複製到剪貼簿
+  async function shareDesign(d){
+    var url = location.origin + location.pathname + '?design=' + encodeURIComponent(d.id);
+    var shareData = {
+      title: (d.name || '樂活刻圖') + ' · LOHAS 創作者市集',
+      text: '看看這張刻圖設計:' + (d.name || ''),
+      url: url
+    };
+    // 手機原生分享
+    if(navigator.share){
+      try {
+        await navigator.share(shareData);
+        bumpShareCount(d);
+        return;
+      } catch(e){
+        if(e && e.name === 'AbortError') return;  // 使用者取消,不複製
+      }
+    }
+    // 桌機 / 不支援 → 複製連結
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('已複製分享連結');
+      bumpShareCount(d);
+    } catch(e){
+      // clipboard 失敗 → 用 prompt 讓使用者手動複製
+      window.prompt('複製這個連結分享:', url);
+    }
+  }
+
+  // 分享次數 +1 (share_count)
+  async function bumpShareCount(d){
+    var sb = window.LohasSupabase?.getClient?.() || window.Supabase?.client;
+    if(!sb || typeof sb.from !== 'function') return;
+    try {
+      var cur = (d.shares || 0) + 1;
+      d.shares = cur;
+      await sb.from('engraving_designs').update({ share_count: cur }).eq('id', d.id);
+    } catch(e){ /* 靜默 */ }
   }
 
   function closeModal(){
