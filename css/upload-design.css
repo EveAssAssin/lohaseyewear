@@ -854,7 +854,9 @@
   margin-bottom:12px; display:flex; align-items:center; gap:7px;
 }
 .dum-carriers-label i{ color:var(--lohas-brand, #50422D) }
-.dum-carrier-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px }
+.dum-carrier-lead-row{ margin-bottom:10px }
+.dum-carrier-lead-row .dum-carrier-lead{ max-width:300px; margin:0 auto }
+.dum-carrier-rest-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px }
 .dum-carrier{ margin:0 }
 .dum-carrier-stage{
   position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
@@ -872,7 +874,7 @@
   .dum-theme-grid{ grid-template-columns:repeat(2, 1fr) }
   .dum-routes{ grid-template-columns:1fr }
   .dum-d3-grid{ grid-template-columns:1fr }
-  .dum-carrier-grid{ grid-template-columns:repeat(2, 1fr) }
+  .dum-carrier-rest-row{ grid-template-columns:repeat(2, 1fr) }
   .dum-step-t{ display:none }
   .dum-step-line{ width:24px }
 }
