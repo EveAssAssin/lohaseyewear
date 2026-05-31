@@ -1181,12 +1181,12 @@
   // 六大載體設定:底圖 + 刻圖疊放位置(%,相對底圖)
   var CARRIERS = [
     { name: '光學鏡片', img: 'images/glasses-mockup.jpg', x: 80, y: 22, w: 15, glasses: true },
-    { name: '鏡框',     img: 'images/carrier-frame.jpg',   x: 50, y: 50, w: 10 },
-    { name: '眼鏡盒',   img: 'images/carrier-box.jpg',     x: 50, y: 50, w: 10 },
-    { name: '眼鏡布',   img: 'images/carrier-cloth.jpg',   x: 72, y: 72, w: 11 },
-    { name: '周邊配件', img: 'images/carrier-merch.jpg',   x: 50, y: 50, w: 10 },
-    { name: '鼻墊',     img: 'images/carrier-nosepad.jpg', x: 50, y: 50, w: 8 },
-    { name: '眼鏡袋',   img: 'images/carrier-pouch.jpg',   x: 72, y: 72, w: 11 },
+    { name: '鏡框',     img: 'images/carrier-frame.jpg',   x: 50, y: 38, w: 7 },
+    { name: '眼鏡盒',   img: 'images/carrier-box.jpg',     x: 50, y: 40, w: 10 },
+    { name: '眼鏡布',   img: 'images/carrier-cloth.jpg',   x: 72, y: 60, w: 11 },
+    { name: '周邊配件', img: 'images/carrier-merch.jpg',   x: 50, y: 62, w: 10 },
+    { name: '鼻墊',     img: 'images/carrier-nosepad.jpg', x: 42, y: 50, w: 8 },
+    { name: '眼鏡袋',   img: 'images/carrier-pouch.jpg',   x: 50, y: 72, w: 11 },
   ];
 
   function renderCarriers(imgUrl){
