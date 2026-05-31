@@ -2003,31 +2003,22 @@
   (function bindCsChatOnce() {
     if (window.__csChatBound) return;
     window.__csChatBound = true;
-    document.addEventListener('DOMContentLoaded', function () {
-      document.getElementById('apOpenChat')?.addEventListener('click', function () {
-        const did = document.getElementById('apDesignId')?.value;
-        const name = document.getElementById('apName')?.value?.trim();
-        // 優先從資料找 creator_id;找不到再退回 label 文字
-        let erpId = null;
-        const d = (typeof mdState !== 'undefined' && mdState.designs)
-          ? mdState.designs.find(x => String(x.id) === String(did)) : null;
-        if (d && d.creator_id) {
-          erpId = d.creator_id;
-        } else {
-          const label = document.getElementById('apCreatorIdLabel')?.textContent?.trim();
-          if (label && label !== '--' && label !== '匿名') erpId = label;
-        }
-        openCsChat(erpId, '', name);
-      });
-      document.getElementById('csChatClose')?.addEventListener('click', closeCsChat);
-      document.getElementById('csChatSend')?.addEventListener('click', sendCsMessage);
-      document.getElementById('csChatModal')?.addEventListener('click', function (e) {
-        if (e.target.id === 'csChatModal') closeCsChat();
-      });
-      // Enter 送出 (Shift+Enter 換行)
-      document.getElementById('csChatInput')?.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCsMessage(); }
-      });
+    // 事件委派到 document,不依賴 DOMContentLoaded (避免 script 在事件後才載入而綁不到)
+    document.addEventListener('click', function (e) {
+      const openBtn = e.target.closest && e.target.closest('#apOpenChat');
+      if (!openBtn) return;
+      const did = document.getElementById('apDesignId')?.value;
+      const name = document.getElementById('apName')?.value?.trim();
+      let erpId = null;
+      const d = (typeof mdState !== 'undefined' && mdState.designs)
+        ? mdState.designs.find(x => String(x.id) === String(did)) : null;
+      if (d && d.creator_id) {
+        erpId = d.creator_id;
+      } else {
+        const label = document.getElementById('apCreatorIdLabel')?.textContent?.trim();
+        if (label && label !== '--' && label !== '匿名') erpId = label;
+      }
+      openCsChat(erpId, '', name);
     });
   })();
 
