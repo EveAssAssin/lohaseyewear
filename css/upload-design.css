@@ -33,9 +33,8 @@
   width:920px;
   max-width:100%;
   max-height:calc(100vh - 60px);
-  display:grid;
-  grid-template-columns:380px 1fr;
-  grid-template-rows:1fr;          /* 強制單列,撐滿 max-height */
+  display:flex;
+  flex-direction:column;       /* tab 在上,內容在下 */
   overflow:hidden;
   box-shadow:0 24px 80px rgba(80,66,45,0.28);
   animation:dumIn .3s cubic-bezier(.2,.8,.2,1);
@@ -44,6 +43,57 @@
   from{ opacity:0; transform:translateY(20px) scale(.96) }
   to  { opacity:1; transform:translateY(0)    scale(1) }
 }
+
+/* === 模式切換 Tab === */
+.dum-tabs{
+  display:flex;
+  flex-shrink:0;
+  border-bottom:1px solid var(--lohas-bd, #E8DED1);
+  background:#FAF7F2;
+  padding:0 56px 0 0;        /* 右留空給 close 鈕 */
+}
+.dum-tab{
+  flex:1;
+  height:52px;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  font-family:inherit;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.8px;
+  color:var(--lohas-muted, #9B9186);
+  border-bottom:2px solid transparent;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  transition:all .2s;
+}
+.dum-tab:hover{ color:var(--lohas-hover, #765F4A) }
+.dum-tab.on{
+  color:var(--lohas-brand, #50422D);
+  border-bottom-color:var(--lohas-brand, #50422D);
+}
+
+/* === 快速模式:原本的左右兩欄 (grid 從 dialog 移來這) === */
+.dum-quick{
+  display:grid;
+  grid-template-columns:380px 1fr;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+.dum-quick[hidden]{ display:none }
+
+/* === 設計師模式容器 === */
+.dum-designer{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  padding:28px 32px 26px;
+}
+.dum-designer[hidden]{ display:none }
 
 .dum-close{
   position:absolute;
@@ -524,9 +574,11 @@
 
 /* === RWD: 平板 === */
 @media (max-width: 900px){
-  .dum-dialog{ grid-template-columns:320px 1fr; width:96vw }
+  .dum-quick{ grid-template-columns:320px 1fr }
+  .dum-dialog{ width:96vw }
   .dum-left{ padding:20px }
   .dum-right{ padding:24px 24px 20px }
+  .dum-designer{ padding:24px }
 }
 
 
@@ -541,13 +593,15 @@
     box-sizing:border-box;
   }
   .dum-dialog{
-    grid-template-columns:1fr;
-    grid-template-rows:auto;
     width:100vw;
     max-width:100vw;
     height:100vh;
     max-height:100vh;
     border-radius:0;
+  }
+  .dum-quick{
+    grid-template-columns:1fr;
+    grid-auto-rows:auto;
     overflow-y:auto;
     overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
@@ -561,7 +615,7 @@
   .dum-left{
     border-right:0;
     border-bottom:1px solid var(--lohas-bd, #E8DED1);
-    padding:80px 20px 20px;
+    padding:20px;
   }
   .dum-uploader{ aspect-ratio:auto; height:200px }
   .dum-flow-info{ padding-top:14px; margin-top:14px }
@@ -570,6 +624,7 @@
   .dum-actions{ flex-direction:column-reverse }
   .dum-btn-cancel,
   .dum-btn-submit{ flex:none; width:100% }
+  .dum-designer{ padding:20px }
 }
 
 
@@ -618,199 +673,206 @@
   letter-spacing:0.5px;
 }
 
-/* ============================================================
-   設計師模式 / 快速模式 (tab + 3 步驟)
-   ============================================================ */
-.dum-tabs{
-  display:flex; gap:8px; padding:0 0 4px; margin-bottom:18px;
-  border-bottom:1px solid var(--lohas-bd, #e8e2d5);
-}
-.dum-tab{
-  flex:1; padding:12px 0; border:0; background:transparent; cursor:pointer;
-  font-family:inherit; font-size:14px; font-weight:600; color:#999;
-  border-bottom:2px solid transparent; margin-bottom:-1px;
-  display:inline-flex; align-items:center; justify-content:center; gap:7px;
-  transition:color .15s, border-color .15s;
-}
-.dum-tab:hover{ color:var(--lohas-brand, #c89f5c) }
-.dum-tab.on{ color:var(--lohas-brand, #c89f5c); border-bottom-color:var(--lohas-brand, #c89f5c) }
 
-/* ===== 步驟指示 ===== */
-.dum-steps{ display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:26px }
-.dum-step{ display:flex; align-items:center; gap:8px; opacity:.45; transition:opacity .2s }
+
+/* =============================================================
+   設計師模式 (3 步驟) — 沿用原本設計語言
+   主色 --lohas-brand #50422D · 邊框 #E8DED1 · 軟底 #FAF7F2/#F4F1EC
+   ============================================================= */
+
+/* === 步驟指示 === */
+.dum-steps{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:28px;
+}
+.dum-step{ display:flex; align-items:center; gap:8px; opacity:.4; transition:opacity .25s }
 .dum-step.on, .dum-step.done{ opacity:1 }
 .dum-step-n{
   width:28px; height:28px; border-radius:50%; flex-shrink:0;
-  background:#e8e2d5; color:#8a7a5e; font-size:13px; font-weight:700;
+  background:#fff; border:1px solid var(--lohas-bd, #E8DED1);
+  color:var(--lohas-muted, #9B9186);
+  font-size:12px; font-weight:700;
   display:inline-flex; align-items:center; justify-content:center;
 }
-.dum-step.on .dum-step-n{ background:var(--lohas-brand, #c89f5c); color:#fff }
-.dum-step.done .dum-step-n{ background:#7aa56a; color:#fff }
-.dum-step-t{ font-size:13px; font-weight:600; color:#5d5346; white-space:nowrap }
-.dum-step-line{ width:36px; height:2px; background:#e8e2d5; flex-shrink:0 }
+.dum-step.on .dum-step-n{
+  background:var(--lohas-brand, #50422D); color:#fff; border-color:var(--lohas-brand, #50422D);
+}
+.dum-step.done .dum-step-n{
+  background:#fff; color:var(--lohas-brand, #50422D); border-color:var(--lohas-brand, #50422D);
+}
+.dum-step-t{ font-size:12px; font-weight:600; color:var(--lohas-text, #2F2A24); letter-spacing:0.5px; white-space:nowrap }
+.dum-step.on .dum-step-t{ color:var(--lohas-brand, #50422D) }
+.dum-step-line{ width:32px; height:1px; background:var(--lohas-bd, #E8DED1); flex-shrink:0 }
 
-/* ===== 步驟內容切換 ===== */
+/* === 步驟內容切換 === */
 .dum-stepview{ display:none }
-.dum-stepview.on{ display:block }
-.dum-step-title{ font-size:19px; font-weight:700; color:#3a3226; margin:0 0 6px; text-align:center }
-.dum-step-sub{ font-size:13px; color:#998b76; margin:0 0 22px; text-align:center; line-height:1.6 }
+.dum-stepview.on{ display:block; animation:dumSlide .25s ease-out }
+.dum-step-title{
+  font-size:18px; font-weight:600; color:var(--lohas-text, #2F2A24);
+  letter-spacing:0.5px; margin:0 0 6px; text-align:center;
+}
+.dum-step-sub{
+  font-size:12px; color:var(--lohas-muted, #9B9186);
+  letter-spacing:0.3px; line-height:1.7; margin:0 0 24px; text-align:center;
+}
 
-/* ===== 步驟導航按鈕 ===== */
-.dum-step-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:26px; gap:12px }
+/* === 步驟導航 === */
+.dum-step-nav{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:26px }
 .dum-btn-next, .dum-btn-back{
-  padding:11px 22px; border-radius:10px; cursor:pointer; font-family:inherit;
-  font-size:14px; font-weight:600; display:inline-flex; align-items:center; gap:7px;
-  transition:all .15s;
+  height:42px; padding:0 24px; border-radius:999px;
+  font-family:inherit; font-size:13px; letter-spacing:0.8px; font-weight:600;
+  cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:all .2s;
 }
-.dum-btn-next{ background:var(--lohas-brand, #c89f5c); color:#fff; border:0 }
-.dum-btn-next:hover{ filter:brightness(1.05) }
-.dum-btn-next:disabled{ background:#ddd6c8; cursor:not-allowed }
-.dum-btn-back{ background:#fff; color:#8a7a5e; border:1px solid #ddd6c8 }
-.dum-btn-back:hover{ background:#faf8f3 }
+.dum-btn-next{ background:var(--lohas-brand, #50422D); color:#fff; border:0 }
+.dum-btn-next:hover:not(:disabled){ background:var(--lohas-hover, #765F4A); transform:translateY(-1px) }
+.dum-btn-next:disabled{ opacity:.4; cursor:not-allowed }
+.dum-btn-back{ background:transparent; color:var(--lohas-text, #2F2A24); border:1px solid var(--lohas-light, #CDBEA2) }
+.dum-btn-back:hover{ border-color:var(--lohas-brand, #50422D); color:var(--lohas-brand, #50422D) }
 
-/* ===== 步驟1:主題格 ===== */
-.dum-theme-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px }
+/* === 步驟1:主題格 === */
+.dum-theme-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px }
 .dum-theme-card{
-  display:flex; flex-direction:column; align-items:center; gap:8px;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
   padding:22px 10px; border-radius:14px; cursor:pointer;
-  background:#fff; border:2px solid #ece7dc; font-family:inherit;
-  transition:all .15s;
+  background:#FAF7F2; border:1px solid var(--lohas-bd, #E8DED1);
+  font-family:inherit; transition:all .15s;
 }
-.dum-theme-card:hover{ border-color:var(--lohas-brand, #c89f5c); transform:translateY(-2px) }
-.dum-theme-card.on{ border-color:var(--lohas-brand, #c89f5c); background:#fdf8ef }
-.dum-theme-emoji{ font-size:34px; line-height:1 }
-.dum-theme-name{ font-size:14px; font-weight:600; color:#3a3226 }
+.dum-theme-card:hover{ border-color:var(--lohas-light, #CDBEA2); transform:translateY(-2px) }
+.dum-theme-card.on{ border-color:var(--lohas-brand, #50422D); background:#fff }
+.dum-theme-emoji{ font-size:26px; line-height:1; color:var(--lohas-brand, #50422D) }
+.dum-theme-name{ font-size:13px; font-weight:600; color:var(--lohas-text, #2F2A24); letter-spacing:0.3px }
 
-/* ===== 步驟2:風格卡 + 提示詞 ===== */
-.dum-style-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:20px }
+/* === 步驟2:兩路線 === */
+.dum-routes{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px }
+.dum-route{ background:#FAF7F2; border:1px solid var(--lohas-bd, #E8DED1); border-radius:14px; padding:16px }
+.dum-route-head{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--lohas-text, #2F2A24); letter-spacing:0.5px; margin-bottom:4px }
+.dum-route-badge{
+  width:22px; height:22px; border-radius:50%; flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; color:#fff;
+}
+.dum-route-badge.a{ background:var(--lohas-brand, #50422D) }
+.dum-route-badge.b{ background:var(--lohas-hover, #765F4A) }
+.dum-route-desc{ font-size:11px; color:var(--lohas-muted, #9B9186); letter-spacing:0.3px; line-height:1.6; margin-bottom:12px }
+
+.dum-style-list{ display:flex; flex-direction:column; gap:8px }
 .dum-style-card{
-  display:flex; flex-direction:column; gap:4px; text-align:left;
-  padding:14px 16px; border-radius:12px; cursor:pointer;
-  background:#fff; border:2px solid #ece7dc; font-family:inherit; transition:all .15s;
+  display:flex; flex-direction:column; gap:3px; text-align:left;
+  padding:12px 14px; border-radius:10px; cursor:pointer;
+  background:#fff; border:1px solid var(--lohas-bd, #E8DED1);
+  font-family:inherit; transition:all .15s;
 }
-.dum-style-card:hover{ border-color:var(--lohas-brand, #c89f5c) }
-.dum-style-card.on{ border-color:var(--lohas-brand, #c89f5c); background:#fdf8ef }
-.dum-style-name{ font-size:14.5px; font-weight:700; color:#3a3226 }
-.dum-style-desc{ font-size:12px; color:#998b76 }
+.dum-style-card:hover{ border-color:var(--lohas-light, #CDBEA2) }
+.dum-style-card.on{ border-color:var(--lohas-brand, #50422D); background:#FAF7F2 }
+.dum-style-name{ font-size:13px; font-weight:600; color:var(--lohas-text, #2F2A24); letter-spacing:0.3px }
+.dum-style-desc{ font-size:11px; color:var(--lohas-muted, #9B9186); letter-spacing:0.3px }
+.dum-style-empty{ font-size:11px; color:var(--lohas-muted, #9B9186); padding:8px; text-align:center }
 
-.dum-prompt-box{
-  background:#faf8f3; border:1px solid #ece7dc; border-radius:14px; padding:16px;
+/* === 風格範例圖 === */
+.dum-style-sample[hidden]{ display:none }
+.dum-style-sample{
+  margin-bottom:16px; padding:14px;
+  background:var(--bg-soft, #F4F1EC); border:1px solid var(--lohas-bd, #E8DED1); border-radius:12px;
 }
-.dum-prompt-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px; flex-wrap:wrap }
-.dum-prompt-label{ font-size:13px; font-weight:700; color:#7a6a52 }
+.dum-sample-label{ font-size:11px; font-weight:600; color:var(--lohas-hover, #765F4A); letter-spacing:0.5px; margin-bottom:10px }
+.dum-sample-single img{ width:100%; max-width:200px; border-radius:10px; display:block; margin:0 auto; border:1px solid var(--lohas-bd, #E8DED1) }
+.dum-sample-pair{ display:flex; align-items:center; justify-content:center; gap:14px }
+.dum-sample-fig{ margin:0; text-align:center; flex:1; max-width:170px }
+.dum-sample-fig img{ width:100%; border-radius:10px; border:1px solid var(--lohas-bd, #E8DED1); display:block }
+.dum-sample-fig figcaption{ font-size:10px; color:var(--lohas-muted, #9B9186); margin-top:5px; letter-spacing:0.3px }
+.dum-sample-ph{
+  aspect-ratio:1/1; background:#fff; border:1px dashed var(--lohas-light, #CDBEA2); border-radius:10px;
+  display:flex; align-items:center; justify-content:center; color:var(--lohas-muted, #9B9186); font-size:12px;
+}
+.dum-sample-arrow{ color:var(--lohas-brand, #50422D); font-size:16px; flex-shrink:0 }
+
+/* === 提示詞框 === */
+.dum-prompt-box{
+  background:var(--bg-soft, #F4F1EC); border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:14px; padding:16px;
+}
+.dum-prompt-box[hidden]{ display:none }
+.dum-prompt-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px }
+.dum-prompt-label{ font-size:12px; font-weight:600; color:var(--lohas-hover, #765F4A); letter-spacing:0.5px }
 .dum-prompt-actions{ display:flex; gap:8px }
 .dum-prompt-btn{
-  padding:7px 13px; border-radius:8px; cursor:pointer; font-family:inherit;
-  font-size:12.5px; font-weight:600; border:1px solid var(--lohas-brand, #c89f5c);
-  background:#fff; color:var(--lohas-brand, #c89f5c);
+  height:34px; padding:0 14px; border-radius:999px;
+  font-family:inherit; font-size:12px; font-weight:600; letter-spacing:0.5px; cursor:pointer;
+  border:1px solid var(--lohas-brand, #50422D); background:#fff; color:var(--lohas-brand, #50422D);
   display:inline-flex; align-items:center; gap:5px; transition:all .15s;
 }
-.dum-prompt-btn:hover{ background:rgba(200,159,92,.08) }
-.dum-prompt-btn.primary{ background:var(--lohas-brand, #c89f5c); color:#fff }
-.dum-prompt-btn.primary:hover{ filter:brightness(1.05) }
+.dum-prompt-btn:hover{ background:#FAF7F2 }
+.dum-prompt-btn.primary{ background:var(--lohas-brand, #50422D); color:#fff }
+.dum-prompt-btn.primary:hover{ background:var(--lohas-hover, #765F4A) }
 .dum-prompt-text{
-  width:100%; box-sizing:border-box; resize:vertical; min-height:80px;
-  border:1px solid #ddd6c8; border-radius:10px; padding:12px;
-  font-family:inherit; font-size:13.5px; line-height:1.6; color:#3a3226; background:#fff;
+  width:100%; box-sizing:border-box; resize:vertical; min-height:84px;
+  border:1px solid var(--lohas-bd, #E8DED1); border-radius:10px; padding:12px;
+  font-family:inherit; font-size:13px; line-height:1.7; color:var(--lohas-text, #2F2A24);
+  background:#fff; outline:none;
 }
-.dum-prompt-tip{
-  margin-top:12px; font-size:12px; color:#998b76; line-height:1.6;
-  display:flex; gap:7px; align-items:flex-start;
-}
-.dum-prompt-tip i{ color:#d9a441; margin-top:2px }
+.dum-prompt-text:focus{ border-color:var(--lohas-brand, #50422D) }
+.dum-prompt-tip{ margin-top:12px; font-size:11px; color:var(--lohas-muted, #9B9186); letter-spacing:0.3px; line-height:1.7; display:flex; gap:7px; align-items:flex-start }
+.dum-prompt-tip i{ color:#B58A42; margin-top:2px; flex-shrink:0 }
 
-/* ===== 步驟3:上傳 + 表單 ===== */
-.dum-d3-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px }
-.dum-d3-upload .dum-uploader{ width:100%; aspect-ratio:1/1 }
-.dum-d3-form{ display:flex; flex-direction:column; gap:16px }
-.dum-d3-themetag{
-  font-size:12.5px; color:#7a6a52; background:#fdf8ef; border:1px solid #ecdcc0;
-  border-radius:8px; padding:8px 12px; display:inline-flex; align-items:center; gap:6px;
-}
-
-/* ===== 設計師模式 RWD ===== */
-@media (max-width:680px){
-  .dum-theme-grid{ grid-template-columns:repeat(2,1fr) }
-  .dum-d3-grid{ grid-template-columns:1fr }
-  .dum-step-t{ display:none }
-  .dum-step-line{ width:24px }
-}
-
-/* ===== 步驟2 兩路線並列 ===== */
-.dum-routes{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px }
-.dum-route{ background:#faf8f3; border:1px solid #ece7dc; border-radius:14px; padding:16px }
-.dum-route-head{ display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; color:#3a3226; margin-bottom:4px }
-.dum-route-badge{ width:24px; height:24px; border-radius:50%; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff }
-.dum-route-badge.a{ background:var(--lohas-brand, #c89f5c) }
-.dum-route-badge.b{ background:#7a6a52 }
-.dum-route-desc{ font-size:12px; color:#998b76; margin-bottom:12px; line-height:1.5 }
-.dum-route .dum-style-list{ grid-template-columns:1fr; gap:8px; margin-bottom:0 }
-.dum-style-empty{ font-size:12px; color:#bbb; padding:8px; text-align:center }
-
-@media (max-width:680px){
-  .dum-routes{ grid-template-columns:1fr }
-}
-
-/* ===== 複製後引導:ChatGPT 鈕高亮 + 箭頭提示 ===== */
-.dum-prompt-btn.primary.guide{
-  animation:dum-gpt-pulse 1.4s ease-in-out infinite;
-  box-shadow:0 0 0 0 rgba(200,159,92,.5);
-}
-@keyframes dum-gpt-pulse{
-  0%{ box-shadow:0 0 0 0 rgba(200,159,92,.5) }
-  70%{ box-shadow:0 0 0 8px rgba(200,159,92,0) }
-  100%{ box-shadow:0 0 0 0 rgba(200,159,92,0) }
+/* === 複製後引導:ChatGPT 鈕高亮 + 箭頭 === */
+.dum-prompt-btn.primary.guide{ animation:dumGptPulse 1.4s ease-in-out infinite }
+@keyframes dumGptPulse{
+  0%{ box-shadow:0 0 0 0 rgba(80,66,45,.4) }
+  70%{ box-shadow:0 0 0 8px rgba(80,66,45,0) }
+  100%{ box-shadow:0 0 0 0 rgba(80,66,45,0) }
 }
 .dum-gpt-hint[hidden]{ display:none }
 .dum-gpt-hint{
   margin-top:12px; padding:10px 14px; border-radius:10px;
-  background:#fdf3e7; border:1px solid #f0d9b5; color:#8a6d3b;
-  font-size:13px; line-height:1.5; font-weight:600;
+  background:#FAF7F2; border:1px solid var(--lohas-light, #CDBEA2); color:var(--lohas-hover, #765F4A);
+  font-size:12px; letter-spacing:0.3px; line-height:1.6; font-weight:600;
   display:flex; gap:8px; align-items:center;
 }
-.dum-gpt-hint i{ color:var(--lohas-brand, #c89f5c); animation:dum-arrow-bounce 1s ease-in-out infinite }
-@keyframes dum-arrow-bounce{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
+.dum-gpt-hint i{ color:var(--lohas-brand, #50422D); animation:dumArrowBounce 1s ease-in-out infinite }
+.dum-gpt-hint b{ color:var(--lohas-brand, #50422D) }
+@keyframes dumArrowBounce{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
 
-/* ===== 風格範例圖預覽 ===== */
-.dum-style-sample[hidden]{ display:none }
-.dum-style-sample{
-  margin-bottom:16px; padding:14px; background:#faf8f3;
-  border:1px solid #ece7dc; border-radius:14px;
+/* === 步驟3:上傳 + 表單 === */
+.dum-d3-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px }
+.dum-d3-upload .dum-uploader{ width:100%; aspect-ratio:1/1 }
+.dum-d3-form{ display:flex; flex-direction:column; gap:16px }
+.dum-d3-themetag{
+  font-size:11px; color:var(--lohas-hover, #765F4A); letter-spacing:0.3px;
+  background:#FAF7F2; border:1px solid var(--lohas-bd, #E8DED1); border-radius:8px;
+  padding:8px 12px; display:inline-flex; align-items:center; gap:6px;
 }
-.dum-sample-label{ font-size:12.5px; font-weight:700; color:#7a6a52; margin-bottom:10px }
-.dum-sample-single img{ width:100%; max-width:220px; border-radius:10px; display:block; margin:0 auto; border:1px solid #ece7dc }
-.dum-sample-pair{ display:flex; align-items:center; justify-content:center; gap:14px }
-.dum-sample-fig{ margin:0; text-align:center; flex:1; max-width:180px }
-.dum-sample-fig img{ width:100%; border-radius:10px; border:1px solid #ece7dc; display:block }
-.dum-sample-fig figcaption{ font-size:11.5px; color:#998b76; margin-top:5px }
-.dum-sample-ph{
-  aspect-ratio:1/1; background:#f0ece3; border:1px dashed #d8cfb8; border-radius:10px;
-  display:flex; align-items:center; justify-content:center; color:#b3a888; font-size:13px;
-}
-.dum-sample-arrow{ color:#c89f5c; font-size:18px; flex-shrink:0 }
+.dum-d3-themetag i{ color:var(--lohas-brand, #50422D) }
 
-/* ===== 六大載體模擬 ===== */
+/* === 六大載體模擬 === */
 .dum-carriers[hidden]{ display:none }
-.dum-carriers{ margin-top:20px }
+.dum-carriers{ margin-top:18px }
 .dum-carriers-label{
-  font-size:13.5px; font-weight:700; color:#7a6a52; margin-bottom:12px;
-  display:flex; align-items:center; gap:7px;
+  font-size:11px; font-weight:600; color:var(--lohas-hover, #765F4A); letter-spacing:0.5px;
+  margin-bottom:12px; display:flex; align-items:center; gap:7px;
 }
-.dum-carriers-label i{ color:#c89f5c }
-.dum-carrier-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px }
+.dum-carriers-label i{ color:var(--lohas-brand, #50422D) }
+.dum-carrier-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px }
 .dum-carrier{ margin:0 }
 .dum-carrier-stage{
   position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
-  background:#f4f1ec; border:1px solid #ece7dc;
+  background:#fff; border:1px solid var(--lohas-bd, #E8DED1);
 }
 .dum-carrier-bg{ width:100%; height:100%; object-fit:cover; display:block }
 .dum-carrier-engrave{
   position:absolute; transform:translate(-50%,-50%);
-  mix-blend-mode:multiply; opacity:.92; pointer-events:none;
+  mix-blend-mode:multiply; opacity:.9; pointer-events:none;
 }
-.dum-carrier figcaption{
-  text-align:center; font-size:12px; color:#7a6a52; margin-top:6px; font-weight:600;
-}
-@media (max-width:680px){
-  .dum-carrier-grid{ grid-template-columns:repeat(2,1fr) }
+.dum-carrier figcaption{ text-align:center; font-size:11px; color:var(--lohas-hover, #765F4A); letter-spacing:0.3px; margin-top:6px; font-weight:600 }
+
+/* === 設計師模式 RWD === */
+@media (max-width: 680px){
+  .dum-theme-grid{ grid-template-columns:repeat(2, 1fr) }
+  .dum-routes{ grid-template-columns:1fr }
+  .dum-d3-grid{ grid-template-columns:1fr }
+  .dum-carrier-grid{ grid-template-columns:repeat(2, 1fr) }
+  .dum-step-t{ display:none }
+  .dum-step-line{ width:24px }
 }
