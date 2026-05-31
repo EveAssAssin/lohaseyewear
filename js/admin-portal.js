@@ -1623,6 +1623,7 @@
 
     modal.hidden = false;
     setTimeout(() => document.getElementById('apErpNumber').focus(), 50);
+    refreshCsAdminBadges();   // 這張刻圖有未讀對話才亮紅點
   }
 
   function closeApproveModal() {
@@ -1713,7 +1714,7 @@
     // (1) App 推播 (進樂活訊息) (2) 站內寫一筆系統訊息到 cs_messages
     const results = await Promise.allSettled([
       pushLohasMessage(memberErpId, title, message, link),
-      writeCsSystemMessage(memberErpId, message),
+      writeCsSystemMessage(memberErpId, message, designId),
     ]);
     results.forEach((r, i) => {
       const which = i === 0 ? 'App推播' : '站內訊息';
@@ -1727,13 +1728,13 @@
   }
 
   // 審核駁回:App 推播 + 站內系統訊息
-  async function sendRejectNotice(memberErpId, designName, reason) {
+  async function sendRejectNotice(memberErpId, designName, reason, designId) {
     const title = '刻圖審核結果通知';
     const message = `您的刻圖「${designName}」未通過審核。\n原因:${reason}\n歡迎修改後重新投稿,如有疑問可直接在此留言給客服。`;
 
     const results = await Promise.allSettled([
       pushLohasMessage(memberErpId, title, message, 'https://www.lohasglasses.com/member-portal.html'),
-      writeCsSystemMessage(memberErpId, message),
+      writeCsSystemMessage(memberErpId, message, designId),
     ]);
     results.forEach((r, i) => {
       const which = i === 0 ? 'App推播' : '站內訊息';
@@ -1746,21 +1747,21 @@
     return results;
   }
 
-  // 寫一筆系統訊息到 cs_messages (sender=staff,會員會在客服對話框看到)
-  async function writeCsSystemMessage(memberErpId, message) {
+  // 寫一筆系統訊息到 cs_messages (sender=staff,會員會在該刻圖客服對話看到)
+  async function writeCsSystemMessage(memberErpId, message, designId) {
     const sb = (window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient())
             || (window.Supabase && window.Supabase.client) || null;
     if (!sb) throw new Error('no supabase');
-    const { error } = await sb.from('cs_messages').insert({
-      member_erpid: String(memberErpId), sender: 'staff', message: message, is_read: false
-    });
+    const row = { member_erpid: String(memberErpId), sender: 'staff', message: message, is_read: false };
+    if (designId) row.design_id = String(designId);
+    const { error } = await sb.from('cs_messages').insert(row);
     if (error) throw error;
     return true;
   }
 
   // ===== 客服對話視窗 (UI 框架,讀歷史 API 待接) =====
   // ===== 後台客服對話 (自建,讀寫 Supabase cs_messages) =====
-  const csChat = { erpId: null, name: '', ch: null };
+  const csChat = { erpId: null, designId: null, name: '', ch: null, open: false };
 
   function csGetSb() {
     return (window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient())
@@ -1841,9 +1842,11 @@
   }
 
   // 開對話 (用會員平台同款 cs-chat-panel 氣泡框,右下角彈出)
-  async function openCsChat(erpId, customerName, designName) {
+  async function openCsChat(erpId, designId, designName) {
     if (!erpId) { alert('此作品沒有對應的會員編號,無法對話'); return; }
+    if (!designId) { alert('找不到刻圖編號,無法對話'); return; }
     csChat.erpId = String(erpId);
+    csChat.designId = String(designId);
 
     let panel = document.getElementById('csChatPanel');
     if (!panel) {
@@ -1852,7 +1855,7 @@
       panel.className = 'cs-chat-panel';
       panel.innerHTML =
         '<div class="cs-chat-panel-head">' +
-          '<span class="cs-chat-panel-title" id="csChatTitle"><i class="fa-regular fa-comment-dots"></i> 客服對話</span>' +
+          '<span class="cs-chat-panel-title" id="csChatTitle"><i class="fa-regular fa-message"></i> 客服對話</span>' +
           '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>' +
         '<div class="cs-chat-stream" id="csChatStream"><div class="cs-chat-empty">載入中...</div></div>' +
@@ -1872,21 +1875,21 @@
     const title = document.getElementById('csChatTitle');
     if (title) {
       const label = designName ? (designName + ' 客服對話') : '客服對話';
-      title.innerHTML = '<i class="fa-regular fa-comment-dots"></i> ' + escapeHtml(label) +
+      title.innerHTML = '<i class="fa-regular fa-message"></i> ' + escapeHtml(label) +
         ' <span class="cs-chat-who">· 會員 ' + escapeHtml(csChat.erpId) + '</span>';
     }
     csChat.open = true;
     requestAnimationFrame(function () { panel.classList.add('open'); });
     loadCsChatHistory();
 
-    // Realtime: 會員回訊即時顯示
+    // Realtime: 該刻圖對話有新訊息即時顯示
     const sb = csGetSb();
     if (sb) {
       try {
         if (csChat.ch) sb.removeChannel(csChat.ch);
-        csChat.ch = sb.channel('cs_admin_' + csChat.erpId)
+        csChat.ch = sb.channel('cs_admin_' + csChat.designId)
           .on('postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'cs_messages', filter: 'member_erpid=eq.' + csChat.erpId },
+            { event: 'INSERT', schema: 'public', table: 'cs_messages', filter: 'design_id=eq.' + csChat.designId },
             function () { loadCsChatHistory(); })
           .subscribe();
       } catch (e) { /* 靠手動刷新 */ }
@@ -1904,17 +1907,17 @@
   async function loadCsChatHistory() {
     const sb = csGetSb();
     const stream = document.getElementById('csChatStream');
-    if (!sb || !stream || !csChat.erpId) return;
+    if (!sb || !stream || !csChat.designId) return;
     try {
       const { data, error } = await sb.from('cs_messages')
         .select('id, sender, message, created_at')
-        .eq('member_erpid', csChat.erpId)
+        .eq('design_id', csChat.designId)
         .order('created_at', { ascending: true });
       if (error) throw error;
       renderCsMessages(data || []);
       await sb.from('cs_messages')
         .update({ is_read: true })
-        .eq('member_erpid', csChat.erpId)
+        .eq('design_id', csChat.designId)
         .eq('sender', 'member')
         .eq('is_read', false);
     } catch (e) {
@@ -1944,13 +1947,13 @@
   async function sendCsMessage() {
     const sb = csGetSb();
     const input = document.getElementById('csChatInput');
-    if (!sb || !input || !csChat.erpId) return;
+    if (!sb || !input || !csChat.erpId || !csChat.designId) return;
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
     try {
       const { error } = await sb.from('cs_messages').insert({
-        member_erpid: csChat.erpId, sender: 'staff', message: text, is_read: false
+        member_erpid: csChat.erpId, design_id: csChat.designId, sender: 'staff', message: text, is_read: false
       });
       if (error) throw error;
       loadCsChatHistory();
@@ -1961,21 +1964,17 @@
   }
 
 
-  // 後台審核「與顧客對話」按鈕紅點:該作者有未讀(member 發的)就顯示
+  // 後台審核「與顧客對話」按鈕紅點:這張刻圖的對話有未讀(member 發的)才顯示
   async function refreshCsAdminBadges() {
     const sb = csGetSb();
     const btn = document.getElementById('apOpenChat');
     if (!sb || !btn) return;
     const did = document.getElementById('apDesignId')?.value;
-    let erpId = null;
-    const d = (typeof mdState !== 'undefined' && mdState.designs)
-      ? mdState.designs.find(x => String(x.id) === String(did)) : null;
-    if (d && d.creator_id) erpId = String(d.creator_id);
-    if (!erpId) { setCsChatBtnDot(0); return; }
+    if (!did) { setCsChatBtnDot(0); return; }
     try {
       const { count } = await sb.from('cs_messages')
         .select('id', { count: 'exact', head: true })
-        .eq('member_erpid', erpId)
+        .eq('design_id', did)
         .eq('sender', 'member')
         .eq('is_read', false);
       setCsChatBtnDot(count || 0);
@@ -2018,7 +2017,7 @@
         const label = document.getElementById('apCreatorIdLabel')?.textContent?.trim();
         if (label && label !== '--' && label !== '匿名') erpId = label;
       }
-      openCsChat(erpId, '', name);
+      openCsChat(erpId, did, name);
     });
   })();
 
@@ -2515,7 +2514,7 @@
           .eq('id', targetId)
           .single();
         if (row && row.creator_id) {
-          await sendRejectNotice(row.creator_id, row.name || '您的刻圖', reason);
+          await sendRejectNotice(row.creator_id, row.name || '您的刻圖', reason, targetId);
         }
       } catch (notifyErr) {
         console.warn('[駁回通知] 發送失敗(不影響駁回):', notifyErr);

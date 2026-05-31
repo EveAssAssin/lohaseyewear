@@ -1158,7 +1158,7 @@
             <div class="photo-name">${escapeHtml(d.name || '')}</div>
             <div class="photo-date">${isOff ? '已被管理員下架' : isApproved ? `<i class="fa-solid fa-pencil"></i>被加入我的最愛刻圖 ${wishCount} 次` : (isPending ? '審核通過後開放收藏' : '未通過審核')}</div>
           </div>
-          ${(isPending || isApproved) ? `<button class="design-chat-btn" data-design-name="${escapeHtml(d.name || '')}"><i class="fa-regular fa-comments"></i>客服對話</button>` : ''}
+          ${(isPending || isApproved) ? `<button class="design-chat-btn" data-design-id="${escapeHtml(d.id)}" data-design-name="${escapeHtml(d.name || '')}"><i class="fa-regular fa-message"></i>客服對話</button>` : ''}
         </div>`;
     }).join('') + `
       <button class="add-tile" id="addDesignBtn"><i class="fa-solid fa-plus"></i><span>上 傳 新 設 計</span></button>`;
@@ -1173,7 +1173,7 @@
     list.querySelectorAll('.design-chat-btn').forEach(btn => {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
-        openCsChat(btn.dataset.designName);
+        openCsChat(btn.dataset.designId, btn.dataset.designName);
       });
     });
   }
@@ -2592,9 +2592,12 @@
   }
 
   // 開對話框 (標題帶刻圖名;底層仍是該會員同一條對話)
-  function openCsChat(designName) {
+  let csCurrentDesignId = null;
+
+  function openCsChat(designId, designName) {
     const erpid = csErpid();
     if (!erpid) { alert('請先登入'); return; }
+    csCurrentDesignId = designId || null;
 
     let panel = document.getElementById('csChatPanel');
     if (!panel) {
@@ -2603,7 +2606,7 @@
       panel.className = 'cs-chat-panel';
       panel.innerHTML =
         '<div class="cs-chat-panel-head">' +
-          '<span class="cs-chat-panel-title" id="csChatTitle"><i class="fa-regular fa-comment-dots"></i> 客服對話</span>' +
+          '<span class="cs-chat-panel-title" id="csChatTitle"><i class="fa-regular fa-message"></i> 客服對話</span>' +
           '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>' +
         '<div class="cs-chat-stream" id="csChatStream"><div class="cs-chat-empty">載入中...</div></div>' +
@@ -2619,11 +2622,10 @@
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCsMessage(); }
       });
     }
-    // 標題帶刻圖名
     const title = document.getElementById('csChatTitle');
     if (title) {
       const label = designName ? (designName + ' 客服對話') : '客服對話';
-      title.innerHTML = '<i class="fa-regular fa-comment-dots"></i> ' + escapeHtml(label);
+      title.innerHTML = '<i class="fa-regular fa-message"></i> ' + escapeHtml(label);
     }
     csState.open = true;
     requestAnimationFrame(function () { panel.classList.add('open'); });
@@ -2634,26 +2636,29 @@
     const panel = document.getElementById('csChatPanel');
     if (panel) panel.classList.remove('open');
     csState.open = false;
+    refreshCsUnread();
   }
 
   async function loadCsMessages() {
     const erpid = csErpid();
     const sb = getSupabase();
     const stream = document.getElementById('csChatStream');
-    if (!erpid || !sb || !stream) return;
+    if (!erpid || !sb || !stream || !csCurrentDesignId) return;
     try {
       const { data, error } = await sb.from('cs_messages')
         .select('id, sender, message, created_at')
         .eq('member_erpid', erpid)
+        .eq('design_id', csCurrentDesignId)
         .order('created_at', { ascending: true });
       if (error) throw error;
       renderCsMessages(data || []);
       await sb.from('cs_messages')
         .update({ is_read: true })
         .eq('member_erpid', erpid)
+        .eq('design_id', csCurrentDesignId)
         .eq('sender', 'staff')
         .eq('is_read', false);
-      setCsNavDot(0);
+      refreshCsUnread();
     } catch (e) {
       stream.innerHTML = '<div class="cs-chat-empty">載入失敗</div>';
     }
@@ -2682,13 +2687,13 @@
     const erpid = csErpid();
     const sb = getSupabase();
     const input = document.getElementById('csChatInput');
-    if (!erpid || !sb || !input) return;
+    if (!erpid || !sb || !input || !csCurrentDesignId) return;
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
     try {
       const { error } = await sb.from('cs_messages').insert({
-        member_erpid: erpid, sender: 'member', message: text, is_read: false
+        member_erpid: erpid, design_id: csCurrentDesignId, sender: 'member', message: text, is_read: false
       });
       if (error) throw error;
       loadCsMessages();
@@ -2697,6 +2702,7 @@
       input.value = text;
     }
   }
+
 
   async function init() {
     const ok = await loadIdentity();
