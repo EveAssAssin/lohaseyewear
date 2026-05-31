@@ -2993,3 +2993,20 @@ body {
   background:var(--lohas-brand, #c89f5c) !important; color:#fff !important;
   border-radius:16px 4px 16px 16px !important;
 }
+
+/* ===== 我的刻圖:下架等通知 banner ===== */
+.mp .md-notices{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px }
+.mp .md-notice{
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px; border-radius:10px;
+  background:#fdf3e7; border:1px solid #f0d9b5; color:#8a6d3b;
+  font-size:14px; line-height:1.5;
+}
+.mp .md-notice > i{ flex-shrink:0; color:#d9a441; font-size:16px }
+.mp .md-notice-text{ flex:1 }
+.mp .md-notice-close{
+  flex-shrink:0; width:28px; height:28px; border:none; background:transparent;
+  color:#b89a5e; cursor:pointer; border-radius:6px; font-size:14px;
+  display:inline-flex; align-items:center; justify-content:center; transition:background .15s;
+}
+.mp .md-notice-close:hover{ background:rgba(0,0,0,.06) }
