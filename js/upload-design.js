@@ -229,6 +229,7 @@
                 '</div>',
                 '<div class="dum-tip">',
                   '<b>小提示:</b> 上傳後可裁切,通過審核後會自動轉換成雷雕用透明底版本',
+                  '<br><a href="market-about.html#not-suitable" target="_blank" rel="noopener" class="dum-tip-link"><i class="fa-solid fa-circle-question"></i> 不確定圖適不適合雷刻?看設計建議</a>',
                 '</div>',
               '</div>',
               // 右:名稱 + 描述
@@ -294,6 +295,7 @@
 
           '<div class="dum-tip">',
             '<b>小提示:</b> 上傳後可裁切,通過審核後會自動轉換成雷雕用透明底版本',
+            '<br><a href="market-about.html#not-suitable" target="_blank" rel="noopener" class="dum-tip-link"><i class="fa-solid fa-circle-question"></i> 不確定圖適不適合雷刻?看設計建議</a>',
           '</div>',
 
           // 眼鏡模擬框 (上傳後才顯示)
@@ -733,7 +735,7 @@
       });
     });
 
-    // 預設自動選 A(無中生有)的第一個風格
+    // 預設自動選 A(用文字生成)的第一個風格
     var firstCard = modal.querySelector('#dumScratchList .dum-style-card')
                  || modal.querySelector('#dumMaterialList .dum-style-card');
     if(firstCard) firstCard.click();

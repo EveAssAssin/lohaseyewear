@@ -160,12 +160,27 @@
   }
 
 
+  // FAQ tab 切換
+  function initFaqTabs(){
+    var tabs = document.querySelectorAll('.faq-tab');
+    var panels = document.querySelectorAll('.faq-panel');
+    if(!tabs.length) return;
+    tabs.forEach(function(tab){
+      tab.addEventListener('click', function(){
+        var key = tab.dataset.faqTab;
+        tabs.forEach(function(t){ t.classList.toggle('active', t === tab); });
+        panels.forEach(function(p){ p.hidden = (p.dataset.faqPanel !== key); });
+      });
+    });
+  }
+
   // ===========================================================
   // Init
   // ===========================================================
   function init(){
     initScrollSpy();
     loadCreators();
+    initFaqTabs();
   }
 
   if (document.readyState === 'loading') {
