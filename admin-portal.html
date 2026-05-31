@@ -1555,28 +1555,7 @@
       </div>
     </div>
 
-    <!-- ===== 客服對話視窗 (UI 框架,API 待接) ===== -->
-    <div class="md-modal-overlay" id="csChatModal" hidden>
-      <div class="md-modal cs-chat-modal">
-        <div class="md-modal-head">
-          <h2><i class="fa-regular fa-comments"></i> 與顧客對話 <span class="cs-chat-who" id="csChatWho"></span></h2>
-          <button class="md-modal-close" id="csChatClose" type="button"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="md-modal-body cs-chat-body">
-          <div class="cs-chat-notice" id="csChatNotice">
-            <i class="fa-solid fa-circle-info"></i> 對話功能準備中,讀取歷史訊息的 API 待串接。目前可送出訊息給顧客。
-          </div>
-          <div class="cs-chat-stream" id="csChatStream">
-            <!-- 對話氣泡動態渲染 -->
-            <div class="cs-chat-empty">尚無對話紀錄</div>
-          </div>
-        </div>
-        <div class="md-modal-foot cs-chat-foot">
-          <textarea id="csChatInput" class="cs-chat-input" rows="2" placeholder="輸入要傳給顧客的訊息..." maxlength="1000"></textarea>
-          <button class="md-btn md-btn-save" id="csChatSend" type="button"><i class="fa-solid fa-paper-plane"></i> 送出</button>
-        </div>
-      </div>
-    </div>
+    <!-- (舊客服對話 modal 已移除,改用動態建立的 cs-chat-panel) -->
 
 
     <!-- ============= 刻圖編輯 Modal ============= -->
@@ -1853,7 +1832,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260530-cslog"></script>
+<script src="js/admin-portal.js?v=20260530-csdup"></script>
 <script src="js/admin-portal-footer.js?v=20260524"></script>
 <script src="js/admin-portal-categories.js?v=20260528"></script>
 
