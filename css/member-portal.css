@@ -2966,3 +2966,30 @@ body {
   background:#e5484d; color:#fff; border-radius:9px;
   font-size:11px; font-weight:700; line-height:1;
 }
+
+/* ===== 客服對話框 · 風格 C (深色標題咖啡調) ===== */
+.cs-chat-panel-head{
+  flex-shrink:0; height:auto !important; padding:14px 12px 14px 16px !important;
+  background:linear-gradient(135deg,#7a6a52,#5d4f3c) !important; color:#fff;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.cs-chat-head-info{ display:flex; align-items:center; gap:10px; min-width:0 }
+.cs-chat-avatar{
+  flex-shrink:0; width:34px; height:34px; border-radius:50%;
+  background:rgba(255,255,255,.22); display:inline-flex; align-items:center; justify-content:center;
+  font-size:15px; color:#fff;
+}
+.cs-chat-head-text{ min-width:0 }
+.cs-chat-head-name{ font-size:14.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.cs-chat-head-meta{ font-size:11.5px; opacity:.8; margin-top:2px }
+
+.cs-chat-stream{ background:#faf8f3 !important }
+.cs-bubble-in{
+  background:#fff !important; color:#3a3226 !important; border:0 !important;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+  border-radius:4px 16px 16px 16px !important;
+}
+.cs-bubble-out{
+  background:var(--lohas-brand, #c89f5c) !important; color:#fff !important;
+  border-radius:16px 4px 16px 16px !important;
+}
