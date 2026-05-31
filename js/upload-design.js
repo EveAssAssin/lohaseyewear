@@ -677,7 +677,10 @@
     var box = modal.querySelector('#dumPromptBox');
     var ta = modal.querySelector('#dumPromptText');
     if(!box || !ta || !dz.style) return;
-    ta.value = dz.style.prompt || '';
+    // {主題} 自動替換成選的分類名稱
+    var p = dz.style.prompt || '';
+    if(dz.theme) p = p.split('{主題}').join(dz.theme);
+    ta.value = p;
     box.hidden = false;
     // 範例圖預覽
     renderStyleSample();
