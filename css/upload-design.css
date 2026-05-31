@@ -617,14 +617,14 @@
     border-bottom:1px solid var(--lohas-bd, #E8DED1);
     padding:20px;
   }
-  .dum-uploader{ aspect-ratio:auto; height:200px }
+  .dum-left .dum-uploader{ aspect-ratio:auto; height:200px }
   .dum-flow-info{ padding-top:14px; margin-top:14px }
   .dum-right{ padding:22px 20px 24px }
   .dum-title{ font-size:20px }
   .dum-actions{ flex-direction:column-reverse }
   .dum-btn-cancel,
   .dum-btn-submit{ flex:none; width:100% }
-  .dum-designer{ padding:20px }
+  .dum-designer{ padding:18px 16px; overflow-y:auto; -webkit-overflow-scrolling:touch }
 }
 
 
@@ -855,8 +855,8 @@
 }
 .dum-carriers-label i{ color:var(--lohas-brand, #50422D) }
 .dum-carrier-lead-row{ margin-bottom:10px }
-.dum-carrier-lead-row .dum-carrier-lead{ max-width:300px; margin:0 auto }
-.dum-carrier-rest-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px }
+.dum-carrier-lead-row .dum-carrier-lead{ width:100%; margin:0 }
+.dum-carrier-rest-row{ display:grid; grid-template-columns:repeat(2, 1fr); gap:10px }
 .dum-carrier{ margin:0 }
 .dum-carrier-stage{
   position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
@@ -871,12 +871,20 @@
 
 /* === 設計師模式 RWD === */
 @media (max-width: 680px){
-  .dum-theme-grid{ grid-template-columns:repeat(2, 1fr) }
-  .dum-routes{ grid-template-columns:1fr }
-  .dum-d3-grid{ grid-template-columns:1fr }
-  .dum-carrier-rest-row{ grid-template-columns:repeat(2, 1fr) }
+  .dum-theme-grid{ grid-template-columns:repeat(2, 1fr); gap:8px }
+  .dum-theme-card{ padding:18px 8px }
+  .dum-routes{ grid-template-columns:1fr; gap:12px }
+  .dum-d3-grid{ grid-template-columns:1fr; gap:14px }
+  .dum-d3-upload .dum-uploader{ aspect-ratio:1/1; height:auto }   /* 設計師第三步維持方形 */
+  .dum-carrier-rest-row{ grid-template-columns:1fr }
+  .dum-carrier-lead-row .dum-carrier-lead{ max-width:100% }
   .dum-step-t{ display:none }
-  .dum-step-line{ width:24px }
+  .dum-step-line{ width:20px }
+  .dum-step-title{ font-size:16px }
+  .dum-step-nav{ gap:10px }
+  .dum-btn-next, .dum-btn-back{ padding:0 18px; font-size:12px }
+  .dum-prompt-actions{ width:100%; }
+  .dum-prompt-btn{ flex:1; justify-content:center }
 }
 
 /* === 步驟1:子分類(可複選) === */
