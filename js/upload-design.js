@@ -1147,11 +1147,12 @@
   // 六大載體設定:底圖 + 刻圖疊放位置(%,相對底圖)
   var CARRIERS = [
     { name: '光學鏡片', img: 'images/glasses-mockup.jpg', x: 80, y: 22, w: 15, glasses: true },
-    { name: '鏡框',     img: 'images/frame-01.jpg',   x: 50, y: 46, w: 16 },
-    { name: '眼鏡盒',   img: 'images/box-01.jpg',     x: 50, y: 50, w: 30 },
-    { name: '眼鏡布',   img: 'images/cloth-01.jpg',   x: 50, y: 50, w: 34 },
-    { name: '周邊配件', img: 'images/merch-01.jpg',   x: 50, y: 50, w: 30 },
-    { name: '鼻墊',     img: 'images/nosepad-01.jpg', x: 50, y: 50, w: 22 },
+    { name: '鏡框',     img: 'images/carrier-frame.jpg',   x: 50, y: 50, w: 30 },
+    { name: '眼鏡盒',   img: 'images/carrier-box.jpg',     x: 50, y: 50, w: 30 },
+    { name: '眼鏡布',   img: 'images/carrier-cloth.jpg',   x: 50, y: 50, w: 34 },
+    { name: '周邊配件', img: 'images/carrier-merch.jpg',   x: 50, y: 50, w: 30 },
+    { name: '鼻墊',     img: 'images/carrier-nosepad.jpg', x: 50, y: 50, w: 24 },
+    { name: '眼鏡袋',   img: 'images/carrier-pouch.jpg',   x: 50, y: 50, w: 32 },
   ];
 
   function renderCarriers(imgUrl){
@@ -1159,19 +1160,25 @@
     var grid = modal.querySelector('#dumCarrierGrid');
     if(!box || !grid) return;
     if(!imgUrl){ box.hidden = true; grid.innerHTML = ''; return; }
-    grid.innerHTML = CARRIERS.map(function(c){
+    function carrierHtml(c){
       // 光學鏡片用眼鏡模擬的定位(水平置中、top為上緣),其他用中心對齊
       var engStyle = c.glasses
         ? 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translateX(-50%)'
         : 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translate(-50%,-50%)';
-      return '<figure class="dum-carrier">' +
+      return '<figure class="dum-carrier' + (c.glasses ? ' dum-carrier-lead' : '') + '">' +
                '<div class="dum-carrier-stage">' +
                  '<img class="dum-carrier-bg" src="' + escAttr(c.img) + '" alt="' + escAttr(c.name) + '">' +
                  '<img class="dum-carrier-engrave" src="' + escAttr(imgUrl) + '" style="' + engStyle + '">' +
                '</div>' +
                '<figcaption>' + escHtml(c.name) + '</figcaption>' +
              '</figure>';
-    }).join('');
+    }
+    // 光學鏡片(第一排,獨佔) + 其他六個(3個一排)
+    var lead = CARRIERS.filter(function(c){ return c.glasses; });
+    var rest = CARRIERS.filter(function(c){ return !c.glasses; });
+    grid.innerHTML =
+      '<div class="dum-carrier-lead-row">' + lead.map(carrierHtml).join('') + '</div>' +
+      '<div class="dum-carrier-rest-row">' + rest.map(carrierHtml).join('') + '</div>';
     box.hidden = false;
   }
 
