@@ -884,14 +884,17 @@
   .dum-theme-grid{ grid-template-columns:repeat(2, 1fr); gap:8px }
   .dum-theme-card{ padding:18px 8px }
   .dum-routes{ grid-template-columns:1fr; gap:12px }
-  .dum-d3-grid{ grid-template-columns:1fr; gap:14px }
-  .dum-d3-upload .dum-uploader{ aspect-ratio:1/1; height:auto }   /* 設計師第三步維持方形 */
-  /* 第三步所有區塊統一全寬切齊 (避免某些框偏右) */
+  .dum-d3-grid{ grid-template-columns:1fr; gap:14px; margin-left:0; margin-right:0; padding:0 }
+  .dum-d3-upload, .dum-d3-form{ margin:0; padding:0; width:100%; min-width:0 }
+  .dum-d3-upload .dum-uploader{ aspect-ratio:1/1; height:auto; margin:0; width:100% }   /* 設計師第三步維持方形 */
+  .dum-tip{ margin-left:0; margin-right:0 }
+  /* 第三步所有區塊統一全寬切齊靠左 (避免某些框偏右) */
   .dum-stepview[data-stepview="3"] > *,
   .dum-d3-grid > *,
   .dum-d3-form > *,
-  .dum-d3-form input{
-    width:100%; max-width:100%; box-sizing:border-box;
+  .dum-d3-form input,
+  .dum-d3-form .dum-field{
+    width:100%; max-width:100%; box-sizing:border-box; margin-left:0; margin-right:0;
   }
   .dum-carrier-rest-row{ grid-template-columns:1fr }
   .dum-carrier-lead-row .dum-carrier-lead{ max-width:100% }
