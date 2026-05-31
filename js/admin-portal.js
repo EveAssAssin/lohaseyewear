@@ -1907,7 +1907,9 @@
   async function loadCsChatHistory() {
     const sb = csGetSb();
     const stream = document.getElementById('csChatStream');
-    if (!sb || !stream || !csChat.designId) return;
+    if (!stream) return;
+    if (!sb) { stream.innerHTML = '<div class="cs-chat-empty">系統未就緒</div>'; return; }
+    if (!csChat.designId) { stream.innerHTML = '<div class="cs-chat-empty">找不到刻圖編號</div>'; return; }
     try {
       const { data, error } = await sb.from('cs_messages')
         .select('id, sender, message, created_at')
@@ -1921,7 +1923,8 @@
         .eq('sender', 'member')
         .eq('is_read', false);
     } catch (e) {
-      stream.innerHTML = '<div class="cs-chat-empty">載入失敗</div>';
+      console.error('[客服對話] 載入失敗:', e);
+      stream.innerHTML = '<div class="cs-chat-empty">載入失敗:' + escapeHtml(e.message || '') + '</div>';
     }
   }
 
