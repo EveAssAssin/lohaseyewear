@@ -1764,6 +1764,8 @@
   const csChat = { erpId: null, designId: null, name: '', ch: null, open: false };
 
   function csGetSb() {
+    // 用後台現成的 getSb() (= Supabase.getClient()),跟其他正常查詢同一個 client
+    try { if (typeof getSb === 'function') return getSb(); } catch (e) {}
     return (window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient())
         || (window.Supabase && window.Supabase.client) || null;
   }
@@ -1855,7 +1857,13 @@
       panel.className = 'cs-chat-panel';
       panel.innerHTML =
         '<div class="cs-chat-panel-head">' +
-          '<span class="cs-chat-panel-title" id="csChatTitle"><i class="fa-regular fa-message"></i> 客服對話</span>' +
+          '<div class="cs-chat-head-info">' +
+            '<span class="cs-chat-avatar"><i class="fa-regular fa-message"></i></span>' +
+            '<div class="cs-chat-head-text">' +
+              '<div class="cs-chat-head-name" id="csChatTitle">客服對話</div>' +
+              '<div class="cs-chat-head-meta" id="csChatMeta"></div>' +
+            '</div>' +
+          '</div>' +
           '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>' +
         '<div class="cs-chat-stream" id="csChatStream"><div class="cs-chat-empty">載入中...</div></div>' +
@@ -1871,13 +1879,11 @@
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCsMessage(); }
       });
     }
-    // 標題帶刻圖名
+    // 標題帶刻圖名 + 會員編號
     const title = document.getElementById('csChatTitle');
-    if (title) {
-      const label = designName ? (designName + ' 客服對話') : '客服對話';
-      title.innerHTML = '<i class="fa-regular fa-message"></i> ' + escapeHtml(label) +
-        ' <span class="cs-chat-who">· 會員 ' + escapeHtml(csChat.erpId) + '</span>';
-    }
+    if (title) title.textContent = designName ? (designName + ' 客服對話') : '客服對話';
+    const meta = document.getElementById('csChatMeta');
+    if (meta) meta.textContent = '會員編號 ' + csChat.erpId;
     csChat.open = true;
     requestAnimationFrame(function () { panel.classList.add('open'); });
     loadCsChatHistory();

@@ -2606,7 +2606,13 @@
       panel.className = 'cs-chat-panel';
       panel.innerHTML =
         '<div class="cs-chat-panel-head">' +
-          '<span class="cs-chat-panel-title" id="csChatTitle"><i class="fa-regular fa-message"></i> 客服對話</span>' +
+          '<div class="cs-chat-head-info">' +
+            '<span class="cs-chat-avatar"><i class="fa-regular fa-message"></i></span>' +
+            '<div class="cs-chat-head-text">' +
+              '<div class="cs-chat-head-name" id="csChatTitle">客服對話</div>' +
+              '<div class="cs-chat-head-meta" id="csChatMeta">會員編號 ' + escapeHtml(erpid) + '</div>' +
+            '</div>' +
+          '</div>' +
           '<button type="button" class="cs-chat-panel-btn" id="csPanelClose" title="關閉"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>' +
         '<div class="cs-chat-stream" id="csChatStream"><div class="cs-chat-empty">載入中...</div></div>' +
@@ -2623,10 +2629,9 @@
       });
     }
     const title = document.getElementById('csChatTitle');
-    if (title) {
-      const label = designName ? (designName + ' 客服對話') : '客服對話';
-      title.innerHTML = '<i class="fa-regular fa-message"></i> ' + escapeHtml(label);
-    }
+    if (title) title.textContent = designName ? (designName + ' 客服對話') : '客服對話';
+    const meta = document.getElementById('csChatMeta');
+    if (meta) meta.textContent = '會員編號 ' + erpid;
     csState.open = true;
     requestAnimationFrame(function () { panel.classList.add('open'); });
     loadCsMessages();
