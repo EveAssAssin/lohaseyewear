@@ -133,3 +133,66 @@
   .ad .cat-sub-row .cat-name-input { max-width: 140px; }
   .ad .cat-meta { display: none; }
 }
+
+/* ============================================================
+   設計師模式提示詞編輯 Modal (對齊後台設計語言)
+   ============================================================ */
+.cpm-overlay{
+  position:fixed; inset:0; background:rgba(45,37,32,.55); z-index:10000;
+  display:none; align-items:center; justify-content:center; padding:20px;
+  font-family:"Noto Sans TC","PingFang TC",sans-serif;
+}
+.cpm-overlay.open{ display:flex }
+.cpm-dialog{
+  background:#fff; border-radius:16px; width:680px; max-width:100%;
+  max-height:90vh; display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 24px 70px rgba(45,37,32,.3);
+}
+.cpm-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 22px; background:#50422D; color:#fff; flex-shrink:0;
+}
+.cpm-head h2{ font-size:15px; font-weight:600; margin:0; display:flex; align-items:center; gap:8px; letter-spacing:0.5px }
+.cpm-close{ background:transparent; border:0; color:#fff; font-size:18px; cursor:pointer; opacity:.85 }
+.cpm-close:hover{ opacity:1 }
+.cpm-body{ padding:20px 22px; overflow-y:auto; flex:1 }
+.cpm-hint{
+  font-size:12.5px; color:#7A6B5C; line-height:1.7; margin:0 0 18px;
+  padding:11px 14px; background:#FAF7F2; border:1px solid #E8DFD0; border-radius:10px;
+}
+.cpm-route{ margin-bottom:22px }
+.cpm-route-title{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:#3D3026; margin-bottom:12px }
+.cpm-badge{ width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff }
+.cpm-badge.a{ background:#50422D }
+.cpm-badge.b{ background:#765F4A }
+.cpm-list{ display:flex; flex-direction:column; gap:14px }
+.cpm-style{ border:1px solid #E8DFD0; border-radius:12px; padding:14px; background:#FAF7F2 }
+.cpm-style-head{ display:flex; gap:10px; margin-bottom:10px }
+.cpm-name{ flex:1; padding:8px 12px; border:1px solid #E8DFD0; border-radius:8px; font-family:inherit; font-size:14px; font-weight:600; background:#fff }
+.cpm-style-del{ width:36px; border:1px solid #E8C9C9; background:#fff; color:#B05050; border-radius:8px; cursor:pointer }
+.cpm-style-del:hover{ background:#FBEEEE }
+.cpm-field{ margin-bottom:10px }
+.cpm-field label{ display:block; font-size:12px; font-weight:600; color:#7A6B5C; margin-bottom:4px; letter-spacing:0.3px }
+.cpm-field input, .cpm-field textarea{
+  width:100%; box-sizing:border-box; padding:8px 12px; border:1px solid #E8DFD0;
+  border-radius:8px; font-family:inherit; font-size:13.5px; resize:vertical; background:#fff;
+}
+.cpm-field input:focus, .cpm-field textarea:focus{ outline:none; border-color:#50422D }
+.cpm-add{
+  margin-top:12px; width:100%; padding:10px; border:1px dashed #CDBEA2; background:#fff;
+  color:#50422D; border-radius:10px; cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:600;
+}
+.cpm-add:hover{ background:#FAF7F2 }
+.cpm-foot{ display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid #E8DFD0; flex-shrink:0 }
+.cpm-btn-cancel, .cpm-btn-save{ padding:10px 24px; border-radius:9px; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600 }
+.cpm-btn-cancel{ background:#fff; border:1px solid #E8DFD0; color:#7A6B5C }
+.cpm-btn-cancel:hover{ background:#FAF7F2 }
+.cpm-btn-save{ background:#50422D; border:0; color:#fff }
+.cpm-btn-save:hover{ background:#765F4A }
+.cpm-btn-save:disabled{ opacity:.6; cursor:not-allowed }
+
+@media (max-width:680px){
+  .cpm-dialog{ width:100%; max-height:100vh; height:100vh; border-radius:0 }
+  .cpm-foot{ flex-direction:column-reverse }
+  .cpm-btn-cancel, .cpm-btn-save{ width:100% }
+}
