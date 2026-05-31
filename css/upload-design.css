@@ -876,3 +876,24 @@
   .dum-step-t{ display:none }
   .dum-step-line{ width:24px }
 }
+
+/* === 步驟1:子分類(可複選) === */
+.dum-theme-subs[hidden]{ display:none }
+.dum-theme-subs{
+  margin-top:16px; padding:14px 16px;
+  background:var(--bg-soft, #F4F1EC); border:1px solid var(--lohas-bd, #E8DED1); border-radius:12px;
+  animation:dumSlide .25s ease-out;
+}
+.dum-theme-subs-head{ font-size:12px; font-weight:600; color:var(--lohas-brand, #50422D); letter-spacing:0.5px; margin-bottom:10px }
+.dum-theme-subs-meta{ color:var(--lohas-muted, #9B9186); font-weight:400; font-size:10px; letter-spacing:0.3px }
+.dum-theme-subs-row{ display:flex; flex-wrap:wrap; gap:6px }
+.dum-subchip-d{
+  background:#fff; color:var(--text-sub, #6F665D); padding:6px 13px; border-radius:999px;
+  font-size:11px; border:1px solid var(--lohas-bd, #E8DED1); cursor:pointer;
+  font-family:inherit; font-weight:500; letter-spacing:0.3px; transition:all .15s;
+}
+.dum-subchip-d:hover{ border-color:var(--lohas-light, #CDBEA2); color:var(--lohas-brand, #50422D) }
+.dum-subchip-d.on{ background:var(--lohas-brand, #50422D); color:#fff; border-color:var(--lohas-brand, #50422D); font-weight:600 }
+
+/* === 步驟3:眼鏡模擬框限寬(置中,別撐滿) === */
+#dumMockFrame2{ max-width:380px; margin:0 auto 18px }
