@@ -38,10 +38,10 @@
   // ===== 設計師模式:提示詞對照表 =====
   // 主題改用 categories 表(動態,跟快速模式/後台同一份)
   // 提示詞用「分類名稱」對應;沒對應到的分類 → 用 _default 通用提示詞
-  // 每個分類有兩條路線:scratch(無中生有) / material(素材改造)
+  // 每個分類有兩條路線:scratch(用文字生成) / material(素材改造)
   //
   // 【範例圖欄位(選填,留空就不顯示預覽)】
-  //   無中生有 scratch:  sample: '圖片URL'          → 顯示一張「成品範例」
+  //   用文字生成 scratch:  sample: '圖片URL'          → 顯示一張「成品範例」
   //   素材改造 material: before: 'URL', after: 'URL' → 顯示「改造前 → 改造後」兩張
   //   之後把圖傳到 Storage 或圖床,把網址填進對應欄位即可
   var PROMPT_MAP = {
@@ -51,8 +51,6 @@
           prompt: '請畫一個「{主題}」主題的圖案,使用極簡單線條風格(single line art / minimalist line drawing),純黑線條、白色背景,無陰影、無填色,線條粗細一致,適合做成雷射雕刻圖案。正方形構圖,主體置中。' },
         { id: 's-cute', name: '可愛手繪', desc: '圓潤討喜、童趣感', sample: '',
           prompt: '請畫一個「{主題}」主題的圖案,使用圓潤的手繪卡通風格(cute hand-drawn cartoon),粗黑外框線、簡單造型,黑白色調為主,白色背景,適合雷射雕刻。正方形構圖。' },
-        { id: 's-geo', name: '幾何圖形', desc: '線條與形狀構成', sample: '',
-          prompt: '請用幾何圖形(geometric shapes)組合出一個「{主題}」主題的圖案,黑色線條白底,扁平風格無漸層,適合雷射雕刻。正方形置中構圖。' },
       ],
       material: [
         { id: 'm-photo', name: '照片轉線稿', desc: '把照片變線條圖',
@@ -176,9 +174,9 @@
             '<h3 class="dum-step-title">選一個風格,用 AI 生成圖案</h3>',
             '<p class="dum-step-sub">複製提示詞 → 貼到 ChatGPT 生成圖片 → 存下來,下一步上傳</p>',
             '<div class="dum-routes">',
-              // 路線 1:無中生有
+              // 路線 1:用文字生成
               '<div class="dum-route">',
-                '<div class="dum-route-head"><span class="dum-route-badge a">A</span>無中生有</div>',
+                '<div class="dum-route-head"><span class="dum-route-badge a">A</span>用文字生成</div>',
                 '<div class="dum-route-desc">直接用文字描述,讓 AI 從零生成</div>',
                 '<div class="dum-style-list" id="dumScratchList"></div>',
               '</div>',
@@ -246,16 +244,7 @@
                 '<div class="dum-d3-themetag" id="dumD3ThemeTag"></div>',
               '</div>',
             '</div>',
-            // 眼鏡模擬框 (上傳後才顯示,比照快速模式)
-            '<div class="dum-mock-frame" id="dumMockFrame2" hidden>',
-              '<div class="dum-mock-label">刻 在 眼 鏡 上 的 樣 子</div>',
-              '<div class="dum-mock-stage">',
-                '<div class="dum-mock-engrave" id="dumMockEngrave2">',
-                  '<img alt="刻圖模擬" id="dumMockImg2">',
-                '</div>',
-              '</div>',
-            '</div>',
-            // 六大載體模擬 (上傳後才顯示)
+            // 六大載體模擬 (上傳後才顯示,含光學鏡片=眼鏡模擬)
             '<div class="dum-carriers" id="dumCarriers" hidden>',
               '<div class="dum-carriers-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 刻在不同載體上的樣子(示意)</div>',
               '<div class="dum-carrier-grid" id="dumCarrierGrid"></div>',
@@ -423,8 +412,6 @@
     els.previewImg  = modal.querySelector('#dumPreviewImg');
     els.mockFrame   = modal.querySelector('#dumMockFrame');
     els.mockImg     = modal.querySelector('#dumMockImg');
-    els.mockFrame2  = modal.querySelector('#dumMockFrame2');
-    els.mockImg2    = modal.querySelector('#dumMockImg2');
     els.title       = modal.querySelector('#dumTitle');
     els.name        = modal.querySelector('#dumName');
     els.slogan      = modal.querySelector('#dumSlogan');
@@ -751,7 +738,7 @@
     if(hint) hint.hidden = true;
   }
 
-  // 選風格後顯示範例圖:無中生有=1張;素材改造=改造前後2張
+  // 選風格後顯示範例圖:用文字生成=1張;素材改造=改造前後2張
   function renderStyleSample(){
     var wrap = modal.querySelector('#dumStyleSample');
     if(!wrap) return;
@@ -1153,18 +1140,13 @@
       if(empty2) empty2.hidden = true;
       up2.classList.add('has-file');
     }
-    // 同步第三步眼鏡模擬 (比照快速模式)
-    if(els.mockImg2 && els.mockFrame2){
-      els.mockImg2.src = state.previewUrl;
-      els.mockFrame2.hidden = false;
-    }
-    // 渲染六大載體模擬
+    // 渲染六大載體模擬(含光學鏡片=眼鏡模擬)
     renderCarriers(state.previewUrl);
   }
 
   // 六大載體設定:底圖 + 刻圖疊放位置(%,相對底圖)
   var CARRIERS = [
-    { name: '光學鏡片', img: 'images/lens-01.jpg',    x: 50, y: 50, w: 26 },
+    { name: '光學鏡片', img: 'images/glasses-mockup.jpg', x: 80, y: 22, w: 15, glasses: true },
     { name: '鏡框',     img: 'images/frame-01.jpg',   x: 50, y: 46, w: 16 },
     { name: '眼鏡盒',   img: 'images/box-01.jpg',     x: 50, y: 50, w: 30 },
     { name: '眼鏡布',   img: 'images/cloth-01.jpg',   x: 50, y: 50, w: 34 },
@@ -1178,11 +1160,14 @@
     if(!box || !grid) return;
     if(!imgUrl){ box.hidden = true; grid.innerHTML = ''; return; }
     grid.innerHTML = CARRIERS.map(function(c){
+      // 光學鏡片用眼鏡模擬的定位(水平置中、top為上緣),其他用中心對齊
+      var engStyle = c.glasses
+        ? 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translateX(-50%)'
+        : 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translate(-50%,-50%)';
       return '<figure class="dum-carrier">' +
                '<div class="dum-carrier-stage">' +
                  '<img class="dum-carrier-bg" src="' + escAttr(c.img) + '" alt="' + escAttr(c.name) + '">' +
-                 '<img class="dum-carrier-engrave" src="' + escAttr(imgUrl) + '" ' +
-                   'style="left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%">' +
+                 '<img class="dum-carrier-engrave" src="' + escAttr(imgUrl) + '" style="' + engStyle + '">' +
                '</div>' +
                '<figcaption>' + escHtml(c.name) + '</figcaption>' +
              '</figure>';
@@ -1238,11 +1223,6 @@
       var empty2 = up2.querySelector('.dum-uploader-empty');
       if(empty2) empty2.hidden = false;
       up2.classList.remove('has-file');
-    }
-    // 清第三步眼鏡模擬
-    if(els.mockImg2 && els.mockFrame2){
-      els.mockImg2.src = '';
-      els.mockFrame2.hidden = true;
     }
     // 清六大載體模擬
     renderCarriers(null);
