@@ -265,6 +265,13 @@
   line-height:1.7;
 }
 .dum-tip b{ color:var(--lohas-brand, #50422D); font-weight:600 }
+.dum-tip-link{
+  display:inline-flex; align-items:center; gap:5px; margin-top:7px;
+  color:var(--lohas-brand, #50422D); font-weight:600; text-decoration:none;
+  border-bottom:1px solid currentColor; padding-bottom:1px;
+}
+.dum-tip-link:hover{ color:var(--lohas-hover, #765F4A) }
+.dum-tip-link i{ font-size:12px }
 /* 設計師第三步:小提示與上方上傳圖拉開 */
 .dum-d3-upload .dum-tip{ margin-top:12px }
 

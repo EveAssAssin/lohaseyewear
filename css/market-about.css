@@ -369,3 +369,87 @@
   .creators-marquee { padding: 24px 16px; }
   .creator-name-chip { font-size: 14px; }
 }
+
+/* =========================================================
+   創作者頁改版新增元件 (沿用 --lohas-brand / --mab-border)
+   ========================================================= */
+
+/* 投稿流程 4 步 */
+.steps-flow-4 .step-item { padding: 20px 16px; }
+.steps-flow-4 .step-content h4 { font-size: 14px; }
+.steps-flow-4 .step-content p { font-size: 12.5px; }
+
+/* 推薦投稿風格 4 卡 */
+.style-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 16px; margin-top: 16px;
+}
+.style-card {
+  display: flex; gap: 16px; align-items: flex-start;
+  background: #fff; border: 1px solid var(--mab-border);
+  border-radius: var(--mab-card-radius); padding: 20px 22px;
+  transition: transform .2s, box-shadow .2s;
+}
+.style-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+.style-icon {
+  width: 46px; height: 46px; flex-shrink: 0; border-radius: 10px;
+  background: rgba(200, 159, 92, 0.1); color: var(--lohas-brand, #c89f5c);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.style-card h4 { font-size: 16px; font-weight: 700; color: #222; margin: 0 0 5px; }
+.style-card p { font-size: 13px; line-height: 1.7; color: #666; margin: 0; }
+
+/* 適合 / 不適合 對照 */
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 18px; margin-top: 16px;
+}
+.compare-col {
+  border-radius: var(--mab-card-radius); padding: 22px 24px;
+  border: 1px solid var(--mab-border);
+}
+.compare-col.ok { background: rgba(76,175,80,0.05); border-color: rgba(76,175,80,0.3); }
+.compare-col.ng { background: rgba(231,76,60,0.04); border-color: rgba(231,76,60,0.25); }
+.compare-h { font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.compare-col.ok .compare-h { color: #2e7d32; }
+.compare-col.ng .compare-h { color: #c62828; }
+.compare-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.compare-list li { font-size: 13.5px; display: flex; gap: 9px; align-items: flex-start; color: #333; line-height: 1.6; }
+.compare-list li i { margin-top: 4px; font-size: 12px; flex-shrink: 0; }
+.compare-col.ok li i { color: #2e7d32; }
+.compare-col.ng li i { color: #c62828; }
+.compare-list small { display: block; color: #999; font-size: 11.5px; margin-top: 2px; }
+
+/* 物理限制 5 警示卡 */
+.warn-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 12px; margin-top: 16px;
+}
+.warn-card {
+  background: #fff; border: 1px solid var(--mab-border);
+  border-top: 3px solid #c62828; border-radius: 10px;
+  padding: 18px 14px; text-align: center;
+}
+.warn-card i { font-size: 20px; color: #c62828; margin-bottom: 10px; }
+.warn-card h4 { font-size: 13.5px; font-weight: 700; color: #222; margin: 0 0 6px; }
+.warn-card p { font-size: 11.5px; line-height: 1.6; color: #666; margin: 0; }
+
+/* FAQ 雙 tab */
+.faq-tabs { display: flex; gap: 10px; margin: 16px 0 20px; flex-wrap: wrap; }
+.faq-tab {
+  padding: 9px 20px; border-radius: 999px;
+  border: 1px solid var(--mab-border); background: #fff;
+  cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600;
+  color: #888; display: inline-flex; align-items: center; gap: 7px; transition: all .15s;
+}
+.faq-tab:hover { color: var(--lohas-brand, #c89f5c); }
+.faq-tab.active { background: var(--lohas-brand, #c89f5c); color: #fff; border-color: var(--lohas-brand, #c89f5c); }
+.faq-panel[hidden] { display: none; }
+
+@media (max-width: 720px) {
+  .style-grid { grid-template-columns: 1fr; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .warn-grid { grid-template-columns: repeat(2, 1fr); }
+  .steps-flow-4 { flex-direction: column; }
+  .steps-flow-4 .step-arrow { transform: rotate(90deg); }
+}
