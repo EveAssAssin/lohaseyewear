@@ -989,6 +989,21 @@
   border:1px solid var(--lohas-brand);
 }
 
+/* 分享按鈕 (次要,描邊) */
+.cm .modal-btn-share{
+  height:46px; margin-top:10px;
+  background:#fff;
+  color:var(--lohas-brand);
+  border:1px solid var(--lohas-brand);
+  border-radius:var(--r-pill);
+  font-family:inherit; font-size:13.5px; letter-spacing:1px; font-weight:600;
+  cursor:pointer; width:100%;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  transition:all .2s;
+}
+.cm .modal-btn-share:hover{ background:rgba(200,159,92,.08) }
+.cm .modal-btn-share i{ font-size:15px }
+
 /* 我的最愛按鈕下方提示 */
 .cm .modal-hint{
   margin:14px 0 0;
