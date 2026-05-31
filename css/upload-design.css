@@ -587,6 +587,8 @@
   .design-upload-modal{
     padding:0;
     box-sizing:border-box;
+    align-items:stretch;      /* 手機讓 dialog 撐滿,不置中留邊 */
+    justify-content:stretch;
   }
   .dum-dialog,
   .dum-dialog *{
@@ -596,12 +598,17 @@
     width:100vw;
     max-width:100vw;
     height:100vh;
+    height:100dvh;            /* 動態視口高度,避免被網址列切掉 */
     max-height:100vh;
+    max-height:100dvh;
     border-radius:0;
   }
+  .dum-tabs{ flex-shrink:0 }   /* tab 列固定不壓縮 */
   .dum-quick{
     grid-template-columns:1fr;
-    grid-auto-rows:auto;
+    grid-auto-rows:min-content;
+    flex:1;
+    min-height:0;
     overflow-y:auto;
     overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
@@ -624,7 +631,7 @@
   .dum-actions{ flex-direction:column-reverse }
   .dum-btn-cancel,
   .dum-btn-submit{ flex:none; width:100% }
-  .dum-designer{ padding:18px 16px; overflow-y:auto; -webkit-overflow-scrolling:touch }
+  .dum-designer{ flex:1; min-height:0; padding:18px 16px; overflow-y:auto; -webkit-overflow-scrolling:touch }
 }
 
 
@@ -881,10 +888,16 @@
   .dum-step-t{ display:none }
   .dum-step-line{ width:20px }
   .dum-step-title{ font-size:16px }
-  .dum-step-nav{ gap:10px }
-  .dum-btn-next, .dum-btn-back{ padding:0 18px; font-size:12px }
-  .dum-prompt-actions{ width:100%; }
-  .dum-prompt-btn{ flex:1; justify-content:center }
+  /* 提示詞框:手機時 label 與按鈕分兩行,按鈕各佔一半 */
+  .dum-prompt-head{ flex-direction:column; align-items:stretch; gap:10px }
+  .dum-prompt-actions{ width:100%; gap:8px }
+  .dum-prompt-btn{ flex:1; justify-content:center; height:40px; font-size:12px }
+  /* 步驟導航:手機時上下堆疊,送出在上、上一步在下,各佔全寬 */
+  .dum-step-nav{ flex-direction:column-reverse; gap:10px; align-items:stretch }
+  .dum-step-nav > span{ display:none }
+  .dum-btn-next, .dum-btn-back, .dum-step-nav .dum-btn-submit{
+    width:100%; justify-content:center; height:46px; padding:0 18px; font-size:13px;
+  }
 }
 
 /* === 步驟1:子分類(可複選) === */
