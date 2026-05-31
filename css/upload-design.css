@@ -871,8 +871,11 @@
 }
 .dum-carrier-bg{ width:100%; height:100%; object-fit:cover; display:block }
 .dum-carrier-engrave{
-  position:absolute; transform:translate(-50%,-50%);
-  mix-blend-mode:multiply; opacity:.9; pointer-events:none;
+  position:absolute; pointer-events:none;
+  /* 雷刻自然感:multiply 讓底材透出 + 降不透明度(霧面) + 微模糊去鋸齒 + 灰階降對比(雷刻是燒灼色不是純黑) */
+  mix-blend-mode:multiply;
+  opacity:.72;
+  filter:grayscale(100%) contrast(.72) brightness(1.08) blur(.3px);
 }
 .dum-carrier figcaption{ text-align:center; font-size:11px; color:var(--lohas-hover, #765F4A); letter-spacing:0.3px; margin-top:6px; font-weight:600 }
 
