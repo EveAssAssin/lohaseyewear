@@ -326,7 +326,7 @@
         '<div class="cpm-body">' +
           '<p class="cpm-hint">這些風格與提示詞會出現在「設計師模式」第二步。留空不填,此分類會自動使用系統通用提示詞。</p>' +
           '<div class="cpm-route">' +
-            '<div class="cpm-route-title"><span class="cpm-badge a">A</span> 無中生有(純文字生成)</div>' +
+            '<div class="cpm-route-title"><span class="cpm-badge a">A</span> 用文字生成</div>' +
             '<div class="cpm-list" id="cpmScratch"></div>' +
             '<button class="cpm-add" type="button" data-route="scratch"><i class="fa-solid fa-plus"></i> 新增風格</button>' +
           '</div>' +
