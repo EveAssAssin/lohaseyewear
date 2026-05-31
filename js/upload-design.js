@@ -632,6 +632,35 @@
     }
   }
 
+  // 依分類名稱關鍵字猜 FontAwesome icon (猜不到 → fa-shapes)
+  function guessThemeIcon(name){
+    var n = String(name || '');
+    var map = [
+      [/動物|寵物|貓|狗|喵|汪/, 'fa-paw'],
+      [/植物|花|草|葉|園藝/, 'fa-leaf'],
+      [/文字|標語|字|書法/, 'fa-font'],
+      [/星座|生肖|占星/, 'fa-star'],
+      [/節慶|節日|聖誕|新年|過年/, 'fa-gift'],
+      [/居家|生活|家居/, 'fa-house'],
+      [/愛情|情侶|心|婚/, 'fa-heart'],
+      [/食物|美食|餐|咖啡|飲/, 'fa-mug-saucer'],
+      [/音樂|樂器|歌/, 'fa-music'],
+      [/運動|球|健身/, 'fa-dumbbell'],
+      [/旅行|旅遊|地圖|出國/, 'fa-plane'],
+      [/兒童|寶寶|嬰/, 'fa-baby'],
+      [/車|交通/, 'fa-car'],
+      [/海|魚|海洋|浪/, 'fa-fish'],
+      [/幾何|圖形|抽象/, 'fa-shapes'],
+      [/宗教|佛|神|廟/, 'fa-hands-praying'],
+      [/英文|字母|英語/, 'fa-a'],
+      [/數字|號碼/, 'fa-hashtag'],
+    ];
+    for(var i = 0; i < map.length; i++){
+      if(map[i][0].test(n)) return map[i][1];
+    }
+    return 'fa-shapes';
+  }
+
   async function renderThemes(){
     var grid = modal.querySelector('#dumThemeGrid');
     if(!grid) return;
@@ -645,7 +674,7 @@
     }
     grid.innerHTML = mains.map(function(name){
       return '<button type="button" class="dum-theme-card" data-theme="' + escAttr(name) + '">' +
-               '<span class="dum-theme-emoji"><i class="fa-solid fa-shapes"></i></span>' +
+               '<span class="dum-theme-emoji"><i class="fa-solid ' + guessThemeIcon(name) + '"></i></span>' +
                '<span class="dum-theme-name">' + escHtml(name) + '</span>' +
              '</button>';
     }).join('');
@@ -718,6 +747,11 @@
         showPrompt();
       });
     });
+
+    // 預設自動選 A(無中生有)的第一個風格
+    var firstCard = modal.querySelector('#dumScratchList .dum-style-card')
+                 || modal.querySelector('#dumMaterialList .dum-style-card');
+    if(firstCard) firstCard.click();
   }
 
   function showPrompt(){
@@ -1147,12 +1181,12 @@
   // 六大載體設定:底圖 + 刻圖疊放位置(%,相對底圖)
   var CARRIERS = [
     { name: '光學鏡片', img: 'images/glasses-mockup.jpg', x: 80, y: 22, w: 15, glasses: true },
-    { name: '鏡框',     img: 'images/carrier-frame.jpg',   x: 50, y: 50, w: 30 },
-    { name: '眼鏡盒',   img: 'images/carrier-box.jpg',     x: 50, y: 50, w: 30 },
-    { name: '眼鏡布',   img: 'images/carrier-cloth.jpg',   x: 50, y: 50, w: 34 },
-    { name: '周邊配件', img: 'images/carrier-merch.jpg',   x: 50, y: 50, w: 30 },
-    { name: '鼻墊',     img: 'images/carrier-nosepad.jpg', x: 50, y: 50, w: 24 },
-    { name: '眼鏡袋',   img: 'images/carrier-pouch.jpg',   x: 50, y: 50, w: 32 },
+    { name: '鏡框',     img: 'images/carrier-frame.jpg',   x: 50, y: 50, w: 10 },
+    { name: '眼鏡盒',   img: 'images/carrier-box.jpg',     x: 50, y: 50, w: 10 },
+    { name: '眼鏡布',   img: 'images/carrier-cloth.jpg',   x: 72, y: 72, w: 11 },
+    { name: '周邊配件', img: 'images/carrier-merch.jpg',   x: 50, y: 50, w: 10 },
+    { name: '鼻墊',     img: 'images/carrier-nosepad.jpg', x: 50, y: 50, w: 8 },
+    { name: '眼鏡袋',   img: 'images/carrier-pouch.jpg',   x: 72, y: 72, w: 11 },
   ];
 
   function renderCarriers(imgUrl){
