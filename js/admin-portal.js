@@ -1845,6 +1845,7 @@
 
   // 開對話 (用會員平台同款 cs-chat-panel 氣泡框,右下角彈出)
   async function openCsChat(erpId, designId, designName) {
+    console.log('[客服對話] openCsChat 被呼叫:', { erpId, designId, designName });
     if (!erpId) { alert('此作品沒有對應的會員編號,無法對話'); return; }
     if (!designId) { alert('找不到刻圖編號,無法對話'); return; }
     csChat.erpId = String(erpId);
@@ -1911,16 +1912,19 @@
   }
 
   async function loadCsChatHistory() {
+    console.log('[客服對話] loadCsChatHistory 執行, designId=', csChat.designId);
     const sb = csGetSb();
     const stream = document.getElementById('csChatStream');
-    if (!stream) return;
+    if (!stream) { console.warn('[客服對話] 找不到 stream 元素'); return; }
     if (!sb) { stream.innerHTML = '<div class="cs-chat-empty">系統未就緒</div>'; return; }
     if (!csChat.designId) { stream.innerHTML = '<div class="cs-chat-empty">找不到刻圖編號</div>'; return; }
+    stream.innerHTML = '<div class="cs-chat-empty">讀取中...</div>';
     try {
       const { data, error } = await sb.from('cs_messages')
         .select('id, sender, message, created_at')
         .eq('design_id', csChat.designId)
         .order('created_at', { ascending: true });
+      console.log('[客服對話] query 回來:', { count: data && data.length, error });
       if (error) throw error;
       renderCsMessages(data || []);
       await sb.from('cs_messages')
