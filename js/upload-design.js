@@ -858,6 +858,11 @@
           (dz.style ? ' · ' + escHtml(dz.style.name) : '');
       }
     }
+    // 切步驟後捲到最上面 (手機/桌機都歸零)
+    var designer = modal.querySelector('#dumDesigner');
+    if(designer) designer.scrollTop = 0;
+    var dialog = modal.querySelector('.dum-dialog');
+    if(dialog) dialog.scrollTop = 0;
   }
 
   // 第三步的上傳器 (沿用 handleFile 同套處理,但獨立預覽)
