@@ -335,7 +335,7 @@
   }
   .mab-nav {
     position: sticky; top: 60px; z-index: 10;
-    background: var(--bg-warm, #F9F8F6);
+    background: transparent;
     margin: 0; padding: 6px 0;
     border-bottom: 1px solid var(--lohas-bd, #E8DED1);
   }
