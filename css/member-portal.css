@@ -332,20 +332,20 @@ body {
 /* 右上按鈕區 (回到官網 + 進入管理後台) */
 .mp .hero-right-actions{
   position:absolute; top:24px; right:36px;
-  display:flex; align-items:center; gap:8px;
+  display:flex; align-items:center; gap:4px;
   z-index:5;
 }
 
-/* 右上 icon + 文字 pill 按鈕 (跟後台 .icon-btn-lg.has-text 視覺一致) */
+/* 右上 icon + 文字 按鈕 (純 icon+文字, 無邊框) */
 .mp .hero-right-actions .icon-btn-lg{
   height:36px;
-  padding:0 14px;
+  padding:0 12px;
   display:inline-flex; align-items:center; justify-content:center;
   gap:6px;
   background:transparent;
   color:var(--lohas-sub, #888);
-  border:1px solid var(--lohas-line, #E8DED1);
-  border-radius:999px;
+  border:0;
+  border-radius:8px;
   font-family:inherit; font-size:13px;
   letter-spacing:0.5px; font-weight:500;
   text-decoration:none;
@@ -361,16 +361,6 @@ body {
   color:inherit;
   font-size:13px;
   line-height:1;
-}
-/* 深色實心款 (進入管理後台) */
-.mp .hero-right-actions .icon-btn-lg.solid{
-  background:#2D2520;
-  color:#fff;
-  border-color:#2D2520;
-}
-.mp .hero-right-actions .icon-btn-lg.solid:hover{
-  background:#3A2F26;
-  color:#fff;
 }
 
 /* Action button (儲存創作者 / 建立匯款 / 寫一篇新故事 等)
@@ -1907,17 +1897,21 @@ body {
     margin:0 auto;
   }
   .mp .mp-mobile-front{
-    width:40px; height:40px;
-    display:flex; align-items:center; justify-content:center;
+    width:auto; height:40px;
+    padding:0 12px;
+    display:inline-flex; align-items:center; justify-content:center;
+    gap:6px;
     color:var(--lohas-mute);
-    font-size:14px;
-    border:1px solid var(--lohas-line);
+    font-size:12px;
+    border:0;
     border-radius:8px;
     text-decoration:none;
     transition:all .15s;
     flex-shrink:0;
     background:transparent;
+    white-space:nowrap;
   }
+  .mp .mp-mobile-front i{ font-size:14px }
   .mp .mp-mobile-front:hover{
     background:var(--lohas-tip);
     color:var(--lohas-brown);

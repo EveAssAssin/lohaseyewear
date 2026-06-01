@@ -226,12 +226,11 @@
   gap:6px;
   white-space:nowrap;
 }
-/* 有文字時變橫向 pill */
+/* 有文字時變橫向 */
 .ad .icon-btn-lg.has-text{
   width:auto; height:36px;
-  padding:0 14px;
-  border-radius:999px;
-  border:1px solid var(--lohas-line);
+  padding:0 12px;
+  border-radius:8px;
 }
 .ad .icon-btn-lg:hover{ background:var(--lohas-tip); color:var(--lohas-brown) }
 .ad .icon-btn-lg .dot{
@@ -1971,16 +1970,20 @@
     width:auto;
   }
   .ad .ad-mobile-front{
-    width:40px; height:40px;
-    display:flex; align-items:center; justify-content:center;
+    width:auto; height:40px;
+    padding:0 12px;
+    display:inline-flex; align-items:center; justify-content:center;
+    gap:6px;
     color:var(--lohas-mute);
-    font-size:14px;
-    border:1px solid var(--lohas-line);
+    font-size:12px;
+    border:0;
     border-radius:8px;
     text-decoration:none;
     transition:all .15s;
     flex-shrink:0;
+    white-space:nowrap;
   }
+  .ad .ad-mobile-front i{ font-size:14px }
   .ad .ad-mobile-front:hover{
     background:var(--lohas-tip);
     color:var(--lohas-brown);
