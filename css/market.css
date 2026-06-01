@@ -117,6 +117,15 @@
   background:#fff;
   color:#333;
 }
+.cm .hero-banner .hero-btns .btn-ghost{
+  border:1px solid rgba(255,255,255,.45);
+  color:#fff;
+  background:rgba(255,255,255,.08);
+}
+.cm .hero-banner .hero-btns .btn-ghost:hover{
+  background:rgba(255,255,255,.18);
+  border-color:#fff;
+}
 
 
 /* === Pill 系統 === */
