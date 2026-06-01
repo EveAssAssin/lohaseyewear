@@ -244,15 +244,6 @@
         <div class="pf-section-sub">${allPhotos.length} 張公開照片</div>
         <div class="photos-grid">${photosHtml}</div>
       </div>
-
-      <div class="pf-footer-cta">
-        <h3>想看更多創作者?</h3>
-        <p>樂活的創作者,每個人都有自己的位置。</p>
-        <div class="btns">
-          <button class="primary" onclick="location.href='market.html'"><i class="fa-solid fa-arrow-left"></i>回 到 創 作 者 市 集</button>
-          <button class="ghost" onclick="location.href='gallery.html'">逛 靈 感 分 享 牆<i class="fa-solid fa-arrow-right"></i></button>
-        </div>
-      </div>
     `;
 
     bindAnchors();
