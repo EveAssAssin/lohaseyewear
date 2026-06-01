@@ -260,7 +260,7 @@
             // 審核流程 (含分潤說明)
             '<div class="dum-flow-info">',
               '<div class="dum-flow-label">審 核 流 程</div>',
-              '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。作品每被使用一次可獲得 <b>$100 分潤</b>,月底結算;首件通過審核後自動開通創作者身份。</div>',
+              '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
             '</div>',
             '<div class="dum-error" id="dumError2" hidden><i class="fa-solid fa-circle-exclamation"></i> <span class="dum-error-text"></span></div>',
             '<div class="dum-step-nav">',
@@ -310,7 +310,7 @@
 
           '<div class="dum-flow-info">',
             '<div class="dum-flow-label">審 核 流 程</div>',
-            '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。作品每被使用一次可獲得 <b>$100 分潤</b>,月底結算;首件通過審核後自動開通創作者身份。</div>',
+            '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
           '</div>',
         '</div>',
 
