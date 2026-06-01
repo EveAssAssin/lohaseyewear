@@ -1241,9 +1241,10 @@
           '<div class="dum-lenspos-box" id="lpBox">' +
             '<img class="dum-lenspos-eng" id="lpEng" src="' + escAttr(imgUrl) + '" draggable="false">' +
             '<span class="dum-lenspos-rot" id="lpRot" title="拖曳旋轉"><i class="fa-solid fa-rotate"></i></span>' +
+            '<span class="dum-lenspos-scale" id="lpScale" title="拖曳縮放"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>' +
           '</div>' +
         '</div>' +
-        '<p class="dum-lenspos-tip"><i class="fa-solid fa-hand-pointer"></i> 拖曳刻圖移動・滾輪或雙指縮放・拖曳上方旋轉鈕或雙指旋轉</p>' +
+        '<p class="dum-lenspos-tip"><i class="fa-solid fa-hand-pointer"></i> 拖曳刻圖移動・拖曳右下角縮放・拖曳上方旋轉鈕(觸控可雙指縮放旋轉)</p>' +
         '<div class="dum-lenspos-foot">' +
           '<button class="dum-lenspos-cancel" type="button">取消</button>' +
           '<button class="dum-lenspos-ok" type="button">確定</button>' +
@@ -1253,6 +1254,7 @@
     var stage = ov.querySelector('#lpStage');
     var box = ov.querySelector('#lpBox');
     var rotBtn = ov.querySelector('#lpRot');
+    var scaleBtn = ov.querySelector('#lpScale');
 
     function apply(){
       // box 用中心定位(方便旋轉鈕跟著轉),寬度=edit.w%,高度auto
@@ -1294,14 +1296,37 @@
     window.addEventListener('mouseup', dragUp);
     window.addEventListener('touchend', dragUp);
 
-    // ---- 滾輪縮放(桌機) ----
-    function onWheel(e){
-      e.preventDefault();
-      var d = e.deltaY < 0 ? 1 : -1;
-      edit.w = Math.max(5, Math.min(50, edit.w + d * 1.5));
-      apply();
+    // ---- 縮放控制點拖曳(桌機/觸控) ----
+    var scaling = false, scStartDist, scStartW;
+    function boxCenter(){
+      var r = stageRect();
+      return { cx: r.left + r.width * edit.x / 100, cy: r.top + r.height * edit.y / 100 };
     }
-    stage.addEventListener('wheel', onWheel, { passive: false });
+    function scaleDown(e){
+      scaling = true;
+      var p = e.touches ? e.touches[0] : e;
+      var c = boxCenter();
+      scStartDist = Math.hypot(p.clientX - c.cx, p.clientY - c.cy);
+      scStartW = edit.w;
+      e.preventDefault(); e.stopPropagation();
+    }
+    function scaleMove(e){
+      if(!scaling) return;
+      var p = e.touches ? e.touches[0] : e;
+      var c = boxCenter();
+      var d = Math.hypot(p.clientX - c.cx, p.clientY - c.cy);
+      if(scStartDist > 0){
+        edit.w = Math.max(5, Math.min(50, scStartW * (d / scStartDist)));
+        apply();
+      }
+    }
+    function scaleUp(){ scaling = false; }
+    scaleBtn.addEventListener('mousedown', scaleDown);
+    scaleBtn.addEventListener('touchstart', scaleDown, { passive: false });
+    window.addEventListener('mousemove', scaleMove);
+    window.addEventListener('touchmove', scaleMove, { passive: false });
+    window.addEventListener('mouseup', scaleUp);
+    window.addEventListener('touchend', scaleUp);
 
     // ---- 旋轉鈕拖曳(桌機/觸控) ----
     var rotating = false;
@@ -1362,7 +1387,10 @@
       window.removeEventListener('touchmove', rotMove);
       window.removeEventListener('mouseup', rotUp);
       window.removeEventListener('touchend', rotUp);
-      stage.removeEventListener('wheel', onWheel);
+      window.removeEventListener('mousemove', scaleMove);
+      window.removeEventListener('touchmove', scaleMove);
+      window.removeEventListener('mouseup', scaleUp);
+      window.removeEventListener('touchend', scaleUp);
       ov.classList.remove('open');
     }
     ov.querySelector('.dum-lenspos-ok').addEventListener('click', function(){
