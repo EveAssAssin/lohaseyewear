@@ -329,9 +329,14 @@ body {
 }
 .mp .admin-badge i{ font-size:10px; color:var(--lohas-light) }
 
-/* 進入管理後台按鈕 */
-.mp .enter-admin-btn{
+/* 右上按鈕區 (回到官網 + 進入管理後台) */
+.mp .hero-right-actions{
   position:absolute; top:24px; right:36px;
+  display:flex; align-items:center; gap:10px;
+}
+
+/* 進入管理後台 / 回到官網 按鈕 (共用樣式) */
+.mp .enter-admin-btn{
   display:inline-flex; align-items:center; gap:7px;
   padding:9px 16px;
   background:#2D2520; color:#fff;
@@ -354,6 +359,17 @@ body {
   line-height:11px;
   text-align:center;
   display:inline-block;
+}
+/* 回到官網用淺色款,跟管理後台區分 */
+.mp .enter-admin-btn.hero-front-btn{
+  background:#fff; color:#2D2520;
+  border:1px solid rgba(0,0,0,0.12);
+}
+.mp .enter-admin-btn.hero-front-btn:hover{
+  background:#F5F0E8;
+}
+.mp .enter-admin-btn.hero-front-btn i{
+  color:#2D2520;
 }
 
 /* Action button (儲存創作者 / 建立匯款 / 寫一篇新故事 等)
@@ -2101,8 +2117,8 @@ body {
   .mp .mp-mobile-admin-btn span{ display:none }
   .mp .mp-mobile-admin-btn i{ font-size:13px; margin:0 }
 
-  /* 手機版: 隱藏 hero 內的 admin 按鈕, 只顯示 mobile-header 的 */
-  .mp .hero > .enter-admin-btn{ display:none !important; }
+  /* 手機版: 隱藏 hero 內的右上按鈕區, 只顯示 mobile-header 的 */
+  .mp .hero-right-actions{ display:none !important; }
   .mp .mp-mobile-admin-btn{ display:inline-flex !important; }
   /* JS 控制 display:none 時不顯示 (Admin 才會顯示) */
   .mp .mp-mobile-admin-btn[style*="display: none"],

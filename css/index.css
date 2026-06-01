@@ -286,6 +286,13 @@
     color: #000;
 }
 
+/* --- 「電腦版隱藏文字」模式 — 後台勾選後,桌機隱藏 overlay 只顯示圖片 --- */
+@media (min-width: 769px) {
+    .home-carousel-card--image-only-desktop .card-overlay {
+        display: none;
+    }
+}
+
 /* --- 手機版 RWD (風格 B 簡化 · 仿本月精選 pill + 帶箭頭 CTA) --- */
 @media (max-width: 768px) {
     /* 卡片改直向佈局,圖文分離 */
