@@ -7412,6 +7412,9 @@
       // CTA checkbox 重置
       const ctaStudent = document.getElementById('news_cta_student');
       if (ctaStudent) ctaStudent.checked = false;
+      // 隱藏首頁文字勾選重置
+      const textHidden = document.getElementById('news_homepage_text_hidden');
+      if (textHidden) textHidden.checked = false;
       updateLinkUrlVisibility();
 
       resetImagePreview('news_cover_preview');
@@ -7457,6 +7460,9 @@
       const ctaList = Array.isArray(n.cta_buttons) ? n.cta_buttons : [];
       const ctaStudent = document.getElementById('news_cta_student');
       if (ctaStudent) ctaStudent.checked = ctaList.includes('student');
+      // 載入「隱藏首頁文字」設定
+      const textHidden = document.getElementById('news_homepage_text_hidden');
+      if (textHidden) textHidden.checked = !!n.homepage_text_hidden;
 
       setImagePreview('news_cover_preview', n.cover_image_url);
       setImagePreview('news_homepage_image_preview', n.homepage_image_url);
@@ -7592,6 +7598,7 @@
           homepage_image_url: homepageImgUrl,
           homepage_link_type: val('news_homepage_link_type') || 'news_detail',
           homepage_link_url: val('news_homepage_link_url'),
+          homepage_text_hidden: !!document.getElementById('news_homepage_text_hidden')?.checked,
           cta_buttons: ctaButtons,
           sort_order: val('news_sort_order') || 0,
           published_at: val('news_published_at'),
@@ -7656,6 +7663,7 @@
         homepage_subtitle: val('news_homepage_subtitle'),
         homepage_link_type: val('news_homepage_link_type') || 'news_detail',
         homepage_link_url: val('news_homepage_link_url'),
+        homepage_text_hidden: !!document.getElementById('news_homepage_text_hidden')?.checked,
         cta_buttons: (() => {
           const arr = [];
           if (document.getElementById('news_cta_student')?.checked) arr.push('student');

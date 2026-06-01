@@ -26,7 +26,7 @@
     const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
-      .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt, category, published_at, homepage_link_type, homepage_link_url')
+      .select('slug, title, homepage_tag, homepage_subtitle, homepage_image_url, cover_image_url, excerpt, category, published_at, homepage_link_type, homepage_link_url, homepage_text_hidden')
       .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
       .order('published_at', { ascending: false })
       .limit(4);
@@ -67,6 +67,13 @@
       const tag = n.homepage_tag || '';
       const sub = n.homepage_subtitle || n.excerpt || '';
       const date = fmtDate(n.published_at);
+      const textHidden = !!n.homepage_text_hidden;
+      // 隱藏文字模式: 只放圖, 整個 overlay 不渲染
+      if (textHidden) {
+        return '<a href="' + escapeHtml(href) + '" class="home-carousel-card home-carousel-card--image-only">' +
+          (img ? '<img src="' + escapeHtml(img) + '" alt="' + escapeHtml(n.title) + '">' : '') +
+        '</a>';
+      }
       return '<a href="' + escapeHtml(href) + '" class="home-carousel-card">' +
         '<div class="card-overlay">' +
           '<div class="card-meta">' +

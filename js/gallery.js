@@ -180,7 +180,11 @@ document.addEventListener("DOMContentLoaded", () => {
       post.main_image_url ||
       "images/lens-01.jpg";
 
-    const displayName = maskName(post.customer_name || "顧客");
+    // 樂活官方上傳的 (member_id='OFFICIAL') 不遮罩,直接顯示完整名字
+    const isOfficial = post.member_id === 'OFFICIAL';
+    const displayName = isOfficial
+      ? (post.customer_name || 'LOHAS 樂活眼鏡')
+      : maskName(post.customer_name || "顧客");
 
     const storyText = post.story || "";
     const cardType = post.type || (storyText.length >= 50 ? "story" : "photo");
