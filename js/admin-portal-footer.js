@@ -229,6 +229,70 @@
     `).join('');
 
     bindColumnDrag(list);
+    bindLinkDrag(list);
+  }
+
+  // ===== 子連結拖曳排序 (每個欄位內) =====
+  function bindLinkDrag(list) {
+    let dragKey = null;  // 格式: "ci-li"
+    list.querySelectorAll('.cm-links-list').forEach(linkList => {
+      const ci = +linkList.dataset.colLinks;
+      const rows = linkList.querySelectorAll('.cm-link-row');
+
+      rows.forEach((rowEl, li) => {
+        const handle = rowEl.querySelector('.cm-link-grip');
+        if (!handle) return;
+        // 加 cursor 樣式
+        handle.style.cursor = 'grab';
+
+        // 點把手才可拖
+        handle.addEventListener('mousedown', () => { rowEl.setAttribute('draggable', 'true'); });
+        handle.addEventListener('touchstart', () => { rowEl.setAttribute('draggable', 'true'); }, { passive: true });
+        rowEl.addEventListener('mouseup', () => rowEl.removeAttribute('draggable'));
+
+        rowEl.dataset.linkRowCi = ci;
+        rowEl.dataset.linkRowLi = li;
+
+        rowEl.addEventListener('dragstart', (e) => {
+          dragKey = ci + '-' + li;
+          rowEl.classList.add('cm-link-dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          // 阻止冒泡觸發欄位拖曳
+          e.stopPropagation();
+        });
+        rowEl.addEventListener('dragend', () => {
+          rowEl.classList.remove('cm-link-dragging');
+          rowEl.removeAttribute('draggable');
+          linkList.querySelectorAll('.cm-link-drag-over').forEach(el => el.classList.remove('cm-link-drag-over'));
+        });
+        rowEl.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (dragKey === null) return;
+          // 只允許同 column 內排序
+          const [dragCi] = dragKey.split('-').map(Number);
+          if (dragCi !== ci) return;
+          rowEl.classList.add('cm-link-drag-over');
+        });
+        rowEl.addEventListener('dragleave', () => rowEl.classList.remove('cm-link-drag-over'));
+        rowEl.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (dragKey === null) return;
+          const [dragCi, dragLi] = dragKey.split('-').map(Number);
+          if (dragCi !== ci) { dragKey = null; return; }
+          if (dragLi === li) { dragKey = null; return; }
+          // 把 dragLi 的 link 移到 li
+          const col = state.columns[ci];
+          if (!col || !col.links) return;
+          const moved = col.links.splice(dragLi, 1)[0];
+          col.links.splice(li, 0, moved);
+          dragKey = null;
+          renderColumns();
+          renderPreview();
+        });
+      });
+    });
   }
 
   // ===== 欄位拖曳排序 =====

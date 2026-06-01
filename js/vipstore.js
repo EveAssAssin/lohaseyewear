@@ -1062,7 +1062,7 @@
               立即綁定身份
             </a>
           ` : ""}
-          <a class="vs-detail-btn vs-detail-btn--ghost"
+          <a class="vs-detail-btn vs-detail-btn--ghost" data-line-cta
             href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener">
             <i class="fa-brands fa-line"></i>
             LINE 詢問優惠
@@ -1073,6 +1073,10 @@
     dom.detailOvl.classList.add("is-show");
     dom.detailOvl.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+    // 動態 render 後,把 LINE CTA 連結同步成 footer 設定的最新 URL
+    if (window.syncLineCtas && window._lohasFooterCfg) {
+      window.syncLineCtas(window._lohasFooterCfg);
+    }
   }
 
   function closeDetail() {

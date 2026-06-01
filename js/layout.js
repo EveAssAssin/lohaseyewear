@@ -51,11 +51,19 @@ async function loadLayout() {
 
 /* === 動態頁尾：fetch footer.html 後從 Supabase site_settings 撈最新資料覆蓋 === */
 async function applyDynamicFooter() {
-  // 1. 確認 Supabase SDK 跟 client 都載好
-  const sb = window.LohasSupabase
-    && window.LohasSupabase.getClient
-    && window.LohasSupabase.getClient();
-  if (!sb) return; // 沒 supabase 就用 footer.html 的靜態內容
+  // 等 Supabase ready (最多重試 20 次,每次 100ms = 2 秒)
+  let sb = null;
+  for (let i = 0; i < 20; i++) {
+    sb = window.LohasSupabase
+      && window.LohasSupabase.getClient
+      && window.LohasSupabase.getClient();
+    if (sb) break;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  if (!sb) {
+    console.warn('[layout] Supabase 未 ready,使用 footer.html 靜態內容');
+    return;
+  }
 
   try {
     const { data, error } = await sb
@@ -64,11 +72,26 @@ async function applyDynamicFooter() {
       .eq('key', 'footer')
       .maybeSingle();
     if (error || !data || !data.value) return;
+    window._lohasFooterCfg = data.value;
     renderFooter(data.value);
+    // 同步更新全站 LINE CTA (有 data-line-cta 屬性的 a)
+    syncLineCtas(data.value);
   } catch (e) {
     console.warn('[layout] 動態頁尾載入失敗:', e);
   }
 }
+
+/* 把 footer 設定裡的 LINE URL 套到所有 [data-line-cta] 元素 */
+function syncLineCtas(cfg) {
+  if (!cfg || !cfg.social) return;
+  const lineCfg = cfg.social.find(s => s && (s.id === 'line' || /line/i.test(s.label || '')));
+  if (!lineCfg || !lineCfg.url || lineCfg.url === '#') return;
+  document.querySelectorAll('[data-line-cta]').forEach(el => {
+    el.setAttribute('href', lineCfg.url);
+  });
+}
+// 暴露給其他 JS (例如 vipstore 動態 render 後手動觸發)
+window.syncLineCtas = syncLineCtas;
 
 function renderFooter(cfg) {
   const wrap = document.querySelector('.main-footer .footer-container');
