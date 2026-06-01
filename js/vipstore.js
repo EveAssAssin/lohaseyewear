@@ -1063,7 +1063,7 @@
             </a>
           ` : ""}
           <a class="vs-detail-btn vs-detail-btn--ghost"
-            href="https://line.me/R/ti/p/@lohas" target="_blank" rel="noopener">
+            href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener">
             <i class="fa-brands fa-line"></i>
             LINE 詢問優惠
           </a>
