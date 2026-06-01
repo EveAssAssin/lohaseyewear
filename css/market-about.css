@@ -6,6 +6,7 @@
   --mab-section-gap: 80px;
   --mab-card-radius: 12px;
   --mab-border: var(--lohas-bd, #e4e0d6);
+  overflow-x: hidden;
 }
 
 .mab-hero .hero-title { letter-spacing: 0.08em; }
@@ -338,10 +339,11 @@
     background: #fff;
     margin: 0; padding: 6px 0;
     border-bottom: none;
+    min-width: 0; max-width: 100%;
   }
   .mab-nav ul {
     display: flex; border-left: none; overflow-x: auto;
-    padding: 0; gap: 4px;
+    padding: 0; gap: 4px; max-width: 100%;
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
   }
   .mab-nav ul::-webkit-scrollbar { display: none; }
@@ -504,8 +506,9 @@
 
 @media (max-width: 720px) {
   .ge-bad { grid-template-columns: repeat(2, 1fr); }
-  .ge-convert .ge-fig { max-width: 160px; }
-  .ge-arrow { font-size: 18px; }
+  .ge-convert { gap: 8px; }
+  .ge-convert .ge-fig { max-width: 140px; }
+  .ge-arrow { font-size: 16px; }
 }
 
 /* === 作品規範 accordion === */
