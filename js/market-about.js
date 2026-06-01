@@ -174,6 +174,33 @@
     });
   }
 
+  // 立即投稿按鈕:已登入→開上傳 modal;未登入→導去會員登入
+  function initUploadButtons(){
+    var btns = document.querySelectorAll('[data-action="upload-design"]');
+    if(!btns.length) return;
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        // 判斷登入
+        var member = window.LohasAuth && window.LohasAuth.getStoredMember
+          ? window.LohasAuth.getStoredMember() : null;
+        if(!member){
+          // 未登入 → 導去會員中心(登入後可在會員區投稿)
+          alert('請先登入樂活會員才能投稿刻圖');
+          location.href = 'member-portal.html';
+          return;
+        }
+        // 已登入 → 開上傳 modal
+        if(window.LohasUploadDesign && window.LohasUploadDesign.openModal){
+          window.LohasUploadDesign.openModal();
+        } else {
+          alert('上傳模組未載入,請重新整理頁面再試');
+          console.error('[market-about] LohasUploadDesign 未載入');
+        }
+      });
+    });
+  }
+
   // ===========================================================
   // Init
   // ===========================================================
@@ -181,6 +208,7 @@
     initScrollSpy();
     loadCreators();
     initFaqTabs();
+    initUploadButtons();
   }
 
   if (document.readyState === 'loading') {
