@@ -939,3 +939,64 @@
 }
 .dum-subchip-d:hover{ border-color:var(--lohas-light, #CDBEA2); color:var(--lohas-brand, #50422D) }
 .dum-subchip-d.on{ background:var(--lohas-brand, #50422D); color:#fff; border-color:var(--lohas-brand, #50422D); font-weight:600 }
+
+/* ===== 光學鏡片刻圖定位視窗 ===== */
+.dum-lenspos-ovl{
+  position:absolute; inset:0; z-index:50;
+  background:rgba(45,37,32,.6);
+  display:none; align-items:center; justify-content:center; padding:20px;
+}
+.dum-lenspos-ovl.open{ display:flex }
+.dum-lenspos-dialog{
+  background:#fff; border-radius:16px; width:420px; max-width:100%;
+  max-height:92%; display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 20px 60px rgba(45,37,32,.35);
+}
+.dum-lenspos-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px; background:var(--lohas-brand,#50422D); color:#fff;
+  font-size:14px; font-weight:600;
+}
+.dum-lenspos-head span{ display:flex; align-items:center; gap:8px }
+.dum-lenspos-x{ background:transparent; border:0; color:#fff; font-size:17px; cursor:pointer; opacity:.85 }
+.dum-lenspos-x:hover{ opacity:1 }
+.dum-lenspos-stage{
+  position:relative; width:100%; aspect-ratio:1/1;
+  background:#f4f1ec; overflow:hidden; touch-action:none;
+}
+.dum-lenspos-bg{ width:100%; height:100%; object-fit:cover; display:block; user-select:none; pointer-events:none }
+.dum-lenspos-box{
+  position:absolute; cursor:grab; touch-action:none;
+}
+.dum-lenspos-box:active{ cursor:grabbing }
+.dum-lenspos-eng{
+  display:block; width:100%; user-select:none; pointer-events:none;
+  mix-blend-mode:multiply; opacity:.9;
+  filter:grayscale(100%) contrast(.95) blur(.3px);
+}
+.dum-lenspos-rot{
+  position:absolute; left:50%; top:-30px; transform:translateX(-50%);
+  width:30px; height:30px; border-radius:50%;
+  background:var(--lohas-brand,#50422D); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; cursor:grab; box-shadow:0 2px 8px rgba(45,37,32,.4);
+}
+.dum-lenspos-rot:active{ cursor:grabbing }
+.dum-lenspos-rot::before{
+  content:''; position:absolute; left:50%; top:100%; width:1px; height:30px;
+  background:var(--lohas-brand,#50422D); transform:translateX(-50%); opacity:.5;
+}
+.dum-lenspos-tip{
+  font-size:11px; color:var(--lohas-muted,#9B9186); padding:14px 18px 12px; line-height:1.6;
+  display:flex; align-items:center; gap:7px;
+}
+.dum-lenspos-tip i{ color:var(--lohas-brand,#50422D) }
+.dum-lenspos-foot{
+  display:flex; gap:10px; padding:14px 18px; border-top:1px solid var(--lohas-bd,#E8DED1);
+}
+.dum-lenspos-cancel, .dum-lenspos-ok{
+  flex:1; height:42px; border-radius:999px; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;
+}
+.dum-lenspos-cancel{ background:#fff; border:1px solid var(--lohas-bd,#E8DED1); color:var(--lohas-hover,#765F4A) }
+.dum-lenspos-ok{ background:var(--lohas-brand,#50422D); border:0; color:#fff }
+.dum-lenspos-ok:hover{ background:var(--lohas-hover,#765F4A) }
