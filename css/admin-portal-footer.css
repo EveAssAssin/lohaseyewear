@@ -196,6 +196,9 @@
   padding: 4px 6px;
   font-size: 14px;
 }
+.cm-drag-btn:active { cursor: grabbing; }
+.cm-col.cm-dragging { opacity: .4; }
+.cm-col.cm-drag-over { box-shadow: 0 0 0 2px var(--lohas-brown, #50422D) inset; border-radius: 10px; }
 
 .cm-col-title {
   flex: 1;
