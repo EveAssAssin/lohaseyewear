@@ -967,19 +967,22 @@
 .dum-lenspos-bg{ width:100%; height:100%; object-fit:cover; display:block; user-select:none; pointer-events:none }
 .dum-lenspos-box{
   position:absolute; cursor:grab; touch-action:none;
+  outline:1.5px dashed rgba(80,66,45,.7);
+  outline-offset:0;
 }
 .dum-lenspos-box:active{ cursor:grabbing }
 .dum-lenspos-eng{
   display:block; width:100%; user-select:none; pointer-events:none;
 }
-.dum-lenspos-scale{
-  position:absolute; right:-15px; bottom:-15px;
-  width:28px; height:28px; border-radius:50%;
-  background:var(--lohas-brand,#50422D); color:#fff;
-  display:flex; align-items:center; justify-content:center;
-  font-size:11px; cursor:grab; box-shadow:0 2px 8px rgba(45,37,32,.4);
+.dum-lenspos-handle{
+  position:absolute; width:16px; height:16px;
+  background:#fff; border:2px solid var(--lohas-brand,#50422D); border-radius:3px;
+  box-shadow:0 1px 4px rgba(45,37,32,.3); z-index:2;
 }
-.dum-lenspos-scale:active{ cursor:grabbing }
+.dum-lenspos-handle.h-nw{ left:-8px; top:-8px; cursor:nwse-resize }
+.dum-lenspos-handle.h-ne{ right:-8px; top:-8px; cursor:nesw-resize }
+.dum-lenspos-handle.h-sw{ left:-8px; bottom:-8px; cursor:nesw-resize }
+.dum-lenspos-handle.h-se{ right:-8px; bottom:-8px; cursor:nwse-resize }
 .dum-lenspos-rot{
   position:absolute; left:50%; top:-30px; transform:translateX(-50%);
   width:30px; height:30px; border-radius:50%;
