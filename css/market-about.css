@@ -507,3 +507,29 @@
   .ge-convert .ge-fig { max-width: 160px; }
   .ge-arrow { font-size: 18px; }
 }
+
+/* === 作品規範 accordion === */
+.rules-acc { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+.rules-item {
+  border: 1px solid var(--lohas-bd, #E8DED1); border-radius: 12px;
+  background: #fff; overflow: hidden;
+}
+.rules-item summary {
+  list-style: none; cursor: pointer; padding: 15px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14.5px; font-weight: 700; color: var(--text-main, #2F2A24);
+}
+.rules-item summary::-webkit-details-marker { display: none; }
+.rules-item summary span { display: flex; align-items: center; gap: 9px; }
+.rules-item summary span i { color: var(--lohas-brand, #50422D); font-size: 14px; }
+.rules-chev { transition: transform .2s; color: var(--text-muted, #9B9186); font-size: 13px; }
+.rules-item[open] .rules-chev { transform: rotate(180deg); }
+.rules-body {
+  padding: 4px 18px 18px; font-size: 13.5px; line-height: 1.8;
+  color: var(--text-sub, #6F665D); border-top: 1px solid var(--bg-soft, #F4F1EC);
+}
+.rules-body p { margin: 10px 0 0; }
+.rules-body p:first-child { margin-top: 12px; }
+.rules-body ul { margin: 8px 0 0; padding-left: 20px; }
+.rules-body li { margin-bottom: 6px; }
+.rules-body b { color: var(--text-main, #2F2A24); font-weight: 700; }
