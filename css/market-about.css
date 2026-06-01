@@ -479,6 +479,7 @@
 .guide-examples { margin-top: 20px; }
 .ge-row { display: flex; gap: 14px; align-items: center; }
 .ge-convert { justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+.ge-convert .ge-fig { max-width: 320px; }
 .ge-fig { margin: 0; flex: 1; max-width: 220px; text-align: center; }
 .ge-fig img {
   width: 100%; aspect-ratio: 1/1; object-fit: cover;
@@ -503,6 +504,6 @@
 
 @media (max-width: 720px) {
   .ge-bad { grid-template-columns: repeat(2, 1fr); }
-  .ge-convert .ge-fig { max-width: 140px; }
+  .ge-convert .ge-fig { max-width: 160px; }
   .ge-arrow { font-size: 18px; }
 }
