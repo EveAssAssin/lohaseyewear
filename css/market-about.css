@@ -456,3 +456,21 @@
   .faq-tabs { flex-direction: column; }
   .faq-tab { width: 100%; justify-content: center; }
 }
+
+/* =========================================================
+   微調:hero 間距 / 第一區去線 / 物理限制 grid
+   ========================================================= */
+
+/* Hero 與 header 拉開 */
+.mab-hero-cta { margin-top: 24px; }
+
+/* 「成為創作者」標題與上方 tab 之間不要線(手機 tab 緊接標題會雙線) */
+#creator .section-head {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 720px) {
+  .mab-hero-cta { margin-top: 0; }
+}
