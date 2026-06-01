@@ -222,6 +222,16 @@
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
   position:relative;
+  text-decoration:none;
+  gap:6px;
+  white-space:nowrap;
+}
+/* 有文字時變橫向 pill */
+.ad .icon-btn-lg.has-text{
+  width:auto; height:36px;
+  padding:0 14px;
+  border-radius:999px;
+  border:1px solid var(--lohas-line);
 }
 .ad .icon-btn-lg:hover{ background:var(--lohas-tip); color:var(--lohas-brown) }
 .ad .icon-btn-lg .dot{
