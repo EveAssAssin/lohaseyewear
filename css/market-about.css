@@ -335,9 +335,9 @@
   }
   .mab-nav {
     position: sticky; top: 60px; z-index: 10;
-    background: transparent;
+    background: #fff;
     margin: 0; padding: 6px 0;
-    border-bottom: 1px solid var(--lohas-bd, #E8DED1);
+    border-bottom: none;
   }
   .mab-nav ul {
     display: flex; border-left: none; overflow-x: auto;
