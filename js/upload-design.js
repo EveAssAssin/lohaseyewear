@@ -1240,11 +1240,14 @@
           '<img class="dum-lenspos-bg" src="images/glasses-mockup.jpg" alt="鏡片" draggable="false">' +
           '<div class="dum-lenspos-box" id="lpBox">' +
             '<img class="dum-lenspos-eng" id="lpEng" src="' + escAttr(imgUrl) + '" draggable="false">' +
+            '<span class="dum-lenspos-handle h-nw" data-corner="nw"></span>' +
+            '<span class="dum-lenspos-handle h-ne" data-corner="ne"></span>' +
+            '<span class="dum-lenspos-handle h-sw" data-corner="sw"></span>' +
+            '<span class="dum-lenspos-handle h-se" data-corner="se"></span>' +
             '<span class="dum-lenspos-rot" id="lpRot" title="拖曳旋轉"><i class="fa-solid fa-rotate"></i></span>' +
-            '<span class="dum-lenspos-scale" id="lpScale" title="拖曳縮放"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>' +
           '</div>' +
         '</div>' +
-        '<p class="dum-lenspos-tip"><i class="fa-solid fa-hand-pointer"></i> 拖曳刻圖移動・拖曳右下角縮放・拖曳上方旋轉鈕(觸控可雙指縮放旋轉)</p>' +
+        '<p class="dum-lenspos-tip"><i class="fa-solid fa-hand-pointer"></i> 拖曳刻圖移動・拖曳四角縮放・拖曳上方旋轉鈕(觸控可雙指縮放旋轉)</p>' +
         '<div class="dum-lenspos-foot">' +
           '<button class="dum-lenspos-cancel" type="button">取消</button>' +
           '<button class="dum-lenspos-ok" type="button">確定</button>' +
@@ -1254,7 +1257,7 @@
     var stage = ov.querySelector('#lpStage');
     var box = ov.querySelector('#lpBox');
     var rotBtn = ov.querySelector('#lpRot');
-    var scaleBtn = ov.querySelector('#lpScale');
+    var handles = ov.querySelectorAll('.dum-lenspos-handle');
 
     function apply(){
       // box 用中心定位(方便旋轉鈕跟著轉),寬度=edit.w%,高度auto
@@ -1321,8 +1324,10 @@
       }
     }
     function scaleUp(){ scaling = false; }
-    scaleBtn.addEventListener('mousedown', scaleDown);
-    scaleBtn.addEventListener('touchstart', scaleDown, { passive: false });
+    handles.forEach(function(h){
+      h.addEventListener('mousedown', scaleDown);
+      h.addEventListener('touchstart', scaleDown, { passive: false });
+    });
     window.addEventListener('mousemove', scaleMove);
     window.addEventListener('touchmove', scaleMove, { passive: false });
     window.addEventListener('mouseup', scaleUp);
