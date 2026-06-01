@@ -569,6 +569,8 @@
 
   // ===== 設計師模式 =====
   var dz = { theme: null, style: null, route: null, subs: [] };   // 當前選的主題/風格/路線/子標籤
+  // 光學鏡片刻圖定位(可拖曳/縮放/旋轉),預設值=原 CARRIERS 光學鏡片
+  var lensPos = { x: 80, y: 22, w: 15, rot: 0 };
 
   function bindDesignerMode(){
     // tab 切換
@@ -1168,6 +1170,11 @@
     }
     // 渲染六大載體模擬(含光學鏡片=眼鏡模擬)
     renderCarriers(state.previewUrl);
+    // 設計師模式第三步:上傳後彈出鏡片定位視窗
+    if(state.previewUrl && modal.querySelector('[data-stepview="3"]') &&
+       modal.querySelector('[data-stepview="3"]').classList.contains('on')){
+      openLensPositioner(state.previewUrl);
+    }
   }
 
   // 六大載體設定:底圖 + 刻圖疊放位置(%,相對底圖)
@@ -1187,10 +1194,14 @@
     if(!box || !grid) return;
     if(!imgUrl){ box.hidden = true; grid.innerHTML = ''; return; }
     function carrierHtml(c){
-      // 光學鏡片用眼鏡模擬的定位(水平置中、top為上緣),其他用中心對齊
-      var engStyle = c.glasses
-        ? 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translateX(-50%)'
-        : 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translate(-50%,-50%)';
+      // 光學鏡片用使用者定位的 lensPos(水平置中、top為上緣、可旋轉),其他用中心對齊預設
+      var engStyle;
+      if(c.glasses){
+        engStyle = 'left:' + lensPos.x + '%;top:' + lensPos.y + '%;width:' + lensPos.w +
+          '%;transform:translateX(-50%) rotate(' + lensPos.rot + 'deg)';
+      } else {
+        engStyle = 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translate(-50%,-50%)';
+      }
       return '<figure class="dum-carrier' + (c.glasses ? ' dum-carrier-lead' : '') + '">' +
                '<div class="dum-carrier-stage">' +
                  '<img class="dum-carrier-bg" src="' + escAttr(c.img) + '" alt="' + escAttr(c.name) + '">' +
@@ -1206,6 +1217,163 @@
       '<div class="dum-carrier-lead-row">' + lead.map(carrierHtml).join('') + '</div>' +
       '<div class="dum-carrier-rest-row">' + rest.map(carrierHtml).join('') + '</div>';
     box.hidden = false;
+  }
+
+  // ===== 光學鏡片刻圖定位視窗(拖曳移動 / 滾輪+捏合縮放 / 旋轉點+雙指旋轉) =====
+  function openLensPositioner(imgUrl){
+    var ov = modal.querySelector('#dumLensPos');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'dumLensPos';
+      ov.className = 'dum-lenspos-ovl';
+      modal.appendChild(ov);
+    }
+    var edit = { x: lensPos.x, y: lensPos.y, w: lensPos.w, rot: lensPos.rot };
+
+    ov.innerHTML =
+      '<div class="dum-lenspos-dialog">' +
+        '<div class="dum-lenspos-head">' +
+          '<span><i class="fa-solid fa-up-down-left-right"></i> 調整刻圖在鏡片上的位置</span>' +
+          '<button class="dum-lenspos-x" type="button" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>' +
+        '<div class="dum-lenspos-stage" id="lpStage">' +
+          '<img class="dum-lenspos-bg" src="images/glasses-mockup.jpg" alt="鏡片" draggable="false">' +
+          '<div class="dum-lenspos-box" id="lpBox">' +
+            '<img class="dum-lenspos-eng" id="lpEng" src="' + escAttr(imgUrl) + '" draggable="false">' +
+            '<span class="dum-lenspos-rot" id="lpRot" title="拖曳旋轉"><i class="fa-solid fa-rotate"></i></span>' +
+          '</div>' +
+        '</div>' +
+        '<p class="dum-lenspos-tip"><i class="fa-solid fa-hand-pointer"></i> 拖曳刻圖移動・滾輪或雙指縮放・拖曳上方旋轉鈕或雙指旋轉</p>' +
+        '<div class="dum-lenspos-foot">' +
+          '<button class="dum-lenspos-cancel" type="button">取消</button>' +
+          '<button class="dum-lenspos-ok" type="button">確定</button>' +
+        '</div>' +
+      '</div>';
+
+    var stage = ov.querySelector('#lpStage');
+    var box = ov.querySelector('#lpBox');
+    var rotBtn = ov.querySelector('#lpRot');
+
+    function apply(){
+      // box 用中心定位(方便旋轉鈕跟著轉),寬度=edit.w%,高度auto
+      box.style.left = edit.x + '%';
+      box.style.top = edit.y + '%';
+      box.style.width = edit.w + '%';
+      box.style.transform = 'translate(-50%,-50%) rotate(' + edit.rot + 'deg)';
+    }
+    apply();
+
+    function stageRect(){ return stage.getBoundingClientRect(); }
+    function clamp(v){ return Math.max(0, Math.min(100, v)); }
+
+    // ---- 拖曳移動(單指/滑鼠在 box 本體) ----
+    var dragging = false, sX, sY, sEx, sEy;
+    function dragDown(e){
+      if(e.target === rotBtn || rotBtn.contains(e.target)) return; // 旋轉鈕另外處理
+      if(e.touches && e.touches.length > 1) return;                // 多指交給捏合
+      dragging = true;
+      var p = e.touches ? e.touches[0] : e;
+      sX = p.clientX; sY = p.clientY; sEx = edit.x; sEy = edit.y;
+      e.preventDefault();
+    }
+    function dragMove(e){
+      if(!dragging) return;
+      if(e.touches && e.touches.length > 1){ dragging = false; return; }
+      var p = e.touches ? e.touches[0] : e;
+      var r = stageRect();
+      edit.x = clamp(sEx + (p.clientX - sX) / r.width * 100);
+      edit.y = clamp(sEy + (p.clientY - sY) / r.height * 100);
+      apply();
+    }
+    function dragUp(){ dragging = false; }
+
+    box.addEventListener('mousedown', dragDown);
+    box.addEventListener('touchstart', dragDown, { passive: false });
+    window.addEventListener('mousemove', dragMove);
+    window.addEventListener('touchmove', dragMove, { passive: false });
+    window.addEventListener('mouseup', dragUp);
+    window.addEventListener('touchend', dragUp);
+
+    // ---- 滾輪縮放(桌機) ----
+    function onWheel(e){
+      e.preventDefault();
+      var d = e.deltaY < 0 ? 1 : -1;
+      edit.w = Math.max(5, Math.min(50, edit.w + d * 1.5));
+      apply();
+    }
+    stage.addEventListener('wheel', onWheel, { passive: false });
+
+    // ---- 旋轉鈕拖曳(桌機/觸控) ----
+    var rotating = false;
+    function center(){
+      var r = stageRect();
+      return { cx: r.left + r.width * edit.x / 100, cy: r.top + r.height * edit.y / 100 };
+    }
+    function rotDown(e){
+      rotating = true;
+      e.preventDefault(); e.stopPropagation();
+    }
+    function rotMove(e){
+      if(!rotating) return;
+      var p = e.touches ? e.touches[0] : e;
+      var c = center();
+      var ang = Math.atan2(p.clientY - c.cy, p.clientX - c.cx) * 180 / Math.PI;
+      edit.rot = Math.round(ang + 90); // 旋轉鈕在上方,+90 對齊
+      apply();
+    }
+    function rotUp(){ rotating = false; }
+    rotBtn.addEventListener('mousedown', rotDown);
+    rotBtn.addEventListener('touchstart', rotDown, { passive: false });
+    window.addEventListener('mousemove', rotMove);
+    window.addEventListener('touchmove', rotMove, { passive: false });
+    window.addEventListener('mouseup', rotUp);
+    window.addEventListener('touchend', rotUp);
+
+    // ---- 雙指捏合縮放 + 旋轉(觸控) ----
+    var pinch = null;
+    function dist(t){ return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+    function angle(t){ return Math.atan2(t[1].clientY - t[0].clientY, t[1].clientX - t[0].clientX) * 180 / Math.PI; }
+    function touchStart(e){
+      if(e.touches.length === 2){
+        pinch = { d: dist(e.touches), a: angle(e.touches), w: edit.w, rot: edit.rot };
+        e.preventDefault();
+      }
+    }
+    function touchMove(e){
+      if(pinch && e.touches.length === 2){
+        e.preventDefault();
+        var scale = dist(e.touches) / pinch.d;
+        edit.w = Math.max(5, Math.min(50, pinch.w * scale));
+        edit.rot = Math.round(pinch.rot + (angle(e.touches) - pinch.a));
+        apply();
+      }
+    }
+    function touchEnd(e){ if(e.touches.length < 2) pinch = null; }
+    stage.addEventListener('touchstart', touchStart, { passive: false });
+    stage.addEventListener('touchmove', touchMove, { passive: false });
+    stage.addEventListener('touchend', touchEnd);
+
+    function cleanup(){
+      window.removeEventListener('mousemove', dragMove);
+      window.removeEventListener('touchmove', dragMove);
+      window.removeEventListener('mouseup', dragUp);
+      window.removeEventListener('touchend', dragUp);
+      window.removeEventListener('mousemove', rotMove);
+      window.removeEventListener('touchmove', rotMove);
+      window.removeEventListener('mouseup', rotUp);
+      window.removeEventListener('touchend', rotUp);
+      stage.removeEventListener('wheel', onWheel);
+      ov.classList.remove('open');
+    }
+    ov.querySelector('.dum-lenspos-ok').addEventListener('click', function(){
+      lensPos = { x: edit.x, y: edit.y, w: edit.w, rot: edit.rot };
+      cleanup();
+      renderCarriers(state.previewUrl);
+    });
+    ov.querySelector('.dum-lenspos-cancel').addEventListener('click', cleanup);
+    ov.querySelector('.dum-lenspos-x').addEventListener('click', cleanup);
+
+    ov.classList.add('open');
   }
 
 
@@ -1258,6 +1426,8 @@
       up2.classList.remove('has-file');
     }
     // 清六大載體模擬
+    // 換圖重來,鏡片定位重置回預設
+    lensPos = { x: 80, y: 22, w: 15, rot: 0 };
     renderCarriers(null);
   }
 
