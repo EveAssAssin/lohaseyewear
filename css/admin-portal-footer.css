@@ -253,6 +253,12 @@
   width: 14px;
   text-align: center;
 }
+.cm-link-grip:active { cursor: grabbing; }
+
+.cm-link-row.cm-link-dragging { opacity: .4; }
+.cm-link-row.cm-link-drag-over {
+  box-shadow: 0 -2px 0 0 var(--lohas-brown, #50422D);
+}
 
 .cm-link-label {
   flex: 0 0 38%;
