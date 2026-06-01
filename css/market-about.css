@@ -474,3 +474,35 @@
 @media (max-width: 720px) {
   .mab-hero-cta { margin-top: 70px; }
 }
+
+/* === 圖示範區 (原始→正確 + 4錯誤) === */
+.guide-examples { margin-top: 20px; }
+.ge-row { display: flex; gap: 14px; align-items: center; }
+.ge-convert { justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+.ge-fig { margin: 0; flex: 1; max-width: 220px; text-align: center; }
+.ge-fig img {
+  width: 100%; aspect-ratio: 1/1; object-fit: cover;
+  border-radius: 12px; border: 1px solid var(--lohas-bd, #E8DED1); display: block;
+}
+.ge-fig figcaption { margin-top: 8px; font-size: 12.5px; color: var(--text-sub, #6F665D); }
+.ge-arrow { color: var(--lohas-brand, #50422D); font-size: 22px; flex-shrink: 0; }
+.ge-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+}
+.ge-tag.origin { background: var(--bg-soft, #F4F1EC); color: var(--text-sub, #6F665D); }
+.ge-tag.ok { background: rgba(90,138,90,0.12); color: #5A8A5A; }
+.ge-bad-label {
+  font-size: 14px; font-weight: 700; color: #B05050;
+  display: flex; align-items: center; gap: 7px; margin-bottom: 14px;
+}
+.ge-bad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.ge-bad .ge-fig { max-width: none; }
+.ge-bad .ge-fig img { border-color: rgba(176,80,80,0.3); }
+.ge-bad .ge-fig figcaption { color: #B05050; font-weight: 600; }
+
+@media (max-width: 720px) {
+  .ge-bad { grid-template-columns: repeat(2, 1fr); }
+  .ge-convert .ge-fig { max-width: 140px; }
+  .ge-arrow { font-size: 18px; }
+}
