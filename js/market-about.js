@@ -30,7 +30,7 @@
   // ===========================================================
   function initScrollSpy(){
     var navLinks = document.querySelectorAll('.mab-nav a[data-tab]');
-    var sections = ['creator', 'guide', 'faq'].map(function(id){
+    var sections = ['creator', 'guide', 'faq', 'rules'].map(function(id){
       return document.getElementById(id);
     }).filter(Boolean);
 
