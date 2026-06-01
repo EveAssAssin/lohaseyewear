@@ -67,14 +67,12 @@
       const tag = n.homepage_tag || '';
       const sub = n.homepage_subtitle || n.excerpt || '';
       const date = fmtDate(n.published_at);
-      const textHidden = !!n.homepage_text_hidden;
-      // 隱藏文字模式: 只放圖, 整個 overlay 不渲染
-      if (textHidden) {
-        return '<a href="' + escapeHtml(href) + '" class="home-carousel-card home-carousel-card--image-only">' +
-          (img ? '<img src="' + escapeHtml(img) + '" alt="' + escapeHtml(n.title) + '">' : '') +
-        '</a>';
-      }
-      return '<a href="' + escapeHtml(href) + '" class="home-carousel-card">' +
+      // 電腦版隱藏文字模式(--image-only-desktop): 永遠 render overlay,
+      // 由 CSS 在電腦版隱藏 .card-overlay;手機版維持正常顯示
+      const cardClass = n.homepage_text_hidden
+        ? 'home-carousel-card home-carousel-card--image-only-desktop'
+        : 'home-carousel-card';
+      return '<a href="' + escapeHtml(href) + '" class="' + cardClass + '">' +
         '<div class="card-overlay">' +
           '<div class="card-meta">' +
             (tag ? '<span class="tag">' + escapeHtml(tag) + '</span>' : '') +
