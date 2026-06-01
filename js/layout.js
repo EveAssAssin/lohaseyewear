@@ -95,14 +95,16 @@ function renderFooter(cfg) {
     }).join('');
 
   // 欄位
-  const columnsHtml = (cfg.columns || []).map(col => {
+  const columnsHtml = (cfg.columns || [])
+    .filter(col => col && (col.title || (col.links || []).some(l => l && (l.label || l.url))))
+    .map(col => {
     const links = (col.links || [])
-      .filter(l => l && l.label)
+      .filter(l => l && (l.label || l.url))
       .map(l => {
         const url = l.url || '#';
         const ext = isExternal(url);
         const target = ext ? ' target="_blank" rel="noopener"' : '';
-        return `<li><a href="${esc(url)}"${target}>${esc(l.label)}</a></li>`;
+        return `<li><a href="${esc(url)}"${target}>${esc(l.label || l.url)}</a></li>`;
       }).join('');
     return `<div class="footer-column">
       <h3>${esc(col.title)}</h3>

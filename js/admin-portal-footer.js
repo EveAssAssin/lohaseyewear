@@ -227,9 +227,50 @@
         <button class="cm-add-link-btn" data-col-add-link="${ci}"><i class="fa-solid fa-plus"></i> 新增連結</button>
       </div>
     `).join('');
+
+    bindColumnDrag(list);
   }
 
-  // ===== 渲染法規連結 =====
+  // ===== 欄位拖曳排序 =====
+  function bindColumnDrag(list) {
+    let dragCi = null;
+    const cols = list.querySelectorAll('.cm-col');
+    cols.forEach((colEl) => {
+      const handle = colEl.querySelector('[data-col-drag]');
+      if (!handle) return;
+      // 只有按住把手才可拖曳
+      handle.addEventListener('mousedown', () => { colEl.setAttribute('draggable', 'true'); });
+      handle.addEventListener('touchstart', () => { colEl.setAttribute('draggable', 'true'); }, { passive: true });
+      colEl.addEventListener('mouseup', () => colEl.removeAttribute('draggable'));
+
+      colEl.addEventListener('dragstart', (e) => {
+        dragCi = +colEl.dataset.colIndex;
+        colEl.classList.add('cm-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      colEl.addEventListener('dragend', () => {
+        colEl.classList.remove('cm-dragging');
+        colEl.removeAttribute('draggable');
+        list.querySelectorAll('.cm-drag-over').forEach(el => el.classList.remove('cm-drag-over'));
+      });
+      colEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (dragCi === null) return;
+        colEl.classList.add('cm-drag-over');
+      });
+      colEl.addEventListener('dragleave', () => colEl.classList.remove('cm-drag-over'));
+      colEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const targetCi = +colEl.dataset.colIndex;
+        if (dragCi === null || dragCi === targetCi) return;
+        const moved = state.columns.splice(dragCi, 1)[0];
+        state.columns.splice(targetCi, 0, moved);
+        dragCi = null;
+        renderColumns();
+        renderPreview();
+      });
+    });
+  }
   function renderLegal() {
     const list = document.getElementById('cmLegalList');
     if (!list) return;
