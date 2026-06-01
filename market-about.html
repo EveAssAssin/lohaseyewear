@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/lohas-base.css?v=20260513-2300">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260513-2300">
   <link rel="stylesheet" href="css/market.css?v=20260513-2330">
-  <link rel="stylesheet" href="css/market-about.css?v=20260601-herofix">
+  <link rel="stylesheet" href="css/market-about.css?v=20260601-examples">
 </head>
 <body data-page="market-about" data-banner-pos="market">
 
@@ -26,7 +26,7 @@
       <h2 class="lohas-cta-title">刻圖創作者專區</h2>
       <p class="lohas-cta-desc">畫一張圖,讓你的設計被戴進日常</p>
       <div class="lohas-cta-btns">
-        <a href="#" class="lohas-cta-btn lohas-cta-btn--solid" data-action="upload-design">
+        <a href="market.html" class="lohas-cta-btn lohas-cta-btn--solid">
           <i class="fa-solid fa-pen-nib"></i> 立即投稿
         </a>
         <a href="#guide" class="lohas-cta-btn lohas-cta-btn--ghost">
@@ -193,42 +193,37 @@
           </div>
         </div>
 
-        <h3 class="mab-h3 mt-32"><i class="fa-solid fa-triangle-exclamation"></i> 雷雕的物理限制</h3>
-        <div class="style-grid">
-          <div class="style-card">
-            <div class="style-icon"><i class="fa-solid fa-minus"></i></div>
-            <div>
-              <h4>線條太細會斷</h4>
-              <p>小於 0.5 mm 的細線會燒掉、變斷線。</p>
-            </div>
+        <div class="guide-examples">
+          <div class="ge-row ge-convert">
+            <figure class="ge-fig">
+              <img src="images/guide-origin.jpg" alt="原始照片" loading="lazy">
+              <figcaption><span class="ge-tag origin">原始照片</span></figcaption>
+            </figure>
+            <i class="fa-solid fa-arrow-right ge-arrow"></i>
+            <figure class="ge-fig">
+              <img src="images/guide-correct.jpg" alt="正確線稿" loading="lazy">
+              <figcaption><span class="ge-tag ok"><i class="fa-solid fa-check"></i> 正確線稿</span></figcaption>
+            </figure>
           </div>
-          <div class="style-card">
-            <div class="style-icon"><i class="fa-solid fa-layer-group"></i></div>
-            <div>
-              <h4>細節太多會糊</h4>
-              <p>密集細節縮小後會糊在一起。</p>
-            </div>
-          </div>
-          <div class="style-card">
-            <div class="style-icon"><i class="fa-solid fa-circle-half-stroke"></i></div>
-            <div>
-              <h4>灰階無法呈現</h4>
-              <p>只有刻與不刻,沒有灰階。</p>
-            </div>
-          </div>
-          <div class="style-card">
-            <div class="style-icon"><i class="fa-solid fa-font"></i></div>
-            <div>
-              <h4>文字太小看不清</h4>
-              <p>建議至少 8pt 以上。</p>
-            </div>
-          </div>
-          <div class="style-card">
-            <div class="style-icon"><i class="fa-solid fa-compress"></i></div>
-            <div>
-              <h4>縮小後仍要辨識</h4>
-              <p>最終約縮到 5-10 mm 寬。</p>
-            </div>
+
+          <div class="ge-bad-label"><i class="fa-solid fa-circle-xmark"></i> 這些都不適合雷刻</div>
+          <div class="ge-row ge-bad">
+            <figure class="ge-fig">
+              <img src="images/guide-bad-1.jpg" alt="錯誤範例 1" loading="lazy">
+              <figcaption>黑色面積太多</figcaption>
+            </figure>
+            <figure class="ge-fig">
+              <img src="images/guide-bad-2.jpg" alt="錯誤範例 2" loading="lazy">
+              <figcaption>線條太細</figcaption>
+            </figure>
+            <figure class="ge-fig">
+              <img src="images/guide-bad-3.jpg" alt="錯誤範例 3" loading="lazy">
+              <figcaption>灰階陰影太多</figcaption>
+            </figure>
+            <figure class="ge-fig">
+              <img src="images/guide-bad-4.jpg" alt="錯誤範例 4" loading="lazy">
+              <figcaption>背景太雜亂</figcaption>
+            </figure>
           </div>
         </div>
 
