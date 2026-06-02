@@ -7221,6 +7221,7 @@
       const { data, error } = await client
         .from('news')
         .select('*')
+        .order('sort_order', { ascending: true, nullsFirst: false })
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false });
 
@@ -7263,7 +7264,8 @@
 
         const dateStr = n.published_at ? new Date(n.published_at).toISOString().slice(0,10).replace(/-/g, '.') : '—';
 
-        return '<div class="creator-card" data-id="' + esc(n.id) + '">' +
+        return '<div class="creator-card news-card-row" data-id="' + esc(n.id) + '">' +
+          '<button class="btn news-drag-handle" type="button" title="拖曳排序" aria-label="拖曳排序" style="background:transparent;border:0;cursor:grab;padding:0 8px;font-size:14px;color:#C9BDA3"><i class="fa-solid fa-grip-vertical"></i></button>' +
           avatarHtml +
           '<div class="creator-card-body">' +
             '<div class="creator-card-name-row">' +
@@ -7313,6 +7315,9 @@
       list.querySelectorAll('[data-act="edit-news"]').forEach(btn => {
         btn.addEventListener('click', () => openEdit(btn.dataset.id));
       });
+
+      // 綁拖曳排序
+      bindNewsDrag();
 
       // 隱藏 (改 status='archived')
       list.querySelectorAll('[data-act="hide-news"]').forEach(btn => {
@@ -7392,6 +7397,74 @@
           renderList();
         });
       });
+    }
+
+    // 拖曳排序: 把 allNews 順序重排,batch update sort_order
+    function bindNewsDrag() {
+      let dragId = null;
+      const cards = list.querySelectorAll('.news-card-row');
+      cards.forEach(card => {
+        const handle = card.querySelector('.news-drag-handle');
+        if (!handle) return;
+        handle.style.cursor = 'grab';
+
+        handle.addEventListener('mousedown', () => { card.setAttribute('draggable', 'true'); });
+        handle.addEventListener('touchstart', () => { card.setAttribute('draggable', 'true'); }, { passive: true });
+        card.addEventListener('mouseup', () => card.removeAttribute('draggable'));
+
+        card.addEventListener('dragstart', (e) => {
+          dragId = card.dataset.id;
+          card.classList.add('news-dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', () => {
+          card.classList.remove('news-dragging');
+          card.removeAttribute('draggable');
+          list.querySelectorAll('.news-drag-over').forEach(el => el.classList.remove('news-drag-over'));
+        });
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (!dragId || dragId === card.dataset.id) return;
+          card.classList.add('news-drag-over');
+        });
+        card.addEventListener('dragleave', () => card.classList.remove('news-drag-over'));
+        card.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          const targetId = card.dataset.id;
+          if (!dragId || dragId === targetId) return;
+          // 在 allNews 內把 dragId 移到 targetId 的位置
+          const fromIdx = allNews.findIndex(x => String(x.id) === String(dragId));
+          const toIdx = allNews.findIndex(x => String(x.id) === String(targetId));
+          if (fromIdx < 0 || toIdx < 0) return;
+          const moved = allNews.splice(fromIdx, 1)[0];
+          allNews.splice(toIdx, 0, moved);
+          dragId = null;
+          // 立即重畫 (給使用者即時 feedback)
+          renderList();
+          // batch update sort_order 寫回 DB
+          saveSortOrder();
+        });
+      });
+    }
+
+    async function saveSortOrder() {
+      const client = sb();
+      if (!client) return;
+      // 依當前 allNews 順序設 sort_order: 0, 10, 20, 30... (用 10 為間距,日後 insert 不用全更新)
+      const updates = allNews.map((n, i) => ({ id: n.id, sort_order: i * 10 }));
+      try {
+        // Supabase 沒 batch update, 逐一更新
+        for (const u of updates) {
+          const { error } = await client.from('news').update({ sort_order: u.sort_order }).eq('id', u.id);
+          if (error) {
+            console.error('[news sort_order update 失敗]', u.id, error);
+          }
+        }
+        toast('順序已儲存');
+      } catch (e) {
+        console.error('[saveSortOrder]', e);
+        toast('順序儲存失敗');
+      }
     }
 
     function openNew(){
@@ -7606,7 +7679,6 @@
           homepage_link_url: val('news_homepage_link_url'),
           homepage_text_hidden: !!document.getElementById('news_homepage_text_hidden')?.checked,
           cta_buttons: ctaButtons,
-          sort_order: val('news_sort_order') || 0,
           published_at: val('news_published_at'),
           author: val('news_author'),
           updated_at: new Date().toISOString()
@@ -7676,7 +7748,6 @@
           if (document.getElementById('news_cta_student')?.checked) arr.push('student');
           return arr;
         })(),
-        sort_order: val('news_sort_order') || 0,
         published_at: val('news_published_at') || new Date().toISOString(),
         author: val('news_author'),
         view_count: currentNews?.view_count || 0,
