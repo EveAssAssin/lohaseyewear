@@ -1751,6 +1751,17 @@
   background-position:center;
   overflow:hidden;
 }
+
+/* news 列表拖曳排序 */
+.ad .news-drag-handle{
+  flex-shrink:0;
+}
+.ad .news-drag-handle:active{ cursor:grabbing !important; }
+.ad .news-card-row.news-dragging{ opacity:.4; }
+.ad .news-card-row.news-drag-over{
+  box-shadow: 0 -3px 0 0 var(--lohas-brown);
+  transition: box-shadow .1s;
+}
 .ad .creator-card-body{
   flex:1; min-width:0;
 }
