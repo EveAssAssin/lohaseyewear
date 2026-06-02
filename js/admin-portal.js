@@ -7409,8 +7409,10 @@
       setVal('news_status', 'draft');
       setVal('news_category', 'story');
       setVal('news_homepage_link_type', 'news_detail');
-      // CTA checkbox 重置
+      // CTA checkbox 重置:門市預設勾、大學生預設不勾
+      const ctaStore = document.getElementById('news_cta_store');
       const ctaStudent = document.getElementById('news_cta_student');
+      if (ctaStore) ctaStore.checked = true;
       if (ctaStudent) ctaStudent.checked = false;
       // 隱藏首頁文字勾選重置
       const textHidden = document.getElementById('news_homepage_text_hidden');
@@ -7457,8 +7459,11 @@
       updateLinkUrlVisibility();
 
       // 載入 CTA 設定 (從 cta_buttons 陣列讀)
-      const ctaList = Array.isArray(n.cta_buttons) ? n.cta_buttons : [];
+      // 舊資料相容:如果 cta_buttons 為 null/undefined,預設勾「store」(維持舊行為)
+      const ctaList = Array.isArray(n.cta_buttons) ? n.cta_buttons : ['store'];
+      const ctaStore = document.getElementById('news_cta_store');
       const ctaStudent = document.getElementById('news_cta_student');
+      if (ctaStore) ctaStore.checked = ctaList.includes('store');
       if (ctaStudent) ctaStudent.checked = ctaList.includes('student');
       // 載入「隱藏首頁文字」設定
       const textHidden = document.getElementById('news_homepage_text_hidden');
@@ -7580,8 +7585,9 @@
           console.log('[news save] homepage 上傳成功:', homepageImgUrl);
         }
 
-        // 收集 CTA 按鈕 (門市永遠有,這裡只記大學生)
+        // 收集 CTA 按鈕
         const ctaButtons = [];
+        if (document.getElementById('news_cta_store')?.checked) ctaButtons.push('store');
         if (document.getElementById('news_cta_student')?.checked) ctaButtons.push('student');
 
         const payload = {
@@ -7666,6 +7672,7 @@
         homepage_text_hidden: !!document.getElementById('news_homepage_text_hidden')?.checked,
         cta_buttons: (() => {
           const arr = [];
+          if (document.getElementById('news_cta_store')?.checked) arr.push('store');
           if (document.getElementById('news_cta_student')?.checked) arr.push('student');
           return arr;
         })(),

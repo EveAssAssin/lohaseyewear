@@ -145,21 +145,35 @@
     const btnWrap = document.getElementById('ndCtaBtns');
     if (!section || !btnWrap) return;
 
-    // 門市永遠顯示, 大學生依後台勾選決定
-    const showStudent = Array.isArray(ctaList) && ctaList.includes('student');
+    // 舊資料(null/undefined)相容: fallback 為門市
+    const list = Array.isArray(ctaList) ? ctaList : ['store'];
+    const showStore = list.includes('store');
+    const showStudent = list.includes('student');
 
-    // 第一顆: 門市 (solid)
-    let html = `<a href="allstore.html" class="lohas-cta-btn lohas-cta-btn--solid">
-      <i class="fa-solid fa-location-dot"></i>門市據點
-    </a>`;
-    // 第二顆: 大學生 (ghost)
-    if (showStudent) {
-      html += `<a href="https://student.lohasglasses.com/" class="lohas-cta-btn lohas-cta-btn--ghost" target="_blank" rel="noopener">
-        <i class="fa-solid fa-graduation-cap"></i>大學生入口
-      </a>`;
+    // 沒勾任何按鈕就整個 section 隱藏
+    if (!showStore && !showStudent) {
+      section.style.display = 'none';
+      return;
     }
 
-    btnWrap.innerHTML = html;
+    // 第一顆 solid, 第二顆 ghost
+    const buttons = [];
+    if (showStore) {
+      buttons.push(`<a href="allstore.html" class="lohas-cta-btn">
+        <i class="fa-solid fa-location-dot"></i>門市預約
+      </a>`);
+    }
+    if (showStudent) {
+      buttons.push(`<a href="https://student.lohasglasses.com/" class="lohas-cta-btn" target="_blank" rel="noopener">
+        <i class="fa-solid fa-graduation-cap"></i>大學生預約
+      </a>`);
+    }
+
+    // 第一顆 solid、第二顆 ghost
+    btnWrap.innerHTML = buttons.map((btn, i) => {
+      const cls = i === 0 ? 'lohas-cta-btn--solid' : 'lohas-cta-btn--ghost';
+      return btn.replace('class="lohas-cta-btn"', `class="lohas-cta-btn ${cls}"`);
+    }).join('');
     section.style.display = '';
   }
 
