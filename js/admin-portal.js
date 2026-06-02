@@ -1277,6 +1277,142 @@
     }
   }
 
+  async function searchByName(){
+    clearAddError();
+    const name = (document.getElementById('uam_name').value || '').trim();
+    if(!name) return showAddError('請輸入會員名字');
+    if(name.length < 2) return showAddError('名字至少 2 個字');
+
+    const searchBtn = document.getElementById('uam_searchNameBtn');
+    searchBtn.disabled = true;
+    const oldText = searchBtn.innerHTML;
+    searchBtn.innerHTML = '查詢中...';
+
+    try {
+      const res = await fetch(`${PROXY_URL}/proxy/member/list`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: {
+            apikey: PROXY_KEY,
+            apiver: '0.1.0',
+            data: { name: name },
+          },
+        }),
+      });
+
+      if(!res.ok){
+        showAddError(`查詢失敗 (HTTP ${res.status})`);
+        return;
+      }
+
+      const json = await res.json();
+      const code = String(json.code || json.status || '');
+
+      if(code !== '200' && code !== '0'){
+        showAddError('找不到符合的會員。錯誤訊息:' + (json.message || json.errmessage || code || '未知'));
+        return;
+      }
+
+      let memberData = json.data;
+      // 多筆結果 → 取第一筆,但提示有幾筆
+      if(Array.isArray(memberData)){
+        if(memberData.length === 0){
+          showAddError('找不到符合的會員');
+          return;
+        }
+        if(memberData.length > 1){
+          // 列出選項讓使用者選
+          showNameMatches(memberData);
+          return;
+        }
+        memberData = memberData[0];
+      }
+      if(!memberData){
+        showAddError('找不到符合的會員');
+        return;
+      }
+
+      fillFoundMember(memberData);
+
+    } catch (err) {
+      console.error('[名字查詢失敗]', err);
+      showAddError('查詢失敗,網路錯誤或 proxy 未開啟。錯誤:' + (err.message || err));
+    } finally {
+      searchBtn.disabled = false;
+      searchBtn.innerHTML = oldText;
+    }
+  }
+
+  // 把 ERP 回傳的會員資料填入結果區 (共用給 ERP/mobile/name 三種搜尋)
+  function fillFoundMember(memberData){
+    const foundErpid = memberData.client_id || memberData.erpid || memberData.erpId || '';
+    const name       = memberData.name || memberData.erpname || memberData.erpName || '';
+    const phone      = memberData.mobile || memberData.phone || '';
+
+    _foundMember = { erpid: String(foundErpid), name, mobile: phone };
+
+    document.getElementById('uam_resultName').textContent = name || '(未知姓名)';
+    document.getElementById('uam_resultMobile').textContent = phone || '—';
+    document.getElementById('uam_resultErpid').textContent = foundErpid;
+    document.getElementById('uam_result').style.display = 'block';
+    const saveB = document.getElementById('uam_saveBtn');
+    saveB.disabled = false;
+    saveB.style.opacity = '1';
+    saveB.style.cursor = 'pointer';
+  }
+
+  // 多筆名字結果,列出選項讓使用者點選
+  function showNameMatches(arr){
+    // 把多筆結果渲染到結果區
+    const html = arr.slice(0, 20).map((m, i) => {
+      const erpid = m.client_id || m.erpid || m.erpId || '';
+      const name = m.name || m.erpname || m.erpName || '';
+      const mobile = m.mobile || m.phone || '';
+      return `<button type="button" data-name-match-idx="${i}" style="display:block;width:100%;text-align:left;padding:10px 14px;background:#fff;border:1px solid #E8DED1;border-radius:6px;margin-bottom:6px;cursor:pointer;font-family:inherit;font-size:13px;color:#3D3026">
+        <strong>${escapeHtml(name)}</strong>
+        <span style="color:#7A6B5C;margin-left:8px">${escapeHtml(mobile)}</span>
+        <span style="color:#9D8E7D;margin-left:8px;font-family:monospace;font-size:11px">${escapeHtml(erpid)}</span>
+      </button>`;
+    }).join('');
+
+    const resultBox = document.getElementById('uam_result');
+    resultBox.style.display = 'block';
+    resultBox.innerHTML = `
+      <div style="padding:14px 16px;background:#FAF7F2;border:1px solid #E8DED1;border-radius:8px;margin-bottom:18px">
+        <div style="font-size:13px;color:#7A6B5C;margin-bottom:10px">
+          找到 ${arr.length} 筆符合,請點選正確的會員:
+          ${arr.length > 20 ? '<span style="color:#C44">(僅顯示前 20 筆,建議改用更精確的關鍵字)</span>' : ''}
+        </div>
+        ${html}
+      </div>
+    `;
+
+    // 綁定點選事件
+    resultBox.querySelectorAll('[data-name-match-idx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = +btn.dataset.nameMatchIdx;
+        const picked = arr[idx];
+        if(!picked) return;
+        // 重新渲染結果區為標準格式
+        rebuildResultBox();
+        fillFoundMember(picked);
+      });
+    });
+  }
+
+  // 還原 uam_result 為原始結構 (用於從多筆選單回到單一結果顯示)
+  function rebuildResultBox(){
+    const resultBox = document.getElementById('uam_result');
+    resultBox.innerHTML = `
+      <div style="padding:14px 16px;background:#FAF7F2;border:1px solid #E8DED1;border-radius:8px;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:600;color:#50422D;margin-bottom:6px" id="uam_resultName">—</div>
+        <div style="font-size:12px;color:#7A6B5C;margin-bottom:2px">手機:<span id="uam_resultMobile">—</span></div>
+        <div style="font-size:12px;color:#7A6B5C">ERP ID:<span id="uam_resultErpid" style="font-family:monospace">—</span></div>
+      </div>
+    `;
+  }
+
   async function saveNewUser(){
     if(!_foundMember){
       return showAddError('請先查詢會員資料');
@@ -1358,6 +1494,14 @@
     const erpidInput = document.getElementById('uam_erpid');
     if(erpidInput) erpidInput.addEventListener('keydown', e => {
       if(e.key === 'Enter'){ e.preventDefault(); searchByErpId(); }
+    });
+
+    // 名字查詢
+    const searchNameBtn = document.getElementById('uam_searchNameBtn');
+    if(searchNameBtn) searchNameBtn.addEventListener('click', searchByName);
+    const nameInput = document.getElementById('uam_name');
+    if(nameInput) nameInput.addEventListener('keydown', e => {
+      if(e.key === 'Enter'){ e.preventDefault(); searchByName(); }
     });
 
     const saveBtn = document.getElementById('uam_saveBtn');
