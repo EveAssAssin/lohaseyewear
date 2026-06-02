@@ -165,7 +165,7 @@
     }
     if (showStudent) {
       buttons.push(`<a href="https://student.lohasglasses.com/" class="lohas-cta-btn" target="_blank" rel="noopener">
-        <i class="fa-solid fa-graduation-cap"></i>大學生預約
+        <i class="fa-solid fa-graduation-cap"></i>學生預約
       </a>`);
     }
 
