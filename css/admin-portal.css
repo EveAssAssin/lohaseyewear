@@ -2699,7 +2699,7 @@
 /* 封面 (1:1) */
 .ad .md-card-cover{
   aspect-ratio:1/1;
-  background:#FAF7F2 center/contain no-repeat;
+  background:#fff center/cover no-repeat;
   position:relative;
   border-bottom:1px solid var(--lohas-line);
 }
