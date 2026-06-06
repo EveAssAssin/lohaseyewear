@@ -492,13 +492,11 @@
   justify-content:center;
 }
 .cm .design-cover img{
-  /* 不撐滿,讓刻圖在白底中間留白置中 */
-  max-width:72%;
-  max-height:72%;
-  width:auto;
-  height:auto;
+  /* 圖在卡片內放到最大(填滿較長邊),不規則比例也一致大小 */
+  width:100%;
+  height:100%;
   object-fit:contain;
-  padding:0;
+  padding:10px;
   transition:transform .25s;
 }
 .cm .design-cover.no-img::after{
