@@ -5378,7 +5378,7 @@
     }
 
     container.innerHTML = mdState.filtered.map(d => {
-      const imgUrl = mdValidUrl(d.image_url_svg) || mdValidUrl(d.image_url_png) || mdValidUrl(d.image_url) || '';
+      const imgUrl = mdValidUrl(d.image_url_png) || mdValidUrl(d.image_url) || mdValidUrl(d.image_url_svg) || '';
       const statusLabel = { approved:'已通過', pending:'待審核', rejected:'已駁回' }[d.status] || d.status || '--';
       const typeLabel = { legacy:'舊官網', member:'官網上傳', store:'門市上傳' }[d.type] || d.type || '--';
       const designer = d.designer_name || '匿名';
@@ -5409,7 +5409,7 @@
             showToggle +
           '</div>' +
           // 圖片
-          '<div class="md-card-cover" ' + (imgUrl ? 'style="background-image:url(\'' + escapeHtml(imgUrl) + '\')"' : '') + '></div>' +
+          '<div class="md-card-cover">' + (imgUrl ? '<img class="md-cover-img" src="' + escapeHtml(imgUrl) + '" alt="">' : '') + '</div>' +
           // 內文 (name + 售價 / by + 愛心)
           '<div class="md-card-body">' +
             '<div class="md-card-row">' +
@@ -5849,7 +5849,7 @@
               '<span class="md-pill t-' + (p.type || 'photo') + '">' + typeLabel + '</span>' +
             '</div>' +
           '</div>' +
-          '<div class="md-card-cover" ' + (imgUrl ? 'style="background-image:url(\'' + escapeHtml(imgUrl) + '\')"' : '') + '></div>' +
+          '<div class="md-card-cover">' + (imgUrl ? '<img class="md-cover-img" src="' + escapeHtml(imgUrl) + '" alt="">' : '') + '</div>' +
           '<div class="md-card-body">' +
             '<div class="md-card-row">' +
               '<div class="md-card-name">' + escapeHtml(p.title || '(未命名)') + '</div>' +
