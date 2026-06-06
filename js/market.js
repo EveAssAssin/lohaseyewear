@@ -467,9 +467,9 @@
     }
 
     grid.innerHTML = list.map(function(d, idx){
-      // 卡片封面優先 SVG (向量銳利) → PNG (透明底) → JPG (fallback)
+      // 卡片封面優先 PNG (透明底、標準比例) → JPG → SVG (向量但比例可能不規則)
       // 過濾掉空字串、'null'、'undefined' 字串
-      var imgs = [d.imageSvg, d.imagePng, d.imageJpg].filter(function(u){
+      var imgs = [d.imagePng, d.imageJpg, d.imageSvg].filter(function(u){
         return u && typeof u === 'string' && u.trim() !== '' && u !== 'null' && u !== 'undefined' && /^https?:\/\//.test(u);
       });
       var coverImg = imgs[0] || '';
