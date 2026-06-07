@@ -457,6 +457,42 @@
     }).join('');
   }
 
+  // 讀 SVG 內容真實邊界(getBBox),重設 viewBox 緊貼內容 → 讓 contain 後填滿
+  var _svgFitCache = {};
+  function fitSvgImages(scope){
+    var imgs = (scope || document).querySelectorAll('img[data-svgfit="1"]');
+    imgs.forEach(function(img){
+      var url = img.getAttribute('src');
+      if(!url) return;
+      if(_svgFitCache[url]){ if(_svgFitCache[url]!=='skip') img.src = _svgFitCache[url]; return; }
+      fetch(url).then(function(r){ return r.text(); }).then(function(txt){
+        var doc = new DOMParser().parseFromString(txt, 'image/svg+xml');
+        var svg = doc.querySelector('svg');
+        if(!svg) { _svgFitCache[url]='skip'; return; }
+        // 暫時掛到隱藏容器才能 getBBox
+        var holder = document.createElement('div');
+        holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;opacity:0';
+        document.body.appendChild(holder);
+        holder.appendChild(svg);
+        var bb;
+        try { bb = svg.getBBox(); } catch(e){ bb = null; }
+        if(!bb || !bb.width || !bb.height){ document.body.removeChild(holder); _svgFitCache[url]='skip'; return; }
+        // 留 8% padding
+        var pad = Math.max(bb.width, bb.height) * 0.08;
+        var nvb = (bb.x - pad) + ' ' + (bb.y - pad) + ' ' + (bb.width + pad*2) + ' ' + (bb.height + pad*2);
+        svg.setAttribute('viewBox', nvb);
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        var out = new XMLSerializer().serializeToString(svg);
+        document.body.removeChild(holder);
+        var dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out);
+        _svgFitCache[url] = dataUrl;
+        img.src = dataUrl;
+      }).catch(function(){ _svgFitCache[url]='skip'; });
+    });
+  }
+
   function renderGrid(tier, list){
     var grid = root.querySelector('.design-grid[data-grid="'+tier+'"]');
     if(!grid) return;
@@ -482,6 +518,7 @@
             '</span>' +
             (coverImg
               ? '<img src="' + escapeAttr(coverImg) + '" alt="' + escapeAttr(d.name) + '" loading="lazy"' +
+                (/\.svg(\?|$)/i.test(coverImg) ? ' data-svgfit="1"' : '') +
                 ' onerror="this.style.display=\'none\';this.parentNode.classList.add(\'no-img\')">'
               : '<span class="cover-text">' + escapeHtml(d.name || '(未命名)') + '</span>'
             ) +
@@ -494,6 +531,9 @@
         '</div>'
       );
     }).join('');
+
+    // SVG 封面:自動讀內容範圍,放大到填滿(解決文字SVG超小)
+    fitSvgImages(grid);
 
     // 綁卡片點擊
     grid.querySelectorAll('.design-card').forEach(function(card){

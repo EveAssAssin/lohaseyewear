@@ -5368,6 +5368,38 @@
       `共 ${mdState.filtered.length} / ${mdState.designs.length} 件`;
   }
 
+  var _mdSvgFitCache = {};
+  function mdFitSvgImages(scope){
+    var imgs = (scope || document).querySelectorAll('img[data-svgfit="1"]');
+    imgs.forEach(function(img){
+      var url = img.getAttribute('src');
+      if(!url) return;
+      if(_mdSvgFitCache[url]){ if(_mdSvgFitCache[url]!=='skip') img.src = _mdSvgFitCache[url]; return; }
+      fetch(url).then(function(r){ return r.text(); }).then(function(txt){
+        var doc = new DOMParser().parseFromString(txt, 'image/svg+xml');
+        var svg = doc.querySelector('svg');
+        if(!svg){ _mdSvgFitCache[url]='skip'; return; }
+        var holder = document.createElement('div');
+        holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;opacity:0';
+        document.body.appendChild(holder);
+        holder.appendChild(svg);
+        var bb;
+        try { bb = svg.getBBox(); } catch(e){ bb = null; }
+        if(!bb || !bb.width || !bb.height){ document.body.removeChild(holder); _mdSvgFitCache[url]='skip'; return; }
+        var pad = Math.max(bb.width, bb.height) * 0.08;
+        svg.setAttribute('viewBox', (bb.x-pad)+' '+(bb.y-pad)+' '+(bb.width+pad*2)+' '+(bb.height+pad*2));
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        var out = new XMLSerializer().serializeToString(svg);
+        document.body.removeChild(holder);
+        var dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(out);
+        _mdSvgFitCache[url] = dataUrl;
+        img.src = dataUrl;
+      }).catch(function(){ _mdSvgFitCache[url]='skip'; });
+    });
+  }
+
   function mdRenderTable() {
     const container = document.getElementById('mdGrid');
     if (!container) return;
@@ -5409,7 +5441,7 @@
             showToggle +
           '</div>' +
           // 圖片
-          '<div class="md-card-cover">' + (imgUrl ? '<img class="md-cover-img" src="' + escapeHtml(imgUrl) + '" alt="">' : '') + '</div>' +
+          '<div class="md-card-cover">' + (imgUrl ? '<img class="md-cover-img"' + (/\.svg(\?|$)/i.test(imgUrl) ? ' data-svgfit="1"' : '') + ' src="' + escapeHtml(imgUrl) + '" alt="">' : '') + '</div>' +
           // 內文 (name + 售價 / by + 愛心)
           '<div class="md-card-body">' +
             '<div class="md-card-row">' +
@@ -5435,6 +5467,9 @@
         '</div>'
       );
     }).join('');
+
+    // SVG 封面自動填滿
+    mdFitSvgImages(container);
 
     // 點卡片
     container.querySelectorAll('.md-card').forEach(card => {
@@ -5849,7 +5884,7 @@
               '<span class="md-pill t-' + (p.type || 'photo') + '">' + typeLabel + '</span>' +
             '</div>' +
           '</div>' +
-          '<div class="md-card-cover">' + (imgUrl ? '<img class="md-cover-img" src="' + escapeHtml(imgUrl) + '" alt="">' : '') + '</div>' +
+          '<div class="md-card-cover">' + (imgUrl ? '<img class="md-cover-img"' + (/\.svg(\?|$)/i.test(imgUrl) ? ' data-svgfit="1"' : '') + ' src="' + escapeHtml(imgUrl) + '" alt="">' : '') + '</div>' +
           '<div class="md-card-body">' +
             '<div class="md-card-row">' +
               '<div class="md-card-name">' + escapeHtml(p.title || '(未命名)') + '</div>' +
