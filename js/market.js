@@ -478,7 +478,7 @@
         try { bb = svg.getBBox(); } catch(e){ bb = null; }
         if(!bb || !bb.width || !bb.height){ document.body.removeChild(holder); _svgFitCache[url]='skip'; return; }
         // 留 8% padding
-        var pad = Math.max(bb.width, bb.height) * 0.08;
+        var pad = Math.max(bb.width, bb.height) * 0.35;
         var nvb = (bb.x - pad) + ' ' + (bb.y - pad) + ' ' + (bb.width + pad*2) + ' ' + (bb.height + pad*2);
         svg.setAttribute('viewBox', nvb);
         svg.removeAttribute('width');
