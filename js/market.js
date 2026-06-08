@@ -478,7 +478,7 @@
         try { bb = svg.getBBox(); } catch(e){ bb = null; }
         if(!bb || !bb.width || !bb.height){ document.body.removeChild(holder); _svgFitCache[url]='skip'; return; }
         // 留 8% padding
-        var pad = Math.max(bb.width, bb.height) * 0.35;
+        var pad = Math.max(bb.width, bb.height) * 0.5;
         var nvb = (bb.x - pad) + ' ' + (bb.y - pad) + ' ' + (bb.width + pad*2) + ' ' + (bb.height + pad*2);
         svg.setAttribute('viewBox', nvb);
         svg.removeAttribute('width');
@@ -706,15 +706,16 @@
 
     // 左側大圖:用 png (透明底) 比較像雷雕預覽,沒有就退 jpg
     // 過濾掉空字串/壞 URL
-    var imgUrlCandidates = [d.imageSvg, d.imagePng, d.imageJpg].filter(function(u){
+    var imgUrlCandidates = [d.imagePng, d.imageJpg, d.imageSvg].filter(function(u){
       return u && typeof u === 'string' && u.trim() !== '' && u !== 'null' && u !== 'undefined' && /^https?:\/\//.test(u);
     });
     var imgUrl = imgUrlCandidates[0] || '';
+    var svgFitAttr = /\.svg(\?|$)/i.test(imgUrl) ? ' data-svgfit="1"' : '';
     var stage = document.getElementById('slide-design');
     if(stage){
       stage.style.background = '#F4F1EC';
       if(imgUrl){
-        stage.innerHTML = '<img src="' + escapeAttr(imgUrl) + '" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display=\'none\'">';
+        stage.innerHTML = '<img src="' + escapeAttr(imgUrl) + '"' + svgFitAttr + ' style="width:100%;height:100%;object-fit:contain" onerror="this.style.display=\'none\'">';
       } else {
         stage.innerHTML = '<span>' + escapeHtml(d.name) + '</span>';
       }
@@ -728,13 +729,15 @@
       if(imgUrl){
         slideMock.innerHTML =
           '<div class="engrave-on-lens">' +
-            '<img src="' + escapeAttr(imgUrl) + '" alt="刻圖模擬">' +
+            '<img src="' + escapeAttr(imgUrl) + '"' + svgFitAttr + ' alt="刻圖模擬">' +
           '</div>' +
           '<div class="mock-hint">刻 在 鏡 片 左 上 · 預 覽 示 意</div>';
       } else {
         slideMock.innerHTML = '<div class="mock-hint">刻圖模擬</div>';
       }
     }
+    // modal 內的 SVG 也自動填滿
+    fitSvgImages(document.getElementById('ovl') || document);
 
     // 縮圖用 jpg
     var thumbDesign = document.getElementById('thumb-design');

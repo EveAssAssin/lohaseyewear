@@ -5386,7 +5386,7 @@
         var bb;
         try { bb = svg.getBBox(); } catch(e){ bb = null; }
         if(!bb || !bb.width || !bb.height){ document.body.removeChild(holder); _mdSvgFitCache[url]='skip'; return; }
-        var pad = Math.max(bb.width, bb.height) * 0.35;
+        var pad = Math.max(bb.width, bb.height) * 0.5;
         svg.setAttribute('viewBox', (bb.x-pad)+' '+(bb.y-pad)+' '+(bb.width+pad*2)+' '+(bb.height+pad*2));
         svg.removeAttribute('width');
         svg.removeAttribute('height');
