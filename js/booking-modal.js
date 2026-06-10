@@ -605,6 +605,15 @@
 
       state.successData = { reservationId };
       state.step = 4;
+      /* GA4 主要轉換:預約完成事件(經 dataLayer 由 GTM 轉發) */
+      try {
+        if (window.lohasTrack) {
+          window.lohasTrack('booking_complete', {
+            reservation_id: reservationId,
+            store_name: (state.store && state.store.name) || ''
+          });
+        }
+      } catch (e) {}
     } catch (err) {
       alert("建立預約失敗：" + (err.message || "請稍後再試"));
     } finally {
