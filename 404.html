@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>頁面導向中… | 樂活眼鏡</title>
+
+<!-- ============================================================
+  舊站 QR 轉址處理
+  - GitHub Pages 純靜態，無法做伺服器 301/302，
+    改用 404.html + 前端 JS 轉址（瀏覽器/QR 掃描器都會執行）。
+  - 規則：/page/{語系}/{ID} → old.lohasglasses.com 同路徑
+    （old 站路徑與新站完全相同，毋須逐筆對照）
+  - 其餘找不到的路徑：顯示友善頁，導回首頁。
+  - 放在 <head> 最前面，render 前即觸發，畫面幾乎不閃。
+============================================================ -->
+<script>
+(function () {
+  var OLD_HOST = 'https://old.lohasglasses.com';
+  var path = location.pathname || '';
+
+  // 只攔截舊站 CMS 路徑：/page/數字/數字...（例：/page/1/396、/page/1/118_1974）
+  if (/^\/page\/\d+\/[\w-]+/.test(path)) {
+    location.replace(OLD_HOST + path + location.search + location.hash);
+    return;
+  }
+  // 若日後還有其他舊站路徑要轉，於此處依樣增加判斷即可，例如：
+  // if (/^\/vipstore\//.test(path)) { location.replace(OLD_HOST + path); return; }
+})();
+</script>
+
+<style>
+  :root{
+    --brand:#50422D;--hover:#765F4A;--gold:#B58A42;
+    --bg-warm:#F9F8F6;--bd:#E8DED1;--text-sub:#6F665D;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    background:var(--bg-warm);color:var(--brand);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:24px;line-height:1.7;
+  }
+  .box{max-width:420px}
+  .glasses{margin:0 auto 24px;opacity:.85}
+  h1{font-size:22px;font-weight:700;margin-bottom:10px}
+  p{font-size:14px;color:var(--text-sub);margin-bottom:24px}
+  .redirect-note{font-size:13px;color:var(--gold);margin-bottom:24px;display:none}
+  .btn{
+    display:inline-block;background:var(--brand);color:#fff;
+    font-size:14px;font-weight:500;padding:11px 28px;border-radius:999px;
+    text-decoration:none;transition:.15s;
+  }
+  .btn:hover{background:var(--hover)}
+</style>
+</head>
+<body>
+  <div class="box">
+    <svg class="glasses" width="120" height="64" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="30" width="75" height="55" rx="20" stroke="#50422D" stroke-width="5" fill="none"/>
+      <rect x="115" y="30" width="75" height="55" rx="20" stroke="#50422D" stroke-width="5" fill="none"/>
+      <line x1="85" y1="55" x2="115" y2="55" stroke="#50422D" stroke-width="5"/>
+      <line x1="10" y1="55" x2="2" y2="40" stroke="#50422D" stroke-width="4" stroke-linecap="round"/>
+      <line x1="190" y1="55" x2="198" y2="40" stroke="#50422D" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <p class="redirect-note" id="redirectNote">正在為您導向商品頁…</p>
+    <h1>找不到這個頁面</h1>
+    <p>這個連結可能已經更新或不存在。<br>歡迎回到首頁，繼續探索樂活眼鏡。</p>
+    <a class="btn" href="/">返回首頁</a>
+  </div>
+
+  <script>
+    // 若是 /page/ 轉址（理論上前面已 replace 離開），保險顯示導向提示
+    if (/^\/page\/\d+\/[\w-]+/.test(location.pathname)) {
+      document.getElementById('redirectNote').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
