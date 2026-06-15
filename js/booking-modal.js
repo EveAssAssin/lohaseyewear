@@ -426,7 +426,11 @@
     r.querySelector("[data-overlay]").addEventListener("click", e => {
       if (e.target.hasAttribute("data-overlay")) close();
     });
-    r.querySelector("[data-close]").addEventListener("click", close);
+    /* 綁定所有 data-close 元素 ─ 右上角 X 按鈕 + 成功畫面的「完成」按鈕
+       (原本用 querySelector 只抓到第一個 X,導致「完成」按鈕沒反應) */
+    r.querySelectorAll("[data-close]").forEach(el => {
+      el.addEventListener("click", close);
+    });
 
     r.querySelectorAll("[data-staff]").forEach(el => {
       el.addEventListener("click", () => {
@@ -526,6 +530,12 @@
 
     const submit = r.querySelector("[data-submit]");
     if (submit) submit.addEventListener("click", submitReservation);
+
+    /* 成功畫面的「完成」按鈕(data-close)住在 footer 裡,
+       footer 被 updateFooter 的 replaceWith 換掉後事件會掉,所以這裡也要綁 */
+    r.querySelectorAll(".bm-foot [data-close]").forEach(el => {
+      el.addEventListener("click", close);
+    });
   }
 
   /* === API：取得可預約時段 === */
