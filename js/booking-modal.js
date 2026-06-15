@@ -77,6 +77,20 @@
       }
     } catch (_e) { /* ignore */ }
 
+    /* 商城帶入的資料(sessionStorage 由 allstore.js captureCartPrefill 存)
+       優先級在會員之下:會員已登入則不覆蓋姓名/電話 */
+    state.cartPrefill = null;
+    try {
+      const raw = sessionStorage.getItem("lohas_cart_prefill");
+      if (raw) {
+        const cart = JSON.parse(raw);
+        state.cartPrefill = cart;
+        if (!state.form.memberName && cart.name) state.form.memberName = cart.name;
+        if (!state.form.memberPhone && cart.phone) state.form.memberPhone = cart.phone;
+        console.log("[booking-modal] 套用商城 prefill", cart);
+      }
+    } catch (_e) { /* ignore */ }
+
     /* 預選顧問 → 直接跳第 2 步（時段） */
     if (opts.preselectEmployeeErpId) {
       const target = state.employees.find(e => String(e.erpid) === String(opts.preselectEmployeeErpId));
@@ -624,6 +638,12 @@
           });
         }
       } catch (e) {}
+
+      /* === 回流商城(只在從商城跳過來的情況才觸發)===
+         預約成功後 AES 加密門市/顧問 ID → form POST 回商城 → 瀏覽器跳轉 */
+      if (state.cartPrefill) {
+        await postBackToMall();
+      }
     } catch (err) {
       alert("建立預約失敗：" + (err.message || "請稍後再試"));
     } finally {
@@ -632,10 +652,99 @@
     }
   }
 
+  /* === 商城 cartType / cartPaymentMethod 對照表 === */
+  const CART_TYPE_MAP = {
+    wear: "配戴用",
+    shop: "代客選購"
+  };
+  const CART_PAYMENT_MAP = {
+    "1":"樂活門市-取貨付款","2":"樂活門市-取貨付款","3":"ATM",
+    "4":"樂活門市-線上信用卡付款","5":"信用卡","6":"宅配-ATM付款",
+    "7":"宅配-線上信用卡付款","8":"美國-信用卡付款","9":"日本-信用卡付款",
+    "10":"韓國-信用卡付款","11":"歐洲國家","12":"超商-取貨付款",
+    "13":"樂活門市-取貨付款","14":"樂活門市-線上信用卡付款","15":"宅配-ATM付款",
+    "16":"宅配-線上信用卡付款","17":"美國-信用卡付款","18":"日本-信用卡付款",
+    "19":"韓國-信用卡付款","20":"歐洲國家","21":"超商-取貨付款","26":"測試"
+  };
+
+  /* === 回流商城:AES 加密 StoreId/StaffId → 隱藏 form POST ===
+     回流規格(商城後端提供):
+       POST https://www.lohaseyewear.com/order/{cartType}/Reserve/{cartPaymentMethod}
+       欄位: name / phone / StoreId(AES) / storename / StaffId(AES) / employeeerp / pname
+     用真實 <form> submit(非 fetch)→ 帶 session cookie 跨 domain + 瀏覽器跳轉商城 */
+  async function postBackToMall() {
+    try {
+      const cart = state.cartPrefill || {};
+      const store = state.store || {};
+      const emp = state.selectedEmployee || {};
+      const storeIdPlain = String(store.erpid || "");
+      const staffIdPlain = String(emp.erpid || "");
+
+      /* 呼叫 BFF 加密 StoreId / StaffId */
+      let enc = { StoreId: storeIdPlain, StaffId: staffIdPlain };
+      try {
+        enc = await window.LohasApi.core.encrypt({
+          StoreId: storeIdPlain,
+          StaffId: staffIdPlain
+        });
+      } catch (e) {
+        console.error("[booking] 回流加密失敗,用明文 fallback", e);
+      }
+
+      const cartType = encodeURIComponent(cart.cartType || "");
+      const cartPay  = encodeURIComponent(cart.cartPaymentMethod || "");
+      const actionUrl = `https://www.lohaseyewear.com/order/${cartType}/Reserve/${cartPay}`;
+
+      const fields = {
+        name:        state.form.memberName || cart.name || "",
+        phone:       state.form.memberPhone || cart.phone || "",
+        StoreId:     enc.StoreId || "",
+        storename:   store.name || "",
+        StaffId:     enc.StaffId || "",
+        employeeerp: staffIdPlain,
+        pname:       emp.name || ""
+      };
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = actionUrl;
+      form.style.display = "none";
+      Object.entries(fields).forEach(([k, v]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = k;
+        input.value = v;
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      console.log("[booking] 回流商城 POST →", actionUrl, fields);
+
+      /* 清掉 sessionStorage */
+      try { sessionStorage.removeItem("lohas_cart_prefill"); } catch (_e) {}
+
+      form.submit();  /* 跳離樂活到商城,之後程式不再執行 */
+    } catch (err) {
+      console.error("[booking] postBackToMall 失敗(預約仍成功)", err);
+    }
+  }
+
   function buildContentText() {
     const svc = state.selectedService;
     const lines = [];
     if (svc) lines.push(`預約服務：${svc.name}（約 ${svc.duration} 分鐘）`);
+
+    /* 商城帶入的訂單資訊(若有)*/
+    if (state.cartPrefill) {
+      const cp = state.cartPrefill;
+      const cartLines = [];
+      if (cp.cartType) cartLines.push(`商城用途：${CART_TYPE_MAP[cp.cartType] || cp.cartType}`);
+      if (cp.cartPaymentMethod) cartLines.push(`付款方式：${CART_PAYMENT_MAP[cp.cartPaymentMethod] || cp.cartPaymentMethod}`);
+      if (cartLines.length > 0) {
+        lines.push("─── 商城訂單資訊 ───");
+        lines.push(...cartLines);
+      }
+    }
+
     if (state.form.content) lines.push(state.form.content);
     return lines.join("\n");
   }

@@ -48,12 +48,65 @@
   const dom = {};
 
   document.addEventListener("DOMContentLoaded", async () => {
+    captureCartPrefill();
     cacheDom();
     bindEvents();
     renderRegionPills();
     initMap();
     await loadStores();
+    maybeShowCartHint();
   });
+
+  /* === 從 URL query 讀商城帶來的 prefill,存 sessionStorage ===
+     來源:Edge Function lohas-cart-redirect 把商城 POST 轉成
+       ?from=cart&name=...&phone=...&cartType=...&cartPaymentMethod=...
+     存起來給 booking-modal 開啟時用。 */
+  function captureCartPrefill() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("from") !== "cart") return;
+      const prefill = {
+        name: params.get("name") || "",
+        phone: params.get("phone") || "",
+        cartType: params.get("cartType") || "",
+        cartPaymentMethod: params.get("cartPaymentMethod") || "",
+        ts: Date.now()
+      };
+      if (!prefill.name && !prefill.phone) return;
+      sessionStorage.setItem("lohas_cart_prefill", JSON.stringify(prefill));
+      console.log("[allstore] 從商城帶入 prefill", prefill);
+      /* 清掉 URL query,避免重整/截圖露出個資 */
+      window.history.replaceState({}, "", window.location.pathname);
+    } catch (e) {
+      console.warn("[allstore] captureCartPrefill 失敗", e);
+    }
+  }
+
+  /* 提示「商城資料已帶入,請選門市」 */
+  function maybeShowCartHint() {
+    try {
+      const raw = sessionStorage.getItem("lohas_cart_prefill");
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      const banner = document.createElement("div");
+      banner.className = "as-cart-hint";
+      banner.innerHTML =
+        `<i class="fa-solid fa-circle-check"></i> ` +
+        `<span>已從商城帶入您的資料(${escapeHtmlAS(data.name || "")}),請選擇預約門市</span>` +
+        `<button class="as-cart-hint-close" aria-label="關閉">✕</button>`;
+      document.body.appendChild(banner);
+      banner.querySelector(".as-cart-hint-close").addEventListener("click", () => banner.remove());
+      setTimeout(() => {
+        if (banner.parentNode) banner.classList.add("fade-out");
+        setTimeout(() => banner.remove(), 500);
+      }, 8000);
+    } catch (e) { /* ignore */ }
+  }
+
+  function escapeHtmlAS(str) {
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
 
   function cacheDom() {
     dom.search = document.getElementById("as-search");
