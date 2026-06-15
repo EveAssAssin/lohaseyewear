@@ -130,6 +130,32 @@
     return ciphertext;
   }
 
+  /* === 呼叫 BFF 加密欄位(回流商城用)===
+     傳入 { StoreId:"120061", StaffId:"176" },回傳 { StoreId:"<密文>", StaffId:"<密文>" }
+     加密在 Edge Function 做(key 不放前端)。
+     不走 post() 因為這個 endpoint 回的不是 {statecode,data} 格式。 */
+  async function encrypt(values) {
+    let response;
+    try {
+      response = await fetch(CONFIG.bffUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Authorization": "Bearer " + CONFIG.supabaseAnonKey,
+          "apikey": CONFIG.supabaseAnonKey,
+          "x-lohas-mode": getMode()
+        },
+        body: JSON.stringify({ action: "encrypt", values: values || {} })
+      });
+    } catch (err) {
+      throw new LohasApiError("加密連線失敗", { original: err });
+    }
+    if (!response.ok) {
+      throw new LohasApiError("加密回應錯誤 (HTTP " + response.status + ")", {});
+    }
+    return response.json();
+  }
+
   /* === 對外 namespace === */
   root.LohasApi = root.LohasApi || {};
   root.LohasApi.core = {
@@ -137,6 +163,7 @@
     getMode,
     setMode,
     post,
+    encrypt,
     aesEncrypt,    // stub
     aesDecrypt,    // stub
     LohasApiError
