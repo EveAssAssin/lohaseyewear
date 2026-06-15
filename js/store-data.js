@@ -207,8 +207,32 @@
 
   /* === 把 API getstoredatas 回傳的原始 store 物件正規化 ===
      輸出乾淨的 Store 物件 */
+  /* === 緊急隱藏門市清單 ===
+     需要臨時下架的門市寫在這裡,normalizeStore 會回傳 null 把它濾掉,
+     allstore 地圖列表 / 單店頁 / vipstore 三處都會自動隱藏(因為它們都有 .filter)。
+     比對方式:精確店名 + erpid 雙重,任一命中就隱藏。
+     之後要恢復顯示,把對應的字串從陣列移除即可。 */
+  const HIDDEN_STORE_NAMES = ["十甲店", "後甲店"];
+  const HIDDEN_STORE_ERPIDS = [];  /* 若知道 erpid 可填這裡,更精準。例:["120061"] */
+
+  function isHiddenStore(raw) {
+    if (!raw) return false;
+    const name = (raw.name || "").trim();
+    const erpid = String(raw.erpid || "");
+    if (HIDDEN_STORE_ERPIDS.includes(erpid)) return true;
+    /* 店名精確比對(去頭尾空白);後台店名若帶前綴如「台中十甲店」也一併比對包含關係 */
+    return HIDDEN_STORE_NAMES.some(hidden =>
+      name === hidden || name.replace(/\s/g, "").includes(hidden)
+    );
+  }
+
   function normalizeStore(raw) {
     if (!raw) return null;
+    /* 緊急隱藏的門市直接回 null,呼叫端的 .filter(Boolean) 會濾掉 */
+    if (isHiddenStore(raw)) {
+      console.info("[store-data] 已隱藏門市:", raw.name);
+      return null;
+    }
     const region = getRegion(raw.city);
     const slogan = pickSlogan(raw.subname, raw.name);   // 後台空白時用對照表 fallback
 
