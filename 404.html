@@ -6,26 +6,26 @@
 <title>頁面導向中… | 樂活眼鏡</title>
 
 <!-- ============================================================
-  舊站 QR 轉址處理
+  舊站 QR 轉址處理（導向新站鏡框百科 frames.html）
   - GitHub Pages 純靜態，無法做伺服器 301/302，
     改用 404.html + 前端 JS 轉址（瀏覽器/QR 掃描器都會執行）。
-  - 規則：/page/{語系}/{ID} → old.lohasglasses.com 同路徑
-    （old 站路徑與新站完全相同，毋須逐筆對照）
+  - 規則：/page/{語系}/{ID} → /frames.html?f={ID}
+    （ID→框型 對照表放在 frames.html，由它讀 f 參數定位）
+  - 取數字 ID 時用 capture group，順手濾掉 #8 結尾多餘的 ' 等雜字元。
   - 其餘找不到的路徑：顯示友善頁，導回首頁。
   - 放在 <head> 最前面，render 前即觸發，畫面幾乎不閃。
 ============================================================ -->
 <script>
 (function () {
-  var OLD_HOST = 'https://old.lohasglasses.com';
   var path = location.pathname || '';
 
-  // 只攔截舊站 CMS 路徑：/page/數字/數字...（例：/page/1/396、/page/1/118_1974）
-  if (/^\/page\/\d+\/[\w-]+/.test(path)) {
-    location.replace(OLD_HOST + path + location.search + location.hash);
+  // 攔截舊站 CMS 路徑：/page/數字/{ID}，ID 允許含底線（例 118_1974）
+  var m = path.match(/^\/page\/\d+\/([\w-]+)/);
+  if (m) {
+    location.replace('/frames.html?f=' + encodeURIComponent(m[1]) + location.hash);
     return;
   }
-  // 若日後還有其他舊站路徑要轉，於此處依樣增加判斷即可，例如：
-  // if (/^\/vipstore\//.test(path)) { location.replace(OLD_HOST + path); return; }
+  // 若日後還有其他舊站路徑要轉，於此處依樣增加判斷即可。
 })();
 </script>
 
@@ -63,14 +63,13 @@
       <line x1="10" y1="55" x2="2" y2="40" stroke="#50422D" stroke-width="4" stroke-linecap="round"/>
       <line x1="190" y1="55" x2="198" y2="40" stroke="#50422D" stroke-width="4" stroke-linecap="round"/>
     </svg>
-    <p class="redirect-note" id="redirectNote">正在為您導向商品頁…</p>
+    <p class="redirect-note" id="redirectNote">正在為您導向鏡框介紹…</p>
     <h1>找不到這個頁面</h1>
     <p>這個連結可能已經更新或不存在。<br>歡迎回到首頁，繼續探索樂活眼鏡。</p>
     <a class="btn" href="/">返回首頁</a>
   </div>
 
   <script>
-    // 若是 /page/ 轉址（理論上前面已 replace 離開），保險顯示導向提示
     if (/^\/page\/\d+\/[\w-]+/.test(location.pathname)) {
       document.getElementById('redirectNote').style.display = 'block';
     }
