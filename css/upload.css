@@ -432,6 +432,21 @@
   margin-bottom:22px;
 }
 
+/* 只有首圖時：單欄、正方形滿版、不留白 */
+.detail-gallery.is-single{
+  grid-template-columns:1fr;
+}
+.detail-gallery.is-single .detail-main-image{
+  aspect-ratio:1 / 1;
+  min-height:0;
+  max-width:520px;
+  margin:0 auto;
+  width:100%;
+}
+.detail-gallery.is-single .detail-main-image img{
+  object-fit:cover;
+}
+
 .detail-main-image,
 .detail-sub-image{
   border-radius:18px;
@@ -460,6 +475,35 @@
   width:100%;
   height:100%;
   object-fit:cover;
+}
+
+/* === 分享按鈕 === */
+.detail-actions{
+  margin-top:20px;
+  display:flex;
+  justify-content:flex-start;
+}
+.detail-share-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:11px 22px;
+  background:var(--lohas-brown, #50422D);
+  color:#fff;
+  border:0;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:500;
+  letter-spacing:.04em;
+  cursor:pointer;
+  transition:opacity .18s, transform .18s;
+}
+.detail-share-btn:hover{
+  opacity:.88;
+  transform:translateY(-1px);
+}
+.detail-share-btn i{
+  font-size:14px;
 }
 
 .detail-title-row{

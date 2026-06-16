@@ -822,6 +822,16 @@ main{
     grid-template-columns:1fr;
   }
 
+  /* 手機版只有首圖：正方形滿版、不切 */
+  .detail-gallery.is-single .detail-main-image{
+    aspect-ratio:1 / 1;
+    min-height:0;
+    max-width:100%;
+  }
+  .detail-gallery.is-single .detail-main-image img{
+    object-fit:cover;
+  }
+
   .filter-drawer{
     max-height:calc(100dvh - 90px);
     display:flex;
