@@ -91,12 +91,13 @@
       }
     } catch (_e) { /* ignore */ }
 
-    /* 預選顧問 → 直接跳第 2 步（時段） */
+    /* 預選顧問 → 一般情況直接跳第 2 步（時段）；
+       商城模式(cartPrefill)只選顧問、時段交給商城那頁，故維持在第 1 步 */
     if (opts.preselectEmployeeErpId) {
       const target = state.employees.find(e => String(e.erpid) === String(opts.preselectEmployeeErpId));
       if (target) {
         state.selectedEmployee = target;
-        state.step = 2;
+        if (!state.cartPrefill) state.step = 2;
       }
     }
 
@@ -166,6 +167,14 @@
   }
 
   function renderSteps() {
+    /* 商城模式：只需選顧問（時段交給商城那頁），步驟條只顯示一步 */
+    if (state.cartPrefill) {
+      return (
+        `<div class="bm-steps">` +
+          `<div class="bm-step active"><span class="bm-step-num">1</span>選擇銷售顧問</div>` +
+        `</div>`
+      );
+    }
     const steps = [
       { n: 1, label: "選銷售顧問" },
       { n: 2, label: "選時段" },
@@ -378,6 +387,25 @@
 
   /* === Footer === */
   function renderFooter() {
+    /* 商城模式：不選時段、不建單，只「選顧問 → 確認回商城」一個動作 */
+    if (state.cartPrefill) {
+      const ok = !!state.selectedEmployee;
+      const summary = state.selectedEmployee
+        ? `<b>${state.selectedEmployee.name}</b>確認後回商城選預約時段`
+        : `<b>請選擇銷售顧問</b>選好後即可回商城繼續`;
+      return (
+        `<div class="bm-foot">` +
+          `<div class="bm-foot-summary">${summary}</div>` +
+          `<div class="bm-foot-actions">` +
+            `<button class="bm-btn primary" data-cart-submit ${ok && !state.submitting ? "" : "disabled"}>` +
+              (state.submitting
+                ? `<i class="fa-solid fa-spinner fa-spin"></i> 處理中…`
+                : `確認顧問，回商城選時段 <i class="fa-solid fa-arrow-right"></i>`) +
+            `</button>` +
+          `</div>` +
+        `</div>`
+      );
+    }
     if (state.step === 4) {
       return (
         `<div class="bm-foot">` +
@@ -545,6 +573,10 @@
     const submit = r.querySelector("[data-submit]");
     if (submit) submit.addEventListener("click", submitReservation);
 
+    /* 商城模式的確認按鈕：只回傳商城，不建立左手預約單 */
+    const cartSubmit = r.querySelector("[data-cart-submit]");
+    if (cartSubmit) cartSubmit.addEventListener("click", submitCartReserve);
+
     /* 成功畫面的「完成」按鈕(data-close)住在 footer 裡,
        footer 被 updateFooter 的 replaceWith 換掉後事件會掉,所以這裡也要綁 */
     r.querySelectorAll(".bm-foot [data-close]").forEach(el => {
@@ -566,6 +598,23 @@
       state.rounds = [];
     } finally {
       state.loadingRounds = false;
+      renderInPlace();
+    }
+  }
+
+  /* === 商城模式：只選顧問，不建立左手預約單，選完直接回傳商城（時段由商城那頁選）=== */
+  async function submitCartReserve() {
+    if (state.submitting) return;
+    if (!state.selectedEmployee) { alert("請先選擇銷售顧問"); return; }
+    if (!state.store) { alert("缺少門市資訊，請重新從門市列表進入"); return; }
+    state.submitting = true;
+    updateFooter();
+    try {
+      /* 加密門市/顧問 ID → 隱藏 form POST 回商城 → 瀏覽器跳轉（之後不再執行） */
+      await postBackToMall();
+    } catch (err) {
+      alert("回傳商城失敗：" + (err.message || "請稍後再試"));
+      state.submitting = false;
       renderInPlace();
     }
   }
