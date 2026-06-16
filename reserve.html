@@ -67,14 +67,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div id="site-header"></div>
 
 <main>
-  <!-- 取貨預約導引條：說明「你從商城來，選門市→選顧問→完成」 -->
-  <div class="rsv-intro">
-    <i class="fa-solid fa-bag-shopping"></i>
-    <span>您正在<b>完成商城訂單的門市取貨預約</b>，請先選擇取貨門市，下一步再指定銷售顧問與時段。</span>
-    <span class="rsv-step">① 選門市 → ② 選顧問 → ③ 選時段 → 完成</span>
-  </div>
-
   <div class="as-shell">
+
+    <!-- 取貨預約導引條：放在 .as-shell 內、subheader 上方，
+         自動繼承 .as-shell 的 margin-top:70px，避開固定 header（桌機/手機一致）。 -->
+    <div class="rsv-intro">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <span>您正在<b>完成商城訂單的門市取貨預約</b>，請先選擇取貨門市，下一步再指定銷售顧問與時段。</span>
+      <span class="rsv-step">① 選門市 → ② 選顧問 → ③ 選時段 → 完成</span>
+    </div>
 
     <header class="as-subheader">
       <div class="as-subheader-inner">
