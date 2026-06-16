@@ -12,50 +12,51 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>完成取貨預約 - LOHAS 樂活眼鏡</title>
   <meta name="description" content="從商城跳轉而來，選擇您要取貨的樂活眼鏡門市與專屬銷售顧問，完成線上預約。">
-  <!-- 這是商城導流的取貨預約專用頁，不希望被搜尋引擎索引 -->
   <meta name="robots" content="noindex, nofollow">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <!-- Leaflet CSS（必須在頁面 CSS 之前載入） -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossorigin="">
+  <!-- LOHAS CSS · tokens → base → components → booking-modal -->
+  <link rel="stylesheet" href="css/lohas-tokens.css?v=20260616-reserve2">
+  <link rel="stylesheet" href="css/lohas-base.css?v=20260616-reserve2">
+  <link rel="stylesheet" href="css/lohas-components.css?v=20260616-reserve2">
+  <link rel="stylesheet" href="css/booking-modal.css?v=20260616-reserve2">
 
-  <!-- LOHAS CSS · 載入順序：tokens → base → components → store-components → page -->
-  <link rel="stylesheet" href="css/lohas-tokens.css?v=20260616-reserve">
-  <link rel="stylesheet" href="css/lohas-base.css?v=20260616-reserve">
-  <link rel="stylesheet" href="css/lohas-components.css?v=20260616-reserve">
-  <link rel="stylesheet" href="css/store-components.css?v=20260616-reserve">
-  <link rel="stylesheet" href="css/allstore.css?v=20260616-reserve">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
-  <!-- reserve 頁專屬導引條（不另開 CSS 檔，沿用全站 tokens）-->
   <style>
-    .rsv-intro{
-      background:var(--lohas-light,#CDBEA2);
-      color:var(--lohas-brand,#50422D);
-      padding:14px 20px;
-      display:flex;align-items:center;gap:12px;
-      font-size:15px;line-height:1.5;
-      border-bottom:1px solid var(--lohas-bd,#E8DED1);
+    /* reserve 落地頁：modal 會蓋在上面，這裡只放一個等待中的提示卡 */
+    .rsv-stage{
+      min-height:60vh;
+      display:flex;align-items:center;justify-content:center;
+      padding:40px 20px;
     }
-    .rsv-intro i{font-size:20px;flex:0 0 auto;}
-    .rsv-intro b{font-weight:700;}
-    .rsv-intro .rsv-step{
-      margin-left:auto;font-size:13px;opacity:.85;white-space:nowrap;
+    .rsv-card{
+      max-width:440px;width:100%;text-align:center;
+      background:#fff;border:1px solid var(--lohas-bd,#E8DED1);
+      border-radius:20px;padding:40px 28px;
+      box-shadow:0 10px 40px rgba(80,66,45,.08);
     }
-    @media (max-width:640px){
-      .rsv-intro{font-size:13px;padding:12px 16px;}
-      .rsv-intro .rsv-step{display:none;}
+    .rsv-card .rsv-ico{
+      width:64px;height:64px;border-radius:50%;
+      background:var(--lohas-light,#CDBEA2);color:var(--lohas-brand,#50422D);
+      display:flex;align-items:center;justify-content:center;
+      font-size:28px;margin:0 auto 18px;
     }
+    .rsv-card h1{font-size:20px;color:var(--lohas-brand,#50422D);margin:0 0 8px;}
+    #rsv-status-title{font-size:16px;font-weight:700;color:var(--lohas-brand,#50422D);margin:0 0 4px;}
+    #rsv-status-msg{font-size:13px;color:var(--text-sub,#8a7e6d);margin:0;}
+    #rsv-spinner{
+      width:30px;height:30px;margin:18px auto 0;
+      border:3px solid var(--lohas-light,#CDBEA2);
+      border-top-color:var(--lohas-brand,#50422D);
+      border-radius:50%;animation:rsvspin .8s linear infinite;
+    }
+    @keyframes rsvspin{to{transform:rotate(360deg)}}
   </style>
 
-  <!-- 全站追蹤碼 GA4 + Meta Pixel -->
   <script src="js/analytics.js?v=20260610-booking"></script>
 </head>
 <body>
@@ -67,91 +68,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div id="site-header"></div>
 
 <main>
-  <div class="as-shell">
-
-    <!-- 取貨預約導引條：放在 .as-shell 內、subheader 上方，
-         自動繼承 .as-shell 的 margin-top:70px，避開固定 header（桌機/手機一致）。 -->
-    <div class="rsv-intro">
-      <i class="fa-solid fa-bag-shopping"></i>
-      <span>您正在<b>完成商城訂單的門市取貨預約</b>，請先選擇取貨門市，下一步再指定銷售顧問與時段。</span>
-      <span class="rsv-step">① 選門市 → ② 選顧問 → ③ 選時段 → 完成</span>
+  <div class="rsv-stage">
+    <div class="rsv-card">
+      <div class="rsv-ico"><i class="fa-solid fa-bag-shopping"></i></div>
+      <h1>完成取貨預約</h1>
+      <p id="rsv-status-title">正在開啟門市選擇…</p>
+      <p id="rsv-status-msg">請稍候</p>
+      <div id="rsv-spinner"></div>
     </div>
-
-    <header class="as-subheader">
-      <div class="as-subheader-inner">
-        <div class="as-subheader-title">
-          <i class="fa-regular fa-calendar-check"></i>
-          <span class="accent">選擇取貨門市</span>
-          <span>· 全台 <b>24</b> 間 + 海外 <b>1</b> 間</span>
-        </div>
-        <div class="as-search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="search" id="as-search" placeholder="輸入縣市、地址、門市名稱">
-        </div>
-        <div class="as-regions" id="as-regions"></div>
-      </div>
-    </header>
-
-    <div class="as-layout" id="as-layout">
-
-      <aside class="as-list-panel">
-        <div class="as-list" id="as-store-list"></div>
-      </aside>
-
-      <div class="as-map-panel">
-        <div id="as-map-canvas"></div>
-        <div class="as-pin-card" id="as-pin-card"></div>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- 手機版底部 TAB 切換（地圖 / 列表） -->
-  <div class="as-view-tabs" id="as-view-tabs">
-    <button class="as-view-tab active" data-view="list" type="button">
-      <i class="fa-solid fa-list-ul"></i>
-      <span>列表</span>
-    </button>
-    <button class="as-view-tab" data-view="map" type="button">
-      <i class="fa-solid fa-map-location-dot"></i>
-      <span>地圖</span>
-    </button>
   </div>
 </main>
 
 <div id="site-footer"></div>
 
-<!-- Leaflet JS（必須先於 allstore.js 載入） -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
-
-<!-- BFF 版：前端不做 AES，加密在 Supabase Edge Function（lohas-api-proxy）做 -->
-
 <!-- 全站 layout -->
-<script src="js/layout.js?v=20260616-reserve"></script>
+<script src="js/layout.js?v=20260616-reserve2"></script>
 
-<!-- API 模組 -->
-<script src="js/api/api-core.js?v=20260616-reserve"></script>
-<script src="js/api/api-store.js?v=20260616-reserve"></script>
+<!-- API 模組（booking-modal 依賴 core / booking；選門市用 store；正規化用 store-data）-->
+<script src="js/api/api-core.js?v=20260616-reserve2"></script>
+<script src="js/api/api-booking.js?v=20260616-reserve2"></script>
+<script src="js/api/api-store.js?v=20260616-reserve2"></script>
+<script src="js/store-data.js?v=20260616-reserve2"></script>
 
-<!-- 資料正規化 -->
-<script src="js/store-data.js?v=20260616-reserve"></script>
+<!-- 預約視窗（含「先選門市 → 再選顧問 → 回商城」流程）-->
+<script src="js/booking-modal.js?v=20260616-reserve2"></script>
 
-<!--
-  頁面邏輯：直接沿用 allstore.js
-  ───────────────────────────────────────────────
-  allstore.js 已內建：
-   · captureCartPrefill()  讀 ?from=cart&name&phone&cartType&cartPaymentMethod
-                           → 存 sessionStorage("lohas_cart_prefill") → 清掉網址 query
-   · maybeShowCartHint()   顯示「已從商城帶入您的資料」提示條
-   · 門市列表 / 地圖 / 區域切換 / 搜尋
-   · 點「預約」→ 跳 store.html?erpid=...#staff（在單店頁選顧問+時段+完成）
-  之後 booking-modal.js 在 store.html 讀 sessionStorage 預填、完成後 AES 回傳商城。
-  → reserve.html 與 allstore.js 共用同一份程式碼，未來只需維護一處，不會發生「改了沒同步」。
--->
-<script src="js/allstore.js?v=20260616-reserve"></script>
+<!-- 落地頁邏輯：擷取商城帶入 → 抓門市 → 彈出視窗 -->
+<script src="js/reserve.js?v=20260616-reserve2"></script>
 
 </body>
 </html>
