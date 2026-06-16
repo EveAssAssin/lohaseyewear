@@ -21,6 +21,7 @@
 
   /* 服務項目（這份目前是固定清單；未來如有 API 可動態取得再改） */
   const SERVICES = [
+    { id: "view",     name: "賞鏡",       duration: 30, price: "免費" },
     { id: "exam",     name: "視力檢測",   duration: 30, price: "免費" },
     { id: "consult",  name: "配鏡諮詢",   duration: 40, price: "免費" },
     { id: "multi",    name: "多焦點配鏡", duration: 90, price: "免費" },
@@ -35,7 +36,7 @@
     store: null,
     employees: [],
     selectedEmployee: null,
-    selectedService: SERVICES[1], // 預設「配鏡諮詢」（向 API 送這個值，但 UI 不再選）
+    selectedService: SERVICES[0], // 預設「賞鏡」；一般預約在 step 1 可改選（商城模式不顯示）
     rounds: [],
     selectedDate: null,
     selectedRoundId: null,
@@ -56,7 +57,10 @@
 
   function open(opts) {
     opts = opts || {};
-    state.store = opts.store;
+    /* 商城取貨流程：傳入 stores（全部門市，含 employees）→ 先選門市、再選顧問 */
+    state.stores = opts.stores || [];
+    state.cartStorePick = !!(opts.stores && !opts.store);
+    state.store = opts.store || null;
     state.employees = (opts.employees || []).filter(e => !e.isLeave && !e.isFreeze);
     state.step = 1;
     state.selectedEmployee = null;
@@ -167,8 +171,19 @@
   }
 
   function renderSteps() {
-    /* 商城模式：只需選顧問（時段交給商城那頁），步驟條只顯示一步 */
+    /* 商城模式：時段交給商城那頁，不選時段 */
     if (state.cartPrefill) {
+      /* 先選門市再選顧問 → 兩步 */
+      if (state.cartStorePick) {
+        const onStore = !state.store;
+        return (
+          `<div class="bm-steps">` +
+            `<div class="bm-step ${onStore ? "active" : ""}"><span class="bm-step-num">1</span>選擇門市</div>` +
+            `<div class="bm-step ${onStore ? "" : "active"}"><span class="bm-step-num">2</span>選擇顧問</div>` +
+          `</div>`
+        );
+      }
+      /* 已帶入門市（從 store.html 來）→ 只剩選顧問一步 */
       return (
         `<div class="bm-steps">` +
           `<div class="bm-step active"><span class="bm-step-num">1</span>選擇銷售顧問</div>` +
@@ -200,11 +215,77 @@
   }
 
   function renderStepContent() {
+    /* 商城「先選門市」模式：還沒選門市前，先顯示門市清單 */
+    if (state.cartPrefill && state.cartStorePick && !state.store) return renderStoreStep();
     if (state.step === 1) return renderStepStaff();
     if (state.step === 2) return renderStepTime();
     if (state.step === 3) return renderStepForm();
     if (state.step === 4) return renderSuccess();
     return "";
+  }
+
+  /* === 商城取貨：選門市（含搜尋） === */
+  function renderStoreStep() {
+    if (!state.stores || state.stores.length === 0) {
+      return (
+        `<div class="bm-state">` +
+          `<div class="spinner"></div>` +
+          `<div class="bm-state-title">載入門市中…</div>` +
+        `</div>`
+      );
+    }
+    return (
+      `<div class="bm-sec">` +
+        `<div class="bm-sec-title">選擇取貨門市</div>` +
+        `<div class="bm-store-search">` +
+          `<i class="fa-solid fa-magnifying-glass"></i>` +
+          `<input type="search" id="bm-store-q" placeholder="輸入縣市、地址或門市名稱" autocomplete="off">` +
+        `</div>` +
+        `<div class="bm-store-list" id="bm-store-list">` +
+          renderStoreItems(state.stores) +
+        `</div>` +
+      `</div>`
+    );
+  }
+
+  function renderStoreItems(list) {
+    if (!list.length) {
+      return `<div class="bm-store-empty">找不到符合的門市</div>`;
+    }
+    return list.map(s => {
+      const region = s.region ? s.region.label : "";
+      const count = (s.employees || []).filter(e => e && !e.isLeave && !e.isFreeze && !e.isUnspecify).length;
+      return (
+        `<button type="button" class="bm-store-item" data-store-pick="${s.erpid}">` +
+          `<span class="bm-store-item-main">` +
+            `<span class="bm-store-item-name">${s.name}</span>` +
+            `<span class="bm-store-item-addr">${region ? region + "｜" : ""}${s.address || ""}</span>` +
+          `</span>` +
+          (count ? `<span class="bm-store-item-meta">${count} 位顧問</span>` : "") +
+          `<i class="fa-solid fa-chevron-right"></i>` +
+        `</button>`
+      );
+    }).join("");
+  }
+
+  /* === 服務項目選擇（賞鏡 / 視力檢測 / 配鏡諮詢 …）=== */
+  function renderServiceSection() {
+    return (
+      `<div class="bm-sec">` +
+        `<div class="bm-sec-title">選擇服務項目</div>` +
+        `<div class="bm-svc-grid">` +
+          SERVICES.map(s => {
+            const active = state.selectedService && state.selectedService.id === s.id;
+            const priceTag = (s.price && s.price !== "免費") ? `（${s.price}）` : "";
+            return (
+              `<button type="button" class="bm-svc-pick ${active ? "active" : ""}" data-svc="${s.id}">` +
+                `${s.name}${priceTag}` +
+              `</button>`
+            );
+          }).join("") +
+        `</div>` +
+      `</div>`
+    );
   }
 
   /* === Step 1: 選顧問（大頭像版） === */
@@ -217,7 +298,18 @@
         `</div>`
       );
     }
+    /* 商城模式不顯示服務選擇（賞鏡 implicit、方向 B 只選顧問）；一般預約顯示 */
+    const svcSection = state.cartPrefill ? "" : renderServiceSection();
+    /* 商城「先選門市」模式：顧問清單上方顯示已選門市 + 可重選 */
+    const storeBar = (state.cartPrefill && state.cartStorePick && state.store)
+      ? `<div class="bm-picked-store">` +
+          `<span><i class="fa-solid fa-store"></i> 取貨門市：<b>${state.store.name}</b></span>` +
+          `<button type="button" class="bm-link" data-change-store>重新選擇</button>` +
+        `</div>`
+      : "";
     return (
+      svcSection +
+      storeBar +
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">選擇銷售顧問</div>` +
         `<div class="bm-staff-grid">` +
@@ -387,8 +479,17 @@
 
   /* === Footer === */
   function renderFooter() {
-    /* 商城模式：不選時段、不建單，只「選顧問 → 確認回商城」一個動作 */
+    /* 商城模式：不選時段、不建單 */
     if (state.cartPrefill) {
+      /* 還在選門市這一步：點門市就進下一步，這裡只給提示、不放按鈕 */
+      if (state.cartStorePick && !state.store) {
+        return (
+          `<div class="bm-foot">` +
+            `<div class="bm-foot-summary"><b>請選擇取貨門市</b>選好後接著挑銷售顧問</div>` +
+          `</div>`
+        );
+      }
+      /* 選顧問這一步：確認 → 回商城 */
       const ok = !!state.selectedEmployee;
       const summary = state.selectedEmployee
         ? `<b>${state.selectedEmployee.name}</b>確認後回商城選預約時段`
@@ -483,6 +584,46 @@
         state.rounds = [];
         renderInPlace();
       });
+    });
+
+    /* 商城取貨：選門市 → 設定門市與該店顧問 → 進選顧問步驟 */
+    r.querySelectorAll("[data-store-pick]").forEach(el => {
+      el.addEventListener("click", () => {
+        const erpid = el.dataset.storePick;
+        const store = state.stores.find(s => String(s.erpid) === String(erpid));
+        if (!store) return;
+        state.store = store;
+        state.employees = (store.employees || [])
+          .filter(e => e && !e.isLeave && !e.isFreeze && !e.isUnspecify);
+        state.selectedEmployee = null;
+        state.step = 1;
+        renderInPlace();
+      });
+    });
+
+    /* 商城取貨：重新選門市 → 退回門市清單 */
+    const changeStore = r.querySelector("[data-change-store]");
+    if (changeStore) changeStore.addEventListener("click", () => {
+      state.store = null;
+      state.selectedEmployee = null;
+      renderInPlace();
+    });
+
+    /* 門市搜尋（只篩清單，不重繪整個 modal） */
+    const storeQ = r.querySelector("#bm-store-q");
+    if (storeQ) storeQ.addEventListener("input", () => {
+      const q = storeQ.value.trim().toLowerCase();
+      const filtered = !q ? state.stores : state.stores.filter(s => {
+        const hay = `${s.name} ${s.address || ""} ${s.city || ""} ${s.region ? s.region.label : ""}`.toLowerCase();
+        return hay.includes(q);
+      });
+      const listEl = r.querySelector("#bm-store-list");
+      if (listEl) {
+        listEl.innerHTML = renderStoreItems(filtered);
+        bindShell(); // 重新綁定新出現的 data-store-pick
+        const q2 = r.querySelector("#bm-store-q");
+        if (q2) { q2.value = storeQ.value; q2.focus(); }
+      }
     });
 
     r.querySelectorAll("[data-svc]").forEach(el => {
