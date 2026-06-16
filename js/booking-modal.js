@@ -822,10 +822,29 @@
       /* GA4 主要轉換:預約完成事件(經 dataLayer 由 GTM 轉發) */
       try {
         if (window.lohasTrack) {
+          // 讀取預約來源歸因（若是從最新消息 CTA 點進來的）
+          var src = {};
+          try {
+            var raw = sessionStorage.getItem('lohas_booking_source');
+            if (raw) {
+              var parsed = JSON.parse(raw);
+              // 來源僅在 6 小時內有效，避免跨 session 誤歸因
+              if (parsed && parsed.ts && (Date.now() - parsed.ts) < 6 * 3600 * 1000) {
+                src = parsed;
+              }
+            }
+          } catch (e) {}
+
           window.lohasTrack('booking_complete', {
             reservation_id: reservationId,
-            store_name: (state.store && state.store.name) || ''
+            store_name: (state.store && state.store.name) || '',
+            source_news_id: src.news_id || '',
+            source_news_title: src.news_title || '',
+            source_cta_type: src.cta_type || ''
           });
+
+          // 用完即清，避免下一次預約沿用舊來源
+          try { sessionStorage.removeItem('lohas_booking_source'); } catch (e) {}
         }
       } catch (e) {}
 

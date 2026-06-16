@@ -108,6 +108,9 @@
   }
 
   function render(n) {
+    // 存全域給 renderCta / 追蹤歸因用
+    window.__ndArticle = n;
+
     document.title = n.title + ' · LOHAS 樂活眼鏡';
 
     // meta description
@@ -156,15 +159,29 @@
       return;
     }
 
+    // 當前文章來源資訊（給轉換歸因用）
+    const article = window.__ndArticle || {};
+    const sourceId = article.id || '';
+    const sourceTitle = article.title || document.title || '';
+
     // 第一顆 solid, 第二顆 ghost
     const buttons = [];
     if (showStore) {
-      buttons.push(`<a href="allstore.html" class="lohas-cta-btn">
+      buttons.push(`<a href="allstore.html"
+        class="lohas-cta-btn"
+        data-news-cta="store"
+        data-news-id="${escAttr(sourceId)}"
+        data-news-title="${escAttr(sourceTitle)}">
         <i class="fa-solid fa-location-dot"></i>門市預約
       </a>`);
     }
     if (showStudent) {
-      buttons.push(`<a href="https://student.lohasglasses.com/" class="lohas-cta-btn" target="_blank" rel="noopener">
+      buttons.push(`<a href="https://student.lohasglasses.com/"
+        class="lohas-cta-btn"
+        target="_blank" rel="noopener"
+        data-news-cta="student"
+        data-news-id="${escAttr(sourceId)}"
+        data-news-title="${escAttr(sourceTitle)}">
         <i class="fa-solid fa-graduation-cap"></i>學生預約
       </a>`);
     }
@@ -175,6 +192,37 @@
       return btn.replace('class="lohas-cta-btn"', `class="lohas-cta-btn ${cls}"`);
     }).join('');
     section.style.display = '';
+
+    // 綁定點擊：把文章來源寫進 sessionStorage（跨頁帶到 allstore → 預約完成）
+    btnWrap.querySelectorAll('[data-news-cta]').forEach(a => {
+      a.addEventListener('click', function () {
+        const src = {
+          news_id: this.getAttribute('data-news-id') || '',
+          news_title: this.getAttribute('data-news-title') || '',
+          cta_type: this.getAttribute('data-news-cta') || '',
+          ts: Date.now()
+        };
+        try {
+          sessionStorage.setItem('lohas_booking_source', JSON.stringify(src));
+        } catch (e) {}
+
+        // 推 dataLayer 事件（GTM 轉發 GA4/Pixel）
+        if (window.lohasTrack) {
+          window.lohasTrack('news_cta_click', {
+            news_id: src.news_id,
+            news_title: src.news_title,
+            cta_type: src.cta_type
+          });
+        }
+      });
+    });
+  }
+
+  // HTML attribute 轉義
+  function escAttr(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function bindShare(n) {
