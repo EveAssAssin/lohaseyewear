@@ -123,12 +123,20 @@ document.addEventListener("DOMContentLoaded", () => {
           .join("")}</div>`
       : "";
 
+    // 是否只有首圖（沒有子圖）→ 用單圖滿版排版
+    const isSingle = subImages.length === 0;
+
+    // 分享用：文章 id（從 card 的收藏按鈕拿 post-id）
+    const postId = card.querySelector("[data-post-id]")?.getAttribute("data-post-id")
+      || card.dataset.postId || "";
+
     detailBody.innerHTML = `
-      <div class="detail-gallery">
+      <div class="detail-gallery ${isSingle ? "is-single" : ""}">
         <div class="detail-main-image">
           <img src="${mainImage}" alt="${title}" />
         </div>
 
+        ${isSingle ? "" : `
         <div class="detail-sub-list">
           ${subImages.map(src => `
             <div class="detail-sub-image">
@@ -136,6 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           `).join("")}
         </div>
+        `}
       </div>
 
       <div class="detail-title-row">
@@ -151,11 +160,52 @@ document.addEventListener("DOMContentLoaded", () => {
       ${tagsHTML}
 
       <p class="detail-story">${story}</p>
+
+      <div class="detail-actions">
+        <button type="button" class="detail-share-btn" id="galleryShareBtn">
+          <i class="fa-solid fa-share-nodes"></i> 分享這張刻圖
+        </button>
+      </div>
     `;
+
+    // 綁分享按鈕
+    const shareBtn = document.getElementById("galleryShareBtn");
+    if (shareBtn) {
+      shareBtn.onclick = function () {
+        shareGalleryPost({ id: postId, title: title, name: name });
+      };
+    }
 
     detailModal.classList.add("is-open");
     detailModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+  }
+
+  // 分享分享牆照片：手機原生分享、桌機複製連結
+  async function shareGalleryPost(post) {
+    const base = location.origin + location.pathname;
+    const url = post.id ? (base + "?post=" + encodeURIComponent(post.id)) : base;
+    const shareData = {
+      title: (post.title || "樂活刻圖分享") + " · LOHAS 刻圖靈感分享牆",
+      text: "看看這張刻圖分享：" + (post.title || ""),
+      url: url
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast("已複製分享連結");
+    } catch (e) {
+      window.prompt("複製這個連結分享：", url);
+    }
   }
 
   function closeDetailModal() {
