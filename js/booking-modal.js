@@ -19,12 +19,14 @@
   const { core } = root.LohasApi;
   const { booking: bookingApi } = root.LohasApi;
 
-  /* 服務項目（門市預約四項；duration 供顯示用）*/
+  /* 服務項目（這份目前是固定清單；未來如有 API 可動態取得再改） */
   const SERVICES = [
-    { id: "pickup",   name: "取件",          duration: 20 },
-    { id: "maintain", name: "眼鏡保養、調整", duration: 20 },
-    { id: "fitting",  name: "配鏡",          duration: 40 },
-    { id: "consult",  name: "諮詢",          duration: 30 }
+    { id: "view",     name: "賞鏡",       duration: 30, price: "免費" },
+    { id: "exam",     name: "視力檢測",   duration: 30, price: "免費" },
+    { id: "consult",  name: "配鏡諮詢",   duration: 40, price: "免費" },
+    { id: "multi",    name: "多焦點配鏡", duration: 90, price: "免費" },
+    { id: "engrave",  name: "雷刻服務",   duration: 60, price: "NT$500" },
+    { id: "repair",   name: "維修保養",   duration: 20, price: "NT$200" }
   ];
 
   /* state */
@@ -34,7 +36,7 @@
     store: null,
     employees: [],
     selectedEmployee: null,
-    selectedService: null,    // 必選,使用者在 step 3 選
+    selectedService: SERVICES[0], // 預設「賞鏡」；一般預約在 step 1 可改選（商城模式不顯示）
     rounds: [],
     selectedDate: null,
     selectedRoundId: null,
@@ -62,7 +64,6 @@
     state.employees = (opts.employees || []).filter(e => !e.isLeave && !e.isFreeze);
     state.step = 1;
     state.selectedEmployee = null;
-    state.selectedService = null;
     state.selectedDate = null;
     state.selectedRoundId = null;
     state.rounds = [];
@@ -267,17 +268,18 @@
     }).join("");
   }
 
-  /* === 服務項目選擇（取件 / 眼鏡保養、調整 / 配鏡 / 諮詢）必選 === */
+  /* === 服務項目選擇（賞鏡 / 視力檢測 / 配鏡諮詢 …）=== */
   function renderServiceSection() {
     return (
       `<div class="bm-sec">` +
-        `<div class="bm-sec-title">預約服務項目 <span class="bm-required">*</span></div>` +
+        `<div class="bm-sec-title">選擇服務項目</div>` +
         `<div class="bm-svc-grid">` +
           SERVICES.map(s => {
             const active = state.selectedService && state.selectedService.id === s.id;
+            const priceTag = (s.price && s.price !== "免費") ? `（${s.price}）` : "";
             return (
               `<button type="button" class="bm-svc-pick ${active ? "active" : ""}" data-svc="${s.id}">` +
-                `${s.name}` +
+                `${s.name}${priceTag}` +
               `</button>`
             );
           }).join("") +
@@ -296,6 +298,8 @@
         `</div>`
       );
     }
+    /* 商城模式不顯示服務選擇（賞鏡 implicit、方向 B 只選顧問）；一般預約顯示 */
+    const svcSection = state.cartPrefill ? "" : renderServiceSection();
     /* 商城「先選門市」模式：顧問清單上方顯示已選門市 + 可重選 */
     const storeBar = (state.cartPrefill && state.cartStorePick && state.store)
       ? `<div class="bm-picked-store">` +
@@ -304,6 +308,7 @@
         `</div>`
       : "";
     return (
+      svcSection +
       storeBar +
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">選擇銷售顧問</div>` +
@@ -427,7 +432,6 @@
   function renderStepForm() {
     const f = state.form;
     return (
-      renderServiceSection() +
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">會員資料（建立預約所需）</div>` +
         renderInput("姓名", "memberName", f.memberName, "請輸入姓名") +
@@ -554,10 +558,7 @@
     if (state.step === 2) return !!state.selectedRoundId;
     if (state.step === 3) {
       const f = state.form;
-      const formOk = !!(f.memberName && f.memberNumber && f.memberPhone && f.memberBirthday);
-      /* 一般模式服務必選;商城模式服務由商城帶,不檢查 */
-      const svcOk = state.cartPrefill ? true : !!state.selectedService;
-      return formOk && svcOk;
+      return !!(f.memberName && f.memberNumber && f.memberPhone && f.memberBirthday);
     }
     return false;
   }
@@ -565,8 +566,10 @@
   /* === 事件 === */
   function bindShell() {
     const r = getRoot();
+    /* 點 overlay 外圍關閉:預約填寫中(step 1-3)不關,避免誤觸把資料弄丟;
+       只有預約成功畫面(step 4)才允許點外面關閉 */
     r.querySelector("[data-overlay]").addEventListener("click", e => {
-      if (e.target.hasAttribute("data-overlay")) close();
+      if (e.target.hasAttribute("data-overlay") && state.step === 4) close();
     });
     /* 綁定所有 data-close 元素 ─ 右上角 X 按鈕 + 成功畫面的「完成」按鈕
        (原本用 querySelector 只抓到第一個 X,導致「完成」按鈕沒反應) */
@@ -762,12 +765,6 @@
   /* === API：建立預約 === */
   async function submitReservation() {
     if (state.submitting) return;
-
-    /* 服務項目必選(商城模式由商城帶,不檢查)*/
-    if (!state.cartPrefill && !state.selectedService) {
-      alert("請先選擇預約服務項目");
-      return;
-    }
 
     /* 欄位檢查：缺哪個就提示哪個,並把焦點移到該欄位 */
     const f = state.form;
