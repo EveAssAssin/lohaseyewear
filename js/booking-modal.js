@@ -34,7 +34,7 @@
     store: null,
     employees: [],
     selectedEmployee: null,
-    selectedService: null,    // 必選,使用者在 step 1 選（商城模式由商城帶,不顯示）
+    selectedService: null,    // 必選,使用者在 step 3 選
     rounds: [],
     selectedDate: null,
     selectedRoundId: null,
@@ -271,7 +271,7 @@
   function renderServiceSection() {
     return (
       `<div class="bm-sec">` +
-        `<div class="bm-sec-title">選擇服務項目 <span class="bm-required">*</span></div>` +
+        `<div class="bm-sec-title">預約服務項目 <span class="bm-required">*</span></div>` +
         `<div class="bm-svc-grid">` +
           SERVICES.map(s => {
             const active = state.selectedService && state.selectedService.id === s.id;
@@ -296,8 +296,6 @@
         `</div>`
       );
     }
-    /* 商城模式不顯示服務選擇（服務由商城帶,方向 B 只選顧問）；一般預約顯示 */
-    const svcSection = state.cartPrefill ? "" : renderServiceSection();
     /* 商城「先選門市」模式：顧問清單上方顯示已選門市 + 可重選 */
     const storeBar = (state.cartPrefill && state.cartStorePick && state.store)
       ? `<div class="bm-picked-store">` +
@@ -306,7 +304,6 @@
         `</div>`
       : "";
     return (
-      svcSection +
       storeBar +
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">選擇銷售顧問</div>` +
@@ -430,6 +427,7 @@
   function renderStepForm() {
     const f = state.form;
     return (
+      renderServiceSection() +
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">會員資料（建立預約所需）</div>` +
         renderInput("姓名", "memberName", f.memberName, "請輸入姓名") +
@@ -552,15 +550,14 @@
   }
 
   function canProceed() {
-    if (state.step === 1) {
-      /* 一般模式:要選顧問 + 服務項目;商城模式:服務由商城帶,只需選顧問 */
-      if (state.cartPrefill) return !!state.selectedEmployee;
-      return !!(state.selectedEmployee && state.selectedService);
-    }
+    if (state.step === 1) return !!state.selectedEmployee;
     if (state.step === 2) return !!state.selectedRoundId;
     if (state.step === 3) {
       const f = state.form;
-      return !!(f.memberName && f.memberNumber && f.memberPhone && f.memberBirthday);
+      const formOk = !!(f.memberName && f.memberNumber && f.memberPhone && f.memberBirthday);
+      /* 一般模式服務必選;商城模式服務由商城帶,不檢查 */
+      const svcOk = state.cartPrefill ? true : !!state.selectedService;
+      return formOk && svcOk;
     }
     return false;
   }
@@ -765,6 +762,12 @@
   /* === API：建立預約 === */
   async function submitReservation() {
     if (state.submitting) return;
+
+    /* 服務項目必選(商城模式由商城帶,不檢查)*/
+    if (!state.cartPrefill && !state.selectedService) {
+      alert("請先選擇預約服務項目");
+      return;
+    }
 
     /* 欄位檢查：缺哪個就提示哪個,並把焦點移到該欄位 */
     const f = state.form;
