@@ -55,6 +55,9 @@
 
   function open(opts) {
     opts = opts || {};
+    /* 關閉時的 callback(reserve.html 用來偵測使用者沒完成就關掉)
+       帶 reason: "success"(已預約完成) / "dismiss"(使用者主動關閉) */
+    state.onClose = typeof opts.onClose === "function" ? opts.onClose : null;
     /* 商城取貨流程：傳入 stores（全部門市，含 employees）→ 先選門市、再選顧問 */
     state.stores = opts.stores || [];
     state.cartStorePick = !!(opts.stores && !opts.store);
@@ -112,6 +115,14 @@
   function close() {
     state.open = false;
     render();
+    /* 通知呼叫端 modal 關閉了。step===4 代表預約成功才關,否則是使用者中途放棄。
+       reserve.html 靠這個判斷要不要顯示「未完成」出路。 */
+    if (state.onClose) {
+      const reason = (state.step === 4) ? "success" : "dismiss";
+      const cb = state.onClose;
+      state.onClose = null;   /* 只呼叫一次 */
+      try { cb(reason); } catch (_e) {}
+    }
   }
 
   function getRoot() {

@@ -41,6 +41,57 @@
     if (sp) sp.style.display = isError ? "none" : "";
   }
 
+  /* 使用者把 modal 關掉、沒完成預約 → 顯示出路,避免卡在轉圈圈
+     提供「重新選擇門市」+「回商城」兩個按鈕 */
+  function showDismissedState(stores) {
+    setStatus("尚未完成預約", "您可以重新選擇門市，或返回商城。", true);
+    var card = document.querySelector(".rsv-card");
+    if (!card) return;
+    /* 避免重複加 */
+    var existing = document.getElementById("rsv-actions");
+    if (existing) existing.remove();
+
+    var box = document.createElement("div");
+    box.id = "rsv-actions";
+    box.style.cssText = "display:flex;flex-direction:column;gap:10px;margin-top:18px;";
+
+    var retry = document.createElement("button");
+    retry.type = "button";
+    retry.textContent = "重新選擇門市";
+    retry.style.cssText = "padding:12px 18px;border:0;border-radius:999px;background:var(--lohas-brand,#50422D);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;";
+    retry.addEventListener("click", function () {
+      box.remove();
+      setStatus("請選擇取貨門市", "在彈出的視窗中挑選門市與銷售顧問");
+      var sp = document.getElementById("rsv-spinner");
+      if (sp) sp.style.display = "";
+      openModal(stores);
+    });
+
+    var back = document.createElement("a");
+    back.textContent = "返回商城";
+    back.href = "https://www.lohaseyewear.com/order/wear/cart";
+    back.style.cssText = "padding:12px 18px;border:1px solid var(--lohas-bd,#E8DED1);border-radius:999px;background:#fff;color:var(--text-sub,#8a7e6d);font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;text-align:center;font-family:inherit;";
+
+    box.appendChild(retry);
+    box.appendChild(back);
+    card.appendChild(box);
+  }
+
+  /* 開 modal,綁定 onClose:使用者沒完成就關 → 顯示出路 */
+  function openModal(stores) {
+    var modal = window.LohasBookingModal;
+    modal.open({
+      stores: stores,
+      onClose: function (reason) {
+        /* reason==="dismiss" 表示使用者主動關閉、沒完成預約
+           (預約成功是走 postBackToMall 直接跳商城,不會觸發這裡) */
+        if (reason === "dismiss") {
+          showDismissedState(stores);
+        }
+      }
+    });
+  }
+
   async function init() {
     captureCartPrefill();
 
@@ -74,7 +125,7 @@
       }
 
       setStatus("請選擇取貨門市", "在彈出的視窗中挑選門市與銷售顧問");
-      modal.open({ stores: stores });
+      openModal(stores);
     } catch (err) {
       console.error("[reserve] 載入門市失敗:", err);
       setStatus("載入失敗", "無法取得門市資料，請重新整理或稍後再試。", true);
