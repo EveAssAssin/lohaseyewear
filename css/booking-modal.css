@@ -570,10 +570,11 @@
 
 /* === 響應式 === */
 @media (max-width: 600px) {
+  /* modal 不貼螢幕絕對最底,底部留空間,避免 footer 被 APP 導覽列/隱私條/瀏覽器工具列蓋住 */
   .bm-overlay { padding: 0; align-items: flex-end; }
   .bm-dialog {
     max-width: none;
-    max-height: 96vh;
+    max-height: 90vh;
     border-radius: var(--r-xl) var(--r-xl) 0 0;
   }
   .bm-staff-grid { grid-template-columns: 1fr; }
@@ -582,20 +583,22 @@
   .bm-staff-pick-name { font-size: 16px; }
   .bm-time-grid { grid-template-columns: repeat(3, 1fr); }
 
-  /* 手機 footer:改成上下兩層 — summary 在上、按鈕獨佔下面整行(滿版)
-     讓「下一步 / 確認」變成跨整個螢幕寬的大按鈕,絕對醒目 */
+  /* 手機 footer:上下兩層 — summary 在上、按鈕獨佔下面整行(滿版) */
   .bm-foot {
     flex-direction: column;
     align-items: stretch;
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
     gap: 10px;
+  }
+  /* 商城模式(webview,底部有 APP 原生導覽列)→ footer 留更大底部空間閃過它 */
+  .bm-dialog--cart .bm-foot {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
   .bm-foot-summary {
     font-size: 12px;
     text-align: center;
   }
   .bm-foot-summary b { font-size: 14px; }
-  /* 按鈕區:撐滿整行 */
   .bm-foot-actions {
     display: flex;
     gap: 10px;
@@ -604,12 +607,11 @@
   .bm-btn {
     padding: 15px 18px;
     font-size: 15px;
-    flex: 1;                 /* 平分整行寬度 */
+    flex: 1;
     justify-content: center;
   }
-  /* 主要按鈕(下一步/確認)更突出:有上一步時占 2/3,沒有時占滿 */
   .bm-btn.primary {
-    flex: 2;
+    flex: 2;                /* 主按鈕占 2/3,更突出 */
     box-shadow: 0 3px 12px rgba(80, 66, 45, 0.3);
     font-weight: 700;
   }
