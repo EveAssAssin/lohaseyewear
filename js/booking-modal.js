@@ -545,7 +545,15 @@
     if (state.selectedDate && state.selectedRoundId) {
       parts.push(formatDate(state.selectedDate) + " " + getRoundTitle(state.selectedRoundId));
     }
-    if (parts.length === 0) return `<b>步驟 ${state.step} / 3</b>依序完成以建立預約`;
+    if (parts.length === 0) {
+      /* 還沒選任何東西時,依步驟給明確提示,讓使用者知道「下一步」為什麼還不能按 */
+      if (state.step === 1) return `<b>請先選擇一位顧問</b>選好後按「下一步」`;
+      if (state.step === 2) return `<b>請選擇預約時段</b>選好後按「下一步」`;
+      return `<b>步驟 ${state.step} / 3</b>依序完成以建立預約`;
+    }
+    if (state.step === 1 && !state.selectedEmployee) {
+      return `<b>請先選擇一位顧問</b>選好後按「下一步」`;
+    }
     return `<b>${parts[0] || ""}</b>${parts.slice(1).join(" · ") || "請繼續選擇"}`;
   }
 
