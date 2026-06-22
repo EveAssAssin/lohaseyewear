@@ -1,0 +1,94 @@
+/* ============================================================
+   樂活管理後台 · 晶碩專頁管理 (cm-pegavision) 樣式
+   ============================================================ */
+
+.pega-admin {
+  margin-top: 18px;
+}
+
+.pega-admin-upload {
+  background: #fff;
+  border: 1px solid #ECE7DC;
+  border-radius: 12px;
+  padding: 22px 24px;
+  max-width: 640px;
+}
+
+.pega-admin-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #3D3026;
+  margin-bottom: 6px;
+}
+
+.pega-admin-hint {
+  font-size: 12px;
+  color: #9D8E7D;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.pega-admin-upload .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pega-admin-preview {
+  position: relative;
+  margin-top: 18px;
+  border: 1px solid #ECE7DC;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #FAF7F2;
+  max-width: 480px;
+}
+
+.pega-admin-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pega-admin-remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(40, 30, 20, 0.65);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.pega-admin-remove:hover {
+  background: rgba(216, 90, 48, 0.9);
+}
+
+/* 手機 RWD */
+@media (max-width: 768px) {
+  .pega-admin-upload {
+    padding: 16px 14px;
+  }
+  .content-page[data-page="cm-pegavision"] .page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .content-page[data-page="cm-pegavision"] .page-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .content-page[data-page="cm-pegavision"] .page-actions .btn,
+  .content-page[data-page="cm-pegavision"] .page-actions .action-btn-solid {
+    flex: 1;
+    justify-content: center;
+  }
+}
