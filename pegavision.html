@@ -30,7 +30,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .pega-page {
       max-width: 960px;
       margin: 0 auto;
-      padding: 0;
+      /* 避開 fixed header (高 70px) */
+      padding: 70px 0 0;
       background: #fff;
     }
     .pega-image-wrap {
