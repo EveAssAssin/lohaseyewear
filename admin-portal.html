@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
   <link rel="stylesheet" href="css/admin-portal.css?v=20260601-imgsize">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260601-drag">
+  <link rel="stylesheet" href="css/admin-portal-pegavision.css?v=20260622">
   <link rel="stylesheet" href="css/admin-portal-categories.css?v=20260530-cpmfix">
   <link rel="stylesheet" href="css/admin-portal-featured-modal.css?v=20260525">
 
@@ -105,6 +106,9 @@
     </button>
     <button class="nav-link" data-page="cm-footer">
       <i class="fa-regular fa-window-maximize"></i><span>頁尾管理</span>
+    </button>
+    <button class="nav-link" data-page="cm-pegavision">
+      <i class="fa-solid fa-eye"></i><span>晶碩專頁</span>
     </button>
     <button class="nav-link" data-page="cm-categories">
       <i class="fa-solid fa-tags"></i><span>分類管理</span>
@@ -979,6 +983,43 @@
     <!-- ============= 頁尾管理 ============= -->
     <div class="content-page" data-page="cm-footer">
       <!-- 內容由 js/admin-portal-footer.js 動態渲染 -->
+    </div>
+
+    <!-- ============= 晶碩專頁 ============= -->
+    <div class="content-page" data-page="cm-pegavision">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">晶碩專頁</h1>
+          <div class="page-sub">上傳一張長圖，會顯示在 pegavision.html 專頁（桌機 / 手機共用同一張）</div>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="pegavision.html" target="_blank" rel="noopener">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>預覽專頁
+          </a>
+          <button class="action-btn-solid" id="pegaSaveBtn">
+            <i class="fa-solid fa-floppy-disk"></i><span>儲存</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pega-admin">
+        <div class="pega-admin-upload">
+          <div class="pega-admin-label">專頁長圖</div>
+          <div class="pega-admin-hint">建議寬度 960px、JPG/PNG，高度不限（長條圖）。上傳後即為前台顯示內容。</div>
+
+          <input type="file" id="pegaFileInput" accept="image/*" style="display:none">
+          <button type="button" class="btn" id="pegaPickBtn">
+            <i class="fa-solid fa-upload"></i> 選擇圖片
+          </button>
+
+          <div class="pega-admin-preview" id="pegaPreview" style="display:none">
+            <img id="pegaPreviewImg" src="" alt="預覽">
+            <button type="button" class="pega-admin-remove" id="pegaRemoveBtn" title="移除圖片">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ============= 分類管理 ============= -->
@@ -1881,6 +1922,7 @@
 <!-- 後台主邏輯 -->
 <script src="js/admin-portal.js?v=20260601-svgfit3"></script>
 <script src="js/admin-portal-footer.js?v=20260601-drag"></script>
+<script src="js/admin-portal-pegavision.js?v=20260622"></script>
 <script src="js/admin-portal-categories.js?v=20260530-routeword"></script>
 
 </body>

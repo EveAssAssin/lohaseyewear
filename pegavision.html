@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MSNPQ36L');</script>
+<!-- End Google Tag Manager -->
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>晶碩隱形眼鏡 · 樂活眼鏡</title>
+  <meta name="description" content="樂活眼鏡 × 晶碩 PEGAVISION 隱形眼鏡，給您清晰舒適的視覺體驗。">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="stylesheet" href="css/lohas-tokens.css?v=20260527-1200">
+  <link rel="stylesheet" href="css/lohas-base.css?v=20260527-1200">
+  <link rel="stylesheet" href="css/lohas-components.css?v=20260527-1200">
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+
+  <!-- 全站追蹤碼 GA4 + Meta Pixel -->
+  <script src="js/analytics.js?v=20260610-booking"></script>
+
+  <style>
+    .pega-page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0;
+      background: #fff;
+    }
+    .pega-image-wrap {
+      width: 100%;
+    }
+    .pega-image-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    /* 載入中 / 尚未設定圖片 的佔位 */
+    .pega-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      min-height: 50vh;
+      padding: 80px 24px;
+      text-align: center;
+      color: #9D8E7D;
+    }
+    .pega-placeholder i {
+      font-size: 42px;
+      opacity: 0.5;
+    }
+    .pega-placeholder p {
+      font-size: 15px;
+      margin: 0;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body data-page="pegavision">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MSNPQ36L"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<!-- 全站 Header -->
+<div id="site-header"></div>
+
+<main>
+  <div class="pega-page">
+    <div class="pega-image-wrap" id="pegaImageWrap">
+      <!-- 圖片由 supabase site_settings (key=pegavision_page) 動態載入 -->
+      <div class="pega-placeholder" id="pegaPlaceholder">
+        <i class="fa-regular fa-image"></i>
+        <p>專頁內容準備中，敬請期待。</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 全站 Footer -->
+<div id="site-footer"></div>
+
+<script src="js/layout.js?v=20260527-1200"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  async function loadPegaPage() {
+    const sb = window.LohasSupabase
+      && window.LohasSupabase.getClient
+      && window.LohasSupabase.getClient();
+    if (!sb) return;
+
+    try {
+      const { data, error } = await sb
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'pegavision_page')
+        .maybeSingle();
+
+      if (error || !data || !data.value) return;
+
+      const cfg = data.value;
+      const imgUrl = cfg.image_url;
+
+      if (!imgUrl) return;
+
+      const wrap = document.getElementById('pegaImageWrap');
+      if (!wrap) return;
+
+      wrap.innerHTML = '<img src="' + imgUrl + '" alt="晶碩隱形眼鏡 PEGAVISION">';
+    } catch (e) {
+      console.warn('[pegavision] 載入失敗:', e);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadPegaPage);
+  } else {
+    loadPegaPage();
+  }
+})();
+</script>
+</body>
+</html>
