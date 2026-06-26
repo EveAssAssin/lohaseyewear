@@ -1496,6 +1496,37 @@
     var sb = window.LohasSupabase?.getClient?.();
     if(!sb) return showError('Supabase 沒準備好,請稍候');
 
+    // === 每日上傳上限:一般會員每日最多 3 件,管理者不受限 ===
+    // 只在「新上傳」檢查(編輯/重新送審不算新增,不受限)
+    if(!state.editId){
+      try {
+        // 1) 先確認是否為管理者(admins 表)
+        var isAdmin = false;
+        var adminRes = await sb.from('admins')
+          .select('member_id')
+          .eq('member_id', String(member.erpid))
+          .maybeSingle();
+        if(!adminRes.error && adminRes.data) isAdmin = true;
+
+        // 2) 非管理者才算當天上傳數
+        if(!isAdmin){
+          var startOfDay = new Date();
+          startOfDay.setHours(0, 0, 0, 0);
+          var cntRes = await sb.from(CONFIG.TABLE)
+            .select('id', { count: 'exact', head: true })
+            .eq('creator_id', String(member.erpid))
+            .gte('created_at', startOfDay.toISOString());
+          var todayCount = cntRes.count || 0;
+          if(todayCount >= 3){
+            return showError('每天最多上傳 3 件刻圖作品,今天已達上限,請明天再來 🙏');
+          }
+        }
+      } catch(limitErr){
+        console.warn('[upload-design] 每日上限檢查失敗,放行:', limitErr);
+        // 檢查失敗不阻擋上傳(避免誤殺),僅記錄
+      }
+    }
+
     setSubmitting(true);
 
     try {
