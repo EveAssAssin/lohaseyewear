@@ -1675,6 +1675,14 @@
             <input type="text" id="mdEditDesigner">
           </div>
           <div class="md-form-row">
+            <label>ErpNumber(ERP 商品編號,分潤對應用)</label>
+            <input type="text" id="mdEditErp" placeholder="例如:128770923,留空 = 尚未建品項">
+          </div>
+          <div class="md-form-row">
+            <label>會員 erpid(分潤收款人,唯讀)</label>
+            <input type="text" id="mdEditCreator" readonly placeholder="未綁定" style="background:#f3f0eb;color:#6F665D;cursor:not-allowed">
+          </div>
+          <div class="md-form-row">
             <label>售價(元)</label>
             <input type="number" id="mdEditPrice" min="0" step="50" placeholder="0 = 未定價">
           </div>
@@ -1920,7 +1928,7 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260601-svgfit3"></script>
+<script src="js/admin-portal.js?v=20260613-erpedit2"></script>
 <script src="js/admin-portal-footer.js?v=20260601-drag"></script>
 <script src="js/admin-portal-pegavision.js?v=20260622"></script>
 <script src="js/admin-portal-categories.js?v=20260530-routeword"></script>
