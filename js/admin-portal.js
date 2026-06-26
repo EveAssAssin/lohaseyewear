@@ -5632,6 +5632,8 @@
     document.getElementById('mdEditCategory').value = d.category || '';
     document.getElementById('mdEditKeywords').value = d.keywords || '';
     document.getElementById('mdEditDesigner').value = d.designer_name || '';
+    document.getElementById('mdEditErp').value      = d.erp_number || '';
+    document.getElementById('mdEditCreator').value  = d.creator_id || '';
     document.getElementById('mdEditPrice').value    = d.price || '';
 
     document.getElementById('mdModalOverlay').hidden = false;
@@ -5655,6 +5657,7 @@
     try {
       const priceRaw = document.getElementById('mdEditPrice').value.trim();
       const priceNum = priceRaw ? Math.max(0, parseInt(priceRaw, 10) || 0) : null;
+      const erpVal = document.getElementById('mdEditErp').value.trim();
 
       const payload = {
         name:          document.getElementById('mdEditName').value.trim(),
@@ -5662,6 +5665,7 @@
         category:      document.getElementById('mdEditCategory').value.trim(),
         keywords:      document.getElementById('mdEditKeywords').value.trim(),
         designer_name: document.getElementById('mdEditDesigner').value.trim(),
+        erp_number:    erpVal || null,
         price:         priceNum,
       };
 
