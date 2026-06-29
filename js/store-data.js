@@ -207,23 +207,50 @@
 
   /* === 把 API getstoredatas 回傳的原始 store 物件正規化 ===
      輸出乾淨的 Store 物件 */
-  /* === 緊急隱藏門市清單 ===
-     需要臨時下架的門市寫在這裡,normalizeStore 會回傳 null 把它濾掉,
+  /* === 隱藏門市清單 ===
+     normalizeStore 會把命中的門市回傳 null 濾掉,
      allstore 地圖列表 / 單店頁 / vipstore 三處都會自動隱藏(因為它們都有 .filter)。
-     比對方式:精確店名 + erpid 雙重,任一命中就隱藏。
-     之後要恢復顯示,把對應的字串從陣列移除即可。 */
+     比對方式:精確店名 + erpid,任一命中就隱藏。 */
+
+  /* 立即隱藏(永久) */
   const HIDDEN_STORE_NAMES = ["十甲店", "後甲店"];
   const HIDDEN_STORE_ERPIDS = [];  /* 若知道 erpid 可填這裡,更精準。例:["120061"] */
 
+  /* 定時隱藏:到了指定日期(含當天)自動隱藏,之前正常顯示。
+     北屯店:2026-07-01 起隱藏(含據點/預約)。日期用台灣時間判斷。
+     之後要永久隱藏可移到上面 HIDDEN_STORE_NAMES;要取消隱藏把整筆刪掉。 */
+  const SCHEDULED_HIDDEN = [
+    { name: "北屯店", fromDate: "2026-07-01" }
+  ];
+
+  /* 取台灣當前日期字串 YYYY-MM-DD(不受使用者裝置時區影響) */
+  function getTaiwanDateStr() {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit"
+      }).format(new Date());   /* en-CA 格式就是 YYYY-MM-DD */
+    } catch (_e) {
+      return new Date().toISOString().slice(0, 10);  /* fallback */
+    }
+  }
+
+  function matchStoreName(rawName, target) {
+    const name = (rawName || "").trim();
+    return name === target || name.replace(/\s/g, "").includes(target);
+  }
+
   function isHiddenStore(raw) {
     if (!raw) return false;
-    const name = (raw.name || "").trim();
     const erpid = String(raw.erpid || "");
     if (HIDDEN_STORE_ERPIDS.includes(erpid)) return true;
-    /* 店名精確比對(去頭尾空白);後台店名若帶前綴如「台中十甲店」也一併比對包含關係 */
-    return HIDDEN_STORE_NAMES.some(hidden =>
-      name === hidden || name.replace(/\s/g, "").includes(hidden)
-    );
+    /* 立即隱藏清單 */
+    if (HIDDEN_STORE_NAMES.some(hidden => matchStoreName(raw.name, hidden))) return true;
+    /* 定時隱藏:今天 >= fromDate 才隱藏 */
+    const today = getTaiwanDateStr();
+    for (const s of SCHEDULED_HIDDEN) {
+      if (matchStoreName(raw.name, s.name) && today >= s.fromDate) return true;
+    }
+    return false;
   }
 
   function normalizeStore(raw) {
