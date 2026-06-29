@@ -1,4 +1,4 @@
-// paperdoll-data.js — 造型搭配器測試資料
+// paperdoll-data.js — 客製眼鏡測試資料
 // v1.0 | 之後可替換為 Supabase / ERP API
 
 const PD_DATA = {

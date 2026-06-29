@@ -1,4 +1,4 @@
-// paperdoll.js — 樂活眼鏡 造型搭配器
+// paperdoll.js — 樂活眼鏡 客製眼鏡體驗
 // v1.0 | 2026-06-29
 
 (function () {
