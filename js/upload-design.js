@@ -160,6 +160,28 @@
           '</div>',
         '</div>',
 
+        // ===== 獨立頁面 B:有照片不會設計(素材改造,全屏獨立) =====
+        '<div class="dum-photob" id="dumPhotoB" hidden>',
+          '<button type="button" class="dum-photob-back" id="dumPhotoBBack"><i class="fa-solid fa-arrow-left"></i> 返回</button>',
+          '<h2 class="dum-photob-title">把你的照片變成刻圖</h2>',
+          '<p class="dum-photob-sub">選一個改造風格,複製提示詞,把照片丟給 AI,生成後回來上傳</p>',
+          '<div class="dum-photob-styles" id="dumPhotoBStyles"></div>',
+          '<div class="dum-prompt-box" id="dumPhotoBPromptBox" hidden>',
+            '<div class="dum-prompt-head">',
+              '<span class="dum-prompt-label"><i class="fa-solid fa-quote-left"></i> 提示詞</span>',
+              '<div class="dum-prompt-actions">',
+                '<button type="button" class="dum-prompt-btn" id="dumPhotoBCopy"><i class="fa-solid fa-copy"></i> 複製</button>',
+                '<button type="button" class="dum-prompt-btn primary" id="dumPhotoBGpt"><i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟 ChatGPT</button>',
+              '</div>',
+            '</div>',
+            '<textarea class="dum-prompt-text" id="dumPhotoBPromptText" readonly rows="4"></textarea>',
+            '<div class="dum-prompt-tip"><i class="fa-solid fa-lightbulb"></i> 小提示:把你的照片連同提示詞一起貼給 ChatGPT,生成後右鍵存圖,點下方「我生成好了,去上傳」。</div>',
+          '</div>',
+          '<div class="dum-photob-nav">',
+            '<button type="button" class="dum-btn-next" id="dumPhotoBToUpload">我生成好了,去上傳 <i class="fa-solid fa-arrow-right"></i></button>',
+          '</div>',
+        '</div>',
+
         // ===== 模式切換 Tab =====
         '<div class="dum-tabs">',
           '<button type="button" class="dum-tab on" data-mode="designer"><i class="fa-solid fa-wand-magic-sparkles"></i> 設計師模式</button>',
@@ -592,6 +614,7 @@
 
   // ===== 設計師模式 =====
   var dz = { theme: null, style: null, route: null, subs: [] };   // 當前選的主題/風格/路線/子標籤
+  var photoBStyle = null;   // 獨立 B 頁面當前選的素材改造風格
   // 光學鏡片刻圖定位(可拖曳/縮放/旋轉),預設值=原 CARRIERS 光學鏡片
   var lensPos = { x: 80, y: 22, w: 15, rot: 0 };
 
@@ -601,6 +624,35 @@
       card.addEventListener('click', function(){
         chooseEntry(card.dataset.entry);
       });
+    });
+
+    // 獨立 B 頁面按鈕
+    var pbBack = modal.querySelector('#dumPhotoBBack');
+    if(pbBack) pbBack.addEventListener('click', function(){
+      // 返回入口頁
+      modal.querySelector('#dumPhotoB').hidden = true;
+      modal.querySelector('#dumIntro').hidden = false;
+    });
+    var pbCopy = modal.querySelector('#dumPhotoBCopy');
+    if(pbCopy) pbCopy.addEventListener('click', function(){
+      var ta = modal.querySelector('#dumPhotoBPromptText');
+      if(!ta || !ta.value) return;
+      navigator.clipboard?.writeText(ta.value);
+      pbCopy.innerHTML = '<i class="fa-solid fa-check"></i> 已複製';
+      setTimeout(function(){ pbCopy.innerHTML = '<i class="fa-solid fa-copy"></i> 複製'; }, 1500);
+    });
+    var pbGpt = modal.querySelector('#dumPhotoBGpt');
+    if(pbGpt) pbGpt.addEventListener('click', function(){
+      var ta = modal.querySelector('#dumPhotoBPromptText');
+      if(ta && ta.value) navigator.clipboard?.writeText(ta.value);
+      window.open('https://chatgpt.com/', '_blank');
+    });
+    var pbToUpload = modal.querySelector('#dumPhotoBToUpload');
+    if(pbToUpload) pbToUpload.addEventListener('click', function(){
+      // 生成完 → 進快速模式上傳
+      modal.querySelector('#dumPhotoB').hidden = true;
+      modal.querySelector('.dum-tabs').hidden = false;
+      switchMode('quick');
     });
 
     // tab 切換
@@ -655,21 +707,80 @@
   function chooseEntry(entry){
     var intro = modal.querySelector('#dumIntro');
     var tabs = modal.querySelector('.dum-tabs');
+    var designer = modal.querySelector('#dumDesigner');
+    var quick = modal.querySelector('#dumQuick');
+    var photob = modal.querySelector('#dumPhotoB');
+
     if(intro) intro.hidden = true;
+
+    if(entry === 'have-photo'){
+      // 2. 有照片不會設計 → 獨立 B 頁面(素材改造),不顯示 tabs/模式
+      if(tabs) tabs.hidden = true;
+      if(designer) designer.hidden = true;
+      if(quick) quick.hidden = true;
+      if(photob) photob.hidden = false;
+      renderPhotoBStyles();
+      return;
+    }
+
+    // 選項 1、3 → 顯示 tabs + 對應模式
     if(tabs) tabs.hidden = false;
+    if(photob) photob.hidden = true;
 
     if(entry === 'upload'){
       // 1. 我已設計好 → 快速模式
       switchMode('quick');
-    } else if(entry === 'have-photo'){
-      // 2. 有照片不會設計 → 設計師模式步驟 2(選風格·生成)
-      switchMode('designer');
-      gotoStep(2, true);   // force=true 繞過「需先選主題」檢查
     } else {
       // 3. 什麼都沒有 → 設計師模式步驟 1(選主題)
       switchMode('designer');
       gotoStep(1);
     }
+  }
+
+  // 獨立 B 頁面:渲染素材改造風格(不綁主題,用通用提示詞)
+  function renderPhotoBStyles(){
+    var wrap = modal.querySelector('#dumPhotoBStyles');
+    var box = modal.querySelector('#dumPhotoBPromptBox');
+    if(!wrap) return;
+    if(box) box.hidden = true;
+    photoBStyle = null;
+
+    var styles = getPhotoBStyles();
+    wrap.innerHTML = styles.map(function(s){
+      return '<button type="button" class="dum-style-card" data-pbstyle="' + s.id + '">' +
+               '<span class="dum-style-name">' + escHtml(s.name) + '</span>' +
+               '<span class="dum-style-desc">' + escHtml(s.desc || '') + '</span>' +
+             '</button>';
+    }).join('');
+
+    wrap.querySelectorAll('.dum-style-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        wrap.querySelectorAll('.dum-style-card').forEach(function(c){ c.classList.remove('on'); });
+        card.classList.add('on');
+        photoBStyle = styles.find(function(x){ return x.id === card.dataset.pbstyle; });
+        var ta = modal.querySelector('#dumPhotoBPromptText');
+        if(ta) ta.value = photoBStyle ? photoBStyle.prompt : '';
+        if(box) box.hidden = false;
+      });
+    });
+
+    // 預設選第一個
+    var first = wrap.querySelector('.dum-style-card');
+    if(first) first.click();
+  }
+
+  // 素材改造通用風格(不依主題)
+  function getPhotoBStyles(){
+    return [
+      { id:'line', name:'簡約線稿', desc:'把照片轉成乾淨的單色線條稿',
+        prompt:'請把我上傳的照片轉換成「簡約單色線稿」風格:乾淨俐落的黑色線條、純白背景、去除陰影與漸層,線條粗細一致,適合雷射雕刻。只保留主體輪廓與關鍵特徵。' },
+      { id:'silhouette', name:'剪影風格', desc:'轉成單色剪影',
+        prompt:'請把我上傳的照片轉換成「單色剪影」風格:主體填滿純黑、背景純白、邊緣清晰,呈現簡潔有力的剪影效果,適合雷射雕刻。' },
+      { id:'sketch', name:'手繪素描', desc:'轉成手繪素描感',
+        prompt:'請把我上傳的照片轉換成「手繪素描」風格:鉛筆線條質感、單色、白背景,保留主體細節但簡化,線條清楚可辨識,適合雷射雕刻。' },
+      { id:'cartoon', name:'可愛卡通', desc:'轉成 Q 版卡通線稿',
+        prompt:'請把我上傳的照片轉換成「可愛 Q 版卡通線稿」風格:圓潤可愛的造型、單色黑線、純白背景、線條簡單清晰,適合雷射雕刻。' },
+    ];
   }
 
   // 依分類名稱關鍵字猜 FontAwesome icon (猜不到 → fa-shapes)
@@ -1674,11 +1785,13 @@
     await renderCategories();
     els.title.textContent = '新增刻圖設計';
     els.submit.querySelector('span').textContent = '送 出 審 核';
-    // 顯示入口頁、隱藏模式 tab(等使用者選了入口才顯示)
+    // 顯示入口頁、隱藏其他所有區塊(入口頁全屏獨立)
     var intro = modal.querySelector('#dumIntro');
     var tabs = modal.querySelector('.dum-tabs');
+    var photob = modal.querySelector('#dumPhotoB');
     if(intro) intro.hidden = false;
     if(tabs) tabs.hidden = true;
+    if(photob) photob.hidden = true;
     switchMode('designer');   // 預設底層為設計師模式(入口選完才實際顯示)
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
@@ -1736,8 +1849,10 @@
     // 編輯/重新上傳:跳過入口頁,直接快速模式(已有圖檔)
     var introE = modal.querySelector('#dumIntro');
     var tabsE = modal.querySelector('.dum-tabs');
+    var photobE = modal.querySelector('#dumPhotoB');
     if(introE) introE.hidden = true;
     if(tabsE) tabsE.hidden = false;
+    if(photobE) photobE.hidden = true;
     switchMode('quick');
 
     modal.classList.add('is-open');
