@@ -1009,3 +1009,41 @@
 .dum-lenspos-cancel{ background:#fff; border:1px solid var(--lohas-bd,#E8DED1); color:var(--lohas-hover,#765F4A) }
 .dum-lenspos-ok{ background:var(--lohas-brand,#50422D); border:0; color:#fff }
 .dum-lenspos-ok:hover{ background:var(--lohas-hover,#765F4A) }
+
+/* ===== 入口頁:三選項 (20260614) ===== */
+.dum-intro{ padding:38px 30px 42px; text-align:center }
+.dum-intro-title{
+  font-size:22px; font-weight:700; color:var(--lohas-brand, #50422D); margin:0 0 6px;
+  letter-spacing:1px;
+}
+.dum-intro-sub{ font-size:13.5px; color:#8A8178; margin:0 0 28px }
+.dum-intro-opts{
+  display:grid; gap:14px; max-width:540px; margin:0 auto;
+}
+.dum-intro-card{
+  display:flex; align-items:center; gap:16px; text-align:left;
+  padding:18px 20px; border:1.5px solid #E8DED1; border-radius:14px;
+  background:#fff; cursor:pointer; transition:all .18s; font-family:inherit;
+}
+.dum-intro-card:hover{
+  border-color:var(--lohas-brand, #50422D);
+  box-shadow:0 6px 20px rgba(80,66,45,.12);
+  transform:translateY(-2px);
+}
+.dum-intro-ico{
+  flex:none; width:52px; height:52px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center; font-size:24px;
+  background:linear-gradient(135deg, #F4EEE3, #E8DED1); color:var(--lohas-brand, #50422D);
+}
+.dum-intro-card:hover .dum-intro-ico{
+  background:linear-gradient(135deg, var(--lohas-brand, #50422D), #6B5840); color:#fff;
+}
+.dum-intro-h{ font-size:15.5px; font-weight:700; color:#3A332B; margin-bottom:3px }
+.dum-intro-d{ font-size:12.5px; color:#8A8178; line-height:1.5 }
+@media(max-width:560px){
+  .dum-intro{ padding:28px 18px 32px }
+  .dum-intro-title{ font-size:19px }
+  .dum-intro-card{ padding:15px 16px; gap:13px }
+  .dum-intro-ico{ width:46px; height:46px; font-size:21px }
+  .dum-intro-h{ font-size:14.5px }
+}
