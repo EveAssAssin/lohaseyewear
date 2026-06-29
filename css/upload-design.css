@@ -52,6 +52,7 @@
   background:#FAF7F2;
   padding:0 56px 0 0;        /* 右留空給 close 鈕 */
 }
+.dum-tabs[hidden]{ display:none !important; }   /* hidden 要蓋過 flex */
 .dum-tab{
   flex:1;
   height:52px;
@@ -1012,6 +1013,7 @@
 
 /* ===== 入口頁:三選項 (20260614) ===== */
 .dum-intro{ padding:38px 30px 42px; text-align:center }
+.dum-intro[hidden]{ display:none !important; }
 .dum-intro-title{
   font-size:22px; font-weight:700; color:var(--lohas-brand, #50422D); margin:0 0 6px;
   letter-spacing:1px;
@@ -1050,6 +1052,7 @@
 
 /* ===== 獨立 B 頁面:有照片不會設計 (20260614) ===== */
 .dum-photob{ padding:30px 30px 36px }
+.dum-photob[hidden]{ display:none !important; }
 .dum-photob-back{
   display:inline-flex; align-items:center; gap:6px; background:none; border:none;
   color:#8A8178; font-size:13.5px; cursor:pointer; padding:4px 0; margin-bottom:14px;
