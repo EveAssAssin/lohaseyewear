@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MSNPQ36L');</script>
+<!-- End Google Tag Manager -->
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>造型搭配器 — 樂活眼鏡</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- LOHAS CSS · 載入順序: tokens → base → components → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/paperdoll.css?v=20260629">
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <!-- 全站追蹤碼 GA4 + Meta Pixel -->
+  <script src="js/analytics.js?v=20260610-booking"></script>
+  <!-- Layout (header / footer) -->
+  <script src="js/layout.js?v=20260516" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js?v=20260518" defer></script>
+  <!-- 造型搭配器資料 + 主程式 -->
+  <script src="js/paperdoll-data.js?v=20260629" defer></script>
+  <script src="js/paperdoll.js?v=20260629" defer></script>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MSNPQ36L"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<div id="site-header"></div>
+
+<main>
+<div id="pd-app">
+
+  <!-- ── 步驟列 ── -->
+  <div class="pd-stepbar">
+    <div class="pd-step active" onclick="PD.goStep(1)">
+      <div class="pd-step-dot">1</div>
+      <div class="pd-step-label">你是誰</div>
+    </div>
+    <div class="pd-step-arrow"></div>
+    <div class="pd-step" onclick="PD.goStep(2)">
+      <div class="pd-step-dot">2</div>
+      <div class="pd-step-label">選鏡框</div>
+    </div>
+    <div class="pd-step-arrow"></div>
+    <div class="pd-step">
+      <div class="pd-step-dot">3</div>
+      <div class="pd-step-label">刻圖</div>
+    </div>
+    <div class="pd-step-arrow"></div>
+    <div class="pd-step">
+      <div class="pd-step-dot">4</div>
+      <div class="pd-step-label">細節</div>
+    </div>
+    <div class="pd-step-arrow"></div>
+    <div class="pd-step">
+      <div class="pd-step-dot">5</div>
+      <div class="pd-step-label">命名</div>
+    </div>
+    <div class="pd-step-arrow"></div>
+    <div class="pd-step">
+      <div class="pd-step-dot">6</div>
+      <div class="pd-step-label">配件</div>
+    </div>
+    <div class="pd-step-arrow"></div>
+    <div class="pd-step">
+      <div class="pd-step-dot">7</div>
+      <div class="pd-step-label">造型卡</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 1 — 問卷
+  ══════════════════════════════════════ -->
+  <div class="pd-screen" data-step="1">
+    <div class="pd-quiz-wrap">
+      <div class="pd-quiz-progress" id="quiz-prog"></div>
+      <div class="pd-quiz-q" id="quiz-q"></div>
+      <div class="pd-quiz-opts" id="quiz-opts"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 2 — 鏡框
+  ══════════════════════════════════════ -->
+  <div class="pd-screen" data-step="2" style="display:none">
+    <div class="pd-panel">
+      <div class="pd-panel-hd">
+        <div class="pd-eyebrow">STEP 2</div>
+        <div class="pd-panel-title">選你的臉的輪廓</div>
+        <div class="pd-panel-sub">找到讓你心裡說「對，就是我」的那一款</div>
+      </div>
+      <div class="pd-panel-body">
+        <div class="pd-frames-layout">
+          <div>
+            <div class="pd-filter-row" id="frame-filters">
+              <button class="pd-chip active" data-val="all"     onclick="PD.setFrameFilter('all')">全部</button>
+              <button class="pd-chip"        data-val="wood"    onclick="PD.setFrameFilter('wood')">木質</button>
+              <button class="pd-chip"        data-val="metal"   onclick="PD.setFrameFilter('metal')">金屬</button>
+              <button class="pd-chip"        data-val="acetate" onclick="PD.setFrameFilter('acetate')">板材</button>
+              <button class="pd-chip"        data-val="tr"      onclick="PD.setFrameFilter('tr')">TR 輕量</button>
+            </div>
+            <div class="pd-frame-grid" id="frame-grid"></div>
+          </div>
+          <div class="pd-side-preview">
+            <span class="sp-icon" id="sp-icon" style="transition:transform .35s cubic-bezier(.34,1.56,.64,1)">👓</span>
+            <div class="sp-name"  id="sp-name">尚未選擇</div>
+            <div class="sp-sub"   id="sp-code"></div>
+            <div class="sp-price" id="sp-price"></div>
+          </div>
+        </div>
+        <div class="pd-nav">
+          <button class="btn-pill-ghost btn-pill-sm" onclick="PD.prevStep()">
+            <i class="fa-solid fa-arrow-left"></i> 上一步
+          </button>
+          <button class="btn-primary" id="step2-next" onclick="PD.nextStep()" disabled>
+            下一步 <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 3 — 刻圖
+  ══════════════════════════════════════ -->
+  <div class="pd-screen" data-step="3" style="display:none">
+    <div class="pd-panel">
+      <div class="pd-panel-hd">
+        <div class="pd-eyebrow">STEP 3 · 搜點子</div>
+        <div class="pd-panel-title">注入靈魂</div>
+        <div class="pd-panel-sub">選一個故事，刻在你的眼鏡上</div>
+      </div>
+      <div class="pd-panel-body">
+        <div class="pd-eng-layout">
+          <div>
+            <div class="pd-filter-row" id="eng-filters">
+              <button class="pd-chip active" data-val="all"   onclick="PD.setEngFilter('all')">全部</button>
+              <button class="pd-chip"        data-val="自然系" onclick="PD.setEngFilter('自然系')">自然系</button>
+              <button class="pd-chip"        data-val="城市系" onclick="PD.setEngFilter('城市系')">城市系</button>
+              <button class="pd-chip"        data-val="幾何系" onclick="PD.setEngFilter('幾何系')">幾何系</button>
+              <button class="pd-chip"        data-val="文字系" onclick="PD.setEngFilter('文字系')">文字系</button>
+            </div>
+            <div class="pd-eng-grid" id="eng-grid"></div>
+            <div style="margin-top:14px;font-size:12px;color:var(--text-muted);text-align:center">
+              不刻圖也可以
+              <span style="color:var(--warn);cursor:pointer;text-decoration:underline;margin-left:4px"
+                    onclick="PD.skipEng()">直接跳過 →</span>
+            </div>
+          </div>
+          <div class="pd-eng-story" id="eng-story">
+            <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:24px 0">
+              選一個刻圖，看看它的故事
+            </div>
+          </div>
+        </div>
+        <div class="pd-nav">
+          <button class="btn-pill-ghost btn-pill-sm" onclick="PD.prevStep()">
+            <i class="fa-solid fa-arrow-left"></i> 上一步
+          </button>
+          <button class="btn-primary" id="step3-next" onclick="PD.nextStep()" disabled>
+            下一步 <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 4 — 細節微調
+  ══════════════════════════════════════ -->
+  <div class="pd-screen" data-step="4" style="display:none">
+    <div class="pd-panel">
+      <div class="pd-panel-hd">
+        <div class="pd-eyebrow">STEP 4</div>
+        <div class="pd-panel-title">讓它更像你</div>
+        <div class="pd-panel-sub">每一個小決定，都讓這副眼鏡更難歸還給陌生人</div>
+      </div>
+      <div class="pd-panel-body">
+        <div class="pd-detail-layout">
+          <div>
+            <div class="pd-count-pill" id="detail-count">已做了 <b>0</b> 個選擇</div>
+
+            <div class="pd-detail-group">
+              <div class="pd-detail-lbl">鏡腳顏色</div>
+              <div class="pd-color-row" id="leg-colors"></div>
+            </div>
+            <div class="pd-detail-group">
+              <div class="pd-detail-lbl">鼻墊材質</div>
+              <div class="pd-radio-row" id="nose-pads"></div>
+            </div>
+            <div class="pd-detail-group">
+              <div class="pd-detail-lbl">固定螺絲顏色</div>
+              <div class="pd-color-row" id="screw-colors"></div>
+            </div>
+            <div class="pd-detail-group">
+              <div class="pd-detail-lbl">
+                鏡腳內側刻字
+                <span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:6px">（最多 10 字，可空白）</span>
+              </div>
+              <input class="pd-txt-input" id="inner-text" maxlength="10"
+                     placeholder="你才懂的兩個字">
+            </div>
+            <div class="pd-detail-group">
+              <div class="pd-detail-lbl">鏡片顏色</div>
+              <div class="pd-color-row" id="lens-colors"></div>
+            </div>
+          </div>
+
+          <div class="pd-side-preview">
+            <span id="detail-preview-icon" style="font-size:68px;display:block;margin-bottom:12px;text-align:center">👓</span>
+            <div style="font-size:13px;font-weight:700;color:var(--lohas-brand);text-align:center">造型預覽</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;line-height:1.9">
+              完成所有細節後<br>就是一副只有你有的眼鏡
+            </div>
+          </div>
+        </div>
+        <div class="pd-nav">
+          <button class="btn-pill-ghost btn-pill-sm" onclick="PD.prevStep()">
+            <i class="fa-solid fa-arrow-left"></i> 上一步
+          </button>
+          <button class="btn-primary" onclick="PD.nextStep()">
+            下一步 <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 5 — 命名
+  ══════════════════════════════════════ -->
+  <div class="pd-screen" data-step="5" style="display:none">
+    <div class="pd-panel">
+      <div class="pd-panel-hd">
+        <div class="pd-eyebrow">STEP 5</div>
+        <div class="pd-panel-title">給它一個名字</div>
+        <div class="pd-panel-sub">有名字的東西，是不一樣的</div>
+      </div>
+      <div class="pd-panel-body">
+        <div class="pd-naming-wrap">
+          <div class="pd-naming-q">這副眼鏡，叫什麼？</div>
+          <div class="pd-naming-sub">可以是地名、一首歌、一個人的名字，或只有你懂的兩個字</div>
+          <input class="pd-naming-input" id="naming-input" maxlength="20" placeholder="雨天散步">
+          <div class="pd-naming-hints">
+            <button class="pd-naming-hint" onclick="PD.applyHint('雨天散步')">雨天散步</button>
+            <button class="pd-naming-hint" onclick="PD.applyHint('外婆的菜園')">外婆的菜園</button>
+            <button class="pd-naming-hint" onclick="PD.applyHint('三十歲')">三十歲</button>
+            <button class="pd-naming-hint" onclick="PD.applyHint('安靜的下午')">安靜的下午</button>
+            <button class="pd-naming-hint" onclick="PD.applyHint('第一次去京都')">第一次去京都</button>
+          </div>
+          <div class="pd-naming-preview">
+            <div class="np-name" id="np-name">（還沒有名字）</div>
+            <div class="np-detail">
+              <span id="np-frame"></span><span id="np-eng"></span>
+            </div>
+          </div>
+        </div>
+        <div class="pd-nav">
+          <button class="btn-pill-ghost btn-pill-sm" onclick="PD.prevStep()">
+            <i class="fa-solid fa-arrow-left"></i> 上一步
+          </button>
+          <div style="display:flex;gap:10px">
+            <button class="btn-pill-ghost btn-pill-sm" onclick="PD.nextStep()">先跳過</button>
+            <button class="btn-primary" onclick="PD.nextStep()">
+              下一步 <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 6 — 配件 Flat Lay
+  ══════════════════════════════════════ -->
+  <div class="pd-screen" data-step="6" style="display:none">
+    <div class="pd-panel" style="padding:0">
+      <div class="pd-panel-hd">
+        <div class="pd-eyebrow">STEP 6</div>
+        <div class="pd-panel-title">配角登場</div>
+        <div class="pd-panel-sub">你的作品需要好的夥伴</div>
+      </div>
+
+      <div class="pd-acc-layout">
+
+        <!-- 左：Flat Lay 舞台 -->
+        <div class="pd-fl-side">
+          <div class="pd-fl-top">
+            <div>
+              <div class="pd-fl-meta-lbl">你的造型套餐</div>
+              <div class="pd-fl-meta-name" id="fl-outfit-name">木質方框</div>
+            </div>
+            <div class="pd-total-pill" id="fl-total">NT$0</div>
+          </div>
+
+          <div class="pd-fl-stage">
+            <div class="pd-fl-hint" id="fl-hint">
+              選擇右側配件<br>它們會飛進來
+            </div>
+
+            <!-- 眼鏡主角 -->
+            <div class="pd-fl-glasses">
+              <span class="flg-icon" id="fl-glasses-em">🕶</span>
+              <div class="flg-name" id="fl-glasses-name"></div>
+            </div>
+
+            <!-- 四角配件佔位 -->
+            <div class="pd-fl-item tl" id="fl-box">
+              <div class="pd-fl-obj" style="width:78px;height:78px">
+                <div class="fo-em">📦</div>
+                <div class="fo-lbl">眼鏡盒</div>
+              </div>
+            </div>
+            <div class="pd-fl-item bl" id="fl-cloth">
+              <div class="pd-fl-obj" style="width:70px;height:52px;padding:6px 10px">
+                <div class="fo-em" style="font-size:20px">🧻</div>
+                <div class="fo-lbl">拭鏡布</div>
+              </div>
+            </div>
+            <div class="pd-fl-item tr" id="fl-bag">
+              <div class="pd-fl-obj" style="width:74px;height:74px">
+                <div class="fo-em">👜</div>
+                <div class="fo-lbl">眼鏡袋</div>
+              </div>
+            </div>
+            <div class="pd-fl-item br" id="fl-stand">
+              <div class="pd-fl-obj" style="width:62px;height:84px">
+                <div class="fo-em">🏛</div>
+                <div class="fo-lbl">置物架</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部清單 -->
+          <div class="pd-fl-list" id="fl-list"></div>
+        </div>
+
+        <!-- 右：配件選購 -->
+        <div class="pd-acc-right">
+          <div class="pd-acc-tabs">
+            <button class="pd-acc-tab active" data-cat="box"   onclick="PD.setAccTab('box')">眼鏡盒</button>
+            <button class="pd-acc-tab"        data-cat="cloth" onclick="PD.setAccTab('cloth')">拭鏡布</button>
+            <button class="pd-acc-tab"        data-cat="bag"   onclick="PD.setAccTab('bag')">眼鏡袋</button>
+            <button class="pd-acc-tab"        data-cat="stand" onclick="PD.setAccTab('stand')">置物架</button>
+          </div>
+          <div class="pd-acc-body">
+            <div class="pd-acc-grid" id="acc-grid"></div>
+          </div>
+          <div class="pd-acc-foot">
+            <div class="pd-acc-foot-cnt" id="acc-foot-cnt">已加入 <b>0</b> 件配件</div>
+            <button class="btn-pill-ghost btn-pill-sm" onclick="PD.prevStep()">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <button class="btn-primary" onclick="PD.nextStep()">
+              完成 <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 7 — 造型卡
+  ══════════════════════════════════════ -->
+  <div class="pd-screen" data-step="7" style="display:none">
+    <div class="pd-panel">
+      <div class="pd-panel-hd">
+        <div class="pd-eyebrow">STEP 7</div>
+        <div class="pd-panel-title">你的作品</div>
+        <div class="pd-panel-sub">做完了，它屬於你了</div>
+      </div>
+      <div class="pd-panel-body">
+        <div class="pd-card-wrap">
+
+          <!-- 造型卡 -->
+          <div class="pd-outfit-card">
+            <div class="pd-oc-eb">LOHAS EYEWEAR · 我的造型</div>
+            <span class="pd-oc-glasses" id="oc-glasses">🕶</span>
+            <div class="pd-oc-name"    id="oc-name">未命名造型</div>
+            <div class="pd-oc-items"   id="oc-items"></div>
+            <div class="pd-oc-creator" id="oc-creator"></div>
+            <div class="pd-oc-divider"></div>
+            <div class="pd-oc-accs"    id="oc-accs"></div>
+            <div class="pd-oc-total"   id="oc-total"></div>
+          </div>
+
+          <!-- 動作列 -->
+          <div class="pd-card-actions">
+            <button class="btn-pill-outline" onclick="PD.saveOutfit()">
+              <i class="fa-regular fa-bookmark"></i> 收藏此造型
+            </button>
+            <button class="btn-pill-ghost" onclick="PD.shareCard()">
+              <i class="fa-solid fa-share-nodes"></i> 分享造型卡
+            </button>
+            <button class="btn-pill-ghost" onclick="PD.prevStep()">
+              <i class="fa-solid fa-rotate-left"></i> 回去調整
+            </button>
+          </div>
+
+          <div style="margin-top:8px;text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:12px">
+            收藏後可在結帳時一次加入購物車
+          </div>
+          <button class="pd-cart-btn">
+            <i class="fa-solid fa-bag-shopping"></i>
+            加入購物車
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#pd-app -->
+</main>
+
+<div id="site-footer"></div>
+
+</body>
+</html>
