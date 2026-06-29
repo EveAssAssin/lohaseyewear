@@ -137,6 +137,29 @@
       '<div class="dum-dialog" role="dialog" aria-modal="true">',
         '<button class="dum-close" type="button" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button>',
 
+        // ===== 入口頁:三選項(一開始顯示,選完跳對應模式/步驟) =====
+        '<div class="dum-intro" id="dumIntro">',
+          '<h2 class="dum-intro-title">想怎麼開始你的刻圖?</h2>',
+          '<p class="dum-intro-sub">選一個最符合你目前狀況的方式</p>',
+          '<div class="dum-intro-opts">',
+            '<button type="button" class="dum-intro-card" data-entry="upload">',
+              '<div class="dum-intro-ico"><i class="fa-solid fa-cloud-arrow-up"></i></div>',
+              '<div class="dum-intro-h">我已經設計好刻圖檔了</div>',
+              '<div class="dum-intro-d">可以直接上傳,快速送審</div>',
+            '</button>',
+            '<button type="button" class="dum-intro-card" data-entry="have-photo">',
+              '<div class="dum-intro-ico"><i class="fa-solid fa-images"></i></div>',
+              '<div class="dum-intro-h">我有很多照片,但我不會設計</div>',
+              '<div class="dum-intro-d">挑個風格,用 AI 把照片變成刻圖</div>',
+            '</button>',
+            '<button type="button" class="dum-intro-card" data-entry="nothing">',
+              '<div class="dum-intro-ico"><i class="fa-solid fa-lightbulb"></i></div>',
+              '<div class="dum-intro-h">我什麼都沒有,給我建議</div>',
+              '<div class="dum-intro-d">從選主題開始,一步步帶你做</div>',
+            '</button>',
+          '</div>',
+        '</div>',
+
         // ===== 模式切換 Tab =====
         '<div class="dum-tabs">',
           '<button type="button" class="dum-tab on" data-mode="designer"><i class="fa-solid fa-wand-magic-sparkles"></i> 設計師模式</button>',
@@ -573,6 +596,13 @@
   var lensPos = { x: 80, y: 22, w: 15, rot: 0 };
 
   function bindDesignerMode(){
+    // 入口頁三選項
+    modal.querySelectorAll('.dum-intro-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        chooseEntry(card.dataset.entry);
+      });
+    });
+
     // tab 切換
     modal.querySelectorAll('.dum-tab').forEach(function(tab){
       tab.addEventListener('click', function(){
@@ -618,6 +648,27 @@
       designer.hidden = true; quick.hidden = false;
     } else {
       designer.hidden = false; quick.hidden = true;
+    }
+  }
+
+  // 入口頁三選項 → 跳到對應模式/步驟
+  function chooseEntry(entry){
+    var intro = modal.querySelector('#dumIntro');
+    var tabs = modal.querySelector('.dum-tabs');
+    if(intro) intro.hidden = true;
+    if(tabs) tabs.hidden = false;
+
+    if(entry === 'upload'){
+      // 1. 我已設計好 → 快速模式
+      switchMode('quick');
+    } else if(entry === 'have-photo'){
+      // 2. 有照片不會設計 → 設計師模式步驟 2(選風格·生成)
+      switchMode('designer');
+      gotoStep(2, true);   // force=true 繞過「需先選主題」檢查
+    } else {
+      // 3. 什麼都沒有 → 設計師模式步驟 1(選主題)
+      switchMode('designer');
+      gotoStep(1);
     }
   }
 
@@ -826,9 +877,9 @@
     }
   }
 
-  function gotoStep(n){
-    // 步驟驗證
-    if(n === 2 && !dz.theme){ return; }
+  function gotoStep(n, force){
+    // 步驟驗證(force=true 時繞過,供入口頁「有照片」直跳步驟2)
+    if(n === 2 && !dz.theme && !force){ return; }
     // 切步驟指示
     modal.querySelectorAll('.dum-step').forEach(function(s){
       var sn = parseInt(s.dataset.step, 10);
@@ -1623,6 +1674,12 @@
     await renderCategories();
     els.title.textContent = '新增刻圖設計';
     els.submit.querySelector('span').textContent = '送 出 審 核';
+    // 顯示入口頁、隱藏模式 tab(等使用者選了入口才顯示)
+    var intro = modal.querySelector('#dumIntro');
+    var tabs = modal.querySelector('.dum-tabs');
+    if(intro) intro.hidden = false;
+    if(tabs) tabs.hidden = true;
+    switchMode('designer');   // 預設底層為設計師模式(入口選完才實際顯示)
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
@@ -1675,6 +1732,13 @@
       els.mockFrame.hidden = false;
       syncSquareBoxes();
     }
+
+    // 編輯/重新上傳:跳過入口頁,直接快速模式(已有圖檔)
+    var introE = modal.querySelector('#dumIntro');
+    var tabsE = modal.querySelector('.dum-tabs');
+    if(introE) introE.hidden = true;
+    if(tabsE) tabsE.hidden = false;
+    switchMode('quick');
 
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
