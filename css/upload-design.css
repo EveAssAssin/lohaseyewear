@@ -1047,3 +1047,27 @@
   .dum-intro-ico{ width:46px; height:46px; font-size:21px }
   .dum-intro-h{ font-size:14.5px }
 }
+
+/* ===== 獨立 B 頁面:有照片不會設計 (20260614) ===== */
+.dum-photob{ padding:30px 30px 36px }
+.dum-photob-back{
+  display:inline-flex; align-items:center; gap:6px; background:none; border:none;
+  color:#8A8178; font-size:13.5px; cursor:pointer; padding:4px 0; margin-bottom:14px;
+  font-family:inherit;
+}
+.dum-photob-back:hover{ color:var(--lohas-brand, #50422D) }
+.dum-photob-title{
+  font-size:21px; font-weight:700; color:var(--lohas-brand, #50422D); margin:0 0 6px;
+}
+.dum-photob-sub{ font-size:13.5px; color:#8A8178; margin:0 0 22px; line-height:1.6 }
+.dum-photob-styles{
+  display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; margin-bottom:8px;
+}
+.dum-photob-nav{
+  display:flex; justify-content:flex-end; margin-top:22px;
+}
+@media(max-width:560px){
+  .dum-photob{ padding:22px 18px 28px }
+  .dum-photob-title{ font-size:18px }
+  .dum-photob-styles{ grid-template-columns:1fr }
+}
