@@ -649,10 +649,11 @@
     });
     var pbToUpload = modal.querySelector('#dumPhotoBToUpload');
     if(pbToUpload) pbToUpload.addEventListener('click', function(){
-      // 生成完 → 進快速模式上傳
+      // 生成完 → 設計師模式步驟 3 上傳(隱藏 tabs)
       modal.querySelector('#dumPhotoB').hidden = true;
-      modal.querySelector('.dum-tabs').hidden = false;
-      switchMode('quick');
+      modal.querySelector('.dum-tabs').hidden = true;
+      switchMode('designer');
+      gotoStep(3, true);
     });
 
     // tab 切換
@@ -1789,10 +1790,13 @@
     var intro = modal.querySelector('#dumIntro');
     var tabs = modal.querySelector('.dum-tabs');
     var photob = modal.querySelector('#dumPhotoB');
+    var designer = modal.querySelector('#dumDesigner');
+    var quick = modal.querySelector('#dumQuick');
     if(intro) intro.hidden = false;
     if(tabs) tabs.hidden = true;
     if(photob) photob.hidden = true;
-    switchMode('designer');   // 預設底層為設計師模式(入口選完才實際顯示)
+    if(designer) designer.hidden = true;   // 入口頁全屏:底層全藏
+    if(quick) quick.hidden = true;
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
