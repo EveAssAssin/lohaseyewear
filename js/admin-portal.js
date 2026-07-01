@@ -1751,7 +1751,7 @@
   /* =============================================================
      刻圖審核 Modal - 填 erp_number + price + 編輯分類/名稱
      ============================================================= */
-  function openApproveModal({ id, name, category, creatorId }) {
+  async function openApproveModal({ id, name, category, creatorId }) {
     const modal = document.getElementById('approveDesignModal');
     if (!modal) {
       alert('審核 Modal 未載入');
@@ -1766,6 +1766,22 @@
     document.getElementById('apCreatorIdLabel').textContent = creatorId || '匿名';
 
     modal.hidden = false;
+
+    // 載入該作品原本的 erp_number / price(重新上架重審時,避免空值覆蓋清掉編號)
+    try {
+      const sb = getSb();
+      if (sb && id) {
+        const { data: row } = await sb.from('engraving_designs')
+          .select('erp_number, price')
+          .eq('id', id)
+          .single();
+        if (row) {
+          if (row.erp_number) document.getElementById('apErpNumber').value = row.erp_number;
+          if (row.price != null) document.getElementById('apPrice').value = row.price;
+        }
+      }
+    } catch (e) { /* 撈不到就維持空,不阻擋審核 */ }
+
     setTimeout(() => document.getElementById('apErpNumber').focus(), 50);
     refreshCsAdminBadges();   // 這張刻圖有未讀對話才亮紅點
   }
@@ -2198,16 +2214,19 @@
     if (!sb) { submitBtn.disabled = false; submitBtn.textContent = '完成審核'; return; }
 
     try {
+      const approveUpdate = {
+        name:        name,
+        category:    category || null,
+        price:       price,
+        is_show:     '上架',
+        status:      'approved',
+        reviewed_at: new Date().toISOString(),
+      };
+      // erp_number 只在有填時才寫入,空值不覆蓋(避免重新上架重審清掉原編號)
+      if (erpNumber) approveUpdate.erp_number = erpNumber;
+
       const { error } = await sb.from('engraving_designs')
-        .update({
-          name:        name,
-          category:    category || null,
-          erp_number:  erpNumber,
-          price:       price,
-          is_show:     '上架',
-          status:      'approved',
-          reviewed_at: new Date().toISOString(),
-        })
+        .update(approveUpdate)
         .eq('id', id);
 
       if (error) throw error;
