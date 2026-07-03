@@ -1650,8 +1650,9 @@
           : d.type === 'store' ? '<i class="fa-solid fa-store"></i>門市'
           : 'Member';
 
-        const imgStyle = d.image_url
-          ? `style="background-image:url('${escapeHtml(d.image_url)}');background-size:cover;background-position:center"`
+        const reviewImgUrl = d.image_url_png || d.image_url || d.image_url_svg || '';
+        const imgStyle = reviewImgUrl
+          ? `style="background-image:url('${escapeHtml(reviewImgUrl)}');background-size:cover;background-position:center"`
           : '';
 
         // 根據狀態切換按鈕
