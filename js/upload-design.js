@@ -345,11 +345,6 @@
             '<b>小提示:</b> 上傳後可裁切,通過審核後會自動轉換成雷雕用透明底版本',
             '<br><a href="market-about.html#not-suitable" target="_blank" rel="noopener" class="dum-tip-link"><i class="fa-solid fa-circle-question"></i> 不確定圖適不適合雷刻?看設計建議</a>',
           '</div>',
-
-          '<div class="dum-flow-info">',
-            '<div class="dum-flow-label">審 核 流 程</div>',
-            '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
-          '</div>',
         '</div>',
 
         // ===== 右欄:表單 =====
@@ -397,20 +392,6 @@
 
           '</div>',
 
-          // 條款: 隱私權 / 使用條款 (預設已同意)
-          '<div class="dum-terms">',
-            '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
-            '<div class="dum-terms-text">',
-              '送出設計即表示您已閱讀並同意 <a href="https://www.lohasglasses.com/privacy.html" target="_blank" rel="noopener">隱私權政策</a> 與 <a href="https://www.lohasglasses.com/terms.html" target="_blank" rel="noopener">使用條款</a>,並授權樂活眼鏡將您的作品用於商品展示與宣傳。',
-            '</div>',
-          '</div>',
-
-          // CTA
-          '<div class="dum-actions">',
-            '<button type="button" class="dum-btn-cancel" id="dumCancel">取 消</button>',
-            '<button type="button" class="dum-btn-submit" id="dumSubmit"><span>送 出 審 核</span></button>',
-          '</div>',
-
         '</div>',
 
         '</div>',  // /dum-quick-row (左右兩欄結束)
@@ -419,6 +400,26 @@
         '<div class="dum-carriers dum-carriers-full" id="dumQuickCarriers" hidden>',
           '<div class="dum-carriers-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 刻在不同載體上的樣子(示意)</div>',
           '<div class="dum-carrier-grid" id="dumQuickCarrierGrid"></div>',
+        '</div>',
+
+        // 審核流程 + 條款 + CTA(整寬,置於最下方,對標設計師模式)
+        '<div class="dum-quick-foot">',
+          '<div class="dum-flow-info">',
+            '<div class="dum-flow-label">審 核 流 程</div>',
+            '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
+          '</div>',
+
+          '<div class="dum-terms">',
+            '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
+            '<div class="dum-terms-text">',
+              '送出設計即表示您已閱讀並同意 <a href="https://www.lohasglasses.com/privacy.html" target="_blank" rel="noopener">隱私權政策</a> 與 <a href="https://www.lohasglasses.com/terms.html" target="_blank" rel="noopener">使用條款</a>,並授權樂活眼鏡將您的作品用於商品展示與宣傳。',
+            '</div>',
+          '</div>',
+
+          '<div class="dum-actions">',
+            '<button type="button" class="dum-btn-cancel" id="dumCancel">取 消</button>',
+            '<button type="button" class="dum-btn-submit" id="dumSubmit"><span>送 出 審 核</span></button>',
+          '</div>',
         '</div>',
 
         '</div>',  // /dum-quick
