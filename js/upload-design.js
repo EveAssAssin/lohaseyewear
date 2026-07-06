@@ -343,12 +343,6 @@
             '<br><a href="market-about.html#not-suitable" target="_blank" rel="noopener" class="dum-tip-link"><i class="fa-solid fa-circle-question"></i> 不確定圖適不適合雷刻?看設計建議</a>',
           '</div>',
 
-          // 全載體模擬 (上傳後才顯示,與設計師模式一致)
-          '<div class="dum-carriers" id="dumQuickCarriers" hidden>',
-            '<div class="dum-carriers-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 刻在不同載體上的樣子(示意)</div>',
-            '<div class="dum-carrier-grid" id="dumQuickCarrierGrid"></div>',
-          '</div>',
-
           '<div class="dum-flow-info">',
             '<div class="dum-flow-label">審 核 流 程</div>',
             '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
@@ -415,6 +409,13 @@
           '</div>',
 
         '</div>',
+
+        // 全載體模擬(整寬,橫跨左右兩欄下方,與設計師模式一致)
+        '<div class="dum-carriers dum-carriers-full" id="dumQuickCarriers" hidden>',
+          '<div class="dum-carriers-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 刻在不同載體上的樣子(示意)</div>',
+          '<div class="dum-carrier-grid" id="dumQuickCarrierGrid"></div>',
+        '</div>',
+
         '</div>',  // /dum-quick
 
         // Loading overlay (透明轉換用)
