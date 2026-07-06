@@ -343,14 +343,10 @@
             '<br><a href="market-about.html#not-suitable" target="_blank" rel="noopener" class="dum-tip-link"><i class="fa-solid fa-circle-question"></i> 不確定圖適不適合雷刻?看設計建議</a>',
           '</div>',
 
-          // 眼鏡模擬框 (上傳後才顯示)
-          '<div class="dum-mock-frame" id="dumMockFrame" hidden>',
-            '<div class="dum-mock-label">刻 在 眼 鏡 上 的 樣 子</div>',
-            '<div class="dum-mock-stage">',
-              '<div class="dum-mock-engrave" id="dumMockEngrave">',
-                '<img alt="刻圖模擬" id="dumMockImg">',
-              '</div>',
-            '</div>',
+          // 全載體模擬 (上傳後才顯示,與設計師模式一致)
+          '<div class="dum-carriers" id="dumQuickCarriers" hidden>',
+            '<div class="dum-carriers-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 刻在不同載體上的樣子(示意)</div>',
+            '<div class="dum-carrier-grid" id="dumQuickCarrierGrid"></div>',
           '</div>',
 
           '<div class="dum-flow-info">',
@@ -1316,8 +1312,8 @@
     els.uploader.querySelector('.dum-uploader-empty').hidden = true;
     els.uploader.classList.add('has-file');
     // 顯示眼鏡模擬框
-    els.mockImg.src = state.previewUrl;
-    els.mockFrame.hidden = false;
+    if(els.mockImg) els.mockImg.src = state.previewUrl;
+    if(els.mockFrame) els.mockFrame.hidden = false;
     syncSquareBoxes();
 
     // 同步第三步(設計師模式)的預覽
@@ -1352,8 +1348,13 @@
   ];
 
   function renderCarriers(imgUrl){
-    var box = modal.querySelector('#dumCarriers');
-    var grid = modal.querySelector('#dumCarrierGrid');
+    renderCarriersInto('#dumCarriers', '#dumCarrierGrid', imgUrl);
+    renderCarriersInto('#dumQuickCarriers', '#dumQuickCarrierGrid', imgUrl);
+  }
+
+  function renderCarriersInto(boxSel, gridSel, imgUrl){
+    var box = modal.querySelector(boxSel);
+    var grid = modal.querySelector(gridSel);
     if(!box || !grid) return;
     if(!imgUrl){ box.hidden = true; grid.innerHTML = ''; return; }
     function carrierHtml(c){
@@ -1607,8 +1608,8 @@
     els.uploader.querySelector('.dum-uploader-empty').hidden = false;
     els.uploader.classList.remove('has-file');
     // 隱藏眼鏡模擬框
-    els.mockImg.src = '';
-    els.mockFrame.hidden = true;
+    if(els.mockImg) els.mockImg.src = '';
+    if(els.mockFrame) els.mockFrame.hidden = true;
 
     // 同步清第三步預覽
     var up2 = modal.querySelector('#dumUploader2');
@@ -1845,8 +1846,8 @@
       els.uploader.querySelector('.dum-uploader-empty').hidden = true;
       els.uploader.classList.add('has-file');
       // 編輯模式也要顯示眼鏡模擬
-      els.mockImg.src = design.image_url;
-      els.mockFrame.hidden = false;
+      if(els.mockImg) els.mockImg.src = design.image_url;
+      if(els.mockFrame) els.mockFrame.hidden = false;
       syncSquareBoxes();
     }
 
