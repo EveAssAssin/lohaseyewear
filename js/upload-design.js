@@ -404,16 +404,16 @@
 
         // 審核流程 + 條款 + CTA(整寬,置於最下方,對標設計師模式)
         '<div class="dum-quick-foot">',
-          '<div class="dum-flow-info">',
-            '<div class="dum-flow-label">審 核 流 程</div>',
-            '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
-          '</div>',
-
           '<div class="dum-terms">',
             '<div class="dum-terms-icon"><i class="fa-solid fa-info"></i></div>',
             '<div class="dum-terms-text">',
               '送出設計即表示您已閱讀並同意 <a href="https://www.lohasglasses.com/privacy.html" target="_blank" rel="noopener">隱私權政策</a> 與 <a href="https://www.lohasglasses.com/terms.html" target="_blank" rel="noopener">使用條款</a>,並授權樂活眼鏡將您的作品用於商品展示與宣傳。',
             '</div>',
+          '</div>',
+
+          '<div class="dum-flow-info">',
+            '<div class="dum-flow-label">審 核 流 程</div>',
+            '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
           '</div>',
 
           '<div class="dum-actions">',
@@ -1368,7 +1368,8 @@
       // 光學鏡片用使用者定位的 lensPos(水平置中、top為上緣、可旋轉),其他用中心對齊預設
       var engStyle;
       if(c.glasses){
-        engStyle = 'left:' + lensPos.x + '%;top:' + lensPos.y + '%;width:' + lensPos.w +
+        // 光學鏡片模擬刻圖放大 1.5 倍(w × 1.5)
+        engStyle = 'left:' + lensPos.x + '%;top:' + lensPos.y + '%;width:' + (lensPos.w * 1.5) +
           '%;transform:translateX(-50%) rotate(' + lensPos.rot + 'deg)';
       } else {
         engStyle = 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translate(-50%,-50%)';
