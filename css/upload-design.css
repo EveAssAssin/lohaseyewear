@@ -79,13 +79,18 @@
 
 /* === 快速模式:原本的左右兩欄 (grid 從 dialog 移來這) === */
 .dum-quick{
-  display:grid;
-  grid-template-columns:380px 1fr;
+  display:flex;
+  flex-direction:column;
   flex:1;
   min-height:0;
-  overflow:hidden;
+  overflow-y:auto;
 }
 .dum-quick[hidden]{ display:none }
+.dum-quick-row{
+  display:grid;
+  grid-template-columns:380px 1fr;
+  flex:none;
+}
 
 /* === 設計師模式容器 === */
 .dum-designer{
@@ -584,7 +589,7 @@
 
 /* === RWD: 平板 === */
 @media (max-width: 900px){
-  .dum-quick{ grid-template-columns:320px 1fr }
+  .dum-quick-row{ grid-template-columns:320px 1fr }
   .dum-dialog{ width:96vw }
   .dum-left{ padding:20px }
   .dum-right{ padding:24px 24px 20px }
@@ -615,13 +620,15 @@
   }
   .dum-tabs{ flex-shrink:0 }   /* tab 列固定不壓縮 */
   .dum-quick{
-    grid-template-columns:1fr;
-    grid-auto-rows:min-content;
     flex:1;
     min-height:0;
     overflow-y:auto;
     overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
+  }
+  .dum-quick-row{
+    grid-template-columns:1fr;
+    grid-auto-rows:min-content;
   }
   .dum-left,
   .dum-right{
@@ -1076,12 +1083,10 @@
 }
 
 /* ===== 快速模式:整寬載體區 (20260614) ===== */
-.dum-quick{ overflow-y:auto; }   /* 讓整寬載體區能顯示/捲動 */
 .dum-carriers-full{
-  grid-column:1 / -1;            /* 橫跨左右兩欄 */
   padding:20px 32px 28px;
   border-top:1px solid var(--lohas-bd, #E8DED1);
-  margin-top:8px;
+  margin-top:4px;
 }
 @media(max-width:900px){
   .dum-carriers-full{ padding:16px 16px 22px }
