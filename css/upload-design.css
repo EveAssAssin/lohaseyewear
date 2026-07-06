@@ -1091,3 +1091,24 @@
 @media(max-width:900px){
   .dum-carriers-full{ padding:16px 16px 22px }
 }
+
+/* ===== 手機版載體刻圖清晰化 (20260615) ===== */
+@media (max-width: 680px){
+  .dum-carrier-engrave{
+    filter:grayscale(100%) contrast(.95);   /* 移除 blur,手機高密度螢幕會放大糊化 */
+  }
+  .dum-carrier-bg{ image-rendering:auto; }
+}
+
+/* ===== 快速模式底部區(審核流程+條款+CTA,整寬) (20260615) ===== */
+.dum-quick-foot{
+  padding:4px 32px 24px;
+}
+.dum-quick-foot .dum-flow-info,
+.dum-quick-foot .dum-terms{ margin-bottom:14px }
+@media(max-width:900px){
+  .dum-quick-foot{ padding:4px 20px 20px }
+}
+@media(max-width:680px){
+  .dum-quick-foot{ padding:4px 16px 18px }
+}
