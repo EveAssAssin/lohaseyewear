@@ -318,6 +318,9 @@
         // ===== 快速模式:現有左右兩欄 =====
         '<div class="dum-quick" id="dumQuick" hidden>',
 
+        // 上半:左右兩欄並排
+        '<div class="dum-quick-row">',
+
         // ===== 左欄:上傳區 =====
         '<div class="dum-left">',
           '<div class="dum-eyebrow">DESIGN · UPLOAD</div>',
@@ -409,6 +412,8 @@
           '</div>',
 
         '</div>',
+
+        '</div>',  // /dum-quick-row (左右兩欄結束)
 
         // 全載體模擬(整寬,橫跨左右兩欄下方,與設計師模式一致)
         '<div class="dum-carriers dum-carriers-full" id="dumQuickCarriers" hidden>',
