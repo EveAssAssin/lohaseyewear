@@ -1368,9 +1368,9 @@
       // 光學鏡片用使用者定位的 lensPos(水平置中、top為上緣、可旋轉),其他用中心對齊預設
       var engStyle;
       if(c.glasses){
-        // 光學鏡片模擬刻圖放大 1.5 倍(w × 1.5)
-        engStyle = 'left:' + lensPos.x + '%;top:' + lensPos.y + '%;width:' + (lensPos.w * 1.5) +
-          '%;transform:translateX(-50%) rotate(' + lensPos.rot + 'deg)';
+        // 與拖曳定位視窗完全一致:中心錨點 translate(-50%,-50%)、寬度=lensPos.w(不放大)
+        engStyle = 'left:' + lensPos.x + '%;top:' + lensPos.y + '%;width:' + lensPos.w +
+          '%;transform:translate(-50%,-50%) rotate(' + lensPos.rot + 'deg)';
       } else {
         engStyle = 'left:' + c.x + '%;top:' + c.y + '%;width:' + c.w + '%;transform:translate(-50%,-50%)';
       }
