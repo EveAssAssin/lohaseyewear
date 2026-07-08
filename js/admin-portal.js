@@ -1762,28 +1762,26 @@
     document.getElementById('apDesignId').value     = id || '';
     document.getElementById('apName').value         = name || '';
     document.getElementById('apCategory').value     = category || '';
-    document.getElementById('apErpNumber').value    = '';
     document.getElementById('apPrice').value        = '';
     document.getElementById('apCreatorIdLabel').textContent = creatorId || '匿名';
 
     modal.hidden = false;
 
-    // 載入該作品原本的 erp_number / price(重新上架重審時,避免空值覆蓋清掉編號)
+    // 載入該作品原本的 price(重新上架重審時帶回原售價)
     try {
       const sb = getSb();
       if (sb && id) {
         const { data: row } = await sb.from('engraving_designs')
-          .select('erp_number, price')
+          .select('price')
           .eq('id', id)
           .single();
         if (row) {
-          if (row.erp_number) document.getElementById('apErpNumber').value = row.erp_number;
           if (row.price != null) document.getElementById('apPrice').value = row.price;
         }
       }
     } catch (e) { /* 撈不到就維持空,不阻擋審核 */ }
 
-    setTimeout(() => document.getElementById('apErpNumber').focus(), 50);
+    setTimeout(() => document.getElementById('apName').focus(), 50);
     refreshCsAdminBadges();   // 這張刻圖有未讀對話才亮紅點
   }
 
@@ -2192,16 +2190,45 @@
     });
   })();
 
+  /* =============================================================
+     刻圖審核 · 自動建 ERP 商品 (createProduct 開放接口)
+     前端 → Supabase Edge Function create-erp-product → ERP
+     成功回傳 bindingId,寫入 engraving_designs.erp_number
+     ------------------------------------------------------------
+     ★ 之後若因 ERP 開了 IP 白名單需改走 Render proxy,
+       只需把 ERP_CREATE_BFF_URL 這一行改成 proxy 端點即可。
+     ============================================================= */
+  const ERP_CREATE_BFF_URL  = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/create-erp-product';
+  const ERP_CREATE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxZG15eHhyc2t2bGxrY2VkeWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzkxMDIsImV4cCI6MjA5MzExNTEwMn0.OsHmLXwgQvxxZ2MTCULxhYmDt3fMO6x9RXohn_eP1RM';
+
+  // 呼叫後端建 ERP 商品;成功回傳 { bindingId, isNew, reused },失敗 throw 帶 returnMsg
+  // 註:ERP 零售價由後端固定 (ERP_DEFAULT_SELLPRICE=1000),前端不帶價格
+  async function autoCreateErp({ designId, name }) {
+    const res = await fetch(ERP_CREATE_BFF_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + ERP_CREATE_ANON_KEY,
+        'apikey': ERP_CREATE_ANON_KEY,
+      },
+      body: JSON.stringify({ designId, name }),
+    });
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok || data.returnCode !== 'SUCCESS' || data.bindingId == null) {
+      throw new Error(data.returnMsg || ('ERP 建檔失敗 (HTTP ' + res.status + ')'));
+    }
+    return { bindingId: String(data.bindingId), isNew: data.isNew, reused: data.reused };
+  }
+
   async function submitApproval() {
     const id         = document.getElementById('apDesignId').value;
     const name       = document.getElementById('apName').value.trim();
     const category   = document.getElementById('apCategory').value.trim();
-    const erpNumber  = document.getElementById('apErpNumber').value.trim();
     const priceRaw   = document.getElementById('apPrice').value.trim();
 
     if (!id) return alert('找不到設計 ID');
     if (!name) return alert('名稱不可為空');
-    if (!erpNumber) return alert('請填寫 ErpNumber');
     if (!priceRaw) return alert('請填寫 Price');
 
     const price = parseFloat(priceRaw);
@@ -2209,6 +2236,19 @@
 
     const submitBtn = document.getElementById('apSubmit');
     submitBtn.disabled = true;
+    submitBtn.textContent = 'ERP 建檔中...';
+
+    // 審核通過一律自動建檔取號(幂等;已建過的作品後端會沿用既有編號,不重複建)
+    let erpNumber;
+    try {
+      const r = await autoCreateErp({ designId: id, name });
+      erpNumber = r.bindingId;
+    } catch (e) {
+      alert('ERP 自動建檔失敗,無法上架:\n' + e.message + '\n\n請稍後再試,或確認 ERP 設定 / 流量包額度。');
+      submitBtn.disabled = false;
+      submitBtn.textContent = '完成審核';
+      return;
+    }
     submitBtn.textContent = '送出中...';
 
     const sb = getSb();
