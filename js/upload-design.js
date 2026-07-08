@@ -1080,8 +1080,21 @@
     if(!box) return;
     box.querySelector('.dum-error-text').textContent = msg;
     box.hidden = false;
-    scrollDialogTop();
-    try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_){}
+    scrollErrIntoView(box);
+  }
+
+  // 把錯誤元素捲進視野。等一幀讓版面算完,再讓瀏覽器自己找最近的捲動祖先捲過去
+  // (桌機標準模式 = .dum-right;手機 = .dum-quick;設計師 = .dum-designer)
+  function scrollErrIntoView(el){
+    if(!el) return;
+    requestAnimationFrame(function(){
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      } catch(_){
+        ['.dum-quick','.dum-designer','.dum-photob','.dum-right','.dum-left','.dum-dialog']
+          .forEach(function(sel){ var c = modal && modal.querySelector(sel); if(c) c.scrollTop = 0; });
+      }
+    });
   }
 
 
@@ -1980,9 +1993,8 @@
     els.error.classList.remove('shake');
     void els.error.offsetWidth;   // 強制 reflow
     els.error.classList.add('shake');
-    // 捲到最上面,讓錯誤訊息與名稱/靈感主題等必填欄位進入視野
-    scrollDialogTop();
-    try { els.error.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_){}
+    // 把錯誤訊息本身捲進視野(自動找對的容器:桌機 .dum-right、手機 .dum-quick)
+    scrollErrIntoView(els.error);
   }
   function clearError(){
     if(els.error){ els.error.hidden = true; els.error.textContent = ''; }
