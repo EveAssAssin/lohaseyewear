@@ -1058,6 +1058,11 @@
     if(!name){ return showError2('請填寫作品名稱'); }
     if(!slogan){ return showError2('請填一句簡單描述'); }
 
+    // 名稱不可重複
+    if(await isNameTaken(name, state.editId)){
+      return showError2('「' + name + '」這個名稱已經有人用了,請換一個');
+    }
+
     // 把設計師模式的欄位灌進主流程用的欄位,沿用 submit()
     if(els.name)   els.name.value = name;
     if(els.slogan) els.slogan.value = slogan;
@@ -1652,6 +1657,28 @@
 
 
   // ===== 送出 =====
+  // 名稱查重:pending/approved 已存在同名(大小寫/前後空白不計) → 回 true
+  // 查不到 client 或查詢失敗一律回 false(不阻擋),真正把關交給 DB 唯一索引
+  async function isNameTaken(name, excludeId){
+    try {
+      var sb = window.LohasSupabase?.getClient?.();
+      if(!sb) return false;
+      var pattern = String(name || '').trim().replace(/[%_\\]/g, '\\$&');  // 轉義,ilike 當作純字面比對
+      if(!pattern) return false;
+      var q = sb.from(CONFIG.TABLE)
+        .select('id', { count: 'exact', head: true })
+        .ilike('name', pattern)
+        .in('status', ['pending', 'approved']);
+      if(excludeId) q = q.neq('id', excludeId);
+      var res = await q;
+      if(res.error){ console.warn('[upload-design] 名稱查重失敗,放行:', res.error); return false; }
+      return (res.count || 0) > 0;
+    } catch(e){
+      console.warn('[upload-design] 名稱查重異常,放行:', e);
+      return false;
+    }
+  }
+
   async function submit(){
     if(state.submitting) return;
     clearError();
@@ -1666,6 +1693,11 @@
     if(!name)                       return showError('請填寫設計名稱');
     if(!slogan)                     return showError('請填寫一句話說明你的作品');
     if(!state.selectedCategory)     return showError('請選擇靈感主題');
+
+    // 名稱不可重複(官網/門市共用同一份資料,DB 也有唯一索引把關)
+    if(await isNameTaken(name, state.editId)){
+      return showError('「' + name + '」這個名稱已經有人用了,請換一個');
+    }
 
     var sb = window.LohasSupabase?.getClient?.();
     if(!sb) return showError('Supabase 沒準備好,請稍候');
@@ -1764,7 +1796,12 @@
       } else {
         resp = await sb.from(CONFIG.TABLE).insert(payload).select().single();
       }
-      if(resp.error) throw new Error('資料寫入失敗:' + resp.error.message);
+      if(resp.error){
+        if(resp.error.code === '23505' || /duplicate key|unique/i.test(resp.error.message || '')){
+          throw new Error('「' + name + '」這個名稱已經有人用了,請換一個');
+        }
+        throw new Error('資料寫入失敗:' + resp.error.message);
+      }
 
       // 成功 → 關閉 + 清空 + 通知
       closeModal();
