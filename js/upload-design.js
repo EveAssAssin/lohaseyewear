@@ -1075,6 +1075,8 @@
     if(!box) return;
     box.querySelector('.dum-error-text').textContent = msg;
     box.hidden = false;
+    scrollDialogTop();
+    try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_){}
   }
 
 
@@ -1941,9 +1943,9 @@
     els.error.classList.remove('shake');
     void els.error.offsetWidth;   // 強制 reflow
     els.error.classList.add('shake');
-    // 滾到視圖內 (右欄頂部)
-    var rightCol = modal.querySelector('.dum-right');
-    if(rightCol) rightCol.scrollTop = 0;
+    // 捲到最上面,讓錯誤訊息與名稱/靈感主題等必填欄位進入視野
+    scrollDialogTop();
+    try { els.error.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_){}
   }
   function clearError(){
     if(els.error){ els.error.hidden = true; els.error.textContent = ''; }

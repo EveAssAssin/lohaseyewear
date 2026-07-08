@@ -1762,7 +1762,7 @@
     document.getElementById('apDesignId').value     = id || '';
     document.getElementById('apName').value         = name || '';
     document.getElementById('apCategory').value     = category || '';
-    document.getElementById('apPrice').value        = '';
+    document.getElementById('apPrice').value        = '1000';
     document.getElementById('apCreatorIdLabel').textContent = creatorId || '匿名';
 
     modal.hidden = false;
@@ -1776,7 +1776,7 @@
           .eq('id', id)
           .single();
         if (row) {
-          if (row.price != null) document.getElementById('apPrice').value = row.price;
+          if (row.price != null && row.price > 0) document.getElementById('apPrice').value = row.price;
         }
       }
     } catch (e) { /* 撈不到就維持空,不阻擋審核 */ }
