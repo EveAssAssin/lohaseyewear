@@ -1670,22 +1670,22 @@
 
 
   // ===== 送出 =====
-  // 名稱查重:pending/approved 已存在同名(大小寫/前後空白不計) → 回 true
+  // 名稱查重:pending/approved 已存在同名 → 回 true。用 .eq 精準比對實際列數,不用 ilike/head 計數
   // 查不到 client 或查詢失敗一律回 false(不阻擋),真正把關交給 DB 唯一索引
   async function isNameTaken(name, excludeId){
     try {
       var sb = window.LohasSupabase?.getClient?.();
       if(!sb) return false;
-      var pattern = String(name || '').trim().replace(/[%_\\]/g, '\\$&');  // 轉義,ilike 當作純字面比對
-      if(!pattern) return false;
-      var q = sb.from(CONFIG.TABLE)
-        .select('id', { count: 'exact', head: true })
-        .ilike('name', pattern)
-        .in('status', ['pending', 'approved']);
-      if(excludeId) q = q.neq('id', excludeId);
-      var res = await q;
+      var target = String(name || '').trim();
+      if(!target) return false;
+      var res = await sb.from(CONFIG.TABLE)
+        .select('id, name, status')
+        .eq('name', target)
+        .in('status', ['pending', 'approved'])
+        .limit(5);
       if(res.error){ console.warn('[upload-design] 名稱查重失敗,放行:', res.error); return false; }
-      return (res.count || 0) > 0;
+      var rows = (res.data || []).filter(function(r){ return !excludeId || r.id !== excludeId; });
+      return rows.length > 0;
     } catch(e){
       console.warn('[upload-design] 名稱查重異常,放行:', e);
       return false;
