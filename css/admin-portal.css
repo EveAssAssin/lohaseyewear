@@ -590,8 +590,15 @@
 
 
 .ad .review-grid{
-  display:grid; grid-template-columns:repeat(3,1fr);
+  display:grid; grid-template-columns:repeat(6,1fr);
   gap:14px;
+}
+/* 中等寬度不要被擠太扁:1400px 以下退成 4 欄、1100px 以下 3 欄 */
+@media (max-width:1400px){
+  .ad .review-grid{ grid-template-columns:repeat(4,1fr) }
+}
+@media (max-width:1100px){
+  .ad .review-grid{ grid-template-columns:repeat(3,1fr) }
 }
 .ad .rcard{
   background:#fff;
