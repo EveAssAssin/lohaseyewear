@@ -679,13 +679,14 @@
 }
 .ad .rcard-meta i{ font-size:9px }
 
-.ad .rcard-actions{ display:flex; gap:8px }
+.ad .rcard-actions{ display:flex; flex-direction:column; gap:8px }
 .ad .rcard-actions button{
-  flex:1;
-  padding:10px 14px;
+  width:100%;
+  padding:10px 12px;
   border-radius:999px;
   font-family:inherit; font-size:12px;
-  letter-spacing:1px; font-weight:600;
+  letter-spacing:.5px; font-weight:600;
+  white-space:nowrap;
   cursor:pointer;
   display:inline-flex; align-items:center; justify-content:center;
   gap:6px;
