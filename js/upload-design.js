@@ -458,6 +458,10 @@
     els.cancel      = modal.querySelector('#dumCancel');
     els.submit      = modal.querySelector('#dumSubmit');
     els.error       = modal.querySelector('#dumError');
+
+    // 命名防呆:禁止 emoji(打字/貼上即時濾除),兩個命名框都掛
+    attachEmojiGuard(els.name);
+    attachEmojiGuard(modal.querySelector('#dumName2'));
   }
 
 
@@ -1056,6 +1060,7 @@
 
     if(!state.file && !state.svgString){ return showError2('請先上傳作品圖'); }
     if(!name){ return showError2('請填寫作品名稱'); }
+    if(stripEmoji(name) !== name){ return showError2('名稱不能包含表情符號(emoji),請移除後再送出'); }
     if(!slogan){ return showError2('請填一句簡單描述'); }
 
     // 把設計師模式的欄位灌進主流程用的欄位,沿用 submit()
@@ -1665,6 +1670,29 @@
 
 
   // ===== 送出 =====
+  // 移除字串中的 emoji / 表情符號(保留中英數字、標點)
+  function stripEmoji(s){
+    return String(s == null ? '' : s).replace(
+      /(?:\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{FE00}-\u{FE0F}]|\u20E3|\u200D)/gu, ''
+    );
+  }
+
+  // 即時防呆:輸入框打字/貼上時把 emoji 濾掉,並盡量維持游標位置
+  function attachEmojiGuard(el){
+    if(!el || el._emojiGuarded) return;
+    el._emojiGuarded = true;
+    el.addEventListener('input', function(){
+      var cleaned = stripEmoji(el.value);
+      if(cleaned !== el.value){
+        var pos = el.selectionStart || 0;
+        var removed = el.value.length - cleaned.length;
+        el.value = cleaned;
+        var np = Math.max(0, pos - removed);
+        try { el.setSelectionRange(np, np); } catch(_){}
+      }
+    });
+  }
+
   async function submit(){
     if(state.submitting) return;
     clearError();
@@ -1677,6 +1705,7 @@
     var name   = (els.name.value || '').trim();
     var slogan = (els.slogan.value || '').trim();
     if(!name)                       return showError('請填寫設計名稱');
+    if(stripEmoji(name) !== name)   return showError('名稱不能包含表情符號(emoji),請移除後再送出');
     if(!slogan)                     return showError('請填寫一句話說明你的作品');
     if(!state.selectedCategory)     return showError('請選擇靈感主題');
 
