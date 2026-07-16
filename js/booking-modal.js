@@ -19,12 +19,14 @@
   const { core } = root.LohasApi;
   const { booking: bookingApi } = root.LohasApi;
 
-  /* 服務項目（門市預約四項；duration 供顯示用）*/
+  /* 服務項目（門市預約四項）
+     apiType 對應左手 createreservate 的 reservationType 可接受值:
+     諮詢 / 配鏡 / 調整 / 取件 / 視力健檢 */
   const SERVICES = [
-    { id: "pickup",   name: "取件",          duration: 20 },
-    { id: "maintain", name: "眼鏡保養、調整", duration: 20 },
-    { id: "fitting",  name: "配鏡",          duration: 40 },
-    { id: "consult",  name: "諮詢",          duration: 30 }
+    { id: "pickup",   name: "取件",          duration: 20, apiType: "取件" },
+    { id: "maintain", name: "眼鏡保養、調整", duration: 20, apiType: "調整" },
+    { id: "fitting",  name: "配鏡",          duration: 40, apiType: "配鏡" },
+    { id: "consult",  name: "諮詢",          duration: 30, apiType: "諮詢" }
   ];
 
   /* state */
@@ -810,7 +812,11 @@
         memberNumber: state.form.memberNumber,
         memberPhone: state.form.memberPhone,
         memberBirthday: state.form.memberBirthday,
-        content: buildContentText()
+        content: buildContentText(),
+        /* 預約類型(讓後台顯示正確服務,不再是預設「商城賞鏡」)
+           商城模式沒選服務時 selectedService 為 null,就不帶,由左手用預設 */
+        reservationType: state.selectedService ? state.selectedService.apiType : null,
+        reservationTitle: state.selectedService ? state.selectedService.name : null
       });
 
       /* data.reservationid 文件說「請用 AES 解密」 */
