@@ -56,7 +56,7 @@
         throw new Error("[LohasApi.booking] createReservation missing: " + k);
       }
     }
-    return post("rsv", {
+    const payload = {
       method: "createreservate",
       grouperp: aesEncrypt(data.groupErpId),
       employeeerp: aesEncrypt(data.employeeErpId),
@@ -67,7 +67,16 @@
       memberphone: data.memberPhone,
       memberbirthday: data.memberBirthday,
       content: data.content || ""
-    });
+    };
+    /* 預約類型 + 顯示名稱(讓後台顯示正確服務,不再是預設「商城賞鏡」)
+       reservationType 可接受:諮詢 / 配鏡 / 調整 / 取件 / 視力健檢
+       有值才送,沒值就讓左手用預設 */
+    if (data.reservationType) {
+      payload.reservationType = data.reservationType;
+      /* reservationTitle 用同一個服務名當顯示名稱,覆蓋預設的「商城賞鏡」 */
+      payload.reservationTitle = data.reservationTitle || data.reservationType;
+    }
+    return post("rsv", payload);
   }
 
   /* ===== 4. 暫時預約單轉正式預約 =====
