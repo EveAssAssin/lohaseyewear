@@ -842,37 +842,56 @@
 
       state.successData = { reservationId };
       state.step = 4;
-      /* GA4 主要轉換:預約完成事件(經 dataLayer 由 GTM 轉發) */
+      /* GA4 / Meta Pixel 主要轉換:預約完成事件(經 dataLayer 由 GTM 轉發)
+         ⚠ 一定要在 postBackToMall() 整頁跳轉「之前」觸發,否則 Pixel 來不及送 */
       try {
-        if (window.lohasTrack) {
-          // 讀取預約來源歸因（若是從最新消息 CTA 點進來的）
-          var src = {};
-          try {
-            var raw = sessionStorage.getItem('lohas_booking_source');
-            if (raw) {
-              var parsed = JSON.parse(raw);
-              // 來源僅在 6 小時內有效，避免跨 session 誤歸因
-              if (parsed && parsed.ts && (Date.now() - parsed.ts) < 6 * 3600 * 1000) {
-                src = parsed;
-              }
+        // 讀取預約來源歸因（若是從最新消息 CTA 點進來的）
+        var src = {};
+        try {
+          var raw = sessionStorage.getItem('lohas_booking_source');
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            // 來源僅在 6 小時內有效，避免跨 session 誤歸因
+            if (parsed && parsed.ts && (Date.now() - parsed.ts) < 6 * 3600 * 1000) {
+              src = parsed;
             }
-          } catch (e) {}
+          }
+        } catch (e) {}
 
-          window.lohasTrack('booking_complete', {
-            reservation_id: reservationId,
-            store_name: (state.store && state.store.name) || '',
-            source_news_id: src.news_id || '',
-            source_news_title: src.news_title || '',
-            source_cta_type: src.cta_type || ''
-          });
+        // 服務別（配鏡 / 取件 / 眼鏡保養調整 / 諮詢）
+        var itemType = (state.selectedService && state.selectedService.name)
+          || (state.cartPrefill ? '商城配鏡' : '') || '';
 
-          // 用完即清，避免下一次預約沿用舊來源
-          try { sessionStorage.removeItem('lohas_booking_source'); } catch (e) {}
+        var bookingParams = {
+          reservation_id: reservationId,
+          store_id: (state.store && state.store.erpid) || '',
+          store_name: (state.store && state.store.name) || '',
+          item_type: itemType,
+          source_news_id: src.news_id || '',
+          source_news_title: src.news_title || '',
+          source_cta_type: src.cta_type || ''
+        };
+
+        // 主推：走 lohasTrack（analytics.js 提供）
+        if (window.lohasTrack) {
+          window.lohasTrack('booking_complete', bookingParams);
+        } else {
+          // 保底：analytics.js 未載入時，直接推 dataLayer（GTM 一樣接得到）
+          window.dataLayer = window.dataLayer || [];
+          var dl = { event: 'booking_complete' };
+          for (var k in bookingParams) { if (bookingParams.hasOwnProperty(k)) dl[k] = bookingParams[k]; }
+          window.dataLayer.push(dl);
         }
-      } catch (e) {}
+
+        // 用完即清，避免下一次預約沿用舊來源
+        try { sessionStorage.removeItem('lohas_booking_source'); } catch (e) {}
+      } catch (e) {
+        console.error('[booking] booking_complete 追蹤推送失敗', e);
+      }
 
       /* === 回流商城(只在從商城跳過來的情況才觸發)===
-         預約成功後 AES 加密門市/顧問 ID → form POST 回商城 → 瀏覽器跳轉 */
+         預約成功後 AES 加密門市/顧問 ID → form POST 回商城 → 瀏覽器跳轉
+         ⚠ 上面已推 booking_complete,這裡給 Pixel/GA 一點送出時間再跳轉 */
       if (state.cartPrefill) {
         await postBackToMall();
       }
@@ -954,7 +973,11 @@
       /* 清掉 sessionStorage */
       try { sessionStorage.removeItem("lohas_cart_prefill"); } catch (_e) {}
 
-      form.submit();  /* 跳離樂活到商城,之後程式不再執行 */
+      /* ⚠ 延遲 600ms 再跳轉,確保剛才推的 booking_complete
+         Pixel/GA request 有時間送出去(否則整頁跳轉會中斷送出,造成漏記) */
+      setTimeout(function () {
+        form.submit();  /* 跳離樂活到商城,之後程式不再執行 */
+      }, 600);
     } catch (err) {
       console.error("[booking] postBackToMall 失敗(預約仍成功)", err);
     }
