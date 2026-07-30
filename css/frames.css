@@ -53,7 +53,11 @@
    ============================================================ */
 .fr-entry{background:#fff;border-bottom:1px solid var(--fr-line);padding:26px 24px 28px}
 .fr-entry-inner{max-width:1180px;margin:0 auto}
-.fr-entry-hint{font-size:13px;color:var(--text-muted);text-align:center;margin:0 0 16px}
+/* 對齊市集 .section-title 規格：22px / 600 / 字距 0.8px / 主文色 */
+.fr-entry-hint{
+  font-size:22px;font-weight:600;color:var(--text-main);
+  letter-spacing:.8px;line-height:1.3;text-align:center;margin:0 0 20px;
+}
 .fr-entry-grid{
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;
   max-width:780px;margin:0 auto;
@@ -377,6 +381,7 @@
   .fr-hero-inner{padding:0 18px 28px}
   .fr-hero-deco{display:none}
   .fr-entry{padding:20px 18px 22px}
+  .fr-entry-hint{font-size:18px;margin-bottom:16px}
   .fr-entry-grid{gap:9px}
   .fr-entry-card{padding:11px 6px 13px}
   .fr-entry-img{max-width:88px}
