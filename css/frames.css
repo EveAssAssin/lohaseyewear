@@ -1,14 +1,22 @@
 /* ============================================================
    frames.css — 鏡框百科全書
    依賴：lohas-tokens.css → lohas-base.css → lohas-components.css
+   ------------------------------------------------------------
+   ※ .main-header 為 position:fixed、height:70px（見 lohas-base.css），
+     不佔文件流，故本頁需自行補償 70px，否則 hero 會被壓在 header 下。
+     手機版 header 同高，維持 70px。
    ============================================================ */
+:root{
+  --fr-header-h:70px;   /* 對應 lohas-base.css 的 .main-header height */
+}
 
 /* ---------- Hero ---------- */
 .fr-hero{
   position:relative;overflow:hidden;
   background:var(--bg-soft);
   border-bottom:1px solid var(--lohas-bd);
-  padding:56px 24px 48px;
+  /* 上緣 = fixed header 高度 + 視覺留白 */
+  padding:calc(var(--fr-header-h) + 48px) 24px 48px;
 }
 .fr-hero-inner{max-width:1180px;margin:0 auto;position:relative}
 .fr-eyebrow{
@@ -33,7 +41,7 @@
 
 /* ---------- 族群 Tabs ---------- */
 .fr-tabs-wrap{
-  position:sticky;top:var(--header-h,64px);z-index:var(--z-sticky);
+  position:sticky;top:var(--fr-header-h);z-index:var(--z-sticky);
   background:#fff;border-bottom:1.5px solid var(--lohas-bd);
 }
 .fr-tabs{
@@ -91,7 +99,7 @@
 .fr-detail{
   margin-top:20px;background:#fff;border:1px solid var(--lohas-bd);
   border-radius:var(--r-lg);padding:26px;box-shadow:var(--sh-soft);
-  scroll-margin-top:calc(var(--header-h,64px) + 70px);
+  scroll-margin-top:calc(var(--fr-header-h) + 72px);
 }
 .fr-detail-head{display:flex;align-items:center;gap:18px;margin-bottom:22px;flex-wrap:wrap}
 .fr-detail-icon{
@@ -170,7 +178,7 @@
   .fr-detail-cols{grid-template-columns:1fr 1fr;gap:18px}
 }
 @media (max-width:640px){
-  .fr-hero{padding:40px 18px 34px}
+  .fr-hero{padding:calc(var(--fr-header-h) + 28px) 18px 34px}
   .fr-main{padding:24px 18px 48px}
   .fr-tabs{padding:0 18px}
   .fr-tab{padding:13px 15px;font-size:13px}
