@@ -65,8 +65,13 @@
   box-shadow:0 12px 28px rgba(80,66,45,.05);
 }
 .fr-entry-card:hover{border-color:var(--lohas-light);transform:translateY(-2px)}
-.fr-entry-card.is-active{border-color:var(--lohas-brand);background:var(--bg-soft)}
-/* 入口插畫：手繪風去背 PNG，不加圓形底座以免裁掉人物 */
+/* 插畫已去背，選中時可安全轉米色底，不會出現方形色塊 */
+.fr-entry-card.is-active{
+  border-color:var(--lohas-brand);background:var(--bg-soft);
+  box-shadow:0 0 0 1.5px var(--lohas-brand),0 12px 28px rgba(80,66,45,.1);
+}
+/* 入口插畫：純線稿去背 PNG，線條統一為 #2F2A24，
+   背景透明可疊在任何底色上；不加圓形底座以免裁掉人物手勢 */
 .fr-entry-img{
   display:block;width:100%;max-width:132px;aspect-ratio:1/1;
   margin:0 auto;overflow:hidden;transition:.18s;
