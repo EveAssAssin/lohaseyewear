@@ -1,15 +1,24 @@
 /* ============================================================
-   frames.js — 鏡框百科 首頁（標本牆）
+   frames.js — 鏡框百科 首頁
    依賴：frames-data.js
    ------------------------------------------------------------
-   結構：Hero → 三入口引導 → 左側篩選軸 + 標本牆
-   三入口點擊後切換左側篩選軸的內容（分類／臉型／材質）。
-   點任一標本 → /frame.html?f={新代碼}
+   結構：Hero → 三入口引導卡 → Sidebar(搜尋 + 動態篩選) + 卡片牆
+   ------------------------------------------------------------
+   三入口（看分類／看臉型／看材質）點擊後，
+   Sidebar 第二區的清單內容隨之切換，兩者為連動關係。
+   點任一卡片 → /frame.html?f={新代碼}
    ============================================================ */
 (function () {
   'use strict';
 
-  var state = { mode: 'category', key: 'mat' };
+  var state = { mode: 'category', key: 'mat', q: '' };
+
+  /* Sidebar 第二區標題（隨模式切換） */
+  var RAIL_TITLES = {
+    category: '框 型 分 類',
+    face:     '臉 型',
+    material: '材 質'
+  };
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -19,20 +28,28 @@
 
   function icon(key, w, h) {
     return '<svg viewBox="0 0 64 42" width="' + w + '" height="' + h +
-      '" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
       (FRAME_ICONS[key] || FRAME_ICONS.square) + '</svg>';
   }
 
-  /* 目前模式對應的篩選選項 */
   function options() {
     if (state.mode === 'face')     return FRAME_FACE_FILTERS;
     if (state.mode === 'material') return FRAME_MATERIAL_FILTERS;
-    return FRAME_GROUPS.map(function (g) { return { key: g.key, label: g.label }; });
+    return FRAME_GROUPS;
+  }
+
+  /* 搜尋比對：名稱、英文、說明、標籤 */
+  function hitSearch(it) {
+    if (!state.q) return true;
+    var q = state.q.toLowerCase();
+    return [it.name, it.en, it.desc, it.tag, it.code].some(function (v) {
+      return v && String(v).toLowerCase().indexOf(q) > -1;
+    });
   }
 
   function filtered() {
     return FRAME_ITEMS.filter(function (it) {
-      return frameMatches(it, state.mode, state.key);
+      return frameMatches(it, state.mode, state.key) && hitSearch(it);
     });
   }
 
@@ -41,7 +58,7 @@
     return o ? o.label : '全部框型';
   }
 
-  /* ---------- 渲染：三入口 ---------- */
+  /* ---------- 渲染：三入口卡 ---------- */
   function renderEntries() {
     document.getElementById('frEntries').innerHTML = FRAME_ENTRIES.map(function (e) {
       return '<button type="button" class="fr-entry-card' +
@@ -53,24 +70,22 @@
     }).join('');
   }
 
-  /* ---------- 渲染：左側篩選軸 ---------- */
+  /* ---------- 渲染：Sidebar 篩選清單 ---------- */
   function railIcon(o) {
-    // 臉型：SVG 輪廓最直觀；分類與材質：Font Awesome
+    // 臉型用 SVG 輪廓最直觀；分類與材質用 Font Awesome
     if (state.mode === 'face' && o.shape && typeof FACE_SHAPES !== 'undefined') {
-      return '<svg class="fr-rail-face" viewBox="0 0 24 28" width="17" height="20" ' +
+      return '<svg class="fr-rail-face" viewBox="0 0 24 28" width="16" height="19" ' +
         'fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
         (FACE_SHAPES[o.shape] || '') + '</svg>';
     }
-    if (o.icon) {
-      return '<i class="' + o.icon + ' fr-rail-fa" aria-hidden="true"></i>';
-    }
-    return '';
+    return o.icon ? '<i class="' + o.icon + ' fr-rail-fa" aria-hidden="true"></i>' : '';
   }
 
   function renderRail() {
+    document.getElementById('frRailTitle').textContent = RAIL_TITLES[state.mode] || '';
     document.getElementById('frRail').innerHTML = options().map(function (o) {
       var n = FRAME_ITEMS.filter(function (it) {
-        return frameMatches(it, state.mode, o.key);
+        return frameMatches(it, state.mode, o.key) && hitSearch(it);
       }).length;
       return '<button type="button" class="fr-rail-btn' +
         (o.key === state.key ? ' is-active' : '') + '" data-key="' + o.key + '">' +
@@ -81,24 +96,29 @@
     }).join('');
   }
 
-  /* ---------- 渲染：標本牆 ---------- */
+  /* ---------- 渲染：卡片牆 ---------- */
   function renderWall() {
     var list = filtered();
-    document.getElementById('frBodyTitle').textContent = currentLabel();
+    document.getElementById('frBlockTitle').textContent =
+      state.q ? '搜尋「' + state.q + '」' : currentLabel();
     document.getElementById('frCount').textContent = list.length + ' 種';
 
     if (!list.length) {
       document.getElementById('frWall').innerHTML =
-        '<p class="fr-empty">這個條件下沒有對應框型，換一個看看。</p>';
+        '<p class="fr-empty">找不到符合的框型，換個條件或關鍵字看看。</p>';
       return;
     }
 
     document.getElementById('frWall').innerHTML = list.map(function (it) {
-      return '<a class="fr-cell" href="/frame.html?f=' + encodeURIComponent(it.code) + '">' +
-        '<span class="fr-cell-icon">' + icon(it.icon, 52, 34) + '</span>' +
-        '<span class="fr-cell-name">' + esc(it.name) + '</span>' +
-        (it.tag ? '<span class="fr-cell-tag">' + esc(it.tag) + '</span>' : '') +
-        '</a>';
+      return '<a class="fr-card" href="/frame.html?f=' + encodeURIComponent(it.code) + '">' +
+        '<span class="fr-card-visual">' +
+          (it.tag ? '<span class="fr-card-badge">' + esc(it.tag) + '</span>' : '') +
+          icon(it.icon, 56, 37) +
+        '</span>' +
+        '<span class="fr-card-body">' +
+          '<span class="fr-card-name">' + esc(it.name) + '</span>' +
+          '<span class="fr-card-desc">' + esc(it.desc) + '</span>' +
+        '</span></a>';
     }).join('');
   }
 
@@ -109,9 +129,9 @@
     document.getElementById('frEntries').addEventListener('click', function (e) {
       var b = e.target.closest('.fr-entry-card'); if (!b) return;
       state.mode = b.dataset.mode;
-      state.key = options()[0].key;   // 切換模式後預設選第一個條件
+      state.key = options()[0].key;      // 切換模式後預設選第一個條件
       render();
-      document.querySelector('.fr-body')
+      document.getElementById('frBody')
         .scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
@@ -119,6 +139,16 @@
       var b = e.target.closest('.fr-rail-btn'); if (!b) return;
       state.key = b.dataset.key;
       renderRail(); renderWall();
+    });
+
+    var t;
+    document.getElementById('frSearch').addEventListener('input', function (e) {
+      clearTimeout(t);
+      var v = e.target.value.trim();
+      t = setTimeout(function () {
+        state.q = v;
+        renderRail(); renderWall();
+      }, 180);
     });
   }
 
