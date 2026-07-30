@@ -982,3 +982,26 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 13px;
 }
+
+/* ── 刻圖展開 / 收合列 ── */
+.pd-eng-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.pd-eng-more:empty { display: none; }
+.pd-eng-more .em-count {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.pd-eng-more .em-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.pd-eng-more .em-btn i { font-size: 10px; }
