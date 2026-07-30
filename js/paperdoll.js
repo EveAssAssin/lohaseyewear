@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.js — 從零開始，打造那副只有我才有的眼鏡
-   v2.2 | 五步重構 · LOHAS FOUND · 實拍照整合 | 2026-07-31
+   v2.4 | 五步重構 · LOHAS FOUND · 圖片載入失敗自動退回織理 | 2026-07-31
    ------------------------------------------------------------
    設計要點：
    1. Step 3 進站時完全看不到 FOUND 品牌，就是一般配件購物頁。
@@ -58,13 +58,59 @@
   }
   const hasPhotos = city => !!city?.photos;
 
-  /* 商品圖：找得到就用實拍，否則用 emoji */
+  /* 品牌紙紋（護照＝紙做的，全站護照類元件共用同一張） */
+  function brandTexture() {
+    const c = FOUND_ALL().find(f => f.photos?.texture);
+    return c ? photo(c, 'texture') : null;
+  }
+  /* 把紙紋掛到元件上，沒有照片時什麼也不做 */
+  function applyTexture(el, size) {
+    if (!el) return;
+    const t = brandTexture();
+    if (!t) return;
+    // 先確認紙紋圖載得到，再掛上去
+    const probe = new Image();
+    probe.onload = () => {
+      el.style.setProperty('--pd-tex', `url("${t}")`);
+      if (size) el.style.setProperty('--pd-tex-size', size);
+      el.classList.add('has-tex');
+    };
+    probe.src = t;
+  }
+
+  /* 商品圖：找得到就用實拍，載入失敗自動退回 emoji */
   function productImg(p, cls) {
     const city = findCity(p.foundId);
     const src  = p.img && city?.photos ? (city.photos.base || '') + p.img : null;
     return src
-      ? `<img class="${cls}" src="${src}" alt="${esc(p.name)}" loading="lazy">`
+      ? `<img class="${cls}" src="${src}" alt="${esc(p.name)}" loading="lazy"
+              onerror="PD.imgFail(this,'${p.em}')">`
       : `<span class="${cls} is-em">${p.em}</span>`;
+  }
+
+  /* 圖片 404 → 換成 emoji，版面不破 */
+  function imgFail(el, em) {
+    if (!el) return;
+    const span = document.createElement('span');
+    span.className = el.className + ' is-em';
+    span.textContent = em || '📦';
+    el.replaceWith(span);
+  }
+
+  /* 滿版背景圖 404 → 移除並退回 CSS 織理 */
+  function bgFail(el, tex) {
+    if (!el) return;
+    const sec = el.closest('section');
+    el.remove();
+    if (sec && !qs('img', sec)) {
+      sec.classList.remove('has-photo');
+      if (tex) sec.classList.add('tex-' + tex);
+    }
+  }
+
+  /* 一般配圖 404 → 整個 figure 收起來 */
+  function figFail(el) {
+    el?.closest('figure, .pi-photo')?.remove();
   }
 
   const BASE  = () => (S.frame?.price || 0) + (S.engraving?.price || 0);
@@ -556,6 +602,7 @@
     const heroT = photo(city, 'heroTall');
     const disc  = photo(city, 'discover');
     const spir  = photo(city, 'spirit');
+    const cardTex = brandTexture();   // 故事卡由廣興紙寮製作，一律用埔里紙紋
 
     return `
     <button class="story-close" onclick="PD.closeStory()" aria-label="關閉">
@@ -564,8 +611,10 @@
 
     <!-- 一、揭曉 -->
     <section class="story-hero ${pics ? 'has-photo' : 'tex-' + city.texture}">
-      ${heroW ? `<img class="sh-bg sh-bg-wide" src="${heroW}" alt="">` : ''}
-      ${heroT ? `<img class="sh-bg sh-bg-tall" src="${heroT}" alt="">` : ''}
+      ${heroW ? `<img class="sh-bg sh-bg-wide" src="${heroW}" alt=""
+                      onerror="PD.bgFail(this,'${city.texture}')">` : ''}
+      ${heroT ? `<img class="sh-bg sh-bg-tall" src="${heroT}" alt=""
+                      onerror="PD.bgFail(this,'${city.texture}')">` : ''}
       <div class="sh-inner">
         <div class="sh-no">FOUND ${esc(city.no)}</div>
         <div class="sh-city">${esc(city.city)}</div>
@@ -584,7 +633,8 @@
       <h2 class="sec-title">${esc(city.discover.title)}</h2>
       ${disc ? `
         <figure class="sec-figure">
-          <img src="${disc}" alt="${esc(city.name)}" loading="lazy">
+          <img src="${disc}" alt="${esc(city.name)}" loading="lazy"
+               onerror="PD.figFail(this)">
           <figcaption>${esc(city.city)} · ${esc(city.name)}</figcaption>
         </figure>` : ''}
       <p class="sec-body">${esc(city.discover.body)}</p>
@@ -605,7 +655,8 @@
           const ps = photo(city, 'process', i);
           return `
           <li class="proc-item">
-            ${ps ? `<div class="pi-photo"><img src="${ps}" alt="${esc(st.name)}" loading="lazy"></div>` : ''}
+            ${ps ? `<div class="pi-photo"><img src="${ps}" alt="${esc(st.name)}" loading="lazy"
+                          onerror="PD.figFail(this)"></div>` : ''}
             <span class="pi-n">${String(i + 1).padStart(2, '0')}</span>
             <div class="pi-text">
               <div class="pi-name">${esc(st.name)}</div>
@@ -619,7 +670,8 @@
 
     <!-- 四、延續 -->
     <section class="story-spirit ${spir ? 'has-photo' : 'tex-' + city.texture}">
-      ${spir ? `<img class="sp-bg" src="${spir}" alt="" loading="lazy">` : ''}
+      ${spir ? `<img class="sp-bg" src="${spir}" alt="" loading="lazy"
+                     onerror="PD.bgFail(this,'${city.texture}')">` : ''}
       <div class="sp-inner">
         <div class="sec-eyebrow light"><span class="sec-no">03</span> CONTINUE｜延續</div>
         <blockquote>${city.spirit}</blockquote>
@@ -632,7 +684,7 @@
       <h2 class="sec-title">帶一件回家</h2>
       <div class="story-products" id="story-products"></div>
 
-      <div class="story-cardnote">
+      <div class="story-cardnote${cardTex ? ' has-tex' : ''}"${cardTex ? ` style="--pd-tex:url('${cardTex}')"` : ''}>
         <div class="scn-em">📜</div>
         <div>
           <div class="scn-t">每一件 FOUND 商品都附一張故事卡</div>
@@ -699,6 +751,7 @@
   }
 
   function renderPassport() {
+    applyTexture($('passport'), '300px');
     const total = FOUND_OPEN().length;
     $('pp-count').innerHTML = `你找到 <b>${S.found.length}</b> / ${total} 個城市`;
     $('pp-stamps').innerHTML = FOUND_ALL().map(c => {
@@ -721,6 +774,7 @@
     bar.classList.add('show');
 
     const toast = $('pp-toast');
+    applyTexture(toast, '260px');
     toast.innerHTML = `
       <span class="pt-em">${city.em}</span>
       <span>
@@ -821,6 +875,7 @@
       box.style.display = 'none';
     } else {
       box.style.display = '';
+      applyTexture(box, '280px');
       const total = FOUND_OPEN().length;
       const done  = S.found.length === total;
       box.innerHTML = `
@@ -906,6 +961,7 @@
     pickFace, pickFrame, setFrameGroup,
     pickEng, setEngFilter, setEngSearch, toggleEngShowAll, skipEng,
     setType, toggleAcc, openStory, closeStory,
+    imgFail, bgFail, figFail,
     applyHint, saveOutfit, shareCard,
   };
 
