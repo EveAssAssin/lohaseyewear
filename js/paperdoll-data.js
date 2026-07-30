@@ -1,194 +1,255 @@
-// paperdoll-data.js — 客製眼鏡測試資料
-// v1.2 | 台灣百工計畫 + 刻圖市集同步 | 眼鏡與配件仍為測試資料
+/* ============================================================
+   paperdoll-data.js — 從零開始，打造那副只有我才有的眼鏡
+   ------------------------------------------------------------
+   v2.0 | 五步重構 · LOHAS FOUND 發現機制
+   ------------------------------------------------------------
+   資料來源分工：
+     鏡框  → js/frames-data.js 的 FRAME_ITEMS（鏡框百科 45 個分類）
+     刻圖  → Supabase engraving_designs（與刻圖市集同源，執行期載入）
+     配件  → 本檔 found[].products（LOHAS FOUND 城市系列）
+   ------------------------------------------------------------
+   ⚠️ 尚無實拍照片，城市主視覺以 CSS 色調 + 織理呈現。
+      日後補照片只需填 found[].photo，版面結構不需更動。
+   ============================================================ */
 
 const PD_DATA = {
 
-  /* ── 台灣百工計畫 ──
-     八大工藝聚落。配件透過 craft 欄位對應到此表。 */
-  crafts: {
-    paper: {
-      id:'paper', em:'📜', name:'廣興紙寮', region:'南投埔里', since:'1965',
-      intro:'埔里四面環山，擁有純淨穩定的山泉水，日治時期起便成為台灣最重要的手工紙聚落。',
-      craft:'採集植物纖維、蒸煮、打漿、抄紙、壓紙、乾燥，數十道工序凝聚的是職人的耐心，而非機器的速度。',
-      spirit:'紙承載的不只是文字，而是一株植物、一座城市、一位職人的時間。',
-    },
-    wood: {
-      id:'wood', em:'🪵', name:'三義木雕', region:'苗栗三義', since:'日治時期',
-      intro:'三義因盛產樟樹而發展林業，伐木後留下的樹根與邊材，成為木匠創作的起點。',
-      craft:'三義木雕源自珍惜資源、不浪費每一塊木頭的生活智慧。師傅不強迫木頭改變，而是順著木紋，找到作品原本的樣子。',
-      spirit:'好的木頭需要時間，好的眼鏡也值得陪伴很長的歲月。',
-    },
-    ceramic: {
-      id:'ceramic', em:'🏺', name:'鶯歌陶瓷', region:'新北鶯歌', since:'19世紀',
-      intro:'鶯歌蘊藏優質陶土，加上河運便利，自十九世紀開始發展陶瓷產業，最初燒製的是碗盤茶壺等生活器皿。',
-      craft:'一件陶器需要塑形、乾燥、修整、燒製、施釉，再次燒製。每一步都不能急。',
-      spirit:'真正耐看的作品，都經得起等待。',
-    },
-    bamboo: {
-      id:'bamboo', em:'🎋', name:'竹山竹藝', region:'南投竹山', since:'清代',
-      intro:'竹山擁有豐富竹林，自清代便發展竹工藝。竹子生長快速、堅韌耐用，是最具代表性的天然材料。',
-      craft:'早年竹匠利用竹子製作生活用品，也發展出細膩的竹編工藝，一根竹子可以陪伴一輩子。',
-      spirit:'最好的設計不一定複雜。就像竹子，看似簡單，卻充滿韌性。',
-    },
-    indigo: {
-      id:'indigo', em:'💙', name:'三峽藍染', region:'新北三峽', since:'清代',
-      intro:'三峽曾大量種植馬藍，利用植物染料製作天然藍布，是台灣藍染工藝的重要發源地。',
-      craft:'每一塊藍染布都需要反覆浸染與氧化。藍色不是一次完成，而是在等待中慢慢誕生。',
-      spirit:'耐看的作品，不是第一眼驚豔，而是越看越有味道。',
-    },
-    umbrella: {
-      id:'umbrella', em:'🌂', name:'美濃紙傘', region:'高雄美濃', since:'客家先民',
-      intro:'客家先民將油紙傘技術帶到美濃，當地盛產竹子，加上桐油與手繪技術成熟，形成完整的紙傘聚落。',
-      craft:'一把紙傘需要劈竹、削竹、編傘骨、裱紙、上油、彩繪等繁複工序，象徵圓滿、守護與祝福。',
-      spirit:'守護視野，如同紙傘守護一家人的晴雨。',
-    },
-    rush: {
-      id:'rush', em:'🌾', name:'苑裡藺草', region:'苗栗苑裡', since:'清代',
-      intro:'苑裡擁有適合藺草生長的海風與濕地環境，早年家家戶戶編織草帽草蓆，是台灣重要的外銷產業。',
-      craft:'藺草具有天然香氣、透氣、防潮等特性，越使用越柔軟，是從土地長出的天然纖維。',
-      spirit:'最好的陪伴，是每天都能感受到自然。',
-    },
-    joinery: {
-      id:'joinery', em:'⚙️', name:'大溪木藝', region:'桃園大溪', since:'清代',
-      intro:'大溪因大漢溪木材運輸而興盛，發展出精湛家具工藝，其中最具代表性的就是榫卯結構。',
-      craft:'不用一根鐵釘，也能讓家具穩固數十年。這是精準的極致，而非複雜的堆疊。',
-      spirit:'真正好的設計，來自精準，而不是複雜。',
-    },
+  /* ══════════════════════════════════════
+     全域設定
+  ══════════════════════════════════════ */
+  config: {
+    engravingPrice:    350,   // 刻圖加價（engraving_designs 無價格欄位）
+    engravingLimit:    500,
+    engravingPageSize: 12,
+    // 鏡框參考價（FRAME_ITEMS 為百科資料，無價格欄位）
+    // 待 ERP interface #36 開通後改由 API 帶入實際售價
+    framePriceByGroup: { mat:3200, style:3600, sun:2800, func:2600 },
   },
 
-  /* ── Step 1 問卷 ── */
-  quiz: [
-    {
-      id: 'lifestyle',
-      q: '你的日常是什麼樣子？',
-      opts: [
-        { val:'cafe',    em:'☕', label:'咖啡廳工作者', desc:'手沖、筆電、一個下午' },
-        { val:'outdoor', em:'🏔', label:'戶外探索者',   desc:'爬山、單車、走路上班' },
-        { val:'urban',   em:'🏙', label:'都市穿梭者',   desc:'捷運、會議、快節奏' },
-        { val:'creator', em:'🎨', label:'創作工作者',   desc:'設計、攝影、手作' },
-      ]
-    },
-    {
-      id: 'admire',
-      q: '你欣賞哪種人的氣質？',
-      opts: [
-        { val:'artist',    em:'🎭', label:'藝術家', desc:'把生活過成作品的人' },
-        { val:'traveler',  em:'✈️', label:'旅行者', desc:'到處留下足跡的人' },
-        { val:'craftsman', em:'🔨', label:'職人',   desc:'把一件事做到極致的人' },
-        { val:'scholar',   em:'📖', label:'學者',   desc:'對任何事都好奇的人' },
-      ]
-    },
-    {
-      id: 'impression',
-      q: '你希望被記住的是哪個樣子？',
-      opts: [
-        { val:'subtle', em:'🤎', label:'低調有質感', desc:'不張揚，但細節都在' },
-        { val:'bold',   em:'✨', label:'大膽有個性', desc:'走進一個房間就被看見' },
-        { val:'warm',   em:'🌿', label:'溫暖有故事', desc:'讓人想靠近、想聊天' },
-        { val:'sharp',  em:'⚡', label:'俐落有效率', desc:'清晰、直接、可信賴' },
-      ]
-    },
+  /* ══════════════════════════════════════
+     Step 1 — 臉型（對應 images/face-*.png）
+     match 需對齊 FRAME_ITEMS.face
+  ══════════════════════════════════════ */
+  faces: [
+    { key:'oval',    label:'橢圓臉', img:'images/face-oval.png',    match:['橢圓臉'],
+      desc:'比例均衡，多數框型都能駕馭。' },
+    { key:'round',   label:'圓臉',   img:'images/face-round.png',   match:['圓臉'],
+      desc:'輪廓柔和，俐落線條能修飾比例。' },
+    { key:'square',  label:'方形臉', img:'images/face-square.png',  match:['方形臉'],
+      desc:'下顎線條分明，圓潤框型可柔化角度。' },
+    { key:'long',    label:'長形臉', img:'images/face-long.png',    match:['長形臉'],
+      desc:'縱向較長，較寬的框能拉出橫向比例。' },
+    { key:'heart',   label:'心形臉', img:'images/face-heart.png',   match:['心形臉'],
+      desc:'額寬下巴窄，下緣輕盈的框最合適。' },
+    { key:'diamond', label:'菱形臉', img:'images/face-diamond.png', match:['菱形臉'],
+      desc:'顴骨突出，帶弧度的框能平衡輪廓。' },
   ],
 
-  /* ── Step 2 鏡框 ── */
-  frames: [
-    { id:'f01', em:'🪵', name:'木質方框',     code:'WD-301', price:3200, mat:'wood',    quote:'喜歡在舊書店消磨下午的人，通常會選這個。',           rec:['cafe','creator','warm'] },
-    { id:'f02', em:'⭕', name:'金屬細框',     code:'MT-102', price:2800, mat:'metal',   quote:'相信少即是多，但對細節有潔癖的人，通常會選這個。',   rec:['urban','sharp','subtle'] },
-    { id:'f03', em:'🟤', name:'玳瑁圓框',     code:'AC-205', price:3600, mat:'acetate', quote:'每次旅行都要去當地小書店的人，通常會選這個。',         rec:['traveler','scholar'] },
-    { id:'f04', em:'⬜', name:'TR 輕量框',    code:'TR-410', price:2400, mat:'tr',      quote:'行事曆總是排得很滿，但還是想保持優雅的人，通常會選這個。', rec:['outdoor','urban'] },
-    { id:'f05', em:'🔲', name:'粗框板材',     code:'AC-508', price:3900, mat:'acetate', quote:'說話直接，穿搭卻比任何人都有想法的人，通常會選這個。', rec:['bold','creator'] },
-    { id:'f06', em:'🥇', name:'復古金屬橢圓', code:'MT-330', price:3100, mat:'metal',   quote:'書架上有二十本以上還沒讀完的書的人，通常會選這個。',   rec:['scholar','traveler'] },
+  /* ══════════════════════════════════════
+     Step 3 — LOHAS FOUND 城市系列
+     ------------------------------------
+     status: 'open'    第一季，可購買
+             'pending' 尚未前往，護照留白
+     敘事三段對齊品牌核心價值：
+       discover 發現 / cocreate 共創 / continue 延續
+  ══════════════════════════════════════ */
+  found: [
+    /* ---------- FOUND 001 ---------- */
+    {
+      id:'paper', no:'001', status:'open', em:'📜',
+      city:'南投埔里', name:'廣興紙寮', since:'1965',
+      theme:'一張紙，承載一座城。',
+      tone:{ base:'#B9A98C', deep:'#6B5C42', light:'#EFE7D6', ink:'#FFFBF2' },
+      texture:'fiber',
+      discover:{
+        title:'埔里的水，養出了紙',
+        body:'埔里四面環山，擁有純淨且穩定的山泉水，自日治時期開始便發展造紙產業，逐漸成為台灣最重要的手工紙聚落。1965 年成立的廣興紙寮，見證了這個產業的興衰。當機械製紙逐漸取代手工紙後，廣興紙寮沒有放棄，而是投入文化保存與教育推廣，讓傳統抄紙工藝延續至今。',
+      },
+      cocreate:{
+        title:'一張紙要經過幾雙手',
+        intro:'每一張手工紙都需要數十道工序。凝聚的是職人的耐心，而不是機器的速度。',
+        steps:[
+          { name:'採纖', desc:'採集構樹、雁皮等植物纖維，去皮取內層。' },
+          { name:'蒸煮', desc:'長時間蒸煮軟化纖維，去除雜質。' },
+          { name:'打漿', desc:'反覆搗打，讓纖維均勻散開成漿。' },
+          { name:'抄紙', desc:'竹簾入槽、晃動、提起，厚薄全靠手感。' },
+          { name:'壓紙', desc:'層層堆疊擠出水分，不能急也不能重。' },
+          { name:'烘乾', desc:'貼上烘牆逐張乾燥，紙面才會平整。' },
+        ],
+        note:'我們沒有改變抄紙的做法，只是把樂活的故事，交給埔里的紙來承載。',
+      },
+      spirit:'紙承載的不只是文字。<br>而是一株植物、一座城市、一位職人的時間。',
+      products:[
+        { id:'p1', type:'box',  em:'📦', name:'手工紙壓模硬盒',   desc:'植物染印花，可完全分解',       price:420 },
+        { id:'p2', type:'box',  em:'🗾', name:'和紙包覆收藏盒',   desc:'千代紙紋樣，一盒一個花色',     price:640 },
+        { id:'p3', type:'card', em:'📇', name:'手工紙故事卡組',   desc:'含保證卡，抄紙職人親筆落款',   price:280 },
+        { id:'p4', type:'box',  em:'🎁', name:'VIP 手工紙禮盒',   desc:'埔里山泉抄紙，送禮專用規格',   price:1280 },
+      ],
+    },
+
+    /* ---------- FOUND 002 ---------- */
+    {
+      id:'wood', no:'002', status:'open', em:'🪵',
+      city:'苗栗三義', name:'三義木雕', since:'日治時期',
+      theme:'時間刻下木紋。',
+      tone:{ base:'#6B4A2B', deep:'#3A2716', light:'#C8A87C', ink:'#FFF6E9' },
+      texture:'grain',
+      discover:{
+        title:'從不浪費一塊木頭開始',
+        body:'三義因盛產樟樹而發展林業，日治時期更是世界重要的樟腦產地。伐木之後留下的大量樹根、邊材與木塊，成為木匠創作的起點。因此三義木雕並不是因藝術而誕生，而是源自珍惜資源、不浪費每一塊木頭的生活智慧。',
+      },
+      cocreate:{
+        title:'順著木紋，找到它原本的樣子',
+        intro:'真正的木雕師傅不是強迫木頭改變，而是順著木紋走。因為每塊木頭的紋路都不同，所以每件作品，都只有一件。',
+        steps:[
+          { name:'選料', desc:'觀察木紋走向與節疤位置，決定它適合成為什麼。' },
+          { name:'粗胚', desc:'鑿出大致輪廓，這一步決定作品的骨架。' },
+          { name:'細修', desc:'順著木紋修整，讓線條貼合材料本身。' },
+          { name:'打磨', desc:'由粗到細反覆研磨，直到觸感溫潤。' },
+          { name:'上油', desc:'植物油養護，木色會隨時間慢慢變深。' },
+        ],
+        note:'眼鏡盒的開合角度改了七次，只為了讓翻蓋的手感，跟師傅做神桌抽屜時一樣順。',
+      },
+      spirit:'好的木頭，需要時間。<br>好的眼鏡，也值得陪伴很長的歲月。',
+      products:[
+        { id:'w1', type:'box',     em:'🪵', name:'黑胡桃木翻蓋盒',   desc:'磁吸閉合，木紋與木質鏡框同源', price:880 },
+        { id:'w2', type:'box',     em:'🟤', name:'樟木限量收藏盒',   desc:'三義原生樟木，帶天然香氣',     price:1680 },
+        { id:'w3', type:'stand',   em:'🗄', name:'黑胡桃木橫桿掛架', desc:'牆掛式，五支橫桿可掛十副',     price:2400 },
+        { id:'w4', type:'service', em:'✍️', name:'雷雕姓名服務',     desc:'木盒側面刻上你的名字',         price:300 },
+      ],
+    },
+
+    /* ---------- FOUND 003 ---------- */
+    {
+      id:'ceramic', no:'003', status:'open', em:'🏺',
+      city:'新北鶯歌', name:'鶯歌陶瓷', since:'19 世紀',
+      theme:'等待，是最好的工藝。',
+      tone:{ base:'#9C6A4E', deep:'#573524', light:'#DDB99A', ink:'#FFF4EA' },
+      texture:'glaze',
+      discover:{
+        title:'陶瓷不是藝術品，是生活',
+        body:'鶯歌因蘊藏優質陶土，加上大漢溪河運便利，自十九世紀開始發展陶瓷產業。最初燒製的是碗、盤、茶壺、水缸這些生活器皿——陶瓷從來不是為了展示，而是每個家庭每天都會使用的日常用品。經過日治時期的技術改良，鶯歌逐漸成為台灣最大的陶瓷聚落。',
+      },
+      cocreate:{
+        title:'每一步都不能急，急了就裂',
+        intro:'一件陶器需要塑形、乾燥、修整、素燒、施釉，再次入窯。窯門關上之後，結果就交給火。',
+        steps:[
+          { name:'練土', desc:'反覆揉練排出氣泡，否則入窯必炸。' },
+          { name:'拉坯', desc:'轆轤成形，厚薄全憑手指的力道。' },
+          { name:'修坯', desc:'半乾時削修底足，決定器物的重心。' },
+          { name:'素燒', desc:'約 800 度初燒，讓坯體吃得住釉。' },
+          { name:'施釉', desc:'浸釉或淋釉，釉層厚薄影響最終發色。' },
+          { name:'釉燒', desc:'1200 度以上高溫，窯變的結果無法預測。' },
+        ],
+        note:'因為窯變無法控制，所以你收到的那只眼鏡托，發色不會跟照片一模一樣。這是缺點，也是它唯一的理由。',
+      },
+      spirit:'真正耐看的作品，<br>都經得起等待。',
+      products:[
+        { id:'c1', type:'stand', em:'🏺', name:'陶瓷眼鏡托',     desc:'手拉坯燒製，一件一個樣',     price:1450 },
+        { id:'c2', type:'stand', em:'🍶', name:'釉燒收納皿',     desc:'鑰匙、戒指與眼鏡的入口皿',   price:980 },
+        { id:'c3', type:'stand', em:'🎨', name:'陶瓷飾品展示盤', desc:'窯變釉色，每只發色都不同',   price:1180 },
+      ],
+    },
+
+    /* ---------- FOUND 004 ---------- */
+    {
+      id:'indigo', no:'004', status:'open', em:'💙',
+      city:'新北三峽', name:'三峽藍染', since:'清代',
+      theme:'時間染出的藍。',
+      tone:{ base:'#2E4A6B', deep:'#152538', light:'#8FB3D9', ink:'#EAF2FB' },
+      texture:'mottle',
+      discover:{
+        title:'河邊晾滿藍布的年代',
+        body:'三峽曾大量種植馬藍，加上鄰近河運與充足水源，成為台灣藍染的重要發源地。當年染坊沿著三峽溪林立，染好的布匹就在河邊漂洗、晾曬。整條溪谷一片藍，是這座小鎮最鮮明的風景。',
+      },
+      cocreate:{
+        title:'藍色不是一次完成的',
+        intro:'每一次浸染只加深一點點，中間必須讓布接觸空氣氧化，顏色才會真正吃進纖維。急不得，也跳不過。',
+        steps:[
+          { name:'採藍', desc:'收割馬藍葉，浸泡打藍製成藍靛。' },
+          { name:'建藍', desc:'養菌發酵起缸，這一步最考驗經驗。' },
+          { name:'綁紮', desc:'以縫、綁、夾決定花紋，圖案在此定案。' },
+          { name:'浸染', desc:'入缸浸泡、取出氧化，反覆多次。' },
+          { name:'漂洗', desc:'清水洗去浮色，晾乾後顏色才算完成。' },
+        ],
+        note:'眼鏡布染了九次。第七次的藍其實就很漂亮了，但師傅說再兩次，洗過之後才不會走色。',
+      },
+      spirit:'耐看的作品，不是第一眼驚豔，<br>而是越看越有味道。',
+      products:[
+        { id:'i1', type:'cloth', em:'💙', name:'藍染手工眼鏡布', desc:'有機棉，每塊紋路都不同',   price:380 },
+        { id:'i2', type:'bag',   em:'🔵', name:'藍染束口收納袋', desc:'植物染色，越洗越溫潤',     price:540 },
+        { id:'i3', type:'bag',   em:'👜', name:'藍染提袋',       desc:'夾染方格紋，日常好搭',     price:780 },
+        { id:'i4', type:'cloth', em:'🧵', name:'藍染包裝布',     desc:'可重複使用的風呂敷包法',   price:320 },
+      ],
+    },
+
+    /* ---------- FOUND 005 ---------- */
+    {
+      id:'umbrella', no:'005', status:'open', em:'🌂',
+      city:'高雄美濃', name:'美濃紙傘', since:'客家先民',
+      theme:'守護。',
+      tone:{ base:'#A8452F', deep:'#5A2115', light:'#E8A78E', ink:'#FFF0EA' },
+      texture:'spoke',
+      discover:{
+        title:'女兒出嫁要帶兩把傘',
+        body:'客家先民將油紙傘技術帶到美濃。當地盛產竹子，加上桐油與手繪技術成熟，逐漸形成完整的紙傘聚落。紙傘不只是遮陽避雨——傘形渾圓，客家人取其圓滿之意，女兒出嫁時要帶兩把紙傘，象徵多子多孫與家庭和睦。',
+      },
+      cocreate:{
+        title:'一把傘，一個月',
+        intro:'劈竹、削竹、編傘骨、裱紙、上油、彩繪，前後超過一個月。一把傘上有上百個手工綁的線結。',
+        steps:[
+          { name:'劈竹', desc:'選桂竹剖成傘骨，粗細必須完全一致。' },
+          { name:'編骨', desc:'棉線穿孔綁紮，一把傘上百個結。' },
+          { name:'裱紙', desc:'柿子水糊上棉紙，貼合不能有皺。' },
+          { name:'彩繪', desc:'手繪花鳥或書法，每把圖案都不同。' },
+          { name:'上油', desc:'反覆刷桐油防水，日曬陰乾交替數回。' },
+        ],
+        note:'我們沒有做傘，而是請彩繪師傅把畫在傘面上的花鳥，畫到眼鏡布上。同一支筆，同一雙手。',
+      },
+      spirit:'紙傘守護一家人的晴雨。<br>眼鏡守護一個人的視野。',
+      products:[
+        { id:'u1', type:'cloth', em:'🌂', name:'紙傘紋客家眼鏡布', desc:'油紙傘彩繪紋樣，客家限定', price:460 },
+        { id:'u2', type:'box',   em:'🎁', name:'油紙傘紋禮盒',     desc:'手繪花鳥圖樣，圓滿寓意',   price:1180 },
+        { id:'u3', type:'cloth', em:'🖌', name:'手繪限量收藏布組', desc:'職人親筆，每組獨立編號',   price:1580 },
+      ],
+    },
+
+    /* ---------- 尚未前往 ---------- */
+    { id:'bamboo',  no:'006', status:'pending', em:'🎋', city:'南投竹山', name:'竹山竹藝',
+      theme:'一根竹子，可以陪伴一輩子。',
+      tone:{ base:'#5E7A42', deep:'#33471F', light:'#B7CE8A', ink:'#F4FAE8' }, texture:'stripe', products:[] },
+
+    { id:'rush',    no:'007', status:'pending', em:'🌾', city:'苗栗苑裡', name:'苑裡藺草',
+      theme:'從土地長出的天然纖維。',
+      tone:{ base:'#A8935E', deep:'#5F5230', light:'#E2D6AC', ink:'#FBF7E9' }, texture:'weave', products:[] },
+
+    { id:'joinery', no:'008', status:'pending', em:'⚙️', city:'桃園大溪', name:'大溪木藝',
+      theme:'不靠釘子，也能傳承百年。',
+      tone:{ base:'#4A4038', deep:'#26201B', light:'#A89684', ink:'#F7F2EC' }, texture:'joint', products:[] },
   ],
 
-  /* ── Step 3 刻圖：市集同步設定 ──
-     實際刻圖即時從 Supabase engraving_designs 讀取（與 market.html 同源），
-     條件 status='approved' 且 is_show='上架'。
-     以下 engravingPrice 為刻圖加價，市集資料表無價格欄位，統一由此設定。 */
-  engravingConfig: {
-    price: 350,   // 刻圖加價（NT$）
-    limit: 500,   // 一次載入上限
+  /* 商品類型 */
+  types: [
+    { key:'all',     label:'全部' },
+    { key:'box',     label:'收納盒' },
+    { key:'cloth',   label:'眼鏡布' },
+    { key:'bag',     label:'收納袋' },
+    { key:'stand',   label:'展示架' },
+    { key:'card',    label:'紙品' },
+    { key:'service', label:'職人服務' },
+  ],
+  typeLabel: {
+    box:'收納盒', cloth:'眼鏡布', bag:'收納袋',
+    stand:'展示架', card:'紙品', service:'職人服務',
   },
 
-  /* 市集連線失敗時的備援清單 */
+  /* 刻圖市集連線失敗時的備援清單 */
   engravingsFallback: [
-    { id:'e01', em:'🌸', name:'小花圖案',  author:'阿偉',        city:'台南・安平',    story:'某個雨天在騎樓下看見路邊野花，就畫了下來。',     series:'自然系', price:350, count:247, total:6, tags:['warm','creator','traveler'] },
-    { id:'e02', em:'🌊', name:'海浪線條',  author:'小林工作室',  city:'高雄・鹽埕',    story:'從小在海邊長大，想把海的節奏刻進每一副眼鏡。', series:'自然系', price:350, count:183, total:6, tags:['outdoor','traveler'] },
-    { id:'e03', em:'⭐', name:'星群排列',  author:'月球小姐',    city:'台北・大稻埕',  story:'失眠的夜晚把窗外的星空畫成了這個。',           series:'幾何系', price:380, count:312, total:4, tags:['bold','subtle'] },
-    { id:'e04', em:'🦋', name:'蝴蝶展翅',  author:'阿偉',        city:'台南・安平',    story:'系列第二作，靈感來自老家院子的紫花。',           series:'自然系', price:350, count:156, total:6, tags:['warm','creator'] },
-    { id:'e05', em:'🗺', name:'城市網格',  author:'Ting Studio', city:'台中・審計新村', story:'把最喜歡的城市街道化成線條。',                 series:'城市系', price:400, count:98,  total:5, tags:['urban','scholar','traveler'] },
-    { id:'e06', em:'🌿', name:'草葉紋',    author:'綠意設計',    city:'宜蘭・羅東',    story:'農家子弟對土地的一份記憶。',                   series:'自然系', price:350, count:201, total:6, tags:['warm','outdoor'] },
-    { id:'e07', em:'✍️', name:'手寫體字',  author:'Ting Studio', city:'台中・審計新村', story:'相信文字是最美的圖案。',                       series:'文字系', price:420, count:445, total:3, tags:['scholar','subtle'] },
-    { id:'e08', em:'🔷', name:'幾何拼接',  author:'月球小姐',    city:'台北・大稻埕',  story:'數學之美，刻在眼鏡上。',                         series:'幾何系', price:380, count:267, total:4, tags:['bold','sharp','urban'] },
-    { id:'e09', em:'🏔', name:'山脈輪廓',  author:'小林工作室',  city:'高雄・鹽埕',    story:'單車環島時畫的，每一座山都不同。',               series:'城市系', price:400, count:134, total:5, tags:['outdoor','traveler'] },
+    { id:'e01', em:'🌸', name:'小花圖案', designer:'阿偉',        category:'自然系', slogan:'某個雨天在騎樓下看見路邊野花，就畫了下來。' },
+    { id:'e02', em:'🌊', name:'海浪線條', designer:'小林工作室',  category:'自然系', slogan:'從小在海邊長大，想把海的節奏刻進每一副眼鏡。' },
+    { id:'e03', em:'⭐', name:'星群排列', designer:'月球小姐',    category:'幾何系', slogan:'失眠的夜晚把窗外的星空畫成了這個。' },
+    { id:'e04', em:'🦋', name:'蝴蝶展翅', designer:'阿偉',        category:'自然系', slogan:'系列第二作，靈感來自老家院子的紫花。' },
+    { id:'e05', em:'🗺', name:'城市網格', designer:'Ting Studio', category:'城市系', slogan:'把最喜歡的城市街道化成線條。' },
+    { id:'e06', em:'✍️', name:'手寫體字', designer:'Ting Studio', category:'文字系', slogan:'相信文字是最美的圖案。' },
   ],
-
-  /* ── Step 4 細節 ── */
-  details: {
-    legColors: [
-      { val:'darkbrown', hex:'#3B2A1A', label:'深棕' },
-      { val:'wood',      hex:'#8B6340', label:'原木' },
-      { val:'black',     hex:'#1A1A1A', label:'黑' },
-      { val:'silver',    hex:'#B0B0B0', label:'金屬銀' },
-      { val:'rosegold',  hex:'#C48B8B', label:'玫瑰金' },
-    ],
-    nosePads: ['矽膠（舒適）', '金屬（穩固）', '透明（低調）'],
-    screwColors: [
-      { val:'gold',   hex:'#B58A42', label:'金色' },
-      { val:'silver', hex:'#A0A0A0', label:'銀色' },
-      { val:'black',  hex:'#222222', label:'黑色' },
-    ],
-    lensColors: [
-      { val:'clear', hex:'#E8F4FD', label:'透明' },
-      { val:'tea',   hex:'#C8A97A', label:'淡茶' },
-      { val:'gray',  hex:'#A0A0A0', label:'淡灰' },
-      { val:'brown', hex:'#7A5A3A', label:'漸層棕' },
-    ],
-  },
-
-  /* ── Step 6 配件 ── */
-  acc: {
-    box: [
-      { id:'b01', em:'🪵', name:'黑胡桃木翻蓋盒',   desc:'磁吸閉合，木紋呼應鏡框', price:880,  badge:'命中注定', bt:'brand', matchMat:'wood', craft:'wood' },
-      { id:'b02', em:'🤎', name:'深棕植鞣革硬殼盒', desc:'手縫白線，越用越有味道', price:1200 },
-      { id:'b03', em:'🌿', name:'楠竹雕花滑蓋盒',   desc:'鏤空花紋蓋，職人手作',   price:750, craft:'bamboo' },
-      { id:'b04', em:'🩶', name:'深灰羊毛氈成型盒', desc:'木質按扣，靜音開合',     price:690 },
-      { id:'b05', em:'📦', name:'回收紙漿壓模硬盒', desc:'植物染印花，環保材質',   price:420, craft:'paper' },
-      { id:'b06', em:'🫙', name:'透明壓克力展示盒', desc:'金屬底座，直接當展示品', price:980 },
-      { id:'b07', em:'🟤', name:'赤陶土色皮革對折盒', desc:'內有鏡框固定夾，不晃動', price:860 },
-      { id:'b08', em:'🪖', name:'橄欖綠軍風金屬盒', desc:'扣環鎖扣，戶外超耐用',   price:550 },
-      { id:'b09', em:'💜', name:'薰衣草紫絨布軟殼盒', desc:'束口繩設計，浪漫氣質', price:390 },
-      { id:'b10', em:'🗾', name:'印花和紙包覆硬盒',  desc:'千代紙紋樣，日系職人感', price:640, craft:'paper' },
-    ],
-    cloth: [
-      { id:'c01', em:'🎨', name:'搜點子創作者聯名布', desc:'超細纖維，限量插畫印花', price:280, badge:'搜點子', bt:'warn' },
-      { id:'c02', em:'💙', name:'台灣藍染手工布',     desc:'有機棉，每塊紋路都不同', price:380, craft:'indigo' },
-      { id:'c03', em:'🌸', name:'刻圖同款印花布',     desc:'和你的刻圖相同圖案',     price:320, badge:'配套', bt:'ok', matchEng:true },
-      { id:'c04', em:'🌿', name:'竹纖維漸層布',       desc:'深淺漸層，親膚透氣',     price:220 },
-      { id:'c05', em:'✨', name:'燙金幾何麂皮絨布',   desc:'燙金圖騰，擦拭零刮傷',   price:350 },
-      { id:'c06', em:'🌸', name:'日本進口桃皮絨',     desc:'霧面細緻，頂級手感',     price:480 },
-      { id:'c07', em:'🔷', name:'台灣老花磁磚紋布',   desc:'復古磁磚紋樣，台味十足', price:300 },
-      { id:'c08', em:'🐾', name:'小動物刺繡棉布',     desc:'立體刺繡點綴，療癒系',   price:420 },
-      { id:'c09', em:'🌂', name:'美濃紙傘紋客家眼鏡布', desc:'油紙傘彩繪紋樣，客家限定', price:460, badge:'台灣百工', bt:'brand', craft:'umbrella' },
-    ],
-    bag: [
-      { id:'g01', em:'🤎', name:'植鞣革束口袋',     desc:'金屬圓環收口，越用越亮',   price:960,  badge:'命中注定', bt:'brand', matchMat:'wood' },
-      { id:'g02', em:'🎨', name:'搜點子插畫帆布袋', desc:'絹印圖案，創作者限量款',   price:480,  badge:'搜點子', bt:'warn' },
-      { id:'g03', em:'🪵', name:'楠竹編織袋',       desc:'傳統工藝，輕量透氣',       price:620, craft:'bamboo' },
-      { id:'g04', em:'💙', name:'蠟染靛藍棉布袋',   desc:'手工蠟染，每件獨一無二',   price:540, craft:'indigo' },
-      { id:'g05', em:'🩶', name:'歐洲羊毛氈成型袋', desc:'進口厚氈，完美包覆輪廓',   price:780 },
-      { id:'g06', em:'⬜', name:'和紙纖維防潑水袋', desc:'輕如紙，防潑水塗層',       price:360 },
-      { id:'g07', em:'🌸', name:'苗族風手工刺繡袋', desc:'手工彩色刺繡，藝術感十足', price:890 },
-      { id:'g08', em:'🔵', name:'義大利皮革信封袋', desc:'折疊封口，超薄好帶',       price:1280 },
-      { id:'g09', em:'🌾', name:'苑裡藺草束口袋',   desc:'天然香氣，越用越柔軟',     price:680, badge:'台灣百工', bt:'brand', craft:'rush' },
-    ],
-    stand: [
-      { id:'s01', em:'🪵', name:'黑胡桃木橫桿掛架',   desc:'牆掛式，可掛 10 副',     price:2400, badge:'命中注定', bt:'brand', matchMat:'wood', craft:'wood' },
-      { id:'s02', em:'✨', name:'手工彎折黃銅管架',   desc:'桌上型，雕塑感造型',     price:3200 },
-      { id:'s03', em:'🔲', name:'清水模水泥底座架',   desc:'桌上型，極簡冷調',       price:1800 },
-      { id:'s04', em:'⭕', name:'竹編圓形壁掛架',     desc:'牆掛式，傳統工藝',       price:1200, craft:'bamboo' },
-      { id:'s05', em:'🔳', name:'壓克力旋轉展示塔',   desc:'360° 旋轉，展示 8 副',   price:2800 },
-      { id:'s06', em:'🏺', name:'鶯歌陶瓷眼鏡托',     desc:'手拉坯燒製，一件一個樣',   price:1450, badge:'台灣百工', bt:'brand', craft:'ceramic' },
-      { id:'s07', em:'⚙️', name:'大溪榫卯木質展示架', desc:'不用一根鐵釘，穩固數十年', price:3600, badge:'台灣百工', bt:'brand', craft:'joinery' },
-    ],
-  },
 };

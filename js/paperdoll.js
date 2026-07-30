@@ -1,168 +1,211 @@
-// paperdoll.js — 樂活眼鏡 客製眼鏡體驗
-// v1.2 | 台灣百工計畫 + 刻圖市集同步 | 2026-07-30
+/* ============================================================
+   paperdoll.js — 從零開始，打造那副只有我才有的眼鏡
+   v2.0 | 五步重構 · LOHAS FOUND 發現機制 | 2026-07-31
+   ------------------------------------------------------------
+   設計要點：
+   1. Step 3 進站時完全看不到 FOUND 品牌，就是一般配件購物頁。
+      卡片角落只有一枚不解釋的壓印章。
+   2. 點卡片主區域 → 全螢幕故事接管；點右下 ＋ → 直接加購不進故事。
+   3. 第一次看完故事退回列表，護照才滑出（彩蛋在此揭曉）。
+   ============================================================ */
 
 (function () {
   'use strict';
 
-  /* ── 狀態 ── */
+  /* ══════════════════════════════════════
+     狀態
+  ══════════════════════════════════════ */
   const S = {
     step: 1,
-    quiz: {},        // { lifestyle, admire, impression }
-    frame: null,
+    face: null,        // 臉型 key
+    frame: null,       // FRAME_ITEMS item（附 price）
     engraving: null,
-    details: { legColor:'darkbrown', nosePad:'矽膠（舒適）', screwColor:'gold', innerText:'', lensColor:'clear', choices:0 },
+    acc: {},           // productId -> { ...product, foundId }
     name: '',
-    acc: {},         // { id: { ...item, cat } }
-    lastCraft: null, // 最近一次選到的工藝 id（用於故事帶）
+    found: [],         // 已發現的城市 id（依發現順序）
+    passportShown: false,
   };
 
-  /* ── 工具 ── */
-  const $  = id => document.getElementById(id);
-  const qs = (sel, ctx) => (ctx || document).querySelector(sel);
-  const qsa = (sel, ctx) => [...(ctx || document).querySelectorAll(sel)];
-  const fmt = n => 'NT$' + n.toLocaleString();
+  /* ══════════════════════════════════════
+     工具
+  ══════════════════════════════════════ */
+  const $   = id => document.getElementById(id);
+  const qs  = (s, c) => (c || document).querySelector(s);
+  const qsa = (s, c) => [...(c || document).querySelectorAll(s)];
+  const fmt = n => 'NT$' + Number(n || 0).toLocaleString();
+  const esc = s => String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  const CFG = () => PD_DATA.config;
+  const FOUND_ALL  = () => PD_DATA.found || [];
+  const FOUND_OPEN = () => FOUND_ALL().filter(f => f.status === 'open');
+  const findCity   = id => FOUND_ALL().find(f => f.id === id);
+
+  /* 所有可購商品攤平（附城市資訊） */
+  function allProducts() {
+    return FOUND_OPEN().flatMap(f =>
+      f.products.map(p => ({ ...p, foundId: f.id, foundNo: f.no })));
+  }
+  const findProduct = id => allProducts().find(p => p.id === id);
+
   const BASE  = () => (S.frame?.price || 0) + (S.engraving?.price || 0);
-  const ACC   = () => Object.values(S.acc).reduce((s, a) => s + a.price, 0);
-  const TOTAL = () => BASE() + ACC();
+  const ACCS  = () => Object.values(S.acc);
+  const TOTAL = () => BASE() + ACCS().reduce((s, a) => s + a.price, 0);
 
-  /* ── 台灣百工輔助 ── */
-  const CRAFTS     = () => PD_DATA.crafts || {};
-  const CRAFT_IDS  = () => Object.keys(CRAFTS());
-  // 目前造型已收集到的工藝聚落（去重）
-  const ownedCrafts = () => [...new Set(
-    Object.values(S.acc).map(a => a.craft).filter(Boolean)
-  )];
+  /* ══════════════════════════════════════
+     步驟切換
+  ══════════════════════════════════════ */
+  const STEP_MAX = 5;
 
-  /* ── 步驟切換 ── */
   function goStep(n) {
+    n = Math.min(Math.max(n, 1), STEP_MAX);
     S.step = n;
+
     qsa('.pd-step').forEach((el, i) => {
       el.classList.toggle('done',   i + 1 < n);
       el.classList.toggle('active', i + 1 === n);
     });
     qsa('.pd-screen').forEach(el => {
-      el.style.display = (el.dataset.step == n) ? '' : 'none';
+      el.style.display = (Number(el.dataset.step) === n) ? '' : 'none';
     });
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // 進入各步驟時渲染
-    if (n === 2) renderFrames();
-    if (n === 3) { loadEngravings(); renderEngravings(); }
-    if (n === 4) renderDetails();
-    if (n === 5) renderNaming();
-    if (n === 6) { renderAccGrid(); updateFlatlay(); }
-    if (n === 7) renderCard();
+
+    if (n === 1) renderFaces();
+    if (n === 2) { loadEngravings(); renderEngravings(); }
+    if (n === 3) { renderTypeTabs(); renderShop(); renderCartBar(); }
+    if (n === 4) renderNaming();
+    if (n === 5) renderFinal();
+
+    syncPassport();
+  }
+  const nextStep = () => goStep(S.step + 1);
+  const prevStep = () => goStep(S.step - 1);
+
+  /* ══════════════════════════════════════
+     STEP 1 — 臉型 → 鏡框（連動鏡框百科）
+  ══════════════════════════════════════ */
+  let frameGroupFilter = 'all';
+
+  function framePrice(item) {
+    return CFG().framePriceByGroup[item.group] || 3000;
   }
 
-  function nextStep() { if (S.step < 7) goStep(S.step + 1); }
-  function prevStep() { if (S.step > 1) goStep(S.step - 1); }
+  function frameIconSvg(item) {
+    const raw = (typeof FRAME_ICONS !== 'undefined' && FRAME_ICONS[item.icon]) || '';
+    return `<svg class="fc-icon" viewBox="0 0 64 42" aria-hidden="true">${raw}</svg>`;
+  }
 
-  /* ══════════════════════════════════════════
-     STEP 1 — 問卷
-  ══════════════════════════════════════════ */
-  let qIdx = 0;
-
-  function renderQuiz() {
-    const q = PD_DATA.quiz[qIdx];
-    // 進度條
-    $('quiz-prog').innerHTML = PD_DATA.quiz.map((_, i) =>
-      `<span class="${i < qIdx ? 'done' : ''}"></span>`).join('');
-    // 問題
-    $('quiz-q').textContent = q.q;
-    // 選項
-    $('quiz-opts').innerHTML = q.opts.map(o => `
-      <button class="pd-quiz-opt ${S.quiz[q.id] === o.val ? 'sel' : ''}"
-              onclick="PD.quizPick('${q.id}','${o.val}')">
-        <span class="oe">${o.em}</span>
-        <div class="ol">${o.label}</div>
-        <div class="od">${o.desc}</div>
+  function renderFaces() {
+    const box = $('face-grid');
+    if (!box) return;
+    box.innerHTML = (PD_DATA.faces || []).map(f => `
+      <button class="pd-face-card ${S.face === f.key ? 'active' : ''}"
+              onclick="PD.pickFace('${f.key}')">
+        <img src="${f.img}" alt="${esc(f.label)}" loading="lazy">
+        <div class="fa-label">${esc(f.label)}</div>
+        <div class="fa-desc">${esc(f.desc)}</div>
       </button>`).join('');
+    renderFrames();
   }
 
-  function quizPick(qid, val) {
-    S.quiz[qid] = val;
-    // 視覺回饋
-    qsa(`#quiz-opts .pd-quiz-opt`).forEach(el => el.classList.remove('sel'));
-    event.currentTarget.classList.add('sel');
-    setTimeout(() => {
-      qIdx++;
-      if (qIdx < PD_DATA.quiz.length) {
-        renderQuiz();
-      } else {
-        qIdx = 0;
-        goStep(2);
-      }
-    }, 280);
+  function pickFace(key) {
+    S.face = key;
+    frameGroupFilter = 'all';
+    renderFaces();
+    $('frame-result')?.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
-  /* ══════════════════════════════════════════
-     STEP 2 — 鏡框
-  ══════════════════════════════════════════ */
-  let frameFilter = 'all';
+  /* 依臉型從 FRAME_ITEMS 篩選（含「各種臉型」通用款） */
+  function matchedFrames() {
+    if (typeof FRAME_ITEMS === 'undefined') return [];
+    if (!S.face) return [];
+    const face = (PD_DATA.faces || []).find(f => f.key === S.face);
+    if (!face) return [];
+    return FRAME_ITEMS.filter(item => {
+      const arr = item.face || [];
+      return arr.some(x => face.match.includes(x) || x === '各種臉型');
+    });
+  }
 
   function renderFrames() {
-    const prefs = Object.values(S.quiz);
-    let list = PD_DATA.frames;
-    if (frameFilter !== 'all') list = list.filter(f => f.mat === frameFilter);
+    const wrap = $('frame-result');
+    const grid = $('frame-grid');
+    if (!wrap || !grid) return;
 
-    $('frame-grid').innerHTML = list.map(f => {
-      const isRec = f.rec.some(r => prefs.includes(r));
-      return `
-      <div class="pd-frame-card ${S.frame?.id === f.id ? 'active' : ''} ${isRec ? 'rec' : ''}"
-           onclick="PD.pickFrame('${f.id}')">
-        <div class="pd-frame-img">${f.em}</div>
-        <div class="pd-frame-name">${f.name}</div>
-        <div class="pd-frame-quote">${f.quote}</div>
-        <div class="pd-frame-price">${fmt(f.price)}</div>
-      </div>`;
-    }).join('');
+    if (!S.face) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
 
-    updateFramePreview();
+    let list = matchedFrames();
+    const face = (PD_DATA.faces || []).find(f => f.key === S.face);
+
+    // 群組 chips
+    const groups = [...new Set(list.map(i => i.group))];
+    const gLabel = {};
+    (typeof FRAME_GROUPS !== 'undefined' ? FRAME_GROUPS : []).forEach(g => gLabel[g.key] = g.label);
+    $('frame-groups').innerHTML =
+      `<button class="pd-chip ${frameGroupFilter === 'all' ? 'active' : ''}"
+               onclick="PD.setFrameGroup('all')">全部 ${list.length}</button>` +
+      groups.map(g => `
+        <button class="pd-chip ${frameGroupFilter === g ? 'active' : ''}"
+                onclick="PD.setFrameGroup('${g}')">${esc(gLabel[g] || g)}</button>`).join('');
+
+    if (frameGroupFilter !== 'all') list = list.filter(i => i.group === frameGroupFilter);
+
+    $('frame-count').innerHTML =
+      `<b>${esc(face.label)}</b> 適合的鏡框，鏡框百科共收錄 <b>${matchedFrames().length}</b> 種`;
+
+    grid.innerHTML = list.map(item => `
+      <div class="pd-frame-card ${S.frame?.code === item.code ? 'active' : ''}"
+           onclick="PD.pickFrame('${item.code}')">
+        ${item.tag ? `<span class="fc-tag">${esc(item.tag)}</span>` : ''}
+        <div class="fc-img">${frameIconSvg(item)}</div>
+        <div class="fc-name">${esc(item.name)}</div>
+        <div class="fc-en">${esc(item.en || '')}</div>
+        <div class="fc-desc">${esc(item.desc)}</div>
+        <div class="fc-foot">
+          <span class="fc-price">${fmt(framePrice(item))}</span>
+          <a class="fc-more" href="frames.html?f=${encodeURIComponent(item.code)}"
+             target="_blank" rel="noopener"
+             onclick="event.stopPropagation()">百科 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+        </div>
+      </div>`).join('');
+
+    updateFrameBar();
   }
 
-  function pickFrame(id) {
-    S.frame = PD_DATA.frames.find(f => f.id === id);
+  function setFrameGroup(g) { frameGroupFilter = g; renderFrames(); }
+
+  function pickFrame(code) {
+    const item = FRAME_ITEMS.find(i => i.code === code);
+    if (!item) return;
+    S.frame = { ...item, price: framePrice(item) };
     renderFrames();
-    // 小動畫：圖示跳動
-    const icon = $('sp-icon');
-    if (icon) { icon.style.transform = 'scale(1.18)'; setTimeout(() => { icon.style.transform = 'scale(1)'; }, 300); }
   }
 
-  function updateFramePreview() {
-    const f = S.frame;
-    $('sp-icon').textContent  = f ? f.em : '👓';
-    $('sp-name').textContent  = f ? f.name : '尚未選擇';
-    $('sp-code').textContent  = f ? f.code : '';
-    $('sp-price').textContent = f ? fmt(f.price) : '';
-    $('step2-next').disabled  = !f;
+  function updateFrameBar() {
+    const bar = $('frame-bar');
+    if (!bar) return;
+    if (!S.frame) { bar.classList.remove('show'); return; }
+    bar.classList.add('show');
+    $('fb-name').textContent  = S.frame.name;
+    $('fb-price').textContent = fmt(S.frame.price);
+    $('step1-next').disabled  = false;
   }
 
-  function setFrameFilter(val) {
-    frameFilter = val;
-    qsa('#frame-filters .pd-chip').forEach(el =>
-      el.classList.toggle('active', el.dataset.val === val));
-    renderFrames();
-  }
+  /* ══════════════════════════════════════
+     STEP 2 — 刻圖（刻圖市集同步）
+  ══════════════════════════════════════ */
+  let engFilter  = 'all';
+  let engSearch  = '';
+  let engLoaded  = false;
+  let engLoading = false;
+  let engShowAll = false;
 
-  /* ══════════════════════════════════════════
-     STEP 3 — 刻圖（與刻圖市集同步）
-  ══════════════════════════════════════════ */
-  let engFilter   = 'all';
-  let engSearch   = '';
-  let engLoaded   = false;
-  let engLoading  = false;
-  let engShowAll  = false;
-  const ENG_PAGE  = 12;   // 預設先顯示幾件
+  const getSb = () =>
+    window.LohasSupabase?.getClient?.() || window.Supabase?.client || window.supabase;
 
-  const ENG_CFG = () => PD_DATA.engravingConfig || { price: 350, limit: 500 };
-
-  /* 取得 Supabase client（與 market.js 同一組 fallback） */
-  function getSb() {
-    return window.LohasSupabase?.getClient?.()
-        || window.Supabase?.client
-        || window.supabase;
-  }
-
-  /* supabase.js 為 defer 載入，用輪詢等待就緒（勿用單次 setTimeout） */
+  /* supabase.js 為 defer 載入，用輪詢等待就緒 */
   function waitForSb(maxMs = 8000, interval = 100) {
     return new Promise(resolve => {
       const t0 = Date.now();
@@ -175,7 +218,6 @@
     });
   }
 
-  /* 從 engraving_designs 載入，條件與 market.html 完全一致 */
   async function loadEngravings() {
     if (engLoaded || engLoading) return;
     engLoading = true;
@@ -187,25 +229,34 @@
 
       const { data, error } = await sb
         .from('engraving_designs')
-        .select('id, legacy_id, name, slogan, keywords, designer_name, category, image_url, image_url_png, like_count, collect_count, status, is_show, created_at, creator_id')
+        .select('id, legacy_id, name, slogan, keywords, designer_name, category, image_url, image_url_png, like_count, collect_count, status, is_show, created_at')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
-        .limit(ENG_CFG().limit);
+        .limit(CFG().engravingLimit);
 
       if (error) throw error;
 
-      // 排除已下架（is_show 為 NULL 視為上架）
-      const rows = (data || []).filter(d => (d.is_show || '上架') === '上架');
-      PD_DATA.engravings = rows.map(normalizeDesign);
+      // 排除已下架（is_show 為 NULL 視為上架），與 market.html 一致
+      PD_DATA.engravings = (data || [])
+        .filter(d => (d.is_show || '上架') === '上架')
+        .map(d => ({
+          id: d.id,
+          name:     d.name || '未命名作品',
+          designer: d.designer_name || '樂活創作者',
+          category: d.category || '',
+          slogan:   d.slogan || '',
+          keywords: d.keywords || '',
+          img:      d.image_url || d.image_url_png || '',
+          likes:    d.like_count || 0,
+          price:    CFG().engravingPrice,
+          em:       '',
+        }));
       engLoaded = true;
 
     } catch (err) {
       console.warn('[paperdoll] 刻圖市集載入失敗，改用備援清單:', err);
-      PD_DATA.engravings = (PD_DATA.engravingsFallback || []).map(e => ({
-        id: e.id, name: e.name, designer: e.author, category: e.series,
-        slogan: e.story, keywords: '', img: '', likes: e.count,
-        price: e.price, em: e.em, isFallback: true,
-      }));
+      PD_DATA.engravings = (PD_DATA.engravingsFallback || [])
+        .map(e => ({ ...e, img:'', likes:0, keywords:'', price: CFG().engravingPrice }));
     } finally {
       engLoading = false;
       renderEngFilters();
@@ -213,40 +264,19 @@
     }
   }
 
-  function normalizeDesign(d) {
-    return {
-      id:       d.id,
-      legacyId: d.legacy_id,
-      name:     d.name || '未命名作品',
-      designer: d.designer_name || '樂活創作者',
-      category: d.category || '',
-      slogan:   d.slogan || '',
-      keywords: d.keywords || '',
-      img:      d.image_url || d.image_url_png || '',
-      likes:    d.like_count || 0,
-      collects: d.collect_count || 0,
-      price:    ENG_CFG().price,
-      em:       '',
-    };
-  }
-
-  /* 縮圖：有圖用圖，沒圖用文字首字 */
   function engThumb(e, cls) {
-    if (e.img) return `<img class="${cls}" src="${e.img}" alt="${e.name}" loading="lazy">`;
-    if (e.em)  return `<span class="${cls} is-em">${e.em}</span>`;
-    return `<span class="${cls} is-em">${(e.name || '刻').slice(0, 1)}</span>`;
+    if (e.img) return `<img class="${cls}" src="${esc(e.img)}" alt="${esc(e.name)}" loading="lazy">`;
+    return `<span class="${cls} is-em">${e.em || esc((e.name || '刻').slice(0, 1))}</span>`;
   }
 
-  /* 分類 chips 由實際資料動態產生 */
   function renderEngFilters() {
     const box = $('eng-filters');
     if (!box) return;
     const cats = [...new Set((PD_DATA.engravings || []).map(e => e.category).filter(Boolean))];
     box.innerHTML =
-      `<button class="pd-chip ${engFilter === 'all' ? 'active' : ''}" data-val="all" onclick="PD.setEngFilter('all')">全部</button>` +
-      cats.map(c =>
-        `<button class="pd-chip ${engFilter === c ? 'active' : ''}" data-val="${c}" onclick="PD.setEngFilter('${c.replace(/'/g, "\\'")}')">${c}</button>`
-      ).join('');
+      `<button class="pd-chip ${engFilter === 'all' ? 'active' : ''}" onclick="PD.setEngFilter('all')">全部</button>` +
+      cats.map(c => `<button class="pd-chip ${engFilter === c ? 'active' : ''}"
+                             onclick="PD.setEngFilter(decodeURIComponent('${encodeURIComponent(c)}'))">${esc(c)}</button>`).join('');
   }
 
   function renderEngravings() {
@@ -254,7 +284,8 @@
     if (!grid) return;
 
     if (engLoading) {
-      grid.innerHTML = '<div class="pd-eng-state"><i class="fa-solid fa-circle-notch fa-spin"></i> 正在同步刻圖市集…</div>';
+      grid.innerHTML = '<div class="pd-state"><i class="fa-solid fa-circle-notch fa-spin"></i> 正在同步刻圖市集…</div>';
+      $('eng-more').innerHTML = '';
       return;
     }
 
@@ -267,440 +298,441 @@
     }
 
     if (!list.length) {
-      grid.innerHTML = '<div class="pd-eng-state">找不到符合的刻圖，換個關鍵字試試</div>';
-      renderEngMore(0, 0);
+      grid.innerHTML = '<div class="pd-state">找不到符合的刻圖，換個關鍵字試試</div>';
+      $('eng-more').innerHTML = '';
       return;
     }
 
-    // 已選中的刻圖一定要在可見範圍內，避免收合後看不到自己的選擇
-    const total   = list.length;
-    let   visible = engShowAll ? list : list.slice(0, ENG_PAGE);
+    const total = list.length;
+    const size  = CFG().engravingPageSize;
+    let visible = engShowAll ? list : list.slice(0, size);
+
+    // 已選中的刻圖務必可見
     if (!engShowAll && S.engraving &&
         !visible.some(e => String(e.id) === String(S.engraving.id)) &&
         list.some(e => String(e.id) === String(S.engraving.id))) {
-      visible = [S.engraving, ...visible.slice(0, ENG_PAGE - 1)];
+      visible = [S.engraving, ...visible.slice(0, size - 1)];
     }
 
     grid.innerHTML = visible.map(e => `
       <div class="pd-eng-card ${String(S.engraving?.id) === String(e.id) ? 'active' : ''}"
-           onclick="PD.pickEng('${e.id}')">
+           onclick="PD.pickEng('${esc(e.id)}')">
         ${engThumb(e, 'ec-thumb')}
-        <div class="ec-name">${e.name}</div>
-        <div class="ec-author">${e.designer}</div>
+        <div class="ec-name">${esc(e.name)}</div>
+        <div class="ec-author">${esc(e.designer)}</div>
         <div class="ec-price">${fmt(e.price)}</div>
       </div>`).join('');
 
-    renderEngMore(visible.length, total);
-  }
+    $('eng-more').innerHTML = (total <= size) ? '' : (engShowAll
+      ? `<div class="em-count">已顯示全部 ${total} 件</div>
+         <button class="pd-chip em-btn" onclick="PD.toggleEngShowAll()"><i class="fa-solid fa-chevron-up"></i> 收合</button>`
+      : `<div class="em-count">顯示 ${visible.length} / ${total} 件</div>
+         <button class="pd-chip em-btn" onclick="PD.toggleEngShowAll()"><i class="fa-solid fa-chevron-down"></i> 展開全部 ${total} 件</button>`);
 
-  /* 展開 / 收合列 */
-  function renderEngMore(shown, total) {
-    const box = $('eng-more');
-    if (!box) return;
-
-    if (!total || total <= ENG_PAGE) { box.innerHTML = ''; return; }
-
-    box.innerHTML = engShowAll
-      ? `<div class="em-count">已顯示全部 ${total} 件刻圖</div>
-         <button class="pd-chip em-btn" onclick="PD.toggleEngShowAll()">
-           <i class="fa-solid fa-chevron-up"></i> 收合
-         </button>`
-      : `<div class="em-count">顯示 ${shown} / ${total} 件</div>
-         <button class="pd-chip em-btn" onclick="PD.toggleEngShowAll()">
-           <i class="fa-solid fa-chevron-down"></i> 展開全部 ${total} 件
-         </button>`;
-  }
-
-  function toggleEngShowAll() {
-    engShowAll = !engShowAll;
-    renderEngravings();
-    if (!engShowAll) {
-      // 收合時捲回刻圖區頂端
-      $('eng-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    updateEngStory();
   }
 
   function pickEng(id) {
-    S.engraving = (PD_DATA.engravings || []).find(e => String(e.id) === String(id));
+    S.engraving = (PD_DATA.engravings || []).find(e => String(e.id) === String(id)) || null;
     renderEngravings();
-    updateEngStory();
-    $('step3-next').disabled = false;
+    $('step2-next').disabled = false;
   }
 
   function updateEngStory() {
-    const e   = S.engraving;
     const box = $('eng-story');
     if (!box) return;
+    const e = S.engraving;
 
     if (!e) {
-      box.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:24px 0">選一個刻圖，看看它的故事</div>';
+      box.innerHTML = '<div class="pd-state" style="padding:24px 0">選一個刻圖，看看它的故事</div>';
       return;
     }
-
-    const kw = (e.keywords || '')
-      .split(',').map(k => k.trim()).filter(Boolean)
-      .slice(0, 4)
-      .map(k => `<span class="es-kw">#${k}</span>`).join('');
+    const kw = (e.keywords || '').split(',').map(k => k.trim()).filter(Boolean).slice(0, 4)
+      .map(k => `<span class="es-kw">#${esc(k)}</span>`).join('');
 
     box.innerHTML = `
       <div class="es-thumb-wrap">${engThumb(e, 'es-thumb')}</div>
-      <div class="es-title">${e.name}</div>
-      <div class="es-city"><i class="fa-solid fa-pen-nib"></i> ${e.designer}${e.category ? ' · ' + e.category : ''}</div>
-      ${e.slogan ? `<div class="es-text">${e.slogan}</div>` : ''}
+      <div class="es-title">${esc(e.name)}</div>
+      <div class="es-by"><i class="fa-solid fa-pen-nib"></i> ${esc(e.designer)}${e.category ? ' · ' + esc(e.category) : ''}</div>
+      ${e.slogan ? `<div class="es-text">${esc(e.slogan)}</div>` : ''}
       ${kw ? `<div class="es-kws">${kw}</div>` : ''}
-      <div class="es-count">
-        <i class="fa-regular fa-heart"></i> ${(e.likes || 0).toLocaleString()} 人喜歡這個作品
-      </div>
-      <div class="pd-eng-collect">
-        <i class="fa-solid fa-store"></i>
-        此作品來自樂活刻圖市集，由創作者親自上架
-      </div>`;
+      ${e.likes ? `<div class="es-count"><i class="fa-regular fa-heart"></i> ${e.likes.toLocaleString()} 人喜歡</div>` : ''}
+      <div class="es-note"><i class="fa-solid fa-store"></i> 來自樂活刻圖市集，由創作者親自上架</div>`;
   }
 
-  function setEngFilter(val) {
-    engFilter  = val;
-    engShowAll = false;
-    renderEngFilters();
+  function setEngFilter(v) { engFilter = v; engShowAll = false; renderEngFilters(); renderEngravings(); }
+  function setEngSearch(v) {
+    const n = (v || '').trim();
+    if (n === engSearch) return;
+    engSearch = n; engShowAll = false; renderEngravings();
+  }
+  function toggleEngShowAll() {
+    engShowAll = !engShowAll;
     renderEngravings();
+    if (!engShowAll) $('eng-grid')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  function skipEng() { S.engraving = null; nextStep(); }
+
+  /* ══════════════════════════════════════
+     STEP 3 — 配件（表面是購物，內裡是 FOUND）
+  ══════════════════════════════════════ */
+  let typeFilter = 'all';
+
+  function renderTypeTabs() {
+    const box = $('type-tabs');
+    if (!box) return;
+    const prods = allProducts();
+    box.innerHTML = (PD_DATA.types || []).map(t => {
+      const n = t.key === 'all' ? prods.length : prods.filter(p => p.type === t.key).length;
+      if (!n) return '';
+      return `<button class="pd-tab ${typeFilter === t.key ? 'active' : ''}"
+                      onclick="PD.setType('${t.key}')">${esc(t.label)}<span class="tab-n">${n}</span></button>`;
+    }).join('');
   }
 
-  function setEngSearch(val) {
-    const next = (val || '').trim();
-    if (next === engSearch) return;
-    engSearch  = next;
-    engShowAll = false;
-    renderEngravings();
-  }
+  function setType(k) { typeFilter = k; renderTypeTabs(); renderShop(); }
 
-  function skipEng() {
-    S.engraving = null;
-    $('step3-next').disabled = false;
-    nextStep();
-  }
+  function renderShop() {
+    const grid = $('shop-grid');
+    if (!grid) return;
 
-  /* ══════════════════════════════════════════
-     STEP 4 — 細節微調
-  ══════════════════════════════════════════ */
-  function renderDetails() {
-    const d = PD_DATA.details;
+    let list = allProducts();
+    if (typeFilter !== 'all') list = list.filter(p => p.type === typeFilter);
 
-    $('leg-colors').innerHTML = d.legColors.map(c => `
-      <div class="pd-color-swatch ${S.details.legColor === c.val ? 'active' : ''}"
-           style="background:${c.hex}"
-           onclick="PD.setDetail('legColor','${c.val}')"
-           title="${c.label}">
-        <span class="sw-tip">${c.label}</span>
-      </div>`).join('');
-
-    $('nose-pads').innerHTML = d.nosePads.map(p => `
-      <button class="pd-radio-opt ${S.details.nosePad === p ? 'active' : ''}"
-              onclick="PD.setDetail('nosePad','${p}')">${p}</button>`).join('');
-
-    $('screw-colors').innerHTML = d.screwColors.map(c => `
-      <div class="pd-color-swatch ${S.details.screwColor === c.val ? 'active' : ''}"
-           style="background:${c.hex};border:1px solid #ddd"
-           onclick="PD.setDetail('screwColor','${c.val}')"
-           title="${c.label}">
-        <span class="sw-tip">${c.label}</span>
-      </div>`).join('');
-
-    $('lens-colors').innerHTML = d.lensColors.map(c => `
-      <div class="pd-color-swatch ${S.details.lensColor === c.val ? 'active' : ''}"
-           style="background:${c.hex};border:1px solid #ddd"
-           onclick="PD.setDetail('lensColor','${c.val}')"
-           title="${c.label}">
-        <span class="sw-tip">${c.label}</span>
-      </div>`).join('');
-
-    $('detail-count').innerHTML = `已做了 <b>${S.details.choices}</b> 個選擇`;
-    $('detail-preview-icon').textContent = S.frame?.em || '👓';
-    const inner = $('inner-text');
-    if (inner) inner.value = S.details.innerText;
-  }
-
-  function setDetail(key, val) {
-    const changed = S.details[key] !== val;
-    S.details[key] = val;
-    if (changed) S.details.choices++;
-    renderDetails();
-  }
-
-  /* ══════════════════════════════════════════
-     STEP 5 — 命名
-  ══════════════════════════════════════════ */
-  function renderNaming() {
-    const inp = $('naming-input');
-    if (inp) inp.value = S.name;
-    updateNamingPreview();
-  }
-
-  function updateNamingPreview() {
-    const n = S.name.trim();
-    $('np-name').textContent   = n || '（還沒有名字）';
-    $('np-frame').textContent  = S.frame?.name || '';
-    $('np-eng').textContent    = S.engraving ? ' · ' + S.engraving.name : '';
-  }
-
-  function applyHint(text) {
-    S.name = text;
-    const inp = $('naming-input');
-    if (inp) inp.value = text;
-    updateNamingPreview();
-  }
-
-  /* ══════════════════════════════════════════
-     STEP 6 — 配件 Flat Lay
-  ══════════════════════════════════════════ */
-  let accCat = 'box';
-  let accOnlyCraft = false;
-  const CAT_LBL = { box:'眼鏡盒', cloth:'拭鏡布', bag:'眼鏡袋', stand:'置物架' };
-  const CAT_POS = { box:'tl', cloth:'bl', bag:'tr', stand:'br' };
-
-  function renderAccGrid() {
-    let items  = PD_DATA.acc[accCat] || [];
-    const mat  = S.frame?.mat;
-    // 「台灣百工」篩選：只留有掛 craft 的品項
-    if (accOnlyCraft) items = items.filter(i => i.craft);
-
-    if (!items.length) {
-      $('acc-grid').innerHTML =
-        '<div class="pd-acc-empty">此分類目前沒有台灣百工品項</div>';
-      return;
-    }
-
-    $('acc-grid').innerHTML = items.map(item => {
-      const isMatch  = item.matchMat && mat === item.matchMat;
-      const badge    = isMatch
-        ? { text:'命中注定', bt:'brand' }
-        : (item.badge ? { text:item.badge, bt:item.bt } : null);
-      const picked   = !!S.acc[item.id];
-      const craft    = item.craft ? CRAFTS()[item.craft] : null;
+    grid.innerHTML = list.map(p => {
+      const city    = findCity(p.foundId);
+      const picked  = !!S.acc[p.id];
+      const known   = S.found.includes(p.foundId);   // 已發現過的城市才顯示地名
       return `
-      <div class="pd-acc-card ${picked ? 'active' : ''}" onclick="PD.toggleAcc('${item.id}')">
-        <div class="ac-check"><svg viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1"/></svg></div>
-        ${badge ? `<div class="ac-badge"><span class="pd-badge pd-badge-${badge.bt}">${badge.text}</span></div>` : ''}
-        <div class="pd-acc-card-img">${item.em}</div>
-        ${craft ? `<div class="pd-acc-craft"><i class="fa-solid fa-location-dot"></i> ${craft.region} · ${craft.name}</div>` : ''}
-        <div class="pd-acc-name">${item.name}</div>
-        <div class="pd-acc-desc">${item.desc}</div>
-        <div class="pd-acc-price">${fmt(item.price)}</div>
+      <div class="pd-shop-card ${picked ? 'picked' : ''}" onclick="PD.openStory('${p.foundId}','${p.id}')">
+        <!-- 不解釋的壓印章 -->
+        <span class="pd-seal ${known ? 'known' : ''}" title="${known ? esc(city.city) : ''}">
+          <i class="fa-regular fa-circle"></i>${esc(p.foundNo)}
+        </span>
+
+        <div class="sc-img">${p.em}</div>
+        <div class="sc-type">${esc(PD_DATA.typeLabel[p.type] || '')}</div>
+        <div class="sc-name">${esc(p.name)}</div>
+        <div class="sc-desc">${esc(p.desc)}</div>
+
+        ${known ? `<div class="sc-city"><i class="fa-solid fa-location-dot"></i> ${esc(city.city)} · ${esc(city.name)}</div>` : ''}
+
+        <div class="sc-foot">
+          <span class="sc-price">${fmt(p.price)}</span>
+          <button class="sc-add ${picked ? 'on' : ''}"
+                  onclick="event.stopPropagation(); PD.toggleAcc('${p.id}')"
+                  title="${picked ? '移除' : '直接加入'}">
+            <i class="fa-solid ${picked ? 'fa-check' : 'fa-plus'}"></i>
+          </button>
+        </div>
       </div>`;
     }).join('');
   }
 
-  /* 台灣百工篩選切換 */
-  function setAccCraftFilter(on) {
-    accOnlyCraft = !!on;
-    qsa('#acc-filters .pd-chip').forEach(el =>
-      el.classList.toggle('active', (el.dataset.craft === '1') === accOnlyCraft));
-    renderAccGrid();
-  }
-
   function toggleAcc(id) {
-    // 找出這個 id 在哪個分類
-    let found = null;
-    for (const [cat, items] of Object.entries(PD_DATA.acc)) {
-      const item = items.find(i => i.id === id);
-      if (item) { found = { ...item, cat }; break; }
-    }
-    if (!found) return;
-
-    if (S.acc[id]) {
-      delete S.acc[id];
-      // 移除後若該工藝已無品項，故事帶改顯示其他仍在的工藝
-      if (S.lastCraft && !ownedCrafts().includes(S.lastCraft)) {
-        S.lastCraft = ownedCrafts()[ownedCrafts().length - 1] || null;
-      }
-    } else {
-      S.acc[id] = found;
-      if (found.craft) S.lastCraft = found.craft;
-    }
-
-    renderAccGrid();
-    updateFlatlay();
+    const p = findProduct(id);
+    if (!p) return;
+    if (S.acc[id]) delete S.acc[id];
+    else S.acc[id] = p;
+    renderShop();
+    renderCartBar();
+    renderStoryProducts();
   }
 
-  function updateFlatlay() {
-    const count = Object.keys(S.acc).length;
+  function renderCartBar() {
+    const bar = $('cart-bar');
+    if (!bar) return;
+    const n = ACCS().length;
+    $('cb-count').innerHTML = n ? `已選 <b>${n}</b> 件配件` : '尚未選擇配件';
+    $('cb-total').textContent = fmt(TOTAL());
+  }
 
-    // hint 隱藏
-    const hint = $('fl-hint');
-    if (hint) hint.style.opacity = count === 0 ? '1' : '0';
+  /* ── 全螢幕故事 ── */
+  function openStory(cityId, fromProductId) {
+    const city = findCity(cityId);
+    if (!city || city.status !== 'open') return;
 
-    // 眼鏡主角
-    $('fl-glasses-em').textContent   = S.frame?.em || '🕶';
-    $('fl-glasses-name').textContent = S.frame?.name || '';
+    const layer = $('story-layer');
+    const from  = fromProductId ? findProduct(fromProductId) : null;
 
-    // 套餐名稱
-    const outfitName = [S.frame?.name, S.engraving?.name].filter(Boolean).join(' · ') || '我的造型';
-    $('fl-outfit-name').textContent = outfitName;
+    layer.dataset.city = cityId;
+    layer.style.setProperty('--c-base',  city.tone.base);
+    layer.style.setProperty('--c-deep',  city.tone.deep);
+    layer.style.setProperty('--c-light', city.tone.light);
+    layer.style.setProperty('--c-ink',   city.tone.ink);
 
-    // 四角配件飛入
-    const catPicked = {};
-    Object.values(S.acc).forEach(a => { if (!catPicked[a.cat]) catPicked[a.cat] = a; });
+    layer.innerHTML = buildStory(city, from);
+    layer.classList.add('open');
+    document.body.classList.add('pd-locked');
+    layer.scrollTop = 0;
+  }
 
-    ['box', 'cloth', 'bag', 'stand'].forEach(cat => {
-      const el   = $('fl-' + cat);
-      const item = catPicked[cat];
-      if (!el) return;
-      if (item) {
-        qs('.fo-em',  el).textContent = item.em;
-        qs('.fo-lbl', el).textContent = item.name.length > 8 ? item.name.slice(0, 8) + '…' : item.name;
-        el.classList.add('show');
-      } else {
-        el.classList.remove('show');
-      }
-    });
+  function buildStory(city, from) {
+    const cc = city.cocreate || {};
+    return `
+    <button class="story-close" onclick="PD.closeStory()" aria-label="關閉">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
 
-    // 底部清單
-    const list = $('fl-list');
-    const fixed = `
-      <div class="pd-fl-row">
-        <div class="pd-fl-row-icon">${S.frame?.em || '👓'}</div>
-        <div class="pd-fl-row-info">
-          <div class="pd-fl-row-name">${S.frame?.name || ''}</div>
-          <div class="pd-fl-row-cat">鏡框</div>
-        </div>
-        <div class="pd-fl-row-price">${S.frame ? fmt(S.frame.price) : ''}</div>
+    <!-- 一、揭曉 -->
+    <section class="story-hero tex-${city.texture}">
+      <div class="sh-inner">
+        <div class="sh-no">FOUND ${esc(city.no)}</div>
+        <div class="sh-city">${esc(city.city)}</div>
+        <h1 class="sh-theme">${city.theme}</h1>
+        ${from ? `
+          <div class="sh-reveal">
+            你剛剛看的那個<span>${esc(from.name)}</span><br>來自這裡。
+          </div>` : ''}
+        <div class="sh-scroll"><i class="fa-solid fa-chevron-down"></i></div>
       </div>
-      ${S.engraving ? `
-      <div class="pd-fl-row">
-        <div class="pd-fl-row-icon">${engThumb(S.engraving, 'fl-row-thumb')}</div>
-        <div class="pd-fl-row-info">
-          <div class="pd-fl-row-name">${S.engraving.name}</div>
-          <div class="pd-fl-row-cat">刻圖</div>
-        </div>
-        <div class="pd-fl-row-price">${fmt(S.engraving.price)}</div>
-      </div>` : ''}`;
+    </section>
 
-    const extras = Object.values(S.acc).map(a => `
-      <div class="pd-fl-row">
-        <div class="pd-fl-row-icon">${a.em}</div>
-        <div class="pd-fl-row-info">
-          <div class="pd-fl-row-name">${a.name}</div>
-          <div class="pd-fl-row-cat">${CAT_LBL[a.cat] || ''}</div>
+    <!-- 二、發現 -->
+    <section class="story-sec">
+      <div class="sec-eyebrow"><span class="sec-no">01</span> DISCOVER｜發現</div>
+      <h2 class="sec-title">${esc(city.discover.title)}</h2>
+      <p class="sec-body">${esc(city.discover.body)}</p>
+      <div class="sec-meta">
+        <span><i class="fa-solid fa-location-dot"></i> ${esc(city.city)}</span>
+        <span><i class="fa-regular fa-clock"></i> ${esc(city.since)}</span>
+        <span><i class="fa-solid fa-hammer"></i> ${esc(city.name)}</span>
+      </div>
+    </section>
+
+    <!-- 三、共創 -->
+    <section class="story-sec alt">
+      <div class="sec-eyebrow"><span class="sec-no">02</span> CO-CREATE｜共創</div>
+      <h2 class="sec-title">${esc(cc.title || '')}</h2>
+      <p class="sec-body">${esc(cc.intro || '')}</p>
+      <ol class="proc-list">
+        ${(cc.steps || []).map((s, i) => `
+          <li class="proc-item">
+            <span class="pi-n">${String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <div class="pi-name">${esc(s.name)}</div>
+              <div class="pi-desc">${esc(s.desc)}</div>
+            </div>
+          </li>`).join('')}
+      </ol>
+      ${cc.note ? `<div class="proc-note"><i class="fa-solid fa-quote-left"></i>${esc(cc.note)}</div>` : ''}
+    </section>
+
+    <!-- 四、延續 -->
+    <section class="story-spirit tex-${city.texture}">
+      <div class="sec-eyebrow light"><span class="sec-no">03</span> CONTINUE｜延續</div>
+      <blockquote>${city.spirit}</blockquote>
+    </section>
+
+    <!-- 五、作品 -->
+    <section class="story-sec">
+      <div class="sec-eyebrow"><span class="sec-no">◆</span> ${esc(city.city)}的作品</div>
+      <h2 class="sec-title">帶一件回家</h2>
+      <div class="story-products" id="story-products"></div>
+
+      <div class="story-cardnote">
+        <div class="scn-em">📜</div>
+        <div>
+          <div class="scn-t">每一件 FOUND 商品都附一張故事卡</div>
+          <div class="scn-d">你剛剛讀到的這段故事，會印在南投埔里的手工紙上，跟著你的眼鏡一起寄到家。</div>
         </div>
-        <div class="pd-fl-row-price">${fmt(a.price)}</div>
-        <div class="pd-fl-row-rm" onclick="PD.toggleAcc('${a.id}')" title="移除">✕</div>
+      </div>
+
+      <button class="story-back" onclick="PD.closeStory()">
+        <i class="fa-solid fa-arrow-left"></i> 回到配件
+      </button>
+    </section>`;
+  }
+
+  function renderStoryProducts() {
+    const box = $('story-products');
+    if (!box) return;
+    const cityId = $('story-layer')?.dataset.city;
+    const city = findCity(cityId);
+    if (!city) return;
+
+    box.innerHTML = city.products.map(p => {
+      const picked = !!S.acc[p.id];
+      return `
+      <button class="sp-card ${picked ? 'on' : ''}" onclick="PD.toggleAcc('${p.id}')">
+        <span class="sp-em">${p.em}</span>
+        <span class="sp-info">
+          <span class="sp-name">${esc(p.name)}</span>
+          <span class="sp-desc">${esc(p.desc)}</span>
+        </span>
+        <span class="sp-right">
+          <span class="sp-price">${fmt(p.price)}</span>
+          <span class="sp-btn"><i class="fa-solid ${picked ? 'fa-check' : 'fa-plus'}"></i></span>
+        </span>
+      </button>`;
+    }).join('');
+  }
+
+  function closeStory() {
+    const layer = $('story-layer');
+    const cityId = layer?.dataset.city;
+    layer.classList.remove('open');
+    document.body.classList.remove('pd-locked');
+
+    // 第一次發現 → 護照登場
+    if (cityId && !S.found.includes(cityId)) {
+      S.found.push(cityId);
+      setTimeout(() => revealPassport(cityId), 260);
+    }
+    renderShop();
+    renderCartBar();
+  }
+
+  /* ══════════════════════════════════════
+     FOUND 護照
+  ══════════════════════════════════════ */
+  function syncPassport() {
+    const bar = $('passport');
+    if (!bar) return;
+    // 未發現任何城市，或不在 Step 3 之後 → 不顯示
+    if (!S.found.length) { bar.classList.remove('show'); return; }
+    bar.classList.add('show');
+    renderPassport();
+  }
+
+  function renderPassport() {
+    const total = FOUND_OPEN().length;
+    $('pp-count').innerHTML = `你找到 <b>${S.found.length}</b> / ${total} 個城市`;
+    $('pp-stamps').innerHTML = FOUND_ALL().map(c => {
+      const got     = S.found.includes(c.id);
+      const pending = c.status === 'pending';
+      return `<span class="pp-stamp ${got ? 'got' : ''} ${pending ? 'pending' : ''}"
+                    title="${pending ? '尚未前往' : (got ? c.city + ' · ' + c.name : '尚未發現')}"
+                    ${got ? `onclick="PD.openStory('${c.id}')"` : ''}>
+                ${got ? c.em : (pending ? '<i class="fa-solid fa-lock"></i>' : '?')}
+              </span>`;
+    }).join('');
+  }
+
+  function revealPassport(cityId) {
+    const city = findCity(cityId);
+    const bar  = $('passport');
+    if (!bar || !city) return;
+
+    renderPassport();
+    bar.classList.add('show');
+
+    const toast = $('pp-toast');
+    toast.innerHTML = `
+      <span class="pt-em">${city.em}</span>
+      <span>
+        <b>你發現了 FOUND ${esc(city.no)}</b><br>
+        ${esc(city.city)} · ${esc(city.name)}
+      </span>`;
+    toast.classList.add('show');
+    clearTimeout(revealPassport._t);
+    revealPassport._t = setTimeout(() => toast.classList.remove('show'), 3600);
+
+    if (!S.passportShown) {
+      S.passportShown = true;
+      bar.classList.add('first');
+      setTimeout(() => bar.classList.remove('first'), 1600);
+    }
+  }
+
+  /* ══════════════════════════════════════
+     STEP 4 — 命名
+  ══════════════════════════════════════ */
+  function renderNaming() {
+    const i = $('naming-input');
+    if (i) i.value = S.name;
+    updateNamingPreview();
+  }
+  function updateNamingPreview() {
+    $('np-name').textContent = S.name.trim() || '（還沒有名字）';
+    $('np-detail').textContent =
+      [S.frame?.name, S.engraving?.name].filter(Boolean).join(' · ');
+  }
+  function applyHint(t) {
+    S.name = t;
+    const i = $('naming-input');
+    if (i) i.value = t;
+    updateNamingPreview();
+  }
+
+  /* ══════════════════════════════════════
+     STEP 5 — 收藏（Flat Lay 造型卡 + 護照）
+  ══════════════════════════════════════ */
+  function renderFinal() {
+    const name = S.name.trim() || '未命名造型';
+
+    $('oc-name').textContent = name;
+    $('oc-sub').textContent  = [S.frame?.name, S.engraving?.name].filter(Boolean).join(' · ');
+    $('oc-by').textContent   = S.engraving ? `刻圖創作者 ${S.engraving.designer}` : '';
+    $('oc-total').innerHTML  = `<span>造型總計</span><b>${fmt(TOTAL())}</b>`;
+
+    /* Flat Lay：3×3 俯拍構圖，中央是眼鏡，周圍八格放配件 */
+    const items = ACCS().slice(0, 8);
+    const cells = [];
+    let k = 0;
+    for (let i = 0; i < 9; i++) {
+      if (i === 4) {
+        cells.push(`
+          <div class="fl-cell fl-center">
+            <div class="flc-glasses">
+              ${typeof FRAME_ICONS !== 'undefined' && S.frame
+                ? `<svg viewBox="0 0 64 42">${FRAME_ICONS[S.frame.icon] || ''}</svg>` : '🕶'}
+            </div>
+            ${S.engraving ? `<div class="flc-eng">${engThumb(S.engraving, 'flc-eng-img')}</div>` : ''}
+            <div class="flc-name">${esc(S.frame?.name || '')}</div>
+          </div>`);
+      } else {
+        const it = items[k++];
+        cells.push(it
+          ? `<div class="fl-cell fl-item" title="${esc(it.name)}">
+               <span class="fli-em">${it.em}</span>
+               <span class="fli-name">${esc(it.name)}</span>
+             </div>`
+          : `<div class="fl-cell fl-empty"></div>`);
+      }
+    }
+    $('flatlay').innerHTML = cells.join('');
+
+    const more = ACCS().length - items.length;
+    $('fl-more').textContent = more > 0 ? `另有 ${more} 件配件未顯示` : '';
+
+    /* 明細 */
+    const rows = [];
+    if (S.frame) rows.push({ em:'👓', name:S.frame.name, cat:'鏡框', price:S.frame.price });
+    if (S.engraving) rows.push({ em:'✦', name:S.engraving.name, cat:'刻圖', price:S.engraving.price });
+    ACCS().forEach(a => {
+      const c = findCity(a.foundId);
+      rows.push({ em:a.em, name:a.name, cat:`FOUND ${a.foundNo} · ${c ? c.city : ''}`, price:a.price });
+    });
+    $('oc-list').innerHTML = rows.map(r => `
+      <div class="ol-row">
+        <span class="ol-em">${r.em}</span>
+        <span class="ol-info"><b>${esc(r.name)}</b><small>${esc(r.cat)}</small></span>
+        <span class="ol-price">${fmt(r.price)}</span>
       </div>`).join('');
 
-    list.innerHTML = fixed + extras;
-
-    // 總計
-    $('fl-total').textContent     = fmt(TOTAL());
-    $('acc-foot-cnt').innerHTML   = `已加入 <b>${count}</b> 件配件`;
-
-    // 台灣百工：故事帶 + 收集進度
-    renderCraftStory();
-    renderCraftProgress();
-  }
-
-  /* ── 工藝故事帶 ── */
-  function renderCraftStory() {
-    const box = $('craft-story');
-    if (!box) return;
-    const c = S.lastCraft ? CRAFTS()[S.lastCraft] : null;
-
-    if (!c) {
-      box.classList.remove('show');
+    /* 護照回顧 */
+    const box = $('oc-passport');
+    if (!S.found.length) {
+      box.style.display = 'none';
+    } else {
+      box.style.display = '';
+      const total = FOUND_OPEN().length;
+      const done  = S.found.length === total;
       box.innerHTML = `
-        <div class="cs-idle">
-          <i class="fa-solid fa-mountain-sun"></i>
-          選一件台灣百工配件，聽聽它來自哪片土地
-        </div>`;
-      return;
-    }
-
-    box.classList.add('show');
-    box.innerHTML = `
-      <div class="cs-head">
-        <span class="cs-em">${c.em}</span>
-        <div class="cs-title">
-          <div class="cs-name">${c.name}</div>
-          <div class="cs-region"><i class="fa-solid fa-location-dot"></i> ${c.region} · ${c.since}</div>
+        <div class="ocp-top">
+          <span><i class="fa-solid fa-passport"></i> FOUND 護照</span>
+          <span class="ocp-n ${done ? 'done' : ''}">${S.found.length} / ${total}</span>
         </div>
-      </div>
-      <div class="cs-craft">${c.craft}</div>
-      <div class="cs-spirit">「${c.spirit}」</div>`;
-  }
-
-  /* ── 八大工藝收集進度 ── */
-  function renderCraftProgress() {
-    const wrap = $('craft-progress');
-    if (!wrap) return;
-    const owned = ownedCrafts();
-    const all   = CRAFT_IDS();
-    const done  = owned.length === all.length && all.length > 0;
-
-    wrap.innerHTML = `
-      <div class="cp-top">
-        <span class="cp-label">
-          <i class="fa-solid fa-map-location-dot"></i>
-          台灣工藝聚落
-        </span>
-        <span class="cp-count ${done ? 'done' : ''}">${owned.length} / ${all.length}</span>
-      </div>
-      <div class="cp-dots">
-        ${all.map(id => {
-          const c  = CRAFTS()[id];
-          const on = owned.includes(id);
-          return `<span class="cp-dot ${on ? 'on' : ''}" title="${c.region} · ${c.name}">${on ? c.em : ''}</span>`;
-        }).join('')}
-      </div>
-      ${done
-        ? `<div class="cp-unlock"><i class="fa-solid fa-award"></i> 百工收藏家達成，已解鎖限定包裝</div>`
-        : `<div class="cp-hint">再收集 ${all.length - owned.length} 個聚落，解鎖「百工收藏家」限定包裝</div>`}`;
-  }
-
-  function setAccTab(cat) {
-    accCat = cat;
-    qsa('.pd-acc-tab').forEach(el =>
-      el.classList.toggle('active', el.dataset.cat === cat));
-    renderAccGrid();
-  }
-
-  /* ══════════════════════════════════════════
-     STEP 7 — 造型卡
-  ══════════════════════════════════════════ */
-  function renderCard() {
-    const name = S.name.trim() || '未命名造型';
-    const accs = Object.values(S.acc);
-
-    $('oc-glasses').textContent = S.frame?.em || '🕶';
-    $('oc-name').textContent    = name;
-    $('oc-items').textContent   = [S.frame?.name, S.engraving?.name].filter(Boolean).join(' · ');
-    $('oc-creator').textContent = S.engraving
-      ? `刻圖 ${S.engraving.name} · 創作者 ${S.engraving.designer}`
-      : '';
-    $('oc-total').innerHTML     = `造型總計：<b>${fmt(TOTAL())}</b>`;
-
-    $('oc-accs').innerHTML = accs.length
-      ? accs.map(a => `
-          <div class="pd-oc-acc">
-            <div class="pd-oc-acc-em">${a.em}</div>
-            <div class="pd-oc-acc-lbl">${a.name.slice(0, 5)}</div>
-          </div>`).join('')
-      : '<div style="font-size:12px;color:var(--lohas-light)">尚未選擇配件</div>';
-
-    // 台灣百工足跡
-    const owned = ownedCrafts();
-    const line  = $('oc-crafts');
-    if (line) {
-      if (!owned.length) {
-        line.style.display = 'none';
-      } else {
-        const all     = CRAFT_IDS();
-        const regions = owned.map(id => CRAFTS()[id].region).join(' · ');
-        const full    = owned.length === all.length;
-        line.style.display = '';
-        line.innerHTML = `
-          <div class="oc-crafts-lbl">
-            <i class="fa-solid fa-map-location-dot"></i>
-            這套造型走過 ${owned.length} 個台灣職人聚落
-          </div>
-          <div class="oc-crafts-regions">${regions}</div>
-          ${full ? '<div class="oc-crafts-medal"><i class="fa-solid fa-award"></i> 百工收藏家</div>' : ''}`;
-      }
+        <div class="ocp-cities">
+          ${S.found.map(id => {
+            const c = findCity(id);
+            return `<span class="ocp-city">${c.em} FOUND ${esc(c.no)} · ${esc(c.city)}</span>`;
+          }).join('')}
+        </div>
+        ${done
+          ? `<div class="ocp-medal"><i class="fa-solid fa-award"></i> 第一季全數走訪，已解鎖限量收藏編號</div>`
+          : `<div class="ocp-hint">還有 ${total - S.found.length} 個城市等你發現</div>`}`;
     }
   }
 
@@ -709,49 +741,34 @@
       const saved = JSON.parse(localStorage.getItem('lohas_outfits') || '[]');
       saved.push({
         name:        S.name || '未命名造型',
-        frame:       S.frame,
-        engraving:   S.engraving,
-        accessories: Object.values(S.acc),
-        crafts:      ownedCrafts().map(id => ({
-                       id,
-                       name:   CRAFTS()[id].name,
-                       region: CRAFTS()[id].region,
-                     })),
+        face:        S.face,
+        frame:       S.frame ? { code:S.frame.code, name:S.frame.name, price:S.frame.price } : null,
+        engraving:   S.engraving ? { id:S.engraving.id, name:S.engraving.name, designer:S.engraving.designer, price:S.engraving.price } : null,
+        accessories: ACCS().map(a => ({ id:a.id, name:a.name, price:a.price, found:a.foundNo })),
+        found:       S.found,
         total:       TOTAL(),
         savedAt:     Date.now(),
       });
       localStorage.setItem('lohas_outfits', JSON.stringify(saved));
-      // 使用全站 toast（如有）或 alert
-      if (window.lohasToast) {
-        window.lohasToast('✦ 造型已收藏！');
-      } else {
-        alert('✦ 造型已收藏！\n可在「我的造型」頁面查看。');
-      }
-    } catch(e) { console.error('[PD] save error', e); }
+      alert('✦ 造型已收藏！\n可在「我的造型」查看。');
+    } catch (e) { console.error('[paperdoll] save error', e); }
   }
 
   function shareCard() {
     const name = S.name.trim() || '我的造型';
-    const text = `我在樂活眼鏡做了一副專屬眼鏡「${name}」！\nlohasglasses.com`;
-    if (navigator.share) {
-      navigator.share({ title: name, text }).catch(() => {});
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      alert('造型文字已複製到剪貼簿！');
-    }
+    const cities = S.found.map(id => findCity(id).city).join('、');
+    const text = `我在樂活眼鏡做了一副專屬眼鏡「${name}」`
+               + (cities ? `，走過 ${cities}。` : '。')
+               + '\nlohasglasses.com';
+    if (navigator.share) navigator.share({ title:name, text }).catch(() => {});
+    else if (navigator.clipboard) { navigator.clipboard.writeText(text); alert('已複製到剪貼簿'); }
   }
 
-  /* ── 初始化 ── */
+  /* ══════════════════════════════════════
+     初始化
+  ══════════════════════════════════════ */
   function init() {
-    // naming input 監聽
-    const ni = $('naming-input');
-    if (ni) {
-      ni.addEventListener('input', () => {
-        S.name = ni.value;
-        updateNamingPreview();
-      });
-    }
-    // 刻圖搜尋監聽
+    // 刻圖搜尋
     const es = $('eng-search');
     if (es) {
       let t = null;
@@ -760,25 +777,32 @@
         t = setTimeout(() => setEngSearch(es.value), 180);
       });
     }
-    // inner-text 監聽
-    const it = $('inner-text');
-    if (it) {
-      it.addEventListener('input', () => { S.details.innerText = it.value; });
+    // 命名
+    const ni = $('naming-input');
+    if (ni) ni.addEventListener('input', () => { S.name = ni.value; updateNamingPreview(); });
+
+    // Esc 關閉故事
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && $('story-layer')?.classList.contains('open')) closeStory();
+    });
+
+    // 故事層內的商品列需在 DOM 就緒後補渲染
+    const layer = $('story-layer');
+    if (layer) {
+      const mo = new MutationObserver(() => renderStoryProducts());
+      mo.observe(layer, { childList:true });
     }
+
     goStep(1);
-    renderQuiz();
   }
 
-  /* ── 公開 API ── */
+  /* 公開 API */
   window.PD = {
     goStep, nextStep, prevStep,
-    quizPick,
-    pickFrame, setFrameFilter,
+    pickFace, pickFrame, setFrameGroup,
     pickEng, setEngFilter, setEngSearch, toggleEngShowAll, skipEng,
-    setDetail,
-    applyHint,
-    toggleAcc, setAccTab, setAccCraftFilter,
-    saveOutfit, shareCard,
+    setType, toggleAcc, openStory, closeStory,
+    applyHint, saveOutfit, shareCard,
   };
 
   document.addEventListener('DOMContentLoaded', init);
