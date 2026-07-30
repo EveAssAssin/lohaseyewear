@@ -1,5 +1,5 @@
 // paperdoll-data.js — 客製眼鏡測試資料
-// v1.1 | 台灣百工計畫整合 | 之後可替換為 Supabase / ERP API
+// v1.2 | 台灣百工計畫 + 刻圖市集同步 | 眼鏡與配件仍為測試資料
 
 const PD_DATA = {
 
@@ -100,8 +100,17 @@ const PD_DATA = {
     { id:'f06', em:'🥇', name:'復古金屬橢圓', code:'MT-330', price:3100, mat:'metal',   quote:'書架上有二十本以上還沒讀完的書的人，通常會選這個。',   rec:['scholar','traveler'] },
   ],
 
-  /* ── Step 3 刻圖 ── */
-  engravings: [
+  /* ── Step 3 刻圖：市集同步設定 ──
+     實際刻圖即時從 Supabase engraving_designs 讀取（與 market.html 同源），
+     條件 status='approved' 且 is_show='上架'。
+     以下 engravingPrice 為刻圖加價，市集資料表無價格欄位，統一由此設定。 */
+  engravingConfig: {
+    price: 350,   // 刻圖加價（NT$）
+    limit: 500,   // 一次載入上限
+  },
+
+  /* 市集連線失敗時的備援清單 */
+  engravingsFallback: [
     { id:'e01', em:'🌸', name:'小花圖案',  author:'阿偉',        city:'台南・安平',    story:'某個雨天在騎樓下看見路邊野花，就畫了下來。',     series:'自然系', price:350, count:247, total:6, tags:['warm','creator','traveler'] },
     { id:'e02', em:'🌊', name:'海浪線條',  author:'小林工作室',  city:'高雄・鹽埕',    story:'從小在海邊長大，想把海的節奏刻進每一副眼鏡。', series:'自然系', price:350, count:183, total:6, tags:['outdoor','traveler'] },
     { id:'e03', em:'⭐', name:'星群排列',  author:'月球小姐',    city:'台北・大稻埕',  story:'失眠的夜晚把窗外的星空畫成了這個。',           series:'幾何系', price:380, count:312, total:4, tags:['bold','subtle'] },

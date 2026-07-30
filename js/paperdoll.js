@@ -1,5 +1,5 @@
 // paperdoll.js — 樂活眼鏡 客製眼鏡體驗
-// v1.1 | 台灣百工計畫整合 | 2026-07-30
+// v1.2 | 台灣百工計畫 + 刻圖市集同步 | 2026-07-30
 
 (function () {
   'use strict';
@@ -46,7 +46,7 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
     // 進入各步驟時渲染
     if (n === 2) renderFrames();
-    if (n === 3) renderEngravings();
+    if (n === 3) { loadEngravings(); renderEngravings(); }
     if (n === 4) renderDetails();
     if (n === 5) renderNaming();
     if (n === 6) { renderAccGrid(); updateFlatlay(); }
@@ -144,59 +144,186 @@
   }
 
   /* ══════════════════════════════════════════
-     STEP 3 — 刻圖
+     STEP 3 — 刻圖（與刻圖市集同步）
   ══════════════════════════════════════════ */
-  let engFilter = 'all';
+  let engFilter   = 'all';
+  let engSearch   = '';
+  let engLoaded   = false;
+  let engLoading  = false;
+
+  const ENG_CFG = () => PD_DATA.engravingConfig || { price: 350, limit: 500 };
+
+  /* 取得 Supabase client（與 market.js 同一組 fallback） */
+  function getSb() {
+    return window.LohasSupabase?.getClient?.()
+        || window.Supabase?.client
+        || window.supabase;
+  }
+
+  /* supabase.js 為 defer 載入，用輪詢等待就緒（勿用單次 setTimeout） */
+  function waitForSb(maxMs = 8000, interval = 100) {
+    return new Promise(resolve => {
+      const t0 = Date.now();
+      (function poll() {
+        const sb = getSb();
+        if (sb && typeof sb.from === 'function') return resolve(sb);
+        if (Date.now() - t0 > maxMs) return resolve(null);
+        setTimeout(poll, interval);
+      })();
+    });
+  }
+
+  /* 從 engraving_designs 載入，條件與 market.html 完全一致 */
+  async function loadEngravings() {
+    if (engLoaded || engLoading) return;
+    engLoading = true;
+    renderEngravings();
+
+    try {
+      const sb = await waitForSb();
+      if (!sb) throw new Error('Supabase client 未就緒');
+
+      const { data, error } = await sb
+        .from('engraving_designs')
+        .select('id, legacy_id, name, slogan, keywords, designer_name, category, image_url, image_url_png, like_count, collect_count, status, is_show, created_at, creator_id')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(ENG_CFG().limit);
+
+      if (error) throw error;
+
+      // 排除已下架（is_show 為 NULL 視為上架）
+      const rows = (data || []).filter(d => (d.is_show || '上架') === '上架');
+      PD_DATA.engravings = rows.map(normalizeDesign);
+      engLoaded = true;
+
+    } catch (err) {
+      console.warn('[paperdoll] 刻圖市集載入失敗，改用備援清單:', err);
+      PD_DATA.engravings = (PD_DATA.engravingsFallback || []).map(e => ({
+        id: e.id, name: e.name, designer: e.author, category: e.series,
+        slogan: e.story, keywords: '', img: '', likes: e.count,
+        price: e.price, em: e.em, isFallback: true,
+      }));
+    } finally {
+      engLoading = false;
+      renderEngFilters();
+      renderEngravings();
+    }
+  }
+
+  function normalizeDesign(d) {
+    return {
+      id:       d.id,
+      legacyId: d.legacy_id,
+      name:     d.name || '未命名作品',
+      designer: d.designer_name || '樂活創作者',
+      category: d.category || '',
+      slogan:   d.slogan || '',
+      keywords: d.keywords || '',
+      img:      d.image_url || d.image_url_png || '',
+      likes:    d.like_count || 0,
+      collects: d.collect_count || 0,
+      price:    ENG_CFG().price,
+      em:       '',
+    };
+  }
+
+  /* 縮圖：有圖用圖，沒圖用文字首字 */
+  function engThumb(e, cls) {
+    if (e.img) return `<img class="${cls}" src="${e.img}" alt="${e.name}" loading="lazy">`;
+    if (e.em)  return `<span class="${cls} is-em">${e.em}</span>`;
+    return `<span class="${cls} is-em">${(e.name || '刻').slice(0, 1)}</span>`;
+  }
+
+  /* 分類 chips 由實際資料動態產生 */
+  function renderEngFilters() {
+    const box = $('eng-filters');
+    if (!box) return;
+    const cats = [...new Set((PD_DATA.engravings || []).map(e => e.category).filter(Boolean))];
+    box.innerHTML =
+      `<button class="pd-chip ${engFilter === 'all' ? 'active' : ''}" data-val="all" onclick="PD.setEngFilter('all')">全部</button>` +
+      cats.map(c =>
+        `<button class="pd-chip ${engFilter === c ? 'active' : ''}" data-val="${c}" onclick="PD.setEngFilter('${c.replace(/'/g, "\\'")}')">${c}</button>`
+      ).join('');
+  }
 
   function renderEngravings() {
-    const prefs = Object.values(S.quiz);
-    let list = PD_DATA.engravings;
-    if (engFilter !== 'all') list = list.filter(e => e.series === engFilter);
+    const grid = $('eng-grid');
+    if (!grid) return;
 
-    $('eng-grid').innerHTML = list.map(e => {
-      const isRec = e.tags.some(t => prefs.includes(t));
-      return `
-      <div class="pd-eng-card ${S.engraving?.id === e.id ? 'active' : ''}"
+    if (engLoading) {
+      grid.innerHTML = '<div class="pd-eng-state"><i class="fa-solid fa-circle-notch fa-spin"></i> 正在同步刻圖市集…</div>';
+      return;
+    }
+
+    let list = PD_DATA.engravings || [];
+    if (engFilter !== 'all') list = list.filter(e => e.category === engFilter);
+    if (engSearch) {
+      const kw = engSearch.toLowerCase();
+      list = list.filter(e =>
+        [e.name, e.designer, e.keywords, e.category, e.slogan].join(' ').toLowerCase().includes(kw));
+    }
+
+    if (!list.length) {
+      grid.innerHTML = '<div class="pd-eng-state">找不到符合的刻圖，換個關鍵字試試</div>';
+      return;
+    }
+
+    grid.innerHTML = list.map(e => `
+      <div class="pd-eng-card ${String(S.engraving?.id) === String(e.id) ? 'active' : ''}"
            onclick="PD.pickEng('${e.id}')">
-        ${isRec ? '<span class="pd-badge pd-badge-warn" style="position:absolute;top:7px;right:7px">推薦</span>' : ''}
-        <span class="ec-icon">${e.em}</span>
+        ${engThumb(e, 'ec-thumb')}
         <div class="ec-name">${e.name}</div>
-        <div class="ec-author">${e.author}</div>
+        <div class="ec-author">${e.designer}</div>
         <div class="ec-price">${fmt(e.price)}</div>
-      </div>`;
-    }).join('');
-
-    updateEngStory();
+      </div>`).join('');
   }
 
   function pickEng(id) {
-    S.engraving = PD_DATA.engravings.find(e => e.id === id);
+    S.engraving = (PD_DATA.engravings || []).find(e => String(e.id) === String(id));
     renderEngravings();
+    updateEngStory();
     $('step3-next').disabled = false;
   }
 
   function updateEngStory() {
-    const e = S.engraving;
+    const e   = S.engraving;
     const box = $('eng-story');
+    if (!box) return;
+
     if (!e) {
       box.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:24px 0">選一個刻圖，看看它的故事</div>';
       return;
     }
+
+    const kw = (e.keywords || '')
+      .split(',').map(k => k.trim()).filter(Boolean)
+      .slice(0, 4)
+      .map(k => `<span class="es-kw">#${k}</span>`).join('');
+
     box.innerHTML = `
-      <div class="es-title">${e.em} ${e.name}</div>
-      <div class="es-city">✦ ${e.author} × ${e.city}</div>
-      <div class="es-text">${e.story}</div>
-      <div class="es-count">已有 ${e.count.toLocaleString()} 副眼鏡上有這個圖案</div>
+      <div class="es-thumb-wrap">${engThumb(e, 'es-thumb')}</div>
+      <div class="es-title">${e.name}</div>
+      <div class="es-city"><i class="fa-solid fa-pen-nib"></i> ${e.designer}${e.category ? ' · ' + e.category : ''}</div>
+      ${e.slogan ? `<div class="es-text">${e.slogan}</div>` : ''}
+      ${kw ? `<div class="es-kws">${kw}</div>` : ''}
+      <div class="es-count">
+        <i class="fa-regular fa-heart"></i> ${(e.likes || 0).toLocaleString()} 人喜歡這個作品
+      </div>
       <div class="pd-eng-collect">
-        📦 收集進度：${e.series}系列 1 / ${e.total} 款<br>
-        集齊可解鎖限定包裝
+        <i class="fa-solid fa-store"></i>
+        此作品來自樂活刻圖市集，由創作者親自上架
       </div>`;
   }
 
   function setEngFilter(val) {
     engFilter = val;
-    qsa('#eng-filters .pd-chip').forEach(el =>
-      el.classList.toggle('active', el.dataset.val === val));
+    renderEngFilters();
+    renderEngravings();
+  }
+
+  function setEngSearch(val) {
+    engSearch = (val || '').trim();
     renderEngravings();
   }
 
@@ -393,7 +520,7 @@
       </div>
       ${S.engraving ? `
       <div class="pd-fl-row">
-        <div class="pd-fl-row-icon">${S.engraving.em}</div>
+        <div class="pd-fl-row-icon">${engThumb(S.engraving, 'fl-row-thumb')}</div>
         <div class="pd-fl-row-info">
           <div class="pd-fl-row-name">${S.engraving.name}</div>
           <div class="pd-fl-row-cat">刻圖</div>
@@ -497,7 +624,9 @@
     $('oc-glasses').textContent = S.frame?.em || '🕶';
     $('oc-name').textContent    = name;
     $('oc-items').textContent   = [S.frame?.name, S.engraving?.name].filter(Boolean).join(' · ');
-    $('oc-creator').textContent = S.engraving ? `${S.engraving.author} × ${S.engraving.city}` : '';
+    $('oc-creator').textContent = S.engraving
+      ? `刻圖 ${S.engraving.name} · 創作者 ${S.engraving.designer}`
+      : '';
     $('oc-total').innerHTML     = `造型總計：<b>${fmt(TOTAL())}</b>`;
 
     $('oc-accs').innerHTML = accs.length
@@ -577,6 +706,15 @@
         updateNamingPreview();
       });
     }
+    // 刻圖搜尋監聽
+    const es = $('eng-search');
+    if (es) {
+      let t = null;
+      es.addEventListener('input', () => {
+        clearTimeout(t);
+        t = setTimeout(() => setEngSearch(es.value), 180);
+      });
+    }
     // inner-text 監聽
     const it = $('inner-text');
     if (it) {
@@ -591,7 +729,7 @@
     goStep, nextStep, prevStep,
     quizPick,
     pickFrame, setFrameFilter,
-    pickEng, setEngFilter, skipEng,
+    pickEng, setEngFilter, setEngSearch, skipEng,
     setDetail,
     applyHint,
     toggleAcc, setAccTab, setAccCraftFilter,
