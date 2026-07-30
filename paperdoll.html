@@ -103,14 +103,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
 
-        <div class="pd-nav">
-          <span style="font-size:12px;color:var(--text-muted)">
-            資料來源：樂活鏡框百科
-          </span>
-          <button class="btn-primary" id="step1-next" onclick="PD.nextStep()" disabled>
-            下一步 <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -144,14 +136,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="pd-eng-story" id="eng-story"></div>
         </div>
 
-        <div class="pd-nav">
-          <button class="btn-pill-ghost btn-pill-sm" onclick="PD.prevStep()">
-            <i class="fa-solid fa-arrow-left"></i> 上一步
-          </button>
-          <button class="btn-primary" id="step2-next" onclick="PD.nextStep()" disabled>
-            下一步 <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -170,17 +154,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="pd-panel-body">
         <div class="pd-tabs" id="type-tabs"></div>
         <div class="pd-shop-grid" id="shop-grid"></div>
-
-        <div class="pd-cart-bar" id="cart-bar">
-          <button class="btn-pill-ghost btn-pill-sm" onclick="PD.prevStep()">
-            <i class="fa-solid fa-arrow-left"></i>
-          </button>
-          <span class="cb-count" id="cb-count"></span>
-          <span class="cb-total" id="cb-total"></span>
-          <button class="btn-primary" onclick="PD.nextStep()">
-            下一步 <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -213,17 +186,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
 
-        <div class="pd-nav">
-          <button class="btn-pill-ghost btn-pill-sm" onclick="PD.prevStep()">
-            <i class="fa-solid fa-arrow-left"></i> 上一步
-          </button>
-          <div style="display:flex;gap:10px">
-            <button class="btn-pill-ghost btn-pill-sm" onclick="PD.nextStep()">先跳過</button>
-            <button class="btn-primary" onclick="PD.nextStep()">
-              完成 <i class="fa-solid fa-arrow-right"></i>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -282,6 +244,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 </div><!-- /#pd-app -->
 </main>
+
+
+<!-- ── 浮動操作列 ── -->
+<div class="pd-actionbar" id="actionbar">
+  <button class="ab-back" id="ab-back" onclick="PD.prevStep()" aria-label="上一步">
+    <i class="fa-solid fa-arrow-left"></i>
+  </button>
+
+  <div class="ab-info">
+    <div class="ab-line" id="ab-line"></div>
+    <div class="ab-sub"  id="ab-sub"></div>
+  </div>
+
+  <div class="ab-total" id="ab-total"></div>
+
+  <button class="ab-skip" id="ab-skip" onclick="PD.nextStep()">先跳過</button>
+  <button class="ab-next" id="ab-next" onclick="PD.nextStep()">
+    <span id="ab-next-t">下一步</span> <i class="fa-solid fa-arrow-right"></i>
+  </button>
+</div>
 
 <!-- ── 全螢幕故事層 ── -->
 <div class="pd-story-layer" id="story-layer"></div>
