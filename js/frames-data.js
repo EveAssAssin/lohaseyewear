@@ -449,15 +449,10 @@ const FRAME_FACE_FILTERS = [
   { key:'diamond', label:'菱形臉', shape:'diamond', match:['菱形臉'] },
 ];
 
-/* 臉型輪廓 SVG（viewBox 0 0 24 28） */
-const FACE_SHAPES = {
-  oval:    '<ellipse cx="12" cy="14" rx="8" ry="11" stroke="currentColor" stroke-width="1.8" fill="none"/>',
-  round:   '<circle cx="12" cy="14" r="9.5" stroke="currentColor" stroke-width="1.8" fill="none"/>',
-  square:  '<rect x="3.5" y="4.5" width="17" height="19" rx="4.5" stroke="currentColor" stroke-width="1.8" fill="none"/>',
-  long:    '<rect x="5" y="2.5" width="14" height="23" rx="7" stroke="currentColor" stroke-width="1.8" fill="none"/>',
-  heart:   '<path d="M12 25 C6 20 3.5 15 3.5 10 C3.5 5.5 7 3 12 3 C17 3 20.5 5.5 20.5 10 C20.5 15 18 20 12 25 Z" stroke="currentColor" stroke-width="1.8" fill="none"/>',
-  diamond: '<path d="M12 2.5 L20 14 L12 25.5 L4 14 Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>',
-};
+/* 臉型插畫圖檔
+   來源：手繪風頭像原圖切分為六張，白底已去背（PNG 透明）。
+   路徑：/images/face-{shape}.png  （200×200） */
+const FACE_IMG_BASE = '/images/face-';
 
 /* 材質篩選：以關鍵字比對 FRAME_ITEMS[].material */
 const FRAME_MATERIAL_FILTERS = [

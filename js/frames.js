@@ -72,11 +72,10 @@
 
   /* ---------- 渲染：Sidebar 篩選清單 ---------- */
   function railIcon(o) {
-    // 臉型用 SVG 輪廓最直觀；分類與材質用 Font Awesome
-    if (state.mode === 'face' && o.shape && typeof FACE_SHAPES !== 'undefined') {
-      return '<svg class="fr-rail-face" viewBox="0 0 24 28" width="16" height="19" ' +
-        'fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-        (FACE_SHAPES[o.shape] || '') + '</svg>';
+    // 臉型：手繪插畫圖檔（PNG 去背）；分類與材質：Font Awesome
+    if (state.mode === 'face' && o.shape && typeof FACE_IMG_BASE !== 'undefined') {
+      return '<img class="fr-rail-face" src="' + FACE_IMG_BASE + o.shape + '.png" ' +
+        'alt="" width="26" height="26" loading="lazy">';
     }
     return o.icon ? '<i class="' + o.icon + ' fr-rail-fa" aria-hidden="true"></i>' : '';
   }
