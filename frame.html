@@ -11,9 +11,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>鏡框百科全書 - Lohas 樂活眼鏡</title>
-  <meta name="description" content="45 種鏡框類型完整圖鑑。從材質、形狀到臉型配搭，樂活眼鏡帶你認識每一種框型，找到最適合自己的那一副。">
-  <link rel="canonical" href="https://www.lohasglasses.com/frames.html">
+
+  <!-- title / description 由 frame.js 依 ?f= 參數動態覆寫 -->
+  <title>鏡框介紹 - Lohas 樂活眼鏡</title>
+  <meta name="description" content="樂活眼鏡鏡框百科，認識這款框型的特徵、適合臉型與常見材質。">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;600&display=swap" rel="stylesheet" />
@@ -29,7 +30,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <script src="/js/analytics.js?v=20260730b"></script>
 </head>
 
-<body data-banner-pos="frames">
+<body data-banner-pos="frame">
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MSNPQ36L"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -38,37 +39,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="site-header"></div>
 
   <main>
-    <!-- ===== Hero ===== -->
-    <section class="fr-hero">
-      <div class="fr-hero-inner">
-        <p class="fr-hero-eyebrow">THE FRAME ALMANAC</p>
-        <h1 class="fr-hero-title">鏡框百科全書</h1>
-        <p class="fr-hero-sub">四大族群 · 45 種框型，逐一詳解</p>
-      </div>
-    </section>
+    <!-- 由實體 QR（舊站連結）進入時顯示 -->
+    <div class="fd-qr-hint" id="fdQrHint">
+      <i class="fa-solid fa-qrcode"></i>
+      <span>已為您帶到對應的鏡框介紹。</span>
+    </div>
 
-    <!-- ===== 三入口引導 ===== -->
-    <section class="fr-entry">
-      <div class="fr-entry-inner">
-        <p class="fr-entry-hint">不知道從哪看起？選一個起點</p>
-        <div class="fr-entry-grid" id="frEntries"></div>
-      </div>
-    </section>
-
-    <!-- ===== 主體：篩選軸 + 標本牆 ===== -->
-    <section class="fr-body">
-      <div class="fr-body-inner">
-        <div class="fr-body-head">
-          <h2 class="fr-body-title" id="frBodyTitle">全部框型</h2>
-          <span class="fr-body-count" id="frCount">45 種</span>
-        </div>
-
-        <div class="fr-layout">
-          <aside class="fr-rail" id="frRail"></aside>
-          <div class="fr-wall" id="frWall"></div>
-        </div>
-      </div>
-    </section>
+    <div class="fd-wrap" id="fdWrap"></div>
   </main>
 
   <div id="site-footer"></div>
@@ -79,6 +56,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="/js/auth.js?v=20260730b"></script>
 <script src="/js/supabase.js?v=20260730b"></script>
 <script src="/js/frames-data.js?v=20260730b"></script>
-<script src="/js/frames.js?v=20260730b"></script>
+<script src="/js/frame.js?v=20260730b"></script>
 </body>
 </html>
