@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.css — 從零開始，打造那副只有我才有的眼鏡
-   v2.1 | 五步重構 · LOHAS FOUND · 浮動操作列
+   v2.2 | 五步重構 · LOHAS FOUND · 實拍照整合
    依賴：lohas-tokens.css → lohas-base.css → lohas-components.css
    ============================================================ */
 
@@ -285,10 +285,14 @@ body.pd-locked { overflow: hidden; }
 .pd-seal.known { color: var(--warn); }
 
 .pd-shop-card .sc-img {
-  height: 84px; background: var(--bg-warm); border-radius: var(--r-sm);
+  aspect-ratio: 1 / 1; background: var(--bg-warm);
+  border-radius: var(--r-sm); overflow: hidden;
   display: flex; align-items: center; justify-content: center;
-  font-size: 34px; margin-bottom: 11px;
+  margin-bottom: 11px;
 }
+.sc-photo { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s cubic-bezier(.22,1,.36,1); }
+.pd-shop-card:hover .sc-photo { transform: scale(1.05); }
+.sc-photo.is-em { display: flex; align-items: center; justify-content: center; font-size: 34px; }
 .pd-shop-card .sc-type {
   font-size: 9.5px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 3px;
 }
@@ -761,4 +765,93 @@ body.pd-locked { overflow: hidden; }
   .sp-right      { width: 100%; justify-content: space-between; }
   .pp-toast      { left: 14px; right: 14px; transform: translateY(20px); }
   .pp-toast.show { transform: translateY(0); }
+}
+
+/* ============================================================
+   實拍照版面 — v2.2
+   （city.photos 有值時啟用，否則沿用上方 tex-* 織理）
+   ============================================================ */
+
+/* ── Hero 滿版照 ── */
+.story-hero.has-photo { background: var(--c-deep); }
+.story-hero.has-photo::before { content: none; }
+.sh-bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  animation: heroZoom 9s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes heroZoom { from { transform: scale(1.07); } to { transform: scale(1); } }
+.sh-bg-tall { display: none; }
+
+/* ── 發現段配圖 ── */
+.sec-figure { margin: 24px 0 26px; }
+.sec-figure img {
+  width: 100%; height: auto; display: block;
+  border-radius: var(--r-md);
+}
+.sec-figure figcaption {
+  font-size: 11px; color: #8C857F;
+  margin-top: 10px; letter-spacing: 1px;
+  display: flex; align-items: center; gap: 7px;
+}
+.sec-figure figcaption::before {
+  content: ''; width: 22px; height: 1px; background: var(--c-base);
+}
+
+/* ── 工序：左圖右文 ── */
+.proc-list.with-photo .proc-item {
+  align-items: flex-start; gap: 18px; padding: 20px 0;
+}
+.pi-photo {
+  flex-shrink: 0; width: 148px;
+  border-radius: var(--r-sm); overflow: hidden;
+  background: rgba(0,0,0,.05);
+}
+.pi-photo img {
+  width: 100%; aspect-ratio: 4 / 3;
+  object-fit: cover; display: block;
+}
+.proc-list.with-photo .pi-n { padding-top: 4px; }
+.pi-text { flex: 1; padding-top: 2px; }
+
+/* ── 精神段滿版照 ── */
+.story-spirit.has-photo { background: var(--c-deep); }
+.story-spirit.has-photo::before { content: none; }
+.sp-bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+}
+.story-spirit.has-photo::after { background: rgba(0,0,0,.42); }
+.sp-inner { position: relative; z-index: 3; }
+
+/* ── 故事層商品列縮圖 ── */
+.sp-thumb {
+  flex-shrink: 0; width: 68px; height: 68px;
+  border-radius: var(--r-sm); overflow: hidden;
+  background: rgba(0,0,0,.04);
+  display: flex; align-items: center; justify-content: center;
+}
+.sp-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sp-photo.is-em { display: flex; align-items: center; justify-content: center; font-size: 30px; }
+
+/* ── Step 5 Flat Lay 縮圖 ── */
+.fli-img {
+  width: 100%; flex: 1; min-height: 0;
+  object-fit: cover; border-radius: 4px; display: block;
+}
+.fli-img.is-em {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; flex: 1;
+}
+.fl-cell.fl-item { gap: 5px; padding: 6px; }
+
+/* ── RWD ── */
+@media (max-width: 768px) {
+  .sh-bg-wide { display: none; }
+  .sh-bg-tall { display: block; }
+  .proc-list.with-photo .proc-item { flex-wrap: wrap; gap: 12px; }
+  .pi-photo { width: 100%; order: -1; }
+  .proc-list.with-photo .pi-n { padding-top: 0; }
+  .sp-thumb { width: 56px; height: 56px; }
 }
