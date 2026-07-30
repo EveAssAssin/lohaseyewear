@@ -1,5 +1,5 @@
 // paperdoll.js — 樂活眼鏡 客製眼鏡體驗
-// v1.0 | 2026-06-29
+// v1.1 | 台灣百工計畫整合 | 2026-07-30
 
 (function () {
   'use strict';
@@ -13,6 +13,7 @@
     details: { legColor:'darkbrown', nosePad:'矽膠（舒適）', screwColor:'gold', innerText:'', lensColor:'clear', choices:0 },
     name: '',
     acc: {},         // { id: { ...item, cat } }
+    lastCraft: null, // 最近一次選到的工藝 id（用於故事帶）
   };
 
   /* ── 工具 ── */
@@ -23,6 +24,14 @@
   const BASE  = () => (S.frame?.price || 0) + (S.engraving?.price || 0);
   const ACC   = () => Object.values(S.acc).reduce((s, a) => s + a.price, 0);
   const TOTAL = () => BASE() + ACC();
+
+  /* ── 台灣百工輔助 ── */
+  const CRAFTS     = () => PD_DATA.crafts || {};
+  const CRAFT_IDS  = () => Object.keys(CRAFTS());
+  // 目前造型已收集到的工藝聚落（去重）
+  const ownedCrafts = () => [...new Set(
+    Object.values(S.acc).map(a => a.craft).filter(Boolean)
+  )];
 
   /* ── 步驟切換 ── */
   function goStep(n) {
@@ -271,12 +280,21 @@
      STEP 6 — 配件 Flat Lay
   ══════════════════════════════════════════ */
   let accCat = 'box';
+  let accOnlyCraft = false;
   const CAT_LBL = { box:'眼鏡盒', cloth:'拭鏡布', bag:'眼鏡袋', stand:'置物架' };
   const CAT_POS = { box:'tl', cloth:'bl', bag:'tr', stand:'br' };
 
   function renderAccGrid() {
-    const items = PD_DATA.acc[accCat] || [];
-    const mat   = S.frame?.mat;
+    let items  = PD_DATA.acc[accCat] || [];
+    const mat  = S.frame?.mat;
+    // 「台灣百工」篩選：只留有掛 craft 的品項
+    if (accOnlyCraft) items = items.filter(i => i.craft);
+
+    if (!items.length) {
+      $('acc-grid').innerHTML =
+        '<div class="pd-acc-empty">此分類目前沒有台灣百工品項</div>';
+      return;
+    }
 
     $('acc-grid').innerHTML = items.map(item => {
       const isMatch  = item.matchMat && mat === item.matchMat;
@@ -284,16 +302,26 @@
         ? { text:'命中注定', bt:'brand' }
         : (item.badge ? { text:item.badge, bt:item.bt } : null);
       const picked   = !!S.acc[item.id];
+      const craft    = item.craft ? CRAFTS()[item.craft] : null;
       return `
       <div class="pd-acc-card ${picked ? 'active' : ''}" onclick="PD.toggleAcc('${item.id}')">
         <div class="ac-check"><svg viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1"/></svg></div>
         ${badge ? `<div class="ac-badge"><span class="pd-badge pd-badge-${badge.bt}">${badge.text}</span></div>` : ''}
         <div class="pd-acc-card-img">${item.em}</div>
+        ${craft ? `<div class="pd-acc-craft"><i class="fa-solid fa-location-dot"></i> ${craft.region} · ${craft.name}</div>` : ''}
         <div class="pd-acc-name">${item.name}</div>
         <div class="pd-acc-desc">${item.desc}</div>
         <div class="pd-acc-price">${fmt(item.price)}</div>
       </div>`;
     }).join('');
+  }
+
+  /* 台灣百工篩選切換 */
+  function setAccCraftFilter(on) {
+    accOnlyCraft = !!on;
+    qsa('#acc-filters .pd-chip').forEach(el =>
+      el.classList.toggle('active', (el.dataset.craft === '1') === accOnlyCraft));
+    renderAccGrid();
   }
 
   function toggleAcc(id) {
@@ -305,8 +333,16 @@
     }
     if (!found) return;
 
-    if (S.acc[id]) delete S.acc[id];
-    else S.acc[id] = found;
+    if (S.acc[id]) {
+      delete S.acc[id];
+      // 移除後若該工藝已無品項，故事帶改顯示其他仍在的工藝
+      if (S.lastCraft && !ownedCrafts().includes(S.lastCraft)) {
+        S.lastCraft = ownedCrafts()[ownedCrafts().length - 1] || null;
+      }
+    } else {
+      S.acc[id] = found;
+      if (found.craft) S.lastCraft = found.craft;
+    }
 
     renderAccGrid();
     updateFlatlay();
@@ -381,6 +417,67 @@
     // 總計
     $('fl-total').textContent     = fmt(TOTAL());
     $('acc-foot-cnt').innerHTML   = `已加入 <b>${count}</b> 件配件`;
+
+    // 台灣百工：故事帶 + 收集進度
+    renderCraftStory();
+    renderCraftProgress();
+  }
+
+  /* ── 工藝故事帶 ── */
+  function renderCraftStory() {
+    const box = $('craft-story');
+    if (!box) return;
+    const c = S.lastCraft ? CRAFTS()[S.lastCraft] : null;
+
+    if (!c) {
+      box.classList.remove('show');
+      box.innerHTML = `
+        <div class="cs-idle">
+          <i class="fa-solid fa-mountain-sun"></i>
+          選一件台灣百工配件，聽聽它來自哪片土地
+        </div>`;
+      return;
+    }
+
+    box.classList.add('show');
+    box.innerHTML = `
+      <div class="cs-head">
+        <span class="cs-em">${c.em}</span>
+        <div class="cs-title">
+          <div class="cs-name">${c.name}</div>
+          <div class="cs-region"><i class="fa-solid fa-location-dot"></i> ${c.region} · ${c.since}</div>
+        </div>
+      </div>
+      <div class="cs-craft">${c.craft}</div>
+      <div class="cs-spirit">「${c.spirit}」</div>`;
+  }
+
+  /* ── 八大工藝收集進度 ── */
+  function renderCraftProgress() {
+    const wrap = $('craft-progress');
+    if (!wrap) return;
+    const owned = ownedCrafts();
+    const all   = CRAFT_IDS();
+    const done  = owned.length === all.length && all.length > 0;
+
+    wrap.innerHTML = `
+      <div class="cp-top">
+        <span class="cp-label">
+          <i class="fa-solid fa-map-location-dot"></i>
+          台灣工藝聚落
+        </span>
+        <span class="cp-count ${done ? 'done' : ''}">${owned.length} / ${all.length}</span>
+      </div>
+      <div class="cp-dots">
+        ${all.map(id => {
+          const c  = CRAFTS()[id];
+          const on = owned.includes(id);
+          return `<span class="cp-dot ${on ? 'on' : ''}" title="${c.region} · ${c.name}">${on ? c.em : ''}</span>`;
+        }).join('')}
+      </div>
+      ${done
+        ? `<div class="cp-unlock"><i class="fa-solid fa-award"></i> 百工收藏家達成，已解鎖限定包裝</div>`
+        : `<div class="cp-hint">再收集 ${all.length - owned.length} 個聚落，解鎖「百工收藏家」限定包裝</div>`}`;
   }
 
   function setAccTab(cat) {
@@ -410,6 +507,27 @@
             <div class="pd-oc-acc-lbl">${a.name.slice(0, 5)}</div>
           </div>`).join('')
       : '<div style="font-size:12px;color:var(--lohas-light)">尚未選擇配件</div>';
+
+    // 台灣百工足跡
+    const owned = ownedCrafts();
+    const line  = $('oc-crafts');
+    if (line) {
+      if (!owned.length) {
+        line.style.display = 'none';
+      } else {
+        const all     = CRAFT_IDS();
+        const regions = owned.map(id => CRAFTS()[id].region).join(' · ');
+        const full    = owned.length === all.length;
+        line.style.display = '';
+        line.innerHTML = `
+          <div class="oc-crafts-lbl">
+            <i class="fa-solid fa-map-location-dot"></i>
+            這套造型走過 ${owned.length} 個台灣職人聚落
+          </div>
+          <div class="oc-crafts-regions">${regions}</div>
+          ${full ? '<div class="oc-crafts-medal"><i class="fa-solid fa-award"></i> 百工收藏家</div>' : ''}`;
+      }
+    }
   }
 
   function saveOutfit() {
@@ -420,6 +538,11 @@
         frame:       S.frame,
         engraving:   S.engraving,
         accessories: Object.values(S.acc),
+        crafts:      ownedCrafts().map(id => ({
+                       id,
+                       name:   CRAFTS()[id].name,
+                       region: CRAFTS()[id].region,
+                     })),
         total:       TOTAL(),
         savedAt:     Date.now(),
       });
@@ -471,7 +594,7 @@
     pickEng, setEngFilter, skipEng,
     setDetail,
     applyHint,
-    toggleAcc, setAccTab,
+    toggleAcc, setAccTab, setAccCraftFilter,
     saveOutfit, shareCard,
   };
 
