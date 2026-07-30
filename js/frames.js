@@ -63,7 +63,7 @@
     document.getElementById('frEntries').innerHTML = FRAME_ENTRIES.map(function (e) {
       return '<button type="button" class="fr-entry-card' +
         (e.key === state.mode ? ' is-active' : '') + '" data-mode="' + e.key + '">' +
-        '<i class="' + e.icon + '" aria-hidden="true"></i>' +
+        '<span class="fr-entry-img"><img src="' + e.img + '" alt="" loading="lazy"></span>' +
         '<span class="fr-entry-label">' + esc(e.label) + '</span>' +
         '<span class="fr-entry-sub">' + esc(e.hint) + '</span>' +
         '</button>';

@@ -433,9 +433,9 @@ const FRAME_ICONS = {
    對應首頁三入口：看臉型 / 看材質 / 看風格
    rail 有三種模式，點入口即切換左側篩選軸內容。 */
 const FRAME_ENTRIES = [
-  { key:'category', icon:'fa-solid fa-table-cells-large', label:'看分類', hint:'依族群瀏覽全部' },
-  { key:'face',     icon:'fa-regular fa-face-smile',      label:'看臉型', hint:'不確定適合什麼' },
-  { key:'material', icon:'fa-solid fa-gem',               label:'看材質', hint:'在意輕重與觸感' },
+  { key:'category', img:'/images/entry-category.png', label:'看分類', hint:'依族群瀏覽全部' },
+  { key:'face',     img:'/images/entry-face.png',     label:'看臉型', hint:'不確定適合什麼' },
+  { key:'material', img:'/images/entry-material.png', label:'看材質', hint:'在意輕重與觸感' },
 ];
 
 /* 臉型篩選：以關鍵字比對 FRAME_ITEMS[].face
