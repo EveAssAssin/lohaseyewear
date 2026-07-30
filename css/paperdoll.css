@@ -1,13 +1,13 @@
 /* ============================================================
    paperdoll.css — 從零開始，打造那副只有我才有的眼鏡
-   v2.0 | 五步重構 · LOHAS FOUND
+   v2.1 | 五步重構 · LOHAS FOUND · 浮動操作列
    依賴：lohas-tokens.css → lohas-base.css → lohas-components.css
    ============================================================ */
 
 /* ══════════════════════════════════════
    容器
 ══════════════════════════════════════ */
-#pd-app { max-width: 1120px; margin: 0 auto; padding: 88px 20px 100px; }
+#pd-app { max-width: 1120px; margin: 0 auto; padding: 88px 20px 132px; }
 body.pd-locked { overflow: hidden; }
 
 .pd-state {
@@ -54,11 +54,6 @@ body.pd-locked { overflow: hidden; }
 .pd-panel-title { font-size: 23px; font-weight: 700; color: var(--lohas-brand); margin-bottom: 5px; }
 .pd-panel-sub { font-size: 13px; color: var(--text-muted); }
 .pd-panel-body { padding: 26px 28px; }
-
-.pd-nav {
-  display: flex; justify-content: space-between; align-items: center;
-  padding-top: 24px; margin-top: 22px; border-top: 1px solid var(--lohas-bd);
-}
 
 /* Chips / Tabs */
 .pd-filter-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -320,19 +315,69 @@ body.pd-locked { overflow: hidden; }
 .sc-add:hover { background: var(--bg-warm); border-color: var(--warn); }
 .sc-add.on { background: var(--lohas-brand); border-color: var(--lohas-brand); color: #fff; }
 
-/* 底部合計列 */
-.pd-cart-bar {
-  position: sticky; bottom: 0; z-index: 30;
-  margin: 20px -28px -26px;
-  background: #fff; border-top: 1px solid var(--lohas-bd);
-  padding: 14px 28px;
-  display: flex; align-items: center; gap: 14px;
+/* ══════════════════════════════════════
+   浮動操作列
+══════════════════════════════════════ */
+.pd-actionbar {
+  position: fixed; z-index: 50;
+  left: 50%; bottom: 20px;
+  transform: translateX(-50%) translateY(140%);
+  width: min(720px, calc(100vw - 32px));
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-pill);
+  padding: 10px 12px 10px 14px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 8px 32px rgba(80,66,45,.16);
+  transition: transform .42s cubic-bezier(.22,1,.36,1), opacity .3s;
+  opacity: 0;
 }
-.pd-cart-bar .cb-count { font-size: 12.5px; color: var(--text-muted); }
-.pd-cart-bar .cb-count b { color: var(--text-main); }
-.pd-cart-bar .cb-total {
-  margin-left: auto; font-size: 17px; font-weight: 700; color: var(--lohas-brand);
+.pd-actionbar.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+.ab-back {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid var(--lohas-bd); background: #fff;
+  color: var(--lohas-brand); cursor: pointer; font-size: 12px;
+  display: flex; align-items: center; justify-content: center; transition: all .18s;
 }
+.ab-back:hover { background: var(--bg-warm); border-color: var(--warn); }
+
+.ab-info { flex: 1; min-width: 0; }
+.ab-line {
+  font-size: 13.5px; font-weight: 700; color: var(--lohas-brand);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.35;
+}
+.ab-sub {
+  font-size: 10.5px; color: var(--text-muted); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.ab-total {
+  flex-shrink: 0; text-align: right; padding-right: 4px;
+  border-right: 1px solid var(--lohas-bd); padding-right: 14px; margin-right: 2px;
+}
+.ab-total span { display: block; font-size: 9.5px; color: var(--text-muted); letter-spacing: 1px; }
+.ab-total b { font-size: 17px; color: var(--lohas-brand); }
+
+.ab-skip {
+  flex-shrink: 0; padding: 8px 14px; border-radius: var(--r-pill);
+  border: 1px solid var(--lohas-bd); background: transparent;
+  color: var(--text-sub); font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: all .18s;
+}
+.ab-skip:hover { border-color: var(--warn); color: var(--lohas-brand); }
+
+.ab-next {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 22px; border-radius: var(--r-pill);
+  border: none; background: var(--lohas-brand); color: #fff;
+  font-size: 13.5px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: all .2s;
+}
+.ab-next:hover:not(:disabled) { background: #6B5940; }
+.ab-next:disabled { opacity: .38; cursor: not-allowed; }
 
 /* ══════════════════════════════════════
    全螢幕故事層
@@ -703,7 +748,11 @@ body.pd-locked { overflow: hidden; }
   .pd-frame-grid { grid-template-columns: 1fr; }
   .pd-eng-grid   { grid-template-columns: repeat(2, 1fr); }
   .pd-shop-grid  { grid-template-columns: repeat(2, 1fr); }
-  .pd-cart-bar   { margin: 20px -16px -20px; padding: 12px 16px; }
+  .pd-actionbar  { left: 12px; right: 12px; width: auto; transform: translateY(140%); padding: 9px 10px 9px 12px; gap: 9px; }
+  .pd-actionbar.show { transform: translateY(0); }
+  .ab-total      { display: none; }
+  .ab-sub        { display: none; }
+  .ab-next       { padding: 9px 16px; font-size: 12.5px; }
   .pd-passport   { top: 64px; padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
   .pd-passport .pp-stamps { margin-left: 0; width: 100%; }
   .story-sec     { padding: 56px 20px; }
