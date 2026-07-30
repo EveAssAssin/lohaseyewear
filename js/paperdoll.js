@@ -150,6 +150,8 @@
   let engSearch   = '';
   let engLoaded   = false;
   let engLoading  = false;
+  let engShowAll  = false;
+  const ENG_PAGE  = 12;   // 預設先顯示幾件
 
   const ENG_CFG = () => PD_DATA.engravingConfig || { price: 350, limit: 500 };
 
@@ -266,10 +268,20 @@
 
     if (!list.length) {
       grid.innerHTML = '<div class="pd-eng-state">找不到符合的刻圖，換個關鍵字試試</div>';
+      renderEngMore(0, 0);
       return;
     }
 
-    grid.innerHTML = list.map(e => `
+    // 已選中的刻圖一定要在可見範圍內，避免收合後看不到自己的選擇
+    const total   = list.length;
+    let   visible = engShowAll ? list : list.slice(0, ENG_PAGE);
+    if (!engShowAll && S.engraving &&
+        !visible.some(e => String(e.id) === String(S.engraving.id)) &&
+        list.some(e => String(e.id) === String(S.engraving.id))) {
+      visible = [S.engraving, ...visible.slice(0, ENG_PAGE - 1)];
+    }
+
+    grid.innerHTML = visible.map(e => `
       <div class="pd-eng-card ${String(S.engraving?.id) === String(e.id) ? 'active' : ''}"
            onclick="PD.pickEng('${e.id}')">
         ${engThumb(e, 'ec-thumb')}
@@ -277,6 +289,35 @@
         <div class="ec-author">${e.designer}</div>
         <div class="ec-price">${fmt(e.price)}</div>
       </div>`).join('');
+
+    renderEngMore(visible.length, total);
+  }
+
+  /* 展開 / 收合列 */
+  function renderEngMore(shown, total) {
+    const box = $('eng-more');
+    if (!box) return;
+
+    if (!total || total <= ENG_PAGE) { box.innerHTML = ''; return; }
+
+    box.innerHTML = engShowAll
+      ? `<div class="em-count">已顯示全部 ${total} 件刻圖</div>
+         <button class="pd-chip em-btn" onclick="PD.toggleEngShowAll()">
+           <i class="fa-solid fa-chevron-up"></i> 收合
+         </button>`
+      : `<div class="em-count">顯示 ${shown} / ${total} 件</div>
+         <button class="pd-chip em-btn" onclick="PD.toggleEngShowAll()">
+           <i class="fa-solid fa-chevron-down"></i> 展開全部 ${total} 件
+         </button>`;
+  }
+
+  function toggleEngShowAll() {
+    engShowAll = !engShowAll;
+    renderEngravings();
+    if (!engShowAll) {
+      // 收合時捲回刻圖區頂端
+      $('eng-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   function pickEng(id) {
@@ -317,13 +358,17 @@
   }
 
   function setEngFilter(val) {
-    engFilter = val;
+    engFilter  = val;
+    engShowAll = false;
     renderEngFilters();
     renderEngravings();
   }
 
   function setEngSearch(val) {
-    engSearch = (val || '').trim();
+    const next = (val || '').trim();
+    if (next === engSearch) return;
+    engSearch  = next;
+    engShowAll = false;
     renderEngravings();
   }
 
@@ -729,7 +774,7 @@
     goStep, nextStep, prevStep,
     quizPick,
     pickFrame, setFrameFilter,
-    pickEng, setEngFilter, setEngSearch, skipEng,
+    pickEng, setEngFilter, setEngSearch, toggleEngShowAll, skipEng,
     setDetail,
     applyHint,
     toggleAcc, setAccTab, setAccCraftFilter,
