@@ -119,6 +119,10 @@
 .fr-rail-n{font-size:11px;color:var(--text-muted)}
 .fr-rail-btn.is-active .fr-rail-n{color:rgba(255,255,255,.7)}
 
+/* 右側內容區 —— grid 子項必須 min-width:0，
+   否則卡片牆內容會把欄寬撐破，導致整個版面溢出跑版 */
+.fr-content{min-width:0}
+
 /* 卡片牆 */
 .fr-block-head{
   display:flex;align-items:baseline;justify-content:space-between;
