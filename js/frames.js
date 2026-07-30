@@ -72,15 +72,17 @@
 
   /* ---------- 渲染：Sidebar 篩選清單 ---------- */
   function railIcon(o) {
-    // 臉型：手繪插畫圖檔（PNG 去背）；分類與材質：Font Awesome
-    if (state.mode === 'face' && o.shape && typeof FACE_IMG_BASE !== 'undefined') {
-      return '<img class="fr-rail-face" src="' + FACE_IMG_BASE + o.shape + '.png" ' +
-        'alt="" width="26" height="26" loading="lazy">';
-    }
+    // 臉型改由 renderFacePick() 以大尺寸頭像呈現，此處僅處理分類與材質
     return o.icon ? '<i class="' + o.icon + ' fr-rail-fa" aria-hidden="true"></i>' : '';
   }
 
   function renderRail() {
+    var isFace = (state.mode === 'face');
+    // 臉型模式：sidebar 收起、主體改單欄，讓頭像有足夠寬度放大
+    document.querySelector('.fr-side').hidden = isFace;
+    document.querySelector('.fr-body-inner').classList.toggle('is-nosidebar', isFace);
+    if (isFace) return;
+
     document.getElementById('frRailTitle').textContent = RAIL_TITLES[state.mode] || '';
     document.getElementById('frRail').innerHTML = options().map(function (o) {
       var n = FRAME_ITEMS.filter(function (it) {
@@ -93,6 +95,34 @@
         '<span class="fr-rail-n">' + n + '</span>' +
         '</button>';
     }).join('');
+  }
+
+  /* ---------- 渲染：臉型大頭像選擇列 ---------- */
+  function renderFacePick() {
+    var box = document.getElementById('frFacePick');
+    if (state.mode !== 'face') { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+
+    box.innerHTML =
+      '<div class="fr-facepick-head">' +
+        '<span class="fr-facepick-t">你的臉型是哪一種？</span>' +
+        '<span class="fr-facepick-hint">選一個，看看適合的框型</span>' +
+      '</div>' +
+      '<div class="fr-facepick-row">' +
+        FRAME_FACE_FILTERS.map(function (o) {
+          var n = FRAME_ITEMS.filter(function (it) {
+            return frameMatches(it, 'face', o.key) && hitSearch(it);
+          }).length;
+          return '<button type="button" class="fr-face-card' +
+            (o.key === state.key ? ' is-active' : '') + '" data-key="' + o.key + '">' +
+            '<span class="fr-face-img">' +
+              '<img src="' + FACE_IMG_BASE + o.shape + '.png" alt="" loading="lazy">' +
+            '</span>' +
+            '<span class="fr-face-name">' + esc(o.label) + '</span>' +
+            '<span class="fr-face-n">' + n + ' 種</span>' +
+            '</button>';
+        }).join('') +
+      '</div>';
   }
 
   /* ---------- 渲染：卡片牆 ---------- */
@@ -121,7 +151,7 @@
     }).join('');
   }
 
-  function render() { renderEntries(); renderRail(); renderWall(); }
+  function render() { renderEntries(); renderRail(); renderFacePick(); renderWall(); }
 
   /* ---------- 事件 ---------- */
   function bind() {
@@ -140,13 +170,19 @@
       renderRail(); renderWall();
     });
 
+    document.getElementById('frFacePick').addEventListener('click', function (e) {
+      var b = e.target.closest('.fr-face-card'); if (!b) return;
+      state.key = b.dataset.key;
+      renderFacePick(); renderWall();
+    });
+
     var t;
     document.getElementById('frSearch').addEventListener('input', function (e) {
       clearTimeout(t);
       var v = e.target.value.trim();
       t = setTimeout(function () {
         state.q = v;
-        renderRail(); renderWall();
+        renderRail(); renderFacePick(); renderWall();
       }, 180);
     });
   }
