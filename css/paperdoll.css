@@ -702,3 +702,157 @@
   .pd-quiz-opts  { grid-template-columns: 1fr; }
   .pd-acc-grid   { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   台灣百工計畫 — v1.1
+   ============================================================ */
+
+/* ── 配件卡：產地標籤 ── */
+.pd-acc-craft {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: var(--warn);
+  font-weight: 500;
+  letter-spacing: .3px;
+  margin-bottom: 3px;
+}
+.pd-acc-craft i { font-size: 8px; }
+
+.pd-acc-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 32px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── 百工篩選列（右欄內） ── */
+.pd-acc-filters {
+  margin-bottom: 12px;
+}
+.pd-acc-filters .pd-chip {
+  font-size: 11px;
+  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ── 工藝故事帶 ── */
+.pd-craft-story {
+  margin-top: 12px;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-left: 3px solid var(--lohas-bd);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  transition: border-color .3s, background .3s;
+}
+.pd-craft-story.show {
+  border-left-color: var(--warn);
+  background: var(--warn-bg, #FFF8EE);
+}
+.pd-craft-story .cs-idle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.pd-craft-story .cs-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.pd-craft-story .cs-em     { font-size: 24px; line-height: 1; }
+.pd-craft-story .cs-name   { font-size: 13px; font-weight: 700; color: var(--lohas-brand); }
+.pd-craft-story .cs-region {
+  font-size: 10px; color: var(--warn);
+  display: flex; align-items: center; gap: 4px; margin-top: 2px;
+}
+.pd-craft-story .cs-craft  { font-size: 11px; color: var(--text-sub); line-height: 1.8; }
+.pd-craft-story .cs-spirit {
+  font-size: 11px; color: var(--lohas-brand);
+  font-weight: 500; line-height: 1.7;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--lohas-bd);
+}
+
+/* ── 八大工藝收集進度 ── */
+.pd-craft-progress {
+  margin-top: 10px;
+  background: rgba(255,255,255,.6);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+}
+.pd-craft-progress .cp-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.pd-craft-progress .cp-label {
+  font-size: 11px; font-weight: 700; color: var(--lohas-brand);
+  display: flex; align-items: center; gap: 5px;
+}
+.pd-craft-progress .cp-label i { color: var(--warn); }
+.pd-craft-progress .cp-count {
+  font-size: 12px; font-weight: 700; color: var(--text-muted);
+}
+.pd-craft-progress .cp-count.done { color: var(--warn); }
+
+.pd-craft-progress .cp-dots {
+  display: flex; gap: 5px; flex-wrap: wrap;
+}
+.pd-craft-progress .cp-dot {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1px dashed var(--lohas-bd);
+  background: rgba(255,255,255,.5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  transition: all .35s cubic-bezier(.34,1.56,.64,1);
+}
+.pd-craft-progress .cp-dot.on {
+  border: 1px solid var(--warn);
+  background: #fff;
+  transform: scale(1.06);
+}
+.pd-craft-progress .cp-hint {
+  font-size: 10px; color: var(--text-muted);
+  margin-top: 8px; line-height: 1.6;
+}
+.pd-craft-progress .cp-unlock {
+  font-size: 11px; font-weight: 700; color: var(--warn);
+  margin-top: 8px;
+  display: flex; align-items: center; gap: 5px;
+}
+
+/* ── 造型卡：百工足跡 ── */
+.pd-oc-crafts {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.15);
+}
+.pd-oc-crafts .oc-crafts-lbl {
+  font-size: 11px; color: var(--lohas-light);
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  margin-bottom: 6px;
+}
+.pd-oc-crafts .oc-crafts-regions {
+  font-size: 12px; color: #fff; font-weight: 500; line-height: 1.7;
+}
+.pd-oc-crafts .oc-crafts-medal {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 10px;
+  background: var(--warn); color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 3px 12px; border-radius: var(--r-pill);
+}
+
+/* ── RWD ── */
+@media (max-width: 768px) {
+  .pd-craft-progress .cp-dot { width: 24px; height: 24px; font-size: 12px; }
+}
