@@ -112,9 +112,16 @@
 .fr-rail-btn:hover{background:#fff}
 .fr-rail-btn.is-active{background:var(--lohas-brand);color:#fff;font-weight:600}
 .fr-rail-fa{width:16px;flex:0 0 auto;font-size:13px;text-align:center;color:var(--lohas-light);transition:.15s}
-.fr-rail-face{flex:0 0 auto;color:var(--lohas-light);transition:.15s}
-.fr-rail-btn:hover .fr-rail-fa,.fr-rail-btn:hover .fr-rail-face{color:var(--lohas-brand)}
-.fr-rail-btn.is-active .fr-rail-fa,.fr-rail-btn.is-active .fr-rail-face{color:#fff}
+/* 臉型插畫為深色線稿 PNG，選中時底色轉深棕會失去對比，
+   故一律加上白色圓形底座確保任何狀態都清晰可辨 */
+.fr-rail-face{
+  flex:0 0 auto;width:26px;height:26px;margin:-3px 0;
+  object-fit:contain;background:#fff;border-radius:50%;
+  border:1px solid var(--fr-line);transition:.15s;
+}
+.fr-rail-btn.is-active .fr-rail-face{border-color:#fff}
+.fr-rail-btn:hover .fr-rail-fa{color:var(--lohas-brand)}
+.fr-rail-btn.is-active .fr-rail-fa{color:#fff}
 .fr-rail-label{flex:1}
 .fr-rail-n{font-size:11px;color:var(--text-muted)}
 .fr-rail-btn.is-active .fr-rail-n{color:rgba(255,255,255,.7)}
