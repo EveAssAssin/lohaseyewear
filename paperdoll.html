@@ -18,7 +18,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/paperdoll.css?v=20260629">
+  <link rel="stylesheet" href="css/paperdoll.css?v=20260730">
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -29,8 +29,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js?v=20260518" defer></script>
   <!-- 客製眼鏡資料 + 主程式 -->
-  <script src="js/paperdoll-data.js?v=20260629" defer></script>
-  <script src="js/paperdoll.js?v=20260629" defer></script>
+  <script src="js/paperdoll-data.js?v=20260730" defer></script>
+  <script src="js/paperdoll.js?v=20260730" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -291,7 +291,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="pd-panel-hd">
         <div class="pd-eyebrow">STEP 6</div>
         <div class="pd-panel-title">配角登場</div>
-        <div class="pd-panel-sub">你的作品需要好的夥伴</div>
+        <div class="pd-panel-sub">你的作品需要好的夥伴 — 部分配件來自台灣八大職人聚落</div>
       </div>
 
       <div class="pd-acc-layout">
@@ -344,6 +344,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
           </div>
 
+          <!-- 台灣百工 · 工藝故事帶 -->
+          <div class="pd-craft-story" id="craft-story">
+            <div class="cs-idle">
+              <i class="fa-solid fa-mountain-sun"></i>
+              選一件台灣百工配件，聽聽它來自哪片土地
+            </div>
+          </div>
+
+          <!-- 台灣百工 · 收集進度 -->
+          <div class="pd-craft-progress" id="craft-progress"></div>
+
           <!-- 底部清單 -->
           <div class="pd-fl-list" id="fl-list"></div>
         </div>
@@ -357,6 +368,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <button class="pd-acc-tab"        data-cat="stand" onclick="PD.setAccTab('stand')">置物架</button>
           </div>
           <div class="pd-acc-body">
+            <div class="pd-filter-row pd-acc-filters" id="acc-filters">
+              <button class="pd-chip active" data-craft="0" onclick="PD.setAccCraftFilter(false)">全部</button>
+              <button class="pd-chip" data-craft="1" onclick="PD.setAccCraftFilter(true)">
+                <i class="fa-solid fa-mountain-sun"></i> 台灣百工
+              </button>
+            </div>
             <div class="pd-acc-grid" id="acc-grid"></div>
           </div>
           <div class="pd-acc-foot">
@@ -395,6 +412,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="pd-oc-creator" id="oc-creator"></div>
             <div class="pd-oc-divider"></div>
             <div class="pd-oc-accs"    id="oc-accs"></div>
+            <div class="pd-oc-crafts"  id="oc-crafts" style="display:none"></div>
             <div class="pd-oc-total"   id="oc-total"></div>
           </div>
 
