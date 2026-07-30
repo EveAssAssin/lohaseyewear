@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.js — 從零開始，打造那副只有我才有的眼鏡
-   v2.0 | 五步重構 · LOHAS FOUND 發現機制 | 2026-07-31
+   v2.1 | 五步重構 · LOHAS FOUND · 浮動操作列 | 2026-07-31
    ------------------------------------------------------------
    設計要點：
    1. Step 3 進站時完全看不到 FOUND 品牌，就是一般配件購物頁。
@@ -73,11 +73,12 @@
 
     if (n === 1) renderFaces();
     if (n === 2) { loadEngravings(); renderEngravings(); }
-    if (n === 3) { renderTypeTabs(); renderShop(); renderCartBar(); }
+    if (n === 3) { renderTypeTabs(); renderShop(); }
     if (n === 4) renderNaming();
     if (n === 5) renderFinal();
 
     syncPassport();
+    renderActionBar();
   }
   const nextStep = () => goStep(S.step + 1);
   const prevStep = () => goStep(S.step - 1);
@@ -113,6 +114,7 @@
     S.face = key;
     frameGroupFilter = 'all';
     renderFaces();
+    renderActionBar();
     $('frame-result')?.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
@@ -186,11 +188,11 @@
   function updateFrameBar() {
     const bar = $('frame-bar');
     if (!bar) return;
-    if (!S.frame) { bar.classList.remove('show'); return; }
+    if (!S.frame) { bar.classList.remove('show'); renderActionBar(); return; }
     bar.classList.add('show');
     $('fb-name').textContent  = S.frame.name;
     $('fb-price').textContent = fmt(S.frame.price);
-    $('step1-next').disabled  = false;
+    renderActionBar();
   }
 
   /* ══════════════════════════════════════
@@ -335,7 +337,7 @@
   function pickEng(id) {
     S.engraving = (PD_DATA.engravings || []).find(e => String(e.id) === String(id)) || null;
     renderEngravings();
-    $('step2-next').disabled = false;
+    renderActionBar();
   }
 
   function updateEngStory() {
@@ -435,16 +437,75 @@
     if (S.acc[id]) delete S.acc[id];
     else S.acc[id] = p;
     renderShop();
-    renderCartBar();
+    renderActionBar();
     renderStoryProducts();
   }
 
-  function renderCartBar() {
-    const bar = $('cart-bar');
+  /* ══════════════════════════════════════
+     浮動操作列（跨步驟共用）
+  ══════════════════════════════════════ */
+  function renderActionBar() {
+    const bar = $('actionbar');
     if (!bar) return;
-    const n = ACCS().length;
-    $('cb-count').innerHTML = n ? `已選 <b>${n}</b> 件配件` : '尚未選擇配件';
-    $('cb-total').textContent = fmt(TOTAL());
+
+    // Step 5 有自己的動作區，不顯示浮動列
+    if (S.step === 5) { bar.classList.remove('show'); return; }
+    bar.classList.add('show');
+
+    const back = $('ab-back');
+    const skip = $('ab-skip');
+    const next = $('ab-next');
+    const nextT = $('ab-next-t');
+
+    back.style.visibility = S.step === 1 ? 'hidden' : '';
+    skip.style.display = 'none';
+    next.disabled = false;
+    nextT.textContent = '下一步';
+
+    let line = '', sub = '';
+
+    if (S.step === 1) {
+      if (S.frame) {
+        line = S.frame.name;
+        sub  = `${S.frame.code} · ${S.frame.en || ''}`;
+      } else {
+        line = S.face ? '從下方挑一款鏡框' : '先選一個最接近的臉型';
+        sub  = '資料來源：樂活鏡框百科';
+        next.disabled = true;
+      }
+    }
+
+    else if (S.step === 2) {
+      skip.style.display = '';
+      if (S.engraving) {
+        line = S.engraving.name;
+        sub  = `刻圖創作者 ${S.engraving.designer}`;
+      } else {
+        line = '挑一個刻圖';
+        sub  = '不刻圖也可以，直接跳過';
+      }
+    }
+
+    else if (S.step === 3) {
+      const n = ACCS().length;
+      line = n ? `已選 ${n} 件配件` : '挑幾件配件';
+      sub  = S.found.length
+        ? `已發現 ${S.found.length} / ${FOUND_OPEN().length} 個城市`
+        : '收納盒、眼鏡布、展示架';
+      if (!n) skip.style.display = '';
+    }
+
+    else if (S.step === 4) {
+      skip.style.display = '';
+      const nm = S.name.trim();
+      line = nm || '還沒有名字';
+      sub  = nm ? '按完成看你的作品' : '有名字的東西，是不一樣的';
+      nextT.textContent = '完成';
+    }
+
+    $('ab-line').textContent = line;
+    $('ab-sub').textContent  = sub;
+    $('ab-total').innerHTML  = `<span>合計</span><b>${fmt(TOTAL())}</b>`;
   }
 
   /* ── 全螢幕故事 ── */
@@ -464,6 +525,7 @@
     layer.innerHTML = buildStory(city, from);
     layer.classList.add('open');
     document.body.classList.add('pd-locked');
+    $('actionbar')?.classList.remove('show');
     layer.scrollTop = 0;
   }
 
@@ -573,6 +635,7 @@
     const cityId = layer?.dataset.city;
     layer.classList.remove('open');
     document.body.classList.remove('pd-locked');
+    renderActionBar();
 
     // 第一次發現 → 護照登場
     if (cityId && !S.found.includes(cityId)) {
@@ -580,7 +643,7 @@
       setTimeout(() => revealPassport(cityId), 260);
     }
     renderShop();
-    renderCartBar();
+    renderActionBar();
   }
 
   /* ══════════════════════════════════════
@@ -647,6 +710,7 @@
     $('np-name').textContent = S.name.trim() || '（還沒有名字）';
     $('np-detail').textContent =
       [S.frame?.name, S.engraving?.name].filter(Boolean).join(' · ');
+    renderActionBar();
   }
   function applyHint(t) {
     S.name = t;
