@@ -81,6 +81,8 @@
    ============================================================ */
 .fr-body{background:var(--bg-warm);padding:26px 24px 64px;scroll-margin-top:var(--fr-header-h)}
 .fr-body-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:196px minmax(0,1fr);gap:26px;align-items:start}
+/* 臉型模式：sidebar 收起，主體單欄，讓頭像有完整寬度可放大 */
+.fr-body-inner.is-nosidebar{grid-template-columns:minmax(0,1fr);gap:0}
 
 /* Sidebar */
 .fr-side{position:sticky;top:calc(var(--fr-header-h) + 18px)}
@@ -112,19 +114,47 @@
 .fr-rail-btn:hover{background:#fff}
 .fr-rail-btn.is-active{background:var(--lohas-brand);color:#fff;font-weight:600}
 .fr-rail-fa{width:16px;flex:0 0 auto;font-size:13px;text-align:center;color:var(--lohas-light);transition:.15s}
-/* 臉型插畫為深色線稿 PNG，選中時底色轉深棕會失去對比，
-   故一律加上白色圓形底座確保任何狀態都清晰可辨 */
-.fr-rail-face{
-  flex:0 0 auto;width:26px;height:26px;margin:-3px 0;
-  object-fit:contain;background:#fff;border-radius:50%;
-  border:1px solid var(--fr-line);transition:.15s;
-}
-.fr-rail-btn.is-active .fr-rail-face{border-color:#fff}
+
 .fr-rail-btn:hover .fr-rail-fa{color:var(--lohas-brand)}
 .fr-rail-btn.is-active .fr-rail-fa{color:#fff}
 .fr-rail-label{flex:1}
 .fr-rail-n{font-size:11px;color:var(--text-muted)}
 .fr-rail-btn.is-active .fr-rail-n{color:rgba(255,255,255,.7)}
+
+/* ---------- 臉型大頭像選擇列（臉型模式專用） ---------- */
+.fr-facepick{
+  background:#fff;border:1px solid var(--fr-line);border-radius:var(--r-lg);
+  padding:20px 20px 22px;margin-bottom:24px;
+  box-shadow:0 12px 28px rgba(80,66,45,.05);
+}
+.fr-facepick-head{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:16px;
+}
+.fr-facepick-t{font-size:15.5px;font-weight:700;color:var(--lohas-brand)}
+.fr-facepick-hint{font-size:12px;color:var(--text-muted)}
+
+.fr-facepick-row{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;
+}
+.fr-face-card{
+  border:1.5px solid var(--fr-line);border-radius:var(--r-md);
+  background:#fff;cursor:pointer;transition:.18s;
+  font-family:var(--font-tc);text-align:center;
+  padding:14px 8px 13px;
+}
+.fr-face-card:hover{border-color:var(--lohas-light);transform:translateY(-2px)}
+.fr-face-card.is-active{border-color:var(--lohas-brand);background:var(--bg-soft)}
+.fr-face-img{
+  display:block;width:100%;aspect-ratio:1/1;max-width:104px;margin:0 auto;
+  border-radius:50%;background:var(--bg-soft);overflow:hidden;transition:.18s;
+}
+.fr-face-card.is-active .fr-face-img{background:#fff;box-shadow:inset 0 0 0 2px var(--lohas-brand)}
+.fr-face-img img{width:100%;height:100%;object-fit:contain;display:block}
+.fr-face-name{
+  display:block;font-size:13.5px;font-weight:700;
+  color:var(--lohas-brand);margin-top:10px;
+}
+.fr-face-n{display:block;font-size:11.5px;color:var(--text-muted);margin-top:3px}
 
 /* 右側內容區 —— grid 子項必須 min-width:0，
    否則卡片牆內容會把欄寬撐破，導致整個版面溢出跑版 */
@@ -299,6 +329,10 @@
 @media (max-width:900px){
   .fd-cols{grid-template-columns:1fr 1fr}
 }
+@media (max-width:1024px){
+  /* 平板：六張改兩排三欄，頭像仍保持大尺寸 */
+  .fr-facepick-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+}
 @media (max-width:820px){
   .fr-body-inner{grid-template-columns:1fr;gap:0}
   .fr-side{position:static;margin-bottom:20px}
@@ -312,6 +346,28 @@
   .fr-rail-btn.is-active{border-color:var(--lohas-brand)}
 }
 @media (max-width:640px){
+  /* 手機：改為橫向滑動的頭像列，頭像維持 88px 不縮小，
+     並用 scroll-snap 讓每次滑動剛好停在一張卡片上 */
+  .fr-facepick{
+    padding:16px 0 18px;margin-bottom:18px;
+    border-radius:var(--r-md);
+  }
+  .fr-facepick-head{padding:0 16px;margin-bottom:13px;gap:6px}
+  .fr-facepick-t{font-size:14.5px}
+  .fr-facepick-hint{font-size:11.5px}
+  .fr-facepick-row{
+    display:flex;gap:10px;overflow-x:auto;padding:2px 16px 4px;
+    scroll-snap-type:x mandatory;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .fr-facepick-row::-webkit-scrollbar{display:none}
+  .fr-face-card{
+    flex:0 0 auto;width:104px;scroll-snap-align:start;padding:12px 6px 11px;
+  }
+  .fr-face-img{max-width:88px}
+  .fr-face-name{font-size:12.5px;margin-top:8px}
+  .fr-face-n{font-size:11px}
+
   .fr-hero{height:clamp(240px,38vh,320px)}
   .fr-hero-inner{padding:0 18px 28px}
   .fr-hero-deco{display:none}
