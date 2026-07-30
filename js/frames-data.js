@@ -75,10 +75,10 @@ const LEGACY_ID_MAP = {
 
 /* ---------- 2. 族群定義 ---------- */
 const FRAME_GROUPS = [
-  { key:'mat',   label:'材質 × 形狀', desc:'依製作材質與外框輪廓分類，決定重量、質感與耐用度。' },
-  { key:'style', label:'風格系列',    desc:'樂活自有設計系列，各有鮮明個性與設計主題。' },
-  { key:'sun',   label:'太陽眼鏡',    desc:'防護紫外線，兼顧造型與戶外機能。' },
-  { key:'func',  label:'功能 / 族群', desc:'依使用需求、年齡與特殊尺碼挑選。' },
+  { key:'mat',   icon:'fa-solid fa-shapes',              label:'材質 × 形狀', desc:'依製作材質與外框輪廓分類，決定重量、質感與耐用度。' },
+  { key:'style', icon:'fa-solid fa-wand-magic-sparkles', label:'風格系列',    desc:'樂活自有設計系列，各有鮮明個性與設計主題。' },
+  { key:'sun',   icon:'fa-solid fa-sun',                 label:'太陽眼鏡',    desc:'防護紫外線，兼顧造型與戶外機能。' },
+  { key:'func',  icon:'fa-solid fa-user-group',          label:'功能 / 族群', desc:'依使用需求、年齡與特殊尺碼挑選。' },
 ];
 
 /* ---------- 3. 鏡框分類資料 ----------
@@ -433,30 +433,40 @@ const FRAME_ICONS = {
    對應首頁三入口：看臉型 / 看材質 / 看風格
    rail 有三種模式，點入口即切換左側篩選軸內容。 */
 const FRAME_ENTRIES = [
-  { key:'category', icon:'ti-layout-grid',          label:'看分類', hint:'依材質形狀瀏覽' },
-  { key:'face',     icon:'ti-user-square-rounded',  label:'看臉型', hint:'不確定適合什麼' },
-  { key:'material', icon:'ti-diamond',              label:'看材質', hint:'在意輕重與觸感' },
+  { key:'category', icon:'fa-solid fa-table-cells-large', label:'看分類', hint:'依族群瀏覽全部' },
+  { key:'face',     icon:'fa-regular fa-face-smile',      label:'看臉型', hint:'不確定適合什麼' },
+  { key:'material', icon:'fa-solid fa-gem',               label:'看材質', hint:'在意輕重與觸感' },
 ];
 
 /* 臉型篩選：以關鍵字比對 FRAME_ITEMS[].face
    「各種臉型」視為全部符合，任何臉型篩選都會命中。 */
 const FRAME_FACE_FILTERS = [
-  { key:'oval',    label:'橢圓臉', match:['橢圓臉'] },
-  { key:'round',   label:'圓臉',   match:['圓臉'] },
-  { key:'square',  label:'方形臉', match:['方形臉'] },
-  { key:'long',    label:'長形臉', match:['長形臉'] },
-  { key:'heart',   label:'心形臉', match:['心形臉'] },
-  { key:'diamond', label:'菱形臉', match:['菱形臉'] },
+  { key:'oval',    label:'橢圓臉', shape:'oval',    match:['橢圓臉'] },
+  { key:'round',   label:'圓臉',   shape:'round',   match:['圓臉'] },
+  { key:'square',  label:'方形臉', shape:'square',  match:['方形臉'] },
+  { key:'long',    label:'長形臉', shape:'long',    match:['長形臉'] },
+  { key:'heart',   label:'心形臉', shape:'heart',   match:['心形臉'] },
+  { key:'diamond', label:'菱形臉', shape:'diamond', match:['菱形臉'] },
 ];
+
+/* 臉型輪廓 SVG（viewBox 0 0 24 28） */
+const FACE_SHAPES = {
+  oval:    '<ellipse cx="12" cy="14" rx="8" ry="11" stroke="currentColor" stroke-width="1.8" fill="none"/>',
+  round:   '<circle cx="12" cy="14" r="9.5" stroke="currentColor" stroke-width="1.8" fill="none"/>',
+  square:  '<rect x="3.5" y="4.5" width="17" height="19" rx="4.5" stroke="currentColor" stroke-width="1.8" fill="none"/>',
+  long:    '<rect x="5" y="2.5" width="14" height="23" rx="7" stroke="currentColor" stroke-width="1.8" fill="none"/>',
+  heart:   '<path d="M12 25 C6 20 3.5 15 3.5 10 C3.5 5.5 7 3 12 3 C17 3 20.5 5.5 20.5 10 C20.5 15 18 20 12 25 Z" stroke="currentColor" stroke-width="1.8" fill="none"/>',
+  diamond: '<path d="M12 2.5 L20 14 L12 25.5 L4 14 Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>',
+};
 
 /* 材質篩選：以關鍵字比對 FRAME_ITEMS[].material */
 const FRAME_MATERIAL_FILTERS = [
-  { key:'acetate', label:'板材',     match:['板材'] },
-  { key:'titan',   label:'鈦金屬',   match:['純鈦','β-鈦','鈦'] },
-  { key:'metal',   label:'金屬',     match:['金屬','不鏽鋼'] },
-  { key:'memory',  label:'記憶合金', match:['記憶合金'] },
-  { key:'tr90',    label:'TR-90',    match:['TR-90'] },
-  { key:'combo',   label:'複合材質', match:['複合材質','+'] },
+  { key:'acetate', icon:'fa-solid fa-layer-group',       label:'板材',     match:['板材'] },
+  { key:'titan',   icon:'fa-solid fa-feather-pointed',   label:'鈦金屬',   match:['純鈦','β-鈦','鈦'] },
+  { key:'metal',   icon:'fa-solid fa-ring',              label:'金屬',     match:['金屬','不鏽鋼'] },
+  { key:'memory',  icon:'fa-solid fa-arrows-rotate',     label:'記憶合金', match:['記憶合金'] },
+  { key:'tr90',    icon:'fa-solid fa-bolt',              label:'TR-90',    match:['TR-90'] },
+  { key:'combo',   icon:'fa-solid fa-object-group',      label:'複合材質', match:['複合材質','+'] },
 ];
 
 /* 判斷單一 item 是否命中某篩選條件 */

@@ -46,7 +46,7 @@
     document.getElementById('frEntries').innerHTML = FRAME_ENTRIES.map(function (e) {
       return '<button type="button" class="fr-entry-card' +
         (e.key === state.mode ? ' is-active' : '') + '" data-mode="' + e.key + '">' +
-        '<i class="ti ' + e.icon + '" aria-hidden="true"></i>' +
+        '<i class="' + e.icon + '" aria-hidden="true"></i>' +
         '<span class="fr-entry-label">' + esc(e.label) + '</span>' +
         '<span class="fr-entry-sub">' + esc(e.hint) + '</span>' +
         '</button>';
@@ -54,6 +54,19 @@
   }
 
   /* ---------- 渲染：左側篩選軸 ---------- */
+  function railIcon(o) {
+    // 臉型：SVG 輪廓最直觀；分類與材質：Font Awesome
+    if (state.mode === 'face' && o.shape && typeof FACE_SHAPES !== 'undefined') {
+      return '<svg class="fr-rail-face" viewBox="0 0 24 28" width="17" height="20" ' +
+        'fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        (FACE_SHAPES[o.shape] || '') + '</svg>';
+    }
+    if (o.icon) {
+      return '<i class="' + o.icon + ' fr-rail-fa" aria-hidden="true"></i>';
+    }
+    return '';
+  }
+
   function renderRail() {
     document.getElementById('frRail').innerHTML = options().map(function (o) {
       var n = FRAME_ITEMS.filter(function (it) {
@@ -61,7 +74,9 @@
       }).length;
       return '<button type="button" class="fr-rail-btn' +
         (o.key === state.key ? ' is-active' : '') + '" data-key="' + o.key + '">' +
-        '<span>' + esc(o.label) + '</span><span class="fr-rail-n">' + n + '</span>' +
+        railIcon(o) +
+        '<span class="fr-rail-label">' + esc(o.label) + '</span>' +
+        '<span class="fr-rail-n">' + n + '</span>' +
         '</button>';
     }).join('');
   }
