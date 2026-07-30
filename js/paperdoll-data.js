@@ -1,15 +1,16 @@
 /* ============================================================
    paperdoll-data.js — 從零開始，打造那副只有我才有的眼鏡
    ------------------------------------------------------------
-   v2.0 | 五步重構 · LOHAS FOUND 發現機制
+   v2.2 | 五步重構 · LOHAS FOUND · FOUND 001 實拍照上線
    ------------------------------------------------------------
    資料來源分工：
      鏡框  → js/frames-data.js 的 FRAME_ITEMS（鏡框百科 45 個分類）
      刻圖  → Supabase engraving_designs（與刻圖市集同源，執行期載入）
      配件  → 本檔 found[].products（LOHAS FOUND 城市系列）
    ------------------------------------------------------------
-   ⚠️ 尚無實拍照片，城市主視覺以 CSS 色調 + 織理呈現。
-      日後補照片只需填 found[].photo，版面結構不需更動。
+   照片：found[].photos 有值時走實拍版面，
+        沒有時自動退回 CSS 色調 + 織理（002〜008 目前如此）。
+        補照片只要填 photos 物件即可，版面結構不需更動。
    ============================================================ */
 
 const PD_DATA = {
@@ -61,6 +62,16 @@ const PD_DATA = {
       theme:'一張紙，承載一座城。',
       tone:{ base:'#B9A98C', deep:'#6B5C42', light:'#EFE7D6', ink:'#FFFBF2' },
       texture:'fiber',
+      photos:{
+        base:     'images/found/001/',
+        heroWide: 'hero-wide.jpg',   // 1839×1035 抄紙提簾，逆光滴水
+        heroTall: 'hero-tall.jpg',   // 1200×1499 竹簾側面，水滴成串
+        discover: 'discover.jpg',    // 1593×1195 廠房全景
+        spirit:   'spirit.jpg',      // 1593×897  手工紙逆光極特寫
+        texture:  'texture.jpg',     // 800×800   紙纖維織理
+        process:  ['process-1.jpg','process-2.jpg','process-3.jpg',
+                   'process-4.jpg','process-5.jpg','process-6.jpg'],
+      },
       discover:{
         title:'埔里的水，養出了紙',
         body:'埔里四面環山，擁有純淨且穩定的山泉水，自日治時期開始便發展造紙產業，逐漸成為台灣最重要的手工紙聚落。1965 年成立的廣興紙寮，見證了這個產業的興衰。當機械製紙逐漸取代手工紙後，廣興紙寮沒有放棄，而是投入文化保存與教育推廣，讓傳統抄紙工藝延續至今。',
@@ -80,10 +91,10 @@ const PD_DATA = {
       },
       spirit:'紙承載的不只是文字。<br>而是一株植物、一座城市、一位職人的時間。',
       products:[
-        { id:'p1', type:'box',  em:'📦', name:'手工紙壓模硬盒',   desc:'植物染印花，可完全分解',       price:420 },
-        { id:'p2', type:'box',  em:'🗾', name:'和紙包覆收藏盒',   desc:'千代紙紋樣，一盒一個花色',     price:640 },
-        { id:'p3', type:'card', em:'📇', name:'手工紙故事卡組',   desc:'含保證卡，抄紙職人親筆落款',   price:280 },
-        { id:'p4', type:'box',  em:'🎁', name:'VIP 手工紙禮盒',   desc:'埔里山泉抄紙，送禮專用規格',   price:1280 },
+        { id:'p1', type:'box',  em:'📦', name:'手工紙壓模硬盒',   desc:'植物染印花，可完全分解',       price:420 , img:'product-p1.jpg' },
+        { id:'p2', type:'box',  em:'🗾', name:'和紙包覆收藏盒',   desc:'千代紙紋樣，一盒一個花色',     price:640 , img:'product-p2.jpg' },
+        { id:'p3', type:'card', em:'📇', name:'手工紙故事卡組',   desc:'含保證卡，抄紙職人親筆落款',   price:280 , img:'product-p3.jpg' },
+        { id:'p4', type:'box',  em:'🎁', name:'VIP 手工紙禮盒',   desc:'埔里山泉抄紙，送禮專用規格',   price:1280 , img:'product-p4.jpg' },
       ],
     },
 

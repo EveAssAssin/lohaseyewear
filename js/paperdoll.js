@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.js — 從零開始，打造那副只有我才有的眼鏡
-   v2.1 | 五步重構 · LOHAS FOUND · 浮動操作列 | 2026-07-31
+   v2.2 | 五步重構 · LOHAS FOUND · 實拍照整合 | 2026-07-31
    ------------------------------------------------------------
    設計要點：
    1. Step 3 進站時完全看不到 FOUND 品牌，就是一般配件購物頁。
@@ -47,6 +47,25 @@
       f.products.map(p => ({ ...p, foundId: f.id, foundNo: f.no })));
   }
   const findProduct = id => allProducts().find(p => p.id === id);
+
+  /* ── 照片輔助 ──
+     city.photos 有值走實拍，沒有則回傳 null 讓版面退回 CSS 織理 */
+  function photo(city, key, idx) {
+    const ph = city?.photos;
+    if (!ph) return null;
+    const v = (idx == null) ? ph[key] : (ph[key] || [])[idx];
+    return v ? (ph.base || '') + v : null;
+  }
+  const hasPhotos = city => !!city?.photos;
+
+  /* 商品圖：找得到就用實拍，否則用 emoji */
+  function productImg(p, cls) {
+    const city = findCity(p.foundId);
+    const src  = p.img && city?.photos ? (city.photos.base || '') + p.img : null;
+    return src
+      ? `<img class="${cls}" src="${src}" alt="${esc(p.name)}" loading="lazy">`
+      : `<span class="${cls} is-em">${p.em}</span>`;
+  }
 
   const BASE  = () => (S.frame?.price || 0) + (S.engraving?.price || 0);
   const ACCS  = () => Object.values(S.acc);
@@ -412,7 +431,7 @@
           <i class="fa-regular fa-circle"></i>${esc(p.foundNo)}
         </span>
 
-        <div class="sc-img">${p.em}</div>
+        <div class="sc-img">${productImg(p, 'sc-photo')}</div>
         <div class="sc-type">${esc(PD_DATA.typeLabel[p.type] || '')}</div>
         <div class="sc-name">${esc(p.name)}</div>
         <div class="sc-desc">${esc(p.desc)}</div>
@@ -530,14 +549,23 @@
   }
 
   function buildStory(city, from) {
-    const cc = city.cocreate || {};
+    const cc   = city.cocreate || {};
+    const pics = hasPhotos(city);
+
+    const heroW = photo(city, 'heroWide');
+    const heroT = photo(city, 'heroTall');
+    const disc  = photo(city, 'discover');
+    const spir  = photo(city, 'spirit');
+
     return `
     <button class="story-close" onclick="PD.closeStory()" aria-label="關閉">
       <i class="fa-solid fa-xmark"></i>
     </button>
 
     <!-- 一、揭曉 -->
-    <section class="story-hero tex-${city.texture}">
+    <section class="story-hero ${pics ? 'has-photo' : 'tex-' + city.texture}">
+      ${heroW ? `<img class="sh-bg sh-bg-wide" src="${heroW}" alt="">` : ''}
+      ${heroT ? `<img class="sh-bg sh-bg-tall" src="${heroT}" alt="">` : ''}
       <div class="sh-inner">
         <div class="sh-no">FOUND ${esc(city.no)}</div>
         <div class="sh-city">${esc(city.city)}</div>
@@ -554,6 +582,11 @@
     <section class="story-sec">
       <div class="sec-eyebrow"><span class="sec-no">01</span> DISCOVER｜發現</div>
       <h2 class="sec-title">${esc(city.discover.title)}</h2>
+      ${disc ? `
+        <figure class="sec-figure">
+          <img src="${disc}" alt="${esc(city.name)}" loading="lazy">
+          <figcaption>${esc(city.city)} · ${esc(city.name)}</figcaption>
+        </figure>` : ''}
       <p class="sec-body">${esc(city.discover.body)}</p>
       <div class="sec-meta">
         <span><i class="fa-solid fa-location-dot"></i> ${esc(city.city)}</span>
@@ -567,23 +600,30 @@
       <div class="sec-eyebrow"><span class="sec-no">02</span> CO-CREATE｜共創</div>
       <h2 class="sec-title">${esc(cc.title || '')}</h2>
       <p class="sec-body">${esc(cc.intro || '')}</p>
-      <ol class="proc-list">
-        ${(cc.steps || []).map((s, i) => `
+      <ol class="proc-list ${pics ? 'with-photo' : ''}">
+        ${(cc.steps || []).map((st, i) => {
+          const ps = photo(city, 'process', i);
+          return `
           <li class="proc-item">
+            ${ps ? `<div class="pi-photo"><img src="${ps}" alt="${esc(st.name)}" loading="lazy"></div>` : ''}
             <span class="pi-n">${String(i + 1).padStart(2, '0')}</span>
-            <div>
-              <div class="pi-name">${esc(s.name)}</div>
-              <div class="pi-desc">${esc(s.desc)}</div>
+            <div class="pi-text">
+              <div class="pi-name">${esc(st.name)}</div>
+              <div class="pi-desc">${esc(st.desc)}</div>
             </div>
-          </li>`).join('')}
+          </li>`;
+        }).join('')}
       </ol>
       ${cc.note ? `<div class="proc-note"><i class="fa-solid fa-quote-left"></i>${esc(cc.note)}</div>` : ''}
     </section>
 
     <!-- 四、延續 -->
-    <section class="story-spirit tex-${city.texture}">
-      <div class="sec-eyebrow light"><span class="sec-no">03</span> CONTINUE｜延續</div>
-      <blockquote>${city.spirit}</blockquote>
+    <section class="story-spirit ${spir ? 'has-photo' : 'tex-' + city.texture}">
+      ${spir ? `<img class="sp-bg" src="${spir}" alt="" loading="lazy">` : ''}
+      <div class="sp-inner">
+        <div class="sec-eyebrow light"><span class="sec-no">03</span> CONTINUE｜延續</div>
+        <blockquote>${city.spirit}</blockquote>
+      </div>
     </section>
 
     <!-- 五、作品 -->
@@ -617,7 +657,7 @@
       const picked = !!S.acc[p.id];
       return `
       <button class="sp-card ${picked ? 'on' : ''}" onclick="PD.toggleAcc('${p.id}')">
-        <span class="sp-em">${p.em}</span>
+        <span class="sp-thumb">${productImg({ ...p, foundId: city.id }, 'sp-photo')}</span>
         <span class="sp-info">
           <span class="sp-name">${esc(p.name)}</span>
           <span class="sp-desc">${esc(p.desc)}</span>
@@ -749,7 +789,7 @@
         const it = items[k++];
         cells.push(it
           ? `<div class="fl-cell fl-item" title="${esc(it.name)}">
-               <span class="fli-em">${it.em}</span>
+               ${productImg(it, 'fli-img')}
                <span class="fli-name">${esc(it.name)}</span>
              </div>`
           : `<div class="fl-cell fl-empty"></div>`);
