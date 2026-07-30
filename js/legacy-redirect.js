@@ -17,7 +17,7 @@
    ------------------------------------------------------------
    規則
    ------------------------------------------------------------
-   /page/{語系}/{ID}  →  /frames.html?f={ID}
+   /page/{語系}/{ID}  →  /frame.html?f={ID}
    ID→新代碼 對照表位於 js/frames-data.js 的 LEGACY_ID_MAP，
    本檔只負責轉址，不維護對照關係。
 
@@ -39,7 +39,7 @@
   var m = (location.pathname || '').match(/^\/page\/\d+\/([\w-]+)/);
   if (!m) return;                       // 非舊站路徑，放行
 
-  var target = '/frames.html?f=' + encodeURIComponent(m[1]);
+  var target = '/frame.html?f=' + encodeURIComponent(m[1]);
 
   // meta refresh 作為保險：JS 若被中斷仍能轉址
   document.write('<meta http-equiv="refresh" content="0; url=' + target + '">');

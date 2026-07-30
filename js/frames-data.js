@@ -428,3 +428,59 @@ const FRAME_ICONS = {
   'sun-clip':  '<rect x="4" y="8" width="56" height="26" rx="4" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="8" y="12" width="48" height="18" rx="3" fill="currentColor" fill-opacity="0.45"/><path d="M26 8 L26 4 M38 8 L38 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   'sun-sport': '<path d="M4 14 Q32 4 60 14 L58 28 Q32 38 6 28 Z" stroke="currentColor" stroke-width="2.4" fill="currentColor" fill-opacity="0.45"/>',
 };
+
+/* ---------- 5. 引導入口與篩選軸定義 ----------
+   對應首頁三入口：看臉型 / 看材質 / 看風格
+   rail 有三種模式，點入口即切換左側篩選軸內容。 */
+const FRAME_ENTRIES = [
+  { key:'category', icon:'ti-layout-grid',          label:'看分類', hint:'依材質形狀瀏覽' },
+  { key:'face',     icon:'ti-user-square-rounded',  label:'看臉型', hint:'不確定適合什麼' },
+  { key:'material', icon:'ti-diamond',              label:'看材質', hint:'在意輕重與觸感' },
+];
+
+/* 臉型篩選：以關鍵字比對 FRAME_ITEMS[].face
+   「各種臉型」視為全部符合，任何臉型篩選都會命中。 */
+const FRAME_FACE_FILTERS = [
+  { key:'oval',    label:'橢圓臉', match:['橢圓臉'] },
+  { key:'round',   label:'圓臉',   match:['圓臉'] },
+  { key:'square',  label:'方形臉', match:['方形臉'] },
+  { key:'long',    label:'長形臉', match:['長形臉'] },
+  { key:'heart',   label:'心形臉', match:['心形臉'] },
+  { key:'diamond', label:'菱形臉', match:['菱形臉'] },
+];
+
+/* 材質篩選：以關鍵字比對 FRAME_ITEMS[].material */
+const FRAME_MATERIAL_FILTERS = [
+  { key:'acetate', label:'板材',     match:['板材'] },
+  { key:'titan',   label:'鈦金屬',   match:['純鈦','β-鈦','鈦'] },
+  { key:'metal',   label:'金屬',     match:['金屬','不鏽鋼'] },
+  { key:'memory',  label:'記憶合金', match:['記憶合金'] },
+  { key:'tr90',    label:'TR-90',    match:['TR-90'] },
+  { key:'combo',   label:'複合材質', match:['複合材質','+'] },
+];
+
+/* 判斷單一 item 是否命中某篩選條件 */
+function frameMatches(item, mode, key) {
+  if (!key) return true;
+  if (mode === 'category') return item.group === key;
+
+  if (mode === 'face') {
+    var f = FRAME_FACE_FILTERS.filter(function (x) { return x.key === key; })[0];
+    if (!f) return true;
+    var list = item.face || [];
+    // 「各種臉型」為通用款，任何臉型都適合
+    if (list.some(function (v) { return v.indexOf('各種臉型') > -1; })) return true;
+    return list.some(function (v) {
+      return f.match.some(function (m) { return v.indexOf(m) > -1; });
+    });
+  }
+
+  if (mode === 'material') {
+    var g = FRAME_MATERIAL_FILTERS.filter(function (x) { return x.key === key; })[0];
+    if (!g) return true;
+    return (item.material || []).some(function (v) {
+      return g.match.some(function (m) { return v.indexOf(m) > -1; });
+    });
+  }
+  return true;
+}
