@@ -855,3 +855,64 @@ body.pd-locked { overflow: hidden; }
   .proc-list.with-photo .pi-n { padding-top: 0; }
   .sp-thumb { width: 56px; height: 56px; }
 }
+
+/* ============================================================
+   紙質織理套用 — v2.3
+   ------------------------------------------------------------
+   概念：護照是紙做的。所有 FOUND 護照類元件與故事卡說明，
+        都鋪上廣興紙寮的紙纖維織理。
+   用法：JS 掛 .has-tex 並設 --pd-tex，沒照片時自動不套用。
+   ============================================================ */
+
+.has-tex { position: relative; overflow: hidden; }
+.has-tex > * { position: relative; z-index: 2; }
+.has-tex::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 1;
+  background-image: var(--pd-tex);
+  background-size: var(--pd-tex-size, 300px);
+  background-repeat: repeat;
+  pointer-events: none;
+}
+
+/* ── 深色底（護照、發現提示、Step5 回顧）：疊加提亮纖維 ──
+   overlay 會把深棕提亮約 20%，經對比度實測取 18%：
+   白字 8.03:1、金字 4.64:1、次要標籤 5.43:1，皆通過 WCAG AA。 */
+.pd-passport.has-tex::after,
+.pp-toast.has-tex::after,
+.pd-oc-passport.has-tex::after {
+  mix-blend-mode: overlay;
+  opacity: .18;
+}
+
+/* 承載偽元素 */
+.pd-passport    { position: relative; overflow: hidden; }
+.pp-toast       { position: fixed;    overflow: hidden; }
+.pd-oc-passport { position: relative; overflow: hidden; }
+
+/* 紙紋提亮後，深底上的文字色需一併調亮才維持對比
+   （#B58A42 在純深棕上原本就只有 3.09:1，本次一併修正） */
+.pd-passport, .pp-toast, .pd-oc-passport {
+  --gold-on-dark: #E3C085;   /* 4.64 : 1 */
+  --tint-on-dark: #E0D3BC;   /* 5.43 : 1 */
+}
+.pd-passport .pp-label,
+.pd-oc-passport .ocp-hint,
+.pd-oc-passport .ocp-n      { color: var(--tint-on-dark); }
+.pd-passport .pp-count b,
+.pp-toast b,
+.pd-oc-passport .ocp-n.done { color: var(--gold-on-dark); }
+
+/* ── 淺色底（故事卡說明）：正片疊底壓出紙感 ──
+   實測 55% 會讓內文掉到 3.21:1，改用 28%：
+   標題 4.90:1、內文 5.83:1。 */
+.story-cardnote.has-tex {
+  background: #fff;
+  border-color: var(--c-base);
+}
+.story-cardnote.has-tex::after {
+  mix-blend-mode: multiply;
+  opacity: .28;
+  --pd-tex-size: 260px;
+}
+.story-cardnote.has-tex .scn-d { color: #57524E; }
