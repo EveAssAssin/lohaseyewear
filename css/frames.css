@@ -1,192 +1,293 @@
 /* ============================================================
-   frames.css — 鏡框百科全書
+   frames.css — 鏡框百科（首頁 frames.html + 詳情頁 frame.html）
    依賴：lohas-tokens.css → lohas-base.css → lohas-components.css
    ------------------------------------------------------------
    ※ .main-header 為 position:fixed、height:70px（見 lohas-base.css），
-     不佔文件流，故本頁需自行補償 70px，否則 hero 會被壓在 header 下。
-     手機版 header 同高，維持 70px。
+     不佔文件流，故本頁需自行補償，否則內容會被壓在 header 下。
    ============================================================ */
 :root{
-  --fr-header-h:70px;   /* 對應 lohas-base.css 的 .main-header height */
+  --fr-header-h:70px;
 }
 
-/* ---------- Hero ---------- */
+/* ============================================================
+   共用
+   ============================================================ */
+.fr-hero,.fr-entry,.fr-body,.fd-wrap{font-family:var(--font-tc)}
+
+/* ============================================================
+   首頁 · Hero
+   ============================================================ */
 .fr-hero{
-  position:relative;overflow:hidden;
-  background:var(--bg-soft);
-  border-bottom:1px solid var(--lohas-bd);
-  /* 上緣 = fixed header 高度 + 視覺留白 */
-  padding:calc(var(--fr-header-h) + 48px) 24px 48px;
+  background:var(--lohas-brand);
+  padding:calc(var(--fr-header-h) + 46px) 24px 44px;
+  text-align:center;
 }
-.fr-hero-inner{max-width:1180px;margin:0 auto;position:relative}
-.fr-eyebrow{
-  font-size:12px;letter-spacing:2.5px;text-transform:uppercase;
-  color:var(--text-muted);margin-bottom:12px;
+.fr-hero-inner{max-width:1180px;margin:0 auto}
+.fr-hero-eyebrow{
+  font-size:11px;letter-spacing:2.5px;color:var(--lohas-light);
+  margin:0 0 12px;text-transform:uppercase;
 }
-.fr-hero h1{
-  font-size:clamp(28px,4.5vw,42px);font-weight:700;line-height:1.22;
-  color:var(--lohas-brand);margin:0 0 14px;
+.fr-hero-title{
+  font-size:clamp(26px,4vw,36px);font-weight:700;color:#fff;
+  line-height:1.3;margin:0 0 12px;
 }
-.fr-hero h1 em{font-style:normal;color:var(--warn)}
-.fr-hero-sub{
-  font-size:15px;line-height:1.8;color:var(--text-sub);max-width:480px;margin:0;
-}
-.fr-hero-svg{
-  position:absolute;right:0;top:50%;transform:translateY(-50%);
-  color:var(--lohas-brand);opacity:.14;pointer-events:none;
-}
-.fr-hero-stats{display:flex;gap:28px;margin-top:26px;flex-wrap:wrap}
-.fr-stat-n{font-size:24px;font-weight:700;color:var(--lohas-brand);line-height:1}
-.fr-stat-l{font-size:12px;color:var(--text-muted);margin-top:4px}
+.fr-hero-sub{font-size:14px;color:var(--lohas-light);margin:0}
 
-/* ---------- 族群 Tabs ---------- */
-.fr-tabs-wrap{
-  position:sticky;top:var(--fr-header-h);z-index:var(--z-sticky);
-  background:#fff;border-bottom:1.5px solid var(--lohas-bd);
+/* ============================================================
+   首頁 · 三入口引導
+   ============================================================ */
+.fr-entry{background:#fff;border-bottom:1px solid var(--lohas-bd);padding:22px 24px 26px}
+.fr-entry-inner{max-width:1180px;margin:0 auto}
+.fr-entry-hint{
+  font-size:12.5px;color:var(--text-muted);text-align:center;margin:0 0 14px;
 }
-.fr-tabs{
-  max-width:1180px;margin:0 auto;display:flex;gap:0;
-  padding:0 24px;overflow-x:auto;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
+.fr-entry-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+  max-width:660px;margin:0 auto;
 }
-.fr-tabs::-webkit-scrollbar{display:none}
-.fr-tab{
-  flex:0 0 auto;padding:15px 20px;background:none;border:none;cursor:pointer;
-  font-family:var(--font-tc);font-size:14px;font-weight:500;color:var(--text-sub);
-  border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:.15s;
-  white-space:nowrap;
+.fr-entry-card{
+  border:1px solid var(--lohas-bd);border-radius:var(--r-md);
+  background:#fff;padding:18px 12px;cursor:pointer;transition:.16s;
+  font-family:var(--font-tc);text-align:center;
 }
-.fr-tab:hover{color:var(--lohas-brand)}
-.fr-tab.is-active{color:var(--lohas-brand);border-bottom-color:var(--lohas-brand);font-weight:700}
-.fr-tab-n{font-size:11px;color:var(--text-muted);margin-left:5px}
+.fr-entry-card:hover{border-color:var(--lohas-light);box-shadow:var(--sh-soft)}
+.fr-entry-card.is-active{
+  border-color:var(--lohas-brand);background:var(--bg-soft);
+}
+.fr-entry-card i{font-size:23px;color:var(--lohas-brand);display:block}
+.fr-entry-label{
+  display:block;font-size:13.5px;font-weight:700;
+  color:var(--lohas-brand);margin-top:8px;
+}
+.fr-entry-sub{display:block;font-size:11.5px;color:var(--text-sub);margin-top:4px}
 
-/* ---------- 主體 ---------- */
-.fr-main{max-width:1180px;margin:0 auto;padding:32px 24px 64px}
-.fr-group-desc{
-  font-size:14px;color:var(--text-sub);line-height:1.75;
-  margin:0 0 22px;padding-left:12px;border-left:3px solid var(--lohas-light);
+/* ============================================================
+   首頁 · 主體（篩選軸 + 標本牆）
+   ============================================================ */
+.fr-body{background:var(--bg-warm);padding:26px 24px 60px;scroll-margin-top:var(--fr-header-h)}
+.fr-body-inner{max-width:1180px;margin:0 auto}
+.fr-body-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:12px;margin-bottom:14px;
 }
+.fr-body-title{font-size:16px;font-weight:700;color:var(--lohas-brand);margin:0}
+.fr-body-count{font-size:12.5px;color:var(--text-muted)}
 
-/* ---------- 知識卡片 Grid ---------- */
-.fr-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px;
+.fr-layout{display:grid;grid-template-columns:158px minmax(0,1fr);gap:0;align-items:start}
+
+/* 左側篩選軸 */
+.fr-rail{
+  border-right:1px solid var(--lohas-bd);padding-right:0;
+  position:sticky;top:calc(var(--fr-header-h) + 12px);
 }
-.fr-card{
-  background:#fff;border:1px solid var(--lohas-bd);border-radius:var(--r-md);
-  padding:22px 18px 18px;cursor:pointer;transition:.18s;position:relative;overflow:hidden;
-  text-align:left;font-family:var(--font-tc);
+.fr-rail-btn{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  width:100%;border:none;background:none;cursor:pointer;
+  font-family:var(--font-tc);font-size:13px;color:var(--text-sub);
+  padding:9px 14px;text-align:left;transition:.14s;
+  border-left:2.5px solid transparent;
 }
-.fr-card:hover{border-color:var(--lohas-light);box-shadow:var(--sh-soft);transform:translateY(-2px)}
-.fr-card.is-active{border-color:var(--lohas-brand);background:var(--bg-soft);box-shadow:var(--sh-soft)}
-.fr-card.is-active::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--lohas-brand);
+.fr-rail-btn:hover{color:var(--lohas-brand);background:#fff}
+.fr-rail-btn.is-active{
+  background:var(--lohas-brand);color:#fff;font-weight:500;
+  border-left-color:var(--warn);
 }
-.fr-card-icon{
-  display:flex;align-items:center;justify-content:center;height:58px;margin-bottom:14px;
-  color:var(--lohas-brand);
-}
-.fr-card-name{font-size:14px;font-weight:700;color:var(--lohas-brand);margin-bottom:3px;line-height:1.4}
-.fr-card-en{font-size:10.5px;letter-spacing:.6px;color:var(--text-muted);margin-bottom:8px}
-.fr-card-desc{font-size:12.5px;line-height:1.7;color:var(--text-sub)}
-.fr-card-tag{
-  display:inline-block;margin-top:10px;font-size:10.5px;padding:3px 10px;
-  border-radius:var(--r-pill);background:var(--bg-soft);color:var(--text-muted);
+.fr-rail-n{font-size:11px;opacity:.7}
+
+/* 標本牆 */
+.fr-wall{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));
+  gap:1px;background:var(--lohas-bd);
   border:1px solid var(--lohas-bd);
 }
-.fr-card.is-active .fr-card-tag{background:#fff}
-
-/* ---------- 詳情面板 ---------- */
-.fr-detail{
-  margin-top:20px;background:#fff;border:1px solid var(--lohas-bd);
-  border-radius:var(--r-lg);padding:26px;box-shadow:var(--sh-soft);
-  scroll-margin-top:calc(var(--fr-header-h) + 72px);
+.fr-cell{
+  background:#fff;padding:18px 10px 15px;text-decoration:none;
+  text-align:center;transition:.15s;display:block;
 }
-.fr-detail-head{display:flex;align-items:center;gap:18px;margin-bottom:22px;flex-wrap:wrap}
-.fr-detail-icon{
-  width:82px;height:60px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
-  background:var(--bg-soft);border:1px solid var(--lohas-bd);border-radius:var(--r-sm);
+.fr-cell:hover{background:var(--bg-soft)}
+.fr-cell-icon{
+  display:flex;align-items:center;justify-content:center;height:44px;
   color:var(--lohas-brand);
 }
-.fr-detail-title{font-size:20px;font-weight:700;color:var(--lohas-brand);margin:0 0 3px}
-.fr-detail-en{font-size:12px;letter-spacing:.8px;color:var(--text-muted)}
-.fr-detail-desc{
-  font-size:14px;line-height:1.85;color:var(--text-sub);
-  margin:0 0 22px;padding-bottom:20px;border-bottom:1px dashed var(--lohas-bd);
+.fr-cell-name{
+  display:block;font-size:11.5px;color:var(--lohas-brand);
+  margin-top:9px;line-height:1.45;
 }
-.fr-detail-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.fr-col-t{
+.fr-cell-tag{
+  display:block;font-size:10px;color:var(--warn);margin-top:4px;
+}
+.fr-empty{
+  grid-column:1/-1;background:#fff;padding:40px 20px;text-align:center;
+  font-size:13px;color:var(--text-muted);margin:0;
+}
+
+/* ============================================================
+   詳情頁 frame.html
+   ============================================================ */
+.fd-wrap{
+  max-width:880px;margin:0 auto;
+  padding:calc(var(--fr-header-h) + 28px) 24px 64px;
+}
+
+/* QR 導向提示 */
+.fd-qr-hint{
+  display:none;align-items:center;gap:10px;
+  max-width:880px;margin:0 auto;
+  padding:11px 18px;margin-top:calc(var(--fr-header-h) + 16px);
+  background:var(--warn-bg);border:1px solid #EBD9B4;border-radius:var(--r-sm);
+  font-size:13px;color:#7A5C21;font-family:var(--font-tc);
+}
+.fd-qr-hint.is-show{display:flex}
+.fd-qr-hint.is-show ~ .fd-wrap{padding-top:20px}
+.fd-qr-hint i{color:var(--warn)}
+
+/* 麵包屑 */
+.fd-crumb{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  font-size:12px;color:var(--text-muted);margin-bottom:20px;
+}
+.fd-crumb a{color:var(--text-sub);text-decoration:none}
+.fd-crumb a:hover{color:var(--lohas-brand);text-decoration:underline}
+.fd-crumb em{font-style:normal;color:var(--lohas-brand)}
+
+/* Hero */
+.fd-hero{
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  padding-bottom:22px;border-bottom:1px solid var(--lohas-bd);
+}
+.fd-hero-icon{
+  width:132px;height:92px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-soft);border:1px solid var(--lohas-bd);
+  border-radius:var(--r-md);color:var(--lohas-brand);
+}
+.fd-badge{
+  display:inline-block;font-size:11px;padding:3px 11px;border-radius:var(--r-pill);
+  background:var(--warn-bg);color:#7A5C21;border:1px solid #EBD9B4;margin-bottom:9px;
+}
+.fd-title{font-size:26px;font-weight:700;color:var(--lohas-brand);margin:0 0 5px;line-height:1.3}
+.fd-en{font-size:12px;letter-spacing:.7px;color:var(--text-muted);margin:0}
+
+.fd-desc{
+  font-size:15px;line-height:1.9;color:var(--text-sub);
+  margin:22px 0 28px;
+}
+
+/* 三欄資訊 */
+.fd-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.fd-col{background:#fff;border:1px solid var(--lohas-bd);border-radius:var(--r-md);padding:18px}
+.fd-col-t{
   font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
   color:var(--text-muted);margin-bottom:10px;
 }
-.fr-col-list{list-style:none;margin:0;padding:0}
-.fr-col-list li{
-  font-size:13px;color:var(--text-sub);padding:6px 0;border-bottom:1px solid var(--bg-soft);
+.fd-col-list{list-style:none;margin:0;padding:0}
+.fd-col-list li{
+  font-size:13px;color:var(--text-sub);padding:6px 0;
+  border-bottom:1px solid var(--bg-soft);
 }
-.fr-col-list li::before{content:'· ';color:var(--lohas-light);font-weight:700}
+.fd-col-list li:last-child{border-bottom:none}
+.fd-col-list li::before{content:'· ';color:var(--lohas-light);font-weight:700}
 
-/* ---------- 商品區 ---------- */
-.fr-prod-sec{margin-top:34px;padding-top:30px;border-top:1px solid var(--lohas-bd)}
-.fr-prod-head{
+/* 區塊標題 */
+.fd-sec-head{
   display:flex;align-items:baseline;justify-content:space-between;
-  gap:12px;flex-wrap:wrap;margin-bottom:16px;
+  gap:12px;margin-bottom:14px;
 }
-.fr-prod-head h2{font-size:15px;font-weight:700;color:var(--lohas-brand);margin:0}
-.fr-prod-count{font-size:12.5px;color:var(--text-muted)}
-.fr-prod-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:14px;
+.fd-sec-head h2{font-size:15px;font-weight:700;color:var(--lohas-brand);margin:0}
+.fd-sec-n{font-size:12.5px;color:var(--text-muted)}
+
+/* 商品 */
+.fd-prod{margin-top:34px;padding-top:28px;border-top:1px solid var(--lohas-bd)}
+.fd-prod-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;
 }
-.fr-prod{
+.fd-prod-card{
   background:#fff;border:1px solid var(--lohas-bd);border-radius:var(--r-md);
-  overflow:hidden;transition:.18s;text-decoration:none;display:block;
+  overflow:hidden;text-decoration:none;display:block;transition:.16s;
 }
-.fr-prod:hover{border-color:var(--lohas-light);box-shadow:var(--sh-card);transform:translateY(-3px)}
-.fr-prod-img{
-  height:130px;background:var(--bg-soft);display:flex;align-items:center;justify-content:center;
-  color:var(--lohas-brand);
+.fd-prod-card:hover{border-color:var(--lohas-light);box-shadow:var(--sh-card);transform:translateY(-3px)}
+.fd-prod-img{
+  height:120px;background:var(--bg-soft);color:var(--lohas-brand);
+  display:flex;align-items:center;justify-content:center;
 }
-.fr-prod-body{padding:14px}
-.fr-prod-series{
-  font-size:10px;letter-spacing:1.2px;text-transform:uppercase;
+.fd-prod-body{display:block;padding:14px}
+.fd-prod-series{
+  display:block;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;
   color:var(--text-muted);margin-bottom:4px;
 }
-.fr-prod-name{font-size:13.5px;font-weight:700;color:var(--text-main);margin-bottom:5px;line-height:1.45}
-.fr-prod-tag{font-size:11.5px;color:var(--text-sub)}
-.fr-prod-cta{
-  display:block;margin-top:12px;text-align:center;font-size:11.5px;font-weight:500;
+.fd-prod-name{display:block;font-size:13.5px;font-weight:700;color:var(--text-main);margin-bottom:5px}
+.fd-prod-tag{display:block;font-size:11.5px;color:var(--text-sub)}
+.fd-prod-cta{
+  display:block;margin-top:12px;text-align:center;font-size:11.5px;
   padding:7px 0;border:1px solid var(--lohas-bd);border-radius:var(--r-sm);
-  color:var(--lohas-brand);transition:.15s;
+  color:var(--lohas-brand);transition:.14s;
 }
-.fr-prod:hover .fr-prod-cta{background:var(--lohas-brand);color:#fff;border-color:var(--lohas-brand)}
-.fr-prod-note{
-  margin-top:18px;text-align:center;font-size:12.5px;color:var(--text-muted);
-}
-.fr-prod-note a{color:var(--lohas-brand);text-decoration:underline}
+.fd-prod-card:hover .fd-prod-cta{background:var(--lohas-brand);color:#fff;border-color:var(--lohas-brand)}
 
-/* ---------- QR 導向提示 ---------- */
-.fr-qr-hint{
-  display:none;align-items:center;gap:10px;
-  max-width:1180px;margin:16px auto 0;padding:11px 18px;
-  background:var(--warn-bg);border:1px solid #EBD9B4;border-radius:var(--r-sm);
-  font-size:13px;color:#7A5C21;
+/* 同族群其他框型 */
+.fd-more{margin-top:34px;padding-top:28px;border-top:1px solid var(--lohas-bd)}
+.fd-more-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:10px;
 }
-.fr-qr-hint.is-show{display:flex}
-.fr-qr-hint i{color:var(--warn)}
+.fd-more-card{
+  background:#fff;border:1px solid var(--lohas-bd);border-radius:var(--r-md);
+  padding:15px 8px 13px;text-align:center;text-decoration:none;transition:.15s;display:block;
+}
+.fd-more-card:hover{border-color:var(--lohas-light);background:var(--bg-soft)}
+.fd-more-icon{
+  display:flex;align-items:center;justify-content:center;height:36px;color:var(--lohas-brand);
+}
+.fd-more-name{display:block;font-size:11.5px;color:var(--lohas-brand);margin-top:7px;line-height:1.4}
 
-/* ---------- RWD ---------- */
+/* 返回 */
+.fd-back{margin-top:34px;text-align:center}
+.fd-back-btn{
+  display:inline-block;background:var(--lohas-brand);color:#fff;
+  font-size:13.5px;padding:11px 30px;border-radius:var(--r-pill);
+  text-decoration:none;transition:.15s;
+}
+.fd-back-btn:hover{background:var(--lohas-hover)}
+
+/* 查無資料 */
+.fd-empty{text-align:center;padding:40px 20px}
+.fd-empty h1{font-size:20px;color:var(--lohas-brand);margin:0 0 10px}
+.fd-empty p{font-size:14px;color:var(--text-sub);margin:0 0 24px;line-height:1.8}
+
+/* ============================================================
+   RWD
+   ============================================================ */
 @media (max-width:900px){
-  .fr-hero-svg{display:none}
-  .fr-detail-cols{grid-template-columns:1fr 1fr;gap:18px}
+  .fd-cols{grid-template-columns:1fr 1fr}
+}
+@media (max-width:768px){
+  .fr-layout{grid-template-columns:1fr;gap:0}
+  .fr-rail{
+    position:static;border-right:none;border-bottom:1px solid var(--lohas-bd);
+    display:flex;gap:0;overflow-x:auto;margin-bottom:14px;
+    scrollbar-width:none;
+  }
+  .fr-rail::-webkit-scrollbar{display:none}
+  .fr-rail-btn{
+    flex:0 0 auto;width:auto;border-left:none;border-bottom:2.5px solid transparent;
+    padding:10px 15px;
+  }
+  .fr-rail-btn.is-active{border-left:none;border-bottom-color:var(--warn)}
 }
 @media (max-width:640px){
-  .fr-hero{padding:calc(var(--fr-header-h) + 28px) 18px 34px}
-  .fr-main{padding:24px 18px 48px}
-  .fr-tabs{padding:0 18px}
-  .fr-tab{padding:13px 15px;font-size:13px}
-  .fr-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
-  .fr-card{padding:18px 14px 15px}
-  .fr-card-icon{height:48px;margin-bottom:11px}
-  .fr-detail{padding:20px}
-  .fr-detail-cols{grid-template-columns:1fr;gap:16px}
-  .fr-prod-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:11px}
-  .fr-prod-img{height:105px}
+  .fr-hero{padding:calc(var(--fr-header-h) + 30px) 18px 32px}
+  .fr-entry{padding:18px 18px 20px}
+  .fr-entry-grid{gap:8px}
+  .fr-entry-card{padding:14px 8px}
+  .fr-entry-card i{font-size:20px}
+  .fr-entry-label{font-size:12.5px}
+  .fr-entry-sub{font-size:10.5px}
+  .fr-body{padding:20px 18px 44px}
+  .fr-wall{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+  .fr-cell{padding:14px 6px 12px}
+  .fr-cell-name{font-size:10.5px}
+  .fd-wrap{padding:calc(var(--fr-header-h) + 20px) 18px 48px}
+  .fd-cols{grid-template-columns:1fr}
+  .fd-hero-icon{width:100px;height:72px}
+  .fd-title{font-size:21px}
+  .fd-prod-grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr))}
 }
