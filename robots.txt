@@ -2,6 +2,7 @@
 # LOHAS 樂活眼鏡 · robots.txt
 # 控制搜尋引擎爬蟲行為
 # 文件規格:https://www.robotstxt.org/
+# 網域:www.lohasglasses.com(依 CNAME)
 # =============================================
 
 # === 全部爬蟲共用規則 ===
@@ -11,6 +12,7 @@ User-agent: *
 Disallow: /admin-portal.html
 Disallow: /member-portal.html
 Disallow: /login.html
+Disallow: /ssologin.html
 
 # 擋掉:動態詳情頁(僅在帶 query 時有意義,空頁無內容可索引)
 Disallow: /news-detail.html
@@ -18,19 +20,25 @@ Disallow: /store.html
 Disallow: /collab.html
 Disallow: /creator-public.html
 
-# 擋掉:技術資源目錄(對使用者無意義,徒增爬蟲負擔)
-Disallow: /js/
+# 擋掉:舊站 QR 轉址路徑(僅作轉址用,無內容)
+Disallow: /page/
+
+# 擋掉:元件片段(非完整頁面)
 Disallow: /components/
+
+# 開放:CSS / JS / 圖片
+# ※ JS 必須開放:frames.html 等頁面內容由 JS 動態產生,
+#   若擋掉 /js/,Googlebot 會將這些頁面視為空白頁而無法索引。
+Allow: /css/
+Allow: /js/
+Allow: /assets/
+Allow: /images/
+Allow: /data/
 
 # 擋掉:常見參數雜訊(避免重複內容問題)
 Disallow: /*?utm_*
 Disallow: /*?fbclid=*
 Disallow: /*?gclid=*
-
-# 開放:CSS 與圖片(Google 需要看 CSS 才能正確渲染頁面)
-Allow: /css/
-Allow: /assets/
-Allow: /images/
 
 # === 特定爬蟲:封鎖內容農場 / AI 訓練爬蟲(可選,視政策決定) ===
 # 如不想被當作 AI 訓練資料,取消以下註解
@@ -44,4 +52,4 @@ Allow: /images/
 # Disallow: /
 
 # === 網站地圖 ===
-Sitemap: https://lohaseyewear.com/sitemap.xml
+Sitemap: https://www.lohasglasses.com/sitemap.xml
