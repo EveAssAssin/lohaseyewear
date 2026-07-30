@@ -18,15 +18,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;600&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="/css/lohas-tokens.css?v=20260730c">
-  <link rel="stylesheet" href="/css/lohas-base.css?v=20260730c">
-  <link rel="stylesheet" href="/css/lohas-components.css?v=20260730c">
-  <link rel="stylesheet" href="/css/frames.css?v=20260730c">
+  <link rel="stylesheet" href="/css/lohas-tokens.css?v=20260730d">
+  <link rel="stylesheet" href="/css/lohas-base.css?v=20260730d">
+  <link rel="stylesheet" href="/css/lohas-components.css?v=20260730d">
+  <link rel="stylesheet" href="/css/frames.css?v=20260730d">
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="apple-touch-icon" href="/favicon.svg">
 
-  <script src="/js/analytics.js?v=20260730c"></script>
+  <script src="/js/analytics.js?v=20260730d"></script>
 </head>
 
 <body data-banner-pos="frames">
@@ -38,16 +38,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="site-header"></div>
 
   <main>
-    <!-- ===== Hero ===== -->
+    <!-- ===== Hero（市集同款滿版橫幅） ===== -->
     <section class="fr-hero">
+      <div class="fr-hero-bg">
+        <!-- 之後可換成實拍圖，未載入時以漸層底色呈現 -->
+        <img src="/images/frames-banner.jpg" alt="" onerror="this.style.display='none'">
+      </div>
+      <svg class="fr-hero-deco" width="260" height="156" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="10" y="30" width="75" height="55" rx="20" stroke="currentColor" stroke-width="5" fill="none"/>
+        <rect x="115" y="30" width="75" height="55" rx="20" stroke="currentColor" stroke-width="5" fill="none"/>
+        <line x1="85" y1="55" x2="115" y2="55" stroke="currentColor" stroke-width="5"/>
+      </svg>
       <div class="fr-hero-inner">
-        <p class="fr-hero-eyebrow">THE FRAME ALMANAC</p>
+        <p class="fr-hero-eyebrow">45 種框型，一次認識</p>
         <h1 class="fr-hero-title">鏡框百科全書</h1>
-        <p class="fr-hero-sub">四大族群 · 45 種框型，逐一詳解</p>
+        <div class="fr-hero-btns">
+          <a class="fr-hero-btn" href="#frBody">開始探索</a>
+          <a class="fr-hero-btn is-ghost" href="/allstore.html">預約門市試戴</a>
+        </div>
       </div>
     </section>
 
-    <!-- ===== 三入口引導 ===== -->
+    <!-- ===== 三入口引導卡 ===== -->
     <section class="fr-entry">
       <div class="fr-entry-inner">
         <p class="fr-entry-hint">不知道從哪看起？選一個起點</p>
@@ -55,16 +67,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
     </section>
 
-    <!-- ===== 主體：篩選軸 + 標本牆 ===== -->
-    <section class="fr-body">
+    <!-- ===== 主體：Sidebar + 卡片牆 ===== -->
+    <section class="fr-body" id="frBody">
       <div class="fr-body-inner">
-        <div class="fr-body-head">
-          <h2 class="fr-body-title" id="frBodyTitle">全部框型</h2>
-          <span class="fr-body-count" id="frCount">45 種</span>
-        </div>
+        <aside class="fr-side">
+          <div class="fr-search">
+            <input type="text" id="frSearch" placeholder="搜尋框型…" aria-label="搜尋框型">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          </div>
+          <div class="fr-side-title" id="frRailTitle">框 型 分 類</div>
+          <div class="fr-rail" id="frRail"></div>
+        </aside>
 
-        <div class="fr-layout">
-          <aside class="fr-rail" id="frRail"></aside>
+        <div class="fr-content">
+          <div class="fr-block-head">
+            <h2 class="fr-block-h" id="frBlockTitle">材質 × 形狀</h2>
+            <span class="fr-block-n" id="frCount">17 種</span>
+          </div>
           <div class="fr-wall" id="frWall"></div>
         </div>
       </div>
@@ -74,11 +93,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="site-footer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/layout.js?v=20260730c"></script>
-<script src="/js/utils.js?v=20260730c"></script>
-<script src="/js/auth.js?v=20260730c"></script>
-<script src="/js/supabase.js?v=20260730c"></script>
-<script src="/js/frames-data.js?v=20260730c"></script>
-<script src="/js/frames.js?v=20260730c"></script>
+<script src="/js/layout.js?v=20260730d"></script>
+<script src="/js/utils.js?v=20260730d"></script>
+<script src="/js/auth.js?v=20260730d"></script>
+<script src="/js/supabase.js?v=20260730d"></script>
+<script src="/js/frames-data.js?v=20260730d"></script>
+<script src="/js/frames.js?v=20260730d"></script>
 </body>
 </html>
