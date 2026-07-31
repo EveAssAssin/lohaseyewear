@@ -1,13 +1,14 @@
 /* ============================================================
    paperdoll.css — 從零開始，打造那副只有我才有的眼鏡
-   v2.7 | 五步重構 · LOHAS FOUND · 價格隱藏後的版面修正
+   v2.8 | 五步重構 · LOHAS FOUND · 護照移至頂部並貼齊 header
    依賴：lohas-tokens.css → lohas-base.css → lohas-components.css
    ============================================================ */
 
 /* ══════════════════════════════════════
    容器
 ══════════════════════════════════════ */
-#pd-app { max-width: 1120px; margin: 0 auto; padding: 88px 20px 132px; }
+/* .main-header 固定 70px，故頂部留 78px（70 + 8 呼吸） */
+#pd-app { max-width: 1120px; margin: 0 auto; padding: 78px 20px 132px; }
 body.pd-locked { overflow: hidden; }
 
 .pd-state {
@@ -25,7 +26,7 @@ body.pd-locked { overflow: hidden; }
 ══════════════════════════════════════ */
 .pd-stepbar {
   display: flex; align-items: center;
-  padding: 22px 0 12px;
+  padding: 14px 0 16px;
   overflow-x: auto; scrollbar-width: none;
 }
 .pd-stepbar::-webkit-scrollbar { display: none; }
@@ -80,8 +81,9 @@ body.pd-locked { overflow: hidden; }
    FOUND 護照（第一次發現後才出現）
 ══════════════════════════════════════ */
 .pd-passport {
-  position: sticky; top: 64px; z-index: 40;
-  margin-bottom: 28px;
+  position: sticky; top: 70px; z-index: 40;   /* = .main-header 高度，貼齊不重疊 */
+  margin-top: 14px;
+  margin-bottom: 6px;
   background: var(--lohas-brand);
   border-radius: var(--r-lg);
   padding: 12px 18px;
@@ -774,7 +776,7 @@ body.pd-locked { overflow: hidden; }
   .ab-total      { display: none; }
   .ab-sub        { display: none; }
   .ab-next       { padding: 9px 16px; font-size: 12.5px; }
-  .pd-passport   { top: 56px; margin-bottom: 22px; padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
+  .pd-passport   { top: 70px; margin-top: 10px; margin-bottom: 4px; padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
   .pd-passport .pp-stamps { margin-left: 0; width: 100%; }
   .story-sec     { padding: 56px 20px; }
   .story-spirit  { padding: 72px 20px; }
