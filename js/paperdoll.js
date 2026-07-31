@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.js — 從零開始，打造那副只有我才有的眼鏡
-   v2.5 | 五步重構 · LOHAS FOUND · 套餐用語統一 | 2026-07-31
+   v2.6 | 五步重構 · LOHAS FOUND · Step5 Flat Lay 示意圖 | 2026-07-31
    ------------------------------------------------------------
    設計要點：
    1. Step 3 進站時完全看不到 FOUND 品牌，就是一般配件購物頁。
@@ -106,6 +106,13 @@
       sec.classList.remove('has-photo');
       if (tex) sec.classList.add('tex-' + tex);
     }
+  }
+
+  /* 套餐示意圖 404 → 關掉 demo 模式，改用動態排版 */
+  function demoFail(el) {
+    console.warn('[paperdoll] 套餐示意圖載入失敗，改用動態 Flat Lay');
+    if (PD_DATA?.config) PD_DATA.config.flatlayDemo = null;
+    renderFinal();
   }
 
   /* 一般配圖 404 → 整個 figure 收起來 */
@@ -824,35 +831,48 @@
     $('oc-by').textContent   = S.engraving ? `刻圖創作者 ${S.engraving.designer}` : '';
     $('oc-total').innerHTML  = `<span>套餐總計</span><b>${fmt(TOTAL())}</b>`;
 
-    /* Flat Lay：3×3 俯拍構圖，中央是眼鏡，周圍八格放配件 */
+    /* ── 套餐主視覺 ──
+       config.flatlayDemo 有值 → 用整組實拍示意圖
+       設為 null            → 回到 3×3 動態俯拍構圖 */
+    const demo  = CFG().flatlayDemo;
     const items = ACCS().slice(0, 8);
-    const cells = [];
-    let k = 0;
-    for (let i = 0; i < 9; i++) {
-      if (i === 4) {
-        cells.push(`
-          <div class="fl-cell fl-center">
-            <div class="flc-glasses">
-              ${typeof FRAME_ICONS !== 'undefined' && S.frame
-                ? `<svg viewBox="0 0 64 42">${FRAME_ICONS[S.frame.icon] || ''}</svg>` : '🕶'}
-            </div>
-            ${S.engraving ? `<div class="flc-eng">${engThumb(S.engraving, 'flc-eng-img')}</div>` : ''}
-            <div class="flc-name">${esc(S.frame?.name || '')}</div>
-          </div>`);
-      } else {
-        const it = items[k++];
-        cells.push(it
-          ? `<div class="fl-cell fl-item" title="${esc(it.name)}">
-               ${productImg(it, 'fli-img')}
-               <span class="fli-name">${esc(it.name)}</span>
-             </div>`
-          : `<div class="fl-cell fl-empty"></div>`);
+
+    if (demo) {
+      $('flatlay').className = 'pd-flatlay is-demo';
+      $('flatlay').innerHTML = `
+        <img class="fl-demo" src="${demo}" alt="套餐實拍示意"
+             onerror="PD.demoFail(this)">
+        <span class="fl-demo-tag">實拍示意</span>`;
+    } else {
+      $('flatlay').className = 'pd-flatlay';
+      const cells = [];
+      let k = 0;
+      for (let i = 0; i < 9; i++) {
+        if (i === 4) {
+          cells.push(`
+            <div class="fl-cell fl-center">
+              <div class="flc-glasses">
+                ${typeof FRAME_ICONS !== 'undefined' && S.frame
+                  ? `<svg viewBox="0 0 64 42">${FRAME_ICONS[S.frame.icon] || ''}</svg>` : '🕶'}
+              </div>
+              ${S.engraving ? `<div class="flc-eng">${engThumb(S.engraving, 'flc-eng-img')}</div>` : ''}
+              <div class="flc-name">${esc(S.frame?.name || '')}</div>
+            </div>`);
+        } else {
+          const it = items[k++];
+          cells.push(it
+            ? `<div class="fl-cell fl-item" title="${esc(it.name)}">
+                 ${productImg(it, 'fli-img')}
+                 <span class="fli-name">${esc(it.name)}</span>
+               </div>`
+            : `<div class="fl-cell fl-empty"></div>`);
+        }
       }
+      $('flatlay').innerHTML = cells.join('');
     }
-    $('flatlay').innerHTML = cells.join('');
 
     const more = ACCS().length - items.length;
-    $('fl-more').textContent = more > 0 ? `另有 ${more} 件配件未顯示` : '';
+    $('fl-more').textContent = (!demo && more > 0) ? `另有 ${more} 件配件未顯示` : '';
 
     /* 明細 */
     const rows = [];
@@ -961,7 +981,7 @@
     pickFace, pickFrame, setFrameGroup,
     pickEng, setEngFilter, setEngSearch, toggleEngShowAll, skipEng,
     setType, toggleAcc, openStory, closeStory,
-    imgFail, bgFail, figFail,
+    imgFail, bgFail, figFail, demoFail,
     applyHint, saveOutfit, shareCard,
   };
 

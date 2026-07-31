@@ -1,7 +1,7 @@
 /* ============================================================
    paperdoll-data.js — 從零開始，打造那副只有我才有的眼鏡
    ------------------------------------------------------------
-   v2.4 | 五步重構 · LOHAS FOUND · FOUND 001 實拍照上線
+   v2.6 | 五步重構 · LOHAS FOUND · Step5 Flat Lay 示意圖
    ------------------------------------------------------------
    資料來源分工：
      鏡框  → js/frames-data.js 的 FRAME_ITEMS（鏡框百科 45 個分類）
@@ -22,6 +22,11 @@ const PD_DATA = {
     engravingPrice:    350,   // 刻圖加價（engraving_designs 無價格欄位）
     engravingLimit:    500,
     engravingPageSize: 12,
+
+    // Step 5 套餐主視覺。
+    // 目前放整組實拍示意圖；日後改成動態 Flat Lay 時，
+    // 把這行設為 null，程式會自動切回 3×3 動態排版。
+    flatlayDemo: 'images/flatlay-demo.jpg',
     // 鏡框參考價（FRAME_ITEMS 為百科資料，無價格欄位）
     // 待 ERP interface #36 開通後改由 API 帶入實際售價
     framePriceByGroup: { mat:3200, style:3600, sun:2800, func:2600 },
