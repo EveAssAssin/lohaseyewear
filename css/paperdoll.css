@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.css — 從零開始，打造那副只有我才有的眼鏡
-   v2.6 | 五步重構 · LOHAS FOUND · Step5 Flat Lay 示意圖
+   v2.7 | 五步重構 · LOHAS FOUND · 價格隱藏後的版面修正
    依賴：lohas-tokens.css → lohas-base.css → lohas-components.css
    ============================================================ */
 
@@ -933,3 +933,21 @@ body.pd-locked { overflow: hidden; }
   --pd-tex-size: 260px;
 }
 .story-cardnote.has-tex .scn-d { color: #57524E; }
+
+/* ============================================================
+   價格隱藏後的版面修正 — v2.7
+   ------------------------------------------------------------
+   config.showPrices = false 時價格元素不會產生，
+   原本靠 space-between 對齊的元件需要改用 margin-left:auto，
+   這樣有價格 / 沒價格兩種情況都能正確靠右。
+   ============================================================ */
+
+.sc-add            { margin-left: auto; }   /* 配件卡：＋ 鈕恆靠右 */
+.pd-frame-card .fc-more { margin-left: auto; }   /* 鏡框卡：百科連結恆靠右 */
+.sp-card .sp-right { margin-left: auto; }   /* 故事層商品列 */
+
+/* 已選鏡框列：沒有價格時不留空欄 */
+.pd-frame-bar .fb-price:empty { display: none; }
+
+/* 浮動列：合計整塊隱藏時，右分隔線一併消失 */
+.ab-total[style*="display: none"] { border-right: none; }
