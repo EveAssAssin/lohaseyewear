@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.css — 從零開始，打造那副只有我才有的眼鏡
-   v2.5 | 五步重構 · LOHAS FOUND · 套餐用語 + 護照位置調整
+   v2.6 | 五步重構 · LOHAS FOUND · Step5 Flat Lay 示意圖
    依賴：lohas-tokens.css → lohas-base.css → lohas-components.css
    ============================================================ */
 
@@ -651,6 +651,23 @@ body.pd-locked { overflow: hidden; }
 .pd-flatlay {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
   margin: 22px 0 10px; aspect-ratio: 1/1;
+}
+
+/* ── 實拍示意模式（config.flatlayDemo 有值時）── */
+.pd-flatlay.is-demo {
+  display: block; aspect-ratio: auto;
+  position: relative; border-radius: var(--r-md);
+  overflow: hidden; background: #EDE8E0;
+}
+.fl-demo {
+  width: 100%; height: auto; display: block;
+  aspect-ratio: 3 / 2; object-fit: cover;
+}
+.fl-demo-tag {
+  position: absolute; left: 12px; bottom: 12px;
+  background: rgba(0,0,0,.42); backdrop-filter: blur(6px);
+  color: #fff; font-size: 10px; letter-spacing: 1px;
+  padding: 4px 11px; border-radius: var(--r-pill);
 }
 .fl-cell {
   background: #fff; border-radius: var(--r-sm);
