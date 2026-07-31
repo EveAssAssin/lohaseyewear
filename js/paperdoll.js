@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.js — 從零開始，打造那副只有我才有的眼鏡
-   v2.6 | 五步重構 · LOHAS FOUND · Step5 Flat Lay 示意圖 | 2026-07-31
+   v2.7 | 五步重構 · LOHAS FOUND · 價格顯示總開關 | 2026-07-31
    ------------------------------------------------------------
    設計要點：
    1. Step 3 進站時完全看不到 FOUND 品牌，就是一般配件購物頁。
@@ -33,6 +33,11 @@
   const qs  = (s, c) => (c || document).querySelector(s);
   const qsa = (s, c) => [...(c || document).querySelectorAll(s)];
   const fmt = n => 'NT$' + Number(n || 0).toLocaleString();
+  /* 價格總開關：config.showPrices 為 false 時，全站不輸出任何金額 */
+  const showPrice = () => PD_DATA?.config?.showPrices !== false;
+  /* 包成一個標籤，關閉時整個元素都不產生，不留空位 */
+  const priceTag = (n, cls) =>
+    showPrice() ? `<span class="${cls}">${fmt(n)}</span>` : '';
   const esc = s => String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -238,7 +243,7 @@
         <div class="fc-en">${esc(item.en || '')}</div>
         <div class="fc-desc">${esc(item.desc)}</div>
         <div class="fc-foot">
-          <span class="fc-price">${fmt(framePrice(item))}</span>
+          ${priceTag(framePrice(item), "fc-price")}
           <a class="fc-more" href="frames.html?f=${encodeURIComponent(item.code)}"
              target="_blank" rel="noopener"
              onclick="event.stopPropagation()">百科 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
@@ -263,7 +268,7 @@
     if (!S.frame) { bar.classList.remove('show'); renderActionBar(); return; }
     bar.classList.add('show');
     $('fb-name').textContent  = S.frame.name;
-    $('fb-price').textContent = fmt(S.frame.price);
+    $('fb-price').textContent = showPrice() ? fmt(S.frame.price) : '';
     renderActionBar();
   }
 
@@ -394,7 +399,7 @@
         ${engThumb(e, 'ec-thumb')}
         <div class="ec-name">${esc(e.name)}</div>
         <div class="ec-author">${esc(e.designer)}</div>
-        <div class="ec-price">${fmt(e.price)}</div>
+        ${showPrice() ? `<div class="ec-price">${fmt(e.price)}</div>` : ''}
       </div>`).join('');
 
     $('eng-more').innerHTML = (total <= size) ? '' : (engShowAll
@@ -492,7 +497,7 @@
         ${known ? `<div class="sc-city"><i class="fa-solid fa-location-dot"></i> ${esc(city.city)} · ${esc(city.name)}</div>` : ''}
 
         <div class="sc-foot">
-          <span class="sc-price">${fmt(p.price)}</span>
+          ${priceTag(p.price, "sc-price")}
           <button class="sc-add ${picked ? 'on' : ''}"
                   onclick="event.stopPropagation(); PD.toggleAcc('${p.id}')"
                   title="${picked ? '移除' : '直接加入'}">
@@ -577,7 +582,14 @@
 
     $('ab-line').textContent = line;
     $('ab-sub').textContent  = sub;
-    $('ab-total').innerHTML  = `<span>合計</span><b>${fmt(TOTAL())}</b>`;
+    const abTotal = $('ab-total');
+    if (showPrice()) {
+      abTotal.style.display = '';
+      abTotal.innerHTML = `<span>合計</span><b>${fmt(TOTAL())}</b>`;
+    } else {
+      abTotal.style.display = 'none';
+      abTotal.innerHTML = '';
+    }
   }
 
   /* ── 全螢幕故事 ── */
@@ -722,7 +734,7 @@
           <span class="sp-desc">${esc(p.desc)}</span>
         </span>
         <span class="sp-right">
-          <span class="sp-price">${fmt(p.price)}</span>
+          ${priceTag(p.price, "sp-price")}
           <span class="sp-btn"><i class="fa-solid ${picked ? 'fa-check' : 'fa-plus'}"></i></span>
         </span>
       </button>`;
@@ -829,7 +841,14 @@
     $('oc-name').textContent = name;
     $('oc-sub').textContent  = [S.frame?.name, S.engraving?.name].filter(Boolean).join(' · ');
     $('oc-by').textContent   = S.engraving ? `刻圖創作者 ${S.engraving.designer}` : '';
-    $('oc-total').innerHTML  = `<span>套餐總計</span><b>${fmt(TOTAL())}</b>`;
+    const ocTotal = $('oc-total');
+    if (showPrice()) {
+      ocTotal.style.display = '';
+      ocTotal.innerHTML = `<span>套餐總計</span><b>${fmt(TOTAL())}</b>`;
+    } else {
+      ocTotal.style.display = 'none';
+      ocTotal.innerHTML = '';
+    }
 
     /* ── 套餐主視覺 ──
        config.flatlayDemo 有值 → 用整組實拍示意圖
@@ -886,7 +905,7 @@
       <div class="ol-row">
         <span class="ol-em">${r.em}</span>
         <span class="ol-info"><b>${esc(r.name)}</b><small>${esc(r.cat)}</small></span>
-        <span class="ol-price">${fmt(r.price)}</span>
+        ${priceTag(r.price, "ol-price")}
       </div>`).join('');
 
     /* 護照回顧 */
