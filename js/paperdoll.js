@@ -1,6 +1,6 @@
 /* ============================================================
    paperdoll.js — 從零開始，打造那副只有我才有的眼鏡
-   v2.4 | 五步重構 · LOHAS FOUND · 圖片載入失敗自動退回織理 | 2026-07-31
+   v2.5 | 五步重構 · LOHAS FOUND · 套餐用語統一 | 2026-07-31
    ------------------------------------------------------------
    設計要點：
    1. Step 3 進站時完全看不到 FOUND 品牌，就是一般配件購物頁。
@@ -814,15 +814,15 @@
   }
 
   /* ══════════════════════════════════════
-     STEP 5 — 收藏（Flat Lay 造型卡 + 護照）
+     STEP 5 — 收藏（Flat Lay 套餐卡 + 護照）
   ══════════════════════════════════════ */
   function renderFinal() {
-    const name = S.name.trim() || '未命名造型';
+    const name = S.name.trim() || '未命名套餐';
 
     $('oc-name').textContent = name;
     $('oc-sub').textContent  = [S.frame?.name, S.engraving?.name].filter(Boolean).join(' · ');
     $('oc-by').textContent   = S.engraving ? `刻圖創作者 ${S.engraving.designer}` : '';
-    $('oc-total').innerHTML  = `<span>造型總計</span><b>${fmt(TOTAL())}</b>`;
+    $('oc-total').innerHTML  = `<span>套餐總計</span><b>${fmt(TOTAL())}</b>`;
 
     /* Flat Lay：3×3 俯拍構圖，中央是眼鏡，周圍八格放配件 */
     const items = ACCS().slice(0, 8);
@@ -899,7 +899,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem('lohas_outfits') || '[]');
       saved.push({
-        name:        S.name || '未命名造型',
+        name:        S.name || '未命名套餐',
         face:        S.face,
         frame:       S.frame ? { code:S.frame.code, name:S.frame.name, price:S.frame.price } : null,
         engraving:   S.engraving ? { id:S.engraving.id, name:S.engraving.name, designer:S.engraving.designer, price:S.engraving.price } : null,
@@ -909,12 +909,12 @@
         savedAt:     Date.now(),
       });
       localStorage.setItem('lohas_outfits', JSON.stringify(saved));
-      alert('✦ 造型已收藏！\n可在「我的造型」查看。');
+      alert('✦ 套餐已收藏！\n可在「我的套餐」查看。');
     } catch (e) { console.error('[paperdoll] save error', e); }
   }
 
   function shareCard() {
-    const name = S.name.trim() || '我的造型';
+    const name = S.name.trim() || '我的套餐';
     const cities = S.found.map(id => findCity(id).city).join('、');
     const text = `我在樂活眼鏡做了一副專屬眼鏡「${name}」`
                + (cities ? `，走過 ${cities}。` : '。')
