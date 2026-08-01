@@ -87,7 +87,12 @@
 
   <div class="controls" id="panel" style="display:none">
     <div class="row">
-      <div class="label">鏡框：1974-72065-BHJ（正面）</div>
+      <div class="label">鏡框：1974-72065-BHJ · 轉頭同步（±45°）</div>
+    </div>
+    <div class="row">
+      <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="flipChk" /> 左右轉向相反時勾選
+      </label>
     </div>
     <div class="row">
       <div class="label">尺寸微調 <span id="sizeVal" style="color:var(--accent)"></span></div>
@@ -133,12 +138,32 @@
     let vOffset = 0;              // 上下微調（以雙眼距離為單位）
     let hOffset = 0.06;           // 左右微調（以雙眼距離為單位）
 
-    // 真實鏡框素材與雙眼錨點（錨點為圖片內左右鏡片中心的比例位置）
-    const REAL = { src:'images/frame-72065.png', lx:0.215, ly:0.48, rx:0.715, ry:0.48 };
+    // 真實鏡框 yaw sprite：13 格（-45° .. 正面(第6格) .. +45°），每格 833x316
+    // 錨點為單格內左右鏡片中心的比例位置
+    const REAL = { src:'images/frame-72065-yaw.png', tileW:833, tileH:316, count:13, front:6,
+                   lx:0.23, ly:0.48, rx:0.71, ry:0.48 };
+    let tileIndex = REAL.front;   // 依 yaw 選出的目前影格
+    let yawFlip = false;          // 左右轉向相反時翻轉
     const frameImg = new Image();
     let frameReady = false;
     frameImg.onload = ()=>{ frameReady = true; redrawPhoto(); };
     frameImg.src = REAL.src;
+
+    // 由 FaceMesh landmarks 估算頭部左右轉動，換算成影格索引 0..count-1
+    function updateTileFromYaw(lm){
+      if(!lm){ tileIndex = REAL.front; return; }
+      const nose = lm[1], reOuter = lm[33], leOuter = lm[263];
+      const eyeMidX = (reOuter.x + leOuter.x)/2;
+      const faceW = Math.abs(leOuter.x - reOuter.x) || 1e-6;
+      let m = (nose.x - eyeMidX)/faceW;           // ~0 正面，±轉動
+      const MAXM = 0.28;                          // 對應到 ±45°
+      m = Math.max(-MAXM, Math.min(MAXM, m));
+      let off = Math.round((m/MAXM) * (REAL.front)); // -6..+6
+      if(mode==='camera') off = -off;             // 相機為鏡像
+      if(yawFlip) off = -off;
+      tileIndex = REAL.front + off;
+      tileIndex = Math.max(0, Math.min(REAL.count-1, tileIndex));
+    }
     let camera = null;
     let faceMesh = null;
     let mode = 'camera';            // 'camera' | 'photo'
@@ -185,6 +210,9 @@
       redrawPhoto();
     });
     hoffVal.textContent = (hOffset>0?'+':'')+Math.round(hOffset*100)+'%';
+    document.getElementById('flipChk').addEventListener('change', (e)=>{
+      yawFlip = e.target.checked; redrawPhoto();
+    });
 
     function setStatus(t){ statusEl.textContent = t; }
 
@@ -211,10 +239,12 @@
       const lm = results.multiFaceLandmarks && results.multiFaceLandmarks[0];
       if(lm){
         if(mode==='photo') lastLandmarks = lm;
+        updateTileFromYaw(lm);
         const leftEye  = avg([lm[33], lm[133]], W, H);
         const rightEye = avg([lm[362], lm[263]], W, H);
         drawFrame(leftEye, rightEye);
-        setStatus(mode==='camera' ? '偵測到臉部 — 移動看看鏡框會不會跟著你' : '偵測到臉部 ✓ 可即時切換款式/顏色/尺寸');
+        const deg = Math.round((tileIndex-REAL.front)/REAL.front*45);
+        setStatus((mode==='camera' ? '偵測到臉部 — 左右轉頭看鏡框角度變化' : '偵測到臉部 ✓ 影格')+`（約 ${deg>0?'+':''}${deg}°）`);
       } else {
         setStatus(mode==='camera' ? '沒偵測到臉，請正對鏡頭、光線充足' : '這張照片沒偵測到臉，換一張更正面、清楚的試試');
       }
@@ -233,9 +263,10 @@
       ctx.save();
       ctx.clearRect(0,0,W,H);
       ctx.drawImage(photoImg, 0,0, W,H);
+      updateTileFromYaw(lastLandmarks);
       const leftEye  = avg([lastLandmarks[33], lastLandmarks[133]], W, H);
       const rightEye = avg([lastLandmarks[362], lastLandmarks[263]], W, H);
-      drawGlasses(leftEye, rightEye);
+      drawFrame(leftEye, rightEye);
       ctx.restore();
     }
 
@@ -249,11 +280,12 @@
       }
     }
 
-    // 用雙眼位置把真實鏡框圖對齊貼上（相似變換：兩錨點 -> 兩眼中心）
+    // 用雙眼位置把 yaw sprite 的目前影格對齊貼上（相似變換：兩錨點 -> 兩眼中心）
     function drawRealFrame(L, R){
-      const iw = frameImg.naturalWidth, ih = frameImg.naturalHeight;
-      const s1 = {x:REAL.lx*iw, y:REAL.ly*ih};
-      const s2 = {x:REAL.rx*iw, y:REAL.ry*ih};
+      const tw = REAL.tileW, thh = REAL.tileH;
+      const sx = tileIndex * tw;                    // sprite 中此格的水平起點
+      const s1 = {x:REAL.lx*tw, y:REAL.ly*thh};     // 單格內左右鏡片中心
+      const s2 = {x:REAL.rx*tw, y:REAL.ry*thh};
       const eyeDist = Math.hypot(R.x-L.x, R.y-L.y);
       const srcDist = Math.hypot(s2.x-s1.x, s2.y-s1.y);
       const scale = eyeDist / srcDist;
@@ -270,7 +302,8 @@
       ctx.rotate(ang);
       ctx.scale(scale, scale);
       ctx.translate(-s1.x, -s1.y);
-      ctx.drawImage(frameImg, 0, 0);
+      // 只畫 sprite 中目前這一格
+      ctx.drawImage(frameImg, sx, 0, tw, thh, 0, 0, tw, thh);
       ctx.restore();
     }
 
