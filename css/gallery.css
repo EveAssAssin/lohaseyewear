@@ -96,8 +96,7 @@ main{
   position:relative;
   width:100vw;
   margin-left:calc(50% - 50vw);
-  height:50vh;
-  min-height:420px;
+  height:100vh;
   display:flex;
   align-items:flex-end;
   justify-content:flex-start;
