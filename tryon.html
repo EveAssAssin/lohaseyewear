@@ -87,28 +87,7 @@
 
   <div class="controls" id="panel" style="display:none">
     <div class="row">
-      <div class="label">鏡框款式</div>
-      <div class="opts" id="styleOpts">
-        <button class="chip active" data-style="real">真實 72065（正面）</button>
-        <button class="chip" data-style="round">圓框</button>
-        <button class="chip" data-style="square">方框</button>
-        <button class="chip" data-style="browline">眉架</button>
-        <button class="chip" data-style="cateye">貓眼</button>
-      </div>
-    </div>
-    <div class="row" id="colorRow">
-      <div class="label" style="color:#666">（顏色僅套用於繪製款式；真實款維持原色）</div>
-    </div>
-    <div class="row">
-      <div class="label">顏色</div>
-      <div class="opts" id="colorOpts">
-        <button class="swatch active" style="background:#1a1a1a" data-color="#1a1a1a"></button>
-        <button class="swatch" style="background:#7a4a1e" data-color="#7a4a1e"></button>
-        <button class="swatch" style="background:#c8a15a" data-color="#c8a15a"></button>
-        <button class="swatch" style="background:#3a5a7a" data-color="#3a5a7a"></button>
-        <button class="swatch" style="background:#b03a3a" data-color="#b03a3a"></button>
-        <button class="swatch" style="background:#d8d8d8" data-color="#d8d8d8"></button>
-      </div>
+      <div class="label">鏡框：1974-72065-BHJ（正面）</div>
     </div>
     <div class="row">
       <div class="label">尺寸微調 <span id="sizeVal" style="color:var(--accent)"></span></div>
@@ -184,16 +163,6 @@
     }
 
     // --- UI 綁定 ---
-    document.getElementById('styleOpts').addEventListener('click', e=>{
-      const b = e.target.closest('.chip'); if(!b) return;
-      document.querySelectorAll('#styleOpts .chip').forEach(c=>c.classList.remove('active'));
-      b.classList.add('active'); frameStyle = b.dataset.style; redrawPhoto();
-    });
-    document.getElementById('colorOpts').addEventListener('click', e=>{
-      const b = e.target.closest('.swatch'); if(!b) return;
-      document.querySelectorAll('#colorOpts .swatch').forEach(c=>c.classList.remove('active'));
-      b.classList.add('active'); frameColor = b.dataset.color; redrawPhoto();
-    });
     sizeSlider.addEventListener('input', ()=>{
       sizeMul = parseFloat(sizeSlider.value);
       sizeVal.textContent = Math.round(sizeMul*100)+'%';
