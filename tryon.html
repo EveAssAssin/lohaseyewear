@@ -89,11 +89,15 @@
     <div class="row">
       <div class="label">鏡框款式</div>
       <div class="opts" id="styleOpts">
-        <button class="chip active" data-style="round">圓框</button>
+        <button class="chip active" data-style="real">真實 23236</button>
+        <button class="chip" data-style="round">圓框</button>
         <button class="chip" data-style="square">方框</button>
         <button class="chip" data-style="browline">眉架</button>
         <button class="chip" data-style="cateye">貓眼</button>
       </div>
+    </div>
+    <div class="row" id="colorRow">
+      <div class="label" style="color:#666">（顏色僅套用於繪製款式；真實款維持原色）</div>
     </div>
     <div class="row">
       <div class="label">顏色</div>
@@ -109,6 +113,10 @@
     <div class="row">
       <div class="label">尺寸微調 <span id="sizeVal" style="color:var(--accent)"></span></div>
       <input class="slider" id="sizeSlider" type="range" min="0.8" max="1.3" step="0.02" value="1" />
+    </div>
+    <div class="row">
+      <div class="label">上下位置微調 <span id="offVal" style="color:var(--accent)"></span></div>
+      <input class="slider" id="offSlider" type="range" min="-0.4" max="0.4" step="0.02" value="0" />
     </div>
     <button class="btn secondary" id="stopBtn">停止 / 重選</button>
   </div>
@@ -136,9 +144,17 @@
     const tabCamera = document.getElementById('tabCamera');
     const tabPhoto = document.getElementById('tabPhoto');
 
-    let frameStyle = 'round';
+    let frameStyle = 'real';
     let frameColor = '#1a1a1a';
     let sizeMul = 1;
+    let vOffset = 0;              // 上下微調（以雙眼距離為單位）
+
+    // 真實鏡框素材與雙眼錨點（錨點為圖片內左右鏡片中心的比例位置）
+    const REAL = { src:'images/frame-23236.png', lx:0.18, ly:0.51, rx:0.658, ry:0.45 };
+    const frameImg = new Image();
+    let frameReady = false;
+    frameImg.onload = ()=>{ frameReady = true; redrawPhoto(); };
+    frameImg.src = REAL.src;
     let camera = null;
     let faceMesh = null;
     let mode = 'camera';            // 'camera' | 'photo'
@@ -179,6 +195,14 @@
       redrawPhoto();
     });
     sizeVal.textContent = '100%';
+    const offSlider = document.getElementById('offSlider');
+    const offVal = document.getElementById('offVal');
+    offSlider.addEventListener('input', ()=>{
+      vOffset = parseFloat(offSlider.value);
+      offVal.textContent = (vOffset>0?'+':'')+Math.round(vOffset*100)+'%';
+      redrawPhoto();
+    });
+    offVal.textContent = '0%';
 
     function setStatus(t){ statusEl.textContent = t; }
 
@@ -207,7 +231,7 @@
         if(mode==='photo') lastLandmarks = lm;
         const leftEye  = avg([lm[33], lm[133]], W, H);
         const rightEye = avg([lm[362], lm[263]], W, H);
-        drawGlasses(leftEye, rightEye);
+        drawFrame(leftEye, rightEye);
         setStatus(mode==='camera' ? '偵測到臉部 — 移動看看鏡框會不會跟著你' : '偵測到臉部 ✓ 可即時切換款式/顏色/尺寸');
       } else {
         setStatus(mode==='camera' ? '沒偵測到臉，請正對鏡頭、光線充足' : '這張照片沒偵測到臉，換一張更正面、清楚的試試');
@@ -230,6 +254,40 @@
       const leftEye  = avg([lastLandmarks[33], lastLandmarks[133]], W, H);
       const rightEye = avg([lastLandmarks[362], lastLandmarks[263]], W, H);
       drawGlasses(leftEye, rightEye);
+      ctx.restore();
+    }
+
+    // 依款式分派：真實鏡框圖 或 程式繪製
+    function drawFrame(L, R){
+      if(frameStyle==='real'){
+        if(frameReady) drawRealFrame(L, R);
+        else setStatus('鏡框素材載入中…');
+      } else {
+        drawGlasses(L, R);
+      }
+    }
+
+    // 用雙眼位置把真實鏡框圖對齊貼上（相似變換：兩錨點 -> 兩眼中心）
+    function drawRealFrame(L, R){
+      const iw = frameImg.naturalWidth, ih = frameImg.naturalHeight;
+      const s1 = {x:REAL.lx*iw, y:REAL.ly*ih};
+      const s2 = {x:REAL.rx*iw, y:REAL.ry*ih};
+      const eyeDist = Math.hypot(R.x-L.x, R.y-L.y);
+      const srcDist = Math.hypot(s2.x-s1.x, s2.y-s1.y);
+      const scale = eyeDist / srcDist;
+      const ang = Math.atan2(R.y-L.y, R.x-L.x) - Math.atan2(s2.y-s1.y, s2.x-s1.x);
+      const mx = (L.x+R.x)/2, my = (L.y+R.y)/2;
+      ctx.save();
+      // 尺寸與上下微調（以雙眼中心為基準）
+      ctx.translate(mx, my + vOffset*eyeDist);
+      ctx.scale(sizeMul, sizeMul);
+      ctx.translate(-mx, -my);
+      // 基礎相似變換：s1->L, s2->R
+      ctx.translate(L.x, L.y);
+      ctx.rotate(ang);
+      ctx.scale(scale, scale);
+      ctx.translate(-s1.x, -s1.y);
+      ctx.drawImage(frameImg, 0, 0);
       ctx.restore();
     }
 
