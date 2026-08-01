@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>虛擬試戴（POC） · LOHAS 樂活眼鏡</title>
+  <link rel="icon" href="favicon.svg" />
+  <style>
+    :root{
+      --bg:#0d0d0d; --panel:#161616; --line:#2a2a2a;
+      --txt:#f5f5f5; --muted:#9a9a9a; --accent:#c8a15a;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:"Noto Sans TC",system-ui,-apple-system,sans-serif;
+      background:var(--bg);color:var(--txt);
+      min-height:100vh;display:flex;flex-direction:column;align-items:center;
+      padding:24px 16px 48px;
+    }
+    h1{font-size:1.4rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
+    .sub{color:var(--muted);font-size:.85rem;margin-bottom:20px;text-align:center;line-height:1.7}
+    .stage{
+      position:relative;width:100%;max-width:640px;aspect-ratio:4/3;
+      background:#000;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+    }
+    #video,#overlay{position:absolute;inset:0;width:100%;height:100%}
+    #video{object-fit:cover;transform:scaleX(-1)}
+    #overlay{z-index:2}
+    .hint{
+      position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
+      text-align:center;padding:24px;color:var(--muted);font-size:.9rem;line-height:1.8;
+      background:rgba(0,0,0,.55);backdrop-filter:blur(2px);
+    }
+    .hint.hidden{display:none}
+    .controls{width:100%;max-width:640px;margin-top:20px}
+    .row{margin-bottom:16px}
+    .row .label{font-size:.8rem;color:var(--muted);margin-bottom:8px;letter-spacing:1px}
+    .opts{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{
+      border:1px solid var(--line);background:var(--panel);color:var(--txt);
+      padding:8px 16px;border-radius:999px;font-size:.85rem;cursor:pointer;transition:.15s;
+    }
+    .chip:hover{border-color:var(--accent)}
+    .chip.active{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
+    .swatch{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+    .swatch.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+    .btn{
+      width:100%;max-width:640px;margin-top:8px;padding:14px;border:none;border-radius:12px;
+      background:var(--accent);color:#111;font-weight:700;font-size:1rem;cursor:pointer;
+    }
+    .btn.secondary{background:transparent;border:1px solid var(--line);color:var(--txt)}
+    .status{font-size:.78rem;color:var(--muted);margin-top:14px;text-align:center;min-height:1.2em}
+    .slider{width:100%;accent-color:var(--accent)}
+  </style>
+</head>
+<body>
+  <h1>虛擬試戴 <span style="color:var(--accent)">POC</span></h1>
+  <p class="sub">概念驗證：攝影機偵測臉部 → 鏡框即時跟隨。<br/>鏡框為程式繪製，之後可替換為實際商品去背圖。</p>
+
+  <div class="stage">
+    <video id="video" playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <div class="hint" id="hint">
+      需要使用你的相機才能試戴。<br/>按下方「開始試戴」並允許相機權限。<br/>
+      <small style="color:#666">影像只在你的裝置本機處理，不會上傳。</small>
+    </div>
+  </div>
+
+  <button class="btn" id="startBtn">開始試戴</button>
+
+  <div class="controls" id="panel" style="display:none">
+    <div class="row">
+      <div class="label">鏡框款式</div>
+      <div class="opts" id="styleOpts">
+        <button class="chip active" data-style="round">圓框</button>
+        <button class="chip" data-style="square">方框</button>
+        <button class="chip" data-style="browline">眉架</button>
+        <button class="chip" data-style="cateye">貓眼</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">顏色</div>
+      <div class="opts" id="colorOpts">
+        <button class="swatch active" style="background:#1a1a1a" data-color="#1a1a1a"></button>
+        <button class="swatch" style="background:#7a4a1e" data-color="#7a4a1e"></button>
+        <button class="swatch" style="background:#c8a15a" data-color="#c8a15a"></button>
+        <button class="swatch" style="background:#3a5a7a" data-color="#3a5a7a"></button>
+        <button class="swatch" style="background:#b03a3a" data-color="#b03a3a"></button>
+        <button class="swatch" style="background:#d8d8d8" data-color="#d8d8d8"></button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="label">尺寸微調 <span id="sizeVal" style="color:var(--accent)"></span></div>
+      <input class="slider" id="sizeSlider" type="range" min="0.8" max="1.3" step="0.02" value="1" />
+    </div>
+    <button class="btn secondary" id="stopBtn">停止相機</button>
+  </div>
+
+  <p class="status" id="status"></p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <script>
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const ctx = overlay.getContext('2d');
+    const hint = document.getElementById('hint');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const panel = document.getElementById('panel');
+    const statusEl = document.getElementById('status');
+    const sizeSlider = document.getElementById('sizeSlider');
+    const sizeVal = document.getElementById('sizeVal');
+
+    let frameStyle = 'round';
+    let frameColor = '#1a1a1a';
+    let sizeMul = 1;
+    let camera = null;
+    let faceMesh = null;
+
+    // --- UI 綁定 ---
+    document.getElementById('styleOpts').addEventListener('click', e=>{
+      const b = e.target.closest('.chip'); if(!b) return;
+      document.querySelectorAll('#styleOpts .chip').forEach(c=>c.classList.remove('active'));
+      b.classList.add('active'); frameStyle = b.dataset.style;
+    });
+    document.getElementById('colorOpts').addEventListener('click', e=>{
+      const b = e.target.closest('.swatch'); if(!b) return;
+      document.querySelectorAll('#colorOpts .swatch').forEach(c=>c.classList.remove('active'));
+      b.classList.add('active'); frameColor = b.dataset.color;
+    });
+    sizeSlider.addEventListener('input', ()=>{ sizeMul = parseFloat(sizeSlider.value); sizeVal.textContent = Math.round(sizeMul*100)+'%'; });
+    sizeVal.textContent = '100%';
+
+    function setStatus(t){ statusEl.textContent = t; }
+
+    // --- 繪製鏡框 ---
+    function drawGlasses(L, R){
+      const cx = overlay.width;
+      // 兩眼中心距離與角度
+      const dx = R.x - L.x, dy = R.y - L.y;
+      const eyeDist = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx);
+      const midX = (L.x + R.x)/2, midY = (L.y + R.y)/2;
+
+      const lensR = eyeDist * 0.46 * sizeMul;      // 鏡片半徑
+      const lensOffset = eyeDist/2;                 // 每片鏡片離中心
+      const lineW = Math.max(2, eyeDist*0.045);
+
+      ctx.save();
+      ctx.translate(midX, midY);
+      ctx.rotate(angle);
+      ctx.strokeStyle = frameColor;
+      ctx.fillStyle = frameColor;
+      ctx.lineWidth = lineW;
+      ctx.lineJoin = 'round';
+      const tint = 'rgba(0,0,0,0.12)';
+
+      function lens(sign){
+        const ox = sign * lensOffset;
+        ctx.beginPath();
+        if(frameStyle==='round'){
+          ctx.arc(ox, 0, lensR, 0, Math.PI*2);
+        } else if(frameStyle==='square'){
+          roundRect(ox-lensR, -lensR*0.8, lensR*2, lensR*1.6, lensR*0.28);
+        } else if(frameStyle==='browline'){
+          roundRect(ox-lensR, -lensR*0.75, lensR*2, lensR*1.5, lensR*0.5);
+        } else if(frameStyle==='cateye'){
+          catEye(ox, sign, lensR);
+        }
+        ctx.fillStyle = tint; ctx.fill();
+        ctx.strokeStyle = frameColor; ctx.stroke();
+        // 眉架上緣加粗
+        if(frameStyle==='browline'){
+          ctx.beginPath();
+          ctx.lineWidth = lineW*2.2;
+          ctx.moveTo(ox-lensR, -lensR*0.75);
+          ctx.lineTo(ox+lensR, -lensR*0.75);
+          ctx.stroke();
+          ctx.lineWidth = lineW;
+        }
+      }
+      lens(-1); lens(1);
+
+      // 鼻樑
+      ctx.beginPath();
+      ctx.moveTo(-lensOffset+lensR*0.55, -lensR*0.15);
+      ctx.quadraticCurveTo(0, -lensR*0.4, lensOffset-lensR*0.55, -lensR*0.15);
+      ctx.stroke();
+
+      // 鏡腳
+      const templeY = -lensR*0.2;
+      ctx.beginPath();
+      ctx.moveTo(-lensOffset-lensR, templeY);
+      ctx.lineTo(-lensOffset-lensR-eyeDist*0.5, templeY-eyeDist*0.05);
+      ctx.moveTo(lensOffset+lensR, templeY);
+      ctx.lineTo(lensOffset+lensR+eyeDist*0.5, templeY-eyeDist*0.05);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+    function roundRect(x,y,w,h,r){
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+    }
+    function catEye(ox,sign,r){
+      // 外上揚的貓眼形
+      ctx.moveTo(ox-r, r*0.2);
+      ctx.quadraticCurveTo(ox-r, -r*0.9, ox+ (sign>0? r*0.2 : -r*0.2), -r*0.7);
+      ctx.quadraticCurveTo(ox+r*1.15*sign, -r*1.05, ox+r*sign, -r*0.2);
+      ctx.quadraticCurveTo(ox+r, r*0.8, ox, r*0.75);
+      ctx.quadraticCurveTo(ox-r*0.7, r*0.7, ox-r, r*0.2);
+      ctx.closePath();
+    }
+
+    // --- MediaPipe 回呼 ---
+    function onResults(results){
+      overlay.width = video.videoWidth || 640;
+      overlay.height = video.videoHeight || 480;
+      ctx.clearRect(0,0,overlay.width,overlay.height);
+      // 鏡像處理（自拍視角）
+      ctx.save();
+      ctx.translate(overlay.width,0);
+      ctx.scale(-1,1);
+
+      if(results.multiFaceLandmarks && results.multiFaceLandmarks.length){
+        const lm = results.multiFaceLandmarks[0];
+        // 左右眼中心（用內外眼角平均）
+        const W = overlay.width, H = overlay.height;
+        const leftEye  = avg([lm[33], lm[133]], W, H);
+        const rightEye = avg([lm[362], lm[263]], W, H);
+        drawGlasses(leftEye, rightEye);
+        setStatus('偵測到臉部 — 移動看看鏡框會不會跟著你');
+      } else {
+        setStatus('沒偵測到臉，請正對鏡頭、光線充足');
+      }
+      ctx.restore();
+    }
+    function avg(pts, W, H){
+      let x=0,y=0; pts.forEach(p=>{x+=p.x;y+=p.y});
+      return {x:(x/pts.length)*W, y:(y/pts.length)*H};
+    }
+
+    // --- 啟動 / 停止 ---
+    async function start(){
+      setStatus('載入臉部偵測模型中…');
+      startBtn.disabled = true;
+      try{
+        faceMesh = new FaceMesh({locateFile:(f)=>'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/'+f});
+        faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+        faceMesh.onResults(onResults);
+        camera = new Camera(video, {
+          onFrame: async()=>{ await faceMesh.send({image:video}); },
+          width:640, height:480
+        });
+        await camera.start();
+        hint.classList.add('hidden');
+        startBtn.style.display='none';
+        panel.style.display='block';
+        setStatus('相機已啟動');
+      }catch(err){
+        setStatus('啟動失敗：'+ (err && err.message ? err.message : err));
+        startBtn.disabled = false;
+      }
+    }
+    function stop(){
+      if(camera){ camera.stop(); }
+      const s = video.srcObject; if(s){ s.getTracks().forEach(t=>t.stop()); }
+      video.srcObject = null;
+      ctx.clearRect(0,0,overlay.width,overlay.height);
+      panel.style.display='none';
+      startBtn.style.display='block';
+      startBtn.disabled=false;
+      hint.classList.remove('hidden');
+      setStatus('已停止相機');
+    }
+    startBtn.addEventListener('click', start);
+    stopBtn.addEventListener('click', stop);
+  </script>
+</body>
+</html>
