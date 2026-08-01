@@ -118,6 +118,10 @@
       <div class="label">上下位置微調 <span id="offVal" style="color:var(--accent)"></span></div>
       <input class="slider" id="offSlider" type="range" min="-0.4" max="0.4" step="0.02" value="0" />
     </div>
+    <div class="row">
+      <div class="label">左右位置微調 <span id="hoffVal" style="color:var(--accent)"></span></div>
+      <input class="slider" id="hoffSlider" type="range" min="-0.4" max="0.4" step="0.02" value="0.06" />
+    </div>
     <button class="btn secondary" id="stopBtn">停止 / 重選</button>
   </div>
 
@@ -148,6 +152,7 @@
     let frameColor = '#1a1a1a';
     let sizeMul = 1;
     let vOffset = 0;              // 上下微調（以雙眼距離為單位）
+    let hOffset = 0.06;           // 左右微調（以雙眼距離為單位）
 
     // 真實鏡框素材與雙眼錨點（錨點為圖片內左右鏡片中心的比例位置）
     const REAL = { src:'images/frame-72065.png', lx:0.215, ly:0.48, rx:0.715, ry:0.48 };
@@ -203,6 +208,14 @@
       redrawPhoto();
     });
     offVal.textContent = '0%';
+    const hoffSlider = document.getElementById('hoffSlider');
+    const hoffVal = document.getElementById('hoffVal');
+    hoffSlider.addEventListener('input', ()=>{
+      hOffset = parseFloat(hoffSlider.value);
+      hoffVal.textContent = (hOffset>0?'+':'')+Math.round(hOffset*100)+'%';
+      redrawPhoto();
+    });
+    hoffVal.textContent = (hOffset>0?'+':'')+Math.round(hOffset*100)+'%';
 
     function setStatus(t){ statusEl.textContent = t; }
 
@@ -278,8 +291,9 @@
       const ang = Math.atan2(R.y-L.y, R.x-L.x) - Math.atan2(s2.y-s1.y, s2.x-s1.x);
       const mx = (L.x+R.x)/2, my = (L.y+R.y)/2;
       ctx.save();
-      // 尺寸與上下微調（以雙眼中心為基準）
-      ctx.translate(mx, my + vOffset*eyeDist);
+      // 尺寸與上下/左右微調（以雙眼中心為基準；相機為鏡像故左右反向）
+      const hx = hOffset*eyeDist*(mode==='camera'?-1:1);
+      ctx.translate(mx + hx, my + vOffset*eyeDist);
       ctx.scale(sizeMul, sizeMul);
       ctx.translate(-mx, -my);
       // 基礎相似變換：s1->L, s2->R
