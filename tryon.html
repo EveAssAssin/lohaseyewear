@@ -19,15 +19,18 @@
     }
     h1{font-size:1.4rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
     .sub{color:var(--muted);font-size:.85rem;margin-bottom:20px;text-align:center;line-height:1.7}
+    .modeTabs{display:flex;gap:8px;margin-bottom:16px}
+    .modeTabs .chip{min-width:120px;text-align:center}
     .stage{
       position:relative;width:100%;max-width:640px;aspect-ratio:4/3;
       background:#000;border-radius:16px;overflow:hidden;border:1px solid var(--line);
     }
     #video,#overlay{position:absolute;inset:0;width:100%;height:100%}
-    #video{object-fit:cover;transform:scaleX(-1)}
-    #overlay{z-index:2}
+    #video{object-fit:cover;transform:scaleX(-1);display:none}
+    #overlay{z-index:2;object-fit:contain}
     .hint{
-      position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
+      position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:6px;
       text-align:center;padding:24px;color:var(--muted);font-size:.9rem;line-height:1.8;
       background:rgba(0,0,0,.55);backdrop-filter:blur(2px);
     }
@@ -51,22 +54,36 @@
     .btn.secondary{background:transparent;border:1px solid var(--line);color:var(--txt)}
     .status{font-size:.78rem;color:var(--muted);margin-top:14px;text-align:center;min-height:1.2em}
     .slider{width:100%;accent-color:var(--accent)}
+    small.note{color:#666}
   </style>
 </head>
 <body>
   <h1>虛擬試戴 <span style="color:var(--accent)">POC</span></h1>
-  <p class="sub">概念驗證：攝影機偵測臉部 → 鏡框即時跟隨。<br/>鏡框為程式繪製，之後可替換為實際商品去背圖。</p>
+  <p class="sub">概念驗證：偵測臉部 → 鏡框即時跟隨。<br/>鏡框為程式繪製，之後可替換為實際商品去背圖。</p>
+
+  <div class="modeTabs">
+    <button class="chip active" id="tabCamera">📷 即時相機</button>
+    <button class="chip" id="tabPhoto">🖼️ 上傳照片</button>
+  </div>
 
   <div class="stage">
     <video id="video" playsinline muted></video>
     <canvas id="overlay"></canvas>
     <div class="hint" id="hint">
-      需要使用你的相機才能試戴。<br/>按下方「開始試戴」並允許相機權限。<br/>
-      <small style="color:#666">影像只在你的裝置本機處理，不會上傳。</small>
+      <div id="hintCamera">
+        需要使用你的相機才能試戴。<br/>按下方「開始試戴」並允許相機權限。<br/>
+        <small class="note">影像只在你的裝置本機處理，不會上傳。</small>
+      </div>
+      <div id="hintPhoto" style="display:none">
+        沒有相機也能測。<br/>按下方「選擇照片」，上傳一張正面自拍。<br/>
+        <small class="note">照片只在你的裝置本機處理，不會上傳。</small>
+      </div>
     </div>
   </div>
 
   <button class="btn" id="startBtn">開始試戴</button>
+  <button class="btn" id="photoBtn" style="display:none">選擇照片</button>
+  <input type="file" id="fileInput" accept="image/*" style="display:none" />
 
   <div class="controls" id="panel" style="display:none">
     <div class="row">
@@ -93,7 +110,7 @@
       <div class="label">尺寸微調 <span id="sizeVal" style="color:var(--accent)"></span></div>
       <input class="slider" id="sizeSlider" type="range" min="0.8" max="1.3" step="0.02" value="1" />
     </div>
-    <button class="btn secondary" id="stopBtn">停止相機</button>
+    <button class="btn secondary" id="stopBtn">停止 / 重選</button>
   </div>
 
   <p class="status" id="status"></p>
@@ -104,91 +121,156 @@
     const video = document.getElementById('video');
     const overlay = document.getElementById('overlay');
     const ctx = overlay.getContext('2d');
+    const stage = document.querySelector('.stage');
     const hint = document.getElementById('hint');
+    const hintCamera = document.getElementById('hintCamera');
+    const hintPhoto = document.getElementById('hintPhoto');
     const startBtn = document.getElementById('startBtn');
+    const photoBtn = document.getElementById('photoBtn');
+    const fileInput = document.getElementById('fileInput');
     const stopBtn = document.getElementById('stopBtn');
     const panel = document.getElementById('panel');
     const statusEl = document.getElementById('status');
     const sizeSlider = document.getElementById('sizeSlider');
     const sizeVal = document.getElementById('sizeVal');
+    const tabCamera = document.getElementById('tabCamera');
+    const tabPhoto = document.getElementById('tabPhoto');
 
     let frameStyle = 'round';
     let frameColor = '#1a1a1a';
     let sizeMul = 1;
     let camera = null;
     let faceMesh = null;
+    let mode = 'camera';            // 'camera' | 'photo'
+    let lastLandmarks = null;       // 照片模式：偵測一次後暫存
+    let photoImg = null;
+
+    // --- 分頁切換 ---
+    tabCamera.addEventListener('click', ()=>switchMode('camera'));
+    tabPhoto.addEventListener('click', ()=>switchMode('photo'));
+    function switchMode(m){
+      if(m===mode) return;
+      teardown();
+      mode = m;
+      tabCamera.classList.toggle('active', m==='camera');
+      tabPhoto.classList.toggle('active', m==='photo');
+      hintCamera.style.display = m==='camera' ? 'block' : 'none';
+      hintPhoto.style.display  = m==='photo'  ? 'block' : 'none';
+      startBtn.style.display = m==='camera' ? 'block' : 'none';
+      photoBtn.style.display = m==='photo'  ? 'block' : 'none';
+      stage.style.aspectRatio = '4/3';
+      setStatus('');
+    }
 
     // --- UI 綁定 ---
     document.getElementById('styleOpts').addEventListener('click', e=>{
       const b = e.target.closest('.chip'); if(!b) return;
       document.querySelectorAll('#styleOpts .chip').forEach(c=>c.classList.remove('active'));
-      b.classList.add('active'); frameStyle = b.dataset.style;
+      b.classList.add('active'); frameStyle = b.dataset.style; redrawPhoto();
     });
     document.getElementById('colorOpts').addEventListener('click', e=>{
       const b = e.target.closest('.swatch'); if(!b) return;
       document.querySelectorAll('#colorOpts .swatch').forEach(c=>c.classList.remove('active'));
-      b.classList.add('active'); frameColor = b.dataset.color;
+      b.classList.add('active'); frameColor = b.dataset.color; redrawPhoto();
     });
-    sizeSlider.addEventListener('input', ()=>{ sizeMul = parseFloat(sizeSlider.value); sizeVal.textContent = Math.round(sizeMul*100)+'%'; });
+    sizeSlider.addEventListener('input', ()=>{
+      sizeMul = parseFloat(sizeSlider.value);
+      sizeVal.textContent = Math.round(sizeMul*100)+'%';
+      redrawPhoto();
+    });
     sizeVal.textContent = '100%';
 
     function setStatus(t){ statusEl.textContent = t; }
 
+    async function ensureFaceMesh(){
+      if(faceMesh) return faceMesh;
+      faceMesh = new FaceMesh({locateFile:(f)=>'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/'+f});
+      faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+      faceMesh.onResults(onResults);
+      return faceMesh;
+    }
+
+    // --- MediaPipe 回呼（相機與照片共用）---
+    function onResults(results){
+      const src = results.image;
+      const W = src.width, H = src.height;
+      overlay.width = W; overlay.height = H;
+      stage.style.aspectRatio = (W/H).toString();
+
+      ctx.save();
+      ctx.clearRect(0,0,W,H);
+      if(mode==='camera'){ ctx.translate(W,0); ctx.scale(-1,1); }  // 自拍鏡像
+      ctx.drawImage(src, 0, 0, W, H);
+
+      const lm = results.multiFaceLandmarks && results.multiFaceLandmarks[0];
+      if(lm){
+        if(mode==='photo') lastLandmarks = lm;
+        const leftEye  = avg([lm[33], lm[133]], W, H);
+        const rightEye = avg([lm[362], lm[263]], W, H);
+        drawGlasses(leftEye, rightEye);
+        setStatus(mode==='camera' ? '偵測到臉部 — 移動看看鏡框會不會跟著你' : '偵測到臉部 ✓ 可即時切換款式/顏色/尺寸');
+      } else {
+        setStatus(mode==='camera' ? '沒偵測到臉，請正對鏡頭、光線充足' : '這張照片沒偵測到臉，換一張更正面、清楚的試試');
+      }
+      ctx.restore();
+    }
+    function avg(pts, W, H){
+      let x=0,y=0; pts.forEach(p=>{x+=p.x;y+=p.y});
+      return {x:(x/pts.length)*W, y:(y/pts.length)*H};
+    }
+
+    // 照片模式：改參數時用暫存的 landmarks 重畫（不必重新偵測）
+    function redrawPhoto(){
+      if(mode!=='photo' || !photoImg || !lastLandmarks) return;
+      const W = photoImg.naturalWidth, H = photoImg.naturalHeight;
+      overlay.width = W; overlay.height = H;
+      ctx.save();
+      ctx.clearRect(0,0,W,H);
+      ctx.drawImage(photoImg, 0,0, W,H);
+      const leftEye  = avg([lastLandmarks[33], lastLandmarks[133]], W, H);
+      const rightEye = avg([lastLandmarks[362], lastLandmarks[263]], W, H);
+      drawGlasses(leftEye, rightEye);
+      ctx.restore();
+    }
+
     // --- 繪製鏡框 ---
     function drawGlasses(L, R){
-      const cx = overlay.width;
-      // 兩眼中心距離與角度
       const dx = R.x - L.x, dy = R.y - L.y;
       const eyeDist = Math.hypot(dx, dy);
       const angle = Math.atan2(dy, dx);
       const midX = (L.x + R.x)/2, midY = (L.y + R.y)/2;
-
-      const lensR = eyeDist * 0.46 * sizeMul;      // 鏡片半徑
-      const lensOffset = eyeDist/2;                 // 每片鏡片離中心
+      const lensR = eyeDist * 0.46 * sizeMul;
+      const lensOffset = eyeDist/2;
       const lineW = Math.max(2, eyeDist*0.045);
 
       ctx.save();
       ctx.translate(midX, midY);
       ctx.rotate(angle);
-      ctx.strokeStyle = frameColor;
-      ctx.fillStyle = frameColor;
-      ctx.lineWidth = lineW;
       ctx.lineJoin = 'round';
       const tint = 'rgba(0,0,0,0.12)';
 
       function lens(sign){
         const ox = sign * lensOffset;
         ctx.beginPath();
-        if(frameStyle==='round'){
-          ctx.arc(ox, 0, lensR, 0, Math.PI*2);
-        } else if(frameStyle==='square'){
-          roundRect(ox-lensR, -lensR*0.8, lensR*2, lensR*1.6, lensR*0.28);
-        } else if(frameStyle==='browline'){
-          roundRect(ox-lensR, -lensR*0.75, lensR*2, lensR*1.5, lensR*0.5);
-        } else if(frameStyle==='cateye'){
-          catEye(ox, sign, lensR);
-        }
+        if(frameStyle==='round'){ ctx.arc(ox, 0, lensR, 0, Math.PI*2); }
+        else if(frameStyle==='square'){ roundRect(ox-lensR, -lensR*0.8, lensR*2, lensR*1.6, lensR*0.28); }
+        else if(frameStyle==='browline'){ roundRect(ox-lensR, -lensR*0.75, lensR*2, lensR*1.5, lensR*0.5); }
+        else if(frameStyle==='cateye'){ catEye(ox, sign, lensR); }
         ctx.fillStyle = tint; ctx.fill();
-        ctx.strokeStyle = frameColor; ctx.stroke();
-        // 眉架上緣加粗
+        ctx.strokeStyle = frameColor; ctx.lineWidth = lineW; ctx.stroke();
         if(frameStyle==='browline'){
-          ctx.beginPath();
-          ctx.lineWidth = lineW*2.2;
-          ctx.moveTo(ox-lensR, -lensR*0.75);
-          ctx.lineTo(ox+lensR, -lensR*0.75);
-          ctx.stroke();
-          ctx.lineWidth = lineW;
+          ctx.beginPath(); ctx.lineWidth = lineW*2.2;
+          ctx.moveTo(ox-lensR, -lensR*0.75); ctx.lineTo(ox+lensR, -lensR*0.75); ctx.stroke();
         }
       }
       lens(-1); lens(1);
 
-      // 鼻樑
+      ctx.strokeStyle = frameColor; ctx.lineWidth = lineW;
       ctx.beginPath();
       ctx.moveTo(-lensOffset+lensR*0.55, -lensR*0.15);
       ctx.quadraticCurveTo(0, -lensR*0.4, lensOffset-lensR*0.55, -lensR*0.15);
       ctx.stroke();
 
-      // 鏡腳
       const templeY = -lensR*0.2;
       ctx.beginPath();
       ctx.moveTo(-lensOffset-lensR, templeY);
@@ -196,7 +278,6 @@
       ctx.moveTo(lensOffset+lensR, templeY);
       ctx.lineTo(lensOffset+lensR+eyeDist*0.5, templeY-eyeDist*0.05);
       ctx.stroke();
-
       ctx.restore();
     }
     function roundRect(x,y,w,h,r){
@@ -208,51 +289,24 @@
       ctx.closePath();
     }
     function catEye(ox,sign,r){
-      // 外上揚的貓眼形
       ctx.moveTo(ox-r, r*0.2);
-      ctx.quadraticCurveTo(ox-r, -r*0.9, ox+ (sign>0? r*0.2 : -r*0.2), -r*0.7);
+      ctx.quadraticCurveTo(ox-r, -r*0.9, ox+(sign>0? r*0.2 : -r*0.2), -r*0.7);
       ctx.quadraticCurveTo(ox+r*1.15*sign, -r*1.05, ox+r*sign, -r*0.2);
       ctx.quadraticCurveTo(ox+r, r*0.8, ox, r*0.75);
       ctx.quadraticCurveTo(ox-r*0.7, r*0.7, ox-r, r*0.2);
       ctx.closePath();
     }
 
-    // --- MediaPipe 回呼 ---
-    function onResults(results){
-      overlay.width = video.videoWidth || 640;
-      overlay.height = video.videoHeight || 480;
-      ctx.clearRect(0,0,overlay.width,overlay.height);
-      // 鏡像處理（自拍視角）
-      ctx.save();
-      ctx.translate(overlay.width,0);
-      ctx.scale(-1,1);
-
-      if(results.multiFaceLandmarks && results.multiFaceLandmarks.length){
-        const lm = results.multiFaceLandmarks[0];
-        // 左右眼中心（用內外眼角平均）
-        const W = overlay.width, H = overlay.height;
-        const leftEye  = avg([lm[33], lm[133]], W, H);
-        const rightEye = avg([lm[362], lm[263]], W, H);
-        drawGlasses(leftEye, rightEye);
-        setStatus('偵測到臉部 — 移動看看鏡框會不會跟著你');
-      } else {
-        setStatus('沒偵測到臉，請正對鏡頭、光線充足');
-      }
-      ctx.restore();
-    }
-    function avg(pts, W, H){
-      let x=0,y=0; pts.forEach(p=>{x+=p.x;y+=p.y});
-      return {x:(x/pts.length)*W, y:(y/pts.length)*H};
-    }
-
-    // --- 啟動 / 停止 ---
+    // --- 相機模式 ---
     async function start(){
       setStatus('載入臉部偵測模型中…');
       startBtn.disabled = true;
       try{
-        faceMesh = new FaceMesh({locateFile:(f)=>'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/'+f});
-        faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
-        faceMesh.onResults(onResults);
+        if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
+          throw new Error('此瀏覽器不支援相機');
+        }
+        await ensureFaceMesh();
+        video.style.display = 'block';
         camera = new Camera(video, {
           onFrame: async()=>{ await faceMesh.send({image:video}); },
           width:640, height:480
@@ -263,23 +317,60 @@
         panel.style.display='block';
         setStatus('相機已啟動');
       }catch(err){
-        setStatus('啟動失敗：'+ (err && err.message ? err.message : err));
+        const msg = (err && err.name === 'NotFoundError') || /not found|device not found/i.test(err&&err.message||'')
+          ? '找不到相機。你的裝置可能沒有鏡頭，或相機被其他程式佔用。請改用上方「🖼️ 上傳照片」，或換手機開啟。'
+          : ('啟動失敗：'+ (err && err.message ? err.message : err));
+        setStatus(msg);
         startBtn.disabled = false;
       }
     }
-    function stop(){
-      if(camera){ camera.stop(); }
+
+    // --- 照片模式 ---
+    photoBtn.addEventListener('click', ()=>fileInput.click());
+    fileInput.addEventListener('change', async (e)=>{
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      setStatus('載入臉部偵測模型中…');
+      try{
+        await ensureFaceMesh();
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = async ()=>{
+          photoImg = img;
+          hint.classList.add('hidden');
+          photoBtn.style.display='none';
+          panel.style.display='block';
+          setStatus('偵測臉部中…');
+          await faceMesh.send({image: img});   // 觸發 onResults（照片會暫存 landmarks）
+          URL.revokeObjectURL(url);
+        };
+        img.onerror = ()=>setStatus('照片載入失敗，換一張試試');
+        img.src = url;
+      }catch(err){
+        setStatus('處理失敗：'+ (err && err.message ? err.message : err));
+      }
+    });
+
+    // --- 停止 / 拆除 ---
+    function teardown(){
+      if(camera){ try{camera.stop();}catch(e){} camera=null; }
       const s = video.srcObject; if(s){ s.getTracks().forEach(t=>t.stop()); }
-      video.srcObject = null;
+      video.srcObject = null; video.style.display='none';
+      photoImg = null; lastLandmarks = null;
+      if(fileInput) fileInput.value = '';
       ctx.clearRect(0,0,overlay.width,overlay.height);
       panel.style.display='none';
-      startBtn.style.display='block';
-      startBtn.disabled=false;
       hint.classList.remove('hidden');
-      setStatus('已停止相機');
+      startBtn.disabled=false;
     }
+    stopBtn.addEventListener('click', ()=>{
+      teardown();
+      startBtn.style.display = mode==='camera' ? 'block' : 'none';
+      photoBtn.style.display = mode==='photo'  ? 'block' : 'none';
+      stage.style.aspectRatio = '4/3';
+      setStatus('已停止');
+    });
     startBtn.addEventListener('click', start);
-    stopBtn.addEventListener('click', stop);
   </script>
 </body>
 </html>
