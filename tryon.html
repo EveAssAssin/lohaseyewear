@@ -90,6 +90,14 @@
       <div class="label">鏡框：1974-72065-BHJ · 轉頭同步（±45°）</div>
     </div>
     <div class="row">
+      <div class="label">刻圖（刻在左鏡片）</div>
+      <div class="opts" id="engraveOpts"></div>
+    </div>
+    <div class="row" id="engraveSizeRow" style="display:none">
+      <div class="label">刻圖大小 <span id="engSizeVal" style="color:var(--accent)"></span></div>
+      <input class="slider" id="engSizeSlider" type="range" min="0.1" max="0.4" step="0.01" value="0.22" />
+    </div>
+    <div class="row">
       <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);cursor:pointer">
         <input type="checkbox" id="flipChk" /> 左右轉向相反時勾選
       </label>
@@ -149,6 +157,20 @@
     let tileIndex = REAL.front;   // 依 yaw 選出的目前影格
     let yawFlip = false;          // 左右轉向相反時翻轉
     let yawMax = 0.5;             // 頭轉多少對應到 ±45°（越大越不敏感）
+
+    // 刻圖（來自刻圖市集 Supabase 公開設計圖，透明 PNG）
+    const ENGRAVINGS = [
+      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28174901/1785318991697-dsiyvr.png',
+      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28174901/1785318860611-u7rjv5.png',
+      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28174901/1785318042090-7r3029.png',
+      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28339993/1785149864767-vweyu5.png',
+      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/1756212299/1784734587560-6lg7wr.png'
+    ];
+    let engraveUrl = '';          // 目前選的刻圖（''=無）
+    let engSize = 0.22;           // 刻圖大小（占單格寬比例）
+    const engraveImg = new Image();
+    let engraveReady = false;
+    engraveImg.onload = ()=>{ engraveReady = true; redrawPhoto(); };
     const frameImg = new Image();
     let frameReady = false;
     frameImg.onload = ()=>{ frameReady = true; redrawPhoto(); };
@@ -227,6 +249,40 @@
       redrawPhoto();
     });
     sensVal.textContent = yawMax.toFixed(2);
+
+    // 建立刻圖選擇器（無 + 各設計縮圖）
+    (function buildEngraveOpts(){
+      var box = document.getElementById('engraveOpts');
+      function mkBtn(html, url, active){
+        var b = document.createElement('button');
+        b.className = 'chip' + (active?' active':'');
+        b.innerHTML = html; b.dataset.eng = url;
+        b.style.padding = url? '4px' : '8px 16px';
+        return b;
+      }
+      box.appendChild(mkBtn('無', '', true));
+      ENGRAVINGS.forEach(function(u){
+        box.appendChild(mkBtn('<img src="'+u+'" style="width:34px;height:34px;object-fit:contain" loading="lazy">', u, false));
+      });
+      box.addEventListener('click', function(e){
+        var b = e.target.closest('.chip'); if(!b) return;
+        box.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+        b.classList.add('active');
+        engraveUrl = b.dataset.eng;
+        document.getElementById('engraveSizeRow').style.display = engraveUrl? 'block':'none';
+        if(engraveUrl){ engraveReady=false; engraveImg.src = engraveUrl; }
+        else { engraveReady=false; }
+        redrawPhoto();
+      });
+    })();
+    const engSizeSlider = document.getElementById('engSizeSlider');
+    const engSizeVal = document.getElementById('engSizeVal');
+    engSizeSlider.addEventListener('input', ()=>{
+      engSize = parseFloat(engSizeSlider.value);
+      engSizeVal.textContent = Math.round(engSize*100)+'%';
+      redrawPhoto();
+    });
+    engSizeVal.textContent = Math.round(engSize*100)+'%';
 
     function setStatus(t){ statusEl.textContent = t; }
 
@@ -318,6 +374,15 @@
       ctx.translate(-s1.x, -s1.y);
       // 只畫 sprite 中目前這一格
       ctx.drawImage(frameImg, sx, 0, tw, thh, 0, 0, tw, thh);
+      // 刻圖：疊在左鏡片（與鏡框同一變換，會跟著移動/旋轉/縮放）
+      if(engraveUrl && engraveReady && engraveImg.naturalWidth){
+        const ew = engSize*tw;
+        const eh = ew * (engraveImg.naturalHeight/engraveImg.naturalWidth);
+        const cx = REAL.lx*tw, cy = REAL.ly*thh;
+        ctx.globalAlpha = 0.92;
+        ctx.drawImage(engraveImg, cx-ew/2, cy-eh/2, ew, eh);
+        ctx.globalAlpha = 1;
+      }
       ctx.restore();
     }
 
