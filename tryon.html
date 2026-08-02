@@ -114,7 +114,7 @@
       </div>
       <div class="row">
         <div class="label">刻圖左右 <span id="engXVal" style="color:var(--accent)"></span></div>
-        <input class="slider" id="engXSlider" type="range" min="0" max="1" step="0.01" value="0.72" />
+        <input class="slider" id="engXSlider" type="range" min="0" max="1" step="0.01" value="0.26" />
       </div>
       <div class="row">
         <div class="label">刻圖上下 <span id="engYVal" style="color:var(--accent)"></span></div>
@@ -186,14 +186,12 @@
     const ENGRAVINGS = [
       'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28174901/1785318991697-dsiyvr.png',
       'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28174901/1785318860611-u7rjv5.png',
-      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28174901/1785318042090-7r3029.png',
-      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28339993/1785149864767-vweyu5.png',
-      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/1756212299/1784734587560-6lg7wr.png'
+      'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/28174901/1785318042090-7r3029.png'
     ];
     let engraveUrl = '';          // 目前選的刻圖（''=無）
     let engSize = 0.18;           // 刻圖大小（占單格寬比例）
-    let engX = 0.72;              // 刻圖位置 X（單格寬比例）預設右上
-    let engY = 0.30;              // 刻圖位置 Y（單格高比例）預設右上
+    let engX = 0.26;              // 刻圖位置 X（單格寬比例）預設左上
+    let engY = 0.30;              // 刻圖位置 Y（單格高比例）預設左上
     const engraveImg = new Image();
     let engraveReady = false;
     engraveImg.onload = ()=>{ engraveReady = true; redrawPhoto(); };
@@ -421,9 +419,12 @@
         const ew = engSize*tw;
         const eh = ew * (engraveImg.naturalHeight/engraveImg.naturalWidth);
         const cx = engX*tw, cy = engY*thh;
+        ctx.save();
         ctx.globalAlpha = 0.92;
-        ctx.drawImage(engraveImg, cx-ew/2, cy-eh/2, ew, eh);
-        ctx.globalAlpha = 1;
+        ctx.translate(cx, cy);
+        ctx.scale(-1, 1);                 // 水平鏡射（雷雕內面預覽）
+        ctx.drawImage(engraveImg, -ew/2, -eh/2, ew, eh);
+        ctx.restore();
       }
       ctx.restore();
     }
