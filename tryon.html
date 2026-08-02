@@ -89,12 +89,22 @@
       <div class="label">鏡框：1974-72065-BHJ · 轉頭同步（±45°）</div>
     </div>
     <div class="row">
-      <div class="label">刻圖（刻在左鏡片）</div>
+      <div class="label">刻圖</div>
       <div class="opts" id="engraveOpts"></div>
     </div>
-    <div class="row" id="engraveSizeRow" style="display:none">
-      <div class="label">刻圖大小 <span id="engSizeVal" style="color:var(--accent)"></span></div>
-      <input class="slider" id="engSizeSlider" type="range" min="0.1" max="0.4" step="0.01" value="0.22" />
+    <div id="engraveControls" style="display:none">
+      <div class="row">
+        <div class="label">刻圖大小 <span id="engSizeVal" style="color:var(--accent)"></span></div>
+        <input class="slider" id="engSizeSlider" type="range" min="0.08" max="0.4" step="0.01" value="0.18" />
+      </div>
+      <div class="row">
+        <div class="label">刻圖左右 <span id="engXVal" style="color:var(--accent)"></span></div>
+        <input class="slider" id="engXSlider" type="range" min="0" max="1" step="0.01" value="0.72" />
+      </div>
+      <div class="row">
+        <div class="label">刻圖上下 <span id="engYVal" style="color:var(--accent)"></span></div>
+        <input class="slider" id="engYSlider" type="range" min="0" max="1" step="0.01" value="0.30" />
+      </div>
     </div>
     <div class="row">
       <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);cursor:pointer">
@@ -166,7 +176,9 @@
       'https://hqdmyxxrskvllkcedybl.supabase.co/storage/v1/object/public/engraving-uploads/designs/1756212299/1784734587560-6lg7wr.png'
     ];
     let engraveUrl = '';          // 目前選的刻圖（''=無）
-    let engSize = 0.22;           // 刻圖大小（占單格寬比例）
+    let engSize = 0.18;           // 刻圖大小（占單格寬比例）
+    let engX = 0.72;              // 刻圖位置 X（單格寬比例）預設右上
+    let engY = 0.30;              // 刻圖位置 Y（單格高比例）預設右上
     const engraveImg = new Image();
     let engraveReady = false;
     engraveImg.onload = ()=>{ engraveReady = true; redrawPhoto(); };
@@ -268,7 +280,7 @@
         box.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
         b.classList.add('active');
         engraveUrl = b.dataset.eng;
-        document.getElementById('engraveSizeRow').style.display = engraveUrl? 'block':'none';
+        document.getElementById('engraveControls').style.display = engraveUrl? 'block':'none';
         if(engraveUrl){ engraveReady=false; engraveImg.src = engraveUrl; }
         else { engraveReady=false; }
         redrawPhoto();
@@ -282,6 +294,22 @@
       redrawPhoto();
     });
     engSizeVal.textContent = Math.round(engSize*100)+'%';
+    const engXSlider = document.getElementById('engXSlider');
+    const engXVal = document.getElementById('engXVal');
+    engXSlider.addEventListener('input', ()=>{
+      engX = parseFloat(engXSlider.value);
+      engXVal.textContent = Math.round(engX*100)+'%';
+      redrawPhoto();
+    });
+    engXVal.textContent = Math.round(engX*100)+'%';
+    const engYSlider = document.getElementById('engYSlider');
+    const engYVal = document.getElementById('engYVal');
+    engYSlider.addEventListener('input', ()=>{
+      engY = parseFloat(engYSlider.value);
+      engYVal.textContent = Math.round(engY*100)+'%';
+      redrawPhoto();
+    });
+    engYVal.textContent = Math.round(engY*100)+'%';
 
     function setStatus(t){ statusEl.textContent = t; }
 
@@ -377,7 +405,7 @@
       if(engraveUrl && engraveReady && engraveImg.naturalWidth){
         const ew = engSize*tw;
         const eh = ew * (engraveImg.naturalHeight/engraveImg.naturalWidth);
-        const cx = REAL.lx*tw, cy = REAL.ly*thh;
+        const cx = engX*tw, cy = engY*thh;
         ctx.globalAlpha = 0.92;
         ctx.drawImage(engraveImg, cx-ew/2, cy-eh/2, ew, eh);
         ctx.globalAlpha = 1;
