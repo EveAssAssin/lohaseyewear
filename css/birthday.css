@@ -252,14 +252,13 @@
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:56px;
-  align-items:center;
+  align-items:start;
 }
 /* 偶數列:圖片換到右邊 */
 .bd .bd-gift-row--rev .bd-gift-media{ order:2 }
 .bd .bd-gift-row--rev .bd-gift-text{ order:1 }
 
 .bd .bd-gift-media{
-  border-radius:var(--r-xl);
   overflow:hidden;
   box-shadow:var(--sh-card);
 }
