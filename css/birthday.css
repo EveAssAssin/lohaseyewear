@@ -53,6 +53,23 @@
     object-position: center;
 }
 
+/* 底部由下往上的柔和漸層,讓左下角文字讀得清楚 */
+.bd .hero-bg::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top,
+        rgba(0,0,0,.48) 0%,
+        rgba(0,0,0,.34) 12%,
+        rgba(0,0,0,.16) 28%,
+        rgba(0,0,0,.05) 42%,
+        rgba(0,0,0,0)   56%);
+    pointer-events: none;
+}
+
 .bd .hero-content {
     text-align: left;
     max-width: 800px;
