@@ -241,14 +241,23 @@
 }
 
 /* =========================
-   生日禮物
+   生日禮物 · 圖文左右交錯
 ========================= */
-.bd .bd-gift{
+.bd .bd-gift-rows{
+  display:flex;
+  flex-direction:column;
+  gap:72px;
+}
+.bd .bd-gift-row{
   display:grid;
-  grid-template-columns:1.05fr .95fr;
+  grid-template-columns:1fr 1fr;
   gap:56px;
   align-items:center;
 }
+/* 偶數列:圖片換到右邊 */
+.bd .bd-gift-row--rev .bd-gift-media{ order:2 }
+.bd .bd-gift-row--rev .bd-gift-text{ order:1 }
+
 .bd .bd-gift-media{
   border-radius:var(--r-xl);
   overflow:hidden;
@@ -258,65 +267,28 @@
   width:100%;
   display:block;
 }
-.bd .bd-gift-value{
-  display:inline-block;
-  background:var(--lohas-brand);
-  color:#fff;
-  font-size:12px;
-  font-weight:500;
-  letter-spacing:2px;
-  padding:8px 20px;
-  border-radius:var(--r-pill);
-  margin-bottom:20px;
+.bd .bd-gift-no{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:3px;
+  color:var(--bd-rose);
+  margin-bottom:14px;
 }
-.bd .bd-gift h2{
-  font-size:26px;
+.bd .bd-gift-text h3{
+  font-size:22px;
   font-weight:700;
   color:var(--lohas-brand);
   letter-spacing:2px;
   line-height:1.5;
-  margin:0 0 16px;
+  margin:0 0 14px;
 }
-.bd .bd-gift > div > p{
+.bd .bd-gift-text p{
   font-size:15px;
-  line-height:1.85;
-  letter-spacing:.5px;
-  color:var(--text-sub);
-  margin:0 0 28px;
-}
-.bd .bd-gift-list{
-  list-style:none;
-  margin:0;
-  padding:0;
-}
-.bd .bd-gift-list li{
-  display:flex;
-  gap:14px;
-  align-items:flex-start;
-  padding:15px 0;
-  border-bottom:1px dashed var(--bd-pink-line);
-}
-.bd .bd-gift-list li:last-child{
-  border-bottom:none;
-}
-.bd .bd-gift-list i{
-  color:var(--lohas-brand);
-  font-size:15px;
-  margin-top:5px;
-  flex-shrink:0;
-}
-.bd .bd-gift-list b{
-  display:block;
-  font-size:16px;
-  font-weight:700;
-  letter-spacing:.5px;
-  color:var(--lohas-brand);
-  margin-bottom:5px;
-}
-.bd .bd-gift-list span{
-  font-size:14px;
-  color:var(--text-sub);
   line-height:1.9;
+  letter-spacing:.5px;
+  color:var(--text-sub);
+  margin:0;
 }
 
 /* =========================
@@ -470,7 +442,12 @@
   .bd .bd-perks{ grid-template-columns:repeat(2,1fr) }
   .bd .bd-steps{ grid-template-columns:repeat(2,1fr) }
   .bd .bd-pickup{ grid-template-columns:1fr }
-  .bd .bd-gift{ grid-template-columns:1fr; gap:36px }
+  /* 手機:改上下排列,圖片一律在上 */
+  .bd .bd-gift-rows{ gap:48px }
+  .bd .bd-gift-row{ grid-template-columns:1fr; gap:24px }
+  .bd .bd-gift-row--rev .bd-gift-media{ order:0 }
+  .bd .bd-gift-row--rev .bd-gift-text{ order:0 }
+  .bd .bd-gift-text h3{ font-size:20px }
 }
 
 @media (max-width:768px){
