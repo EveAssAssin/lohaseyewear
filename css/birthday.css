@@ -19,130 +19,111 @@
 }
 
 /* =========================
-   Hero
+   Hero Banner
+   --------------------------------------------
+   完全比照 index.html 的 .hero-banner
+   (高度 / 對齊 / 間距 / 字級 / 遮罩 數值一致)
 ========================= */
-.bd .bd-hero{
-  position:relative;
-  width:100vw;
-  margin-left:calc(50% - 50vw);
-  min-height:560px;
-  display:flex;
-  align-items:center;
-  overflow:hidden;
-  background:var(--bd-pink-soft);
+.bd .hero-banner {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    overflow: hidden;
+    color: #fff;
+    padding-left: 5%;
+    padding-bottom: 40px;
 }
-.bd .bd-hero-bg{
-  position:absolute;
-  inset:0;
-  z-index:0;
+
+.bd .hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
 }
-.bd .bd-hero-bg img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  object-position:72% 62%;
+
+.bd .hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
-/* 左側柔和遮罩:讓標題清楚可讀,右側商品仍完整露出 */
-.bd .bd-hero-bg::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(100deg,
-    rgba(255,247,248,.97) 0%,
-    rgba(255,247,248,.92) 26%,
-    rgba(255,247,248,.55) 48%,
-    rgba(255,247,248,.10) 66%,
-    rgba(255,247,248,0) 78%);
-  pointer-events:none;
+
+.bd .hero-bg::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1);
 }
-.bd .bd-hero-inner{
-  position:relative;
-  z-index:2;
-  width:100%;
-  max-width:1200px;
-  margin:0 auto;
-  padding:150px 32px 90px;   /* 上方留白避開固定頁首(70px) */
+
+.bd .hero-content {
+    text-align: left;
+    max-width: 800px;
 }
-.bd .bd-hero-box{
-  max-width:520px;
+
+.bd .hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-top: -10px;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
 }
-.bd .bd-eb{
-  display:inline-block;
-  font-size:12px;
-  letter-spacing:3px;
-  color:var(--bd-rose-deep);
-  font-weight:700;
-  margin-bottom:16px;
+
+.bd .hero-subtitle {
+    font-size: 1.0rem;
+    margin-bottom: 5px;
+    font-weight: 400;
+    letter-spacing: 2px;
 }
-.bd .bd-hero-title{
-  font-family:"Noto Serif TC",serif;
-  font-size:clamp(2.1rem,4.4vw,3.2rem);
-  line-height:1.28;
-  font-weight:600;
-  color:var(--text-main);
-  margin:0 0 18px;
+
+.bd .hero-btns .btn-outline {
+    border: 1px solid #fff;
+    color: #fff;
+    background: transparent;
 }
-.bd .bd-hero-title em{
-  font-style:normal;
-  color:var(--bd-rose-deep);
+
+.bd .hero-btns .btn-outline:hover {
+    background: #fff;
+    color: #333;
 }
-.bd .bd-hero-desc{
-  font-size:1.02rem;
-  line-height:2;
-  color:var(--text-sub);
-  margin:0 0 28px;
-}
-.bd .bd-hero-price{
-  display:inline-flex;
-  align-items:baseline;
-  gap:8px;
-  background:#fff;
-  border:1px solid var(--bd-pink-line);
-  border-radius:var(--r-pill);
-  padding:10px 22px;
-  margin-bottom:28px;
-  box-shadow:var(--sh-soft);
-}
-.bd .bd-hero-price b{
-  font-size:1.7rem;
-  color:var(--bd-rose-deep);
-  letter-spacing:.5px;
-}
-.bd .bd-hero-price span{
-  font-size:.88rem;
-  color:var(--text-sub);
-}
-.bd .bd-hero-btns{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-}
-.bd .bd-btn{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:14px 30px;
-  border-radius:var(--r-pill);
-  font-size:.95rem;
-  font-weight:700;
-  text-decoration:none;
-  transition:.2s;
-  border:1px solid transparent;
-}
-.bd .bd-btn--solid{
-  background:var(--lohas-brand);
-  color:#fff;
-}
-.bd .bd-btn--solid:hover{
-  background:var(--lohas-hover);
-}
-.bd .bd-btn--ghost{
-  background:rgba(255,255,255,.86);
-  color:var(--text-main);
-  border-color:var(--bd-pink-line);
-}
-.bd .bd-btn--ghost:hover{
-  background:#fff;
+
+@media (max-width: 768px) {
+    .bd .hero-banner {
+        padding-left: 20px;
+        padding-bottom: 40px;
+        align-items: flex-end;
+        justify-content: flex-start;
+        height: 100svh;
+    }
+
+    .bd .hero-content {
+        max-width: 90%;
+    }
+
+    .bd .hero-title {
+        font-size: 2.0rem;
+        margin-bottom: 3px;
+    }
+
+    .bd .hero-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 3px;
+    }
+
+    .bd .hero-btns .btn {
+        display: inline-block;
+        padding: 8px 25px;
+        font-size: 0.85rem;
+        margin-right: 10px;
+        margin-top: 10px;
+    }
 }
 
 /* =========================
@@ -451,42 +432,6 @@
 }
 
 @media (max-width:768px){
-  /* 手機:文字框置上(圖片上半為留白),商品在下方完整露出 */
-  .bd .bd-hero{
-    min-height:0;
-    align-items:flex-start;
-  }
-  .bd .bd-hero-bg img{ object-position:center bottom }
-  .bd .bd-hero-bg::after{
-    background:linear-gradient(180deg,
-      rgba(255,247,248,.94) 0%,
-      rgba(255,247,248,.72) 42%,
-      rgba(255,247,248,.15) 62%,
-      rgba(255,247,248,0) 76%);
-  }
-  .bd .bd-hero-inner{ padding:96px 20px 300px }
-  .bd .bd-hero-box{
-    max-width:100%;
-    background:rgba(255,255,255,.82);
-    border:1px solid rgba(239,214,216,.9);
-    border-radius:var(--r-lg);
-    padding:24px 20px;
-    backdrop-filter:blur(6px);
-  }
-  .bd .bd-hero-title{ font-size:1.85rem }
-  .bd .bd-hero-desc{ font-size:.92rem; line-height:1.9; margin-bottom:22px }
-  /* 價格標籤改直式,避免換行破版 */
-  .bd .bd-hero-price{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:2px;
-    width:100%;
-    padding:12px 20px;
-    margin-bottom:22px;
-  }
-  .bd .bd-hero-price b{ font-size:1.5rem; white-space:nowrap }
-  .bd .bd-hero-price span{ font-size:.82rem }
-  .bd .bd-hero-btns .bd-btn{ flex:1 1 auto; justify-content:center }
   .bd .bd-sec{ padding:56px 20px }
   .bd .bd-sec-head{ margin-bottom:36px }
   .bd .bd-notes{ padding:26px 22px }
@@ -495,6 +440,4 @@
 @media (max-width:480px){
   .bd .bd-perks{ grid-template-columns:1fr }
   .bd .bd-steps{ grid-template-columns:1fr }
-  .bd .bd-hero-inner{ padding:92px 18px 240px }
-  .bd .bd-hero-title{ font-size:1.7rem }
 }

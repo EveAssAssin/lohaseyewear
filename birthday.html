@@ -19,7 +19,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/birthday.css?v=20260806-2">
+  <link rel="stylesheet" href="css/birthday.css?v=20260806-3">
   <script src="js/layout.js?v=20260806-1" defer></script>
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -36,40 +36,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div id="site-header"></div>
 
-<main>
+<!-- ============ Hero(結構與樣式完全比照 index.html) ============ -->
+<section class="hero-banner">
+    <div class="hero-content">
+        <p class="hero-subtitle">生日當月配鏡，直接折 $1,000。</p>
+        <h1 class="hero-title">壽星專屬生日禮</h1>
 
-  <!-- ============ Hero ============ -->
-  <section class="bd-hero">
-    <div class="bd-hero-bg">
-      <picture>
-        <source media="(max-width:768px)" srcset="images/hero-banner-birthday-mobile.jpg">
-        <img src="images/hero-banner-birthday.jpg" alt="樂活眼鏡生日禮盒:粉色提袋、生日紙盒、太陽眼鏡與專屬眼鏡布">
-      </picture>
-    </div>
-    <div class="bd-hero-inner">
-      <div class="bd-hero-box">
-        <span class="bd-eb">HAPPY BIRTHDAY</span>
-        <h1 class="bd-hero-title">生日這個月<br><em>換一副更喜歡的自己</em></h1>
-        <div class="bd-hero-price">
-          <b>折 $1,000</b>
-          <span>生日當月配鏡直接折抵</span>
+        <div class="hero-btns">
+            <a href="login.html" class="btn btn-primary">登入會員領好禮</a>
+            <a href="#gift" class="btn btn-outline">看生日禮物</a>
         </div>
-        <p class="bd-hero-desc">
-          除了配鏡折扣,還有每週生日限定好禮、每月抽抽樂,<br>
-          以及一份刻上你自己設計圖案的專屬生日禮。
-        </p>
-        <div class="bd-hero-btns">
-          <a href="login.html" class="bd-btn bd-btn--solid">
-            登入會員領好禮
-            <i class="fa-solid fa-arrow-right"></i>
-          </a>
-          <a href="#gift" class="bd-btn bd-btn--ghost">
-            看生日禮物
-          </a>
-        </div>
-      </div>
     </div>
-  </section>
+    <div class="hero-bg">
+        <picture>
+  <source srcset="images/hero-banner-birthday-mobile.jpg" media="(max-width: 768px)">
+  <img src="images/hero-banner-birthday.jpg" alt="樂活眼鏡生日禮盒:粉色提袋、生日紙盒、太陽眼鏡與專屬眼鏡布">
+</picture>
+    </div>
+</section>
+
+<main>
 
   <!-- ============ 四大好禮 ============ -->
   <section class="bd-sec">
