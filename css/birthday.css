@@ -53,7 +53,7 @@
     object-position: center;
 }
 
-/* 底部由下往上的柔和漸層,讓左下角文字讀得清楚 */
+/* 底部由下往上的淡漸層 */
 .bd .hero-bg::after {
     content: '';
     position: absolute;
@@ -62,11 +62,11 @@
     width: 100%;
     height: 100%;
     background: linear-gradient(to top,
-        rgba(0,0,0,.55) 0%,
-        rgba(0,0,0,.52) 18%,
-        rgba(0,0,0,.38) 30%,
-        rgba(0,0,0,.18) 42%,
-        rgba(0,0,0,.06) 52%,
+        rgba(0,0,0,.30) 0%,
+        rgba(0,0,0,.26) 18%,
+        rgba(0,0,0,.18) 30%,
+        rgba(0,0,0,.08) 42%,
+        rgba(0,0,0,.02) 52%,
         rgba(0,0,0,0)   62%);
     pointer-events: none;
 }
@@ -125,12 +125,23 @@
         margin-bottom: 3px;
     }
 
-    .bd .hero-btns .btn {
-        display: inline-block;
-        padding: 8px 25px;
-        font-size: 0.85rem;
-        margin-right: 10px;
+    /* 兩顆按鈕強制並排、等寬,不換行 */
+    .bd .hero-btns {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
         margin-top: 10px;
+    }
+
+    .bd .hero-btns .btn {
+        flex: 1 1 0;
+        display: inline-block;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        text-align: center;
+        white-space: nowrap;
+        margin-right: 0;
+        margin-top: 0;
     }
 }
 
