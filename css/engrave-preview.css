@@ -12,7 +12,7 @@
 }
 
 .ep-main{
-  max-width:1240px;
+  max-width:1360px;
   margin:0 auto;
   padding:96px 24px 80px;
 }
@@ -38,7 +38,7 @@
 /* ---- 版面:左預覽 / 右控制 ---- */
 .ep-wrap{
   display:grid;
-  grid-template-columns:1.5fr .8fr;   /* 預覽是主角,給它更多寬度 */
+  grid-template-columns:1.9fr .75fr;  /* 預覽是主角,右側控制欄只要放得下滑桿 */
   gap:32px;
   align-items:start;
 }
@@ -187,8 +187,8 @@
 
 /* ---- RWD ---- */
 @media (max-width:900px){
-  .ep-main{ padding:80px 16px 60px }
-  .ep-wrap{ grid-template-columns:1fr; gap:24px }
+  .ep-main{ padding:72px 16px 60px }
+  .ep-wrap{ grid-template-columns:1fr; gap:20px }
   .ep-left{
     position:sticky; top:0; z-index:5;
     background:var(--bg-warm);
@@ -198,10 +198,16 @@
 }
 
 @media (max-width:480px){
-  .ep-title{ font-size:22px }
+  /* 手機的可用高度就這麼多,標題區每省一分都是預覽多一分。
+     這裡把頁首壓到最精簡,其餘視覺規格不動。 */
+  .ep-main{ padding:64px 16px 48px }
+  .ep-head{ margin-bottom:14px }
+  .ep-back{ margin-bottom:8px; font-size:12.5px }
+  .ep-title{ font-size:20px; margin-bottom:4px }
+  .ep-sub{ font-size:13px; line-height:1.6 }
+
   /* 預覽滿版:手機畫面本來就窄,左右各留 16px 等於白白少掉一截。
      用負 margin 把 .ep-main 的 padding 吃回來,其餘內容維持原本邊界。 */
-  .ep-main{ padding-left:16px; padding-right:16px }
   .ep-stage{
     margin-left:-16px;
     margin-right:-16px;

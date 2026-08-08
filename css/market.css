@@ -1537,22 +1537,9 @@
 }
 
 /* ---- 刻圖模擬 CTA(詳情彈窗) ----
-   HTML 上放在 modal-right 最前面(手機版要的位置);
-   桌機用 order 排到動作區之前,維持原本「資訊在上、按鈕在下」的閱讀順序。 */
-.cm .modal-right > .modal-btn-try{ order:5; margin-bottom:10px }
-.cm .modal-by-row  { order:1 }
-.cm .modal-title   { order:2 }
-.cm .modal-cat     { order:3 }
-.cm .modal-quote   { order:4 }
-.cm .modal-actions { order:6 }
-
-/* 手機版:CTA 回到 HTML 原位(預覽下方、創作者資訊上方),
-   讓使用者看完刻圖後可直接進入模擬,不必捲到最底部。
-   註:必須寫在上面桌機那組 order 之後,同權重才蓋得過。 */
-@media (max-width:768px){
-  .cm .modal-right > .modal-btn-try{ order:0; margin:0 0 16px }
-}
-
+   位置:modal-left 內、縮圖列正下方,桌機與手機一致(.modal-left 是 flex column,
+   gap:10px 直接提供間距,不需要 order 或 margin 微調)。
+   樣式:完全比照 .modal-btn-pri 的規格,只多加 text-decoration(它是 <a> 不是 <button>)。 */
 .cm .modal-btn-try{
   height:48px;
   background:var(--lohas-brand);
@@ -1571,10 +1558,7 @@
   text-decoration:none;
   transition:all .2s;
 }
-.cm .modal-btn-try:hover{
-  background:var(--lohas-hover);
-  transform:translateY(-1px);
-}
+.cm .modal-btn-try:hover{ background:var(--lohas-hover) }
 .cm .modal-btn-try i{ font-size:13px }
 
 /* 「加入最愛」降為次要樣式,避免與模擬 CTA 兩顆實色互搶。
