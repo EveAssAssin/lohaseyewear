@@ -2541,7 +2541,10 @@
     }
     if (page === 'inspo') loadInspos();
     if (page === 'wishlist') loadWishlist();
-    if (page === 'my-designs') loadMyDesigns();
+    if (page === 'my-designs') {
+      loadMyDesigns();
+      markAllCsRead();     // 進頁即視為已讀,紅點立即消失
+    }
     if (page === 'analytics') loadAnalytics();
     if (page === 'earnings') loadEarnings();
     if (page === 'my-coupons' && window.LohasCoupons) window.LohasCoupons.load();
@@ -2603,6 +2606,32 @@
       const count = rows.filter(r => !r.design_id || validIds.has(String(r.design_id))).length;
       setCsNavDot(count);
     } catch (e) { /* 靜默 */ }
+  }
+
+  /**
+   * 進入「我的刻圖設計」時,把該會員所有客服訊息一次標為已讀。
+   *
+   * 原本只在打開單張刻圖的對話視窗時清除(且限定同一 design_id),
+   * 導致未讀分散在多張刻圖時,必須逐一點開才會消,紅點形同永久存在。
+   * 改為進頁即全部清除,並立即隱藏紅點(不等待寫入完成)。
+   */
+  async function markAllCsRead() {
+    const erpid = csErpid();
+    const sb = getSupabase();
+    if (!erpid || !sb) return;
+
+    setCsNavDot(0);   // 先隱藏,避免等待網路造成延遲感
+
+    try {
+      await sb.from('cs_messages')
+        .update({ is_read: true })
+        .eq('member_erpid', erpid)
+        .eq('sender', 'staff')
+        .eq('is_read', false);
+    } catch (e) {
+      console.warn('[cs] 標記已讀失敗,下次進頁會再試:', e);
+      refreshCsUnread();   // 寫入失敗則還原紅點,不誤導使用者
+    }
   }
 
   // 紅點顯示在側邊欄「我的刻圖設計」nav
