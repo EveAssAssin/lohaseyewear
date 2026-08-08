@@ -75,26 +75,17 @@
   }
 
   /**
-   * 讓「回刻圖市集」真的回到剛才那張刻圖,而不是丟回市集頂端重滑一次。
-   * 兩條路徑:
-   *   1. 從市集點進來的 → history.back(),連捲動位置一起還原,
-   *      瀏覽器有 bfcache 的話彈窗甚至會維持開著。
-   *   2. 直接開網址 / 從別處進來的 → market.html?design=<id>,
-   *      市集的 openDesignFromUrl() 會把卡片捲到中央並自動開啟彈窗。
+   * 讓「回到這張刻圖」真的回到剛才那張,而不是丟回市集頂端重滑一次。
+   * 一律走 market.html?design=<id>,由市集的 openDesignFromUrl()
+   * 把卡片捲到中央並自動開啟彈窗。
+   *
+   * 曾試過改用 history.back() 想順便還原捲動位置,實測不行:
+   * 回去只會停在原網址(沒有 design 參數)、彈窗不會開,
+   * 而且瀏覽器的捲動還原跟卡片的非同步渲染會打架,位置反而更亂。
    */
   function setBackLink(id) {
     if (!el.back || !id) return;
-    var deep = 'market.html?design=' + encodeURIComponent(id);
-    el.back.href = deep;
-
-    var ref = document.referrer || '';
-    var fromMarket = ref.indexOf(location.origin) === 0 && /\/market\.html/.test(ref);
-    if (!fromMarket || history.length <= 1) return;
-
-    el.back.addEventListener('click', function (e) {
-      e.preventDefault();
-      history.back();
-    });
+    el.back.href = 'market.html?design=' + encodeURIComponent(id);
   }
 
   async function loadDesign() {
