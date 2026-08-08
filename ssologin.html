@@ -86,10 +86,9 @@
 
 <script>
 (async () => {
-  const SSO_VERIFY_URL    = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/store-sso-verify';
-  const PROFILE_API_URL   = 'https://lohas-proxy-nwad.onrender.com/api/proxy/member/list';
-  const PROXY_API_KEY     = 'bfjY2jssj9dDajq0';
-  const PROXY_API_VER     = '0.1.0';
+  // SSO 驗證 + 會員資料 + session token 一次由 auth-session 於伺服器端完成,
+  // 前端不再持有 proxy 金鑰。
+  const AUTH_SESSION_URL  = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/auth-session';
   const DEFAULT_NEXT      = '/market.html';
 
   const url   = new URL(location.href);
@@ -116,63 +115,32 @@
   if (!token) return fail('缺少 SSO token,請從 App 重新進入', true);
 
   try {
-    // ===== Step 1: 驗證 SSO token,拿到 erpid + erpname =====
-    const verifyRes = await fetch(SSO_VERIFY_URL, {
+    // ===== Step 1: 由伺服器端一次完成 SSO 驗證 + 取會員資料 + 簽發 session token =====
+    // 一次性 SSO token 在 auth-session 內部驗證(會被消耗),
+    // 前端不再接觸 proxy 金鑰。
+    const authRes  = await fetch(AUTH_SESSION_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ token }),
+      body:    JSON.stringify({ action: 'sso', ssoToken: token }),
     });
-    const verifyJson = await verifyRes.json();
+    const authJson = await authRes.json();
 
-    if (!verifyRes.ok || !verifyJson.ok){
-      return fail(verifyJson.error || '驗證失敗,請重新登入', true);
+    if (String(authJson.code) !== '200' || !authJson.token){
+      return fail(authJson.message || '驗證失敗,請重新登入', true);
     }
 
-    const erpid   = verifyJson.erpid;
-    const erpname = verifyJson.erpname;
+    const profile = authJson.member || {};
+    const member  = {
+      erpid:    profile.client_id || '',
+      name:     profile.name      || '',
+      mobile:   profile.mobile    || '',
+      email:    profile.email     || '',
+      birthday: profile.birthday  || '',
+    };
 
-    // ===== Step 2: 拿完整 member profile (跟帳密登入流程一致) =====
-    // 若 profile API 失敗,退回最小 member 物件(讓使用者至少能用)
-    let member;
-    try {
-      const profileRes = await fetch(PROFILE_API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: {
-            apikey: PROXY_API_KEY,
-            apiver: PROXY_API_VER,
-            data: { client_id: Number(erpid) }
-          }
-        }),
-      });
-      const profileJson = await profileRes.json();
-      const code = String(profileJson.code || '');
-
-      if (code === '200' && profileJson.data) {
-        member = {
-          erpid:    profileJson.data.client_id || erpid,
-          name:     profileJson.data.name || erpname || '',
-          mobile:   profileJson.data.mobile   || '',
-          email:    profileJson.data.email    || '',
-          birthday: profileJson.data.birthday || '',
-        };
-      } else {
-        throw new Error('profile not found');
-      }
-    } catch (profileError) {
-      console.warn('[SSO] 會員資料讀取失敗,改用 SSO token 帶來的最小資料', profileError);
-      member = {
-        erpid:    erpid,
-        name:     erpname || '',
-        mobile:   '',
-        email:    '',
-        birthday: '',
-      };
-    }
-
-    // ===== Step 3: 寫入 localStorage (對齊 auth.js STORAGE_KEY = 'lohasMember') =====
+    // ===== Step 2: 寫入 localStorage (對齊 auth.js STORAGE_KEY = 'lohasMember') =====
     localStorage.setItem('lohasMember', JSON.stringify(member));
+    localStorage.setItem('lohasSessionToken', authJson.token);  // 供票券等需驗身分的功能使用
     localStorage.setItem('lohasLoginAt', String(Date.now()));   // P1 過期機制
 
     msg.textContent = '登 入 成 功 , 即 將 跳 轉';
