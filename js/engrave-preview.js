@@ -14,7 +14,7 @@
 
    依賴:
      window.LohasSupabase  (getClient)
-     MediaPipe FaceMesh / Camera
+     MediaPipe FaceMesh(相機串流與偵測迴圈由本檔自行處理)
    ============================================================= */
 
 (function (window, document) {
