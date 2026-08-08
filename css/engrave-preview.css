@@ -12,7 +12,7 @@
 }
 
 .ep-main{
-  max-width:1100px;
+  max-width:1240px;
   margin:0 auto;
   padding:96px 24px 80px;
 }
@@ -38,13 +38,15 @@
 /* ---- 版面:左預覽 / 右控制 ---- */
 .ep-wrap{
   display:grid;
-  grid-template-columns:1.15fr .85fr;
+  grid-template-columns:1.5fr .8fr;   /* 預覽是主角,給它更多寬度 */
   gap:32px;
   align-items:start;
 }
 .ep-left{ position:sticky; top:20px }
 
 /* ---- 預覽區 ---- */
+/* aspect-ratio 只是「還沒有影像」時的預設外框;
+   一旦有相機或照片,JS 的 fitStage() 會改成影像的實際比例,消掉上下黑邊。 */
 .ep-stage{
   position:relative;
   width:100%;
@@ -185,17 +187,26 @@
 
 /* ---- RWD ---- */
 @media (max-width:900px){
-  .ep-main{ padding:80px 20px 60px }
+  .ep-main{ padding:80px 16px 60px }
   .ep-wrap{ grid-template-columns:1fr; gap:24px }
   .ep-left{
     position:sticky; top:0; z-index:5;
     background:var(--bg-warm);
     padding-bottom:10px;
   }
-  .ep-stage{ aspect-ratio:1/1 }
+  .ep-stage{ aspect-ratio:3/4 }
 }
 
 @media (max-width:480px){
   .ep-title{ font-size:22px }
-  .ep-stage{ aspect-ratio:3/4 }
+  /* 預覽滿版:手機畫面本來就窄,左右各留 16px 等於白白少掉一截。
+     用負 margin 把 .ep-main 的 padding 吃回來,其餘內容維持原本邊界。 */
+  .ep-main{ padding-left:16px; padding-right:16px }
+  .ep-stage{
+    margin-left:-16px;
+    margin-right:-16px;
+    width:calc(100% + 32px);
+    border-left:0; border-right:0;
+    border-radius:0;
+  }
 }

@@ -23,9 +23,12 @@
   var CONFIG = {
     TABLE: 'engraving_designs',
     // 預設位置(以雙眼間距為單位,相對目標眼睛中心)
-    DEF_SIZE: 0.18,     // 刻圖寬度
-    DEF_DX: -0.10,      // 沿雙眼軸,負值 = 往外側
-    DEF_DY: -0.28,      // 垂直,負值 = 往上
+    // 一般鏡框的鏡片約:半寬 0.5、半高 0.35 個雙眼間距,中心大致落在眼睛上。
+    // 「鏡片右上角」因此取 外移 0.24、上移 0.16,刻圖寬 0.30。
+    // 舊值 (0.18 / -0.10 / -0.28) 會把刻圖放到眉毛上方且小到看不見。
+    DEF_SIZE: 0.30,     // 刻圖寬度
+    DEF_DX: -0.24,      // 沿雙眼軸,負值 = 往外側
+    DEF_DY: -0.16,      // 垂直,負值 = 往上
     DEF_OPACITY: 0.85
   };
 
@@ -148,6 +151,17 @@
     return { center: target, eyeDist: eyeDist, angle: angle, outward: outward };
   }
 
+  /* 讓預覽框貼合影像實際比例。
+     原本固定 4:3 / 1:1 / 3:4,遇到比例不合的來源就上下留一大片黑邊,
+     等於把有限的手機畫面浪費掉一大半。 */
+  function fitStage(W, H) {
+    if (!el.stage || !W || !H) return;
+    var r = (W / H).toFixed(4);
+    if (el.stage.dataset.ratio === r) return;
+    el.stage.dataset.ratio = r;
+    el.stage.style.aspectRatio = r;
+  }
+
   function drawEngrave(ctx, lm, W, H) {
     if (!State.engraveReady || !State.engraveImg) return;
 
@@ -166,6 +180,9 @@
     ctx.globalAlpha = State.opacity;
     ctx.translate(a.center.x, a.center.y);
     ctx.rotate(a.angle);                    // 跟著臉的傾斜
+    // 相機模式整個畫布是鏡像的,刻圖若直接畫上去會左右相反(文字會變反的)。
+    // 在區域座標再翻一次抵銷,offX 同步變號才能留在原來那側。
+    if (State.mode === 'camera') { ctx.scale(-1, 1); offX = -offX; }
     ctx.drawImage(img, offX - w / 2, offY - h / 2, w, h);
     ctx.restore();
   }
@@ -177,6 +194,7 @@
 
     el.canvas.width = W;
     el.canvas.height = H;
+    fitStage(W, H);
     var ctx = el.canvas.getContext('2d');
 
     ctx.save();
@@ -206,6 +224,7 @@
     var W = img.naturalWidth, H = img.naturalHeight;
     el.canvas.width = W;
     el.canvas.height = H;
+    fitStage(W, H);
     var ctx = el.canvas.getContext('2d');
     ctx.save();
     ctx.clearRect(0, 0, W, H);
@@ -272,9 +291,14 @@
     el.startBtn.disabled = true;
     setStatus('要求相機權限中…');
 
+    // 手機要直式,橫式串流在直立畫面上只會變成又扁又小的一條
+    var portrait = window.innerWidth < 768;
+    var wIdeal = portrait ? 720 : 960;
+    var hIdeal = portrait ? 960 : 720;
+
     navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 720 } }
+      video: { facingMode: 'user', width: { ideal: wIdeal }, height: { ideal: hIdeal } }
     }).then(attachStream).catch(function (err) {
       setStatus(camErrorMsg(err));
       el.startBtn.disabled = false;
@@ -361,6 +385,8 @@
     if (el.fileInput) el.fileInput.value = '';
     var ctx = el.canvas.getContext('2d');
     ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+    el.stage.style.aspectRatio = '';
+    delete el.stage.dataset.ratio;
     el.hint.classList.remove('hidden');
     el.stopBtn.style.display = 'none';
     el.startBtn.disabled = false;
@@ -446,6 +472,9 @@
       function (v) { return Math.round(v * 100) + '%'; });
 
     el.reset.addEventListener('click', resetPosition);
+
+    // 滑桿初值一律由 CONFIG 決定,避免 HTML 寫死的值跟預設不同步
+    resetPosition();
   }
 
   if (document.readyState === 'loading') {
