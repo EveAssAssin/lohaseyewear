@@ -1295,6 +1295,13 @@
     overflow-y:auto;
   }
   .cm .modal-right{ max-height:none }
+
+  /* 手機版:CTA 留在 HTML 原位(預覽下方、創作者資訊上方),
+     讓使用者看完刻圖模擬圖後可直接進入,不必捲到最底部。 */
+  .cm .modal-right > .modal-btn-try{
+    order:0;
+    margin:0 0 16px;
+  }
 }
 
 /* ============================================================
@@ -1536,7 +1543,16 @@
   }
 }
 
-/* ---- 刻圖模擬 CTA(詳情彈窗) ---- */
+/* ---- 刻圖模擬 CTA(詳情彈窗) ----
+   HTML 上放在 modal-right 最前面(手機版要的位置);
+   桌機用 order 排到動作區之前,維持原本「資訊在上、按鈕在下」的閱讀順序。 */
+.cm .modal-right > .modal-btn-try{ order:5; margin-bottom:10px }
+.cm .modal-by-row  { order:1 }
+.cm .modal-title   { order:2 }
+.cm .modal-cat     { order:3 }
+.cm .modal-quote   { order:4 }
+.cm .modal-actions { order:6 }
+
 .cm .modal-btn-try{
   height:48px;
   background:var(--lohas-brand);
