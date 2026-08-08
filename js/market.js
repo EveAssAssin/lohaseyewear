@@ -105,6 +105,10 @@
 
       var design = State.designs.find(function(x){ return String(x.id) === String(did); });
       if(design){
+        // 先把對應卡片捲到畫面中央,再開彈窗。
+        // 這樣使用者關掉彈窗後就停在那張卡片上,不會被丟回頁面最上方重找。
+        var card = document.querySelector('.design-card[data-id="' + String(did).replace(/"/g, '\\"') + '"]');
+        if(card && card.scrollIntoView) card.scrollIntoView({ block: 'center' });
         openModal(design);
       } else {
         console.warn('[market] 網址指定的作品不存在或未上架:', did);
