@@ -782,6 +782,12 @@
       toggleWishlist(d.id);
     };
 
+    // 模擬刻在自己的眼鏡上
+    var tryBtn = document.getElementById('tryEngraveBtn');
+    if(tryBtn){
+      tryBtn.href = 'engrave-preview.html?design=' + encodeURIComponent(d.id);
+    }
+
     // 分享這張刻圖
     var shareBtn = document.getElementById('shareBtn');
     if(shareBtn){

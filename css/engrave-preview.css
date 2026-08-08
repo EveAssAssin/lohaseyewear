@@ -1,0 +1,207 @@
+/* =============================================
+   LOHAS · 刻圖模擬 (engrave-preview.html)
+   --------------------------------------------
+   命名空間: .ep
+   依賴: lohas-tokens.css / lohas-base.css / lohas-components.css
+   色彩一律沿用站上 token,不另定義新色
+   ============================================= */
+
+.ep{
+  background:var(--bg-warm);
+  color:var(--text-main);
+}
+
+.ep-main{
+  max-width:1100px;
+  margin:0 auto;
+  padding:96px 24px 80px;
+}
+
+/* ---- 頁首 ---- */
+.ep-head{ margin-bottom:32px }
+.ep-back{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:13px; letter-spacing:.5px;
+  color:var(--text-sub); text-decoration:none;
+  margin-bottom:16px; transition:color .18s;
+}
+.ep-back:hover{ color:var(--lohas-brand) }
+.ep-title{
+  font-size:26px; font-weight:700; letter-spacing:2px;
+  color:var(--lohas-brand); margin:0 0 10px;
+}
+.ep-sub{
+  font-size:15px; line-height:1.85; letter-spacing:.5px;
+  color:var(--text-sub); margin:0;
+}
+
+/* ---- 版面:左預覽 / 右控制 ---- */
+.ep-wrap{
+  display:grid;
+  grid-template-columns:1.15fr .85fr;
+  gap:32px;
+  align-items:start;
+}
+.ep-left{ position:sticky; top:20px }
+
+/* ---- 預覽區 ---- */
+.ep-stage{
+  position:relative;
+  width:100%;
+  aspect-ratio:4/3;
+  background:#111;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+}
+.ep-stage video,
+.ep-stage canvas{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:contain;
+}
+.ep-stage video{ display:none }
+
+.ep-hint{
+  position:absolute; inset:0; z-index:3;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center; padding:24px;
+  background:rgba(20,18,16,.72);
+  color:#F4EEE3;
+}
+.ep-hint.hidden{ display:none }
+.ep-hint-ico{ font-size:32px; opacity:.75; margin-bottom:16px }
+.ep-hint p{ font-size:15px; line-height:1.8; margin:0 0 8px; letter-spacing:.5px }
+.ep-hint small{ font-size:12px; opacity:.6; letter-spacing:.5px }
+
+.ep-status{
+  position:absolute; left:0; right:0; bottom:0; z-index:4;
+  padding:8px 14px;
+  font-size:12px; letter-spacing:.5px;
+  color:#F4EEE3;
+  background:linear-gradient(to top, rgba(20,18,16,.82), rgba(20,18,16,0));
+  min-height:1.2em;
+  pointer-events:none;
+}
+
+/* ---- 模式切換 ---- */
+.ep-modes{ display:flex; gap:8px; margin:14px 0 10px }
+.ep-mode{
+  flex:1;
+  padding:9px 14px;
+  border:1px solid var(--lohas-bd);
+  background:#fff; color:var(--text-sub);
+  border-radius:var(--r-pill);
+  font-size:13px; font-weight:500; letter-spacing:.5px;
+  cursor:pointer; transition:all .18s; font-family:inherit;
+}
+.ep-mode:hover{ border-color:var(--lohas-light); color:var(--lohas-brand) }
+.ep-mode.on{
+  background:var(--lohas-brand); border-color:var(--lohas-brand); color:#fff;
+}
+
+/* ---- 按鈕 ---- */
+.ep-btn{
+  width:100%;
+  padding:13px 24px;
+  border-radius:var(--r-pill);
+  font-size:14px; font-weight:600; letter-spacing:2px;
+  cursor:pointer; transition:all .2s;
+  font-family:inherit; border:1px solid transparent;
+  margin-top:8px;
+}
+.ep-btn--main{ background:var(--lohas-brand); color:#fff }
+.ep-btn--main:hover{ background:var(--lohas-hover) }
+.ep-btn--main:disabled{ opacity:.5; cursor:not-allowed }
+.ep-btn--ghost{
+  background:transparent; color:var(--text-sub);
+  border-color:var(--lohas-bd);
+}
+.ep-btn--ghost:hover{ border-color:var(--lohas-brand); color:var(--lohas-brand) }
+
+/* ---- 刻圖資訊卡 ---- */
+.ep-design{
+  display:flex; align-items:center; gap:16px;
+  background:#fff;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-lg);
+  padding:16px 18px;
+  margin-bottom:16px;
+}
+.ep-design-img{
+  flex-shrink:0;
+  width:64px; height:64px;
+  border-radius:var(--r-sm);
+  background:var(--bg-soft) center/contain no-repeat;
+  border:1px solid var(--lohas-bd);
+}
+.ep-design-name{
+  font-size:16px; font-weight:700; letter-spacing:.5px;
+  color:var(--lohas-brand); margin-bottom:4px;
+}
+.ep-design-by{ font-size:13px; color:var(--text-muted); letter-spacing:.3px }
+
+/* ---- 調整面板 ---- */
+.ep-panel{
+  background:#fff;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-lg);
+  padding:20px 20px 16px;
+  margin-bottom:16px;
+}
+.ep-row{ margin-bottom:16px }
+.ep-row:last-of-type{ margin-bottom:12px }
+.ep-label{
+  font-size:13px; color:var(--text-sub);
+  letter-spacing:.5px; margin-bottom:8px;
+}
+.ep-label span{ color:var(--lohas-brand); font-weight:600 }
+.ep-slider{ width:100%; accent-color:var(--lohas-brand) }
+
+.ep-reset{
+  width:100%;
+  padding:9px;
+  border:1px dashed var(--lohas-bd);
+  background:transparent;
+  color:var(--text-muted);
+  border-radius:var(--r-sm);
+  font-size:12.5px; letter-spacing:.5px;
+  cursor:pointer; transition:all .18s; font-family:inherit;
+}
+.ep-reset:hover{ border-color:var(--lohas-light); color:var(--lohas-brand) }
+
+/* ---- 提醒 ---- */
+.ep-note{
+  display:flex; gap:10px; align-items:flex-start;
+  background:var(--warn-bg);
+  border-radius:var(--r-sm);
+  padding:12px 14px;
+  font-size:12.5px; line-height:1.8; letter-spacing:.3px;
+  color:var(--warn);
+  margin-bottom:24px;
+}
+.ep-note i{ margin-top:3px; flex-shrink:0 }
+
+/* ---- CTA 微調(在窄欄裡) ---- */
+.ep-cta{ padding:40px 24px; border-radius:var(--r-lg) }
+.ep-cta .lohas-cta-title{ font-size:22px }
+.ep-cta .lohas-cta-desc{ font-size:14px; margin-bottom:24px }
+.ep-cta .lohas-cta-btn{ min-width:auto; padding:13px 28px; font-size:13px }
+
+/* ---- RWD ---- */
+@media (max-width:900px){
+  .ep-main{ padding:80px 20px 60px }
+  .ep-wrap{ grid-template-columns:1fr; gap:24px }
+  .ep-left{
+    position:sticky; top:0; z-index:5;
+    background:var(--bg-warm);
+    padding-bottom:10px;
+  }
+  .ep-stage{ aspect-ratio:1/1 }
+}
+
+@media (max-width:480px){
+  .ep-title{ font-size:22px }
+  .ep-stage{ aspect-ratio:3/4 }
+}

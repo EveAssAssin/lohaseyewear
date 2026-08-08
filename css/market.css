@@ -1535,3 +1535,44 @@
     font-size: 22px;
   }
 }
+
+/* ---- 刻圖模擬 CTA(詳情彈窗) ---- */
+.cm .modal-btn-try{
+  height:48px;
+  background:var(--lohas-brand);
+  color:#fff;
+  border:0;
+  border-radius:var(--r-pill);
+  font-family:inherit;
+  font-size:14px;
+  letter-spacing:1px;
+  font-weight:600;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  text-decoration:none;
+  transition:all .2s;
+}
+.cm .modal-btn-try:hover{
+  background:var(--lohas-hover);
+  transform:translateY(-1px);
+}
+.cm .modal-btn-try i{ font-size:13px }
+
+/* 「加入最愛」降為次要樣式,避免與模擬 CTA 兩顆實色互搶。
+   已加入狀態(.added)保留原本的實色回饋,維持狀態可辨識。 */
+.cm .modal-actions .modal-btn-pri:not(.added){
+  background:transparent;
+  color:var(--lohas-brand);
+  border:1px solid var(--lohas-brand);
+}
+.cm .modal-actions .modal-btn-pri:not(.added):hover{
+  background:var(--bg-soft);
+}
+.cm .modal-actions .modal-btn-pri.added{
+  background:var(--lohas-light);
+  color:var(--lohas-brand);
+  border:1px solid var(--lohas-light);
+}

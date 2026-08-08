@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MSNPQ36L');</script>
+<!-- End Google Tag Manager -->
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>刻圖模擬 · LOHAS 樂活眼鏡</title>
+  <meta name="description" content="用相機或上傳照片,即時預覽刻圖雷刻在你眼鏡鏡片上的樣子。">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/engrave-preview.css?v=20260808-1">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <script src="js/analytics.js?v=20260610-booking"></script>
+</head>
+<body class="ep">
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MSNPQ36L"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<div id="site-header"></div>
+
+<main class="ep-main">
+
+  <div class="ep-head">
+    <a class="ep-back" href="market.html"><i class="fa-solid fa-chevron-left"></i> 回刻圖市集</a>
+    <h1 class="ep-title">刻圖模擬</h1>
+    <p class="ep-sub">看看這張刻圖雷刻在你眼鏡上的樣子</p>
+  </div>
+
+  <div class="ep-wrap">
+
+    <!-- ===== 左:預覽 ===== -->
+    <div class="ep-left">
+      <div class="ep-stage" id="epStage">
+        <video id="epVideo" playsinline muted></video>
+        <canvas id="epCanvas"></canvas>
+
+        <div class="ep-hint" id="epHint">
+          <div id="epHintCamera">
+            <i class="fa-solid fa-camera ep-hint-ico"></i>
+            <p>戴上你的眼鏡,按下方「開始模擬」</p>
+            <small>影像只在你的裝置處理,不會上傳</small>
+          </div>
+          <div id="epHintPhoto" style="display:none">
+            <i class="fa-regular fa-image ep-hint-ico"></i>
+            <p>上傳一張戴眼鏡的正面照</p>
+            <small>照片只在你的裝置處理,不會上傳</small>
+          </div>
+        </div>
+
+        <div class="ep-status" id="epStatus"></div>
+      </div>
+
+      <div class="ep-modes">
+        <button class="ep-mode on" id="epTabCamera"><i class="fa-solid fa-camera"></i> 即時相機</button>
+        <button class="ep-mode" id="epTabPhoto"><i class="fa-regular fa-image"></i> 上傳照片</button>
+      </div>
+
+      <button class="ep-btn ep-btn--main" id="epStartBtn">開 始 模 擬</button>
+      <button class="ep-btn ep-btn--main" id="epPhotoBtn" style="display:none">選 擇 照 片</button>
+      <input type="file" id="epFileInput" accept="image/*" hidden>
+      <button class="ep-btn ep-btn--ghost" id="epStopBtn" style="display:none">停 止 / 重 選</button>
+    </div>
+
+    <!-- ===== 右:刻圖資訊 + 調整 ===== -->
+    <div class="ep-right">
+
+      <div class="ep-design" id="epDesign">
+        <div class="ep-design-img" id="epDesignImg"></div>
+        <div class="ep-design-info">
+          <div class="ep-design-name" id="epDesignName">載入中…</div>
+          <div class="ep-design-by" id="epDesignBy"></div>
+        </div>
+      </div>
+
+      <div class="ep-panel" id="epPanel">
+        <div class="ep-row">
+          <div class="ep-label">刻圖大小 <span id="epSizeVal"></span></div>
+          <input class="ep-slider" id="epSize" type="range" min="0.06" max="0.30" step="0.005" value="0.14">
+        </div>
+        <div class="ep-row">
+          <div class="ep-label">左右位置 <span id="epXVal"></span></div>
+          <input class="ep-slider" id="epX" type="range" min="-1" max="1" step="0.02" value="0">
+        </div>
+        <div class="ep-row">
+          <div class="ep-label">上下位置 <span id="epYVal"></span></div>
+          <input class="ep-slider" id="epY" type="range" min="-1" max="1" step="0.02" value="0">
+        </div>
+        <div class="ep-row">
+          <div class="ep-label">刻圖濃度 <span id="epOpacityVal"></span></div>
+          <input class="ep-slider" id="epOpacity" type="range" min="0.3" max="1" step="0.05" value="0.85">
+        </div>
+        <button class="ep-reset" id="epReset"><i class="fa-solid fa-rotate-left"></i> 回到預設位置</button>
+      </div>
+
+      <div class="ep-note">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>此為示意畫面。實際雷刻的位置與呈現,以門市與您確認後為準。</span>
+      </div>
+
+      <section class="lohas-cta lohas-cta--apple ep-cta">
+        <div class="lohas-cta-inner">
+          <h2 class="lohas-cta-title">喜歡這個樣子?</h2>
+          <p class="lohas-cta-desc">到門市就能把這張刻圖雷刻在你的鏡片上。</p>
+          <div class="lohas-cta-btns">
+            <a href="allstore.html" class="lohas-cta-btn lohas-cta-btn--solid">
+              預約門市 <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="js/utils.js?v=20260513-2300"></script>
+<script src="js/supabase.js?v=20260513-2300"></script>
+<script src="js/layout.js?v=20260513-2300"></script>
+<script src="js/engrave-preview.js?v=20260808-1"></script>
+</body>
+</html>
