@@ -427,13 +427,15 @@
 
     try {
       const [designsRes, uploadsRes] = await Promise.all([
-        sb.from('engraving_designs').select('id, name, creator_id, type, created_at').eq('status', 'pending').order('created_at', { ascending: true }).limit(3),
+        sb.from('engraving_designs').select('id, name, creator_id, designer_name, type, created_at').eq('status', 'pending').order('created_at', { ascending: true }).limit(3),
         sb.from('gallery_posts').select('id, title, customer_name, member_id, type, created_at').eq('status', 'pending').order('created_at', { ascending: true }).limit(3)
       ]);
 
       const items = [];
       (designsRes.data || []).forEach(d => items.push({
-        type: 'design', id: d.id, title: d.name, by: d.creator_id, role: d.type, time: d.created_at
+        type: 'design', id: d.id, title: d.name,
+        by: d.designer_name ? `${d.creator_id} · ${d.designer_name}` : d.creator_id,
+        role: d.type, time: d.created_at
       }));
       (uploadsRes.data || []).forEach(p => items.push({
         type: p.type === 'story' ? 'story' : 'photo',
@@ -1671,7 +1673,7 @@
                        data-creator-id="${escapeHtml(d.creator_id || '')}">
                  <i class="fa-solid fa-pen-to-square"></i>開 始 審 核
                </button>
-               <button class="reject" data-act="reject" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-by="${escapeHtml(d.creator_id)}"><i class="fa-solid fa-xmark"></i>駁 回</button>
+               <button class="reject" data-act="reject" data-id="${d.id}" data-name="${escapeHtml(d.name)}" data-by="${escapeHtml(d.designer_name ? d.creator_id + ' · ' + d.designer_name : d.creator_id)}"><i class="fa-solid fa-xmark"></i>駁 回</button>
              </div>`;
 
         // 駁回理由顯示
@@ -1688,7 +1690,7 @@
             </div>
             <div class="rcard-info">
               <div class="rcard-title">${escapeHtml(d.name)}</div>
-              <div class="rcard-by">by <b>${escapeHtml(d.creator_id)}</b> <span class="role-pill ${rolePillCls}">${rolePillContent}</span></div>
+              <div class="rcard-by">by <b>${escapeHtml(d.creator_id)}</b>${d.designer_name ? ' · ' + escapeHtml(d.designer_name) : ''} <span class="role-pill ${rolePillCls}">${rolePillContent}</span></div>
               ${d.description ? `<div class="rcard-quote">${escapeHtml(d.description)}</div>` : ''}
               ${rejectInfo}
               <div class="rcard-meta"><i class="fa-regular fa-clock"></i>${isRejectedView ? '駁回於 ' + formatTime(d.reviewed_at || d.created_at) : '送審 ' + formatTime(d.created_at)}</div>
