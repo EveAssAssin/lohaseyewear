@@ -44,7 +44,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- ===== 左:預覽 ===== -->
     <div class="ep-left">
       <div class="ep-stage" id="epStage">
-        <video id="epVideo" playsinline muted></video>
+        <video id="epVideo" playsinline muted autoplay></video>
         <canvas id="epCanvas"></canvas>
 
         <div class="ep-hint" id="epHint">
@@ -117,11 +117,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div id="site-footer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<!-- 不載 camera_utils:它內部會自行呼叫 getUserMedia,在 iOS 會重複索取相機權限 -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 <script src="js/utils.js?v=20260513-2300"></script>
 <script src="js/supabase.js?v=20260513-2300"></script>
 <script src="js/layout.js?v=20260513-2300"></script>
-<script src="js/engrave-preview.js?v=20260808-1"></script>
+<script src="js/engrave-preview.js?v=20260808-ioscam"></script>
 </body>
 </html>

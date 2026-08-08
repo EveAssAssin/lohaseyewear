@@ -32,7 +32,8 @@
   var State = {
     design: null,
     mode: 'camera',          // camera | photo
-    camera: null,
+    stream: null,
+    running: false,
     faceMesh: null,
     photoImg: null,
     lastLandmarks: null,
@@ -232,31 +233,89 @@
 
   /* ---------- 相機 ---------- */
 
-  async function startCamera() {
-    setStatus('載入臉部偵測中…');
+  function camErrorMsg(err) {
+    var name = (err && err.name) || '';
+    var msg = (err && err.message) || String(err || '');
+
+    if (name === 'NotAllowedError' || name === 'SecurityError' ||
+        /not allowed|permission|denied/i.test(msg)) {
+      return '相機權限被擋住了。iPhone 請檢查:① 不要用「私密瀏覽」分頁,Safari 私密瀏覽不給相機 ' +
+             '② 網址列左邊「ᴀA」→ 網站設定 → 相機 → 允許。或直接改用下方「上傳照片」。';
+    }
+    if (name === 'NotFoundError' || name === 'OverconstrainedError' ||
+        /not found|device not found/i.test(msg)) {
+      return '找不到相機。請改用「上傳照片」,或換手機開啟。';
+    }
+    if (name === 'NotReadableError' || name === 'AbortError') {
+      return '相機正被其他 App 佔用。關掉其他用到相機的程式再試一次。';
+    }
+    return '啟動失敗:' + msg;
+  }
+
+  /**
+   * iOS Safari 的關鍵限制:getUserMedia 必須在使用者手勢的同一輪事件迴圈內發出。
+   * 先 await 載入 FaceMesh(CDN + WASM,常要好幾秒)的話,手勢視窗早已過期,
+   * Safari 會直接丟 NotAllowedError,連權限對話框都不跳。
+   * 所以順序固定為:先取得相機串流 → 再載模型 → 才開始偵測。
+   */
+  function startCamera() {
+    if (!window.isSecureContext) {
+      setStatus('相機只能在 https 網址下使用,請從 www.lohasglasses.com 開啟。');
+      return;
+    }
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      setStatus('此瀏覽器不支援相機,請改用「上傳照片」。');
+      return;
+    }
+
     el.startBtn.disabled = true;
-    try {
-      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
-        throw new Error('此瀏覽器不支援相機');
-      }
-      await ensureFaceMesh();
-      el.video.style.display = 'block';
-      State.camera = new Camera(el.video, {
-        onFrame: async function () { await State.faceMesh.send({ image: el.video }); },
-        width: 960, height: 720
-      });
-      await State.camera.start();
-      el.hint.classList.add('hidden');
-      el.startBtn.style.display = 'none';
-      el.stopBtn.style.display = 'block';
-      setStatus('相機已啟動');
-    } catch (err) {
-      var msg = (err && err.name === 'NotFoundError') ||
-        /not found|device not found/i.test((err && err.message) || '')
-        ? '找不到相機。請改用「上傳照片」,或換手機開啟。'
-        : '啟動失敗:' + ((err && err.message) || err);
-      setStatus(msg);
+    setStatus('要求相機權限中…');
+
+    navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 720 } }
+    }).then(attachStream).catch(function (err) {
+      setStatus(camErrorMsg(err));
       el.startBtn.disabled = false;
+    });
+  }
+
+  async function attachStream(stream) {
+    State.stream = stream;
+    el.video.srcObject = stream;
+    el.video.muted = true;
+    el.video.setAttribute('playsinline', '');
+    el.video.style.display = 'block';
+
+    try {
+      await el.video.play();
+    } catch (e) { /* iOS 偶爾丟 AbortError,實際仍會播放 */ }
+
+    el.hint.classList.add('hidden');
+    el.startBtn.style.display = 'none';
+    el.stopBtn.style.display = 'block';
+
+    setStatus('載入臉部偵測中…');
+    try {
+      await ensureFaceMesh();
+    } catch (e) {
+      setStatus('臉部偵測載入失敗,請重新整理再試一次。');
+      return;
+    }
+
+    State.running = true;
+    setStatus('相機已啟動');
+    pump();
+  }
+
+  /* 自行驅動偵測迴圈,取代 MediaPipe Camera utils。
+     Camera utils 內部會自己再呼叫一次 getUserMedia,在 iOS 上等於二次要權限。 */
+  async function pump() {
+    while (State.running) {
+      if (State.faceMesh && el.video.readyState >= 2) {
+        try { await State.faceMesh.send({ image: el.video }); } catch (e) {}
+      }
+      await new Promise(function (r) { requestAnimationFrame(r); });
     }
   }
 
@@ -286,9 +345,13 @@
   /* ---------- 停止 / 切換 ---------- */
 
   function teardown() {
-    if (State.camera) { try { State.camera.stop(); } catch (e) {} State.camera = null; }
+    State.running = false;
+    if (State.stream) {
+      State.stream.getTracks().forEach(function (t) { t.stop(); });
+      State.stream = null;
+    }
     var s = el.video.srcObject;
-    if (s) s.getTracks().forEach(function (t) { t.stop(); });
+    if (s && s.getTracks) s.getTracks().forEach(function (t) { t.stop(); });
     el.video.srcObject = null;
     el.video.style.display = 'none';
     State.photoImg = null;
