@@ -8,9 +8,51 @@
     API_KEY: 'bfjY2jssj9dDajq0',
     API_VER: '0.1.0',
     STORAGE_KEY: 'lohasMember',
+    TOKEN_KEY: 'lohasSessionToken',
     REDIRECT_KEY: 'redirectAfterLogin',
-    EXPIRE_DAYS: 7   // 登入 7 天未操作自動登出
+    EXPIRE_DAYS: 7,  // 登入 7 天未操作自動登出
+    // 伺服器端登入/驗證端點(金鑰在後端,前端不持有)
+    SESSION_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/auth-session'
   };
+
+  /* -----------------------------------------------------------
+     Session token
+     -----------------------------------------------------------
+     與既有 lohasMember 機制「並存」,不取代。
+     現有頁面全部照舊運作;只有需要伺服器端驗證身分的功能
+     (如票券 API)才使用此 token。
+     ----------------------------------------------------------- */
+
+  function getToken() {
+    return localStorage.getItem(CONFIG.TOKEN_KEY) || '';
+  }
+
+  function saveToken(token) {
+    if (token) localStorage.setItem(CONFIG.TOKEN_KEY, token);
+  }
+
+  function clearToken() {
+    localStorage.removeItem(CONFIG.TOKEN_KEY);
+  }
+
+  /**
+   * 伺服器端登入:由 Edge Function 驗證帳密並簽發 token。
+   * 成功回傳 { token, member };失敗丟出錯誤由呼叫端決定是否回退舊流程。
+   */
+  async function loginViaSession(account, password) {
+    const res = await fetch(CONFIG.SESSION_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', account: account, password: password })
+    });
+    const json = await res.json();
+    if (String(json.code) !== '200' || !json.token) {
+      const err = new Error(json.message || '登入失敗');
+      err.serverRejected = res.status === 401;   // 401 = 帳密真的錯,不該回退
+      throw err;
+    }
+    return json;
+  }
 
   function getStoredMember() {
     return Utils.safeJsonParse(localStorage.getItem(CONFIG.STORAGE_KEY), null);
@@ -27,6 +69,7 @@
 
   function clearMember() {
     localStorage.removeItem(CONFIG.STORAGE_KEY);
+    localStorage.removeItem(CONFIG.TOKEN_KEY);
   }
 
   // 7 天未操作視為過期,自動清除登入狀態
@@ -99,6 +142,7 @@
 
   function logout() {
     clearMember();
+    clearToken();
     window.location.href = 'login.html';
   }
 
@@ -106,9 +150,13 @@
     CONFIG,
     apiPost,
     loginWithAccount,
+    loginViaSession,
     getStoredMember,
     saveMember,
     clearMember,
+    getToken,
+    saveToken,
+    clearToken,
     isLogin,
     requireLogin,
     getRedirect,

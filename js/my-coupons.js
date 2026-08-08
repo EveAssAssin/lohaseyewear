@@ -83,9 +83,13 @@
     var ctrl = new AbortController();
     var to = setTimeout(function () { ctrl.abort(); }, CONFIG.TIMEOUT_MS);
 
-    // ⚠ 過渡期:session 機制尚未完成,暫由前端帶 erpid。
-    // Edge Function 完成 session 驗證後會忽略此值,屆時可移除。
+    // 優先用 session token(伺服器端驗證身分,前端傳的 erpid 會被忽略)。
+    // 尚未取得 token 者(舊登入態)暫時回退帶 erpid,待全面換發後移除。
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
     var m = Auth && Auth.getStoredMember ? Auth.getStoredMember() : null;
+    var payload = token
+      ? { token: token }
+      : { erpid: m && m.erpid ? m.erpid : '' };
 
     // 註:不可加 credentials:'include' —— Edge Function 的 CORS 回應為 '*',
     // 兩者並存會被瀏覽器擋下。未來改用 session cookie 時,
@@ -93,7 +97,7 @@
     return fetch(CONFIG.ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ erpid: m && m.erpid ? m.erpid : '' }),
+      body: JSON.stringify(payload),
       signal: ctrl.signal
     })
       .then(function (r) {

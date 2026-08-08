@@ -62,28 +62,48 @@
     setLoading(true);
 
     try {
-      const loginResult = await Auth.loginWithAccount(account, password);
-      const erpid = loginResult.data?.erpid;
-      const loginName = getLoginName(loginResult);
-
-      if (!erpid) {
-        throw new Error('登入成功，但未取得會員編號');
-      }
-
-      let member;
+      // ── 路徑 A(優先):伺服器端驗證,取得 session token ──
+      // 金鑰留在 Edge Function,前端不持有;token 供票券等需驗身分的功能使用。
+      let member = null;
+      let erpid = '';
+      let loginName = '';
 
       try {
-        member = await fetchProfileByClientId(erpid);
-      } catch (profileError) {
-        console.warn('[會員資料讀取失敗，改用登入資料]', profileError);
+        const s = await Auth.loginViaSession(account, password);
+        Auth.saveToken(s.token);
+        member = s.member || {};
+        erpid = member.client_id || '';
+        loginName = member.name || '';
+      } catch (sessionError) {
+        // 帳密確實錯誤 → 直接報錯,不要用舊路徑再試一次
+        if (sessionError.serverRejected) throw sessionError;
+        // 其他情況(函式未部署/連線失敗)→ 回退舊路徑,確保登入不中斷
+        console.warn('[login] 伺服器端登入不可用,回退既有流程:', sessionError.message);
+      }
 
-        member = {
-          client_id: erpid,
-          name: loginName,
-          mobile: '',
-          email: '',
-          birthday: ''
-        };
+      // ── 路徑 B(回退):既有前端流程 ──
+      if (!erpid) {
+        const loginResult = await Auth.loginWithAccount(account, password);
+        erpid = loginResult.data?.erpid;
+        loginName = getLoginName(loginResult);
+
+        if (!erpid) {
+          throw new Error('登入成功，但未取得會員編號');
+        }
+
+        try {
+          member = await fetchProfileByClientId(erpid);
+        } catch (profileError) {
+          console.warn('[會員資料讀取失敗，改用登入資料]', profileError);
+
+          member = {
+            client_id: erpid,
+            name: loginName,
+            mobile: '',
+            email: '',
+            birthday: ''
+          };
+        }
       }
 
       Auth.saveMember({
