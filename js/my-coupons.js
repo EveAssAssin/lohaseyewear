@@ -83,13 +83,15 @@
     var ctrl = new AbortController();
     var to = setTimeout(function () { ctrl.abort(); }, CONFIG.TIMEOUT_MS);
 
-    // client_id 不由前端指定 —— Edge Function 會自 session 取得 erpId。
-    // 這裡送出 body 僅為預留(未來可帶 only_usable 等選項)。
+    // ⚠ 過渡期:session 機制尚未完成,暫由前端帶 erpid。
+    // Edge Function 完成 session 驗證後會忽略此值,屆時可移除。
+    var m = Auth && Auth.getStoredMember ? Auth.getStoredMember() : null;
+
     return fetch(CONFIG.ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({}),
+      body: JSON.stringify({ erpid: m && m.erpid ? m.erpid : '' }),
       signal: ctrl.signal
     })
       .then(function (r) {
