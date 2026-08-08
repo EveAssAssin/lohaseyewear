@@ -87,10 +87,12 @@
     // Edge Function 完成 session 驗證後會忽略此值,屆時可移除。
     var m = Auth && Auth.getStoredMember ? Auth.getStoredMember() : null;
 
+    // 註:不可加 credentials:'include' —— Edge Function 的 CORS 回應為 '*',
+    // 兩者並存會被瀏覽器擋下。未來改用 session cookie 時,
+    // 需同時把 Edge Function 的 Allow-Origin 改為指定網域才能開啟。
     return fetch(CONFIG.ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ erpid: m && m.erpid ? m.erpid : '' }),
       signal: ctrl.signal
     })
