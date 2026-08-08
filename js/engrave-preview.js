@@ -253,10 +253,11 @@
   }
 
   /**
-   * iOS Safari 的關鍵限制:getUserMedia 必須在使用者手勢的同一輪事件迴圈內發出。
-   * 先 await 載入 FaceMesh(CDN + WASM,常要好幾秒)的話,手勢視窗早已過期,
-   * Safari 會直接丟 NotAllowedError,連權限對話框都不跳。
-   * 所以順序固定為:先取得相機串流 → 再載模型 → 才開始偵測。
+   * 先取得相機串流,拿到之後才建立 FaceMesh。
+   * 這樣排序的理由是「使用者感受」:權限詢問立刻跳出,而不是等畫面先卡一下;
+   * 被拒絕時也不必白白初始化模型。
+   * 註:不是為了保住 iOS 手勢視窗 —— ensureFaceMesh 內部沒有真正的下載
+   *     (WASM 是第一次 send() 才載),舊寫法量到的延遲是 1ms,從未超時。
    */
   function startCamera() {
     if (!window.isSecureContext) {
@@ -309,7 +310,8 @@
   }
 
   /* 自行驅動偵測迴圈,取代 MediaPipe Camera utils。
-     Camera utils 內部會自己再呼叫一次 getUserMedia,在 iOS 上等於二次要權限。 */
+     串流已由 startCamera 取得,不需要 camera_utils 再代為呼叫一次 getUserMedia,
+     順便少一支 CDN 相依。 */
   async function pump() {
     while (State.running) {
       if (State.faceMesh && el.video.readyState >= 2) {
