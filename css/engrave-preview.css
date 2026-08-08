@@ -179,15 +179,9 @@
   padding:12px 14px;
   font-size:12.5px; line-height:1.8; letter-spacing:.3px;
   color:var(--warn);
-  margin-bottom:24px;
+  margin-bottom:0;
 }
 .ep-note i{ margin-top:3px; flex-shrink:0 }
-
-/* ---- CTA 微調(在窄欄裡) ---- */
-.ep-cta{ padding:40px 24px; border-radius:var(--r-lg) }
-.ep-cta .lohas-cta-title{ font-size:22px }
-.ep-cta .lohas-cta-desc{ font-size:14px; margin-bottom:24px }
-.ep-cta .lohas-cta-btn{ min-width:auto; padding:13px 28px; font-size:13px }
 
 /* ---- RWD ---- */
 @media (max-width:900px){
