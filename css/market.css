@@ -1295,13 +1295,6 @@
     overflow-y:auto;
   }
   .cm .modal-right{ max-height:none }
-
-  /* 手機版:CTA 留在 HTML 原位(預覽下方、創作者資訊上方),
-     讓使用者看完刻圖模擬圖後可直接進入,不必捲到最底部。 */
-  .cm .modal-right > .modal-btn-try{
-    order:0;
-    margin:0 0 16px;
-  }
 }
 
 /* ============================================================
@@ -1552,6 +1545,13 @@
 .cm .modal-cat     { order:3 }
 .cm .modal-quote   { order:4 }
 .cm .modal-actions { order:6 }
+
+/* 手機版:CTA 回到 HTML 原位(預覽下方、創作者資訊上方),
+   讓使用者看完刻圖後可直接進入模擬,不必捲到最底部。
+   註:必須寫在上面桌機那組 order 之後,同權重才蓋得過。 */
+@media (max-width:768px){
+  .cm .modal-right > .modal-btn-try{ order:0; margin:0 0 16px }
+}
 
 .cm .modal-btn-try{
   height:48px;
