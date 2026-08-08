@@ -26,9 +26,24 @@
   var Auth = window.LohasAuth;
 
   var CONFIG = {
-    // Edge Function 代理端點(尚未部署)
     ENDPOINT: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/coupon-list',
+    LOCK_ENDPOINT: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/coupon-lock',
     TIMEOUT_MS: 12000
+  };
+
+  // 對方錯誤碼 → 使用者看得懂的說明
+  var ERR_MSG = {
+    '006': '資料不完整,請重新整理後再試',
+    '007': '查無此票券',
+    '021': '這張票券已經使用過了',
+    '022': '這張票券已過期',
+    '023': '這張票券目前無法在官網使用',
+    '024': '鎖定已釋放,請重新選取票券',
+    '025': '操作逾時,請重新選取票券',
+    '027': '已達鎖定時間上限,請重新選取票券',
+    '401': '登入狀態已失效,請重新登入',
+    '429': '操作太頻繁,請稍候再試',
+    '500': '系統忙碌中,請稍後再試一次'
   };
 
   // 狀態對照:文案 + 徽章樣式 + 圖示
@@ -295,13 +310,55 @@
     }
   }
 
-  // 「立即使用」—— 鎖定流程(待 Edge Function 就緒後接上)
+  // 「立即使用」→ 鎖定票券,取得 lock_token 與可兌換分類
   function onUse(couponId) {
     var c = State.coupons.find(function (x) { return x.coupon_id === couponId; });
     if (!c) return;
-    // TODO: 接 coupon/lock → 取得 lock_token → 依 category_tid 導向商品挑選
-    alert('「' + c.title + '」\n\n折抵金額 $' + money(c.amount) +
-          '\n\n鎖定與商品挑選流程尚未開放,待票券代理服務部署後啟用。');
+
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
+    if (!token) {
+      alert('請先重新登入一次,再使用票券。');
+      return;
+    }
+
+    var btn = document.querySelector('[data-use="' + couponId + '"]');
+    if (btn) { btn.disabled = true; btn.textContent = '處 理 中...'; }
+
+    fetch(CONFIG.LOCK_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'lock', token: token, coupon_id: couponId })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (String(j.code) !== '200' || !j.data) {
+          throw new Error(ERR_MSG[String(j.code)] || j.message || '鎖定失敗');
+        }
+        var d = j.data;
+        // 暫存,供後續商品挑選與購物車回送使用
+        try {
+          sessionStorage.setItem('lohasCouponLock', JSON.stringify({
+            coupon_id: d.coupon_id,
+            lock_token: d.lock_token,
+            expire_time: d.expire_time,
+            amount: d.amount,
+            title: d.title,
+            category_tid: d.category_tid || []
+          }));
+        } catch (e) { /* 無痕模式可能失敗,不影響流程 */ }
+
+        // TODO(階段二):依 category_tid 導向商品挑選頁
+        alert('已為你保留這張票券\n\n' +
+              d.title + ' · 折抵 $' + money(d.amount) + '\n' +
+              '保留時間 ' + Math.round((d.expires_in || 1800) / 60) + ' 分鐘\n\n' +
+              '商品挑選頁尚未開放,稍後將自動釋放,不會扣除票券。');
+
+        load(true);   // 重新整理清單(該券會變成「使用中」)
+      })
+      .catch(function (err) {
+        alert(err.message || '操作失敗,請稍後再試');
+        if (btn) { btn.disabled = false; btn.textContent = '立 即 使 用'; }
+      });
   }
 
   /* ---------- 對外 ---------- */
