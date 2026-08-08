@@ -2516,6 +2516,7 @@
     'creator-page': '創作者個人頁',
     'analytics': '創作數據',
     'earnings': '分潤紀錄',
+    'my-coupons': '我的票券',
     'profile': '會員資料'
   };
 
@@ -2543,6 +2544,7 @@
     if (page === 'my-designs') loadMyDesigns();
     if (page === 'analytics') loadAnalytics();
     if (page === 'earnings') loadEarnings();
+    if (page === 'my-coupons' && window.LohasCoupons) window.LohasCoupons.load();
 
     // 進入分享頁 → 隱藏 sidebar 紅標 (已看過)
     if (page === 'shares') {
