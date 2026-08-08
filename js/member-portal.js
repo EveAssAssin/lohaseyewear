@@ -1904,13 +1904,15 @@
         return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
       })
       .reduce((s, r) => s + Number(r.amount || 0), 0);
-    const pending = (records || [])
-      .filter(r => r.payout_status === 'pending')
+    // 官網不分「已發/未發」狀態(實際發放在 APP 端),明細一律顯示「有發放資格」
+    // 但金額仍排除已匯款(paid),避免已付款項被重複計入而灌大數字
+    const eligible = (records || [])
+      .filter(r => r.payout_status !== 'paid')
       .reduce((s, r) => s + Number(r.amount || 0), 0);
 
     document.querySelectorAll('[data-stat="thisMonth"]').forEach(el => el.textContent = '$' + thisMonth.toLocaleString());
     document.querySelectorAll('[data-stat="totalRoyalty"]').forEach(el => el.textContent = '$' + total.toLocaleString());
-    document.querySelectorAll('[data-stat="nextPayout"]').forEach(el => el.textContent = '$' + pending.toLocaleString());
+    document.querySelectorAll('[data-stat="nextPayout"]').forEach(el => el.textContent = '$' + eligible.toLocaleString());
 
     // 匯款進度 - 顯示分潤明細
     const payoutList = document.getElementById('payoutList');
@@ -1927,16 +1929,15 @@
           .limit(20);
 
         payoutList.innerHTML = (detailed || []).map(r => {
-          const isPaid = r.payout_status === 'paid';
           const dt = new Date(r.used_at);
           const dateStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
           return `
-            <div class="payout-row ${isPaid ? '' : 'upcoming'}">
-              <div class="payout-icon ${isPaid ? 'paid-icon' : 'upcoming-icon'}">
-                <i class="fa-solid fa-${isPaid ? 'check' : 'clock'}"></i>
+            <div class="payout-row">
+              <div class="payout-icon paid-icon">
+                <i class="fa-solid fa-check"></i>
               </div>
               <div class="payout-info">
-                <div class="payout-date">${dateStr} · ${isPaid ? '已匯款' : '待匯款'}</div>
+                <div class="payout-date">${dateStr} · 有發放資格</div>
                 <div class="payout-meta">${escapeHtml(r.design_name || '未命名設計')}</div>
               </div>
               <div class="payout-amt">$${Number(r.amount || 0).toLocaleString()}</div>
