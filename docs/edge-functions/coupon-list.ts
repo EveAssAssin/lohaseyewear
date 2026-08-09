@@ -17,19 +17,27 @@
    部署:Supabase Dashboard → Edge Functions → coupon-list → 貼上本檔
         Verify JWT 要【關閉】(前端沒有 Supabase 使用者,身分靠自家 session token)
 
-   環境變數(Dashboard → Edge Functions → Secrets):
-     SITE_API_KEY      票券／商城共用的那把金鑰(必填)
-     TICKET_BASE_URL   票券 API Base URL
-                       測試 https://lohas-app-backend-test.onrender.com
-                       正式 上線後由對方提供
+   金鑰設定(擇一):
+     A. Dashboard → Edge Functions → Secrets 新增 SITE_API_KEY(建議)
+     B. 沒有 Secrets 權限時,把金鑰直接填在下面的 FALLBACK_SITE_KEY
+
+   ⚠ 若走 B:金鑰【只能在 Supabase Dashboard 的編輯器裡填】。
+     這份檔案在公開的 GitHub repo 裡,填了就等於公開,
+     絕對不要把填好金鑰的版本回寫到 repo。
+
+   Base URL 已有預設值(測試環境),不需要設定。
+   正式環境上線時,設 TICKET_BASE_URL 或直接改下面那行。
    ============================================================= */
+
+// ⚠ 只在 Dashboard 填,不要提交回 GitHub
+const FALLBACK_SITE_KEY = '';
 
 /* 是否只認 session token。
    設 false 會退回「允許前端傳 erpid」的舊行為 —— 那是 session 機制上線前
    的過渡措施,只在緊急回滾時才該打開,平常一律 true。 */
 const STRICT_SESSION = true;
 
-const SITE_KEY = Deno.env.get('SITE_API_KEY') || '';
+const SITE_KEY = Deno.env.get('SITE_API_KEY') || FALLBACK_SITE_KEY;
 const TICKET_BASE = (Deno.env.get('TICKET_BASE_URL') ||
   'https://lohas-app-backend-test.onrender.com').replace(/\/+$/, '');
 
@@ -78,7 +86,7 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
 
   if (!SITE_KEY) {
-    console.error('[coupon-list] 缺少 SITE_API_KEY');
+    console.error('[coupon-list] 缺少金鑰:請設 SITE_API_KEY 或填 FALLBACK_SITE_KEY');
     return reply('500', { message: '系統設定不完整,請聯繫客服' }, 500);
   }
 

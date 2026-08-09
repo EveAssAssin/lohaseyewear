@@ -15,9 +15,16 @@
    部署:Supabase Dashboard → Edge Functions → 新增 shop → 貼上本檔
         Verify JWT 要【關閉】
 
-   環境變數(Dashboard → Edge Functions → Secrets):
-     SHOP_BASE_URL   商城 Base URL,例:https://lohas-shop-test.onrender.com
-     SITE_API_KEY    與票券共用的那把金鑰
+   金鑰設定(擇一):
+     A. Dashboard → Edge Functions → Secrets 新增 SITE_API_KEY(建議)
+     B. 沒有 Secrets 權限時,把金鑰直接填在下面的 FALLBACK_SITE_KEY
+
+   ⚠ 若走 B:金鑰【只能在 Supabase Dashboard 的編輯器裡填】。
+     這份檔案在公開的 GitHub repo 裡,填了就等於公開,
+     絕對不要把填好金鑰的版本回寫到 repo。
+
+   Base URL 已有預設值(測試環境),不需要設定。
+   正式環境上線時,設 SHOP_BASE_URL 或直接改下面那行。
 
    action 一覽:
      categories  分類樹
@@ -25,9 +32,12 @@
      product     商品詳情(nid),含規格樹
    ============================================================= */
 
+// ⚠ 只在 Dashboard 填,不要提交回 GitHub
+const FALLBACK_SITE_KEY = '';
+
 const SHOP_BASE = (Deno.env.get('SHOP_BASE_URL') || 'https://lohas-shop-test.onrender.com')
   .replace(/\/+$/, '');
-const SITE_KEY  = Deno.env.get('SITE_API_KEY') || '';
+const SITE_KEY  = Deno.env.get('SITE_API_KEY') || FALLBACK_SITE_KEY;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -69,7 +79,10 @@ Deno.serve(async (req) => {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
   if (rateLimited(ip)) return reply('429', { message: '操作太頻繁,請稍候再試' }, 429);
 
-  if (!SITE_KEY) return reply('500', { message: '尚未設定 SITE_API_KEY' }, 500);
+  if (!SITE_KEY) {
+    console.error('[shop] 缺少金鑰:請設 SITE_API_KEY 或填 FALLBACK_SITE_KEY');
+    return reply('500', { message: '系統設定不完整,請聯繫技術窗口' }, 500);
+  }
 
   let body: Record<string, any>;
   try { body = await req.json(); }

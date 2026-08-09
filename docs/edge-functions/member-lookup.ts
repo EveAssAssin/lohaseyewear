@@ -16,16 +16,23 @@
    部署:Supabase Dashboard → Edge Functions → 新增 member-lookup → 貼上本檔
         Verify JWT 要【關閉】
 
-   環境變數(Dashboard → Edge Functions → Secrets):
-     ERP_API_KEY    即時互動 webapi 的 apikey(原本寫在前端那把)
-     PROXY_URL      選填,預設 https://lohas-proxy-nwad.onrender.com/api
+   金鑰設定(擇一):
+     A. Dashboard → Edge Functions → Secrets 新增 ERP_API_KEY(建議)
+     B. 沒有 Secrets 權限時,把金鑰直接填在下面的 FALLBACK_ERP_KEY
+
+   ⚠ 若走 B:金鑰【只能在 Supabase Dashboard 的編輯器裡填】。
+     這份檔案在公開的 GitHub repo 裡,填了就等於公開,
+     絕對不要把填好金鑰的版本回寫到 repo。
    ============================================================= */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// ⚠ 只在 Dashboard 填,不要提交回 GitHub
+const FALLBACK_ERP_KEY = '';
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const ERP_KEY      = Deno.env.get('ERP_API_KEY') || '';
+const ERP_KEY      = Deno.env.get('ERP_API_KEY') || FALLBACK_ERP_KEY;
 const PROXY_URL    = (Deno.env.get('PROXY_URL') || 'https://lohas-proxy-nwad.onrender.com/api')
   .replace(/\/+$/, '');
 const AUTH_FN      = `${SUPABASE_URL}/functions/v1/auth-session`;
@@ -69,8 +76,8 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
 
   if (!ERP_KEY) {
-    console.error('[member-lookup] 缺少 ERP_API_KEY');
-    return reply('500', { message: '系統設定不完整' }, 500);
+    console.error('[member-lookup] 缺少 ERP 金鑰:請設 ERP_API_KEY 或填 FALLBACK_ERP_KEY');
+    return reply('500', { message: '系統設定不完整,請聯繫技術窗口' }, 500);
   }
 
   let body: Record<string, any>;
