@@ -53,6 +53,9 @@
       .catch(function (err) {
         clearTimeout(to);
         if (err.name === 'AbortError') throw new Error('連線逾時,請重新整理再試');
+        // fetch 本身失敗(服務未上線 / 斷網 / CORS)只會丟出 TypeError,
+        // 訊息是英文的 "Failed to fetch",不能直接給使用者看
+        if (err instanceof TypeError) throw new Error('目前無法連線到禮物服務,請稍後再試。');
         throw err;
       });
   }
