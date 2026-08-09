@@ -343,6 +343,10 @@
     display:flex;
     flex-direction:column;
     gap:0;
+    /* 桌機那組是 align-items:start。換成 column flex 之後,
+       start 會變成「橫向靠左 + 寬度縮到內容大小」,整欄只剩一半寬。
+       這裡必須明確蓋回 stretch。 */
+    align-items:stretch;
   }
   .dz-right{ display:contents }
 
@@ -377,7 +381,18 @@
     padding-bottom:10px;
     margin-bottom:16px;
   }
-  .dz-stage{ aspect-ratio:4/3 }
+  /* 預覽滿版:用負 margin 把 .dz-main 的 16px padding 吃回來,
+     其餘內容維持原本邊界。手機畫面本來就窄,左右各留 16px
+     等於預覽白白少掉一截。 */
+  .dz-stage{
+    aspect-ratio:4/3;
+    margin-left:-16px;
+    margin-right:-16px;
+    width:calc(100% + 32px);
+    border-left:0;
+    border-right:0;
+    border-radius:0;
+  }
 
   /* 手機縮成圓鈕,跟刻圖市集一致 */
   .dz-scroll{
