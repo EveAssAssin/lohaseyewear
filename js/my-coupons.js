@@ -59,6 +59,7 @@
     coupons: [],
     filter: 'all',
     isDemo: false,
+    needLogin: false,
     loaded: false,
     countdownTimer: null
   };
@@ -117,16 +118,27 @@
     })
       .then(function (r) {
         clearTimeout(to);
+        // 401 要獨立處理:那不是「服務壞了」,是「這個人需要重新登入」
+        if (r.status === 401) { var e = new Error('AUTH'); e.needLogin = true; throw e; }
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
       .then(function (j) {
+        if (String(j.code) === '401') { var e = new Error('AUTH'); e.needLogin = true; throw e; }
         if (j.code !== '200' || !j.data) throw new Error(j.message || '回應格式不符');
         State.isDemo = false;
+        State.needLogin = false;
         return j.data.coupons || [];
       })
       .catch(function (err) {
         clearTimeout(to);
+        // 身分問題絕不能退回示範資料 —— 那會讓需要重新登入的人
+        // 看到五張不存在的票券,比直接報錯還糟
+        if (err.needLogin) {
+          State.needLogin = true;
+          State.isDemo = false;
+          return [];
+        }
         console.warn('[coupons] 代理尚未就緒,改用示範資料:', err.message);
         State.isDemo = true;
         return demoCoupons();
@@ -236,6 +248,16 @@
     }
 
     var html = '';
+
+    if (State.needLogin) {
+      box.innerHTML =
+        '<div class="md-notice">' +
+          '<i class="fa-solid fa-circle-exclamation"></i>' +
+          '<div>你的登入狀態需要更新才能查看票券。' +
+          '請<a href="login.html" style="text-decoration:underline">重新登入一次</a>,之後就不會再出現這個提示。</div>' +
+        '</div>';
+      return;
+    }
 
     if (State.isDemo) {
       html += '<div class="md-notice" style="margin-bottom:12px">' +
