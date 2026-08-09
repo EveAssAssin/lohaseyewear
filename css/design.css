@@ -301,6 +301,115 @@
   font-size:12px; color:var(--text-muted); letter-spacing:.3px;
 }
 
+/* =============================================================
+   送禮模式(design.html?design=<id>&gift=1)
+   ============================================================= */
+
+/* ---- 選眼鏡 ---- */
+.dz-frames{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(104px, 1fr));
+  gap:10px;
+}
+.dz-frame{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:10px 8px;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-sm);
+  background:#fff;
+  cursor:pointer; transition:all .18s;
+  font-family:inherit;
+}
+.dz-frame:hover{ border-color:var(--lohas-light) }
+.dz-frame.on{
+  border-color:var(--lohas-brand);
+  box-shadow:0 0 0 2px var(--lohas-brand) inset;
+}
+.dz-frame img{ width:100%; aspect-ratio:4/3; object-fit:contain }
+.dz-frame-noimg{
+  width:100%; aspect-ratio:4/3;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text-muted); background:var(--bg-soft);
+  border-radius:var(--r-sm);
+}
+.dz-frame-name{
+  width:100%;
+  font-size:11.5px; letter-spacing:.2px; color:var(--text-sub);
+  text-align:center;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.dz-frame-price{
+  font-size:13px; font-weight:700; letter-spacing:.3px;
+  color:var(--lohas-brand);
+}
+
+/* ---- 二選一切換 ---- */
+.dz-seg{ display:flex; gap:8px; margin:0 0 10px }
+.dz-seg-btn{
+  flex:1;
+  padding:10px 12px;
+  border:1px solid var(--lohas-bd);
+  background:#fff; color:var(--text-sub);
+  border-radius:var(--r-pill);
+  font-family:inherit; font-size:13px; font-weight:500; letter-spacing:.5px;
+  cursor:pointer; transition:all .18s;
+}
+.dz-seg-btn:hover{ border-color:var(--lohas-light); color:var(--lohas-brand) }
+.dz-seg-btn.on{
+  background:var(--lohas-brand); border-color:var(--lohas-brand); color:#fff;
+}
+.dz-seg-note{
+  margin:0 0 18px;
+  font-size:12.5px; line-height:1.8; letter-spacing:.3px;
+  color:var(--text-muted);
+}
+
+/* ---- 輸入 ---- */
+.dz-input{
+  width:100%;
+  height:42px;
+  padding:0 14px;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-sm);
+  background:#fff;
+  font-family:inherit; font-size:14px;
+  color:var(--text-main);
+  transition:border-color .18s;
+}
+.dz-input:focus{ outline:none; border-color:var(--lohas-brand) }
+.dz-textarea{
+  height:auto;
+  padding:11px 14px;
+  line-height:1.7;
+  resize:vertical;
+}
+
+.dz-form-err{
+  margin:0 0 12px;
+  padding:11px 14px;
+  background:var(--status-rejected-bg);
+  color:var(--status-rejected);
+  border-radius:var(--r-sm);
+  font-size:13px; line-height:1.7; letter-spacing:.3px;
+}
+
+/* ---- 建立完成 ---- */
+.dz-result{ text-align:center }
+.dz-result-ico{
+  font-size:32px; color:var(--status-approved); margin-bottom:12px;
+}
+.dz-result-text{
+  margin:0 0 18px;
+  font-size:13.5px; line-height:1.85; letter-spacing:.3px;
+  color:var(--text-sub);
+  text-align:left;
+}
+.dz-link-row{
+  display:flex; gap:8px; margin-bottom:14px;
+}
+.dz-link-row .dz-input{ flex:1; min-width:0; font-size:12.5px }
+.dz-link-row .dz-btn{ width:auto; flex-shrink:0; padding:0 20px; letter-spacing:1px }
+
 /* ---- 滑到底浮鈕(規格比照刻圖市集的 .scroll-to-join) ---- */
 .dz-scroll{
   position:fixed;
@@ -375,11 +484,15 @@
   .dz-head          { order:1 }
   .dz-card--product { order:2 }
   .dz-left          { order:3 }
-  .dz-card--design  { order:4 }
-  #dzPlaceCard      { order:5 }
-  .dz-note          { order:6 }
-  #dzSubmit         { order:7 }
-  .dz-submit-hint   { order:8 }
+  .dz-card--frames  { order:4 }   /* 送禮模式才有 */
+  .dz-card--design  { order:5 }
+  #dzPlaceCard      { order:6 }
+  #dzGiftCard       { order:7 }   /* 送禮模式才有 */
+  .dz-note          { order:8 }
+  .dz-form-err      { order:9 }
+  #dzSubmit         { order:10 }
+  .dz-submit-hint   { order:11 }
+  #dzResult         { order:12 }
 
   /* 商品標示改用預覽上的說明條 */
   .dz-stage-meta{ display:flex }

@@ -792,6 +792,11 @@
       tryBtn.href = 'engrave-preview.html?design=' + encodeURIComponent(d.id);
     }
 
+    var giftBtn = document.getElementById('giftBtn');
+    if(giftBtn){
+      giftBtn.href = 'design.html?gift=1&design=' + encodeURIComponent(d.id);
+    }
+
     // 分享這張刻圖
     var shareBtn = document.getElementById('shareBtn');
     if(shareBtn){

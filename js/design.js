@@ -23,6 +23,7 @@
 
   var CONFIG = {
     SHOP_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop',
+    GIFT_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gift',
     TIMEOUT_MS: 15000,
     // 預設落點:鏡片右上。以商品圖寬度為單位。
     DEF: { lens: 'right', scale: 0.12, x: 0.68, y: 0.38 },
@@ -34,6 +35,12 @@
   };
 
   var State = {
+    // 送禮模式:從刻圖市集帶著 design 進來,眼鏡要在這頁挑
+    gift: false,
+    frames: [],
+    fulfillment: 'store',
+    recipMode: 'link',
+
     nid: 0,
     product: null,
     specSid: null,
@@ -97,8 +104,8 @@
 
   /* ---------- 商品 ---------- */
 
-  function loadProduct() {
-    return shopCall({ action: 'product', nid: State.nid }).then(function (d) {
+  function loadProduct(nid) {
+    return shopCall({ action: 'product', nid: nid }).then(function (d) {
       var p = d.product;
       if (!p) throw new Error('查無這件商品,或商品已下架。');
 
@@ -108,6 +115,9 @@
       }
 
       State.product = p;
+      State.nid = nid;
+      State.specSid = null;
+      State.specTitle = '';
       el.productName.textContent = p.title || '(未命名商品)';
 
       var price = (p.offer_price != null && p.offer_price !== '')
@@ -335,6 +345,169 @@
     el.overlay.addEventListener('pointercancel', end);
   }
 
+  /* ---------- 送禮模式:選眼鏡 ----------
+     只列 can_design 為 true 的商品。目前是 7 件造型太陽眼鏡,
+     所以不做分類導覽 —— 直接列完比讓人點兩層分類快。 */
+  function loadFrames() {
+    return shopCall({ action: 'products', can_design_only: 1, limit: 100 })
+      .then(function (d) {
+        // 缺貨的不給送,免得付了款出不了貨
+        State.frames = (d.products || []).filter(function (p) { return Number(p.stock) !== 0; });
+        renderFrames();
+      })
+      .catch(function (err) {
+        el.frames.innerHTML = '<p class="dz-empty">' + esc(err.message) + '</p>';
+      });
+  }
+
+  function renderFrames() {
+    if (!State.frames.length) {
+      el.frames.innerHTML = '<p class="dz-empty">目前沒有可客製的眼鏡</p>';
+      return;
+    }
+    el.frames.innerHTML = State.frames.map(function (p) {
+      var on = State.product && State.product.nid === p.nid ? ' on' : '';
+      var price = (p.offer_price != null && p.offer_price !== '') ? p.offer_price : p.price;
+      return '<button class="dz-frame' + on + '" type="button" data-nid="' + p.nid + '">' +
+        (p.image ? '<img src="' + esc(p.image) + '" alt="" loading="lazy">'
+                 : '<span class="dz-frame-noimg"><i class="fa-regular fa-image"></i></span>') +
+        '<span class="dz-frame-name">' + esc(p.title || '') + '</span>' +
+        '<span class="dz-frame-price">NT$' + money(price) + '</span>' +
+        '</button>';
+    }).join('');
+  }
+
+  function pickFrame(nid) {
+    el.frames.querySelectorAll('.dz-frame').forEach(function (b) {
+      b.classList.toggle('on', String(b.dataset.nid) === String(nid));
+    });
+    loadProduct(Number(nid))
+      .then(function () { refreshSubmit(); refreshScrollBtn(); })
+      .catch(function (err) { showFormErr(err.message); });
+  }
+
+  /* ---------- 送禮模式:設定 ---------- */
+
+  var FULFILL_NOTE = {
+    store: '付款後對方會收到一張兌換券,帶去樂活門市現場配鏡雷刻。不需要地址,顏色尺寸也能到店再確認。',
+    ship:  '你在商城結帳時填收件地址(可以填對方家),商品直接寄出。刻圖位置以這裡設定的為準。'
+  };
+
+  function setFulfillment(f) {
+    State.fulfillment = f;
+    el.fulfill.querySelectorAll('.dz-seg-btn').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.f === f);
+    });
+    el.fulfillNote.textContent = FULFILL_NOTE[f];
+  }
+
+  function setRecipMode(m) {
+    State.recipMode = m;
+    el.recipMode.querySelectorAll('.dz-seg-btn').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.m === m);
+    });
+    if (m === 'member') show(el.recipKeyRow); else hide(el.recipKeyRow);
+  }
+
+  function showFormErr(msg) {
+    el.formErr.textContent = msg;
+    show(el.formErr);
+    el.formErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function giftCall(payload) {
+    var ctrl = new AbortController();
+    var to = setTimeout(function () { ctrl.abort(); }, CONFIG.TIMEOUT_MS);
+    return fetch(CONFIG.GIFT_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    })
+      .then(function (r) { clearTimeout(to); return r.json(); })
+      .then(function (j) {
+        if (String(j.code) !== '200' || !j.data) throw new Error(j.message || '建立失敗');
+        return j.data;
+      })
+      .catch(function (err) {
+        clearTimeout(to);
+        if (err.name === 'AbortError') throw new Error('連線逾時,請稍後再試');
+        if (err instanceof TypeError) throw new Error('目前無法連線到禮物服務,請稍後再試。');
+        throw err;
+      });
+  }
+
+  function createGift() {
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
+    if (!token) {
+      if (Auth && Auth.setRedirect) {
+        Auth.setRedirect(location.pathname.split('/').pop() + location.search);
+      }
+      window.location.href = 'login.html';
+      return;
+    }
+
+    var key = (el.recipKey.value || '').trim();
+    if (State.recipMode === 'member' && !key) {
+      showFormErr('請填寫對方的會員編號或手機,或改用「產生領取連結」。');
+      return;
+    }
+
+    hide(el.formErr);
+    el.submit.disabled = true;
+    el.submit.textContent = '處 理 中...';
+
+    var m = Auth && Auth.getStoredMember ? Auth.getStoredMember() : null;
+
+    giftCall({
+      action: 'create',
+      token: token,
+      sender_name: (m && m.name) || '',
+      design_id: State.design.id,
+      design_name: State.design.name,
+      design_image_url: designUrl(State.design),
+      product_nid: State.product.nid,
+      product_sid: State.specSid,
+      product_title: State.product.title,
+      product_spec_title: State.specTitle,
+      product_image: State.product.image,
+      engrave_placement: {
+        lens: State.lens, scale: State.scale, x: State.x, y: State.y,
+        basis: 'product_image'
+      },
+      message: (el.message.value || '').trim(),
+      fulfillment: State.fulfillment,
+      recipient_mode: State.recipMode,
+      recipient_key: key,
+      recipient_label: (el.recipLabel.value || '').trim()
+    })
+      .then(function (d) { onGiftCreated(d.gift); })
+      .catch(function (err) {
+        showFormErr(err.message);
+        el.submit.disabled = false;
+        el.submit.textContent = '建 立 禮 物';
+      });
+  }
+
+  function onGiftCreated(g) {
+    [el.frameCard, el.designCard, el.placeCard, el.giftCard,
+     el.submit, el.submitHint, el.note].forEach(hide);
+    hide(el.formErr);
+
+    // cart/push 還沒開通,禮物會停在「待付款」。這件事一定要講白,
+    // 不然使用者會以為已經送出去了。
+    el.resultText.textContent = State.fulfillment === 'store'
+      ? '禮物已建立,目前狀態是「待付款」。商城付款介面尚未開通,接上後你會在禮物中心看到付款入口;完成付款後對方才能領取。'
+      : '禮物已建立,目前狀態是「待付款」。商城付款介面尚未開通,接上後你會在禮物中心看到付款入口。';
+
+    if (g && g.claim_url) {
+      el.claimUrl.value = g.claim_url;
+      show(el.linkRow);
+    }
+    show(el.result);
+    el.result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   /* ---------- 滑到底浮鈕 ----------
      刻圖展開後右欄會很長,「加入購物車」在最底部。
      行為比照刻圖市集:捲一段後浮出,到底後翻轉成「回到頂部」。 */
@@ -394,6 +567,17 @@
 
   function refreshSubmit() {
     var needSpec = el.specs.querySelector('.dz-spec') && State.specSid == null;
+
+    if (State.gift) {
+      var ready = !!State.design && !!State.product && !needSpec;
+      el.submit.disabled = !ready;
+      el.submitHint.textContent = !State.product ? '請先選一副眼鏡'
+        : !State.design ? '請選一張刻圖'
+        : needSpec ? '請選擇規格'
+        : '建立後會出現在你的禮物中心';
+      return;
+    }
+
     var ok = !!State.design && !needSpec;
     el.submit.disabled = !ok;
     el.submitHint.textContent = !State.design ? '請先選一張刻圖'
@@ -431,6 +615,8 @@
 
   function onSubmit() {
     if (!State.design || !State.product) return;
+    if (State.gift) { createGift(); return; }
+
     var payload = buildPayload();
     try { sessionStorage.setItem('lohasDesignDraft', JSON.stringify(payload)); } catch (e) {}
 
@@ -463,27 +649,41 @@
       placeCard: $('dzPlaceCard'), lens: $('dzLens'),
       scale: $('dzScale'), x: $('dzX'), y: $('dzY'),
       scaleVal: $('dzScaleVal'), xVal: $('dzXVal'), yVal: $('dzYVal'),
-      reset: $('dzReset'), submit: $('dzSubmit'), submitHint: $('dzSubmitHint')
+      reset: $('dzReset'), submit: $('dzSubmit'), submitHint: $('dzSubmitHint'),
+      designCard: document.querySelector('.dz-card--design'),
+      // 送禮模式專用
+      frameCard: $('dzFrameCard'), frames: $('dzFrames'),
+      giftCard: $('dzGiftCard'), fulfill: $('dzFulfill'), fulfillNote: $('dzFulfillNote'),
+      recipMode: $('dzRecipMode'), recipKeyRow: $('dzRecipKeyRow'), recipKey: $('dzRecipKey'),
+      recipLabel: $('dzRecipLabel'), message: $('dzMessage'),
+      formErr: $('dzFormErr'), noteText: $('dzNoteText'),
+      result: $('dzResult'), resultText: $('dzResultText'),
+      linkRow: $('dzLinkRow'), claimUrl: $('dzClaimUrl'), copy: $('dzCopy')
     };
     if (!el.body) return;
 
-    var nid = Number(new URLSearchParams(location.search).get('nid') || 0);
-    if (!nid) {
+    var q = new URLSearchParams(location.search);
+    State.gift = q.get('gift') === '1';
+    var nid = Number(q.get('nid') || 0);
+    var presetDesign = (q.get('design') || '').trim();
+
+    if (State.gift) {
+      startGiftMode(presetDesign);
+    } else if (!nid) {
       fail('這個連結沒有指定商品。請從商城的商品頁點「客製文創」進入。');
       return;
+    } else {
+      loadProduct(nid)
+        .then(function () {
+          hide(el.loading);
+          show(el.body);
+          applyPlacement();
+          refreshScrollBtn();     // 版面出現了,重算浮鈕狀態
+          return loadDesigns();
+        })
+        .then(function () { refreshScrollBtn(); })
+        .catch(function (err) { fail(err.message); });
     }
-    State.nid = nid;
-
-    loadProduct()
-      .then(function () {
-        hide(el.loading);
-        show(el.body);
-        applyPlacement();
-        refreshScrollBtn();     // 版面出現了,重算浮鈕狀態
-        return loadDesigns();
-      })
-      .then(function () { refreshScrollBtn(); })
-      .catch(function (err) { fail(err.message); });
 
     // 事件
     el.designGrid.addEventListener('click', function (e) {
@@ -517,8 +717,58 @@
     el.reset.addEventListener('click', resetPlacement);
     el.submit.addEventListener('click', onSubmit);
 
+    // 送禮模式的事件
+    el.frames.addEventListener('click', function (e) {
+      var b = e.target.closest('.dz-frame');
+      if (b) pickFrame(b.dataset.nid);
+    });
+    el.fulfill.addEventListener('click', function (e) {
+      var b = e.target.closest('.dz-seg-btn');
+      if (b) setFulfillment(b.dataset.f);
+    });
+    el.recipMode.addEventListener('click', function (e) {
+      var b = e.target.closest('.dz-seg-btn');
+      if (b) setRecipMode(b.dataset.m);
+    });
+    el.copy.addEventListener('click', function () {
+      var url = el.claimUrl.value;
+      var done = function () {
+        el.copy.textContent = '已複製';
+        setTimeout(function () { el.copy.textContent = '複製'; }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done, function () { el.claimUrl.select(); });
+      } else {
+        el.claimUrl.select();
+      }
+    });
+
     bindDrag();
     bindScrollBtn();
+  }
+
+  /* 送禮模式:刻圖已由市集帶進來,眼鏡要在這頁挑 */
+  function startGiftMode(presetDesign) {
+    document.querySelector('.dz-title').textContent = '把這張刻圖送給朋友';
+    document.querySelector('.dz-sub').textContent =
+      '選一副眼鏡、決定刻圖位置,填好要送給誰就完成。';
+    el.submit.textContent = '建 立 禮 物';
+    el.noteText.textContent =
+      '此為示意畫面。實際雷刻位置會在門市與收禮人再次確認,金額以商城結帳為準。';
+
+    hide(el.loading);
+    show(el.body);
+    show(el.frameCard);
+    show(el.giftCard);
+    setFulfillment('store');
+    setRecipMode('link');
+    applyPlacement();
+
+    Promise.all([loadFrames(), loadDesigns()]).then(function () {
+      if (presetDesign) pickDesign(presetDesign);
+      refreshSubmit();
+      refreshScrollBtn();
+    });
   }
 
   if (document.readyState === 'loading') {

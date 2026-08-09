@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/design.css?v=20260810-meta2">
+  <link rel="stylesheet" href="css/design.css?v=20260810-gift">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -83,6 +83,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="dz-specs" id="dzSpecs"></div>
       </section>
 
+      <!-- 選眼鏡(僅送禮模式:從刻圖市集進來時還沒有商品) -->
+      <section class="dz-card dz-card--frames" id="dzFrameCard" style="display:none">
+        <h2 class="dz-card-h">選一副眼鏡</h2>
+        <div class="dz-frames" id="dzFrames">
+          <p class="dz-empty">載入商品中…</p>
+        </div>
+      </section>
+
       <!-- 刻圖 -->
       <section class="dz-card dz-card--design">
         <h2 class="dz-card-h">選一張刻圖</h2>
@@ -121,13 +129,58 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="dz-reset" id="dzReset"><i class="fa-solid fa-rotate-left"></i> 回到預設位置</button>
       </section>
 
+      <!-- 送禮設定(僅送禮模式) -->
+      <section class="dz-card" id="dzGiftCard" style="display:none">
+        <h2 class="dz-card-h">送給誰</h2>
+
+        <div class="dz-label">要怎麼給對方</div>
+        <div class="dz-seg" id="dzFulfill">
+          <button class="dz-seg-btn on" type="button" data-f="store">門市兌換</button>
+          <button class="dz-seg-btn" type="button" data-f="ship">宅配到府</button>
+        </div>
+        <p class="dz-seg-note" id="dzFulfillNote"></p>
+
+        <div class="dz-label">收禮人</div>
+        <div class="dz-seg" id="dzRecipMode">
+          <button class="dz-seg-btn on" type="button" data-m="link">產生領取連結</button>
+          <button class="dz-seg-btn" type="button" data-m="member">指定會員</button>
+        </div>
+
+        <div class="dz-row" id="dzRecipKeyRow" style="display:none">
+          <label class="dz-label" for="dzRecipKey">對方的會員編號或手機</label>
+          <input class="dz-input" id="dzRecipKey" type="text" maxlength="40" autocomplete="off">
+        </div>
+        <div class="dz-row">
+          <label class="dz-label" for="dzRecipLabel">怎麼稱呼對方（選填）</label>
+          <input class="dz-input" id="dzRecipLabel" type="text" maxlength="20" placeholder="例:小美">
+        </div>
+        <div class="dz-row">
+          <label class="dz-label" for="dzMessage">祝福語（選填）</label>
+          <textarea class="dz-input dz-textarea" id="dzMessage" maxlength="300" rows="3"
+                    placeholder="生日快樂,看到這張圖就想到你"></textarea>
+        </div>
+      </section>
+
       <div class="dz-note">
         <i class="fa-solid fa-circle-info"></i>
-        <span>此為示意畫面。實際雷刻位置會在門市與您再次確認,刻圖費用以商城結帳金額為準。</span>
+        <span id="dzNoteText">此為示意畫面。實際雷刻位置會在門市與您再次確認,刻圖費用以商城結帳金額為準。</span>
       </div>
 
+      <p class="dz-form-err" id="dzFormErr" style="display:none"></p>
       <button class="dz-btn dz-btn--pri" id="dzSubmit" disabled>加 入 購 物 車</button>
       <p class="dz-submit-hint" id="dzSubmitHint">請先選一張刻圖</p>
+
+      <!-- 送禮完成 -->
+      <section class="dz-card dz-result" id="dzResult" style="display:none">
+        <i class="fa-solid fa-circle-check dz-result-ico"></i>
+        <h2 class="dz-card-h">禮物已建立</h2>
+        <p class="dz-result-text" id="dzResultText"></p>
+        <div class="dz-link-row" id="dzLinkRow" style="display:none">
+          <input class="dz-input" id="dzClaimUrl" readonly>
+          <button class="dz-btn dz-btn--pri" id="dzCopy" type="button">複製</button>
+        </div>
+        <a class="dz-btn dz-btn--ghost" href="member-portal.html">到禮物中心查看</a>
+      </section>
 
     </div>
   </div>
@@ -146,6 +199,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/auth.js?v=20260809-nokey"></script>
 <script src="js/supabase.js?v=20260513-2300"></script>
 <script src="js/layout.js?v=20260513-2300"></script>
-<script src="js/design.js?v=20260810-meta"></script>
+<script src="js/design.js?v=20260810-gift"></script>
 </body>
 </html>
