@@ -27,7 +27,10 @@
     // 預設落點:鏡片右上。以商品圖寬度為單位。
     DEF: { lens: 'right', scale: 0.12, x: 0.68, y: 0.38 },
     // 切到左鏡片時,水平位置以圖片中線鏡射
-    LEFT_X: 0.32
+    LEFT_X: 0.32,
+    // 刻圖先只顯示這麼多,其餘收在「展開全部」後面。
+    // 目前有 300 張以上,全開會把右欄拉得又臭又長,選商品的人根本捲不到底。
+    DESIGN_PREVIEW: 8
   };
 
   var State = {
@@ -37,6 +40,7 @@
     specTitle: '',
     designs: [],
     design: null,
+    designsExpanded: false,
     lens: CONFIG.DEF.lens,
     scale: CONFIG.DEF.scale,
     x: CONFIG.DEF.x,
@@ -202,10 +206,21 @@
 
     if (!list.length) {
       el.designGrid.innerHTML = '<p class="dz-empty">找不到符合的刻圖</p>';
+      hide(el.more);
       return;
     }
 
-    el.designGrid.innerHTML = list.slice(0, 120).map(function (d) {
+    // 已選中的那張一定要在畫面上,否則收合後使用者會看不到自己選了什麼
+    var shown = list;
+    if (!State.designsExpanded && list.length > CONFIG.DESIGN_PREVIEW) {
+      shown = list.slice(0, CONFIG.DESIGN_PREVIEW);
+      if (State.design && !shown.some(function (d) { return d.id === State.design.id; })) {
+        var picked = list.find(function (d) { return d.id === State.design.id; });
+        if (picked) shown = [picked].concat(shown.slice(0, CONFIG.DESIGN_PREVIEW - 1));
+      }
+    }
+
+    el.designGrid.innerHTML = shown.map(function (d) {
       var u = designUrl(d);
       var on = State.design && State.design.id === d.id ? ' on' : '';
       return '<button class="dz-design' + on + '" data-id="' + esc(d.id) + '" ' +
@@ -214,6 +229,15 @@
                 : '<i class="fa-regular fa-image"></i>') +
              '</button>';
     }).join('');
+
+    if (list.length <= CONFIG.DESIGN_PREVIEW) {
+      hide(el.more);
+    } else {
+      show(el.more);
+      el.more.innerHTML = State.designsExpanded
+        ? '<i class="fa-solid fa-chevron-up"></i> 收合'
+        : '<i class="fa-solid fa-chevron-down"></i> 展開全部 ' + list.length + ' 張';
+    }
   }
 
   function pickDesign(id) {
@@ -301,6 +325,35 @@
     el.overlay.addEventListener('pointercancel', end);
   }
 
+  /* ---------- 滑到底浮鈕 ----------
+     刻圖展開後右欄會很長,「加入購物車」在最底部。
+     行為比照刻圖市集:捲一段後浮出,到底後翻轉成「回到頂部」。 */
+  function bindScrollBtn() {
+    var btn = el.scroll;
+    var target = el.submit;
+    if (!btn || !target) return;
+
+    var label = btn.querySelector('.dz-scroll-label');
+
+    function onScroll() {
+      btn.classList.toggle('show', window.scrollY > 240);
+      var atBottom = target.getBoundingClientRect().top < window.innerHeight * 0.9;
+      btn.classList.toggle('at-bottom', atBottom);
+      if (label) label.textContent = atBottom ? '回到頂部' : '加入購物車';
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('at-bottom')) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
   /* ---------- 送出 ---------- */
 
   function refreshSubmit() {
@@ -366,7 +419,8 @@
       body: $('dzBody'),
       stage: $('dzStage'), productImg: $('dzProductImg'), overlay: $('dzOverlay'),
       productName: $('dzProductName'), productPrice: $('dzProductPrice'), specs: $('dzSpecs'),
-      designSearch: $('dzDesignSearch'), designGrid: $('dzDesignGrid'),
+      designSearch: $('dzDesignSearch'), designGrid: $('dzDesignGrid'), more: $('dzMore'),
+      scroll: $('dzScroll'),
       placeCard: $('dzPlaceCard'), lens: $('dzLens'),
       scale: $('dzScale'), x: $('dzX'), y: $('dzY'),
       scaleVal: $('dzScaleVal'), xVal: $('dzXVal'), yVal: $('dzYVal'),
@@ -397,6 +451,12 @@
     });
     el.designSearch.addEventListener('input', function () {
       State.filter = el.designSearch.value;
+      // 換關鍵字就收回去,不然搜完還是一整片
+      State.designsExpanded = false;
+      renderDesigns();
+    });
+    el.more.addEventListener('click', function () {
+      State.designsExpanded = !State.designsExpanded;
       renderDesigns();
     });
     el.lens.addEventListener('click', function (e) {
@@ -416,6 +476,7 @@
     el.submit.addEventListener('click', onSubmit);
 
     bindDrag();
+    bindScrollBtn();
   }
 
   if (document.readyState === 'loading') {

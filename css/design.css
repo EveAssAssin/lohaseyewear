@@ -159,12 +159,12 @@
   color:var(--text-muted); font-size:13px; pointer-events:none;
 }
 
+/* 預設只出 8 張,由 JS 控制筆數,所以這裡不再需要 max-height + 捲軸。
+   卡在一個小捲動區裡選圖比整片攤開更難用。 */
 .dz-design-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill, minmax(72px, 1fr));
   gap:8px;
-  max-height:300px;
-  overflow-y:auto;
 }
 .dz-design{
   aspect-ratio:1/1;
@@ -189,6 +189,22 @@
   text-align:center;
   font-size:13px; color:var(--text-muted);
 }
+
+/* 展開全部 / 收合 */
+.dz-more{
+  width:100%;
+  margin-top:10px;
+  padding:9px;
+  border:1px dashed var(--lohas-bd);
+  background:transparent;
+  color:var(--text-sub);
+  border-radius:var(--r-sm);
+  font-family:inherit; font-size:12.5px; letter-spacing:.5px;
+  cursor:pointer; transition:all .18s;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+}
+.dz-more:hover{ border-color:var(--lohas-light); color:var(--lohas-brand) }
+.dz-more i{ font-size:10px }
 
 /* ---- 鏡片切換 ---- */
 .dz-lens{ display:flex; gap:8px; margin-bottom:16px }
@@ -263,6 +279,57 @@
   font-size:12px; color:var(--text-muted); letter-spacing:.3px;
 }
 
+/* ---- 滑到底浮鈕(規格比照刻圖市集的 .scroll-to-join) ---- */
+.dz-scroll{
+  position:fixed;
+  right:24px;
+  bottom:32px;
+  z-index:150;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:var(--lohas-brand);
+  color:#fff;
+  padding:12px 18px 12px 16px;
+  border:0;
+  border-radius:var(--r-pill);
+  font-family:inherit;
+  font-size:12px;
+  letter-spacing:1px;
+  font-weight:600;
+  box-shadow:0 8px 24px rgba(80,66,45,0.25);
+  cursor:pointer;
+  opacity:0;
+  transform:translateY(20px);
+  pointer-events:none;
+  transition:opacity .3s ease, transform .3s ease, background .2s ease;
+}
+.dz-scroll.show{
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:auto;
+}
+.dz-scroll:hover{
+  background:var(--lohas-hover);
+  transform:translateY(-2px);
+}
+.dz-scroll i{
+  font-size:11px;
+  animation:dzScrollHint 1.8s ease-in-out infinite;   /* 上下擺動,引導下捲 */
+}
+.dz-scroll-label{ white-space:nowrap }
+
+/* 到底之後翻轉成「回到頂部」 */
+.dz-scroll.at-bottom i{
+  transform:rotate(180deg);
+  animation:none;
+}
+
+@keyframes dzScrollHint{
+  0%, 100%{ transform:translateY(0) }
+  50%{ transform:translateY(3px) }
+}
+
 /* ---- RWD ---- */
 @media (max-width:900px){
   .dz-main{ padding:90px 16px 60px }
@@ -280,7 +347,19 @@
     margin-bottom:16px;
   }
   .dz-stage{ aspect-ratio:4/3 }
-  .dz-design-grid{ max-height:240px }
+
+  /* 手機縮成圓鈕,跟刻圖市集一致 */
+  .dz-scroll{
+    right:16px;
+    bottom:20px;
+    width:44px;
+    height:44px;
+    padding:0;
+    border-radius:50%;
+    justify-content:center;
+  }
+  .dz-scroll-label{ display:none }
+  .dz-scroll i{ font-size:14px }
 }
 
 @media (max-width:480px){
