@@ -409,6 +409,14 @@
     if (m === 'member') show(el.recipKeyRow); else hide(el.recipKeyRow);
   }
 
+  /* 這一欄只認號碼(會員編號或手機)。填名字系統比對不到人,
+     禮物會退回連結領取 —— 不擋,但要當場講,不然使用者以為送到對方帳號了。 */
+  function checkRecipKey() {
+    var v = (el.recipKey.value || '').trim();
+    var looksLikeName = v && /[^\d\s\-+()]/.test(v);
+    el.recipKeyWarn.style.display = looksLikeName ? '' : 'none';
+  }
+
   function showFormErr(msg) {
     el.formErr.textContent = msg;
     show(el.formErr);
@@ -655,6 +663,7 @@
       frameCard: $('dzFrameCard'), frames: $('dzFrames'),
       giftCard: $('dzGiftCard'), fulfill: $('dzFulfill'), fulfillNote: $('dzFulfillNote'),
       recipMode: $('dzRecipMode'), recipKeyRow: $('dzRecipKeyRow'), recipKey: $('dzRecipKey'),
+      recipKeyWarn: $('dzRecipKeyWarn'),
       recipLabel: $('dzRecipLabel'), message: $('dzMessage'),
       formErr: $('dzFormErr'), noteText: $('dzNoteText'),
       result: $('dzResult'), resultText: $('dzResultText'),
@@ -730,6 +739,7 @@
       var b = e.target.closest('.dz-seg-btn');
       if (b) setRecipMode(b.dataset.m);
     });
+    el.recipKey.addEventListener('input', checkRecipKey);
     el.copy.addEventListener('click', function () {
       var url = el.claimUrl.value;
       var done = function () {

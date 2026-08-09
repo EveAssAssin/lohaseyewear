@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/design.css?v=20260810-gift">
+  <link rel="stylesheet" href="css/design.css?v=20260810-hint">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -147,12 +147,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
 
         <div class="dz-row" id="dzRecipKeyRow" style="display:none">
-          <label class="dz-label" for="dzRecipKey">對方的會員編號或手機</label>
-          <input class="dz-input" id="dzRecipKey" type="text" maxlength="40" autocomplete="off">
+          <label class="dz-label" for="dzRecipKey">對方的<b>樂活會員編號</b>或<b>手機號碼</b></label>
+          <input class="dz-input" id="dzRecipKey" type="text" maxlength="40"
+                 inputmode="numeric" autocomplete="off"
+                 placeholder="例:28095198 或 0912345678">
+          <p class="dz-field-hint">這裡只認號碼。查不到對應的會員也沒關係,系統會自動改用領取連結,你再自己傳給對方。</p>
+          <p class="dz-field-warn" id="dzRecipKeyWarn" style="display:none">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            這看起來像名字。名字比對不到會員,請填號碼;想寫稱呼請用下面那欄。
+          </p>
         </div>
         <div class="dz-row">
           <label class="dz-label" for="dzRecipLabel">怎麼稱呼對方（選填）</label>
-          <input class="dz-input" id="dzRecipLabel" type="text" maxlength="20" placeholder="例:小美">
+          <input class="dz-input" id="dzRecipLabel" type="text" maxlength="20" placeholder="例:小美、黃總">
+          <p class="dz-field-hint">會顯示在領取頁,提醒點到連結的人「這份是要給誰的」。</p>
         </div>
         <div class="dz-row">
           <label class="dz-label" for="dzMessage">祝福語（選填）</label>
@@ -199,6 +207,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/auth.js?v=20260809-nokey"></script>
 <script src="js/supabase.js?v=20260513-2300"></script>
 <script src="js/layout.js?v=20260513-2300"></script>
-<script src="js/design.js?v=20260810-gift"></script>
+<script src="js/design.js?v=20260810-hint"></script>
 </body>
 </html>

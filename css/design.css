@@ -384,6 +384,22 @@
   resize:vertical;
 }
 
+/* 欄位底下的說明與提醒 */
+.dz-field-hint{
+  margin:7px 0 0;
+  font-size:12px; line-height:1.7; letter-spacing:.2px;
+  color:var(--text-muted);
+}
+.dz-field-warn{
+  margin:7px 0 0;
+  padding:8px 11px;
+  background:var(--warn-bg);
+  color:var(--warn);
+  border-radius:var(--r-sm);
+  font-size:12px; line-height:1.7; letter-spacing:.2px;
+}
+.dz-field-warn i{ margin-right:5px }
+
 .dz-form-err{
   margin:0 0 12px;
   padding:11px 14px;
