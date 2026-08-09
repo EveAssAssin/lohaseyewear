@@ -1,0 +1,187 @@
+/* =============================================================
+   LOHAS · 領取禮物 (gift-claim.html)
+   -------------------------------------------------------------
+   命名空間: .gc
+   依賴: lohas-tokens.css / lohas-base.css / lohas-components.css
+   色彩一律沿用站上 token,不另定義新色
+   ============================================================= */
+
+.gc{
+  background:var(--bg-warm);
+  color:var(--text-main);
+}
+
+.gc-main{
+  max-width:620px;
+  margin:0 auto;
+  padding:96px 24px 80px;
+}
+
+/* ---- 載入 / 錯誤 ---- */
+.gc-state{
+  text-align:center;
+  padding:60px 20px;
+}
+.gc-state-ico{
+  font-size:36px;
+  color:var(--lohas-light);
+  margin-bottom:18px;
+}
+.gc-state p{
+  font-size:15px; line-height:1.85; letter-spacing:.5px;
+  color:var(--text-sub);
+  margin:0 0 24px;
+}
+
+/* ---- 頁首 ---- */
+.gc-head{ text-align:center; margin-bottom:28px }
+.gc-eyebrow{
+  font-size:11px; letter-spacing:3px; font-weight:600;
+  color:var(--lohas-light);
+  margin:0 0 12px;
+}
+.gc-title{
+  font-size:26px; font-weight:700; letter-spacing:2px;
+  color:var(--lohas-brand);
+  margin:0 0 10px;
+}
+.gc-from{
+  font-size:14px; letter-spacing:.5px;
+  color:var(--text-sub);
+  margin:0;
+}
+
+/* ---- 禮物卡 ---- */
+.gc-card{
+  background:#fff;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  margin-bottom:20px;
+}
+.gc-visual{
+  width:100%;
+  aspect-ratio:4/3;
+  background:var(--bg-soft) center/cover no-repeat;
+}
+.gc-visual.is-empty{
+  display:flex; align-items:center; justify-content:center;
+  font-size:44px; color:var(--lohas-light);
+}
+.gc-info{ padding:22px 24px }
+
+.gc-item,
+.gc-design{
+  display:flex; align-items:baseline; gap:12px;
+  padding:9px 0;
+  border-bottom:1px dashed var(--lohas-bd);
+}
+.gc-item:empty,
+.gc-design:empty{ display:none }
+.gc-design{ border-bottom:0 }
+
+.gc-item-label{
+  flex-shrink:0;
+  font-size:12px; letter-spacing:1px;
+  color:var(--text-muted);
+}
+.gc-item-name{
+  font-size:15px; font-weight:600; letter-spacing:.3px;
+  color:var(--lohas-brand);
+}
+
+.gc-msg{
+  margin:16px 0 0;
+  padding:16px 18px;
+  background:var(--bg-soft);
+  border-radius:var(--r-sm);
+  font-size:14px; line-height:1.9; letter-spacing:.5px;
+  color:var(--text-sub);
+  border:0;
+}
+.gc-msg::before{ content:'「' }
+.gc-msg::after{ content:'」' }
+
+/* ---- 面板(登入 / 表單 / 完成) ---- */
+.gc-panel{
+  background:#fff;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-lg);
+  padding:24px;
+}
+.gc-panel--done{ text-align:center }
+.gc-done-ico{
+  font-size:34px;
+  color:var(--status-approved);
+  margin-bottom:14px;
+}
+.gc-panel-h{
+  font-size:17px; font-weight:700; letter-spacing:1px;
+  color:var(--lohas-brand);
+  margin:0 0 8px;
+}
+.gc-panel-text{
+  font-size:13.5px; line-height:1.85; letter-spacing:.3px;
+  color:var(--text-sub);
+  margin:0 0 18px;
+}
+
+/* ---- 表單 ---- */
+.gc-row{ margin-bottom:14px }
+.gc-label{
+  display:block;
+  font-size:13px; letter-spacing:.5px;
+  color:var(--text-sub);
+  margin-bottom:7px;
+}
+.gc-input{
+  width:100%;
+  height:44px;
+  padding:0 14px;
+  border:1px solid var(--lohas-bd);
+  border-radius:var(--r-sm);
+  background:#fff;
+  font-family:inherit; font-size:14px;
+  color:var(--text-main);
+  transition:border-color .18s;
+}
+.gc-input:focus{
+  outline:none;
+  border-color:var(--lohas-brand);
+}
+.gc-form-err{
+  margin:0 0 14px;
+  padding:10px 14px;
+  background:var(--status-rejected-bg);
+  color:var(--status-rejected);
+  border-radius:var(--r-sm);
+  font-size:13px; line-height:1.7; letter-spacing:.3px;
+}
+
+/* ---- 按鈕 ---- */
+.gc-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:100%;
+  padding:13px 24px;
+  border-radius:var(--r-pill);
+  border:1px solid transparent;
+  font-family:inherit; font-size:14px; font-weight:600; letter-spacing:2px;
+  cursor:pointer; transition:all .2s;
+  text-decoration:none;
+}
+.gc-btn--pri{ background:var(--lohas-brand); color:#fff }
+.gc-btn--pri:hover{ background:var(--lohas-hover) }
+.gc-btn--pri:disabled{ opacity:.5; cursor:not-allowed }
+.gc-btn--ghost{
+  background:transparent; color:var(--text-sub);
+  border-color:var(--lohas-bd);
+}
+.gc-btn--ghost:hover{ border-color:var(--lohas-brand); color:var(--lohas-brand) }
+
+/* ---- RWD ---- */
+@media (max-width:480px){
+  .gc-main{ padding:72px 16px 56px }
+  .gc-title{ font-size:22px }
+  .gc-info{ padding:18px 18px }
+  .gc-panel{ padding:20px 18px }
+}

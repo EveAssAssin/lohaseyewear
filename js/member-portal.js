@@ -2548,6 +2548,7 @@
     if (page === 'analytics') loadAnalytics();
     if (page === 'earnings') loadEarnings();
     if (page === 'my-coupons' && window.LohasCoupons) window.LohasCoupons.load();
+    if (page === 'gifts' && window.LohasGifts) window.LohasGifts.load();
 
     // 進入分享頁 → 隱藏 sidebar 紅標 (已看過)
     if (page === 'shares') {

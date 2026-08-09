@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MSNPQ36L');</script>
+<!-- End Google Tag Manager -->
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>領取禮物 · LOHAS 樂活眼鏡</title>
+  <meta name="description" content="有人送了你一份樂活眼鏡的禮物,登入會員即可領取。">
+  <!-- 領取連結不該被搜尋引擎收錄 -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/gift-claim.css?v=20260809-gift">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <script src="js/analytics.js?v=20260610-booking"></script>
+</head>
+<body class="gc">
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MSNPQ36L"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<div id="site-header"></div>
+
+<main class="gc-main">
+
+  <!-- 載入中 -->
+  <div class="gc-state" id="gcLoading">
+    <i class="fa-solid fa-gift gc-state-ico"></i>
+    <p>正在打開禮物…</p>
+  </div>
+
+  <!-- 錯誤 / 不可領取 -->
+  <div class="gc-state" id="gcError" style="display:none">
+    <i class="fa-regular fa-face-frown gc-state-ico"></i>
+    <p id="gcErrorText"></p>
+    <a class="gc-btn gc-btn--ghost" href="index.html">回到首頁</a>
+  </div>
+
+  <!-- 禮物本體 -->
+  <div class="gc-wrap" id="gcBody" style="display:none">
+
+    <div class="gc-head">
+      <p class="gc-eyebrow">A · G I F T · F O R · Y O U</p>
+      <h1 class="gc-title" id="gcTitle">有人送了你一份禮物</h1>
+      <p class="gc-from" id="gcFrom"></p>
+    </div>
+
+    <div class="gc-card">
+      <div class="gc-visual" id="gcVisual"></div>
+      <div class="gc-info">
+        <div class="gc-item" id="gcItem"></div>
+        <div class="gc-design" id="gcDesign"></div>
+        <blockquote class="gc-msg" id="gcMsg" style="display:none"></blockquote>
+      </div>
+    </div>
+
+    <!-- 尚未登入 -->
+    <div class="gc-panel" id="gcNeedLogin" style="display:none">
+      <p class="gc-panel-text">登入樂活會員即可領取這份禮物。還不是會員也沒關係,註冊後回到這個連結就能領。</p>
+      <button class="gc-btn gc-btn--pri" id="gcLoginBtn">登 入 領 取</button>
+    </div>
+
+    <!-- 收件資訊 -->
+    <form class="gc-panel" id="gcForm" style="display:none">
+      <h2 class="gc-panel-h">填寫收件資訊</h2>
+      <p class="gc-panel-text">送禮的人看不到你填的地址,只會知道你已經領取。</p>
+
+      <div class="gc-row">
+        <label class="gc-label" for="gcName">收件人姓名</label>
+        <input class="gc-input" id="gcName" type="text" maxlength="60" autocomplete="name" required>
+      </div>
+      <div class="gc-row">
+        <label class="gc-label" for="gcPhone">聯絡電話</label>
+        <input class="gc-input" id="gcPhone" type="tel" maxlength="30" autocomplete="tel" required>
+      </div>
+      <div class="gc-row">
+        <label class="gc-label" for="gcAddr">收件地址</label>
+        <input class="gc-input" id="gcAddr" type="text" maxlength="200" autocomplete="street-address" required>
+      </div>
+
+      <p class="gc-form-err" id="gcFormErr" style="display:none"></p>
+      <button class="gc-btn gc-btn--pri" id="gcSubmit" type="submit">確 認 領 取</button>
+    </form>
+
+    <!-- 已領取 -->
+    <div class="gc-panel gc-panel--done" id="gcDone" style="display:none">
+      <i class="fa-solid fa-circle-check gc-done-ico"></i>
+      <h2 class="gc-panel-h">已完成領取</h2>
+      <p class="gc-panel-text" id="gcDoneText">我們會盡快為你出貨,出貨後會另行通知。</p>
+      <a class="gc-btn gc-btn--ghost" href="member-portal.html">到禮物中心查看</a>
+    </div>
+
+  </div>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="js/utils.js?v=20260513-2300"></script>
+<script src="js/auth.js?v=20260808-session"></script>
+<script src="js/layout.js?v=20260513-2300"></script>
+<script src="js/gift-claim.js?v=20260809-gift"></script>
+</body>
+</html>

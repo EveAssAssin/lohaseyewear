@@ -3166,3 +3166,92 @@ body {
   .mp .cp-foot{ align-items:stretch }
   .mp .cp-use{ width:100%; padding:11px 22px }
 }
+
+/* =============================================================
+   禮物中心 (gift-center)
+   -------------------------------------------------------------
+   狀態徽章沿用 .cp-badge(我的票券已定義的那組),不重複造輪子
+   ============================================================= */
+
+.mp .gf-list{ display:flex; flex-direction:column; gap:10px }
+
+.mp .gf-card{
+  display:flex; align-items:stretch;
+  border:1px solid var(--lohas-line);
+  border-radius:10px;
+  background:#fff;
+  overflow:hidden;
+  transition:border-color .18s;
+}
+.mp .gf-card:hover{ border-color:var(--lohas-light-brown) }
+
+/* 左側縮圖 */
+.mp .gf-thumb{
+  flex-shrink:0;
+  width:118px;
+  background:var(--lohas-tip) center/cover no-repeat;
+  border-right:1px solid var(--lohas-line);
+}
+.mp .gf-thumb--empty{
+  display:flex; align-items:center; justify-content:center;
+  color:var(--lohas-mute); font-size:26px;
+}
+
+.mp .gf-body{ flex:1; min-width:0; padding:16px 18px }
+
+.mp .gf-head{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:10px; margin-bottom:6px;
+}
+.mp .gf-title{
+  margin:0; font-size:15px; font-weight:700; letter-spacing:.3px;
+  color:var(--lohas-brown);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+.mp .gf-msg{
+  margin:0 0 8px;
+  font-size:13px; line-height:1.75; letter-spacing:.3px;
+  color:var(--lohas-sub);
+}
+
+.mp .gf-meta{
+  display:flex; flex-wrap:wrap; gap:14px;
+  font-size:12px; color:var(--lohas-mute); letter-spacing:.3px;
+}
+.mp .gf-meta i{ margin-right:5px }
+
+.mp .gf-foot{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; flex-wrap:wrap;
+  margin-top:12px; padding-top:12px;
+  border-top:1px dashed var(--lohas-line);
+}
+.mp .gf-hint{
+  font-size:12px; color:var(--lohas-mute); letter-spacing:.3px;
+}
+.mp .gf-hint i{ margin-right:5px }
+
+.mp .gf-btn{
+  padding:9px 20px;
+  border-radius:999px;
+  border:1px solid transparent;
+  font-family:inherit; font-size:13px; font-weight:600; letter-spacing:1px;
+  cursor:pointer; transition:all .18s;
+  display:inline-flex; align-items:center; gap:7px;
+  text-decoration:none;
+}
+.mp .gf-btn--pri{ background:var(--lohas-brown); color:#fff }
+.mp .gf-btn--pri:hover{ background:var(--lohas-hover, #6B5B45) }
+.mp .gf-btn--ghost{
+  background:#fff; color:var(--lohas-sub);
+  border-color:var(--lohas-line);
+}
+.mp .gf-btn--ghost:hover{ border-color:var(--lohas-brown); color:var(--lohas-brown) }
+
+@media (max-width:768px){
+  .mp .gf-thumb{ width:92px }
+  .mp .gf-body{ padding:14px 16px }
+  .mp .gf-foot{ align-items:stretch }
+  .mp .gf-btn{ width:100%; justify-content:center; padding:11px 20px }
+}
