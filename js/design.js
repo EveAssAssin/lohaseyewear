@@ -116,6 +116,13 @@
       el.productPrice.innerHTML = price +
         '<span class="dz-price-note">刻圖費用另計,以結帳金額為準</span>';
 
+      // 手機版疊在預覽上的標示(桌機由 CSS 隱藏)
+      el.stageMeta.innerHTML =
+        '<span class="dz-stage-meta-name">' + esc(p.title || '') + '</span>' +
+        '<span class="dz-stage-meta-price">NT$' +
+        money(p.offer_price != null && p.offer_price !== '' ? p.offer_price : p.price) +
+        '</span>';
+
       if (p.image) el.productImg.src = p.image;
       renderSpecs(p.specifications || []);
       return p;
@@ -139,6 +146,9 @@
 
   function renderSpecs(tree) {
     var leaves = flattenSpecs(tree, '', []);
+    // 沒有規格時,那張卡就只剩品名價格 —— 手機版靠這個 class 把它整張收掉,
+    // 資訊改用預覽上的說明條呈現
+    el.productCard.classList.toggle('has-specs', leaves.length > 0);
     if (!leaves.length) { el.specs.innerHTML = ''; return; }
 
     el.specs.innerHTML =
@@ -347,6 +357,22 @@
       var atBottom = target.getBoundingClientRect().top < window.innerHeight * 0.9;
       btn.classList.toggle('at-bottom', atBottom);
       if (label) label.textContent = atBottom ? '回到頂部' : '加入購物車';
+
+      releaseSticky();
+    }
+
+    /* 手機版預覽是 sticky,會一路釘到 .dz-wrap 底部 ——
+       也就是會蓋住最後的「加入購物車」。
+       過了「刻在哪裡」之後已經沒有東西需要對照預覽,就讓它跟著捲走。 */
+    function releaseSticky() {
+      if (!el.left || !el.note) return;
+      if (window.innerWidth > 900) {          // 桌機兩欄並排,不會互相遮蔽
+        el.left.classList.remove('is-unstuck');
+        return;
+      }
+      var pinnedBottom = 70 + el.stage.offsetHeight;   // 70 = 固定 header 高度
+      el.left.classList.toggle('is-unstuck',
+        el.note.getBoundingClientRect().top < pinnedBottom);
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -428,6 +454,9 @@
       loading: $('dzLoading'), error: $('dzError'), errorText: $('dzErrorText'),
       body: $('dzBody'),
       stage: $('dzStage'), productImg: $('dzProductImg'), overlay: $('dzOverlay'),
+      stageMeta: $('dzStageMeta'),
+      left: document.querySelector('.dz-left'), note: document.querySelector('.dz-note'),
+      productCard: document.querySelector('.dz-card--product'),
       productName: $('dzProductName'), productPrice: $('dzProductPrice'), specs: $('dzSpecs'),
       designSearch: $('dzDesignSearch'), designGrid: $('dzDesignGrid'), more: $('dzMore'),
       scroll: $('dzScroll'),

@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/design.css?v=20260810-full">
+  <link rel="stylesheet" href="css/design.css?v=20260810-meta">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -61,6 +61,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <img class="dz-product-img" id="dzProductImg" alt="">
         <!-- 刻圖疊層,可拖曳 -->
         <img class="dz-overlay" id="dzOverlay" alt="" draggable="false" style="display:none">
+        <!-- 手機版的商品標示:直接疊在預覽上,省掉一張只寫品名價格的卡片 -->
+        <div class="dz-stage-meta" id="dzStageMeta"></div>
       </div>
       <p class="dz-stage-hint" id="dzStageHint">
         <i class="fa-solid fa-hand-pointer"></i> 直接拖曳刻圖調整位置,或用右側滑桿微調
@@ -143,6 +145,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/auth.js?v=20260809-nokey"></script>
 <script src="js/supabase.js?v=20260513-2300"></script>
 <script src="js/layout.js?v=20260513-2300"></script>
-<script src="js/design.js?v=20260809-more2"></script>
+<script src="js/design.js?v=20260810-meta"></script>
 </body>
 </html>
