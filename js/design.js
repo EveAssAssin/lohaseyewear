@@ -328,6 +328,8 @@
   /* ---------- 滑到底浮鈕 ----------
      刻圖展開後右欄會很長,「加入購物車」在最底部。
      行為比照刻圖市集:捲一段後浮出,到底後翻轉成「回到頂部」。 */
+  var refreshScrollBtn = function () {};
+
   function bindScrollBtn() {
     var btn = el.scroll;
     var target = el.submit;
@@ -336,6 +338,11 @@
     var label = btn.querySelector('.dz-scroll-label');
 
     function onScroll() {
+      // 商品還沒載入時 #dzBody 是 display:none,rect 全為 0,
+      // 這時算出來的 atBottom 是假的(會一載入就顯示「回到頂部」)。
+      // 等版面真的存在再算。
+      if (!target.offsetParent) return;
+
       btn.classList.toggle('show', window.scrollY > 240);
       var atBottom = target.getBoundingClientRect().top < window.innerHeight * 0.9;
       btn.classList.toggle('at-bottom', atBottom);
@@ -343,6 +350,9 @@
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    // 展開刻圖、選規格都會改變頁面高度,連帶影響按鈕狀態
+    window.addEventListener('resize', onScroll, { passive: true });
+    refreshScrollBtn = onScroll;
     onScroll();
 
     btn.addEventListener('click', function () {
@@ -440,8 +450,10 @@
         hide(el.loading);
         show(el.body);
         applyPlacement();
+        refreshScrollBtn();     // 版面出現了,重算浮鈕狀態
         return loadDesigns();
       })
+      .then(function () { refreshScrollBtn(); })
       .catch(function (err) { fail(err.message); });
 
     // 事件
@@ -458,6 +470,7 @@
     el.more.addEventListener('click', function () {
       State.designsExpanded = !State.designsExpanded;
       renderDesigns();
+      refreshScrollBtn();   // 展開後頁面變長,按鈕該重算
     });
     el.lens.addEventListener('click', function (e) {
       var b = e.target.closest('.dz-lens-btn');
