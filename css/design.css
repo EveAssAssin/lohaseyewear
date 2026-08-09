@@ -333,11 +333,41 @@
 /* ---- RWD ---- */
 @media (max-width:900px){
   .dz-main{ padding:90px 16px 60px }
+
+  /* 手機改單欄,並把 .dz-right 拆開(display:contents)讓它的卡片
+     變成 .dz-wrap 的直接子元素,才能用 order 重排。
+     目標順序:標題 → 商品 → 預覽 → 選刻圖 → 位置 → 提醒 → 按鈕
+     這樣「選一張刻圖」就緊貼在模擬圖下方。
+     .dz-right 本身只有 grid-area,沒有視覺樣式,拆開不影響外觀。 */
   .dz-wrap{
-    grid-template-columns:1fr;
-    grid-template-areas:"head" "left" "right";
+    display:flex;
+    flex-direction:column;
     gap:0;
   }
+  .dz-right{ display:contents }
+
+  .dz-head          { order:1 }
+  .dz-card--product { order:2 }
+  .dz-left          { order:3 }
+  .dz-card--design  { order:4 }
+  #dzPlaceCard      { order:5 }
+  .dz-note          { order:6 }
+  #dzSubmit         { order:7 }
+  .dz-submit-hint   { order:8 }
+
+  /* 商品資訊搬到最上面後,壓成一行,不要再佔掉預覽的空間 */
+  .dz-card--product{
+    padding:12px 16px;
+    margin-bottom:14px;
+  }
+  .dz-card--product .dz-card-h{ display:none }
+  .dz-card--product .dz-product{
+    display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 12px;
+  }
+  .dz-card--product .dz-product-name{ margin-bottom:0; font-size:14px }
+  .dz-card--product .dz-product-price b{ font-size:16px }
+  .dz-card--product .dz-price-note{ font-size:11px }
+  .dz-card--product .dz-specs{ margin-top:12px }
   /* 手機把預覽釘在上方,調整時看得到變化。
      top 是 header 高度(70px),不能設 0,否則會被 header 蓋住。 */
   .dz-left{
