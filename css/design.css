@@ -366,7 +366,8 @@
   }
   .dz-card--product .dz-product-name{ margin-bottom:0; font-size:14px }
   .dz-card--product .dz-product-price b{ font-size:16px }
-  .dz-card--product .dz-price-note{ font-size:11px }
+  /* 這句(刻圖費用另計)底部的 .dz-note 已經講過,手機不重複佔一行 */
+  .dz-card--product .dz-price-note{ display:none }
   .dz-card--product .dz-specs{ margin-top:12px }
   /* 手機把預覽釘在上方,調整時看得到變化。
      top 是 header 高度(70px),不能設 0,否則會被 header 蓋住。 */
