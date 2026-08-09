@@ -42,7 +42,8 @@
   gap:32px;
   align-items:start;
 }
-.ep-left{ position:sticky; top:20px }
+/* sticky 的 top 必須讓開固定 header(.main-header 高 70px) */
+.ep-left{ position:sticky; top:90px }
 
 /* ---- 預覽區 ---- */
 /* aspect-ratio 只是「還沒有影像」時的預設外框;
@@ -187,10 +188,11 @@
 
 /* ---- RWD ---- */
 @media (max-width:900px){
-  .ep-main{ padding:72px 16px 60px }
+  .ep-main{ padding:90px 16px 60px }
   .ep-wrap{ grid-template-columns:1fr; gap:20px }
+  /* top 是 header 高度(70px),不能設 0,否則預覽會滑到 header 底下 */
   .ep-left{
-    position:sticky; top:0; z-index:5;
+    position:sticky; top:70px; z-index:5;
     background:var(--bg-warm);
     padding-bottom:10px;
   }
@@ -199,8 +201,8 @@
 
 @media (max-width:480px){
   /* 手機的可用高度就這麼多,標題區每省一分都是預覽多一分。
-     這裡把頁首壓到最精簡,其餘視覺規格不動。 */
-  .ep-main{ padding:64px 16px 48px }
+     但 padding-top 不可低於 header 的 70px,否則標題會鑽到 header 底下。 */
+  .ep-main{ padding:86px 16px 48px }
   .ep-head{ margin-bottom:14px }
   .ep-back{ margin-bottom:8px; font-size:12.5px }
   .ep-title{ font-size:20px; margin-bottom:4px }

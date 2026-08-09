@@ -180,7 +180,8 @@
 
 /* ---- RWD ---- */
 @media (max-width:480px){
-  .gc-main{ padding:72px 16px 56px }
+  /* padding-top 不可低於固定 header 的 70px */
+  .gc-main{ padding:86px 16px 56px }
   .gc-title{ font-size:22px }
   .gc-info{ padding:18px 18px }
   .gc-panel{ padding:20px 18px }

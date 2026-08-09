@@ -36,7 +36,9 @@
   align-items:start;
 }
 .dz-head{ grid-area:head; margin-bottom:28px }
-.dz-left{ grid-area:left; position:sticky; top:20px }
+/* sticky 的 top 必須讓開固定 header(.main-header 高 70px),
+   設 0 的話捲動時內容會滑到 header 底下 */
+.dz-left{ grid-area:left; position:sticky; top:90px }
 .dz-right{ grid-area:right }
 
 .dz-title{
@@ -263,15 +265,16 @@
 
 /* ---- RWD ---- */
 @media (max-width:900px){
-  .dz-main{ padding:80px 16px 60px }
+  .dz-main{ padding:90px 16px 60px }
   .dz-wrap{
     grid-template-columns:1fr;
     grid-template-areas:"head" "left" "right";
     gap:0;
   }
-  /* 手機把預覽釘在上方,調整時看得到變化 */
+  /* 手機把預覽釘在上方,調整時看得到變化。
+     top 是 header 高度(70px),不能設 0,否則會被 header 蓋住。 */
   .dz-left{
-    position:sticky; top:0; z-index:5;
+    position:sticky; top:70px; z-index:5;
     background:var(--bg-warm);
     padding-bottom:10px;
     margin-bottom:16px;
@@ -281,7 +284,8 @@
 }
 
 @media (max-width:480px){
-  .dz-main{ padding:64px 16px 48px }
+  /* padding-top 不可低於 header 的 70px,否則標題會鑽到 header 底下 */
+  .dz-main{ padding:86px 16px 48px }
   .dz-title{ font-size:22px }
   .dz-head{ margin-bottom:18px }
   .dz-card{ padding:18px }
