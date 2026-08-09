@@ -185,3 +185,13 @@
   .gc-info{ padding:18px 18px }
   .gc-panel{ padding:20px 18px }
 }
+
+/* 收禮人稱呼提示:連結被轉傳時的第一道防線(社交層面的,不是技術的) */
+.gc-forwho{
+  padding:11px 14px;
+  background:var(--warn-bg);
+  color:var(--warn);
+  border-radius:var(--r-sm);
+  font-size:13px; line-height:1.75;
+}
+.gc-forwho i{ margin-right:6px }

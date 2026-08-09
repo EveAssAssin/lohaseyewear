@@ -82,9 +82,10 @@
       el.visual.innerHTML = '<i class="fa-solid fa-gift"></i>';
     }
 
+    var spec = g.product_spec_title ? '（' + esc(g.product_spec_title) + '）' : '';
     el.item.innerHTML = g.product_title
       ? '<span class="gc-item-label">禮物內容</span>' +
-        '<span class="gc-item-name">' + esc(g.product_title) + '</span>'
+        '<span class="gc-item-name">' + esc(g.product_title) + spec + '</span>'
       : '';
 
     el.design.innerHTML = g.design_name
@@ -101,12 +102,27 @@
     show(el.body);
   }
 
+  // 兩條履約路徑的說明文案分開寫,不共用一句含糊的
+  function claimNote(g) {
+    return g.fulfillment === 'ship'
+      ? '送禮的人已經填好收件資訊、完成付款,商品會直接寄出。按下確認後,這份禮物與刻圖就會收進你的帳號。'
+      : '確認後會發一張兌換券到你的帳號,帶著它到樂活門市,現場配鏡並雷刻這張刻圖。顏色與尺寸可以到店再挑。';
+  }
+
+  function doneNote(g) {
+    if (g.status === 'shipped') return '禮物已出貨,請留意物流通知。';
+    if (g.status === 'redeemed') return '已在門市完成兌換。';
+    if (g.fulfillment === 'ship') return '已收進你的帳號,商品出貨後會另行通知。';
+    if (g.status === 'issued') return '兌換券已在你的帳號裡,到「我的票券」就能看到。帶著它到門市即可。';
+    return '兌換券準備中,稍後會出現在「我的票券」。';
+  }
+
   function renderStage() {
     var g = State.gift;
 
-    if (g.status === 'claimed' || g.status === 'shipped') {
+    if (['claimed', 'issued', 'shipped', 'redeemed'].indexOf(g.status) >= 0) {
       el.title.textContent = '這份禮物已經領取了';
-      if (g.status === 'shipped') el.doneText.textContent = '禮物已出貨,請留意物流通知。';
+      el.doneText.textContent = doneNote(g);
       show(el.done);
       return;
     }
@@ -119,6 +135,13 @@
       show(el.needLogin);
       return;
     }
+
+    if (g.recipient_label) {
+      el.forWho.innerHTML = '<i class="fa-solid fa-circle-info"></i> 送禮的人指名要送給「' +
+                            esc(g.recipient_label) + '」。不是你的話,請把連結轉給對的人。';
+      show(el.forWho);
+    }
+    el.claimNote.textContent = claimNote(g);
     show(el.form);
   }
 
@@ -170,30 +193,19 @@
     var token = Auth && Auth.getToken ? Auth.getToken() : '';
     if (!token) { gotoLogin(); return; }
 
-    var name = el.name.value.trim();
-    var phone = el.phone.value.trim();
-    var addr = el.addr.value.trim();
-    if (!name || !phone || !addr) {
-      el.formErr.textContent = '三個欄位都要填喔。';
-      show(el.formErr);
-      return;
-    }
-
     hide(el.formErr);
     el.submit.disabled = true;
     el.submit.textContent = '處 理 中...';
 
-    var payload = {
-      action: 'claim', token: token,
-      recipient_name: name, recipient_phone: phone, recipient_address: addr
-    };
+    var payload = { action: 'claim', token: token };
     if (State.claimCode) payload.claim_code = State.claimCode;
     else payload.gift_id = State.giftId;
 
     call(payload)
-      .then(function () {
+      .then(function (d) {
         hide(el.form);
         el.title.textContent = '領取成功';
+        el.doneText.textContent = doneNote((d && d.gift) || State.gift);
         show(el.done);
       })
       .catch(function (err) {
@@ -212,7 +224,7 @@
       body: $('gcBody'), title: $('gcTitle'), from: $('gcFrom'),
       visual: $('gcVisual'), item: $('gcItem'), design: $('gcDesign'), msg: $('gcMsg'),
       needLogin: $('gcNeedLogin'), loginBtn: $('gcLoginBtn'),
-      form: $('gcForm'), name: $('gcName'), phone: $('gcPhone'), addr: $('gcAddr'),
+      form: $('gcForm'), forWho: $('gcForWho'), claimNote: $('gcClaimNote'),
       formErr: $('gcFormErr'), submit: $('gcSubmit'),
       done: $('gcDone'), doneText: $('gcDoneText')
     };

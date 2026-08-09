@@ -31,16 +31,26 @@
     pending_payment: { label: '待付款',   cls: 'locked',  icon: 'fa-hourglass-half' },
     paid:            { label: '待領取',   cls: 'usable',  icon: 'fa-gift' },
     claimed:         { label: '已領取',   cls: 'usable',  icon: 'fa-circle-check' },
+    issued:          { label: '已發券',   cls: 'usable',  icon: 'fa-ticket' },
     shipped:         { label: '已出貨',   cls: 'usable',  icon: 'fa-truck' },
+    redeemed:        { label: '已兌換',   cls: 'usable',  icon: 'fa-store' },
     cancelled:       { label: '已取消',   cls: 'used',    icon: 'fa-ban' },
     expired:         { label: '已過期',   cls: 'expired', icon: 'fa-ban' }
   };
   var RECV_STATUS = {
-    paid:      { label: '可領取', cls: 'usable',  icon: 'fa-gift' },
-    claimed:   { label: '已領取', cls: 'usable',  icon: 'fa-circle-check' },
-    shipped:   { label: '已出貨', cls: 'usable',  icon: 'fa-truck' },
-    cancelled: { label: '已取消', cls: 'used',    icon: 'fa-ban' },
-    expired:   { label: '已過期', cls: 'expired', icon: 'fa-ban' }
+    paid:      { label: '可領取',   cls: 'usable',  icon: 'fa-gift' },
+    claimed:   { label: '已領取',   cls: 'usable',  icon: 'fa-circle-check' },
+    issued:    { label: '待到門市', cls: 'usable',  icon: 'fa-ticket' },
+    shipped:   { label: '已出貨',   cls: 'usable',  icon: 'fa-truck' },
+    redeemed:  { label: '已兌換',   cls: 'usable',  icon: 'fa-store' },
+    cancelled: { label: '已取消',   cls: 'used',    icon: 'fa-ban' },
+    expired:   { label: '已過期',   cls: 'expired', icon: 'fa-ban' }
+  };
+
+  // 履約方式的標示,兩條路使用者看到的東西差很多,要一眼分得出來
+  var FULFILL = {
+    ship:  { label: '宅配到府',   icon: 'fa-truck-fast' },
+    store: { label: '門市兌換',   icon: 'fa-store' }
   };
 
   var ERR_MSG = {
@@ -119,15 +129,22 @@
     return '<div class="gf-thumb gf-thumb--empty"><i class="fa-solid fa-gift"></i></div>';
   }
 
+  function fulfillHtml(g) {
+    var f = FULFILL[g.fulfillment] || FULFILL.store;
+    return '<span><i class="fa-solid ' + f.icon + '"></i>' + f.label + '</span>';
+  }
+
   function sentCardHtml(g) {
     var st = SENT_STATUS[g.status] || SENT_STATUS.pending_payment;
-    var title = g.product_title || g.design_name || '禮物';
+    var spec = g.product_spec_title ? '（' + g.product_spec_title + '）' : '';
+    var title = (g.product_title || g.design_name || '禮物') + spec;
 
     var to = g.recipient_mode === 'member'
-      ? '指定會員 ' + esc(g.recipient_erpid || '')
+      ? '指定 ' + esc(g.recipient_label || '對方')
       : '連結領取';
 
-    // 待領取且是連結模式 → 給複製按鈕,這是送禮者最需要的動作
+    // 待領取 → 給複製按鈕,這是送禮者最需要的動作。
+    // 兩種模式都有領取碼(指定沒對上時就靠它),所以不分模式都顯示。
     var actions = '';
     if (g.status === 'paid' && g.claim_url) {
       actions =
@@ -137,9 +154,11 @@
       actions =
         '<span class="gf-hint"><i class="fa-solid fa-circle-info"></i>完成付款後才會產生領取連結</span>' +
         '<button class="gf-btn gf-btn--ghost" data-cancel="' + esc(g.id) + '">取消</button>';
-    } else if (g.status === 'claimed' || g.status === 'shipped') {
-      actions = '<span class="gf-hint"><i class="fa-solid fa-circle-check"></i>' +
-                esc(g.recipient_name || '對方') + ' 已於 ' + fmtDate(g.claimed_at) + ' 領取</span>';
+    } else if (['claimed', 'issued', 'shipped', 'redeemed'].indexOf(g.status) >= 0) {
+      // 這裡刻意不顯示對方姓名 —— Edge Function 的白名單也不會給,
+      // 送禮者只該知道「領了沒」,不該拿到收禮人的個資
+      actions = '<span class="gf-hint"><i class="fa-solid fa-circle-check"></i>對方已於 ' +
+                fmtDate(g.claimed_at) + ' 領取</span>';
     }
 
     return '' +
@@ -154,6 +173,7 @@
           (g.message ? '<p class="gf-msg">「' + esc(g.message) + '」</p>' : '') +
           '<div class="gf-meta">' +
             '<span><i class="fa-regular fa-paper-plane"></i>' + to + '</span>' +
+            fulfillHtml(g) +
             '<span><i class="fa-regular fa-calendar"></i>' + fmtDate(g.created_at) + '</span>' +
           '</div>' +
           (actions ? '<div class="gf-foot">' + actions + '</div>' : '') +
@@ -163,17 +183,25 @@
 
   function recvCardHtml(g) {
     var st = RECV_STATUS[g.status] || RECV_STATUS.paid;
-    var title = g.product_title || g.design_name || '禮物';
+    var spec = g.product_spec_title ? '（' + g.product_spec_title + '）' : '';
+    var title = (g.product_title || g.design_name || '禮物') + spec;
 
     var actions = '';
     if (g.status === 'paid') {
       actions = '<a class="gf-btn gf-btn--pri" href="gift-claim.html?g=' + encodeURIComponent(g.id) + '">' +
                 '<i class="fa-solid fa-gift"></i> 領 取 禮 物</a>';
     } else if (g.status === 'claimed') {
-      actions = '<span class="gf-hint"><i class="fa-solid fa-box"></i>已領取,準備出貨中</span>';
+      actions = g.fulfillment === 'ship'
+        ? '<span class="gf-hint"><i class="fa-solid fa-box"></i>已領取,商品準備出貨中</span>'
+        : '<span class="gf-hint"><i class="fa-solid fa-hourglass-half"></i>兌換券準備中,稍後會出現在「我的票券」</span>';
+    } else if (g.status === 'issued') {
+      actions = '<span class="gf-hint"><i class="fa-solid fa-ticket"></i>兌換券已在「我的票券」,帶著它到門市</span>';
     } else if (g.status === 'shipped') {
       actions = '<span class="gf-hint"><i class="fa-solid fa-truck"></i>已於 ' +
                 fmtDate(g.shipped_at) + ' 出貨</span>';
+    } else if (g.status === 'redeemed') {
+      actions = '<span class="gf-hint"><i class="fa-solid fa-store"></i>已於 ' +
+                fmtDate(g.redeemed_at) + ' 在門市完成兌換</span>';
     }
 
     return '' +
@@ -188,6 +216,7 @@
           (g.message ? '<p class="gf-msg">「' + esc(g.message) + '」</p>' : '') +
           '<div class="gf-meta">' +
             '<span><i class="fa-regular fa-user"></i>來自 ' + esc(g.sender_name || '一位朋友') + '</span>' +
+            fulfillHtml(g) +
             '<span><i class="fa-regular fa-calendar"></i>' + fmtDate(g.created_at) + '</span>' +
           '</div>' +
           (actions ? '<div class="gf-foot">' + actions + '</div>' : '') +

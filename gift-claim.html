@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/gift-claim.css?v=20260809-gift">
+  <link rel="stylesheet" href="css/gift-claim.css?v=20260809-ab">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -72,23 +72,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <button class="gc-btn gc-btn--pri" id="gcLoginBtn">登 入 領 取</button>
     </div>
 
-    <!-- 收件資訊 -->
+    <!-- 確認領取 -->
     <form class="gc-panel" id="gcForm" style="display:none">
-      <h2 class="gc-panel-h">填寫收件資訊</h2>
-      <p class="gc-panel-text">送禮的人看不到你填的地址,只會知道你已經領取。</p>
-
-      <div class="gc-row">
-        <label class="gc-label" for="gcName">收件人姓名</label>
-        <input class="gc-input" id="gcName" type="text" maxlength="60" autocomplete="name" required>
-      </div>
-      <div class="gc-row">
-        <label class="gc-label" for="gcPhone">聯絡電話</label>
-        <input class="gc-input" id="gcPhone" type="tel" maxlength="30" autocomplete="tel" required>
-      </div>
-      <div class="gc-row">
-        <label class="gc-label" for="gcAddr">收件地址</label>
-        <input class="gc-input" id="gcAddr" type="text" maxlength="200" autocomplete="street-address" required>
-      </div>
+      <h2 class="gc-panel-h">確認領取</h2>
+      <!-- 收禮人稱呼:連結被轉傳時,至少讓不相干的人先猶豫一下 -->
+      <p class="gc-panel-text gc-forwho" id="gcForWho" style="display:none"></p>
+      <p class="gc-panel-text" id="gcClaimNote"></p>
 
       <p class="gc-form-err" id="gcFormErr" style="display:none"></p>
       <button class="gc-btn gc-btn--pri" id="gcSubmit" type="submit">確 認 領 取</button>
@@ -98,7 +87,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="gc-panel gc-panel--done" id="gcDone" style="display:none">
       <i class="fa-solid fa-circle-check gc-done-ico"></i>
       <h2 class="gc-panel-h">已完成領取</h2>
-      <p class="gc-panel-text" id="gcDoneText">我們會盡快為你出貨,出貨後會另行通知。</p>
+      <p class="gc-panel-text" id="gcDoneText"></p>
       <a class="gc-btn gc-btn--ghost" href="member-portal.html">到禮物中心查看</a>
     </div>
 
@@ -110,6 +99,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/utils.js?v=20260513-2300"></script>
 <script src="js/auth.js?v=20260808-session"></script>
 <script src="js/layout.js?v=20260513-2300"></script>
-<script src="js/gift-claim.js?v=20260809-gift2"></script>
+<script src="js/gift-claim.js?v=20260809-ab"></script>
 </body>
 </html>

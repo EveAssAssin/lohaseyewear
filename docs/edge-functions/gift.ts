@@ -4,9 +4,13 @@
    禮物中心的唯一資料入口。
 
    為什麼所有事都得經過這裡:
-     gifts 表存了收件姓名/電話/地址與領取碼,RLS 全鎖、anon 完全讀不到。
+     gifts 存了領取碼與收禮人聯絡方式,RLS 全鎖、anon 完全讀不到。
      前端拿的 anon key 是公開的(GitHub Pages),不可能讓它直接碰這張表。
      本函式用 service_role 連線(繞過 RLS),並自行做身分與權限判斷。
+
+   兩條履約路徑:
+     ship   宅配到府 —— 收件地址由送禮者在商城結帳時填,官網完全不碰
+     store  門市兌換 —— 確定收禮人後,官網呼叫商城發券,到門市核銷
 
    部署:Supabase Dashboard → Edge Functions → 新增 gift → 貼上本檔
         Verify JWT 要【關閉】(前端沒有 Supabase 使用者,身分靠自家 session token)
@@ -19,7 +23,7 @@
      list     我送出的 / 我收到的            需 token
      create   建立禮物(狀態 pending_payment) 需 token
      preview  用領取碼看禮物長怎樣            不需 token(領取碼本身就是憑證)
-     claim    領取                           需 token
+     claim    領取(綁到自己帳號)            需 token
      cancel   送禮者取消(僅限尚未付款)       需 token
    ============================================================= */
 
@@ -83,38 +87,88 @@ function newClaimCode(): string {
   return s;
 }
 
-/* 對外欄位白名單:收件人個資與內部欄位一律不出去 */
-function publicGift(g: Record<string, unknown>, viewer: 'sender' | 'recipient' | 'anon') {
+/* 手機號碼正規化,讓 09xx 與 +8869xx 視為同一支 */
+function normPhone(v: string): string {
+  const d = String(v || '').replace(/[^0-9]/g, '');
+  if (d.startsWith('8869') && d.length === 12) return '0' + d.slice(3);
+  return d;
+}
+
+/* 對外欄位白名單。
+   收禮人聯絡方式與內部欄位一律不出去 —— 送禮者只該知道「領了沒」,
+   不該拿到對方的手機或姓名(對方可能根本不是他原本要送的人)。 */
+function publicGift(g: Record<string, any>, viewer: 'sender' | 'recipient' | 'anon') {
   const base = {
     id: g.id,
     status: g.status,
+    fulfillment: g.fulfillment,
     design_id: g.design_id,
     design_name: g.design_name,
     design_image_url: g.design_image_url,
     product_title: g.product_title,
+    product_spec_title: g.product_spec_title,
     product_image: g.product_image,
+    engrave_placement: g.engrave_placement,
     message: g.message,
     sender_name: g.sender_name,
+    recipient_label: g.recipient_label,
     created_at: g.created_at,
     paid_at: g.paid_at,
     claimed_at: g.claimed_at,
+    issued_at: g.issued_at,
     shipped_at: g.shipped_at,
+    redeemed_at: g.redeemed_at,
     expires_at: g.expires_at,
   };
   if (viewer === 'sender') {
     return {
       ...base,
       recipient_mode: g.recipient_mode,
-      recipient_erpid: g.recipient_erpid,
       claim_code: g.claim_code,
       claim_url: g.claim_code ? `${SITE_ORIGIN}/gift-claim.html?c=${g.claim_code}` : null,
       order_trade_no: g.order_trade_no,
     };
   }
   if (viewer === 'recipient') {
-    return { ...base, recipient_name: g.recipient_name };
+    return { ...base, coupon_id: g.coupon_id };
   }
-  return base;   // anon:只看得到禮物長相,看不到任何人的資料
+  return base;   // anon:只看得到禮物長相與稱呼,看不到任何人的資料
+}
+
+/**
+ * 把「指定給我、但還沒綁定」的禮物認回來。
+ *
+ * 送禮者填的是會員編號或手機,建立當下官網不查(不做探測工具),
+ * 所以認領這件事延到本人登入時才做 —— 比對的是「我自己的」號碼,
+ * 不會洩漏任何別人的資訊。
+ */
+async function bindPending(erpid: string, token: string) {
+  const keys = [erpid];
+
+  // 手機要從 auth-session 的 profile 拿。拿不到就只用會員編號比對,
+  // 手機指定的那批會退回連結領取,不影響其他人。
+  try {
+    const r = await fetch(AUTH_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'profile', token }),
+    });
+    const j = await r.json();
+    if (String(j?.code) === '200') {
+      const p = j?.data?.member ?? j?.data ?? j?.member ?? {};
+      const phone = normPhone(p.phone ?? p.mobile ?? p.cellphone ?? '');
+      if (phone) keys.push(phone);
+    }
+  } catch { /* profile 拿不到不是致命問題 */ }
+
+  try {
+    await db.from('gifts')
+      .update({ recipient_erpid: erpid })
+      .is('recipient_erpid', null)
+      .in('recipient_key', keys)
+      .neq('sender_erpid', erpid)                 // 不可能送給自己
+      .not('status', 'in', '("cancelled","expired")');
+  } catch { /* 綁定失敗下次進頁會再試 */ }
 }
 
 async function logEvent(
@@ -154,7 +208,9 @@ Deno.serve(async (req) => {
     if (g.status === 'pending_payment') {
       return reply('030', { message: '這份禮物還在準備中,請稍後再試' }, 409);
     }
-    return reply('200', { data: { gift: publicGift(g, 'anon'), claimable: g.status === 'paid' } });
+    return reply('200', {
+      data: { gift: publicGift(g, 'anon'), claimable: g.status === 'paid' },
+    });
   }
 
   /* 以下動作都需要身分 */
@@ -163,6 +219,8 @@ Deno.serve(async (req) => {
 
   /* ---------- list ---------- */
   if (action === 'list') {
+    await bindPending(erpid, String(body.token || ''));
+
     const [sentRes, recvRes] = await Promise.all([
       db.from('gifts').select('*')
         .eq('sender_erpid', erpid)
@@ -186,41 +244,61 @@ Deno.serve(async (req) => {
 
   /* ---------- create ---------- */
   if (action === 'create') {
+    const fulfillment = body.fulfillment === 'ship' ? 'ship' : 'store';
     const mode = body.recipient_mode === 'member' ? 'member' : 'link';
-    const recipientErpid = String(body.recipient_erpid || '').trim();
+    const keyRaw = String(body.recipient_key || '').trim();
 
-    if (mode === 'member' && !recipientErpid) {
-      return reply('006', { message: '請指定收禮的會員' }, 400);
+    if (mode === 'member' && !keyRaw) {
+      return reply('006', { message: '請填寫對方的會員編號或手機' }, 400);
     }
-    if (mode === 'member' && recipientErpid === erpid) {
+    if (mode === 'member' && (keyRaw === erpid || normPhone(keyRaw) === normPhone(erpid))) {
       return reply('031', { message: '不能把禮物送給自己' }, 400);
     }
+
+    // 這裡【不做任何會員查詢】。
+    // 官網沒有本地會員名冊(會員資料在即時互動端),要查就得打對方 API,
+    // 那等於做出一支「這支號碼是不是會員」的探測工具。
+    // 改成:只記下 recipient_key,等對方自己登入禮物中心時由 bindPending() 比對綁定。
+    // 同時一律附上領取碼,對方沒登入過也能靠連結領。
 
     const row = {
       sender_erpid: erpid,
       sender_name: String(body.sender_name || '').slice(0, 60) || null,
+
       design_id: body.design_id || null,
       design_name: String(body.design_name || '').slice(0, 120) || null,
       design_image_url: String(body.design_image_url || '').slice(0, 500) || null,
+
       product_nid: body.product_nid ? Number(body.product_nid) : null,
       product_sid: body.product_sid ? Number(body.product_sid) : null,
       product_title: String(body.product_title || '').slice(0, 200) || null,
+      product_spec_title: String(body.product_spec_title || '').slice(0, 120) || null,
       product_image: String(body.product_image || '').slice(0, 500) || null,
+
+      engrave_placement: body.engrave_placement || null,
       message: String(body.message || '').slice(0, 300) || null,
+
+      fulfillment,
       recipient_mode: mode,
-      recipient_erpid: mode === 'member' ? recipientErpid : null,
-      claim_code: mode === 'link' ? newClaimCode() : null,
+      recipient_key: mode === 'member' ? keyRaw.slice(0, 40) : null,
+      recipient_erpid: null,          // 等 bindPending() 比對成功才回填
+      recipient_label: String(body.recipient_label || '').slice(0, 40) || null,
+      claim_code: newClaimCode(),     // 兩種模式都給,指定失敗時就是退路
       status: 'pending_payment',
     };
 
     const { data: g, error } = await db.from('gifts').insert(row).select().single();
     if (error) return reply('500', { message: '建立失敗,請稍後再試' }, 500);
 
-    await logEvent(g.id, null, 'pending_payment', 'sender', '建立禮物');
+    await logEvent(g.id, null, 'pending_payment', 'sender',
+      `建立禮物(${fulfillment}/${mode})`);
     return reply('200', { data: { gift: publicGift(g, 'sender') } });
   }
 
-  /* ---------- claim ---------- */
+  /* ---------- claim:把禮物綁到自己帳號 ----------
+     宅配路徑:商城已依送禮者填的地址出貨,綁定只是為了讓收禮人
+               在禮物中心看得到、並把刻圖收進最愛。
+     門市路徑:綁定後官網才知道該把兌換券發給誰。 */
   if (action === 'claim') {
     const code = String(body.claim_code || '').trim();
     const giftId = String(body.gift_id || '').trim();
@@ -236,11 +314,11 @@ Deno.serve(async (req) => {
     if (g.sender_erpid === erpid) {
       return reply('032', { message: '這是你自己送出的禮物' }, 403);
     }
-    // 指定會員的禮物,只有那個人能領
-    if (g.recipient_mode === 'member' && g.recipient_erpid && g.recipient_erpid !== erpid) {
+    // 已指定會員的禮物,只有那個人能領
+    if (g.recipient_erpid && g.recipient_erpid !== erpid) {
       return reply('033', { message: '這份禮物是指定給其他會員的' }, 403);
     }
-    if (g.status === 'claimed' || g.status === 'shipped') {
+    if (['claimed', 'issued', 'shipped', 'redeemed'].includes(g.status)) {
       return reply('034', { message: '這份禮物已經領取過了' }, 409);
     }
     if (g.status === 'pending_payment') {
@@ -253,13 +331,6 @@ Deno.serve(async (req) => {
       return reply('036', { message: '這份禮物已超過領取期限' }, 409);
     }
 
-    const name = String(body.recipient_name || '').trim().slice(0, 60);
-    const phone = String(body.recipient_phone || '').trim().slice(0, 30);
-    const address = String(body.recipient_address || '').trim().slice(0, 200);
-    if (!name || !phone || !address) {
-      return reply('006', { message: '請填寫收件姓名、電話與地址' }, 400);
-    }
-
     // 條件更新:只有仍是 paid 的那一刻才寫得進去。
     // 兩個人同時點領取時,第二個人會更新到 0 筆而不是覆蓋掉第一個人。
     const { data: updated, error: upErr } = await db.from('gifts')
@@ -267,9 +338,7 @@ Deno.serve(async (req) => {
         status: 'claimed',
         claimed_at: new Date().toISOString(),
         claimed_by_erpid: erpid,
-        recipient_name: name,
-        recipient_phone: phone,
-        recipient_address: address,
+        recipient_erpid: g.recipient_erpid || erpid,
       })
       .eq('id', g.id).eq('status', 'paid')
       .select().maybeSingle();
@@ -286,6 +355,11 @@ Deno.serve(async (req) => {
           .insert({ member_id: erpid, design_id: updated.design_id });
       } catch { /* 已收藏過會撞唯一鍵,忽略 */ }
     }
+
+    // TODO(等商城開 /api/site/gift/issue):
+    //   fulfillment==='store' 時在此呼叫商城發券,成功後
+    //   status → 'issued' 並回填 coupon_id。
+    //   介面未開之前先停在 claimed,收禮人會看到「兌換券準備中」。
 
     return reply('200', { data: { gift: publicGift(updated, 'recipient') } });
   }
