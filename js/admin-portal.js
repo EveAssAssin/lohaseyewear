@@ -945,28 +945,11 @@
       // 2. 從 ERP 撈中文名/手機/email (容錯,失敗就用 Supabase 資料)
       let erpName = '', erpMobile = '', erpEmail = '', erpBirthday = '';
       try {
-        const erpRes = await fetch(`${PROXY_URL}/proxy/member/list`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            data: {
-              apikey: PROXY_KEY,
-              apiver: '0.1.0',
-              data: { client_id: erpid },
-            },
-          }),
-        });
-        if(erpRes.ok){
-          const erpJson = await erpRes.json();
-          let d = erpJson.data;
-          if(Array.isArray(d)) d = d[0];
-          if(d){
-            erpName = d.name || d.erpname || d.erpName || '';
-            erpMobile = d.mobile || d.phone || '';
-            erpEmail = d.email || '';
-            erpBirthday = d.birthday || '';
-          }
-        }
+        const d = await lookupMember({ erpid: erpid });
+        erpName = d.name || '';
+        erpMobile = d.mobile || '';
+        erpEmail = d.email || '';
+        erpBirthday = d.birthday || '';
       } catch(e){ console.warn('[ERP 查詢失敗,使用 Supabase 資料]', e); }
 
       // 3. 整理顯示名稱 (優先序: ERP > creator_info.display_name > ERP ID)
@@ -1042,24 +1025,8 @@
     let realName = name;
     if(name === erpid || !name){
       try {
-        const erpRes = await fetch(`${PROXY_URL}/proxy/member/list`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            data: {
-              apikey: PROXY_KEY,
-              apiver: '0.1.0',
-              data: { client_id: erpid },
-            },
-          }),
-        });
-        if(erpRes.ok){
-          const erpJson = await erpRes.json();
-          let d = erpJson.data;
-          if(Array.isArray(d)) d = d[0];
-          const erpName = d?.name || d?.erpname || d?.erpName;
-          if(erpName) realName = erpName;
-        }
+        const d = await lookupMember({ erpid: erpid });
+        if(d.name) realName = d.name;
       } catch(e){ console.warn('[ERP 查詢失敗,用 erpid 當名字]', e); }
     }
 
@@ -1090,8 +1057,37 @@
   }
 
   // ===== 查詢會員 / 升級身份 Modal =====
-  const PROXY_URL = 'https://lohas-proxy-nwad.onrender.com/api';
-  const PROXY_KEY = 'bfjY2jssj9dDajq0';   // 跟前台 auth.js 共用
+  // 會員查詢改走 Edge Function:金鑰留在後端,前端只送 session token。
+  // 該函式會再驗一次「呼叫者是不是 admins 表裡的人」,
+  // 不能只靠這個頁面在前端擋 —— 前端擋得住 UI,擋不住直接打 API。
+  const MEMBER_LOOKUP_FN =
+    'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/member-lookup';
+
+  // 回傳陣列(用姓名查可能多筆)。欄位已由後端統一為
+  // { erpid, name, mobile, email, birthday }。
+  async function lookupMembers(query) {
+    const token = window.LohasAuth && window.LohasAuth.getToken
+      ? window.LohasAuth.getToken() : '';
+    if (!token) throw new Error('登入狀態已失效,請重新登入後再試');
+
+    const res = await fetch(MEMBER_LOOKUP_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ token: token }, query)),
+    });
+    const json = await res.json();
+    if (String(json.code) !== '200' || !json.data) {
+      throw new Error(json.message || '查詢失敗');
+    }
+    return json.data.members || [];
+  }
+
+  // 手機與會員編號是唯一鍵,只會有一筆
+  async function lookupMember(query) {
+    const list = await lookupMembers(query);
+    if (!list.length) throw new Error('查無此會員');
+    return list[0];
+  }
 
   // 查到的會員資料暫存
   let _foundMember = null;
@@ -1146,56 +1142,14 @@
     searchBtn.innerHTML = '查詢中...';
 
     try {
-      // 嘗試打 proxy: body 內帶 mobile
-      const res = await fetch(`${PROXY_URL}/proxy/member/list`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: {
-            apikey: PROXY_KEY,
-            apiver: '0.1.0',
-            data: { mobile: mobile },
-          },
-        }),
-      });
+      // Edge Function 已經把上游回應收斂成 { erpid, name, mobile },
+      // 不再需要在前端猜欄位名
+      const m = await lookupMember({ mobile: mobile });
+      _foundMember = { erpid: m.erpid, name: m.name, mobile: m.mobile || mobile };
 
-      if(!res.ok){
-        showAddError(`查詢失敗 (HTTP ${res.status})。可能 proxy 不支援 mobile 篩選,需要請廠商加上。`);
-        return;
-      }
-
-      const json = await res.json();
-      const code = String(json.code || json.status || '');
-
-      if(code !== '200' && code !== '0'){
-        showAddError('找不到該手機號碼的會員。錯誤訊息:' + (json.message || json.errmessage || code || '未知'));
-        return;
-      }
-
-      // 解析資料 - data 可能是物件或陣列
-      let memberData = json.data;
-      if(Array.isArray(memberData)) memberData = memberData[0];
-      if(!memberData){
-        showAddError('找不到該手機號碼的會員');
-        return;
-      }
-
-      // 解析常見欄位
-      const erpid  = memberData.client_id || memberData.erpid || memberData.erpId || '';
-      const name   = memberData.name || memberData.erpname || memberData.erpName || '';
-      const phone  = memberData.mobile || memberData.phone || mobile;
-
-      if(!erpid){
-        showAddError('查詢成功但回傳缺少 ERP ID,請聯絡技術窗口');
-        return;
-      }
-
-      _foundMember = { erpid, name, mobile: phone };
-
-      // 顯示結果
-      document.getElementById('uam_resultName').textContent = name || '(未知姓名)';
-      document.getElementById('uam_resultMobile').textContent = phone;
-      document.getElementById('uam_resultErpid').textContent = erpid;
+      document.getElementById('uam_resultName').textContent = m.name || '(未知姓名)';
+      document.getElementById('uam_resultMobile').textContent = m.mobile || mobile;
+      document.getElementById('uam_resultErpid').textContent = m.erpid;
       document.getElementById('uam_result').style.display = 'block';
       const saveB = document.getElementById('uam_saveBtn');
       saveB.disabled = false;
@@ -1204,7 +1158,7 @@
 
     } catch (err) {
       console.error('[手機查詢失敗]', err);
-      showAddError('查詢失敗,網路錯誤或 proxy 未開啟。錯誤:' + (err.message || err));
+      showAddError(err.message || '查詢失敗,請稍後再試');
     } finally {
       searchBtn.disabled = false;
       searchBtn.innerHTML = oldText;
@@ -1223,47 +1177,12 @@
     searchBtn.innerHTML = '查詢中...';
 
     try {
-      const res = await fetch(`${PROXY_URL}/proxy/member/list`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: {
-            apikey: PROXY_KEY,
-            apiver: '0.1.0',
-            data: { client_id: erpid },
-          },
-        }),
-      });
+      const m = await lookupMember({ erpid: erpid });
+      _foundMember = { erpid: m.erpid, name: m.name, mobile: m.mobile };
 
-      if(!res.ok){
-        showAddError(`查詢失敗 (HTTP ${res.status})`);
-        return;
-      }
-
-      const json = await res.json();
-      const code = String(json.code || json.status || '');
-
-      if(code !== '200' && code !== '0'){
-        showAddError('找不到該會員編號。錯誤訊息:' + (json.message || json.errmessage || code || '未知'));
-        return;
-      }
-
-      let memberData = json.data;
-      if(Array.isArray(memberData)) memberData = memberData[0];
-      if(!memberData){
-        showAddError('找不到該會員編號');
-        return;
-      }
-
-      const foundErpid = memberData.client_id || memberData.erpid || memberData.erpId || erpid;
-      const name       = memberData.name || memberData.erpname || memberData.erpName || '';
-      const phone      = memberData.mobile || memberData.phone || '';
-
-      _foundMember = { erpid: String(foundErpid), name, mobile: phone };
-
-      document.getElementById('uam_resultName').textContent = name || '(未知姓名)';
-      document.getElementById('uam_resultMobile').textContent = phone || '—';
-      document.getElementById('uam_resultErpid').textContent = foundErpid;
+      document.getElementById('uam_resultName').textContent = m.name || '(未知姓名)';
+      document.getElementById('uam_resultMobile').textContent = m.mobile || '—';
+      document.getElementById('uam_resultErpid').textContent = m.erpid;
       document.getElementById('uam_result').style.display = 'block';
       const saveB = document.getElementById('uam_saveBtn');
       saveB.disabled = false;
@@ -1272,7 +1191,7 @@
 
     } catch (err) {
       console.error('[會員編號查詢失敗]', err);
-      showAddError('查詢失敗,網路錯誤或 proxy 未開啟。錯誤:' + (err.message || err));
+      showAddError(err.message || '查詢失敗,請稍後再試');
     } finally {
       searchBtn.disabled = false;
       searchBtn.innerHTML = oldText;
@@ -1291,51 +1210,17 @@
     searchBtn.innerHTML = '查詢中...';
 
     try {
-      const res = await fetch(`${PROXY_URL}/proxy/member/list`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: {
-            apikey: PROXY_KEY,
-            apiver: '0.1.0',
-            data: { name: name },
-          },
-        }),
-      });
+      const list = await lookupMembers({ name: name });
 
-      if(!res.ok){
-        showAddError(`查詢失敗 (HTTP ${res.status})`);
-        return;
-      }
-
-      const json = await res.json();
-      const code = String(json.code || json.status || '');
-
-      if(code !== '200' && code !== '0'){
-        showAddError('找不到符合的會員。錯誤訊息:' + (json.message || json.errmessage || code || '未知'));
-        return;
-      }
-
-      let memberData = json.data;
-      // 多筆結果 → 取第一筆,但提示有幾筆
-      if(Array.isArray(memberData)){
-        if(memberData.length === 0){
-          showAddError('找不到符合的會員');
-          return;
-        }
-        if(memberData.length > 1){
-          // 列出選項讓使用者選
-          showNameMatches(memberData);
-          return;
-        }
-        memberData = memberData[0];
-      }
-      if(!memberData){
+      if(list.length === 0){
         showAddError('找不到符合的會員');
         return;
       }
-
-      fillFoundMember(memberData);
+      if(list.length > 1){
+        showNameMatches(list);   // 同名同姓 → 列出選項讓使用者點選
+        return;
+      }
+      fillFoundMember(list[0]);
 
     } catch (err) {
       console.error('[名字查詢失敗]', err);

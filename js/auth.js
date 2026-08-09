@@ -4,9 +4,7 @@
   const Utils = window.LohasUtils;
 
   const CONFIG = {
-    PROXY_URL: 'https://lohas-proxy-nwad.onrender.com/api',
-    API_KEY: 'bfjY2jssj9dDajq0',
-    API_VER: '0.1.0',
+    // 前端不再持有任何 API 金鑰。需要金鑰的呼叫一律經 Edge Function。
     STORAGE_KEY: 'lohasMember',
     TOKEN_KEY: 'lohasSessionToken',
     REDIRECT_KEY: 'redirectAfterLogin',
@@ -114,31 +112,13 @@
     return true;
   }
 
-  async function apiPost(path, payloadData) {
-    const response = await fetch(`${CONFIG.PROXY_URL}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: {
-          apikey: CONFIG.API_KEY,
-          apiver: CONFIG.API_VER,
-          data: payloadData
-        }
-      })
-    });
+  /* 2026-08-09 移除 apiPost() 與 loginWithAccount()
+     -----------------------------------------------------------
+     這兩個函式會在瀏覽器裡直接帶著 ERP apikey 打代理,
+     等於把金鑰印在公開 repo 上。登入已全面改走 loginViaSession()
+     (金鑰留在 auth-session Edge Function),前端不再需要持有任何金鑰。
 
-    return response.json();
-  }
-
-  async function loginWithAccount(account, password) {
-    const result = await apiPost('/proxy/officialWed/login', { account, password });
-
-    if (Utils.normalizeApiCode(result.code) !== '200') {
-      throw new Error(result.message || result.errmessage || '帳號或密碼錯誤');
-    }
-
-    return result;
-  }
+     管理後台的會員查詢原本也用 apiPost,已改走 member-lookup Edge Function。 */
 
   function logout() {
     clearMember();
@@ -148,8 +128,6 @@
 
   window.LohasAuth = {
     CONFIG,
-    apiPost,
-    loginWithAccount,
     loginViaSession,
     getStoredMember,
     saveMember,

@@ -27,25 +27,6 @@
     loginBtn.innerText = status ? '登入中...' : '登入';
   }
 
-  function getLoginName(loginResult) {
-    return loginResult.data?.erpname ||
-      loginResult.data?.erpName ||
-      loginResult.data?.name ||
-      '';
-  }
-
-  async function fetchProfileByClientId(erpid) {
-    const result = await Auth.apiPost('/proxy/member/list', {
-      client_id: Number(erpid)
-    });
-
-    if (Utils.normalizeApiCode(result.code) !== '200' || !result.data) {
-      throw new Error('登入成功，但查無完整會員資料');
-    }
-
-    return result.data;
-  }
-
   async function handleLogin() {
     if (loginBtn?.disabled) return;   // 防連按 / Enter 連送
 
@@ -62,53 +43,21 @@
     setLoading(true);
 
     try {
-      // ── 路徑 A(優先):伺服器端驗證,取得 session token ──
-      // 金鑰留在 Edge Function,前端不持有;token 供票券等需驗身分的功能使用。
-      let member = null;
-      let erpid = '';
-      let loginName = '';
+      // 只有一條路徑:伺服器端驗證並簽發 session token。
+      //
+      // 原本還有一條「前端直接打代理」的回退路徑,已於 2026-08-09 移除。
+      // 那條路徑必須在瀏覽器裡持有 ERP apikey,而本站是公開 repo,
+      // 等於把金鑰公開。安全性優先於「auth-session 掛掉時還能登入」。
+      const s = await Auth.loginViaSession(account, password);
+      Auth.saveToken(s.token);
 
-      try {
-        const s = await Auth.loginViaSession(account, password);
-        Auth.saveToken(s.token);
-        member = s.member || {};
-        erpid = member.client_id || '';
-        loginName = member.name || '';
-      } catch (sessionError) {
-        // 帳密確實錯誤 → 直接報錯,不要用舊路徑再試一次
-        if (sessionError.serverRejected) throw sessionError;
-        // 其他情況(函式未部署/連線失敗)→ 回退舊路徑,確保登入不中斷
-        console.warn('[login] 伺服器端登入不可用,回退既有流程:', sessionError.message);
-      }
-
-      // ── 路徑 B(回退):既有前端流程 ──
-      if (!erpid) {
-        const loginResult = await Auth.loginWithAccount(account, password);
-        erpid = loginResult.data?.erpid;
-        loginName = getLoginName(loginResult);
-
-        if (!erpid) {
-          throw new Error('登入成功，但未取得會員編號');
-        }
-
-        try {
-          member = await fetchProfileByClientId(erpid);
-        } catch (profileError) {
-          console.warn('[會員資料讀取失敗，改用登入資料]', profileError);
-
-          member = {
-            client_id: erpid,
-            name: loginName,
-            mobile: '',
-            email: '',
-            birthday: ''
-          };
-        }
-      }
+      const member = s.member || {};
+      const erpid = member.client_id || '';
+      if (!erpid) throw new Error('登入成功，但未取得會員編號，請聯繫客服');
 
       Auth.saveMember({
-        erpid: member.client_id || erpid,
-        name: member.name || loginName || '',
+        erpid: erpid,
+        name: member.name || '',
         mobile: member.mobile || '',
         email: member.email || '',
         birthday: member.birthday || ''
