@@ -372,7 +372,11 @@
 
     box.innerHTML = '<p class="empty-text">載入中...</p>';
     fetchCoupons().then(function (list) {
-      State.coupons = Array.isArray(list) ? list : [];
+      // 已過期的票券一律不顯示。
+      // 對方 API 會回傳會員的全部票券(含 2021 年的舊券),
+      // 那些對使用者沒有任何用處,只會把還能用的券埋在下面。
+      State.coupons = (Array.isArray(list) ? list : [])
+        .filter(function (c) { return c.status !== 'expired'; });
       State.loaded = true;
       render();
     });
