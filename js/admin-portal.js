@@ -1070,12 +1070,26 @@
       ? window.LohasAuth.getToken() : '';
     if (!token) throw new Error('登入狀態已失效,請重新登入後再試');
 
-    const res = await fetch(MEMBER_LOOKUP_FN, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({ token: token }, query)),
-    });
-    const json = await res.json();
+    let res;
+    try {
+      res = await fetch(MEMBER_LOOKUP_FN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({ token: token }, query)),
+      });
+    } catch (e) {
+      throw new Error('無法連線到會員查詢服務,請稍後再試');
+    }
+
+    // 404 = 函式還沒部署。講清楚是設定問題,不要讓人以為是查無此會員
+    if (res.status === 404) {
+      throw new Error('會員查詢服務尚未部署(Edge Function: member-lookup),請聯繫技術窗口');
+    }
+
+    let json;
+    try { json = await res.json(); }
+    catch (e) { throw new Error('會員查詢服務回應異常(HTTP ' + res.status + ')'); }
+
     if (String(json.code) !== '200' || !json.data) {
       throw new Error(json.message || '查詢失敗');
     }
