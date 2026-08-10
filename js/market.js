@@ -382,15 +382,16 @@
     // 先渲染前 9 件到 creator grid (跟原本 v18 設計一致)
     renderGrid('creator', creatorList.slice(0, 9));
 
-    // 「顯示全部」按鈕功能 → 改成載入全部
-    var seeAllBtn = root.querySelector('.market-block[data-section="creator"] .see-all');
-    if(seeAllBtn){
-      seeAllBtn.addEventListener('click', function(e){
+    // 「顯示全部」→ 載入全部。標題右上和 grid 底下各有一顆,
+    // 用 querySelectorAll 一起處理:任一顆被點就展開,兩顆一起收起來。
+    var seeAllBtns = root.querySelectorAll('.market-block[data-section="creator"] .see-all');
+    seeAllBtns.forEach(function(btn){
+      btn.addEventListener('click', function(e){
         e.preventDefault();
         renderGrid('creator', creatorList);
-        seeAllBtn.style.display = 'none';
+        seeAllBtns.forEach(function(b){ b.style.display = 'none'; });
       });
-    }
+    });
   }
 
   // ===== 渲染聯名卡片 (上方 market block) =====
@@ -694,9 +695,9 @@
     // 已經是全部就不重 render
     if(currentCount >= creatorList.length) return;
     renderGrid('creator', creatorList);
-    // 隱藏「顯示全部」按鈕(已經顯示全部了)
-    var seeAllBtn = root.querySelector('.market-block[data-section="creator"] .see-all');
-    if(seeAllBtn) seeAllBtn.style.display = 'none';
+    // 隱藏「顯示全部」按鈕(已經顯示全部了)。上下兩顆都要收。
+    root.querySelectorAll('.market-block[data-section="creator"] .see-all')
+      .forEach(function(b){ b.style.display = 'none'; });
   }
 
   function applySearch(){

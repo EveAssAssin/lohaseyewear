@@ -458,6 +458,37 @@
 .cm .see-all:hover i{ transform:translateX(3px) }
 .cm .see-all i{ font-size:10px; transition:transform .15s }
 
+/* grid 底下那一顆。標題右上那顆是「順手可點」的次要連結,
+   這一顆是捲到底之後的主要動作,所以給它可點的外型和足夠的觸控面積。
+
+   ⚠ 邊框寫成 var(--lohas-line, #E8DFD0):market.html 沒有載入任何定義
+   --lohas-line 的檔案(它只存在於 admin-portal / member-portal /
+   creator-public 三支 CSS 裡),所以這一頁上該變數是未定義的。
+   不給 fallback 的話整個 border 宣告會失效,按鈕會變成純文字。
+   這一頁另外還有 12 處同樣的問題 —— 見下方註解。 */
+.cm .market-block-foot{
+  display:flex;
+  justify-content:center;
+  margin-top:24px;
+}
+.cm .see-all--foot{
+  font-size:13px;
+  padding:11px 26px;
+  border:1px solid var(--lohas-line, #E8DFD0);
+  border-radius:var(--r-pill);
+  letter-spacing:1px;
+}
+.cm .see-all--foot:hover{
+  border-color:var(--lohas-brand);
+  background:rgba(200,159,92,.06);
+}
+
+/* --lohas-line 在這一頁從未被定義,因此本檔案裡所有
+   border:1px solid var(--lohas-line) 目前都不會顯示(共 12 處)。
+   根治的方法是把 --lohas-line:#E8DFD0 加進 lohas-tokens.css
+   (那是唯一每頁都會載入的檔案),而不是繼續逐處補 fallback。
+   但那會一次改變本頁 12 條線的外觀,故未逕行處理。 */
+
 
 /* === 設計卡 (用 img 取代純色文字) === */
 .cm .design-grid{
