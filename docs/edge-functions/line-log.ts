@@ -38,11 +38,9 @@ const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-/* 加進群組時的自我介紹。名字已經說明用途,這裡補上「怎麼停用」。 */
+/* 加進群組時的自我介紹。這是告知義務 —— 群裡的人有權知道對話正在被記錄。 */
 const JOIN_NOTICE =
-  '我是「樂活工作日誌」。\n' +
-  '我會記錄這個群組的文字訊息,用來整理每週工作摘要,不會外流也不會回覆訊息。\n' +
-  '不希望被記錄的話,把我移出群組即可。';
+  '我是「樂活工作日誌」。我會記錄這個群組的文字訊息,用來整理每週工作摘要,不會外流也不會回覆訊息。';
 
 /* ---------- 簽章驗證 ----------
    LINE 會在 X-Line-Signature 帶上「用 channel secret 對 raw body 做 HMAC-SHA256
