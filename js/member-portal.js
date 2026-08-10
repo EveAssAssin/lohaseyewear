@@ -2516,7 +2516,7 @@
     'creator-page': '創作者個人頁',
     'analytics': '創作數據',
     'earnings': '分潤紀錄',
-    'my-coupons': '我的票券',
+    'gifts': '禮物中心',
     'profile': '會員資料'
   };
 
@@ -2547,7 +2547,9 @@
     }
     if (page === 'analytics') loadAnalytics();
     if (page === 'earnings') loadEarnings();
-    if (page === 'my-coupons' && window.LohasCoupons) window.LohasCoupons.load();
+    // 票券已改由 App 負責顯示與使用,官網會員中心只留禮物。
+    // 票券的 Edge Function(coupon-list / lock / extend)仍在用 —— App 點票券
+    // 跳進 design.html 客製時,官網要靠它們取得可換分類並定期續鎖。
     if (page === 'gifts' && window.LohasGifts) window.LohasGifts.load();
 
     // 進入分享頁 → 隱藏 sidebar 紅標 (已看過)

@@ -3023,12 +3023,14 @@ body {
 .mp .md-notice-close:hover{ background:rgba(0,0,0,.06) }
 
 /* =============================================================
-   我的票券 (my-coupons)
+   篩選膠囊 + 狀態徽章(禮物中心使用)
    -------------------------------------------------------------
+   這組原本屬於「我的票券」。票券已移出官網(顯示與使用回到 App),
+   票券卡的樣式隨之刪除,只留禮物中心仍在用的這兩組。
    色彩一律沿用 .mp 既有變數與 status 色票,不另定義新色
    ============================================================= */
 
-/* ---- 狀態篩選 ---- */
+/* ---- 分頁 / 篩選膠囊 ---- */
 .mp .cp-filters{
   display:flex; flex-wrap:wrap; gap:8px;
   margin:0 0 18px;
@@ -3050,59 +3052,6 @@ body {
   color:#fff;
 }
 
-/* ---- 票券清單 ---- */
-.mp .cp-list{ display:flex; flex-direction:column; gap:10px }
-
-/* ---- 票券卡 ---- */
-.mp .cp-card{
-  position:relative;
-  display:flex; align-items:stretch; gap:0;
-  border:1px solid var(--lohas-line);
-  border-radius:10px;
-  background:#fff;
-  overflow:hidden;
-  transition:box-shadow .18s, border-color .18s;
-}
-.mp .cp-card:hover{ border-color:var(--lohas-light-brown) }
-
-/* 左側金額區(票根) */
-.mp .cp-amt{
-  flex-shrink:0;
-  width:118px;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  gap:2px;
-  background:var(--lohas-tip);
-  border-right:1px dashed var(--lohas-line);
-  padding:18px 10px;
-}
-.mp .cp-amt-num{
-  font-size:22px; font-weight:700; letter-spacing:.5px;
-  color:var(--lohas-brown); line-height:1.2;
-}
-.mp .cp-amt-unit{ font-size:11px; color:var(--lohas-mute); letter-spacing:1px }
-
-/* 右側內容 */
-.mp .cp-body{
-  flex:1; min-width:0;
-  padding:16px 18px;
-  display:flex; flex-direction:column; gap:8px;
-}
-.mp .cp-head{ display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap }
-.mp .cp-title{
-  font-size:15px; font-weight:700; letter-spacing:.5px;
-  color:var(--lohas-text); margin:0; line-height:1.4;
-}
-.mp .cp-desc{
-  font-size:13px; line-height:1.75;
-  color:var(--lohas-sub); margin:0;
-}
-.mp .cp-meta{
-  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-  font-size:12px; color:var(--lohas-mute); letter-spacing:.3px;
-}
-.mp .cp-meta i{ font-size:11px; margin-right:4px }
-
 /* ---- 狀態徽章(沿用站上 status 色) ---- */
 .mp .cp-badge{
   flex-shrink:0;
@@ -3117,55 +3066,6 @@ body {
 .mp .cp-badge.expired{ background:#EFEDEA; color:#8A8178 }
 .mp .cp-badge.notyet { background:var(--lohas-tip); color:var(--lohas-mute) }
 
-/* 不可用票券整體降低視覺重量 */
-.mp .cp-card.is-inactive{ background:#FCFBFA }
-.mp .cp-card.is-inactive .cp-amt{ background:#F5F3F0 }
-.mp .cp-card.is-inactive .cp-amt-num{ color:var(--lohas-mute) }
-.mp .cp-card.is-inactive .cp-title{ color:var(--lohas-sub) }
-
-/* ---- 動作區 ---- */
-.mp .cp-foot{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; flex-wrap:wrap;
-  margin-top:2px;
-}
-.mp .cp-use{
-  padding:9px 22px;
-  border:none; border-radius:999px;
-  background:var(--lohas-brown); color:#fff;
-  font-size:13px; font-weight:600; letter-spacing:1px;
-  cursor:pointer; transition:background .18s;
-  font-family:inherit;
-}
-.mp .cp-use:hover{ background:var(--lohas-hover) }
-.mp .cp-blocked{
-  font-size:12px; color:var(--lohas-mute); letter-spacing:.3px;
-  display:inline-flex; align-items:center; gap:5px;
-}
-.mp .cp-blocked i{ font-size:11px }
-
-/* 使用中的倒數提示 */
-.mp .cp-countdown{
-  font-size:12px; font-weight:600; letter-spacing:.3px;
-  color:var(--status-pending);
-  display:inline-flex; align-items:center; gap:5px;
-}
-
-/* ---- RWD ---- */
-@media (max-width:768px){
-  .mp .cp-card{ flex-direction:column }
-  .mp .cp-amt{
-    width:100%;
-    flex-direction:row; justify-content:flex-start; gap:6px;
-    padding:12px 16px;
-    border-right:none;
-    border-bottom:1px dashed var(--lohas-line);
-  }
-  .mp .cp-amt-num{ font-size:19px }
-  .mp .cp-body{ padding:14px 16px }
-  .mp .cp-foot{ align-items:stretch }
-  .mp .cp-use{ width:100%; padding:11px 22px }
-}
 
 /* =============================================================
    禮物中心 (gift-center)
