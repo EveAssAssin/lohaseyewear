@@ -80,7 +80,11 @@
       console.warn('[market] 主題分類載入失敗:', e);
     }
 
-    await renderFeatured();
+    // 本月精選區塊被 hidden 起來時就不撈資料 —— 那是兩次 Supabase 查詢,
+    // 為一個看不到的區塊做沒有意義。開關只在 market.html 那個 hidden 屬性。
+    if (document.querySelector('.featured-block:not([hidden])')) {
+      await renderFeatured();
+    }
     renderAllSections();
     if(State.member) await loadWishlist();
 
