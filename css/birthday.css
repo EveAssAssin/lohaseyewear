@@ -290,6 +290,25 @@
   margin:0;
 }
 
+/* 送禮入口。這一區是四則圖文並列,放實色按鈕會把視覺重心整個拉過去,
+   所以用底線文字連結 —— 有明確可點的樣子,但不搶版面。 */
+.bd .bd-gift-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:20px;
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  color:var(--lohas-brand);
+  text-decoration:none;
+  border-bottom:1px solid var(--lohas-brand);
+  padding-bottom:4px;
+  transition:gap .18s, opacity .18s;
+}
+.bd .bd-gift-cta:hover{ gap:13px; opacity:.7 }
+.bd .bd-gift-cta i{ font-size:12px }
+
 /* =========================
    參加方式
 ========================= */
