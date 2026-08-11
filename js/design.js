@@ -849,24 +849,29 @@
 
     buildImages().then(function (images) {
       var payload = buildPayload(images);
+      /* 送出前先留一份。cart/push 失敗、或客人在商城那邊中途關掉時,
+         至少還知道他做了什麼設定,不必從頭來過。 */
       try { sessionStorage.setItem('lohasDesignDraft', JSON.stringify(payload)); } catch (e) {}
 
-      // TODO(等商城 cart/push 正式規格):
-      //   POST {SHOP}/api/site/cart/push → 取得 cart_url → location.href = cart_url
-      //   一次性 token 60 秒有效,且必須整頁導轉(不可放 iframe),
-      //   否則第三方 cookie 限制會讓商城那邊建立不了登入。
-      console.info('[design] cart/push payload', payload);
-      window.alert(
-        '設計已完成\n\n' +
-        (State.product.title || '') + (State.specTitle ? ' · ' + State.specTitle : '') + '\n' +
-        '刻圖:' + (State.design.name || '') + '\n\n' +
-        '購物車回拋介面尚未開通,設計已暫存。介面接上後會直接帶你到商城結帳。'
-      );
+      el.submit.textContent = '送 進 購 物 車...';
+      return shopCall({
+        action: 'cart_push',
+        /* 不送 client_id。商城規格明訂會員編號必須由官網後端從 session 取得,
+           不可接受前端傳入 —— 否則任何人都能把商品推進別人的購物車。
+           shop 函式會拿這個 token 去 auth-session 換回編號,前端送什麼都不看。 */
+        token: (window.LohasAuth && window.LohasAuth.getToken()) || '',
+        main: payload.main
+      });
+    }).then(function (data) {
+      /* cart_url 的一次性 token 只有 60 秒,而且必須【整頁導轉】——
+         放進 iframe 的話,兩站不同註冊網域,瀏覽器的第三方 cookie 限制
+         會讓商城那邊建立不了登入,客人會看到一個沒登入的購物車。 */
+      if (!data || !data.cart_url) throw new Error('商城未回傳購物車網址');
+      window.location.href = data.cart_url;
     }).catch(function (e) {
-      console.error('[design] 產生預覽圖失敗', e);
-      el.formErr.textContent = '預覽圖產生失敗,請重試一次。';
+      console.error('[design] 送進購物車失敗', e);
+      el.formErr.textContent = (e && e.message) || '送出失敗,請重試一次。';
       show(el.formErr);
-    }).then(function () {
       el.submit.disabled = false;
       el.submit.textContent = label;
     });
