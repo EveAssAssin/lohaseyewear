@@ -277,13 +277,38 @@
 
   /* ---------- 位置 ---------- */
 
+  /* 商品圖在舞台裡實際被畫出來的矩形。
+     ---------------------------------------------------------------
+     舞台是固定比例(桌機 1:1、手機 4:3),商品圖是 object-fit:contain,
+     所以圖片通常不會填滿舞台,四周會有留白。
+
+     疊層必須以【這個矩形】為基準,不能以舞台為基準 —— 否則同一組座標
+     在不同裝置上會落在鏡框的不同位置。實測 1080x1080 的商品圖在 4:3 的
+     舞台裡左右各留白 61px,x=0.2 在手機上是圖片的 10%、在桌機上是 20%,
+     整整差一倍。客人在手機拉好的位置,師傅照桌機的合成圖去刻就是錯的。
+
+     改成圖片基準之後,State.x / y / scale 才真的是「商品圖的比例」,
+     payload 裡的 basis:'product_image' 也才名副其實。 */
+  function imageRect() {
+    var s = el.stage.getBoundingClientRect();
+    var nw = el.productImg.naturalWidth  || 0;
+    var nh = el.productImg.naturalHeight || 0;
+    // 圖還沒載完就先用舞台代替,載完的 onload 會再算一次
+    if (!nw || !nh || !s.width || !s.height) {
+      return { x: 0, y: 0, w: s.width, h: s.height };
+    }
+    var k = Math.min(s.width / nw, s.height / nh);
+    var w = nw * k, h = nh * k;
+    return { x: (s.width - w) / 2, y: (s.height - h) / 2, w: w, h: h };
+  }
+
   function applyPlacement() {
     if (!State.design) return;
-    // 以商品圖寬度為單位,換算成百分比定位。
-    // 用百分比而不是像素,是為了讓同一組數值在任何尺寸的畫面上都一致。
-    el.overlay.style.width = (State.scale * 100) + '%';
-    el.overlay.style.left  = (State.x * 100) + '%';
-    el.overlay.style.top   = (State.y * 100) + '%';
+    // 以商品圖的實際渲染矩形換算成像素定位(理由見 imageRect 的註解)
+    var r = imageRect();
+    el.overlay.style.width = (State.scale * r.w) + 'px';
+    el.overlay.style.left  = (r.x + State.x * r.w) + 'px';
+    el.overlay.style.top   = (r.y + State.y * r.h) + 'px';
 
     el.scaleVal.textContent = Math.round(State.scale * 100) + '%';
     el.xVal.textContent = Math.round(State.x * 100);
@@ -328,10 +353,13 @@
 
     el.overlay.addEventListener('pointermove', function (e) {
       if (!dragging) return;
-      var r = el.stage.getBoundingClientRect();
-      if (!r.width || !r.height) return;
-      State.x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
-      State.y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+      // 換算成「商品圖」的比例,不是舞台的 —— 與 applyPlacement 同一個基準,
+      // 兩邊用不同基準的話,拖曳的手感會和實際存下來的數值對不上。
+      var s = el.stage.getBoundingClientRect();
+      var r = imageRect();
+      if (!r.w || !r.h) return;
+      State.x = Math.min(1, Math.max(0, (e.clientX - s.left - r.x) / r.w));
+      State.y = Math.min(1, Math.max(0, (e.clientY - s.top  - r.y) / r.h));
       applyPlacement();
     });
 
@@ -755,6 +783,13 @@
 
     bindDrag();
     bindScrollBtn();
+
+    /* 疊層是以商品圖的渲染矩形定位的(見 imageRect),而那個矩形會在兩個
+       時機改變:圖片載完(才知道原始尺寸)、視窗尺寸變動(舞台大小或
+       比例跟著變,桌機 1:1 / 手機 4:3)。兩個時機都要重算,
+       否則刻圖會停在舊的位置上。 */
+    el.productImg.addEventListener('load', applyPlacement);
+    window.addEventListener('resize', applyPlacement, { passive: true });
   }
 
   /* 送禮模式:刻圖已由市集帶進來,眼鏡要在這頁挑 */
