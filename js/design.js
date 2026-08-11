@@ -25,8 +25,12 @@
     SHOP_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop',
     GIFT_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gift',
     TIMEOUT_MS: 15000,
-    // 預設落點:鏡片右上。以商品圖寬度為單位。
-    DEF: { lens: 'right', scale: 0.12, x: 0.68, y: 0.38 },
+    /* 預設落點。以商品圖寬高為單位。
+       y 用 0.5(垂直置中)而不是偏上:商品照一律是正面平放、鏡框大致
+       置中,0.5 幾乎一定落在鏡框上;先前的 0.38 在造型款(例如翼形框)
+       會落到鏡框上方的空白處 —— 客人沒調就送出的話,師傅收到的是一張
+       刻在空氣中的圖。落在鏡框上再讓客人微調,比落在外面安全。 */
+    DEF: { lens: 'right', scale: 0.12, x: 0.68, y: 0.5 },
     // 切到左鏡片時,水平位置以圖片中線鏡射
     LEFT_X: 0.32,
     // 刻圖先只顯示這麼多,其餘收在「展開全部」後面。
