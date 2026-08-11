@@ -340,6 +340,186 @@
     applyPlacement();
   }
 
+  /* ---------- 產出兩張圖 ----------
+     為什麼是兩張,不是一張:
+
+     · preview  給消費者看。購物車與訂單縮圖,可裁可縮,好看即可。
+     · guide    給雕刻師傅看。滿版不裁、標明位置與哪一片鏡片。
+
+     師傅的實際作業方式是「參考圖片的位置與大小,依經驗決定」(商城端回覆),
+     所以位置資訊的載體是圖,不是數值 —— 而縮圖與雕刻參考的需求正好相反
+     (縮圖會被壓縮裁切,雕刻參考不能裁)。同一張兼任兩者一定有一邊被犧牲,
+     而且不會有人發現,因為圖「看起來有出現」。 */
+
+  var IMG_PROXY = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/img-proxy';
+
+  /* 商城 CDN(CloudFront)不回 CORS 標頭,直接畫進 canvas 會被汙染,
+     toBlob() 會拋錯。走自家的 img-proxy 轉一手。
+     只有【合成時】才繞這一圈 —— 畫面上顯示的商品圖仍然直連,
+     這樣 proxy 掛掉時只有合成失敗,不會整頁沒圖。 */
+  function proxied(url) {
+    return url ? IMG_PROXY + '?url=' + encodeURIComponent(url) : '';
+  }
+
+  function loadImage(src) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('圖片載入失敗:' + src)); };
+      img.src = src;
+    });
+  }
+
+  function canvasToBlob(canvas) {
+    return new Promise(function (resolve, reject) {
+      canvas.toBlob(function (b) {
+        b ? resolve(b) : reject(new Error('圖片輸出失敗'));
+      }, 'image/png');
+    });
+  }
+
+  /* 把刻圖畫到商品照上,輸出原始解析度的 canvas。
+     幾何換算必須和畫面上的 CSS 完全一致,否則師傅拿到的位置是錯的:
+       .dz-overlay { width: scale × 圖寬; transform: translate(-50%,-50%) }
+     也就是 left/top 記的是【中心點】,寬度以商品圖寬度為單位。 */
+  function drawComposite(product, design) {
+    var W = product.naturalWidth, H = product.naturalHeight;
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+
+    ctx.drawImage(product, 0, 0, W, H);
+
+    var dw = State.scale * W;
+    var dh = dw * (design.naturalHeight / design.naturalWidth);
+    var dx = State.x * W - dw / 2;
+    var dy = State.y * H - dh / 2;
+
+    // 對應 CSS 的 mix-blend-mode:multiply —— 雷刻是黑線,
+    // 用相乘才像刻在鏡片上,而不是貼一張圖上去。
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(design, dx, dy, dw, dh);
+    ctx.globalCompositeOperation = 'source-over';
+
+    return { canvas: canvas, W: W, H: H, dx: dx, dy: dy, dw: dw, dh: dh };
+  }
+
+  /* 加工圖:合成圖 + 下方一條說明帶。
+     不把字疊在商品照上 —— 照片是淺色底,字會讀不清楚,
+     而這張圖的用途就是要讓人讀得清楚。 */
+  function drawGuide(base) {
+    var W = base.W, H = base.H;
+    /* 說明帶高度。算法不是隨手抓的:標題落在 0.30×band,底下三行小字
+       各佔 1.9×字級,而字級是 0.026×W —— 三行加起來約 6.3 個字級。
+       band 太矮的話最後一行(現場判斷那句)會被切掉,而那句正是免責說明。 */
+    var band = Math.max(280, Math.round(H * 0.28));
+    var pad  = Math.round(W * 0.04);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H + band;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, W, H + band);
+    ctx.drawImage(base.canvas, 0, 0);
+
+    // 刻圖範圍框。用洋紅色是因為商品照裡幾乎不會有這個顏色,
+    // 一眼就分得出「哪些是刻圖、哪些是鏡框本來就有的紋路」。
+    ctx.strokeStyle = '#E5007F';
+    ctx.lineWidth = Math.max(2, Math.round(W * 0.003));
+    ctx.setLineDash([ctx.lineWidth * 4, ctx.lineWidth * 3]);
+    ctx.strokeRect(base.dx, base.dy, base.dw, base.dh);
+    ctx.setLineDash([]);
+
+    // 分隔線
+    ctx.strokeStyle = '#DDD';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, H + 1); ctx.lineTo(W, H + 1); ctx.stroke();
+
+    /* 左右是這件事最容易錯、錯了就報廢的地方,所以兩種說法都寫出來。
+
+       ⚠ 判斷依據是【刻圖實際落在圖片的哪一側】,不是 State.lens。
+       介面上那兩顆按鈕只寫「左鏡片 / 右鏡片」,沒有講明以配戴者還是
+       以看圖者為準 —— 而現行實作是把「右鏡片」放在圖片右側(預設 x=0.68),
+       等於採看圖者視角。照眼鏡業慣例(配戴者視角)去解讀那個標籤就會標反,
+       而師傅照著標反的圖刻下去,那副眼鏡就報廢了。
+
+       畫出來的位置不會騙人,所以從 x 反推。 */
+    var onRight = State.x >= 0.5;
+    var onPhoto = onRight ? '本圖右側鏡片' : '本圖左側鏡片';
+    var wearer  = onRight ? '配戴者左眼側' : '配戴者右眼側';
+
+    var y = H + Math.round(band * 0.30);
+    var big = Math.round(W * 0.042);
+
+    /* 先寫「本圖哪一側」再寫「配戴者哪一眼」:
+       師傅手上有的是這張圖,能當場核對的也是這張圖。
+       配戴者視角放後面當補充,順序反過來會讓人先記住錯的那個。 */
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#E5007F';
+    ctx.font = '700 ' + big + 'px "Noto Sans TC", sans-serif';
+    var head = '刻於 ' + onPhoto;
+    // 寬度要在【還是大字】的時候量,換了字體再量會偏
+    var headW = ctx.measureText(head).width;
+    ctx.fillText(head, pad, y);
+
+    ctx.fillStyle = '#111';
+    ctx.font = '400 ' + Math.round(big * 0.72) + 'px "Noto Sans TC", sans-serif';
+    ctx.fillText('(' + wearer + ')', pad + headW + big * 0.5, y);
+
+    var small = Math.round(W * 0.026);
+    ctx.fillStyle = '#555';
+    ctx.font = '400 ' + small + 'px "Noto Sans TC", sans-serif';
+
+    var lines = [
+      '刻圖:' + (State.design.name || '(未命名)') +
+        '　寬度約為商品圖寬的 ' + Math.round(State.scale * 100) + '%',
+      '設計編號 ' + State.design.id + '　商品 nid ' + State.product.nid +
+        '　產生於 ' + new Date().toLocaleString('zh-TW', { hour12: false }),
+      '虛線框為客人指定的位置與大小,供參考;實際雷刻由現場判斷。'
+    ];
+    lines.forEach(function (t, i) {
+      ctx.fillText(t, pad, y + Math.round(small * 1.9) * (i + 1) + small * 0.6);
+    });
+
+    return canvas;
+  }
+
+  function uploadPng(blob, name) {
+    var sb = window.LohasSupabase && window.LohasSupabase.getClient();
+    if (!sb) return Promise.reject(new Error('Supabase 未初始化'));
+    var bucket = (window.LohasSupabase.CONFIG || {}).STORAGE_BUCKET || 'gallery-uploads';
+    var path = 'design-previews/' + name;
+    return sb.storage.from(bucket)
+      .upload(path, blob, { contentType: 'image/png', upsert: true })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      });
+  }
+
+  /* 產出並上傳兩張圖,回傳 { preview_url, guide_url }。 */
+  function buildImages() {
+    var stamp = State.design.id + '-' + Date.now();
+    // 字型沒載完就畫,加工圖的中文會變成系統預設字體(甚至豆腐字)
+    return Promise.all([
+      loadImage(proxied(State.product.image)),
+      loadImage(designUrl(State.design)),
+      (document.fonts && document.fonts.ready) || Promise.resolve()
+    ]).then(function (r) {
+      var base = drawComposite(r[0], r[1]);
+      return Promise.all([canvasToBlob(base.canvas), canvasToBlob(drawGuide(base))]);
+    }).then(function (blobs) {
+      return Promise.all([
+        uploadPng(blobs[0], stamp + '-preview.png'),
+        uploadPng(blobs[1], stamp + '-guide.png')
+      ]);
+    }).then(function (urls) {
+      return { preview_url: urls[0], guide_url: urls[1] };
+    });
+  }
+
   /* 拖曳:滑鼠與觸控共用 pointer 事件,不必寫兩套 */
   function bindDrag() {
     var dragging = false;
@@ -625,7 +805,7 @@
      ⚠ 商城的 cart/push 正式規格尚未收到(手上是草案版,且沒有位置欄位),
      所以這一版先把 payload 準備好並存進 sessionStorage,
      等規格確認就把下面的 TODO 換成真正的呼叫。 */
-  function buildPayload() {
+  function buildPayload(images) {
     return {
       main: {
         nid: State.product.nid,
@@ -634,8 +814,12 @@
         design: {
           design_id: State.design.id,
           design_name: State.design.name,
+          // 純刻圖的向量檔,實際要進雕刻軟體的就是它
           engraving_url: State.design.image_url_svg || null,
-          preview_url: designUrl(State.design),
+          // 合成圖:給消費者看(購物車與訂單縮圖)
+          preview_url: images.preview_url,
+          // 加工圖:給師傅看位置。⚠ 商城端尚未新增此欄位,已於文件中提出
+          guide_url: images.guide_url,
           placement: {
             lens: State.lens,
             scale: State.scale,
@@ -653,20 +837,35 @@
     if (!State.design || !State.product) return;
     if (State.gift) { createGift(); return; }
 
-    var payload = buildPayload();
-    try { sessionStorage.setItem('lohasDesignDraft', JSON.stringify(payload)); } catch (e) {}
+    // 產圖 + 上傳要幾秒,期間必須擋住重複點擊 ——
+    // 點兩下就會上傳兩組檔案,而且第二組會覆蓋第一組的 URL。
+    var label = el.submit.textContent;
+    el.submit.disabled = true;
+    el.submit.textContent = '產 生 預 覽 圖...';
 
-    // TODO(等商城 cart/push 正式規格):
-    //   POST {SHOP}/api/site/cart/push → 取得 cart_url → location.href = cart_url
-    //   一次性 token 60 秒有效,且必須整頁導轉(不可放 iframe),
-    //   否則第三方 cookie 限制會讓商城那邊建立不了登入。
-    console.info('[design] cart/push payload', payload);
-    window.alert(
-      '設計已完成\n\n' +
-      (State.product.title || '') + (State.specTitle ? ' · ' + State.specTitle : '') + '\n' +
-      '刻圖:' + (State.design.name || '') + '\n\n' +
-      '購物車回拋介面尚未開通,設計已暫存。介面接上後會直接帶你到商城結帳。'
-    );
+    buildImages().then(function (images) {
+      var payload = buildPayload(images);
+      try { sessionStorage.setItem('lohasDesignDraft', JSON.stringify(payload)); } catch (e) {}
+
+      // TODO(等商城 cart/push 正式規格):
+      //   POST {SHOP}/api/site/cart/push → 取得 cart_url → location.href = cart_url
+      //   一次性 token 60 秒有效,且必須整頁導轉(不可放 iframe),
+      //   否則第三方 cookie 限制會讓商城那邊建立不了登入。
+      console.info('[design] cart/push payload', payload);
+      window.alert(
+        '設計已完成\n\n' +
+        (State.product.title || '') + (State.specTitle ? ' · ' + State.specTitle : '') + '\n' +
+        '刻圖:' + (State.design.name || '') + '\n\n' +
+        '購物車回拋介面尚未開通,設計已暫存。介面接上後會直接帶你到商城結帳。'
+      );
+    }).catch(function (e) {
+      console.error('[design] 產生預覽圖失敗', e);
+      el.formErr.textContent = '預覽圖產生失敗,請重試一次。';
+      show(el.formErr);
+    }).then(function () {
+      el.submit.disabled = false;
+      el.submit.textContent = label;
+    });
   }
 
   /* ---------- 啟動 ---------- */
