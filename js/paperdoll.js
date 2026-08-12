@@ -244,7 +244,7 @@
         <div class="fc-desc">${esc(item.desc)}</div>
         <div class="fc-foot">
           ${priceTag(framePrice(item), "fc-price")}
-          <a class="fc-more" href="frames.html?f=${encodeURIComponent(item.code)}"
+          <a class="fc-more" href="frame.html?f=${encodeURIComponent(item.code)}"
              target="_blank" rel="noopener"
              onclick="event.stopPropagation()">百科 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
         </div>

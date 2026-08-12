@@ -13,7 +13,8 @@
 
 /* ---------- 1. 舊站 ID → 新代碼 對照表 ----------
    實體 QR 已印製 lohasglasses.com/page/1/{舊ID}，
-   由 404.html 導向 frames.html?f={舊ID}，於此處轉譯成新代碼。
+   由 js/legacy-redirect.js（掛在 index.html）導向 frame.html?f={舊ID}，
+   於此處轉譯成新代碼。404.html 有同樣一份規則作為備援。
    合併規則（做法2）：金屬+塑膠 / 金屬X塑膠 / 塑膠+金屬 統一視為 combo。 */
 const LEGACY_ID_MAP = {
   // --- 材質 × 形狀 ---
