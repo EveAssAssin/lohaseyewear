@@ -18,9 +18,24 @@
 ============================================================ -->
 <script>
 /* 版本標記：若線上看不到此註解，代表 404.html 未成功部署／被舊檔覆蓋 */
-window.__LOHAS_404_VERSION__ = '20260730-frames-abs';
+window.__LOHAS_404_VERSION__ = '20260812-aspx';
 (function () {
-  var m = (location.pathname || '').match(/^\/page\/\d+\/([\w-]+)/);
+  var path = location.pathname || '';
+
+  /* 舊版 ASP.NET 固定路徑（大小寫不敏感、忽略結尾斜線與查詢字串） */
+  var LEGACY_PATHS = [
+    { from: '/store/visitor/store_list.aspx', to: '/allstore.html' }
+  ];
+  var lower = path.toLowerCase().replace(/\/+$/, '');
+  for (var i = 0; i < LEGACY_PATHS.length; i++) {
+    if (lower === LEGACY_PATHS[i].from) {
+      location.replace(LEGACY_PATHS[i].to);
+      return;
+    }
+  }
+
+  /* 舊站 QR */
+  var m = path.match(/^\/page\/\d+\/([\w-]+)/);
   if (m) {
     location.replace('/frames.html?f=' + encodeURIComponent(m[1]));
     return;
