@@ -6,19 +6,22 @@
 <title>頁面導向中… | 樂活眼鏡</title>
 
 <!-- ============================================================
-  舊站 QR 轉址（導向新站鏡框百科 frames.html）
+  舊站 QR 轉址（導向新站鏡框介紹 frame.html）
   - GitHub Pages 純靜態、無法做伺服器端 301/302，
     改用 404.html + 前端 JS 轉址（瀏覽器與 QR 掃描器皆會執行）。
-  - 規則：/page/{語系}/{ID} → /frames.html?f={ID}
+  - 規則：/page/{語系}/{ID} → /frame.html?f={ID}
     ID→新代碼 對照表在 js/frames-data.js 的 LEGACY_ID_MAP，
     毋須在此維護 49 筆，只需一條規則。
+    ※ 是 frame.html（單數）不是 frames.html —— 只有 js/frame.js 會讀 ?f=，
+      frames.html（鏡框百科總表）完全不處理該參數，導過去代碼會被吃掉。
+      本檔須與 js/legacy-redirect.js 的規則保持一致。
   - capture group 只取 [\w-]，順手濾掉 QR#8 結尾多餘的單引號。
   - 其餘找不到的路徑：顯示友善頁導回首頁。
   - script 置於 <head> 最前，render 前即觸發，畫面幾乎不閃。
 ============================================================ -->
 <script>
 /* 版本標記：若線上看不到此註解，代表 404.html 未成功部署／被舊檔覆蓋 */
-window.__LOHAS_404_VERSION__ = '20260812-aspx';
+window.__LOHAS_404_VERSION__ = '20260812-aspx-frame';
 (function () {
   var path = location.pathname || '';
 
@@ -37,7 +40,7 @@ window.__LOHAS_404_VERSION__ = '20260812-aspx';
   /* 舊站 QR */
   var m = path.match(/^\/page\/\d+\/([\w-]+)/);
   if (m) {
-    location.replace('/frames.html?f=' + encodeURIComponent(m[1]));
+    location.replace('/frame.html?f=' + encodeURIComponent(m[1]));
     return;
   }
   // 日後其他舊站路徑（vipstore_list、logo_trace 等）可在此比照增加。
