@@ -128,7 +128,11 @@
         ? '<b>NT$' + money(p.offer_price) + '</b> <s>NT$' + money(p.price) + '</s>'
         : '<b>NT$' + money(p.price) + '</b>';
       el.productPrice.innerHTML = price +
-        '<span class="dz-price-note">刻圖費用另計,以結帳金額為準</span>';
+        /* 不寫「另計」。商城 2026-08-12 來文:刻圖費多為 0 元且已含在商品
+           售價內,未另設收費品項,plus_buy 的 engraving_fee 不會加進購物車。
+           但原文是「多為」0 元,不保證每件都是,所以也不能寫成「不另收費」。
+           一律以結帳金額為準,兩種情況都成立。 */
+        '<span class="dz-price-note">刻圖費用以商城結帳金額為準</span>';
 
       // 手機版疊在預覽上的標示(桌機由 CSS 隱藏)
       el.stageMeta.innerHTML =
