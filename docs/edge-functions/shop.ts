@@ -20,6 +20,7 @@
      product     商品詳情(nid),含規格樹
      cart_push   把客製完成品送回商城購物車,回傳 cart_url
                  ⚠ 這支需要 session token,規則見下方註解
+                 ⚠ 這支會在 design_submissions 留一筆紀錄(成功與失敗都留)
    ============================================================= */
 
 // ⚠ 只在 Dashboard 填,不要提交回 GitHub
@@ -30,6 +31,11 @@ const SHOP_BASE = (Deno.env.get('SHOP_BASE_URL') || 'https://lohas-shop-test.onr
 const SITE_KEY  = Deno.env.get('SITE_API_KEY') || FALLBACK_SITE_KEY;
 
 const AUTH_FN = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/auth-session';
+
+/* 送單紀錄用。這兩個是 Supabase 自動注入 Edge Function 的環境變數,
+   不需要在 Secrets 裡設定,也不需要填 FALLBACK。 */
+const SB_URL = Deno.env.get('SUPABASE_URL') || '';
+const SB_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
 /* 送進 cart/push 的圖片網址只允許這個 host。
    ---------------------------------------------------------------
@@ -170,6 +176,68 @@ function buildCartBody(clientId: string, body: Record<string, any>) {
   return out;
 }
 
+/* 送單紀錄。
+   ---------------------------------------------------------------
+   成功與失敗都寫,失敗的那些才是排查用得上的 ——
+   在此之前送單失敗只能請客人開瀏覽器 console,實務上做不到。
+
+   紀錄取自 buildCartBody 的產出(已消毒過的版本),不是前端原始 body。
+
+   ⚠ 這一步失敗絕對不能影響客人:寫紀錄是我方的內部需求,
+     不是客人的交易的一部分。整段包在 try/catch 裡,錯了只留 log。
+
+   刻意不存的東西:session token、coupon.lock_token —— 兩者都是憑證。 */
+async function logSubmission(row: Record<string, unknown>) {
+  if (!SB_URL || !SB_SERVICE_KEY) {
+    console.warn('[shop] 缺少 SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY,略過送單紀錄');
+    return;
+  }
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/design_submissions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_SERVICE_KEY,
+        'Authorization': 'Bearer ' + SB_SERVICE_KEY,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(row),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!r.ok) {
+      console.error('[shop] 送單紀錄寫入失敗 ' + r.status + ' ' + (await r.text()).slice(0, 200));
+    }
+  } catch (e) {
+    console.error('[shop] 送單紀錄例外:', e instanceof Error ? e.message : e);
+  }
+}
+
+/** 把 buildCartBody 的產出 + 商城回應,攤平成一筆資料列 */
+function submissionRow(
+  erpid: string,
+  out: Record<string, any>,
+  shop: { code: string; message: string; cartUrl: string },
+): Record<string, unknown> {
+  const main = out.main || {};
+  const design = main.design || {};
+  return {
+    erpid,
+    nid: main.nid ?? null,
+    sid: main.sid ?? null,
+    design_id:     design.design_id || null,
+    design_name:   design.design_name || null,
+    engraving_url: design.engraving_url || null,
+    preview_url:   design.preview_url || null,
+    guide_url:     design.guide_url || null,
+    placement:     design.placement || null,
+    coupon_id:     out.coupon?.coupon_id ?? null,
+    succeeded:     shop.code === '200' && !!shop.cartUrl,
+    shop_code:     shop.code || null,
+    shop_message:  shop.message ? String(shop.message).slice(0, 500) : null,
+    cart_url:      shop.cartUrl || null,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
@@ -191,9 +259,10 @@ Deno.serve(async (req) => {
   if (!path) return reply('006', { message: '不支援的 action' }, 400);
 
   let out: Record<string, unknown>;
+  let erpid = '';
 
   if (action === 'cart_push') {
-    const erpid = await erpidFromToken(String(body.token || ''));
+    erpid = await erpidFromToken(String(body.token || ''));
     if (!erpid) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
 
     if (!Number(body?.main?.nid)) return reply('006', { message: '缺少商品編號' }, 400);
@@ -225,11 +294,28 @@ Deno.serve(async (req) => {
     // 原樣轉回,但保險起見濾掉任何可能回音金鑰的欄位
     if (j && typeof j === 'object' && 'debug' in j) delete (j as any).debug;
 
+    if (action === 'cart_push') {
+      await logSubmission(submissionRow(erpid, out, {
+        code:    String(j?.code ?? r.status),
+        message: String(j?.message ?? ''),
+        cartUrl: String(j?.data?.cart_url ?? ''),
+      }));
+    }
+
     return new Response(JSON.stringify(j), {
       status: r.status,
       headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' },
     });
   } catch (e) {
+    // 連不上商城 / 對方回的不是 JSON。這種也要留紀錄,
+    // 否則「客人說送不出去」在我方查不到任何東西。
+    if (action === 'cart_push') {
+      await logSubmission(submissionRow(erpid, out, {
+        code:    'FETCH_FAILED',
+        message: e instanceof Error ? e.message : String(e),
+        cartUrl: '',
+      }));
+    }
     return reply('500', { message: '無法連線到商城,請稍後再試' }, 502);
   }
 });
