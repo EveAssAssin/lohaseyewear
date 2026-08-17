@@ -2813,6 +2813,28 @@
 
     // 預載入首頁需要的東西
     if (State.isCreator) loadAnalytics(); // 首頁累計數據
+
+    openPageFromUrl();
+  }
+
+  /* 用網址指定要開哪一頁:member-portal.html?page=gifts
+     ---------------------------------------------------------------
+     在此之前這一頁沒有任何路由,永遠停在首頁 —— 站內那些寫著
+     「到禮物中心查看」的按鈕,點了只會到會員區首頁,使用者還要自己
+     再找一次側邊選單,看起來就像沒反應。
+
+     只放行「側邊選單上真的存在、而且沒有被隱藏」的頁面:
+     創作者專屬的頁面對一般會員是隱藏的,不能靠帶網址參數繞進去。 */
+  function openPageFromUrl() {
+    var page = new URLSearchParams(location.search).get('page');
+    if (!page || page === 'home') return;
+
+    var nav = root.querySelector('.nav-link[data-page="' + page + '"]');
+    var panel = root.querySelector('.content-page[data-page="' + page + '"]');
+    if (!nav || !panel) return;
+    if (nav.offsetParent === null) return;   // 被隱藏(如非創作者的創作者專區)
+
+    goTo(page);
   }
 
   document.addEventListener('DOMContentLoaded', init);

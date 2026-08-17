@@ -194,9 +194,11 @@
     } else if (g.status === 'claimed') {
       actions = g.fulfillment === 'ship'
         ? '<span class="gf-hint"><i class="fa-solid fa-box"></i>已領取,商品準備出貨中</span>'
-        : '<span class="gf-hint"><i class="fa-solid fa-hourglass-half"></i>兌換券準備中,稍後會出現在「我的票券」</span>';
+        // 不指向「我的票券」——官網那一頁已整併進本頁。門市核銷是店員以客編
+        // 查詢,客人不需要找到券再出示,所以只講「發到帳號」與「到店兌換」。
+        : '<span class="gf-hint"><i class="fa-solid fa-hourglass-half"></i>兌換券準備中,完成後會發到你的會員帳號</span>';
     } else if (g.status === 'issued') {
-      actions = '<span class="gf-hint"><i class="fa-solid fa-ticket"></i>兌換券已在「我的票券」,帶著它到門市</span>';
+      actions = '<span class="gf-hint"><i class="fa-solid fa-ticket"></i>兌換券已發出,到門市報會員編號即可兌換</span>';
     } else if (g.status === 'shipped') {
       actions = '<span class="gf-hint"><i class="fa-solid fa-truck"></i>已於 ' +
                 fmtDate(g.shipped_at) + ' 出貨</span>';
