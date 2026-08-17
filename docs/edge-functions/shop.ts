@@ -123,12 +123,25 @@ function clamp01(v: unknown): number {
 /* 組出要送給商城的 cart/push body。
    前端送來的東西一律當成不可信,逐欄挑出來重建 ——
    直接把 body 轉發等於把金鑰的權限開放給任何呼叫者。 */
-function buildCartBody(clientId: string, body: Record<string, any>) {
+function buildCartBody(clientId: string, body: Record<string, any>, submissionId: string) {
   const m = body.main || {};
   const d = m.design || {};
   const p = d.placement || {};
 
   const design: Record<string, unknown> = {
+    /* 這一次送出的唯一識別碼。
+       ---------------------------------------------------------
+       design_id 是【刻圖作品】的編號,同一張刻圖可以被送出很多次,
+       所以它無法回答「訂單對應到哪一筆送單」。submission_id 才可以。
+
+       它由我方在此產生,並且【就是 design_submissions 那一列的主鍵】——
+       商城原樣保存、付款完成時原樣回拋,我方拿到就能直接對上,
+       不必再靠「最近一筆未成交的」這種機率性比對。
+
+       商城 2026-08-17 來文確認採此做法(做法 A),並說明會與 placement
+       同樣處理:原樣保存、不解析、只做長度上限 100。 */
+    submission_id: submissionId,
+
     design_id:   String(d.design_id || '').slice(0, 100),
     design_name: String(d.design_name || '').slice(0, 200),
     placement: {
@@ -221,6 +234,9 @@ function submissionRow(
   const main = out.main || {};
   const design = main.design || {};
   return {
+    /* 主鍵用我方送給商城的那一組,不讓資料庫自己產 ——
+       兩邊必須是同一個值,商城回拋時才對得上。 */
+    id: design.submission_id,
     erpid,
     nid: main.nid ?? null,
     sid: main.sid ?? null,
@@ -267,8 +283,11 @@ Deno.serve(async (req) => {
 
     if (!Number(body?.main?.nid)) return reply('006', { message: '缺少商品編號' }, 400);
 
-    out = buildCartBody(erpid, body);
-    console.log('[shop] cart_push erpid=' + erpid + ' nid=' + (out as any).main.nid);
+    /* 送出前先決定這一筆的識別碼,而不是等寫紀錄時才由資料庫產生 ——
+       商城要收到的和我方要存的必須是同一個值。 */
+    out = buildCartBody(erpid, body, crypto.randomUUID());
+    console.log('[shop] cart_push erpid=' + erpid + ' nid=' + (out as any).main.nid +
+                ' submission=' + (out as any).main.design.submission_id);
   } else {
     // 讀取型的三支:只轉送白名單內的參數,
     // 前端傳什麼就照單全收會把金鑰的權限放大

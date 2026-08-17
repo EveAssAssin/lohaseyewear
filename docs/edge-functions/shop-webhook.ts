@@ -153,47 +153,70 @@ async function handleGiftEvent(event: string, body: Record<string, any>) {
 
 /* ---------- 客製訂單成立:回填 order_no ---------- */
 
-/* ⚠ 這裡的比對有一個已知的不精確之處,已同步向商城提出:
-   商城回拋的是 design_id + nid + sid,而 design_id 是【刻圖作品】的編號,
-   不是【這一次送出】的編號 —— 同一張刻圖被同一個人重複送出時,
-   光靠這三個欄位分不出是哪一筆。
+/* 比對優先用 submission_id —— 那是 shop 函式在送出 cart/push 當下產生的,
+   而且就是 design_submissions 那一列的主鍵,一對一,沒有模糊空間。
+   商城 2026-08-17 來文確認會原樣保存並回拋。
 
-   目前的處理:取該會員最近一筆「同 design_id + 同 nid 且尚未有 order_no」
-   的送單紀錄。實務上客人不會在同一分鐘內用同一張刻圖對同一件商品下兩單,
-   但這是機率問題不是保證。
-
-   根治要商城回拋一個由我方產生、對每次送出唯一的識別碼。已提出。 */
+   退路是舊的模糊比對(design_id + nid + erpid,取最近一筆未成交的),
+   保留它是為了兩種情況:submission_id 上線前送出、但之後才付款完成的訂單;
+   以及商城那側尚未開始回傳該欄位的過渡期。
+   ⚠ 那條路是機率不是保證 —— 同一個人用同一張刻圖對同一件商品送兩次就分不出來。
+   兩邊都上線之後,退路應該不會再被走到,若 log 出現 fuzzy 就要查。 */
 async function handleDesignOrder(body: Record<string, any>) {
-  const orderNo  = String(body.order_no || '').trim();
-  const designId = String(body.design_id || '').trim();
-  const nid      = Number(body.nid);
-  const erpid    = String(body.client_id || body.erpid || '').trim();
+  const orderNo      = String(body.order_no || '').trim();
+  const submissionId = String(body.submission_id || '').trim();
+  const designId     = String(body.design_id || '').trim();
+  const nid          = Number(body.nid);
+  const erpid        = String(body.client_id || body.erpid || '').trim();
 
   if (!orderNo) return { result: 'mismatch', note: '缺少 order_no' };
-  if (!designId && !erpid) return { result: 'mismatch', note: '缺少 design_id 與 client_id,無從比對' };
 
-  let q = 'design_submissions?order_no=is.null&succeeded=is.true' +
-          '&order=created_at.desc&limit=1&select=id';
-  if (designId) q += '&design_id=eq.' + encodeURIComponent(designId);
-  if (Number.isFinite(nid) && nid > 0) q += '&nid=eq.' + nid;
-  if (erpid) q += '&erpid=eq.' + encodeURIComponent(erpid);
+  let target = '';
+  let how = '';
 
-  const found = await sb(q);
-  if (!found.ok) throw new Error('查詢送單紀錄失敗 ' + found.status);
-  const rows = await found.json();
+  if (submissionId) {
+    const r = await sb('design_submissions?id=eq.' + encodeURIComponent(submissionId) +
+                       '&select=id,order_no');
+    if (!r.ok) throw new Error('查詢送單紀錄失敗 ' + r.status);
+    const rows = await r.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return { result: 'mismatch', note: `submission_id ${submissionId} 查無此筆` };
+    }
+    if (rows[0].order_no && rows[0].order_no !== orderNo) {
+      return { result: 'mismatch', note: `submission ${submissionId} 已對應 ${rows[0].order_no},拒絕覆蓋` };
+    }
+    target = rows[0].id;
+    how = 'submission_id';
 
-  if (!Array.isArray(rows) || rows.length === 0) {
-    return { result: 'mismatch', note: `找不到對應的送單紀錄(design_id=${designId} nid=${nid})` };
+  } else {
+    if (!designId && !erpid) {
+      return { result: 'mismatch', note: '缺少 submission_id、design_id 與 client_id,無從比對' };
+    }
+    let q = 'design_submissions?order_no=is.null&succeeded=is.true' +
+            '&order=created_at.desc&limit=1&select=id';
+    if (designId) q += '&design_id=eq.' + encodeURIComponent(designId);
+    if (Number.isFinite(nid) && nid > 0) q += '&nid=eq.' + nid;
+    if (erpid) q += '&erpid=eq.' + encodeURIComponent(erpid);
+
+    const found = await sb(q);
+    if (!found.ok) throw new Error('查詢送單紀錄失敗 ' + found.status);
+    const rows = await found.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return { result: 'mismatch', note: `找不到對應的送單紀錄(design_id=${designId} nid=${nid})` };
+    }
+    target = rows[0].id;
+    how = 'fuzzy';
+    console.warn('[shop-webhook] 未帶 submission_id,改用模糊比對 → ' + target);
   }
 
-  const r = await sb('design_submissions?id=eq.' + encodeURIComponent(rows[0].id), {
+  const r = await sb('design_submissions?id=eq.' + encodeURIComponent(target), {
     method: 'PATCH',
     headers: { 'Prefer': 'return=minimal' },
     body: JSON.stringify({ order_no: orderNo }),
   });
   if (!r.ok) throw new Error('回填 order_no 失敗 ' + r.status);
 
-  return { result: 'ok', note: `submission ${rows[0].id} → ${orderNo}` };
+  return { result: 'ok', note: `submission ${target} → ${orderNo}(${how})` };
 }
 
 /* ---------- 入口 ---------- */
