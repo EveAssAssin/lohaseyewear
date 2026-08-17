@@ -53,10 +53,23 @@
 
       const member = s.member || {};
       const erpid = member.client_id || '';
-      if (!erpid) throw new Error('登入成功，但未取得會員編號，請聯繫客服');
+      const mid = member.mid || '';
+
+      /* 不再因為 erpid 為空就擋下來。
+         官網註冊只建立 App 會員,客編要到門市消費時才由店員建立與綁定
+         (見票券文件附錄三)。那種會員的 client_id 是空的,但有 mid ——
+         他應該登得進來,只是票券、禮物、預約這類需要客編的功能不可用。
+
+         兩個都沒有才是真的異常:代表上游回了成功卻沒給任何識別。 */
+      if (!erpid && !mid) {
+        throw new Error('登入成功，但未取得會員識別，請聯繫客服');
+      }
 
       Auth.saveMember({
         erpid: erpid,
+        mid: mid,
+        // 未綁定時 erpid 為空,前端據此顯示「綁定門市會員後即可使用」
+        isErpBound: member.is_erp_bound === undefined ? !!erpid : !!member.is_erp_bound,
         name: member.name || '',
         mobile: member.mobile || '',
         email: member.email || '',

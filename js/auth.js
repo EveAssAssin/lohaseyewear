@@ -70,6 +70,28 @@
     localStorage.removeItem(CONFIG.TOKEN_KEY);
   }
 
+  /* 這個會員有沒有綁定門市(ERP 客編)。
+     -----------------------------------------------------------
+     官網註冊只建立 App 會員,客編是空的 —— 票券、禮物、門市預約這類
+     需要客編的功能對他不可用,要到門市消費時由店員建立與綁定。
+
+     判斷一律走這支,不要各頁自己讀 erpid 再判斷 ——
+     舊資料沒有 isErpBound 欄位,那些頁面會全部誤判成未綁定。
+     這裡以 erpid 有沒有值作為退路。 */
+  function isErpBound() {
+    const m = getStoredMember();
+    if (!m) return false;
+    if (m.isErpBound !== undefined) return !!m.isErpBound;
+    return !!m.erpid;
+  }
+
+  /* 需要客編的功能統一用這句,措辭一致。
+     刻意不寫「請先綁定」——客人自己綁不了,那是門市人員做的事,
+     叫他去做一件他做不到的事只會讓人更困惑。 */
+  function erpRequiredNote() {
+    return '這項功能需要門市會員身分。第一次到樂活門市時,店員會協助你完成綁定,不需另外準備什麼。';
+  }
+
   // 7 天未操作視為過期,自動清除登入狀態
   function isLogin() {
     const member = getStoredMember();
@@ -132,6 +154,8 @@
     getStoredMember,
     saveMember,
     clearMember,
+    isErpBound,
+    erpRequiredNote,
     getToken,
     saveToken,
     clearToken,
