@@ -18,6 +18,21 @@
   var ENDPOINT = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/member-auth';
   var TIMEOUT_MS = 20000;
 
+  /* ⚠ 尚未開放(2026-08-17)
+     -------------------------------------------------------------
+     member-auth 目前指向主後端的【測試站】,而登入走的是正式環境。
+     在這種狀態下註冊成功的帳號會建在測試環境、然後登不進來,
+     而且姓名、Email、手機會寫進不該寫的地方。
+
+     擋在這裡而不是只拿掉 login.html 的連結,是因為這頁的網址一旦
+     被分享或被搜尋引擎收錄,拿掉連結擋不住任何人。
+
+     待 member-auth 的 base URL 改為正式站並驗證後,把這個常數改成
+     false 即可。 */
+  var NOT_READY = true;
+  var NOT_READY_NOTE = '會員註冊功能整備中,尚未開放。' +
+    '目前請至樂活門市或樂活 App 註冊,兩邊的帳號是共用的。';
+
   var State = { sessionKey: '', sentTo: '', verifyType: 'email' };
   var el = {};
 
@@ -255,6 +270,19 @@
       step1: $('rgStep1'), step2: $('rgStep2')
     };
     if (!el.form) return;
+
+    /* 未開放時直接停在說明畫面。表單連渲染都不渲染 ——
+       讓人填完一整頁才說「尚未開放」比一開始就講更糟。 */
+    if (NOT_READY) {
+      hide(el.form);
+      show(el.donePane);
+      el.donePane.querySelector('.rg-done-icon').innerHTML =
+        '<i class="fa-solid fa-circle-info"></i>';
+      el.donePane.querySelector('.rg-done-title').textContent = '尚未開放';
+      el.doneText.textContent = NOT_READY_NOTE;
+      el.donePane.querySelector('.rg-done-btn').textContent = '回 登 入';
+      return;
+    }
 
     el.account.addEventListener('blur', function () {
       var v = this.value.trim();
