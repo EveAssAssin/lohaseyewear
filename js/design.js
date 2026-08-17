@@ -679,31 +679,44 @@
 
     hide(el.formErr);
     el.submit.disabled = true;
-    el.submit.textContent = '處 理 中...';
+    el.submit.textContent = '產 生 預 覽 圖...';
 
     var m = Auth && Auth.getStoredMember ? Auth.getStoredMember() : null;
 
-    giftCall({
-      action: 'create',
-      token: token,
-      sender_name: (m && m.name) || '',
-      design_id: State.design.id,
-      design_name: State.design.name,
-      design_image_url: designUrl(State.design),
-      product_nid: State.product.nid,
-      product_sid: State.specSid,
-      product_title: State.product.title,
-      product_spec_title: State.specTitle,
-      product_image: State.product.image,
-      engrave_placement: {
-        lens: State.lens, scale: State.scale, x: State.x, y: State.y,
-        basis: 'product_image'
-      },
-      message: (el.message.value || '').trim(),
-      fulfillment: State.fulfillment,
-      recipient_mode: State.recipMode,
-      recipient_key: key,
-      recipient_label: (el.recipLabel.value || '').trim()
+    /* 先產合成圖再建立禮物。
+       ---------------------------------------------------------
+       收禮人打開領取頁時,最該看到的是「刻上去的樣子」,不是型錄照。
+       這裡用的是和「加入購物車」完全相同的 buildImages(),
+       所以兩條路產出的圖一致,不會出現送禮看到一種、下單看到另一種。
+
+       順帶產出的 guide_url 也一併存下 —— 門市兌換時加工人員要看它,
+       而現在存的成本跟只存一張相同,等接上商城再回頭補就得重畫舊資料。 */
+    buildImages().then(function (images) {
+      el.submit.textContent = '建 立 禮 物...';
+      return giftCall({
+        action: 'create',
+        token: token,
+        sender_name: (m && m.name) || '',
+        design_id: State.design.id,
+        design_name: State.design.name,
+        design_image_url: designUrl(State.design),
+        preview_url: images.preview_url,
+        guide_url: images.guide_url,
+        product_nid: State.product.nid,
+        product_sid: State.specSid,
+        product_title: State.product.title,
+        product_spec_title: State.specTitle,
+        product_image: State.product.image,
+        engrave_placement: {
+          lens: State.lens, scale: State.scale, x: State.x, y: State.y,
+          basis: 'product_image'
+        },
+        message: (el.message.value || '').trim(),
+        fulfillment: State.fulfillment,
+        recipient_mode: State.recipMode,
+        recipient_key: key,
+        recipient_label: (el.recipLabel.value || '').trim()
+      });
     })
       .then(function (d) { onGiftCreated(d.gift); })
       .catch(function (err) {

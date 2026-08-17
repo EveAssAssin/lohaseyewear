@@ -74,7 +74,10 @@
   function renderGift(g) {
     el.from.textContent = g.sender_name ? '來自 ' + g.sender_name : '來自一位朋友';
 
-    var visual = g.product_image || g.design_image_url || '';
+    /* 優先用合成圖 —— 收禮人第一眼該看到的是「刻上去的樣子」,
+       而不是型錄上那副乾淨的眼鏡。
+       後兩個是舊資料的退路:合成圖上線前建立的禮物沒有這個欄位。 */
+    var visual = g.preview_url || g.product_image || g.design_image_url || '';
     if (visual) {
       el.visual.style.backgroundImage = "url('" + visual + "')";
     } else {

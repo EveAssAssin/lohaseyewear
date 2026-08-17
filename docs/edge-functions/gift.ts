@@ -94,6 +94,25 @@ function normPhone(v: string): string {
   return d;
 }
 
+/* 只放行我方 Storage 上的圖片網址。
+   ---------------------------------------------------------------
+   合成圖會顯示在領取頁、加工位置圖會給門市人員下載。若接受任意網址,
+   這支介面就成了「把外部連結種進禮物」的管道 —— 收禮人或門市人員
+   點下去的東西,就不是我方能保證的了。
+   我方自己產的圖一律在 Supabase Storage,鎖死這個 host 沒有副作用。 */
+const ASSET_HOST = 'hqdmyxxrskvllkcedybl.supabase.co';
+
+function ourAssetUrl(v: unknown): string | null {
+  const s = String(v || '').slice(0, 500);
+  if (!s) return null;
+  try {
+    const u = new URL(s);
+    return (u.protocol === 'https:' && u.hostname === ASSET_HOST) ? s : null;
+  } catch {
+    return null;
+  }
+}
+
 /* 對外欄位白名單。
    收禮人聯絡方式與內部欄位一律不出去 —— 送禮者只該知道「領了沒」,
    不該拿到對方的手機或姓名(對方可能根本不是他原本要送的人)。 */
@@ -105,6 +124,10 @@ function publicGift(g: Record<string, any>, viewer: 'sender' | 'recipient' | 'an
     design_id: g.design_id,
     design_name: g.design_name,
     design_image_url: g.design_image_url,
+    /* 合成圖對外開放,那是收禮人該看到的東西。
+       guide_url 刻意不放 —— 那是給加工人員的位置指示圖,
+       走管理後台取用,沒有理由出現在任何前台介面。 */
+    preview_url: g.preview_url,
     product_title: g.product_title,
     product_spec_title: g.product_spec_title,
     product_image: g.product_image,
@@ -268,6 +291,12 @@ Deno.serve(async (req) => {
       design_id: body.design_id || null,
       design_name: String(body.design_name || '').slice(0, 120) || null,
       design_image_url: String(body.design_image_url || '').slice(0, 500) || null,
+
+      /* 合成圖與加工位置圖。這兩個網址會顯示給收禮人、或供門市人員下載,
+         所以只放行我方 Storage 上的網址 —— 若照單全收,任何人都能呼叫
+         這支介面把外部連結種進禮物,再讓收禮人或門市人員點下去。 */
+      preview_url: ourAssetUrl(body.preview_url),
+      guide_url:   ourAssetUrl(body.guide_url),
 
       product_nid: body.product_nid ? Number(body.product_nid) : null,
       product_sid: body.product_sid ? Number(body.product_sid) : null,

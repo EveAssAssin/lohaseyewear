@@ -121,8 +121,9 @@
   /* ---------- 渲染 ---------- */
 
   function thumbHtml(g) {
-    // 商品圖優先,沒有就用刻圖;都沒有就給一個禮物圖示佔位
-    var img = g.product_image || g.design_image_url || '';
+    // 合成圖優先(看得到刻上去的樣子),其次商品圖、刻圖;
+    // 都沒有就給一個禮物圖示佔位。後兩者是合成圖上線前的舊資料退路。
+    var img = g.preview_url || g.product_image || g.design_image_url || '';
     if (img) {
       return '<div class="gf-thumb" style="background-image:url(\'' + esc(img) + '\')"></div>';
     }
