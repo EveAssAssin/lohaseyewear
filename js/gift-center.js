@@ -182,6 +182,13 @@
       '</div>';
   }
 
+  /* 門市兌換的禮物,不論在「等券」或「可兌換」階段,下一步都會走進門市 ——
+     所以兩個階段都給一條找門市的路,不必自己回首頁翻。 */
+  function storeLinkHtml() {
+    return '<a class="gf-hint-link" href="allstore.html">' +
+           '<i class="fa-solid fa-location-dot"></i>查看門市據點</a>';
+  }
+
   function recvCardHtml(g) {
     var st = RECV_STATUS[g.status] || RECV_STATUS.paid;
     var spec = g.product_spec_title ? '（' + g.product_spec_title + '）' : '';
@@ -192,13 +199,21 @@
       actions = '<a class="gf-btn gf-btn--pri" href="gift-claim.html?g=' + encodeURIComponent(g.id) + '">' +
                 '<i class="fa-solid fa-gift"></i> 領 取 禮 物</a>';
     } else if (g.status === 'claimed') {
+      /* 每一種狀態都要回答「所以我現在該做什麼」。
+         只寫狀態(例:兌換券準備中)會讓人停在原地不知道下一步 ——
+         即使答案是「什麼都不用做」,也要把它說出來,並講清楚接下來會發生什麼。 */
       actions = g.fulfillment === 'ship'
-        ? '<span class="gf-hint"><i class="fa-solid fa-box"></i>已領取,商品準備出貨中</span>'
+        ? '<span class="gf-hint"><i class="fa-solid fa-box"></i>' +
+          '已領取,現在不用做任何事 —— 商品備貨中,出貨後會再通知你。</span>'
         // 不指向「我的票券」——官網那一頁已整併進本頁。門市核銷是店員以客編
-        // 查詢,客人不需要找到券再出示,所以只講「發到帳號」與「到店兌換」。
-        : '<span class="gf-hint"><i class="fa-solid fa-hourglass-half"></i>兌換券準備中,完成後會發到你的會員帳號</span>';
+        // 查詢,客人不需要找到券再出示,所以只講「到店報編號」。
+        : '<span class="gf-hint"><i class="fa-solid fa-hourglass-half"></i>' +
+          '已領取,現在不用做任何事 —— 兌換券產生中,好了這裡會變成「可到門市兌換」。</span>' +
+          storeLinkHtml();
     } else if (g.status === 'issued') {
-      actions = '<span class="gf-hint"><i class="fa-solid fa-ticket"></i>兌換券已發出,到門市報會員編號即可兌換</span>';
+      actions = '<span class="gf-hint"><i class="fa-solid fa-ticket"></i>' +
+                '可以兌換了 —— 帶著這副眼鏡的樣子到任一門市,報你的會員編號或手機即可,' +
+                '不需要另外出示什麼。</span>' + storeLinkHtml();
     } else if (g.status === 'shipped') {
       actions = '<span class="gf-hint"><i class="fa-solid fa-truck"></i>已於 ' +
                 fmtDate(g.shipped_at) + ' 出貨</span>';

@@ -3132,6 +3132,18 @@ body {
 }
 .mp .gf-hint i{ margin-right:5px }
 
+/* 狀態說明旁的下一步連結(例:查看門市據點)。
+   刻意不做成按鈕 —— 它不是這張卡片的主要動作,
+   主要動作是「領取禮物」那顆,兩者外型要分得開。 */
+.mp .gf-hint-link{
+  font-size:12px; letter-spacing:.3px;
+  color:var(--lohas-brand); text-decoration:none;
+  border-bottom:1px solid currentColor;
+  white-space:nowrap; flex-shrink:0;
+}
+.mp .gf-hint-link i{ margin-right:5px }
+.mp .gf-hint-link:hover{ color:var(--lohas-hover) }
+
 .mp .gf-btn{
   padding:9px 20px;
   border-radius:999px;
