@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOHAS 樂活眼鏡 - 會員註冊</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- LOHAS CSS · 載入順序: tokens → base → components → page
+       login.css 一起載入是刻意的:.input-lohas 與 .btn-lohas 定義在那裡,
+       複製一份到 register.css 的話,兩邊遲早會走鐘。 -->
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="css/register.css?v=20260817">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+</head>
+
+<body>
+  <div id="site-header"></div>
+
+  <main class="rg-main">
+    <div class="rg-box">
+
+      <div class="rg-head">
+        <p class="rg-title">會員註冊</p>
+        <div class="rg-steps">
+          <span class="rg-step on" id="rgStep1">1　填寫資料</span>
+          <span class="rg-step-line"></span>
+          <span class="rg-step" id="rgStep2">2　驗證</span>
+        </div>
+      </div>
+
+      <!-- ============ 第一步:填寫資料 ============ -->
+      <section id="rgForm" class="rg-pane">
+
+        <label class="rg-field">
+          <span class="rg-label">帳號</span>
+          <input type="text" id="rgAccount" class="input-lohas" placeholder="至少 6 碼" autocomplete="username">
+          <span class="rg-hint" id="rgAccountHint"></span>
+        </label>
+
+        <label class="rg-field">
+          <span class="rg-label">密碼</span>
+          <input type="password" id="rgPwd" class="input-lohas" placeholder="6–20 碼英文與數字" autocomplete="new-password">
+          <span class="rg-hint" id="rgPwdHint"></span>
+        </label>
+
+        <label class="rg-field">
+          <span class="rg-label">再輸入一次密碼</span>
+          <input type="password" id="rgPwd2" class="input-lohas" placeholder="與上面相同" autocomplete="new-password">
+          <span class="rg-hint" id="rgPwd2Hint"></span>
+        </label>
+
+        <label class="rg-field">
+          <span class="rg-label">姓名</span>
+          <input type="text" id="rgName" class="input-lohas" placeholder="與證件相同,方便門市核對" autocomplete="name">
+        </label>
+
+        <label class="rg-field">
+          <span class="rg-label">Email</span>
+          <input type="email" id="rgEmail" class="input-lohas" placeholder="用來收驗證碼與帳號通知" autocomplete="email">
+          <span class="rg-hint" id="rgEmailHint"></span>
+        </label>
+
+        <div class="rg-field">
+          <span class="rg-label">手機號碼</span>
+          <div class="rg-mobile-row">
+            <select id="rgCountry" class="input-lohas rg-country">
+              <option value="+886" selected>+886 台灣</option>
+              <option value="+852">+852 香港</option>
+              <option value="+853">+853 澳門</option>
+              <option value="+86">+86 中國</option>
+              <option value="+81">+81 日本</option>
+              <option value="+65">+65 新加坡</option>
+              <option value="+60">+60 馬來西亞</option>
+            </select>
+            <input type="tel" id="rgMobile" class="input-lohas" placeholder="0912345678" autocomplete="tel">
+          </div>
+          <!-- 手機是日後門市綁定 ERP 的唯一依據,填錯的代價比其他欄位高 -->
+          <span class="rg-hint" id="rgMobileHint">日後到門市綁定會員時,以這支號碼比對</span>
+        </div>
+
+        <div class="rg-field">
+          <span class="rg-label">驗證碼要寄到哪</span>
+          <div class="rg-radio-row">
+            <label class="rg-radio"><input type="radio" name="rgVerify" value="email" checked><span>Email</span></label>
+            <label class="rg-radio"><input type="radio" name="rgVerify" value="sms"><span>手機簡訊</span></label>
+          </div>
+        </div>
+
+        <div id="rgErr" class="rg-err" style="display:none"></div>
+
+        <button id="rgSubmit" class="btn-lohas" type="button">下 一 步</button>
+
+        <p class="rg-foot">
+          已經有帳號了?<a href="login.html">直接登入</a>
+        </p>
+      </section>
+
+      <!-- ============ 第二步:輸入驗證碼 ============ -->
+      <section id="rgVerifyPane" class="rg-pane" style="display:none">
+        <p class="rg-sent" id="rgSentTo"></p>
+
+        <label class="rg-field">
+          <span class="rg-label">驗證碼</span>
+          <input type="text" id="rgCode" class="input-lohas" placeholder="輸入收到的驗證碼"
+                 inputmode="numeric" autocomplete="one-time-code">
+          <!-- 對方規則:填錯 5 次即作廢。事先講,免得使用者亂試 -->
+          <span class="rg-hint">有效 15 分鐘。連續填錯 5 次會失效,需要重新索取。</span>
+        </label>
+
+        <div id="rgVerifyErr" class="rg-err" style="display:none"></div>
+
+        <button id="rgVerifyBtn" class="btn-lohas" type="button">完 成 註 冊</button>
+
+        <p class="rg-foot">
+          沒收到?<a href="#" id="rgBack">回上一步改資料重寄</a>
+        </p>
+      </section>
+
+      <!-- ============ 完成 ============ -->
+      <section id="rgDone" class="rg-pane rg-done" style="display:none">
+        <div class="rg-done-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <p class="rg-done-title">註冊完成</p>
+        <p class="rg-done-text" id="rgDoneText"></p>
+        <a class="btn-lohas rg-done-btn" href="login.html">前 往 登 入</a>
+      </section>
+
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" defer></script>
+  <script src="js/layout.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/register.js?v=20260817"></script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+/* =============================================================
+   register.css — 會員註冊
+   -------------------------------------------------------------
+   依賴:lohas-tokens.css → lohas-base.css → lohas-components.css → login.css
+
+   ⚠ 表單控制項(.input-lohas / .btn-lohas)定義在 login.css,本檔不重複定義。
+     兩頁共用同一份,改一處兩邊一起變。
+
+   顏色一律走 tokens,不寫死色碼:
+     --lohas-brand  #50422D   主色
+     --lohas-hover  #765F4A   hover
+     --lohas-light  #CDBEA2   次要文字
+     --bg-warm      #F9F8F6   背景
+   ============================================================= */
+
+.rg-main{
+  min-height:100vh;
+  background:var(--bg-warm);
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  /* 70px = 固定 header 的高度 */
+  padding:calc(70px + 40px) 16px 60px;
+}
+
+.rg-box{
+  width:100%;
+  max-width:420px;
+}
+
+/* === 標題與步驟 === */
+
+.rg-head{ text-align:center; margin-bottom:28px }
+
+.rg-title{
+  color:var(--lohas-brand);
+  font-size:24px;
+  font-weight:500;
+  letter-spacing:.12em;
+  margin:0 0 16px;
+}
+
+.rg-steps{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.rg-step{
+  font-size:12px;
+  letter-spacing:.08em;
+  color:var(--text-muted, #9B9186);
+  transition:color .2s;
+}
+.rg-step.on{
+  color:var(--lohas-brand);
+  font-weight:500;
+}
+.rg-step-line{
+  width:40px; height:1px;
+  background:var(--lohas-bd, #E8DED1);
+}
+
+/* === 欄位 === */
+
+.rg-pane{ display:flex; flex-direction:column; gap:18px }
+
+.rg-field{ display:block }
+
+.rg-label{
+  display:block;
+  font-size:13px;
+  color:var(--text-sub, #6F665D);
+  letter-spacing:.04em;
+  margin-bottom:6px;
+}
+
+/* 提示文字:預設是灰色說明,加上 is-err / is-ok 才變色。
+   用同一個位置顯示三種狀態,欄位不會因為訊息出現而跳動。 */
+.rg-hint{
+  display:block;
+  min-height:18px;
+  margin-top:6px;
+  padding-left:4px;
+  font-size:12px;
+  line-height:1.5;
+  color:var(--text-muted, #9B9186);
+}
+.rg-hint.is-err{ color:var(--err, #C0392B) }
+.rg-hint.is-ok{ color:var(--ok, #2E7D5B) }
+
+.input-lohas.is-err{
+  border-color:var(--err, #C0392B);
+  background:#fff;
+}
+
+/* === 手機號碼:國碼 + 號碼 === */
+
+.rg-mobile-row{
+  display:grid;
+  grid-template-columns:130px 1fr;
+  gap:8px;
+}
+.rg-country{
+  padding-right:12px;
+  font-size:14px;
+  /* select 在 iOS 上預設會被系統樣式蓋掉,明確關掉 */
+  -webkit-appearance:none;
+  appearance:none;
+  background-image:none;
+}
+
+@media (max-width:380px){
+  .rg-mobile-row{ grid-template-columns:1fr; }
+}
+
+/* === 驗證方式 === */
+
+.rg-radio-row{ display:flex; gap:10px }
+
+.rg-radio{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:11px 12px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  background:#fafafa;
+  font-size:14px;
+  color:var(--text-sub, #6F665D);
+  cursor:pointer;
+  transition:all .18s;
+}
+.rg-radio:has(input:checked){
+  border-color:var(--lohas-brand);
+  background:#fff;
+  color:var(--lohas-brand);
+  font-weight:500;
+}
+.rg-radio input{ accent-color:var(--lohas-brand) }
+
+/* === 錯誤訊息 === */
+
+.rg-err{
+  padding:11px 16px;
+  border-radius:var(--r-md, 14px);
+  background:var(--err-bg, #FDEDEC);
+  color:var(--err, #C0392B);
+  font-size:13px;
+  line-height:1.7;
+}
+
+/* === 頁尾連結 === */
+
+.rg-foot{
+  text-align:center;
+  font-size:13px;
+  color:var(--text-muted, #9B9186);
+  margin:4px 0 0;
+}
+.rg-foot a{
+  color:var(--lohas-brand);
+  text-decoration:none;
+  margin-left:6px;
+  border-bottom:1px solid currentColor;
+}
+.rg-foot a:hover{ color:var(--lohas-hover) }
+
+/* === 第二步 === */
+
+.rg-sent{
+  padding:12px 16px;
+  border-radius:var(--r-md, 14px);
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  font-size:13px;
+  line-height:1.8;
+  color:var(--text-sub, #6F665D);
+  margin:0;
+}
+.rg-sent b{ color:var(--lohas-brand); font-weight:500 }
+
+/* === 完成 === */
+
+.rg-done{ text-align:center; gap:14px }
+
+.rg-done-icon{
+  font-size:44px;
+  color:var(--lohas-brand);
+  line-height:1;
+}
+.rg-done-title{
+  font-size:20px;
+  font-weight:500;
+  letter-spacing:.08em;
+  color:var(--lohas-brand);
+  margin:0;
+}
+.rg-done-text{
+  font-size:13px;
+  line-height:1.9;
+  color:var(--text-sub, #6F665D);
+  margin:0;
+}
+.rg-done-btn{
+  display:block;
+  text-align:center;
+  text-decoration:none;
+  margin-top:6px;
+}
