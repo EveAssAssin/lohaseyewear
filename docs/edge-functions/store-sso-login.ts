@@ -1,13 +1,27 @@
 // ============================================================
 // Edge Function: store-sso-login
 // 路徑: supabase/functions/store-sso-login/index.ts
-// 版本: v1.8
+// 版本: v1.9
 //
 // 用途: API #4 — App / 商城 送 erpId(+ 選填 erpName、next),
 //       生成 30 秒一次性 token,回 reUrl,對方以 WebView 或整頁導轉開啟完成 SSO
 //
 // 部署: Supabase Dashboard → Edge Functions → store-sso-login
 //       設定 "Verify JWT" 為 OFF (對方不會帶 supabase JWT)
+//
+// v1.9 異動 (相對 v1.8):
+//   - 新增呼叫紀錄與速率限制。前置作業:先在 SQL Editor 執行
+//     docs/sso-login-log-schema.sql 建立 sso_login_log。
+//
+//     這一版的由來是商城 2026-08-17 的一句提醒:
+//       「金鑰外洩時,我方這邊無從察覺 —— 對方拿去打的是貴方的端點。
+//         只有貴方看得到異常。」
+//     這把金鑰等同於「可為任意會員產生登入連結,不需要密碼」,
+//     而先前這支完全沒有紀錄 —— 真的被拿去掃帳號,我們不會知道,
+//     事後也查不出被存取過哪些帳號。
+//
+//   - 速率限制【擋】、掃描特徵【只告警不擋】。
+//     擋錯的代價是真客人從 App 進不了官網,那比多一筆警示嚴重得多。
 //
 // v1.8 異動 (相對 v1.7):
 //   - 金鑰改為多把。App 與商城各持一把,哪一把外洩就只輪替哪一把,
@@ -29,7 +43,8 @@
 // 注意: token 入庫的格式不變,store-sso-verify 那端不需要動。
 //
 // ⚠ 金鑰只在 Dashboard 填,不要提交回 GitHub。
-//   整份覆蓋線上版本之後,務必把 API_KEYS 裡的值填回去。
+//   整份覆蓋線上版本之前,先按函式頁面右上角的 Download 備份,
+//   再把 API_KEYS 裡的值貼回去。
 // ============================================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -43,13 +58,29 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 // 開通順序:先在這裡填上金鑰 → Deploy → 才把值交付給對方。
 // 還沒要開通的來源就留空字串,那一把等於不存在。
 const API_KEYS: Array<{ key: string; label: string }> = [
-  { key: '', label: 'app'  },   // App 用(原本那把,值不要改)
-  { key: '', label: 'shop' },   // 商城用
+  { key: '', label: 'app'       },   // App 用(原本那把,值不要改)
+  { key: '', label: 'shop'      },   // 商城正式站
+  { key: '', label: 'shop-test' },   // 商城測試站(2026-08-17 商城來文要求)
 ];
 
 const API_VER = '1.0';
 const SSO_BASE = 'https://www.lohasglasses.com/ssologin.html';
 const TOKEN_TTL_SECONDS = 30;
+
+/* ===== 速率限制與異常門檻 =====
+   RATE_MAX 是【會擋下來】的:同一把金鑰一分鐘內超過就拒絕。
+   設 60 是因為正常情況下這是「客人點一下才發生一次」的動作,
+   一分鐘六十次已經遠高於任何真實尖峰。
+
+   SCAN_DISTINCT 只【告警不擋】:十分鐘內同一把金鑰為多少個不同的
+   erpId 產生連結。逐一嘗試會員編號是拿到金鑰之後最自然的用法,
+   而正常流量下這個數字不會太高。
+   但商城的客人本來就多,擋錯的代價是真客人進不了官網 ——
+   所以這一項只寫紀錄,由人看過再決定。 */
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 60;
+const SCAN_WINDOW_MS = 600_000;
+const SCAN_DISTINCT = 100;
 
 // CORS — 對外給 App,App 不走瀏覽器 CORS,但保留 OPTIONS 給瀏覽器測試工具
 const CORS = {
@@ -58,6 +89,11 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Content-Type':                 'application/json; charset=utf-8',
 };
+
+const sb = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
 serve(async (req: Request) => {
   // ===== CORS preflight =====
@@ -68,11 +104,14 @@ serve(async (req: Request) => {
     return jsonResp(405, { status: 405, error: 'Method not allowed, use POST' });
   }
 
+  const ip = clientIp(req);
+
   // ===== 解析 body =====
   let raw: any;
   try {
     raw = await req.json();
   } catch {
+    await log({ key_label: '(invalid)', ip, result: 'bad_request', note: 'Invalid JSON body' });
     return jsonResp(400, { status: 400, error: 'Invalid JSON body' });
   }
 
@@ -90,7 +129,24 @@ serve(async (req: Request) => {
   // 對方送一個空的 apiKey 就會比對成功。
   const caller = API_KEYS.find((k) => k.key && k.key === apiKey);
   if (!caller) {
+    /* ⚠ 不記錄對方送來的金鑰值 —— 那有可能正是真的那一把,
+       寫進資料庫等於多開一個外洩點。只記「有人用錯的金鑰來過」。 */
+    await log({ key_label: '(invalid)', erpid: erpId || null, ip, result: 'invalid_key' });
     return jsonResp(401, { status: 401, error: 'Invalid apiKey' });
+  }
+
+  // ===== 速率限制 =====
+  const guard = await checkRate(caller.label);
+  if (guard.blocked) {
+    console.error('[store-sso-login] rate limited:', caller.label, guard.note);
+    await log({ key_label: caller.label, erpid: erpId || null, ip,
+                result: 'rate_limited', note: guard.note });
+    return jsonResp(429, { status: 429, error: 'Too many requests' });
+  }
+  if (guard.scanWarning) {
+    /* 這一行是給人看的。逐一嘗試會員編號是拿到金鑰後最自然的用法,
+       但商城客人多,擋錯會讓真客人進不來 —— 所以只告警。 */
+    console.error('[store-sso-login] ⚠ 可能的帳號掃描:', caller.label, guard.note);
   }
 
   // ===== apiVer 提醒 (不擋,只 log) =====
@@ -100,6 +156,7 @@ serve(async (req: Request) => {
 
   // ===== 必填檢查 =====
   if (!erpId) {
+    await log({ key_label: caller.label, ip, result: 'bad_request', note: 'missing erpId' });
     return jsonResp(400, { status: 400, error: 'Missing required field: erpId' });
   }
 
@@ -108,6 +165,8 @@ serve(async (req: Request) => {
   // //evil.example.com 在瀏覽器眼中是「同協定的絕對網址」,
   // 放行的話這支 SSO 就成了釣魚跳板。
   if (next && (!next.startsWith('/') || next.startsWith('//'))) {
+    await log({ key_label: caller.label, erpid: erpId, ip,
+                result: 'bad_request', note: 'invalid next: ' + next.slice(0, 80) });
     return jsonResp(400, {
       status: 400,
       error: 'next must be a site-relative path starting with "/" (e.g. /design.html?nid=2612)',
@@ -115,14 +174,9 @@ serve(async (req: Request) => {
   }
 
   // ===== 寫 sso_tokens =====
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  );
-
   const expiresAt = new Date(Date.now() + TOKEN_TTL_SECONDS * 1000).toISOString();
 
-  const { data: tokenRow, error } = await supabase
+  const { data: tokenRow, error } = await sb
     .from('sso_tokens')
     .insert({
       erpid:      erpId,
@@ -134,8 +188,13 @@ serve(async (req: Request) => {
 
   if (error || !tokenRow) {
     console.error('[store-sso-login] insert error:', error);
+    await log({ key_label: caller.label, erpid: erpId, ip, result: 'error',
+                note: String(error?.message || '').slice(0, 200) });
     return jsonResp(500, { status: 500, error: 'Internal server error' });
   }
+
+  await log({ key_label: caller.label, erpid: erpId, ip, result: 'ok',
+              next_path: next || null });
 
   console.log('[store-sso-login] issued for', caller.label, 'erpId', erpId, next ? '→ ' + next : '');
 
@@ -152,6 +211,58 @@ serve(async (req: Request) => {
     expiresIn: TOKEN_TTL_SECONDS,
   });
 });
+
+/* ===== 速率限制 =====
+   用資料庫而不是記憶體計數 —— Edge Function 會有多個執行個體,
+   各自記數等於沒有限制。
+
+   ⚠ 查詢失敗時【放行】。理由:這條路徑是客人從 App 進官網的入口,
+   因為紀錄表出問題就讓所有人進不來,比放行一分鐘嚴重得多。
+   放行時會寫 error log,不會安靜略過。 */
+async function checkRate(label: string): Promise<{
+  blocked: boolean; scanWarning: boolean; note: string;
+}> {
+  const since = new Date(Date.now() - SCAN_WINDOW_MS).toISOString();
+  const { data, error } = await sb
+    .from('sso_login_log')
+    .select('erpid, created_at')
+    .eq('key_label', label)
+    .eq('result', 'ok')
+    .gte('created_at', since);
+
+  if (error) {
+    console.error('[store-sso-login] 速率限制查詢失敗,本次放行:', error.message);
+    return { blocked: false, scanWarning: false, note: '' };
+  }
+
+  const rows = data || [];
+  const rateFrom = Date.now() - RATE_WINDOW_MS;
+  const recent = rows.filter((r) => new Date(r.created_at).getTime() >= rateFrom).length;
+  const distinct = new Set(rows.map((r) => r.erpid).filter(Boolean)).size;
+
+  return {
+    blocked: recent >= RATE_MAX,
+    scanWarning: distinct >= SCAN_DISTINCT,
+    note: `1分鐘 ${recent} 次 / 10分鐘 ${distinct} 個不同會員`,
+  };
+}
+
+/* 寫紀錄。⚠ 失敗絕不影響主流程 —— 記錄是我方的內部需求,
+   不是客人這次登入的一部分。 */
+async function log(row: Record<string, unknown>): Promise<void> {
+  try {
+    const { error } = await sb.from('sso_login_log').insert(row);
+    if (error) console.error('[store-sso-login] 紀錄寫入失敗:', error.message);
+  } catch (e) {
+    console.error('[store-sso-login] 紀錄寫入例外:', e instanceof Error ? e.message : e);
+  }
+}
+
+/** 取真實來源 IP。x-forwarded-for 是「客戶端, 代理1, ...」,第一段才是來源 */
+function clientIp(req: Request): string {
+  const xff = req.headers.get('x-forwarded-for') || '';
+  return xff.split(',')[0].trim() || req.headers.get('cf-connecting-ip') || '';
+}
 
 // 雙收解包: 有 data 包就剝、沒有就回原物件
 function unwrapBody(raw: any): any {
