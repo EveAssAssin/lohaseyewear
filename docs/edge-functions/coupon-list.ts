@@ -25,11 +25,25 @@
      這份檔案在公開的 GitHub repo 裡,填了就等於公開,
      絕對不要把填好金鑰的版本回寫到 repo。
 
-   Base URL 已有預設值(測試環境),不需要設定。
-   正式環境上線時,設 TICKET_BASE_URL 或直接改下面那行。
+   2026-08-18:已切至正式站
+   -------------------------------------------------------------
+   先前指向主後端的【測試站】,那是票券開發初期沿用下來的。
+   若在客人看得到票券的狀態下維持測試站,他們會看到不存在的券、
+   或折抵時失敗 —— 商城 2026-08-17 來文特別點出這一項。
+
+   查證後確認:官網目前【沒有任何前端程式呼叫這支】
+   (「我的票券」已於 8/11 移除並整併為禮物中心),因此無客人受影響。
+   但 App 票券頁點「使用」進入官網文創頁那條動線之後會用到它,
+   故趁現在一併切好,不等到那時候才發現。
+
+   ⚠ 金鑰也要一起換。主後端的測試站與正式站是【兩把不同的值】,
+     只改網址、沿用舊金鑰的話六支 API 會全部回未授權,
+     症狀是「改完之後全部不能用」,很容易誤判成網址給錯。
    ============================================================= */
 
 // ⚠ 只在 Dashboard 填,不要提交回 GitHub
+// ⚠ 這裡要填【主後端正式站】那一把,不是商城那把 ——
+//   shop 函式用的是商城的金鑰,兩者不同,填錯兩邊都會壞。
 const FALLBACK_SITE_KEY = '';
 
 /* 是否只認 session token。
@@ -38,8 +52,11 @@ const FALLBACK_SITE_KEY = '';
 const STRICT_SESSION = true;
 
 const SITE_KEY = Deno.env.get('SITE_API_KEY') || FALLBACK_SITE_KEY;
+/* 主後端。正式站為 lohas.realtime.tw,siteapi/* 的路徑不變。
+   測試站是 lohas-app-backend-test.onrender.com —— 要切回去測的話
+   記得金鑰也要換成測試站那把,兩者綁環境。 */
 const TICKET_BASE = (Deno.env.get('TICKET_BASE_URL') ||
-  'https://lohas-app-backend-test.onrender.com').replace(/\/+$/, '');
+  'https://lohas.realtime.tw').replace(/\/+$/, '');
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
