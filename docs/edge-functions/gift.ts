@@ -24,6 +24,7 @@
      create   建立禮物(狀態 pending_payment) 需 token
      preview  用領取碼看禮物長怎樣            不需 token(領取碼本身就是憑證)
      claim    領取(綁到自己帳號)            需 token
+     pick     收禮人挑鏡框與刻圖(B 路線)     需 token
      cancel   送禮者取消(僅限尚未付款)       需 token
    ============================================================= */
 
@@ -389,6 +390,85 @@ Deno.serve(async (req) => {
     //   fulfillment==='store' 時在此呼叫商城發券,成功後
     //   status → 'issued' 並回填 coupon_id。
     //   介面未開之前先停在 claimed,收禮人會看到「兌換券準備中」。
+
+    return reply('200', { data: { gift: publicGift(updated, 'recipient') } });
+  }
+
+  /* ---------- pick:收禮人挑選鏡框與刻圖(B 路線) ----------
+     A 買的是「客製刻圖眼鏡・禮物」這件通用商品,款式由 B 自己決定。
+     B 領取之後走 design.html 挑鏡框、挑刻圖、拉位置,結果寫回這裡。
+
+     「尚未挑選」的判斷用 design_id is null,不另外加欄位 ——
+     A 路線的禮物一定有 design_id,B 路線建立時是空的,天然分得開。
+
+     不呼叫商城:A 已經付過款了,這一步只是補上「要做哪一副」。
+     第一階段限定門市自取,店員查管理後台就看得到,商城不需要知道。 */
+  if (action === 'pick') {
+    const giftId = String(body.gift_id || '').trim();
+    if (!giftId) return reply('006', { message: '缺少禮物識別' }, 400);
+
+    const { data: g, error } = await db.from('gifts')
+      .select('*').eq('id', giftId).maybeSingle();
+    if (error) return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    if (!g) return reply('007', { message: '查無此禮物' }, 404);
+
+    // 只有收禮人本人能挑。送禮人不行 —— 他送的就是「自己挑」這件事。
+    const mine = g.claimed_by_erpid === erpid || g.recipient_erpid === erpid;
+    if (!mine) return reply('033', { message: '這份禮物不是給你的' }, 403);
+
+    if (g.status !== 'claimed') {
+      return reply('035', { message: '這份禮物目前的狀態無法挑選' }, 409);
+    }
+    if (g.design_id) {
+      return reply('037', { message: '這份禮物已經挑選過了' }, 409);
+    }
+
+    const nid = Number(body.product_nid);
+    if (!Number.isFinite(nid) || nid <= 0) {
+      return reply('006', { message: '缺少商品編號' }, 400);
+    }
+    if (!body.design_id) {
+      return reply('006', { message: '請先選一張刻圖' }, 400);
+    }
+
+    /* ⚠ 已知限制:此處不驗證 nid 是否確實在可客製清單內。
+       要驗就得從這裡再打一次商城的 products,為了一個「挑錯款式會被
+       門市當場發現」的情境增加一條跨服務相依,划不來。
+       第一階段限定門市自取,店員配鏡時就會對到實物。 */
+    const patch: Record<string, unknown> = {
+      product_nid: nid,
+      product_sid: body.product_sid ? Number(body.product_sid) : null,
+      product_title: String(body.product_title || '').slice(0, 200) || null,
+      product_spec_title: String(body.product_spec_title || '').slice(0, 120) || null,
+      product_image: String(body.product_image || '').slice(0, 500) || null,
+
+      design_id: body.design_id,
+      design_name: String(body.design_name || '').slice(0, 120) || null,
+      design_image_url: String(body.design_image_url || '').slice(0, 500) || null,
+
+      preview_url: ourAssetUrl(body.preview_url),
+      guide_url:   ourAssetUrl(body.guide_url),
+      engrave_placement: body.engrave_placement || null,
+    };
+
+    /* 條件更新:只有 design_id 仍為空時才寫得進去。
+       兩個分頁同時送出的話,第二個會更新到 0 筆而不是覆蓋掉第一個。 */
+    const { data: updated, error: upErr } = await db.from('gifts')
+      .update(patch)
+      .eq('id', g.id).is('design_id', null)
+      .select().maybeSingle();
+
+    if (upErr) return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    if (!updated) return reply('037', { message: '這份禮物已經挑選過了' }, 409);
+
+    await logEvent(g.id, 'claimed', 'claimed', 'recipient',
+      `收禮人挑選:nid ${nid} / ${patch.design_name || ''}`);
+
+    // 挑好的刻圖收進他的「我的最愛刻圖」,與 claim 那邊一致
+    try {
+      await db.from('engraving_wishlist')
+        .insert({ member_id: erpid, design_id: body.design_id });
+    } catch { /* 已收藏過會撞唯一鍵,忽略 */ }
 
     return reply('200', { data: { gift: publicGift(updated, 'recipient') } });
   }
