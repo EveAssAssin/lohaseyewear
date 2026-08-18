@@ -272,11 +272,13 @@
   function initInternalBanner() {
     var bar = document.createElement('div');
     bar.className = 'rg-internal';
+    /* 那支端點依用途分組回傳,註冊的碼在 signup 底下 ——
+       第一次看的人會盯著 login 那一組找不到自己的碼。 */
     bar.innerHTML =
       '<b>內部測試模式</b>　資料會建立在<b>測試站</b>,不是正式環境。<br>' +
       '驗證碼不會實際發送,送出後到 ' +
       '<a href="' + SMS_CODE_URL + '" target="_blank" rel="noopener">healthz/smscode</a>' +
-      ' 取得。';
+      ' 取得 —— 看 <b>signup</b> 那一組,不是 login。';
     el.form.parentNode.insertBefore(bar, el.form);
 
     /* 測試站沒有郵件服務,Email 那條一定回 079。
