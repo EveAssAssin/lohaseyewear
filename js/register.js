@@ -33,6 +33,18 @@
   var NOT_READY_NOTE = '會員註冊功能整備中,尚未開放。' +
     '目前請至樂活門市或樂活 App 註冊,兩邊的帳號是共用的。';
 
+  /* 內部測試入口:register.html?internal=1
+     -------------------------------------------------------------
+     這【不是安全機制】。真正的防線是 member-auth 指向測試站 ——
+     就算有人猜到這個參數,他建立的帳號也只會進測試環境。
+     它的用途只有一個:避免真實訪客在整備期間誤入。
+
+     測試站沒有接郵件服務(register/send 會回 079),所以測試模式下
+     只開放簡訊。簡訊在測試站會被攔截、不實際發送,但驗證碼照常產生,
+     由後端的 healthz/smscode 取得(商城 2026-08-17 來文)。 */
+  var IS_INTERNAL = /[?&]internal=1(?:&|$)/.test(location.search);
+  var SMS_CODE_URL = 'https://lohas-app-backend-test.onrender.com/healthz/smscode';
+
   var State = { sessionKey: '', sentTo: '', verifyType: 'email' };
   var el = {};
 
@@ -252,6 +264,38 @@
     State.sessionKey = '';
   }
 
+  /* ---------- 內部測試模式 ---------- */
+
+  /* 一眼看得出這不是正式流程。
+     沒有這條橫幅的話,測試中的人很容易忘記自己在測試站,
+     然後拿真實的手機號碼註冊、或以為帳號建在正式環境。 */
+  function initInternalBanner() {
+    var bar = document.createElement('div');
+    bar.className = 'rg-internal';
+    bar.innerHTML =
+      '<b>內部測試模式</b>　資料會建立在<b>測試站</b>,不是正式環境。<br>' +
+      '驗證碼不會實際發送,送出後到 ' +
+      '<a href="' + SMS_CODE_URL + '" target="_blank" rel="noopener">healthz/smscode</a>' +
+      ' 取得。';
+    el.form.parentNode.insertBefore(bar, el.form);
+
+    /* 測試站沒有郵件服務,Email 那條一定回 079。
+       與其讓人選了才失敗,不如直接鎖成簡訊並說明原因。 */
+    var email = document.querySelector('input[name="rgVerify"][value="email"]');
+    var sms = document.querySelector('input[name="rgVerify"][value="sms"]');
+    if (email && sms) {
+      email.disabled = true;
+      email.checked = false;
+      sms.checked = true;
+      var label = email.closest('.rg-radio');
+      if (label) {
+        label.style.opacity = '.45';
+        label.style.cursor = 'not-allowed';
+        label.title = '測試站沒有接郵件服務,只能用簡訊驗證';
+      }
+    }
+  }
+
   /* ---------- 啟動 ---------- */
 
   function init() {
@@ -271,9 +315,11 @@
     };
     if (!el.form) return;
 
+    if (IS_INTERNAL) initInternalBanner();
+
     /* 未開放時直接停在說明畫面。表單連渲染都不渲染 ——
        讓人填完一整頁才說「尚未開放」比一開始就講更糟。 */
-    if (NOT_READY) {
+    if (NOT_READY && !IS_INTERNAL) {
       hide(el.form);
       show(el.donePane);
       el.donePane.querySelector('.rg-done-icon').innerHTML =
