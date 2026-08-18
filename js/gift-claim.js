@@ -123,9 +123,29 @@
     return '第一次到樂活門市的話,店員會先協助你完成會員綁定再兌換,不需另外準備什麼。';
   }
 
+  /* B 路線領取完成後,主要動作是「去挑款式」而不是「到禮物中心看看」。
+     把按鈕直接指過去,少一次轉折 —— 中間多一頁,就多一個關掉的機會。 */
+  function applyDoneBtn(g) {
+    if (!el.doneBtn) return;
+    if (g && g.status === 'claimed' && !g.design_id) {
+      el.doneBtn.textContent = '挑 選 款 式';
+      el.doneBtn.className = 'gc-btn';
+      el.doneBtn.href = 'design.html?pick=' + encodeURIComponent(g.id);
+    }
+  }
+
   function doneNote(g) {
     if (g.status === 'shipped') return '禮物已出貨,請留意物流通知。';
     if (g.status === 'redeemed') return '已在門市完成兌換。';
+
+    /* B 路線:送禮人買的是通用禮物商品,款式還沒決定。
+       這時候最該講的不是「已領取」,是「換你挑了」——
+       他如果就這樣關掉頁面,那份禮物會一直停在未完成。 */
+    if (g.status === 'claimed' && !g.design_id) {
+      return '接下來換你挑 —— 選一副喜歡的鏡框、挑一張刻圖,決定要刻在哪裡。' +
+        '挑好之後帶著會員編號到任一樂活門市,店員會現場為你配鏡並雷刻。';
+    }
+
     if (g.fulfillment === 'ship') return '已收進你的帳號,商品出貨後會另行通知。';
     /* 不再指向「我的票券」——官網的票券中心已整併進禮物中心,那一頁不存在了。
        券本身發在樂活會員帳號(票券系統),而門市核銷是店員以客編查詢,
@@ -147,6 +167,7 @@
     if (['claimed', 'issued', 'shipped', 'redeemed'].indexOf(g.status) >= 0) {
       el.title.textContent = '這份禮物已經領取了';
       el.doneText.textContent = doneNote(g);
+      applyDoneBtn(g);
       show(el.done);
       return;
     }
@@ -230,6 +251,7 @@
         hide(el.form);
         el.title.textContent = '領取成功';
         el.doneText.textContent = doneNote((d && d.gift) || State.gift);
+        applyDoneBtn((d && d.gift) || State.gift);
         show(el.done);
       })
       .catch(function (err) {
@@ -250,7 +272,7 @@
       needLogin: $('gcNeedLogin'), loginBtn: $('gcLoginBtn'),
       form: $('gcForm'), forWho: $('gcForWho'), claimNote: $('gcClaimNote'),
       formErr: $('gcFormErr'), submit: $('gcSubmit'),
-      done: $('gcDone'), doneText: $('gcDoneText')
+      done: $('gcDone'), doneText: $('gcDoneText'), doneBtn: $('gcDoneBtn')
     };
     if (!el.body) return;
 

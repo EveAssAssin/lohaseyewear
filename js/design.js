@@ -45,6 +45,11 @@
     fulfillment: 'store',
     recipMode: 'link',
 
+    /* 挑選模式(B 路線):收禮人領到「通用禮物」之後,自己挑鏡框與刻圖。
+       有值代表在挑選模式,值就是那份禮物的 id。 */
+    pickGiftId: '',
+    pickGift: null,
+
     nid: 0,
     product: null,
     specSid: null,
@@ -805,6 +810,18 @@
   function refreshSubmit() {
     var needSpec = el.specs.querySelector('.dz-spec') && State.specSid == null;
 
+    /* 挑選模式:收禮人挑鏡框與刻圖。條件與送禮模式相同(都要選眼鏡),
+       差別只在文案 —— 他不是在送禮,是在決定自己要拿到什麼。 */
+    if (State.pickGiftId) {
+      var pickReady = !!State.design && !!State.product && !needSpec;
+      el.submit.disabled = !pickReady;
+      el.submitHint.textContent = !State.product ? '請先選一副眼鏡'
+        : !State.design ? '請選一張刻圖'
+        : needSpec ? '請選擇規格'
+        : '確認後就會照這個樣子為你製作';
+      return;
+    }
+
     if (State.gift) {
       var ready = !!State.design && !!State.product && !needSpec;
       el.submit.disabled = !ready;
@@ -856,6 +873,7 @@
 
   function onSubmit() {
     if (!State.design || !State.product) return;
+    if (State.pickGiftId) { submitPick(); return; }
     if (State.gift) { createGift(); return; }
 
     // 產圖 + 上傳要幾秒,期間必須擋住重複點擊 ——
@@ -926,10 +944,13 @@
 
     var q = new URLSearchParams(location.search);
     State.gift = q.get('gift') === '1';
+    var pickId = (q.get('pick') || '').trim();
     var nid = Number(q.get('nid') || 0);
     var presetDesign = (q.get('design') || '').trim();
 
-    if (State.gift) {
+    if (pickId) {
+      startPickMode(pickId);
+    } else if (State.gift) {
       startGiftMode(presetDesign);
     } else if (!nid) {
       fail('這個連結沒有指定商品。請從商城的商品頁點「客製文創」進入。');
@@ -1015,6 +1036,126 @@
        否則刻圖會停在舊的位置上。 */
     el.productImg.addEventListener('load', applyPlacement);
     window.addEventListener('resize', applyPlacement, { passive: true });
+  }
+
+  /* ---------- 挑選模式(B 路線) ----------
+     A 買的是「客製刻圖眼鏡・禮物」通用商品,款式由收禮人自己決定。
+     B 領取之後從禮物中心或領取頁進到這裡,挑鏡框、挑刻圖、拉位置。
+
+     與送禮模式共用同一組介面 —— 那三塊本來就寫好了,差別只在:
+       進入點     ?pick=<gift_id> 而不是 ?gift=1
+       送給誰那卡  不顯示(他不是在送禮)
+       送出行為    呼叫 gift 的 pick 寫回,不建立新禮物、不打商城
+                   (A 已經付過款了,這一步只是補上「要做哪一副」) */
+  function startPickMode(giftId) {
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
+    if (!token) {
+      if (Auth && Auth.setRedirect) {
+        Auth.setRedirect(location.pathname.split('/').pop() + location.search);
+      }
+      window.location.href = 'login.html';
+      return;
+    }
+
+    State.pickGiftId = giftId;
+
+    /* 先確認這份禮物真的是他的、而且還沒挑過。
+       不先確認就把介面開出來的話,他挑完才被拒絕 —— 那時候圖都產完了。 */
+    giftCall({ action: 'list', token: token })
+      .then(function (d) {
+        var g = (d.received || []).filter(function (x) {
+          return String(x.id) === String(giftId);
+        })[0];
+
+        if (!g) throw new Error('查無這份禮物,可能不是給你的。');
+        if (g.status !== 'claimed') {
+          throw new Error('這份禮物目前的狀態無法挑選,到禮物中心看看最新狀況。');
+        }
+        if (g.design_id) {
+          throw new Error('這份禮物已經挑選過了。');
+        }
+
+        State.pickGift = g;
+        renderPickMode(g);
+        return Promise.all([loadFrames(), loadDesigns()]);
+      })
+      .then(function () {
+        refreshSubmit();
+        refreshScrollBtn();
+      })
+      .catch(function (err) { fail(err.message); });
+  }
+
+  function renderPickMode(g) {
+    document.querySelector('.dz-title').textContent = '挑一副你喜歡的';
+    document.querySelector('.dz-sub').textContent =
+      (g.sender_name ? g.sender_name + ' ' : '有人') +
+      '送了你一副客製刻圖眼鏡,款式和刻圖由你決定。';
+    el.submit.textContent = '完 成 挑 選';
+    el.noteText.textContent =
+      '此為示意畫面。實際雷刻位置會在門市與你再次確認,顏色與尺寸也可以到店再挑。';
+
+    hide(el.loading);
+    show(el.body);
+    show(el.frameCard);
+    hide(el.giftCard);          // 他不是在送禮,不需要「送給誰」
+    applyPlacement();
+  }
+
+  function submitPick() {
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
+    if (!token) { window.location.href = 'login.html'; return; }
+
+    hide(el.formErr);
+    el.submit.disabled = true;
+    el.submit.textContent = '產 生 預 覽 圖...';
+
+    /* 用的是與「加入購物車」完全相同的 buildImages(),
+       所以門市拿到的圖與客人看到的一致。 */
+    buildImages().then(function (images) {
+      el.submit.textContent = '送 出 中...';
+      return giftCall({
+        action: 'pick',
+        token: token,
+        gift_id: State.pickGiftId,
+
+        product_nid: State.product.nid,
+        product_sid: State.specSid,
+        product_title: State.product.title,
+        product_spec_title: State.specTitle,
+        product_image: State.product.image,
+
+        design_id: State.design.id,
+        design_name: State.design.name,
+        design_image_url: designUrl(State.design),
+        preview_url: images.preview_url,
+        guide_url: images.guide_url,
+
+        engrave_placement: {
+          lens: State.lens, scale: State.scale, x: State.x, y: State.y,
+          basis: 'product_image'
+        }
+      });
+    })
+      .then(function () { onPicked(); })
+      .catch(function (err) {
+        showFormErr(err.message);
+        el.submit.disabled = false;
+        el.submit.textContent = '完 成 挑 選';
+      });
+  }
+
+  function onPicked() {
+    [el.frameCard, el.designCard, el.placeCard, el.giftCard,
+     el.submit, el.submitHint, el.note].forEach(hide);
+    hide(el.formErr);
+
+    document.querySelector('.dz-title').textContent = '挑好了';
+    el.resultText.textContent =
+      '我們已經記下你選的款式與刻圖。帶著你的會員編號或手機到任一樂活門市,' +
+      '店員會現場為你配鏡並雷刻,顏色與尺寸可以到店再確認。';
+    show(el.result);
+    el.result.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   /* 送禮模式:刻圖已由市集帶進來,眼鏡要在這頁挑 */

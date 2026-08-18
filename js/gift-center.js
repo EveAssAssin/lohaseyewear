@@ -198,6 +198,15 @@
     if (g.status === 'paid') {
       actions = '<a class="gf-btn gf-btn--pri" href="gift-claim.html?g=' + encodeURIComponent(g.id) + '">' +
                 '<i class="fa-solid fa-gift"></i> 領 取 禮 物</a>';
+    } else if (g.status === 'claimed' && !g.design_id) {
+      /* B 路線:送禮人買的是通用禮物商品,款式由收禮人自己挑。
+         design_id 還是空的就代表還沒挑 —— 這是他現在唯一該做的事,
+         所以給主要按鈕的外型,不是提示文字。 */
+      actions = '<a class="gf-btn gf-btn--pri" href="design.html?pick=' +
+                encodeURIComponent(g.id) + '">' +
+                '<i class="fa-solid fa-wand-magic-sparkles"></i> 挑 選 款 式</a>' +
+                '<span class="gf-hint">選鏡框、選刻圖、決定雕刻位置</span>';
+
     } else if (g.status === 'claimed') {
       /* 每一種狀態都要回答「所以我現在該做什麼」。
          只寫狀態(例:兌換券準備中)會讓人停在原地不知道下一步 ——
