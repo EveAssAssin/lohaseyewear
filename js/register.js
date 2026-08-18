@@ -35,15 +35,15 @@
 
   /* 內部測試入口:register.html?internal=1
      -------------------------------------------------------------
-     這【不是安全機制】。真正的防線是 member-auth 指向測試站 ——
-     就算有人猜到這個參數,他建立的帳號也只會進測試環境。
-     它的用途只有一個:避免真實訪客在整備期間誤入。
+     ⚠ 2026-08-18 member-auth 已切至正式站,這個模式的性質完全變了。
 
-     測試站沒有接郵件服務(register/send 會回 079),所以測試模式下
-     只開放簡訊。簡訊在測試站會被攔截、不實際發送,但驗證碼照常產生,
-     由後端的 healthz/smscode 取得(商城 2026-08-17 來文)。 */
+     切換前:帳號建在測試環境,簡訊被攔截不發送,驗證碼從 healthz/smscode 取。
+     切換後:【建立的是真實會員,與 ERP 同步,簡訊會真的發送到那支號碼】。
+
+     所以它不再是「安全的沙盒」,而是「還沒對外開放、但已經會動真的」。
+     用途只剩一個:上線前由內部人員實際跑一次流程。
+     跑之前要有心理準備 —— 那筆會員資料會留下來,清除要走 ERP。 */
   var IS_INTERNAL = /[?&]internal=1(?:&|$)/.test(location.search);
-  var SMS_CODE_URL = 'https://lohas-app-backend-test.onrender.com/healthz/smscode';
 
   var State = { sessionKey: '', sentTo: '', verifyType: 'email' };
   var el = {};
@@ -272,30 +272,17 @@
   function initInternalBanner() {
     var bar = document.createElement('div');
     bar.className = 'rg-internal';
-    /* 那支端點依用途分組回傳,註冊的碼在 signup 底下 ——
-       第一次看的人會盯著 login 那一組找不到自己的碼。 */
+    /* 措辭要讓人看了會停一下。切到正式站之後,這個模式沒有任何沙盒性質 ——
+       填下去就是一筆真的會員資料,而且與 ERP 同步。 */
     bar.innerHTML =
-      '<b>內部測試模式</b>　資料會建立在<b>測試站</b>,不是正式環境。<br>' +
-      '驗證碼不會實際發送,送出後到 ' +
-      '<a href="' + SMS_CODE_URL + '" target="_blank" rel="noopener">healthz/smscode</a>' +
-      ' 取得 —— 看 <b>signup</b> 那一組,不是 login。';
+      '<b>⚠ 內部測試模式 · 這是正式環境</b><br>' +
+      '送出後會建立<b>真實的會員帳號</b>,並與 ERP 同步。' +
+      '驗證碼<b>會真的發送</b>到你填的信箱或手機。<br>' +
+      '請使用內部人員自己的資料,不要用虛構的號碼 —— 收不到驗證碼就走不完。';
     el.form.parentNode.insertBefore(bar, el.form);
 
-    /* 測試站沒有郵件服務,Email 那條一定回 079。
-       與其讓人選了才失敗,不如直接鎖成簡訊並說明原因。 */
-    var email = document.querySelector('input[name="rgVerify"][value="email"]');
-    var sms = document.querySelector('input[name="rgVerify"][value="sms"]');
-    if (email && sms) {
-      email.disabled = true;
-      email.checked = false;
-      sms.checked = true;
-      var label = email.closest('.rg-radio');
-      if (label) {
-        label.style.opacity = '.45';
-        label.style.cursor = 'not-allowed';
-        label.title = '測試站沒有接郵件服務,只能用簡訊驗證';
-      }
-    }
+    /* 正式站兩種管道都可用,不再鎖 Email。
+       測試站那時候鎖是因為它沒接郵件服務(一定回 079),那個限制在這裡不存在。 */
   }
 
   /* ---------- 啟動 ---------- */

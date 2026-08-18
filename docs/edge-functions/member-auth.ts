@@ -35,14 +35,21 @@
    ============================================================= */
 
 // ⚠ 只在 Dashboard 填,不要提交回 GitHub
+// ⚠ 這裡要填【主後端正式站】那一把,與 coupon-list 相同。
+//   不是 shop 用的商城金鑰,也不是先前測試站那把 —— 三者互不相同。
 const FALLBACK_SITE_KEY = '';
 
 const SITE_KEY = Deno.env.get('SITE_API_KEY') || FALLBACK_SITE_KEY;
 
 /* 主後端(會員 API 與票券 API 同一台)。
-   正式環境上線時設 TICKET_BASE_URL,或直接改這一行。 */
+   2026-08-18 切至正式站。測試站是 lohas-app-backend-test.onrender.com,
+   要切回去測的話金鑰也要換 —— 兩站是不同的兩把,只改網址會全部回未授權。
+
+   ⚠ 切到正式站之後,這裡建立的是【真實會員】,且與 ERP 同步。
+     測試站那套「簡訊被攔截、驗證碼從 healthz/smscode 取」在這裡不存在,
+     簡訊會真的發送、帳號會真的建立,清除成本高。 */
 const BASE = (Deno.env.get('TICKET_BASE_URL') ||
-  'https://lohas-app-backend-test.onrender.com').replace(/\/+$/, '');
+  'https://lohas.realtime.tw').replace(/\/+$/, '');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
