@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>門市查刻圖 · LOHAS 樂活眼鏡</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- LOHAS CSS · 載入順序: tokens → base → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/store-lookup.css?v=20260818">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+</head>
+
+<body class="sl">
+
+  <header class="sl-top">
+    <span class="sl-brand">LOHAS</span>
+    <span class="sl-title">門市查刻圖</span>
+  </header>
+
+  <main class="sl-main">
+
+    <!-- 搜尋 -->
+    <section class="sl-search">
+      <label class="sl-label" for="slErpid">會員編號</label>
+      <div class="sl-search-row">
+        <input type="text" id="slErpid" class="sl-input" inputmode="numeric"
+               placeholder="例:28095839" autocomplete="off">
+        <button type="button" id="slBtn" class="sl-btn">查 詢</button>
+      </div>
+      <p class="sl-hint">
+        客人報會員編號或手機都可以 —— 手機請先到管理後台的會員查詢換成編號。
+      </p>
+    </section>
+
+    <div id="slMsg" class="sl-msg" style="display:none"></div>
+
+    <!-- 結果 -->
+    <section id="slResult" class="sl-result" style="display:none">
+      <p class="sl-result-head" id="slResultHead"></p>
+      <div id="slList"></div>
+    </section>
+
+  </main>
+
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js?v=20260817-appmember"></script>
+  <script src="js/store-lookup.js?v=20260818"></script>
+</body>
+</html>

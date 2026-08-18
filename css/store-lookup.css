@@ -1,0 +1,192 @@
+/* =============================================================
+   store-lookup.css — 門市查刻圖
+   -------------------------------------------------------------
+   依賴:lohas-tokens.css → lohas-base.css
+
+   這一頁的使用情境跟站上其他頁都不同:
+     店員站在櫃檯、拿著手機、客人在對面等。
+
+   因此:
+     - 手機優先,桌機只是把寬度撐開,不做兩欄
+     - 觸控目標大(48px 起),站著單手點得到
+     - 一眼要看到的是「刻什麼、刻在哪」,其餘往下放
+     - 不放任何裝飾 —— 這是工作用的畫面,不是給客人看的
+   ============================================================= */
+
+.sl{
+  background:var(--bg-warm);
+  color:var(--text-main);
+  min-height:100vh;
+  margin:0;
+}
+
+/* === 頂部 ===
+   這頁沒有站台的固定 header(那個有選單、對店員是干擾),
+   自己做一條窄的,只放品牌與頁名。 */
+.sl-top{
+  position:sticky; top:0; z-index:10;
+  display:flex; align-items:baseline; gap:10px;
+  padding:14px 16px;
+  background:var(--lohas-brand);
+  color:#fff;
+}
+.sl-brand{ font-size:13px; letter-spacing:.28em; opacity:.75 }
+.sl-title{ font-size:15px; font-weight:500; letter-spacing:.06em }
+
+.sl-main{
+  max-width:640px;
+  margin:0 auto;
+  padding:20px 16px 60px;
+}
+
+/* === 搜尋 === */
+
+.sl-search{ margin-bottom:20px }
+
+.sl-label{
+  display:block;
+  font-size:13px; color:var(--text-sub);
+  letter-spacing:.04em; margin-bottom:8px;
+}
+
+.sl-search-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+}
+
+.sl-input{
+  width:100%;
+  height:52px;                      /* 站著單手打字,矮了不好點 */
+  padding:0 16px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-md, 14px);
+  background:#fff;
+  font-family:inherit;
+  font-size:17px;                   /* iOS 在小於 16px 時會自動放大頁面 */
+  letter-spacing:.06em;
+  color:var(--text-main);
+  outline:none;
+}
+.sl-input:focus{ border-color:var(--lohas-brand) }
+
+.sl-btn{
+  height:52px;
+  padding:0 24px;
+  border:0;
+  border-radius:var(--r-md, 14px);
+  background:var(--lohas-brand);
+  color:#fff;
+  font-family:inherit; font-size:15px; font-weight:500; letter-spacing:.1em;
+  cursor:pointer;
+}
+.sl-btn:hover{ background:var(--lohas-hover) }
+.sl-btn:disabled{ opacity:.5; cursor:default }
+
+.sl-hint{
+  margin:10px 2px 0;
+  font-size:12px; line-height:1.7;
+  color:var(--text-muted);
+}
+
+/* === 訊息 === */
+
+.sl-msg{
+  padding:14px 16px;
+  border-radius:var(--r-md, 14px);
+  font-size:14px; line-height:1.8;
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  color:var(--text-sub);
+}
+.sl-msg.is-err{
+  background:var(--err-bg, #FDEDEC);
+  border-color:var(--err, #C0392B);
+  color:var(--err, #C0392B);
+}
+
+/* === 結果 === */
+
+.sl-result-head{
+  font-size:13px; color:var(--text-sub);
+  margin:0 2px 12px;
+}
+
+.sl-card{
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-lg, 18px);
+  padding:16px;
+  margin-bottom:14px;
+}
+
+.sl-card-head{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:10px; margin-bottom:12px;
+}
+.sl-product{
+  font-size:16px; font-weight:500; line-height:1.5;
+  color:var(--lohas-brand);
+}
+.sl-badge{
+  flex-shrink:0;
+  font-size:11px; letter-spacing:.06em;
+  padding:4px 10px; border-radius:var(--r-pill, 999px);
+  background:var(--bg-soft); color:var(--text-sub);
+  white-space:nowrap;
+}
+.sl-badge.is-todo{ background:var(--err-bg, #FDEDEC); color:var(--err, #C0392B) }
+.sl-badge.is-done{ background:var(--ok-bg, #E7F4EE); color:var(--ok, #2E7D5B) }
+
+/* 加工位置圖 —— 這是師傅真正要看的東西,給它最大的版面。
+   縮成小圖示的話,店員會點開才看,那就多一次動作。 */
+.sl-guide{
+  display:block; width:100%;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-md, 14px);
+  margin-bottom:12px;
+  background:#fff;
+}
+
+.sl-rows{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px }
+.sl-row{
+  display:grid; grid-template-columns:88px 1fr;
+  gap:10px; font-size:14px; line-height:1.7;
+}
+.sl-row dt{ color:var(--text-muted); font-size:13px }
+.sl-row dd{ margin:0; color:var(--text-main) }
+
+.sl-msgbox{
+  padding:10px 14px; margin:0 0 14px;
+  border-left:3px solid var(--lohas-light);
+  border-radius:0;                 /* 單邊框線不配圓角 */
+  background:var(--bg-soft);
+  font-size:13px; line-height:1.8; color:var(--text-sub);
+}
+
+/* 檔案按鈕。雕刻檔用 download 而不是預覽 ——
+   SVG 直接開在瀏覽器裡可能只是一片黑(線稿沒有背景),
+   師傅要的是把檔案拿到雕刻軟體裡。 */
+.sl-files{ display:flex; flex-wrap:wrap; gap:8px }
+.sl-file{
+  flex:1 1 auto;
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  min-height:44px; padding:0 16px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  background:#fff;
+  font-size:13px; letter-spacing:.04em;
+  color:var(--lohas-brand); text-decoration:none;
+  white-space:nowrap;
+}
+.sl-file:hover{ border-color:var(--lohas-brand); background:var(--bg-soft) }
+.sl-file i{ font-size:14px }
+
+/* 尚未挑選 —— 這是店員唯一需要「做別的事」的情況,講得比其他都大聲 */
+.sl-todo{
+  padding:14px 16px;
+  border-radius:var(--r-md, 14px);
+  background:var(--err-bg, #FDEDEC);
+  color:var(--err, #C0392B);
+  font-size:14px; line-height:1.8;
+}
