@@ -3167,3 +3167,38 @@ body {
   .mp .gf-foot{ align-items:stretch }
   .mp .gf-btn{ width:100%; justify-content:center; padding:11px 20px }
 }
+
+/* =============================================================
+   未綁定門市會員的說明橫幅(#mpErpNotice)
+   -------------------------------------------------------------
+   官網註冊的會員沒有 ERP 客編,票券、禮物、預約、創作者收益
+   全都需要它。沒有這條橫幅的話,那些區塊只會顯示各自的空狀態
+   (「尚未收藏」「沒有票券」),看起來像功能壞了而不是像
+   「你還差一個步驟」。
+
+   用資訊色而不是錯誤色:他沒有做錯任何事。
+   ============================================================= */
+.mp .mp-erp-notice{
+  display:flex; align-items:flex-start; gap:12px;
+  margin:0 0 22px;
+  padding:16px 18px;
+  border:1px solid var(--lohas-line);
+  border-left:3px solid var(--lohas-brown);
+  border-radius:var(--r-md, 14px);
+  background:#fff;
+}
+.mp .mp-erp-notice[hidden]{ display:none }
+.mp .mp-erp-notice i{
+  flex-shrink:0; margin-top:2px;
+  font-size:16px; color:var(--lohas-brown);
+}
+.mp .mp-erp-notice-body{ font-size:13.5px; line-height:1.85; color:var(--lohas-sub) }
+.mp .mp-erp-notice-title{
+  display:block; margin-bottom:3px;
+  font-size:14px; font-weight:600; color:var(--lohas-brown);
+}
+
+@media (max-width:768px){
+  .mp .mp-erp-notice{ padding:14px 15px; gap:10px; margin-bottom:18px }
+  .mp .mp-erp-notice-body{ font-size:13px }
+}

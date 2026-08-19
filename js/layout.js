@@ -166,9 +166,17 @@ function initMemberLink() {
 
     event.preventDefault();
 
-    const member = JSON.parse(localStorage.getItem("lohasMember") || "null");
+    /* ⚠ 判斷「有沒有登入」,不是「有沒有 erpid」。
+       官網註冊的會員 erpid 是空的(要到門市才綁定),
+       用 erpid 判斷的話,他已經登入了卻會被這個連結送回登入頁。
 
-    if (member && member.erpid) {
+       這裡優先走 LohasAuth.isLogin()(還會處理 7 天過期),
+       layout.js 在某些頁面比 auth.js 早載入,所以留一條直讀的退路。 */
+    const Auth = window.LohasAuth;
+    const member = JSON.parse(localStorage.getItem("lohasMember") || "null");
+    const loggedIn = Auth && Auth.isLogin ? Auth.isLogin() : !!member;
+
+    if (loggedIn) {
       window.location.href = "member-portal.html";
       return;
     }

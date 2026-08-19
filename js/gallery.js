@@ -387,8 +387,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    /* 收藏是用 erpid 當鍵存的,官網註冊的會員沒有這個鍵。
+       原本這裡直接 return —— 按了愛心完全沒反應、沒有任何提示,
+       看起來就是功能壞了。至少要說一句為什麼。 */
     const member = getMember();
-    if (!member?.erpid) return;
+    if (!member?.erpid) {
+      showToast(window.LohasAuth?.erpRequiredNote?.() || "這項功能需要門市會員身分");
+      return;
+    }
 
     if (!supabaseClient) {
       showToast("Supabase 尚未設定");

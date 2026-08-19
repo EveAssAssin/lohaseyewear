@@ -181,6 +181,16 @@
       return;
     }
 
+    /* 已登入但沒有門市客編:在這裡就講,不要讓他按下「確認領取」才失敗。
+       -----------------------------------------------------------
+       後端對這種情況回 401,前端會翻成「登入狀態已失效,請重新登入」——
+       先讓他看到禮物、按下領取,最後給一個假理由,是最糟的一種擋法。 */
+    if (Auth.isErpBound && !Auth.isErpBound()) {
+      if (el.needErpText) el.needErpText.textContent = Auth.erpRequiredNote();
+      show(el.needErp);
+      return;
+    }
+
     if (g.recipient_label) {
       el.forWho.innerHTML = '<i class="fa-solid fa-circle-info"></i> 送禮的人指名要送給「' +
                             esc(g.recipient_label) + '」。不是你的話,請把連結轉給對的人。';
@@ -208,6 +218,13 @@
     if (!token) {
       // 從禮物中心進來卻沒有 token,先去登入再回來
       gotoLogin();
+      return;
+    }
+    /* 沒有客編的話 list 會回 401,訊息是「登入狀態已失效」——
+       這條路徑沒有 claim_code 可以 preview,連禮物內容都拿不到,
+       所以直接講清楚,不要拿一個假理由把人擋在整頁錯誤畫面。 */
+    if (Auth.isErpBound && !Auth.isErpBound()) {
+      fail(Auth.erpRequiredNote());
       return;
     }
     call({ action: 'list', token: token })
@@ -270,6 +287,7 @@
       body: $('gcBody'), title: $('gcTitle'), from: $('gcFrom'),
       visual: $('gcVisual'), item: $('gcItem'), design: $('gcDesign'), msg: $('gcMsg'),
       needLogin: $('gcNeedLogin'), loginBtn: $('gcLoginBtn'),
+      needErp: $('gcNeedErp'), needErpText: $('gcNeedErpText'),
       form: $('gcForm'), forWho: $('gcForWho'), claimNote: $('gcClaimNote'),
       formErr: $('gcFormErr'), submit: $('gcSubmit'),
       done: $('gcDone'), doneText: $('gcDoneText'), doneBtn: $('gcDoneBtn')

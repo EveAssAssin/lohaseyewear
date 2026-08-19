@@ -346,6 +346,20 @@
       return;
     }
 
+    /* 未綁定門市會員在這裡先擋下來。
+       -----------------------------------------------------------
+       不擋的話會照樣打 API,而後端對「token 有效但沒有客編」
+       是回 401,前端翻成「登入狀態已失效,請重新登入」——
+       他剛登入,那句話是錯的,而且他照做也不會有任何改變。
+
+       這只是文案層的守門,真正的權限判斷在 gift Edge Function。 */
+    if (Auth && Auth.isErpBound && !Auth.isErpBound()) {
+      State.error = Auth.erpRequiredNote();
+      State.loaded = true;
+      render();
+      return;
+    }
+
     box.innerHTML = '<p class="empty-text">載入中...</p>';
     call({ action: 'list', token: token })
       .then(function (d) {

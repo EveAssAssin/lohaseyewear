@@ -87,8 +87,15 @@
   async function loadIdentity() {
     const member = Auth.getStoredMember();
 
-    if (!member || !member.erpid) {
-      // 沒登入 → 導去登入頁
+    /* ⚠ 這裡判斷的是「有沒有登入」,不是「有沒有 erpid」。
+       -----------------------------------------------------------
+       官網註冊的會員 erpid 是空的(要到門市才綁定)。
+       2026-08-19 之前這行寫成 `!member.erpid` 就跳登入頁,結果是:
+       他登入成功 → 被導來這頁 → 又被踢回登入頁 → 再登入 → 再被踢,
+       畫面上不會出現任何訊息,他只會以為自己密碼打錯。
+
+       未綁定的人進得來,只是需要客編的區塊會顯示說明(見 renderErpNotice)。 */
+    if (!Auth.isLogin()) {
       Auth.setRedirect && Auth.setRedirect('member-portal.html');
       window.location.href = 'login.html';
       return false;
@@ -97,7 +104,9 @@
     // 強制把 erpid 轉成字串
     // (ERP API 可能回 number, 但 Supabase 的 member_id 欄位是 TEXT 型別,
     //  型別不一致會查不到資料)
-    member.erpid = String(member.erpid);
+    // 未綁定的會員這裡是空字串 —— 用它去 .eq() 查不到東西(不會報錯),
+    // 各區塊會落到自己的空狀態,所以下面另外掛一條說明橫幅。
+    member.erpid = String(member.erpid || '');
 
     State.member = member;
 
@@ -206,17 +215,48 @@
     return true;
   }
 
+  /* 未綁定門市會員的說明橫幅。
+     -----------------------------------------------------------
+     不用 alert、不擋畫面 —— 他沒有做錯事,只是還差一個步驟。
+     措辭統一走 Auth.erpRequiredNote(),各頁不要各寫各的。 */
+  function renderErpNotice() {
+    const box = document.getElementById('mpErpNotice');
+    if (!box) return;
+
+    if (Auth.isErpBound()) { box.hidden = true; return; }
+
+    /* 這裡不直接用 Auth.erpRequiredNote() ——
+       那句是寫給「單一功能」的(開頭是「這項功能需要…」),
+       放在整頁的橫幅上沒有指涉對象,讀起來會卡。
+       兩處講的是同一件事,但句子要各自合身。 */
+    box.innerHTML =
+      '<i class="fa-solid fa-circle-info"></i>' +
+      '<div class="mp-erp-notice-body">' +
+        '<span class="mp-erp-notice-title">你的帳號還沒有門市會員身分</span>' +
+        '第一次到樂活門市消費時,店員會協助你完成綁定,不需另外準備什麼。' +
+        '在那之前,票券、禮物中心、門市預約、收藏與創作者收益都會是空的。' +
+      '</div>';
+    box.hidden = false;
+  }
+
   function applyIdentity() {
     const m = State.member;
 
     root.classList.toggle('is-creator', State.isCreator);
 
+    renderErpNotice();
+
+    /* 未綁定時不要顯示「樂活會員編號:-」——
+       那看起來像資料掉了。講清楚是還沒有。 */
+    const idText = m.erpid ? `樂活會員編號:${m.erpid}` : '尚未綁定門市會員';
+    const idTextMobile = m.erpid ? `會員編號:${m.erpid}` : '尚未綁定門市會員';
+
     // Hero 區
     Utils.setText('#dashboard-name', m.name || '-');
-    Utils.setText('#dashboard-id', `樂活會員編號:${m.erpid || '-'}`);
+    Utils.setText('#dashboard-id', idText);
     // 同步手機版個人資料卡
     Utils.setText('#mobile-dashboard-name', m.name || '-');
-    Utils.setText('#mobile-dashboard-id', `會員編號:${m.erpid || '-'}`);
+    Utils.setText('#mobile-dashboard-id', idTextMobile);
 
     const heroBadge = document.getElementById('heroBadge');
     if (heroBadge) heroBadge.style.display = State.isCreator ? 'inline-flex' : 'none';

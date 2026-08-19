@@ -510,11 +510,21 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.addEventListener("click", event => {
         event.preventDefault();
 
+        const Auth = window.LohasAuth;
         const member = JSON.parse(localStorage.getItem("lohasMember") || "null");
 
-        if (!member || !member.erpid) {
+        // 真的沒登入 → 去登入
+        if (!member) {
           localStorage.setItem("redirectAfterLogin", "gallery.html#upload-area");
           window.location.href = "login.html";
+          return;
+        }
+
+        /* 登入了但沒有門市客編:分享照片是用 erpid 當 member_id 存的,
+           所以做不到。但把他丟去登入頁是錯的 —— 他已經登入了,
+           再登一次還是一樣,而且畫面上不會有任何解釋。 */
+        if (!member.erpid) {
+          alert(Auth?.erpRequiredNote?.() || "這項功能需要門市會員身分。");
           return;
         }
 

@@ -17,7 +17,9 @@
     Utils.setText('#profile-birthday', member.birthday || '-');
 
     Utils.setText('#dashboard-name', member.name || '-');
-    Utils.setText('#dashboard-id', `樂活會員編號：${member.erpid || '-'}`);
+    // 未綁定時「-」看起來像資料掉了,講清楚是還沒有
+    Utils.setText('#dashboard-id',
+      member.erpid ? `樂活會員編號：${member.erpid}` : '尚未綁定門市會員');
 
     loadMyPhotos();
     loadMyFavorites();
@@ -36,8 +38,9 @@ if (savedAvatar && avatarPreview) {
 
     if (!list) return;
 
+    // 已登入但沒綁門市:不要說「請先登入」,那句話是錯的而且他無從改起
     if (!member || !member.erpid) {
-      list.innerHTML = '<p class="empty-text">請先登入會員</p>';
+      list.innerHTML = '<p class="empty-text">' + Auth.erpRequiredNote() + '</p>';
       return;
     }
 
@@ -96,8 +99,9 @@ if (savedAvatar && avatarPreview) {
 
     if (!list) return;
 
+    // 已登入但沒綁門市:不要說「請先登入」,那句話是錯的而且他無從改起
     if (!member || !member.erpid) {
-      list.innerHTML = '<p class="empty-text">請先登入會員</p>';
+      list.innerHTML = '<p class="empty-text">' + Auth.erpRequiredNote() + '</p>';
       return;
     }
 
@@ -238,7 +242,9 @@ avatarInput?.addEventListener('change', function (event) {
   function initMemberPage() {
     const storedMember = Auth.getStoredMember();
 
-    if (!storedMember || !storedMember.erpid) {
+    /* 判斷「有沒有登入」,不是「有沒有 erpid」——
+       官網註冊的會員 erpid 是空的,用 erpid 判斷會把已登入的人踢回登入頁。 */
+    if (!Auth.isLogin()) {
       // 改成直接寫 redirectAfterLogin,target 改成 member-portal.html (member.html 不存在)
       localStorage.setItem('redirectAfterLogin', 'member-portal.html');
       window.location.href = 'login.html';

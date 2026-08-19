@@ -871,8 +871,26 @@
     };
   }
 
+  /* 需要門市客編的動作,一律先過這一關。
+     -----------------------------------------------------------
+     這頁的每一條送出路徑(購物車、送禮、收禮人挑款)都需要客編,
+     而後端對「token 有效但沒有客編」統一回 401 →
+     前端會顯示「登入狀態已失效,請重新登入」。
+
+     最糟的是時機:產圖與上傳要好幾秒,擋在後面等於讓人白等一輪,
+     然後拿到一個假理由。所以在按下去的第一時間就講。
+
+     這是文案層的守門,真正的權限判斷在 shop / gift Edge Function。 */
+  function blockedByErp() {
+    var Auth = window.LohasAuth;
+    if (!Auth || !Auth.isErpBound || Auth.isErpBound()) return false;
+    showFormErr(Auth.erpRequiredNote());
+    return true;
+  }
+
   function onSubmit() {
     if (!State.design || !State.product) return;
+    if (blockedByErp()) return;
     if (State.pickGiftId) { submitPick(); return; }
     if (State.gift) { createGift(); return; }
 
@@ -1058,6 +1076,12 @@
     }
 
     State.pickGiftId = giftId;
+
+    // 沒有客編的話 list 會回 401「登入狀態已失效」,而他其實登入得好好的
+    if (Auth && Auth.isErpBound && !Auth.isErpBound()) {
+      fail(Auth.erpRequiredNote());
+      return;
+    }
 
     /* 先確認這份禮物真的是他的、而且還沒挑過。
        不先確認就把介面開出來的話,他挑完才被拒絕 —— 那時候圖都產完了。 */

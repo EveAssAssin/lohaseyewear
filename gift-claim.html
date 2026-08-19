@@ -68,8 +68,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- 尚未登入 -->
     <div class="gc-panel" id="gcNeedLogin" style="display:none">
-      <p class="gc-panel-text">登入樂活會員即可領取這份禮物。還不是會員也沒關係,註冊後回到這個連結就能領。</p>
+      <!-- ⚠ 不要在這裡寫「註冊後回到這個連結就能領」——
+           官網註冊的會員沒有門市客編,領取需要客編,他會卡在下一個面板。
+           講「門市或 App 註冊的會員」才是真的。 -->
+      <p class="gc-panel-text">登入樂活會員即可領取這份禮物。門市或樂活 App 註冊的會員都可以。</p>
       <button class="gc-btn gc-btn--pri" id="gcLoginBtn">登 入 領 取</button>
+    </div>
+
+    <!-- 已登入,但還沒有門市會員身分 —— 領取需要客編。
+         獨立一個面板而不是塞進錯誤訊息裡:他沒有做錯事,
+         而且這是唯一一個「禮物看得到但領不了」的正當情況,值得講清楚。 -->
+    <div class="gc-panel" id="gcNeedErp" style="display:none">
+      <h2 class="gc-panel-h">這份禮物先幫你留著</h2>
+      <p class="gc-panel-text" id="gcNeedErpText"></p>
+      <p class="gc-panel-text">綁定之後回到這個連結就能領取,禮物不會因此失效。</p>
+      <a class="gc-btn gc-btn--ghost" href="store.html">看門市據點</a>
     </div>
 
     <!-- 確認領取 -->
@@ -98,7 +111,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script src="js/utils.js?v=20260513-2300"></script>
 <script src="js/auth.js?v=20260817-appmember"></script>
-<script src="js/layout.js?v=20260513-2300"></script>
-<script src="js/gift-claim.js?v=20260818-pick"></script>
+<script src="js/layout.js?v=20260819-erp"></script>
+<script src="js/gift-claim.js?v=20260819-erp"></script>
 </body>
 </html>
