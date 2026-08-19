@@ -24,8 +24,17 @@ LOHAS 樂活眼鏡官方網站,靜態網頁專案,透過 GitHub Pages 部署,正
 
 ## Edge Function 的金鑰與環境(踩過坑,務必先讀)
 
-使用者**沒有 Supabase Secrets 權限**,所有金鑰都填在程式碼裡的 `FALLBACK_*` 常數,
+使用者**沒有 Supabase Secrets 權限**,金鑰多半填在程式碼裡的 `FALLBACK_*` 常數,
 而那個值**只存在於線上部署的那一份** —— repo 裡永遠是空字串(公開 repo,不能放金鑰)。
+
+**但 Secrets 確實有人在動。** 2026-08-19 對方(商城工程方)自行設定了
+`SITE_API_KEY` 與 `SHOP_SITE_API_KEY`,並且**直接改了線上 `shop` 函式的程式碼**。
+所以線上那一份與 repo 這一份可能不一致,而且不是使用者改的。
+
+因此:**動任何 Edge Function 之前,先 Download 看線上實際長什麼樣**,
+不要假設 repo 這份就是線上跑的那份。程式碼讀 `Deno.env.get(...) || FALLBACK_*`,
+env 優先 —— Secret 一旦被設定,`FALLBACK_*` 就再也沒有作用,
+但它仍然要留著填對的值(Secret 被刪掉時那是唯一的救命索)。
 
 ### 給部署步驟時,第一步一定要是「先按 Download」
 
