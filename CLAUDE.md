@@ -43,11 +43,11 @@ LOHAS 樂活眼鏡官方網站,靜態網頁專案,透過 GitHub Pages 部署,正
 
 ### 各支函式打哪一台、用哪一把金鑰(不可互換)
 
-| 函式 | 對接 | 金鑰 |
+| 函式 | 對接 | 金鑰(Secret 名稱) |
 |---|---|---|
-| `shop` | 商城**測試站** `lohas-shop-test.onrender.com` | 商城那把 |
-| `coupon-list` | 主後端**正式站** `lohas.realtime.tw` | 主後端正式站那把 |
-| `member-auth` | 主後端**測試站** | 主後端測試站那把 |
+| `shop` | 商城**測試站** `lohas-shop-test.onrender.com` | `SHOP_SITE_API_KEY` |
+| `coupon-list` | 主後端**正式站** `lohas.realtime.tw` | `SITE_API_KEY` |
+| `member-auth` | 主後端**正式站** `lohas.realtime.tw` | `SITE_API_KEY` |
 | `store-sso-login` | — | 三把:`app` / `shop` / `shop-test`,由我方發給對方 |
 | `shop-webhook` | — | 一把,由我方發給商城 |
 | `auth-session` | Render 代理 → 即時互動正式站 | `PROXY_KEY` ＋ `SESSION_SECRET` |
@@ -55,14 +55,22 @@ LOHAS 樂活眼鏡官方網站,靜態網頁專案,透過 GitHub Pages 部署,正
 **商城的金鑰與主後端的金鑰是不同的兩把**,主後端的測試站與正式站又是不同的兩把。
 填錯的症狀是「改完之後全部回未授權」,很容易誤判成網址給錯。
 
+2026-08-19 起 Secret 拆成兩個名稱(上表),原因是三支函式原本共用 `SITE_API_KEY`
+卻打不同環境 —— 任一邊切換環境就會把另一邊弄斷。
+**`shop` 不做 `|| SITE_API_KEY` 備援**:變數沒設時要明確地壞掉,
+而不是安靜地拿主後端那把去打商城。
+
 `store-sso-login` 那把等同於「可為任意會員產生官網登入連結,不需要密碼」——
 它的敏感度高於一般 API 金鑰,呼叫紀錄寫在 `sso_login_log`。
 
 ## 不要隨手改的東西
 
-- **`js/register.js` 的 `NOT_READY`** — 註冊已完成但刻意關閉。`member-auth` 指向
-  主後端測試站,在那個狀態下開放註冊,使用者的帳號會建在測試環境然後登不進來。
-  要開放的前提是:`member-auth` 已切正式站、且註冊流程已在測試站驗證完成。
+- **`js/register.js` 的 `NOT_READY`** — 註冊程式已完成但入口刻意關閉。
+  2026-08-19 起 `member-auth` 已指向主後端**正式站**且驗證通過(`check_duplicate` 回 200),
+  所以現在**每一次測試都會產生真實會員、真的發簡訊、且與 ERP 同步**,
+  主後端正式站沒有測試站那條撈驗證碼的診斷路由(一律 404)。
+  內部驗證請走 `?internal=1`,用自己人的手機與 Email,並記下建了哪些帳號。
+  `NOT_READY = false`(對外開放)要等內部驗證完成後再由使用者決定。
 - **`shop` 的 `SHOP_BASE`** — 商城正式站尚未部署修正,對方明確要求維持在測試站驗證。
 
 ## 環境的現實

@@ -7,9 +7,16 @@
         Verify JWT 關閉(官網前端不帶 Supabase JWT)
 
    金鑰兩種來源,擇一:
-     A. Secrets 設 SITE_API_KEY(有權限時的正解)
+     A. Secrets 設 SHOP_SITE_API_KEY(有權限時的正解)
      B. 沒有 Secrets 權限時,把金鑰直接填在下面的 FALLBACK_SITE_KEY
         絕對不要把填好金鑰的版本回寫到 repo。
+
+   ⚠ 這支讀的是 SHOP_SITE_API_KEY,【不是】SITE_API_KEY,也刻意不做備援。
+     SITE_API_KEY 是主後端(lohas.realtime.tw)那把,給 coupon-list 與 member-auth 用;
+     商城是另一台、另一把。2026-08-19 之前這支誤讀 SITE_API_KEY,
+     對方把該 Secret 改成主後端的值之後,這支就會拿錯的金鑰去打商城。
+     寫成 `SHOP_SITE_API_KEY || SITE_API_KEY` 更糟 —— 變數哪天沒設,
+     它會安靜地拿另一把去打錯的站,而不是明確地壞掉。
 
    Base URL 已有預設值(測試環境),不需要設定。
    正式環境上線時,設 SHOP_BASE_URL 或直接改下面那行。
@@ -28,7 +35,7 @@ const FALLBACK_SITE_KEY = '';
 
 const SHOP_BASE = (Deno.env.get('SHOP_BASE_URL') || 'https://lohas-shop-test.onrender.com')
   .replace(/\/+$/, '');
-const SITE_KEY  = Deno.env.get('SITE_API_KEY') || FALLBACK_SITE_KEY;
+const SITE_KEY  = Deno.env.get('SHOP_SITE_API_KEY') || FALLBACK_SITE_KEY;
 
 const AUTH_FN = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/auth-session';
 
@@ -262,7 +269,7 @@ Deno.serve(async (req) => {
   if (rateLimited(ip)) return reply('429', { message: '操作太頻繁,請稍候再試' }, 429);
 
   if (!SITE_KEY) {
-    console.error('[shop] 缺少金鑰:請設 SITE_API_KEY 或填 FALLBACK_SITE_KEY');
+    console.error('[shop] 缺少金鑰:請設 SHOP_SITE_API_KEY 或填 FALLBACK_SITE_KEY');
     return reply('500', { message: '系統設定不完整,請聯繫技術窗口' }, 500);
   }
 
