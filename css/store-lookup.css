@@ -95,6 +95,9 @@
   padding:14px 16px;
   border-radius:var(--r-md, 14px);
   font-size:14px; line-height:1.8;
+  /* 訊息是用 textContent 塞的,裡面的 \n 要能斷行 ——
+     不然「剛綁定請重開一次官網」那句會跟前一句黏成一團 */
+  white-space:pre-line;
   background:#fff;
   border:1px solid var(--lohas-bd, #E8DED1);
   color:var(--text-sub);

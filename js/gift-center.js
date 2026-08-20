@@ -202,10 +202,18 @@
       /* B 路線:送禮人買的是通用禮物商品,款式由收禮人自己挑。
          design_id 還是空的就代表還沒挑 —— 這是他現在唯一該做的事,
          所以給主要按鈕的外型,不是提示文字。 */
-      actions = '<a class="gf-btn gf-btn--pri" href="design.html?pick=' +
-                encodeURIComponent(g.id) + '">' +
-                '<i class="fa-solid fa-wand-magic-sparkles"></i> 挑 選 款 式</a>' +
-                '<span class="gf-hint">選鏡框、選刻圖、決定雕刻位置</span>';
+      var bound = !Auth || !Auth.isErpBound || Auth.isErpBound();
+      actions = bound
+        ? '<a class="gf-btn gf-btn--pri" href="design.html?pick=' +
+          encodeURIComponent(g.id) + '">' +
+          '<i class="fa-solid fa-wand-magic-sparkles"></i> 挑 選 款 式</a>' +
+          '<span class="gf-hint">選鏡框、選刻圖、決定雕刻位置</span>'
+        /* 還沒綁定門市會員的挑不了(挑選要送商城購物車,需要客編)。
+           按鈕導去挑選等於送他去撞牆 —— 改成指路到門市,
+           那本來就是 B 路線要把他帶去的地方。 */
+        : '<a class="gf-btn gf-btn--pri" href="store.html">' +
+          '<i class="fa-solid fa-location-dot"></i> 看 門 市 據 點</a>' +
+          '<span class="gf-hint">帶著手機到門市,店員開通會員後當場就能挑款式</span>';
 
     } else if (g.status === 'claimed') {
       /* 每一種狀態都要回答「所以我現在該做什麼」。
@@ -346,19 +354,10 @@
       return;
     }
 
-    /* 未綁定門市會員在這裡先擋下來。
-       -----------------------------------------------------------
-       不擋的話會照樣打 API,而後端對「token 有效但沒有客編」
-       是回 401,前端翻成「登入狀態已失效,請重新登入」——
-       他剛登入,那句話是錯的,而且他照做也不會有任何改變。
-
-       這只是文案層的守門,真正的權限判斷在 gift Edge Function。 */
-    if (Auth && Auth.isErpBound && !Auth.isErpBound()) {
-      State.error = Auth.erpRequiredNote();
-      State.loaded = true;
-      render();
-      return;
-    }
+    /* 2026-08-20:不再擋未綁定門市的會員。
+       gift 函式已改為 erpid 或 mid 皆可,他們領得到禮物、
+       也該在這裡看得到自己領了什麼。挑款式那一步才需要客編,
+       而那一步的提示寫在禮物卡片上,不是整頁擋掉。 */
 
     box.innerHTML = '<p class="empty-text">載入中...</p>';
     call({ action: 'list', token: token })

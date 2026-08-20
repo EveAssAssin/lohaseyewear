@@ -128,6 +128,15 @@
   function applyDoneBtn(g) {
     if (!el.doneBtn) return;
     if (g && g.status === 'claimed' && !g.design_id) {
+      /* 還沒綁定門市會員的人挑不了(挑選要送商城購物車,需要客編)。
+         把按鈕導去「挑選款式」等於送他去撞牆 —— 改成指路到門市。 */
+      var bound = !Auth || !Auth.isErpBound || Auth.isErpBound();
+      if (!bound) {
+        el.doneBtn.textContent = '看 門 市 據 點';
+        el.doneBtn.className = 'gc-btn gc-btn--ghost';
+        el.doneBtn.href = 'store.html';
+        return;
+      }
       el.doneBtn.textContent = '挑 選 款 式';
       el.doneBtn.className = 'gc-btn';
       el.doneBtn.href = 'design.html?pick=' + encodeURIComponent(g.id);
@@ -142,6 +151,15 @@
        這時候最該講的不是「已領取」,是「換你挑了」——
        他如果就這樣關掉頁面,那份禮物會一直停在未完成。 */
     if (g.status === 'claimed' && !g.design_id) {
+      var bound = !Auth || !Auth.isErpBound || Auth.isErpBound();
+      /* 未綁定的人也領得到 B 路線的禮物(那是刻意的),
+         但他還挑不了款式。這時候要指路,不是道歉 ——
+         他本來就要到門市取件,綁定在那裡順手就做完了。 */
+      if (!bound) {
+        return '禮物已經是你的了,會一直保留著。' +
+          '接下來帶著手機到任一樂活門市,店員會幫你開通會員,' +
+          '當場就能挑鏡框、挑刻圖,並現場為你配鏡雷刻。';
+      }
       return '接下來換你挑 —— 選一副喜歡的鏡框、挑一張刻圖,決定要刻在哪裡。' +
         '挑好之後帶著會員編號到任一樂活門市,店員會現場為你配鏡並雷刻。';
     }
@@ -181,15 +199,15 @@
       return;
     }
 
-    /* 已登入但沒有門市客編:在這裡就講,不要讓他按下「確認領取」才失敗。
+    /* 2026-08-20:未綁定門市的會員【也能領】,兩條路線都是。
        -----------------------------------------------------------
-       後端對這種情況回 401,前端會翻成「登入狀態已失效,請重新登入」——
-       先讓他看到禮物、按下領取,最後給一個假理由,是最糟的一種擋法。 */
-    if (Auth.isErpBound && !Auth.isErpBound()) {
-      if (el.needErpText) el.needErpText.textContent = Auth.erpRequiredNote();
-      show(el.needErp);
-      return;
-    }
+       先前這裡整個擋掉,是把事情做反了 ——
+       B 路線的用意本來就是讓還不是會員的人也收得到禮物,
+       再把他帶進門市綁定。擋在領取這一關,他就沒有理由去店裡了。
+
+       領取之後的差別寫在完成頁(見 doneNote):
+       已挑好款式的 → 券進 App,到門市核銷
+       還沒挑款式的 → 到門市綁定,店員會協助當場挑 */
 
     if (g.recipient_label) {
       el.forWho.innerHTML = '<i class="fa-solid fa-circle-info"></i> 送禮的人指名要送給「' +
@@ -220,13 +238,8 @@
       gotoLogin();
       return;
     }
-    /* 沒有客編的話 list 會回 401,訊息是「登入狀態已失效」——
-       這條路徑沒有 claim_code 可以 preview,連禮物內容都拿不到,
-       所以直接講清楚,不要拿一個假理由把人擋在整頁錯誤畫面。 */
-    if (Auth.isErpBound && !Auth.isErpBound()) {
-      fail(Auth.erpRequiredNote());
-      return;
-    }
+    /* 2026-08-20 起 list 以 erpid 或 mid 皆可查,
+       未綁定的人也看得到自己領的禮物,所以這裡不再擋。 */
     call({ action: 'list', token: token })
       .then(function (d) {
         var g = (d.received || []).find(function (x) { return String(x.id) === String(giftId); });
@@ -287,7 +300,6 @@
       body: $('gcBody'), title: $('gcTitle'), from: $('gcFrom'),
       visual: $('gcVisual'), item: $('gcItem'), design: $('gcDesign'), msg: $('gcMsg'),
       needLogin: $('gcNeedLogin'), loginBtn: $('gcLoginBtn'),
-      needErp: $('gcNeedErp'), needErpText: $('gcNeedErpText'),
       form: $('gcForm'), forWho: $('gcForWho'), claimNote: $('gcClaimNote'),
       formErr: $('gcFormErr'), submit: $('gcSubmit'),
       done: $('gcDone'), doneText: $('gcDoneText'), doneBtn: $('gcDoneBtn')

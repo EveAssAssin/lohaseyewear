@@ -124,6 +124,11 @@ Deno.serve(async (req) => {
   /* ---------- 查禮物 ----------
      收到的禮物才是門市要處理的。送出去的不看 ——
      那是別人要去領的,查了也幫不上忙。 */
+  /* ⚠ 只查得到已經掛在【會員編號】底下的禮物。
+     未綁定門市的客人領禮物時是記在 claimed_by_mid,要等他本人
+     再進一次官網才會搬過來(gift.ts 的 backfillMidGifts)。
+     店員在櫃檯剛綁完就查,會查不到 —— 前端的空結果訊息有寫這件事。
+     這裡不另外用 mid 查:店員手上只有會員編號,拿不到 mid。 */
   const { data: gifts, error } = await db.from('gifts')
     .select('*')
     .or(`claimed_by_erpid.eq.${target},recipient_erpid.eq.${target}`)

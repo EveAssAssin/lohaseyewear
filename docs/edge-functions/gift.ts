@@ -55,8 +55,20 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
 /* ---------- 身分 ----------
    不自行驗證 HMAC:密鑰只放在 auth-session 一處,
    任何一邊改了簽章格式都不會造成兩邊不同步。 */
-async function erpidFromToken(token: string): Promise<string> {
-  if (!token) return '';
+type Who = { erpid: string; mid: string };
+
+/* 2026-08-20:改回傳 erpid 與 mid 兩者。
+   -----------------------------------------------------------
+   官網註冊的會員沒有 ERP 客編,只有 mid。在此之前這種人連
+   【領取禮物】都做不到 —— 而收禮人正是最可能還不是會員的一群。
+
+   主後端已確認:以 mid 發出的票券記在 owner_mid,該會員日後到門市
+   綁定客編時會自動搬到 client_id 並清空 owner_mid,兩邊都查得到。
+   所以「未綁定也能領」在票券那一端是成立的,卡點只在我方。
+
+   ⚠ 但不是每個動作都能放寬,見下方各動作的守門。 */
+async function whoFromToken(token: string): Promise<Who | null> {
+  if (!token) return null;
   try {
     const r = await fetch(AUTH_FN, {
       method: 'POST',
@@ -64,16 +76,29 @@ async function erpidFromToken(token: string): Promise<string> {
       body: JSON.stringify({ action: 'verify', token }),
     });
     const j = await r.json();
-    if (String(j?.code) !== '200') return '';
+    if (String(j?.code) !== '200') return null;
     // auth-session 的成功回應欄位名未經確認,這裡容錯取值。
-    // 首次實測後可收斂成單一路徑。
-    const raw =
+    const rawErp =
       j?.data?.erpid ?? j?.data?.client_id ?? j?.data?.member?.client_id ??
       j?.erpid ?? j?.client_id ?? j?.member?.client_id ?? '';
-    return String(raw || '').trim();
+    const rawMid = j?.data?.mid ?? j?.mid ?? '';
+    const erpid = String(rawErp || '').trim();
+    const mid = String(rawMid || '').trim();
+    if (!erpid && !mid) return null;      // 兩個都沒有才是真的無身分
+    return { erpid, mid };
   } catch {
-    return '';
+    return null;
   }
+}
+
+/* 需要 ERP 客編的動作統一用這句擋。
+   措辭與前端的 LohasAuth.erpRequiredNote() 一致 ——
+   同一件事在兩個地方講成兩種說法,客服會收到兩種問題。 */
+function needErp() {
+  return reply('403', {
+    reason: 'erp_required',
+    message: '這項功能需要門市會員身分。第一次到樂活門市時,店員會協助你完成綁定,不需另外準備什麼。',
+  }, 403);
 }
 
 /* ---------- 領取碼 ----------
@@ -166,6 +191,28 @@ function publicGift(g: Record<string, any>, viewer: 'sender' | 'recipient' | 'an
  * 所以認領這件事延到本人登入時才做 —— 比對的是「我自己的」號碼,
  * 不會洩漏任何別人的資訊。
  */
+/**
+ * 綁定門市會員之後,把以 mid 領取的禮物搬到客編底下。
+ *
+ * 這是主後端 owner_mid 回填的鏡像。少了它,門市用會員編號查刻圖
+ * 會查不到那份禮物 —— 而那正是 B 路線最後一哩路要用的東西。
+ *
+ * 【搬過去並清空 mid】,不是兩欄都留:
+ * 兩欄同時有值的話,這個人日後解除綁定,兩個身分會各自
+ * 從不同欄位看到同一份禮物。主後端的取捨也是如此。
+ *
+ * 觸發時機是本人下一次帶著 token 進來(list)。店員在櫃檯剛綁完時
+ * 資料還沒搬,請客人在手機上開一次會員專區即可。
+ */
+async function backfillMidGifts(erpid: string, mid: string) {
+  if (!erpid || !mid) return;
+  try {
+    await db.from('gifts')
+      .update({ claimed_by_erpid: erpid, claimed_by_mid: null })
+      .eq('claimed_by_mid', mid);
+  } catch { /* 搬不動下次進頁再試,不影響這一次的查詢 */ }
+}
+
 async function bindPending(erpid: string, token: string) {
   const keys = [erpid];
 
@@ -237,23 +284,53 @@ Deno.serve(async (req) => {
     });
   }
 
-  /* 以下動作都需要身分 */
-  const erpid = await erpidFromToken(String(body.token || ''));
-  if (!erpid) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+  /* 以下動作都需要身分。
+     有 erpid 或 mid 其中之一即可通過這一關 ——
+     個別動作要不要求客編,由各自的守門決定,不在這裡一刀切。 */
+  const who = await whoFromToken(String(body.token || ''));
+  if (!who) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+  const erpid = who.erpid;
+  const mid = who.mid;
 
   /* ---------- list ---------- */
   if (action === 'list') {
-    await bindPending(erpid, String(body.token || ''));
+    /* 認領待比對的禮物只在有客編時做:送禮人填的是會員編號或手機,
+       兩者都對應到客編,沒有客編就沒有東西可比對。
+       同時把先前以 mid 領的禮物搬到客編底下(剛綁定的人會走到這裡)。 */
+    if (erpid) {
+      await Promise.all([
+        bindPending(erpid, String(body.token || '')),
+        backfillMidGifts(erpid, mid),
+      ]);
+    }
+
+    /* 收到的禮物:客編與 mid 兩種擁有權都要查。
+       未綁定時領的禮物記在 claimed_by_mid,綁定之後新的會記在客編,
+       兩邊都列出來才不會在綁定前後「少一半」。 */
+    const recvOr = [
+      erpid ? `recipient_erpid.eq.${erpid}` : '',
+      erpid ? `claimed_by_erpid.eq.${erpid}` : '',
+      mid ? `claimed_by_mid.eq.${mid}` : '',
+    ].filter(Boolean).join(',');
+
+    /* 收到的那一份用條件式串接,不要用「哨兵值」。
+       先前寫成 .neq('sender_erpid', erpid || '…') —— 沒有客編時
+       就會拿一個假值去比對,那種寫法遲早會有人挑到真的撞上的值。
+       沒有客編的人本來就不可能是送禮人,直接不加這個條件。 */
+    let recvQ = db.from('gifts').select('*')
+      .or(recvOr)
+      .neq('status', 'pending_payment')      // 對方還沒付款的不該出現在我這邊
+      .order('created_at', { ascending: false }).limit(100);
+    if (erpid) recvQ = recvQ.neq('sender_erpid', erpid);
 
     const [sentRes, recvRes] = await Promise.all([
-      db.from('gifts').select('*')
-        .eq('sender_erpid', erpid)
-        .order('created_at', { ascending: false }).limit(100),
-      db.from('gifts').select('*')
-        .or(`recipient_erpid.eq.${erpid},claimed_by_erpid.eq.${erpid}`)
-        .neq('sender_erpid', erpid)
-        .neq('status', 'pending_payment')      // 對方還沒付款的不該出現在我這邊
-        .order('created_at', { ascending: false }).limit(100),
+      // 送出的禮物一定有客編(建立禮物要付款,付款需要客編)
+      erpid
+        ? db.from('gifts').select('*')
+            .eq('sender_erpid', erpid)
+            .order('created_at', { ascending: false }).limit(100)
+        : Promise.resolve({ data: [], error: null }),
+      recvQ,
     ]);
     if (sentRes.error || recvRes.error) {
       return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
@@ -268,6 +345,9 @@ Deno.serve(async (req) => {
 
   /* ---------- create ---------- */
   if (action === 'create') {
+    // 送禮要在商城付款,商城必須有客編。沒有客編的人建不了禮物。
+    if (!erpid) return needErp();
+
     const fulfillment = body.fulfillment === 'ship' ? 'ship' : 'store';
     const mode = body.recipient_mode === 'member' ? 'member' : 'link';
     const keyRaw = String(body.recipient_key || '').trim();
@@ -341,13 +421,25 @@ Deno.serve(async (req) => {
     if (error) return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
     if (!g) return reply('007', { message: '查無此禮物' }, 404);
 
-    if (g.sender_erpid === erpid) {
+    if (erpid && g.sender_erpid === erpid) {
       return reply('032', { message: '這是你自己送出的禮物' }, 403);
     }
-    // 已指定會員的禮物,只有那個人能領
+    // 已指定會員的禮物,只有那個人能領。
+    // 沒有客編的人無從證明自己是被指定的那位,一律擋下 ——
+    // 放行等於讓任何拿到連結的人領走指名給別人的禮物。
     if (g.recipient_erpid && g.recipient_erpid !== erpid) {
       return reply('033', { message: '這份禮物是指定給其他會員的' }, 403);
     }
+
+    /* 兩條路線都放行給未綁定的會員,B 路線尤其不能擋。
+       -----------------------------------------------------------
+       B 路線的用意本來就是「未綁定的人也收得到禮物,再把他帶進門市」。
+       擋在領取這一關的話,他沒有理由到店裡,那條路線就失去意義了。
+       而且第一階段是門市自取 —— 他本來就要去店裡,綁定在那裡順手就做。
+
+       他確實暫時挑不了款式(pick 要送 cart/push,商城需要客編),
+       但那不是死路:門市查刻圖對「尚未挑選」的禮物會顯示指引,
+       店員綁定後請他當場挑,或綁完自己回官網挑。 */
     if (['claimed', 'issued', 'shipped', 'redeemed'].includes(g.status)) {
       return reply('034', { message: '這份禮物已經領取過了' }, 409);
     }
@@ -363,12 +455,19 @@ Deno.serve(async (req) => {
 
     // 條件更新:只有仍是 paid 的那一刻才寫得進去。
     // 兩個人同時點領取時,第二個人會更新到 0 筆而不是覆蓋掉第一個人。
+    /* 有客編就記客編,沒有就記 mid。
+       兩欄不同時寫 —— 同時有值的話,這個人日後解除綁定,
+       兩個身分會各自從不同欄位都看得到同一份禮物。
+       (主後端的 owner_mid 回填也是同樣的取捨,見對方 8/20 來文) */
+    const owner = erpid
+      ? { claimed_by_erpid: erpid, recipient_erpid: g.recipient_erpid || erpid }
+      : { claimed_by_mid: mid };
+
     const { data: updated, error: upErr } = await db.from('gifts')
       .update({
         status: 'claimed',
         claimed_at: new Date().toISOString(),
-        claimed_by_erpid: erpid,
-        recipient_erpid: g.recipient_erpid || erpid,
+        ...owner,
       })
       .eq('id', g.id).eq('status', 'paid')
       .select().maybeSingle();
@@ -378,8 +477,10 @@ Deno.serve(async (req) => {
 
     await logEvent(g.id, 'paid', 'claimed', 'recipient', '收禮人完成領取');
 
-    // 刻圖收進對方的「我的最愛刻圖」。失敗不影響領取本身。
-    if (updated.design_id) {
+    /* 刻圖收進對方的「我的最愛刻圖」。失敗不影響領取本身。
+       ⚠ 只在有客編時做:收藏表的 member_id 是客編,
+       沒有客編就沒有鍵可以寫(見 repo 的收藏改鍵議題)。 */
+    if (updated.design_id && erpid) {
       try {
         await db.from('engraving_wishlist')
           .insert({ member_id: erpid, design_id: updated.design_id });
@@ -404,6 +505,18 @@ Deno.serve(async (req) => {
      不呼叫商城:A 已經付過款了,這一步只是補上「要做哪一副」。
      第一階段限定門市自取,店員查管理後台就看得到,商城不需要知道。 */
   if (action === 'pick') {
+    /* 挑款式會送 cart/push,商城要客編,所以這一步仍需綁定。
+       未綁定的人【領得到】B 路線的禮物(那是刻意的),只是還挑不了 ——
+       訊息要指路,不要只說「你不能用」:他到門市綁定後就能挑,
+       或請店員當場協助。禮物不會因此失效。 */
+    if (!erpid) {
+      return reply('403', {
+        reason: 'erp_required',
+        message: '挑選款式需要門市會員身分。帶著手機到樂活門市,' +
+                 '店員會協助你完成綁定,當場就能挑鏡框與刻圖。禮物會一直保留著。',
+      }, 403);
+    }
+
     const giftId = String(body.gift_id || '').trim();
     if (!giftId) return reply('006', { message: '缺少禮物識別' }, 400);
 
@@ -475,6 +588,9 @@ Deno.serve(async (req) => {
 
   /* ---------- cancel ---------- */
   if (action === 'cancel') {
+    // 只有送禮者能取消,而送禮者一定有客編
+    if (!erpid) return needErp();
+
     const giftId = String(body.gift_id || '').trim();
     if (!giftId) return reply('006', { message: '缺少禮物識別' }, 400);
 
