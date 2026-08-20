@@ -18,6 +18,9 @@
    環境變數:
      SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY  → Supabase 自動注入,不用設
      SITE_ORIGIN(選填)→ 產生領取連結用,預設 https://www.lohasglasses.com
+     SITE_API_KEY → 呼叫主後端 siteapi/gift/issue 發券用(與 coupon-list 同一把)
+     TICKET_BASE_URL(選填)→ 主後端位址,預設正式站 https://lohas.realtime.tw
+     GIFT_CENTER_ITEM_ID(選填)→ 票券中心的禮物型品項編號,預設 2
 
    action 一覽:
      list     我送出的 / 我收到的            需 token
@@ -34,6 +37,24 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SITE_ORIGIN  = Deno.env.get('SITE_ORIGIN') || 'https://www.lohasglasses.com';
 const AUTH_FN      = `${SUPABASE_URL}/functions/v1/auth-session`;
+
+/* ---------- 發券(主後端) ----------
+   ⚠ gift/issue 在【主後端】siteapi/*,不是商城。
+     金鑰因此是 SITE_API_KEY(coupon-list、member-auth 用的那把),
+     不是商城的 SHOP_SITE_API_KEY。兩者混用的症狀是全部回 403。
+
+   位址預設【正式站】。對方目前只在測試站開通,所以現階段這支呼叫
+   會失敗 —— 那是可以接受的,見 issueCoupon() 的說明。 */
+const TICKET_BASE = (Deno.env.get('TICKET_BASE_URL') || 'https://lohas.realtime.tw')
+  .replace(/\/+$/, '');
+const SITE_KEY = Deno.env.get('SITE_API_KEY') || '';
+
+/* 票券中心裡「禮物型」品項的編號。
+   對方限定只有明確勾選過禮物型的品項才能用這支端點發券
+   (錯誤碼 ITEM_NOT_GIFT),所以這個值不能亂填。
+   測試站目前是 2(客製太陽眼鏡體驗券);正式站的值若不同,
+   用 GIFT_CENTER_ITEM_ID 覆蓋,不必改程式。 */
+const CENTER_ITEM_ID = Number(Deno.env.get('GIFT_CENTER_ITEM_ID') || 2);
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -213,6 +234,40 @@ async function backfillMidGifts(erpid: string, mid: string) {
   } catch { /* 搬不動下次進頁再試,不影響這一次的查詢 */ }
 }
 
+/**
+ * 補發券:收禮人打開禮物中心時,幫他把上次沒發成的券補上。
+ *
+ * 為什麼是這種做法:
+ *   我方沒有排程器可以跑重試佇列,而加一套 pg_cron 只為了這件事
+ *   太重。收禮人本來就會回來看「我的券好了沒」—— 那正是最自然的
+ *   重試時機,而且只有真的有人在等的禮物才會被重試。
+ *
+ * 一次只補一份,而且要求 claimed 超過一分鐘:
+ *   claim 當下已經試過一次,立刻再試多半是同一個結果;
+ *   一次只補一份則是為了不要讓禮物中心的載入被好幾次外部呼叫拖住。
+ *   剩下的下次進頁再補,反正他還會回來。
+ */
+async function retryIssue(rows: Record<string, any>[]) {
+  const cutoff = Date.now() - 60 * 1000;
+  const target = rows.find((g) =>
+    g.status === 'claimed' &&
+    g.fulfillment === 'store' &&
+    !g.coupon_id &&
+    g.claimed_at && new Date(g.claimed_at).getTime() < cutoff
+  );
+  if (!target) return;
+
+  const res = await issueCoupon(target);
+  if (res.ok) {
+    const updated = await applyIssued(target, res.couponId, res.already);
+    // 就地換掉,讓這一次的回應就看得到新狀態,不必再重整一次
+    Object.assign(target, updated);
+  } else if (!res.retryable) {
+    // 不可重試的錯誤要留下明確紀錄,不然它會被每次進頁重試洗掉
+    console.error('[gift] 補發券失敗且不可重試 ' + target.id + ' code=' + res.code);
+  }
+}
+
 async function bindPending(erpid: string, token: string) {
   const keys = [erpid];
 
@@ -240,6 +295,128 @@ async function bindPending(erpid: string, token: string) {
       .neq('sender_erpid', erpid)                 // 不可能送給自己
       .not('status', 'in', '("cancelled","expired")');
   } catch { /* 綁定失敗下次進頁會再試 */ }
+}
+
+/* ---------- 發券 ----------
+   門市自取的禮物,收禮人領取後要在票券中心發一張兌換券給他。
+
+   === 為什麼失敗不是災難 ===
+   依雙方約定「發券失敗不退回可領取狀態」:claimed(歸屬)與
+   issued(發券)是兩個狀態,歸屬已定不可逆。退回的話,禮物會在
+   重試期間被其他持有連結的人領走 —— 那比晚幾分鐘拿到券嚴重得多。
+
+   所以這支失敗時只留紀錄,禮物停在 claimed,
+   收禮人看到「兌換券準備中」,由 list 的重試補上(見 retryIssue)。
+
+   === 現階段預期會失敗 ===
+   對方的 gift/issue 目前只在測試站開通,而我方指向正式站。
+   這是刻意的:正式站部署後這支會自己通,不必再改一次程式。
+
+   === 冪等 ===
+   以 gift_id 為冪等鍵。重複呼叫回同一個 coupon_id 且
+   already_issued: true —— 對方以資料表唯一鍵實作,不是先查再寫,
+   所以併發下也不會發出兩張。 */
+type IssueResult =
+  | { ok: true; couponId: number; already: boolean }
+  | { ok: false; retryable: boolean; code: string; message: string };
+
+async function issueCoupon(g: Record<string, any>): Promise<IssueResult> {
+  if (!SITE_KEY) {
+    return { ok: false, retryable: true, code: 'NO_KEY', message: '未設定 SITE_API_KEY' };
+  }
+
+  /* client_id 或 mid 擇一。未綁定門市的收禮人只有 mid ——
+     對方會把擁有權記在 owner_mid,該會員綁定客編時自動回填。 */
+  const owner: Record<string, unknown> = g.claimed_by_erpid
+    ? { client_id: Number(g.claimed_by_erpid) }
+    : { mid: String(g.claimed_by_mid || '') };
+  if (!g.claimed_by_erpid && !g.claimed_by_mid) {
+    return { ok: false, retryable: false, code: 'NO_OWNER', message: '這份禮物沒有擁有者' };
+  }
+
+  try {
+    const r = await fetch(`${TICKET_BASE}/siteapi/gift/issue`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-Site-Key': SITE_KEY,
+      },
+      body: JSON.stringify({
+        gift_id: g.id,                  // 冪等鍵
+        center_item_id: CENTER_ITEM_ID,
+        ...owner,
+        // expires_at 不帶 = 無期限(雙方 8/14 約定)
+        order_no: g.order_trade_no || '',
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    const j = await r.json();
+    const code = String(j?.code ?? r.status);
+
+    if (code === '200' || code === 'OK') {
+      const couponId = Number(j?.data?.coupon_id);
+      if (!Number.isFinite(couponId) || couponId <= 0) {
+        // 回了成功卻沒有券號,這種情況重試沒有意義,要人看
+        return { ok: false, retryable: false, code: 'NO_COUPON_ID', message: '發券成功但未回傳券號' };
+      }
+      return { ok: true, couponId, already: !!j?.data?.already_issued };
+    }
+
+    /* ALREADY_ISSUED 視為成功 —— 對方會一併回既有的 coupon_id。
+       只當成錯誤的話,我方會永遠停在 claimed 拿不到券號,
+       收禮人的 App 看得到券、禮物中心卻顯示「準備中」。 */
+    if (code === 'ALREADY_ISSUED') {
+      const couponId = Number(j?.data?.coupon_id);
+      if (Number.isFinite(couponId) && couponId > 0) {
+        return { ok: true, couponId, already: true };
+      }
+      return { ok: false, retryable: false, code, message: '對方回報已發過但未附券號' };
+    }
+
+    /* 未知的代碼一律以 retryable 為準(雙方約定)。
+       這樣對方日後新增錯誤碼,我方不必為了分類而改程式。
+       retryable 沒帶時保守當成不可重試 —— 無止境地重打一個
+       其實不會成功的請求,比停下來要人看更糟。 */
+    return {
+      ok: false,
+      retryable: j?.retryable === true || j?.data?.retryable === true,
+      code,
+      message: String(j?.message || '發券失敗'),
+    };
+
+  } catch (e) {
+    // 連線失敗、逾時:這一類重試會好
+    return {
+      ok: false, retryable: true, code: 'NETWORK',
+      message: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
+/* 發券成功後把狀態推進到 issued。失敗則原樣留著,不動狀態。 */
+async function applyIssued(g: Record<string, any>, couponId: number, already: boolean) {
+  const { data: updated, error } = await db.from('gifts')
+    .update({
+      status: 'issued',
+      coupon_id: couponId,
+      issued_at: new Date().toISOString(),
+    })
+    .eq('id', g.id).eq('status', 'claimed')     // 條件更新,不覆蓋別人推進過的狀態
+    .select().maybeSingle();
+
+  /* 券已經真的發出去了,這裡失敗只是我方沒記到。
+     不能當作沒發過 —— 下次 retryIssue 會再打一次,對方以 gift_id 冪等,
+     回的是同一個 coupon_id,所以會自己補正。留下 log 讓人看得到。 */
+  if (error) {
+    console.error('[gift] 券已發出但狀態寫入失敗 ' + g.id +
+                  ' coupon=' + couponId + ' ' + error.message);
+  }
+
+  await logEvent(g.id, 'claimed', 'issued', 'system',
+    already ? `發券(對方回報已發過)券號 ${couponId}` : `發券成功,券號 ${couponId}`);
+
+  return updated || { ...g, status: 'issued', coupon_id: couponId };
 }
 
 async function logEvent(
@@ -335,10 +512,15 @@ Deno.serve(async (req) => {
     if (sentRes.error || recvRes.error) {
       return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
     }
+
+    // 上次沒發成的券,趁他來看的時候補一張(一次一份,見 retryIssue)
+    const received = recvRes.data || [];
+    await retryIssue(received);
+
     return reply('200', {
       data: {
         sent: (sentRes.data || []).map((g) => publicGift(g, 'sender')),
-        received: (recvRes.data || []).map((g) => publicGift(g, 'recipient')),
+        received: received.map((g) => publicGift(g, 'recipient')),
       },
     });
   }
@@ -487,12 +669,25 @@ Deno.serve(async (req) => {
       } catch { /* 已收藏過會撞唯一鍵,忽略 */ }
     }
 
-    // TODO(等商城開 /api/site/gift/issue):
-    //   fulfillment==='store' 時在此呼叫商城發券,成功後
-    //   status → 'issued' 並回填 coupon_id。
-    //   介面未開之前先停在 claimed,收禮人會看到「兌換券準備中」。
+    /* 門市自取:發一張兌換券給他。
+       宅配不發券 —— 商城已依送禮者填的地址出貨,沒有東西要兌換。
 
-    return reply('200', { data: { gift: publicGift(updated, 'recipient') } });
+       發券失敗【不影響領取本身】:歸屬已經定了,這裡只是少一張券,
+       由 list 的重試補上。所以整段包住,錯誤不往外丟。 */
+    let finalGift = updated;
+    if (updated.fulfillment === 'store') {
+      const res = await issueCoupon(updated);
+      if (res.ok) {
+        finalGift = await applyIssued(updated, res.couponId, res.already);
+      } else {
+        console.warn('[gift] 發券失敗 ' + updated.id +
+                     ' code=' + res.code + ' retryable=' + res.retryable);
+        await logEvent(updated.id, 'claimed', 'claimed', 'system',
+          '發券失敗(' + res.code + ',' + (res.retryable ? '可重試' : '不可重試') + '):' + res.message);
+      }
+    }
+
+    return reply('200', { data: { gift: publicGift(finalGift, 'recipient') } });
   }
 
   /* ---------- pick:收禮人挑選鏡框與刻圖(B 路線) ----------
