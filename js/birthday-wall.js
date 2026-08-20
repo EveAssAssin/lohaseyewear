@@ -29,7 +29,7 @@
     TIMEOUT_MS: 15000
   };
 
-  var State = { offset: 0, loading: false, done: false };
+  var State = { offset: 0, loading: false, done: false, usePhotos: false };
   var el = {};
 
   /* ---------- 工具 ---------- */
@@ -80,13 +80,31 @@
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
 
+  /* 第二種佔位:站上現成的商品與情境照。
+     -----------------------------------------------------------
+     用途只有一個 —— 看「格子被真的照片填滿之後」版面長怎樣。
+     SVG 佔位圖看得出結構,但看不出密度與明暗,兩種都需要。
+
+     ⚠ 這些是商品照,不是客人的分享照,而且長寬比各不相同 ——
+     那正是要看的:object-fit: cover 會怎麼裁。 */
+  var PLACE_PHOTO = [
+    'images/birthday-gift.jpg', 'images/gift-sunglasses.jpg',
+    'images/gift-box.jpg',      'images/gift-cloth.jpg',
+    'images/gift-bag.jpg',      'images/flatlay-demo.jpg',
+    'images/carrier-cloth.jpg', 'images/carrier-pouch.jpg',
+    'images/cloth-01.jpg',      'images/carrier-merch.jpg',
+    'images/box-01.jpg',        'images/frame-01.jpg'
+  ];
+
   function placeholderPage(offset, limit) {
     var items = [];
     var total = 30;                       // 假裝總共這麼多筆,好測「看更多」與結尾
     for (var i = offset; i < Math.min(offset + limit, total); i++) {
       items.push({
         id: 'placeholder-' + i,
-        image_url: placeSvg(i),
+        image_url: State.usePhotos
+          ? PLACE_PHOTO[i % PLACE_PHOTO.length]
+          : placeSvg(i),
         nickname: PLACE_NAME[i % PLACE_NAME.length],
         content: PLACE_TEXT[i % PLACE_TEXT.length],
         created_at: new Date(2026, 7, 20 - (i % 28)).toISOString()
@@ -198,15 +216,23 @@
     if (!el.sec || !el.wall) return;
 
     var preview = /[?&]wall=preview(?:&|$)/.test(location.search);
+    // ?wall=preview&photos=1 → 用站上現成的商品照填格子,看密度與裁切
+    State.usePhotos = preview && /[?&]photos=1(?:&|$)/.test(location.search);
 
     /* 沒有真實資料來源時,只有預覽模式看得到。
        這一段不要拿掉 —— 它是「不要對外顯示假客人」的唯一保障。 */
     if (!CONFIG.ENDPOINT && !preview) return;
 
     if (!CONFIG.ENDPOINT) {
+      /* 照片模式的警語要更重:SVG 一眼看得出是假的,
+         商品照不會 —— 它看起來就像已經接上真實資料了。 */
       el.wall.insertAdjacentHTML('beforebegin',
-        '<p class="bd-wall-preview">⚠ 版型預覽:以下全部是佔位圖,' +
-        '不是真實的客人分享。App 端的列表 API 尚未提供。</p>');
+        '<p class="bd-wall-preview">⚠ 版型預覽:' +
+        (State.usePhotos
+          ? '格子裡是<b>站上現成的商品照</b>,不是客人的分享照,' +
+            '姓名與文字也都是假的。'
+          : '以下全部是佔位圖,不是真實的客人分享。') +
+        'App 端的列表 API 尚未提供。</p>');
     }
 
     el.sec.hidden = false;
