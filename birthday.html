@@ -19,7 +19,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/birthday.css?v=20260811-giftcta">
+  <link rel="stylesheet" href="css/birthday.css?v=20260820-wall">
   <script src="js/layout.js?v=20260819-erp" defer></script>
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -202,6 +202,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
+  <!-- ============ 壽星分享牆 ============
+       資料來自 App 的生日分享,需要商城/App 端提供列表 API
+       (需求見 docs/給黃總_生日分享牆API需求_0820c.md,尚未提供)。
+
+       ⚠ 在真實資料接上之前,這一區【預設不顯示】——
+       公開頁面放一牆假的客人照片,看的人不會知道那是假的。
+       要看版型加 ?wall=preview,規則寫在 js/birthday-wall.js。 -->
+  <section class="bd-sec bd-sec--soft" id="bdWallSec" hidden>
+    <div class="bd-sec-in">
+      <div class="bd-sec-head">
+        <h2 class="bd-sec-title">壽星們的生日</h2>
+        <div class="bd-title-line"></div>
+        <p class="bd-sec-desc">今年在樂活過生日的人,和他們收到的禮物。</p>
+      </div>
+
+      <div class="bd-wall" id="bdWall"></div>
+
+      <div class="bd-wall-foot">
+        <button type="button" class="bd-wall-more" id="bdWallMore">看 更 多</button>
+        <p class="bd-wall-end" id="bdWallEnd" hidden>已經到底了</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 注意事項 ============ -->
   <section class="bd-sec">
     <div class="bd-notes">
@@ -238,5 +262,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div id="site-footer"></div>
 
+<script src="js/birthday-wall.js?v=20260820-wall"></script>
 </body>
 </html>

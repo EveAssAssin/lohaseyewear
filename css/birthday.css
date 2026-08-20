@@ -480,3 +480,98 @@
   .bd .bd-perks{ grid-template-columns:1fr }
   .bd .bd-steps{ grid-template-columns:1fr }
 }
+
+/* =========================
+   壽星分享牆
+   -------------------------
+   資料來自 App 的生日分享。版型比照靈感分享牆:圖片為主、
+   說明退到次要 —— 這一區要傳達的是「真的有人在這裡過生日」,
+   不是讀完每一則。
+========================= */
+
+.bd .bd-wall{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:18px;
+}
+
+.bd .bd-wall-card{
+  background:#fff;
+  border-radius:var(--r-lg, 18px);
+  overflow:hidden;
+  border:1px solid var(--lohas-line, #E8DED1);
+  display:flex; flex-direction:column;
+}
+
+/* 固定正方形:照片是客人自己拍的,長寬比什麼都有。
+   不固定的話整面牆會參差不齊,而參差的來源是別人的相機,不是設計。 */
+.bd .bd-wall-media{
+  position:relative;
+  aspect-ratio:1 / 1;
+  background:var(--bd-pink-soft, #FBF4F2);
+}
+.bd .bd-wall-media img{
+  width:100%; height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.bd .bd-wall-body{
+  padding:14px 16px 16px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.bd .bd-wall-who{
+  display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+}
+.bd .bd-wall-name{
+  font-size:14px; font-weight:600; color:var(--lohas-brand);
+  letter-spacing:.04em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.bd .bd-wall-date{
+  flex-shrink:0;
+  font-size:12px; color:var(--text-muted, #9B9186);
+}
+/* 兩行截斷:有人會寫很長。整面牆的卡片高度要一致,
+   不然「看更多」按鈕會在一個很奇怪的位置。 */
+.bd .bd-wall-text{
+  margin:0;
+  font-size:13px; line-height:1.75; color:var(--text-sub);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.bd .bd-wall-foot{ margin-top:32px; text-align:center }
+.bd .bd-wall-more{
+  min-height:44px; padding:0 34px;
+  border:1px solid var(--lohas-brand);
+  border-radius:var(--r-pill, 999px);
+  background:transparent; color:var(--lohas-brand);
+  font-family:inherit; font-size:14px; letter-spacing:.1em;
+  cursor:pointer; transition:background .18s, color .18s;
+}
+.bd .bd-wall-more:hover{ background:var(--lohas-brand); color:#fff }
+.bd .bd-wall-more:disabled{ opacity:.5; cursor:default }
+.bd .bd-wall-end{
+  margin:0; font-size:13px; color:var(--text-muted, #9B9186);
+}
+
+/* 預覽模式的橫幅。刻意做得顯眼且醜 ——
+   它的用途就是讓人一眼看出「這不是真的」,不是融入版面。 */
+.bd .bd-wall-preview{
+  margin:0 0 24px;
+  padding:12px 16px;
+  border:1px dashed var(--err, #C0392B);
+  border-radius:var(--r-md, 14px);
+  background:var(--err-bg, #FDEDEC);
+  color:var(--err, #C0392B);
+  font-size:13px; line-height:1.8; text-align:center;
+}
+
+@media (max-width:900px){
+  .bd .bd-wall{ grid-template-columns:repeat(3, 1fr); gap:14px }
+}
+@media (max-width:640px){
+  .bd .bd-wall{ grid-template-columns:repeat(2, 1fr); gap:12px }
+  .bd .bd-wall-body{ padding:12px 13px 14px }
+}
