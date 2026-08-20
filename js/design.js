@@ -24,7 +24,21 @@
   var CONFIG = {
     SHOP_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop',
     GIFT_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gift',
+    COUPON_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/coupon-lock',
     TIMEOUT_MS: 15000,
+
+    /* 票券模式的續鎖節奏。
+       -----------------------------------------------------------
+       對方鎖 30 分鐘,建議每 5–10 分鐘續一次,自鎖定起算最多 4 小時。
+
+       EXTEND_EVERY 取 5 分鐘:抓在建議區間的下緣,萬一有一次呼叫失敗
+       還有第二次機會,不會一次沒續到就直接讓客人的鎖過期。
+
+       IDLE_STOP 是刻意加的 —— 只有【客人還在動】才續。
+       分頁開著沒人在用卻一直續,會把券卡住到 4 小時上限,
+       那段時間他連拿去門市都不能用。 */
+    EXTEND_EVERY_MS: 5 * 60 * 1000,
+    IDLE_STOP_MS: 10 * 60 * 1000,
     /* 預設落點。以商品圖寬高為單位。
        y 用 0.5(垂直置中)而不是偏上:商品照一律是正面平放、鏡框大致
        置中,0.5 幾乎一定落在鏡框上;先前的 0.38 在造型款(例如翼形框)
@@ -49,6 +63,19 @@
        有值代表在挑選模式,值就是那份禮物的 id。 */
     pickGiftId: '',
     pickGift: null,
+
+    /* 票券模式:App 票券頁點「使用」→ SSO → design.html?coupon_id=…
+       coupon 有值代表已鎖到券,裡面含 lock_token 與可換分類。 */
+    coupon: null,
+    couponTimer: 0,
+    lastActivity: 0,
+    /* 鎖掉了之後 coupon 會被清成 null,但畫面仍然要停在票券模式
+       (提示、送出鈕的狀態都不一樣),所以另外記一個旗標。 */
+    couponWasLost: false,
+    /* 送進購物車成功之後,lock_token 的所有權就交給商城了
+       (它會拿去 redeem)。這時候絕對不能再 unlock ——
+       解掉的話商城建立訂單時核銷會失敗,客人的券扣不掉、訂單也成立不了。 */
+    couponHandedOff: false,
 
     nid: 0,
     product: null,
@@ -569,11 +596,29 @@
   /* ---------- 送禮模式:選眼鏡 ----------
      只列 can_design 為 true 的商品。目前是 7 件造型太陽眼鏡,
      所以不做分類導覽 —— 直接列完比讓人點兩層分類快。 */
+  /* 票券模式:只留這張券換得到的分類。
+     -----------------------------------------------------------
+     商品 API 有 tid 參數,但可換分類是【陣列】,而 tid 的多值語法
+     我方沒有確認過 —— 猜錯的話會安靜地少列或多列商品,
+     而客人挑了不能換的款式要到結帳才被拒絕。
+
+     可客製商品目前只有個位數,在前端過濾成本可以忽略,
+     而且比對的是商品自己回的 category_tid,不會有語法問題。
+     空陣列依規格代表不限分類。 */
+  function frameAllowed(p) {
+    var want = State.coupon && State.coupon.category_tid;
+    if (!want || !want.length) return true;
+    var has = Array.isArray(p.category_tid) ? p.category_tid : [];
+    return has.some(function (t) { return want.indexOf(Number(t)) >= 0; });
+  }
+
   function loadFrames() {
     return shopCall({ action: 'products', can_design_only: 1, limit: 100 })
       .then(function (d) {
         // 缺貨的不給送,免得付了款出不了貨
-        State.frames = (d.products || []).filter(function (p) { return Number(p.stock) !== 0; });
+        State.frames = (d.products || [])
+          .filter(function (p) { return Number(p.stock) !== 0; })
+          .filter(frameAllowed);
         renderFrames();
       })
       .catch(function (err) {
@@ -583,7 +628,12 @@
 
   function renderFrames() {
     if (!State.frames.length) {
-      el.frames.innerHTML = '<p class="dz-empty">目前沒有可客製的眼鏡</p>';
+      /* 票券模式下「沒有」的原因不同:不是沒商品,是這張券換不到 ——
+         講「目前沒有可客製的眼鏡」會讓他以為網站壞了。 */
+      el.frames.innerHTML = '<p class="dz-empty">' +
+        (State.coupon
+          ? '這張票券目前沒有可兌換的款式,請與門市確認。'
+          : '目前沒有可客製的眼鏡') + '</p>';
       return;
     }
     el.frames.innerHTML = State.frames.map(function (p) {
@@ -810,6 +860,19 @@
   function refreshSubmit() {
     var needSpec = el.specs.querySelector('.dz-spec') && State.specSid == null;
 
+    /* 票券模式:條件與挑選模式相同(都要選眼鏡 + 刻圖),
+       多一個「鎖還在不在」—— 鎖掉了按下去一定失敗,不如先擋住。 */
+    if (State.coupon || State.couponWasLost) {
+      var cReady = !!State.coupon && !!State.design && !!State.product && !needSpec;
+      el.submit.disabled = !cReady;
+      el.submitHint.textContent = !State.coupon ? '票券的鎖定已結束,請回 App 重新點一次'
+        : !State.product ? '請先選一副眼鏡'
+        : !State.design ? '請選一張刻圖'
+        : needSpec ? '請選擇規格'
+        : '折抵金額與應付差額會在商城結帳頁顯示';
+      return;
+    }
+
     /* 挑選模式:收禮人挑鏡框與刻圖。條件與送禮模式相同(都要選眼鏡),
        差別只在文案 —— 他不是在送禮,是在決定自己要拿到什麼。 */
     if (State.pickGiftId) {
@@ -900,28 +963,72 @@
     el.submit.disabled = true;
     el.submit.textContent = '產 生 預 覽 圖...';
 
-    buildImages().then(function (images) {
+    /* 票券模式:產圖之前先確認鎖還在。
+       -----------------------------------------------------------
+       續一次鎖比「查詢鎖的狀態」多做的事只有延長時間,而那正是
+       此刻想要的 —— 接下來還要產圖、上傳、送單,再多爭取 30 分鐘。
+
+       擋在產圖【之前】是重點:產圖上傳要好幾秒,鎖早就掉了才發現的話,
+       那幾秒是白等的。 */
+    var ready = State.coupon
+      ? couponCall({
+          action: 'extend',
+          token: (window.LohasAuth && window.LohasAuth.getToken()) || '',
+          lock_token: State.coupon.lock_token
+        }).catch(function (err) {
+          if (['024', '025', '027'].indexOf(err.code) >= 0) {
+            couponLost('票券的鎖定已結束,無法用它結帳。');
+            var e = new Error('票券鎖定已結束');
+            e.handled = true;
+            throw e;
+          }
+          // 網路或上游暫時性問題:鎖多半還在,讓他繼續送,由後端做最終判斷
+          return null;
+        })
+      : Promise.resolve(null);
+
+    ready.then(buildImages).then(function (images) {
       var payload = buildPayload(images);
       /* 送出前先留一份。cart/push 失敗、或客人在商城那邊中途關掉時,
          至少還知道他做了什麼設定,不必從頭來過。 */
       try { sessionStorage.setItem('lohasDesignDraft', JSON.stringify(payload)); } catch (e) {}
 
       el.submit.textContent = '送 進 購 物 車...';
-      return shopCall({
+      var req = {
         action: 'cart_push',
         /* 不送 client_id。商城規格明訂會員編號必須由官網後端從 session 取得,
            不可接受前端傳入 —— 否則任何人都能把商品推進別人的購物車。
            shop 函式會拿這個 token 去 auth-session 換回編號,前端送什麼都不看。 */
         token: (window.LohasAuth && window.LohasAuth.getToken()) || '',
         main: payload.main
-      });
+      };
+      /* 票券:只帶 coupon_id 與 lock_token,不帶面額。
+         折抵金額由商城向主後端核銷時取得 —— 前端送的金額不可信,
+         而且兩邊各有一份就會有「哪一份才算數」的問題。 */
+      if (State.coupon) {
+        req.coupon = {
+          coupon_id: State.coupon.coupon_id,
+          lock_token: State.coupon.lock_token
+        };
+      }
+      return shopCall(req);
     }).then(function (data) {
       /* cart_url 的一次性 token 只有 60 秒,而且必須【整頁導轉】——
          放進 iframe 的話,兩站不同註冊網域,瀏覽器的第三方 cookie 限制
          會讓商城那邊建立不了登入,客人會看到一個沒登入的購物車。 */
       if (!data || !data.cart_url) throw new Error('商城未回傳購物車網址');
+
+      /* 券已經交給商城了(它會在建立訂單當下拿 lock_token 去核銷)。
+         從這一刻起我方不再續鎖、也絕不能 unlock ——
+         解掉的話商城核銷會失敗,客人的訂單成立不了。 */
+      if (State.coupon) {
+        State.couponHandedOff = true;
+        stopKeepAlive();
+      }
       window.location.href = data.cart_url;
     }).catch(function (e) {
+      // handled = 已經在上面顯示過更精確的訊息,不要再蓋掉
+      if (e && e.handled) { el.submit.disabled = false; el.submit.textContent = label; return; }
       console.error('[design] 送進購物車失敗', e);
       el.formErr.textContent = (e && e.message) || '送出失敗,請重試一次。';
       show(el.formErr);
@@ -963,10 +1070,16 @@
     var q = new URLSearchParams(location.search);
     State.gift = q.get('gift') === '1';
     var pickId = (q.get('pick') || '').trim();
+    var couponId = (q.get('coupon_id') || '').trim();
     var nid = Number(q.get('nid') || 0);
     var presetDesign = (q.get('design') || '').trim();
 
-    if (pickId) {
+    /* 票券模式排在最前面。
+       這條路徑是 App 帶進來的,網址只有 coupon_id、不會有 nid ——
+       排在 nid 判斷之後的話會先被「這個連結沒有指定商品」擋掉。 */
+    if (couponId) {
+      startCouponMode(couponId);
+    } else if (pickId) {
       startPickMode(pickId);
     } else if (State.gift) {
       startGiftMode(presetDesign);
@@ -1183,6 +1296,179 @@
   }
 
   /* 送禮模式:刻圖已由市集帶進來,眼鏡要在這頁挑 */
+  /* =============================================================
+     票券模式(App 票券頁點「使用」進來)
+     -------------------------------------------------------------
+     動線:App 按「使用」→ 主後端驗券屬於本人 → store-sso-login
+           → 開啟 design.html?coupon_id=…
+
+     這一頁進來的第一件事是【鎖券】,不是挑東西 ——
+     lock 的回傳同時決定了「這張券能換哪些鏡框」(category_tid),
+     不鎖就不知道要顯示什麼。代價是客人只是看看也會佔住 30 分鐘,
+     但離開時會 unlock,而且逾時自動釋放、券不會被消耗。
+     ============================================================= */
+
+  function couponCall(payload) {
+    var ctrl = new AbortController();
+    var to = setTimeout(function () { ctrl.abort(); }, CONFIG.TIMEOUT_MS);
+    return fetch(CONFIG.COUPON_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    })
+      .then(function (r) { clearTimeout(to); return r.json(); })
+      .then(function (j) {
+        if (String(j.code) !== '200') {
+          var err = new Error(j.message || '票券服務暫時無法使用');
+          err.code = String(j.code);
+          err.reason = j.reason || '';
+          throw err;
+        }
+        return j.data || {};
+      })
+      .catch(function (e) {
+        clearTimeout(to);
+        if (e.name === 'AbortError') throw new Error('連線逾時,請重試一次。');
+        throw e;
+      });
+  }
+
+  /* 鎖定會過期,而過期的處理方式跟「錯誤」不一樣:
+     客人挑好的鏡框與刻圖要留著,只有券要重選。
+     整頁換成錯誤畫面等於叫他從頭來一次。 */
+  function couponLost(msg) {
+    stopKeepAlive();
+    State.coupon = null;
+    State.couponWasLost = true;
+    showFormErr(msg + ' 你挑好的款式都還留著,回 App 重新點一次票券即可繼續。');
+    refreshSubmit();
+  }
+
+  function stopKeepAlive() {
+    if (State.couponTimer) { clearInterval(State.couponTimer); State.couponTimer = 0; }
+  }
+
+  /* 只在客人還有動作時續鎖。
+     沒有這個判斷的話,一個忘了關的分頁會把券一路續到 4 小時上限。 */
+  function startKeepAlive() {
+    stopKeepAlive();
+    State.lastActivity = Date.now();
+
+    ['pointerdown', 'keydown', 'input', 'wheel'].forEach(function (ev) {
+      document.addEventListener(ev, function () { State.lastActivity = Date.now(); },
+        { passive: true });
+    });
+
+    State.couponTimer = setInterval(function () {
+      if (!State.coupon || State.couponHandedOff) { stopKeepAlive(); return; }
+      if (Date.now() - State.lastActivity > CONFIG.IDLE_STOP_MS) return;   // 人不在,不續
+
+      couponCall({
+        action: 'extend',
+        token: (window.LohasAuth && window.LohasAuth.getToken()) || '',
+        lock_token: State.coupon.lock_token
+      }).then(function (d) {
+        State.coupon.expire_time = d.expire_time;
+        State.coupon.max_until = d.max_until;
+
+        /* 快到 4 小時上限時先講。做完才發現鎖過期,
+           等於整段客製白做 —— 提前十分鐘他還來得及送出。 */
+        if (d.max_until && (d.max_until * 1000 - Date.now()) < 10 * 60 * 1000) {
+          showFormErr('這張票券的鎖定即將到達時間上限,請盡快送出。');
+        }
+      }).catch(function (err) {
+        // 024 已釋放 / 025 已逾時 / 027 已達上限 —— 都不必再續了
+        if (['024', '025', '027'].indexOf(err.code) >= 0) {
+          couponLost('票券的鎖定已結束。');
+        }
+        // 其他錯誤(網路、上游暫時性)不動作,下一輪再試
+      });
+    }, CONFIG.EXTEND_EVERY_MS);
+  }
+
+  /* 離開頁面時把券放掉,不要讓別人(或他自己在門市)等 30 分鐘。
+     ⚠ 送進購物車成功之後不能放 —— 那把 token 已經交給商城去核銷了。 */
+  function releaseOnLeave() {
+    window.addEventListener('pagehide', function () {
+      if (!State.coupon || State.couponHandedOff) return;
+      try {
+        var body = new Blob([JSON.stringify({
+          action: 'unlock',
+          token: (window.LohasAuth && window.LohasAuth.getToken()) || '',
+          lock_token: State.coupon.lock_token
+        })], { type: 'application/json' });
+        // 用 sendBeacon:一般的 fetch 在頁面卸載時會被瀏覽器取消
+        navigator.sendBeacon(CONFIG.COUPON_FN, body);
+      } catch (e) { /* 放不掉也沒關係,逾時會自動釋放 */ }
+    });
+  }
+
+  function startCouponMode(couponId) {
+    var Auth = window.LohasAuth;
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
+
+    if (!token) {
+      // 帶著 ?coupon_id= 一起回來,不然登入完會落在一張沒有券的空白頁
+      if (Auth && Auth.setRedirect) {
+        Auth.setRedirect('design.html' + location.search);
+      }
+      window.location.href = 'login.html';
+      return;
+    }
+
+    /* 票券以客編為索引,官網註冊而未綁定門市的會員用不了。
+       在鎖券之前就講,不要讓他等一趟往返才拿到「查無此券」。 */
+    if (Auth.isErpBound && !Auth.isErpBound()) {
+      fail(Auth.erpRequiredNote());
+      return;
+    }
+
+    couponCall({ action: 'lock', token: token, coupon_id: Number(couponId) })
+      .then(function (d) {
+        State.coupon = {
+          coupon_id: d.coupon_id || Number(couponId),
+          lock_token: d.lock_token,
+          category_tid: Array.isArray(d.category_tid) ? d.category_tid : [],
+          amount: d.amount,
+          title: d.title || '票券',
+          expire_time: d.expire_time,
+          max_until: null
+        };
+
+        renderCouponMode(State.coupon);
+        startKeepAlive();
+        releaseOnLeave();
+
+        return Promise.all([loadFrames(), loadDesigns()]);
+      })
+      .then(function () {
+        refreshSubmit();
+        refreshScrollBtn();
+      })
+      .catch(function (err) {
+        /* 上游的訊息已經是給人看的中文(「此票券未開放在官網使用」
+           「票券已過期」…),直接顯示比我方再翻譯一次準確。 */
+        fail(err.message || '這張票券目前無法使用。');
+      });
+  }
+
+  function renderCouponMode(c) {
+    document.querySelector('.dz-title').textContent = '用「' + c.title + '」客製一副';
+    document.querySelector('.dz-sub').textContent =
+      '挑一副眼鏡與刻圖,右邊會即時看到成品的樣子。';
+    el.submit.textContent = '用 票 券 結 帳';
+    el.noteText.textContent =
+      '此為示意畫面。實際雷刻位置會在門市與你再次確認,' +
+      '票券折抵與應付差額以商城結帳頁為準。';
+
+    hide(el.loading);
+    show(el.body);
+    show(el.frameCard);
+    hide(el.giftCard);        // 他不是在送禮
+    applyPlacement();
+  }
+
   function startGiftMode(presetDesign) {
     document.querySelector('.dz-title').textContent = '把這張刻圖送給朋友';
     document.querySelector('.dz-sub').textContent =
