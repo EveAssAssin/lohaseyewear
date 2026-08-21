@@ -493,6 +493,10 @@
   display:grid;
   grid-template-columns:repeat(4, 1fr);
   gap:18px;
+  /* 沒寫文字的人不少,而 grid 預設會把卡片拉長對齊,
+     短的那張底下就留一塊白 —— 那看起來像沒對齊,不像刻意的。
+     改成依內容決定高度,參差就成了瀑布流的味道。 */
+  align-items:start;
 }
 
 .bd .bd-wall-card{
