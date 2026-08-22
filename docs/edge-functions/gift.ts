@@ -52,9 +52,12 @@ const SITE_KEY = Deno.env.get('SITE_API_KEY') || '';
 /* 票券中心裡「禮物型」品項的編號。
    對方限定只有明確勾選過禮物型的品項才能用這支端點發券
    (錯誤碼 ITEM_NOT_GIFT),所以這個值不能亂填。
-   測試站目前是 2(客製太陽眼鏡體驗券);正式站的值若不同,
-   用 GIFT_CENTER_ITEM_ID 覆蓋,不必改程式。 */
-const CENTER_ITEM_ID = Number(Deno.env.get('GIFT_CENTER_ITEM_ID') || 2);
+
+   ⚠ 兩站的編號【不同】:測試站是 2,正式站是 7(客製太陽眼鏡體驗券)。
+     這裡取正式站的值 —— 我方 2026-08-19 起一律走正式站。
+     8/20 寫成 2 是照對方測試站的來文填的,當時沒有正式站的值。
+     真要切回測試站的話用 GIFT_CENTER_ITEM_ID 覆蓋,不必改程式。 */
+const CENTER_ITEM_ID = Number(Deno.env.get('GIFT_CENTER_ITEM_ID') || 7);
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

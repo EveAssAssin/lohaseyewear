@@ -39,6 +39,9 @@
        那段時間他連拿去門市都不能用。 */
     EXTEND_EVERY_MS: 5 * 60 * 1000,
     IDLE_STOP_MS: 10 * 60 * 1000,
+    /* 對方的鎖定上限:自鎖定起算 4 小時,續到上限就不能再延。
+       用本機經過時間對照這個值,不用對方回的 Unix 時間戳。 */
+    LOCK_MAX_MS: 4 * 60 * 60 * 1000,
     /* 預設落點。以商品圖寬高為單位。
        y 用 0.5(垂直置中)而不是偏上:商品照一律是正面平放、鏡框大致
        置中,0.5 幾乎一定落在鏡框上;先前的 0.38 在造型款(例如翼形框)
@@ -1369,12 +1372,18 @@
         token: (window.LohasAuth && window.LohasAuth.getToken()) || '',
         lock_token: State.coupon.lock_token
       }).then(function (d) {
-        State.coupon.expire_time = d.expire_time;
-        State.coupon.max_until = d.max_until;
+        State.coupon.expiresInMs = (Number(d.expires_in) || 1800) * 1000;
 
         /* 快到 4 小時上限時先講。做完才發現鎖過期,
-           等於整段客製白做 —— 提前十分鐘他還來得及送出。 */
-        if (d.max_until && (d.max_until * 1000 - Date.now()) < 10 * 60 * 1000) {
+           等於整段客製白做 —— 提前十分鐘他還來得及送出。
+
+           ⚠ 用【本機經過的時間】判斷,不拿對方的 max_until 減 Date.now()。
+             那是 Unix 時間戳,兩端時鐘有落差時會算出錯誤的剩餘量 ——
+             差幾分鐘就會提早或根本不提醒。對方 8/22 來文特別提過這一點。
+             上限是「自鎖定起算 4 小時」,鎖定那一刻是我方自己記的,
+             用它算出來的經過時間不受任何時鐘落差影響。 */
+        var used = Date.now() - State.coupon.lockedAt;
+        if (used > CONFIG.LOCK_MAX_MS - 10 * 60 * 1000) {
           showFormErr('這張票券的鎖定即將到達時間上限,請盡快送出。');
         }
       }).catch(function (err) {
@@ -1430,10 +1439,18 @@
           coupon_id: d.coupon_id || Number(couponId),
           lock_token: d.lock_token,
           category_tid: Array.isArray(d.category_tid) ? d.category_tid : [],
+          /* ⚠ amount 不是折抵金額,不要拿去顯示。
+             贈品型券(例如客製太陽眼鏡體驗券)的 amount 是票券中心的
+             欄位設定值 —— 那張券的 amount 是 10,顯示成「折 10 元」
+             會讓客人以為只折十塊。要顯示就用 title 與 redeem_content。
+             實際折抵與應付差額一律以商城結帳頁為準。 */
           amount: d.amount,
           title: d.title || '票券',
-          expire_time: d.expire_time,
-          max_until: null
+          /* 時間一律以本機為準,不存對方的 Unix 時間戳。
+             lockedAt 是「我方看到鎖定成功的那一刻」,
+             用它算經過時間不受兩端時鐘落差影響。 */
+          lockedAt: Date.now(),
+          expiresInMs: (Number(d.expires_in) || 1800) * 1000
         };
 
         renderCouponMode(State.coupon);
