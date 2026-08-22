@@ -12,14 +12,20 @@
         絕對不要把填好金鑰的版本回寫到 repo。
 
    ⚠ 這支讀的是 SHOP_SITE_API_KEY,【不是】SITE_API_KEY,也刻意不做備援。
-     SITE_API_KEY 是主後端(lohas.realtime.tw)那把,給 coupon-list 與 member-auth 用;
-     商城是另一台、另一把。2026-08-19 之前這支誤讀 SITE_API_KEY,
-     對方把該 Secret 改成主後端的值之後,這支就會拿錯的金鑰去打商城。
-     寫成 `SHOP_SITE_API_KEY || SITE_API_KEY` 更糟 —— 變數哪天沒設,
-     它會安靜地拿另一把去打錯的站,而不是明確地壞掉。
 
-   Base URL 已有預設值(測試環境),不需要設定。
-   正式環境上線時,設 SHOP_BASE_URL 或直接改下面那行。
+     2026-08-22 對方查證後更正:兩台正式站的金鑰【目前是同一個值】,
+     先前說「不同值、不能互推」是依據一份沒跟著更新的內部紀錄。
+
+     即便值相同,兩個變數名稱仍然【維持分開】——
+     它們相同純屬現況,任一站輪替金鑰時就會再度分開。
+     合併成一個的話,那一天會有兩支函式同時壞掉而查不出原因。
+
+     也刻意不寫 `SHOP_SITE_API_KEY || SITE_API_KEY`:變數哪天沒設,
+     備援會讓它安靜地拿另一把去打錯的站,而不是明確地壞掉。
+
+   Base URL:2026-08-22 起指向【商城正式站】。
+   對方已於我方 Supabase 設定 SHOP_BASE_URL,下面那行只是沒設定時的退路。
+   要切回測試站的話設 SHOP_BASE_URL,不必改程式。
 
    action 一覽:
      categories  分類樹
@@ -33,7 +39,7 @@
 // ⚠ 只在 Dashboard 填,不要提交回 GitHub
 const FALLBACK_SITE_KEY = '';
 
-const SHOP_BASE = (Deno.env.get('SHOP_BASE_URL') || 'https://lohas-shop-test.onrender.com')
+const SHOP_BASE = (Deno.env.get('SHOP_BASE_URL') || 'https://www.lohaseyewear.com')
   .replace(/\/+$/, '');
 const SITE_KEY  = Deno.env.get('SHOP_SITE_API_KEY') || FALLBACK_SITE_KEY;
 
