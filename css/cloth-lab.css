@@ -166,16 +166,20 @@
 .lab-file:hover{ border-color:var(--lohas-brand); background:var(--bg-soft, #F4F1EC) }
 .lab-file:disabled{ opacity:.5; cursor:default }
 
+/* ⚠ 不要用綠色 + 打勾。
+   綠勾在介面裡的意思是「這已經完成」—— 那是【狀態】,
+   放在按鈕上會讓人以為這一件已經處理過了,而不是「按了才會完成」。
+   完成後的綠色標籤(.lab-tag.is-done)才是狀態該出現的地方。 */
 .lab-done-wrap{ margin-left:auto }
 .lab-done{
-  display:inline-flex; align-items:center; gap:7px;
-  min-height:42px; padding:0 22px;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; padding:0 26px;
   border:0; border-radius:var(--r-pill, 999px);
-  background:var(--ok, #2E7D5B); color:#fff;
-  font-family:inherit; font-size:13.5px; font-weight:500;
-  cursor:pointer;
+  background:var(--lohas-brand); color:#fff;
+  font-family:inherit; font-size:14px; letter-spacing:.14em;
+  cursor:pointer; transition:background .15s;
 }
-.lab-done:hover{ background:#246347 }
+.lab-done:hover{ background:var(--lohas-hover, #765F4A) }
 .lab-done:disabled{ opacity:.5; cursor:default }
 
 .lab-empty{

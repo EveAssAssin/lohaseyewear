@@ -14,7 +14,7 @@
   <!-- LOHAS CSS · 載入順序: tokens → base → page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
-  <link rel="stylesheet" href="css/cloth-lab.css?v=20260824">
+  <link rel="stylesheet" href="css/cloth-lab.css?v=20260824b">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -51,8 +51,8 @@
           <button type="button" class="lab-seg-btn" data-s="done">已完成</button>
           <button type="button" class="lab-seg-btn" data-s="">全部</button>
         </div>
-        <label class="lab-size" title="DXF 會依這個寬度換算成實際尺寸">
-          <span>DXF 寬度</span>
+        <label class="lab-size" title="下載的 DXF 會依這個尺寸輸出。預設是眼鏡布的實際寬度,換了布再改這裡即可。">
+          <span>眼鏡布尺寸</span>
           <input type="number" id="labWidthMm" value="150" min="20" max="600" step="1">
           <em>mm</em>
         </label>
@@ -65,6 +65,6 @@
   </main>
 
   <script src="js/dxf.js?v=20260824"></script>
-  <script src="js/cloth-lab.js?v=20260824"></script>
+  <script src="js/cloth-lab.js?v=20260824b"></script>
 </body>
 </html>

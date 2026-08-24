@@ -112,7 +112,7 @@
               '<i class="fa-solid fa-eye"></i>看大圖</a>' +
             (it.status === 'new'
               ? '<span class="lab-done-wrap"><button type="button" class="lab-done" data-done="' +
-                esc(it.id) + '"><i class="fa-solid fa-check"></i>這件做好了</button></span>'
+                esc(it.id) + '">完 成 製 作</button></span>'
               : '') +
           '</div>' +
         '</div>' +

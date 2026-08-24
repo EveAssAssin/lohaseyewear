@@ -127,7 +127,7 @@
               (it.status === 'new'
                 ? '<span class="cloth-done-wrap">' +
                   '<button type="button" class="cloth-done" data-done="' + esc(it.id) + '">' +
-                  '<i class="fa-solid fa-check"></i>這件做好了</button></span>'
+                  '完 成 製 作</button></span>'
                 : '') +
             '</div>' +
           '</div>' +

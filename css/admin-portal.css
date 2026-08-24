@@ -4198,17 +4198,23 @@
 .cloth-btn:hover{ border-color:var(--lohas-brown, #50422D); background:var(--lohas-bg-soft, #F4F1EC) }
 .cloth-btn:disabled{ opacity:.5; cursor:default }
 
-/* 把它推到最右邊。中間留白讓它與下載那組分開,不必再加分隔線 */
+/* 把它推到最右邊。中間留白讓它與下載那組分開,不必再加分隔線。
+
+   ⚠ 不要用綠色 + 打勾。
+   綠勾在介面裡的意思是「這已經完成」—— 那是【狀態】,
+   放在按鈕上會讓人以為這一件已經處理過了,而不是「按了才會完成」。
+   完成後的綠色標籤(.cloth-tag.is-done)才是狀態該出現的地方。
+   用品牌色的實色鈕,與站上其他主要動作一致。 */
 .cloth-done-wrap{ margin-left:auto }
 .cloth-done{
-  display:inline-flex; align-items:center; gap:7px;
-  min-height:36px; padding:0 20px;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:38px; padding:0 22px;
   border:0; border-radius:999px;
-  background:#2E7D5B; color:#fff;
-  font-family:inherit; font-size:13px; font-weight:500; letter-spacing:.04em;
+  background:var(--lohas-brown, #50422D); color:#fff;
+  font-family:inherit; font-size:13px; letter-spacing:.12em;
   cursor:pointer; transition:background .15s;
 }
-.cloth-done:hover{ background:#246347 }
+.cloth-done:hover{ background:var(--lohas-hover, #765F4A) }
 .cloth-done:disabled{ opacity:.5; cursor:default }
 
 @media (max-width:768px){
@@ -4231,7 +4237,6 @@
 .cloth-dxf-size > span{
   font-size:12.5px; color:var(--lohas-sub, #6B6257); white-space:nowrap;
 }
-.cloth-dxf-size > span b{ color:var(--lohas-brown, #50422D); font-weight:600 }
 .cloth-dxf-size input{
   width:72px; height:32px; padding:0 10px;
   border:1px solid var(--lohas-line, #E8DED1); border-radius:999px;
