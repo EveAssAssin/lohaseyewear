@@ -23,6 +23,7 @@
   var Auth = window.LohasAuth;
 
   var CONFIG = {
+    SAVE_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/cloth',
     BASE_IMG: 'images/carrier-cloth.jpg',
     /* 預設落點取自實際成品照(images/cloth-01.jpg 上那個「Louis」的位置)——
        那是攝影時就決定好的版面,照著放比自己猜一個中間值準。 */
@@ -210,42 +211,134 @@
     ];
   }
 
+  /* ---------- 筆觸 ----------
+     等寬的線畫出來像水管,不像筆。三件事讓它有筆的感覺:
+
+       1. 速度 —— 畫得快線變細、慢下來變粗。真實的筆就是這樣,
+          而且滑鼠沒有筆壓時,速度是唯一可用的線索。
+       2. 筆壓 —— 有觸控筆就用 pointer 的 pressure(滑鼠固定回 0.5)。
+       3. 收尖 —— 起筆與收筆的幾個點漸細,線條才有頭尾,
+          不會兩端都是齊頭的圓棒。
+
+     粗細變化不直接套用,而是往目標值靠(lerp)——
+     直接套的話手一抖線就忽粗忽細,看起來是雜訊不是筆觸。
+
+     這對之後轉線稿也有好處:potrace 描的是輪廓,
+     有粗細變化的筆畫轉出來才像手寫,不是等寬的管子。 */
+
+  function widthAt(stroke, pt, pressure) {
+    var base = stroke.w;
+    var prev = stroke.pts.length ? stroke.pts[stroke.pts.length - 1] : null;
+
+    // 筆壓:沒有觸控筆時瀏覽器固定回 0.5,算出來就是 1 倍,不影響
+    var pf = 0.6 + 0.8 * (pressure > 0 ? pressure : 0.5);
+
+    // 速度:兩個取樣點的距離。畫得越快越細
+    var sf = 1;
+    if (prev) {
+      var dx = pt[0] - prev[0], dy = pt[1] - prev[1];
+      var v = Math.sqrt(dx * dx + dy * dy);
+      sf = Math.min(1, Math.max(0.35, 1 - v / 220));
+    }
+
+    var target = base * pf * sf;
+    var last = prev ? prev[2] : base * 0.45;   // 起筆從細的開始
+    return last + (target - last) * 0.35;      // 往目標靠,不要跳
+  }
+
+  /* 收尾時把最後幾點縮細,做出收筆。
+     在放開的那一刻做,而不是邊畫邊猜 —— 畫的當下不知道哪一點是最後一點。 */
+  function taperEnd(stroke) {
+    var n = stroke.pts.length;
+    var tail = Math.min(6, Math.floor(n / 3));
+    for (var i = 0; i < tail; i++) {
+      var idx = n - 1 - i;
+      var k = (i + 1) / (tail + 1);            // 越靠尾巴越細
+      stroke.pts[idx][2] *= (1 - k * 0.75);
+    }
+  }
+
+  function drawStroke(ctx, s) {
+    var p = s.pts;
+    if (!p.length) return;
+
+    /* 單點:畫一個圓。點一下想要一個點,結果什麼都沒有會以為壞掉。 */
+    if (p.length === 1) {
+      ctx.beginPath();
+      ctx.arc(p[0][0], p[0][1], Math.max(1, p[0][2] / 2), 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+
+    /* 逐段畫,每段自己的寬度。用中點做二次貝茲平滑,
+       線條才不會是一節一節的折線。 */
+    for (var i = 1; i < p.length; i++) {
+      var a = p[i - 1], b = p[i];
+      var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      var pmx = i > 1 ? (p[i - 2][0] + a[0]) / 2 : a[0];
+      var pmy = i > 1 ? (p[i - 2][1] + a[1]) / 2 : a[1];
+
+      ctx.beginPath();
+      ctx.lineWidth = Math.max(0.8, (a[2] + b[2]) / 2);
+      ctx.moveTo(pmx, pmy);
+      ctx.quadraticCurveTo(a[0], a[1], mx, my);
+      ctx.stroke();
+    }
+  }
+
+  function prepCtx(ctx) {
+    ctx.strokeStyle = '#000';
+    ctx.fillStyle = '#000';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }
+
   function redraw() {
     var ctx = el.canvas.getContext('2d');
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, CONFIG.TRACE_SIZE, CONFIG.TRACE_SIZE);
-    ctx.strokeStyle = '#000';
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    State.strokes.forEach(function (s) {
-      if (!s.pts.length) return;
-      ctx.lineWidth = s.w;
-      ctx.beginPath();
-      ctx.moveTo(s.pts[0][0], s.pts[0][1]);
-      for (var i = 1; i < s.pts.length; i++) ctx.lineTo(s.pts[i][0], s.pts[i][1]);
-      /* 只有一點時 lineTo 畫不出東西,補一個極短的線段當作圓點 ——
-         客人點一下想要一個點,結果什麼都沒有會以為壞掉。 */
-      if (s.pts.length === 1) ctx.lineTo(s.pts[0][0] + 0.1, s.pts[0][1] + 0.1);
-      ctx.stroke();
-    });
+    prepCtx(ctx);
+    State.strokes.forEach(function (s) { drawStroke(ctx, s); });
     el.apply.disabled = !State.strokes.length;
   }
 
   function bindDraw() {
+    var ctx = el.canvas.getContext('2d');
+
     el.canvas.addEventListener('pointerdown', function (e) {
       State.drawing = true;
       el.canvas.setPointerCapture(e.pointerId);
-      State.strokes.push({ w: State.brush, pts: [canvasPoint(e)] });
-      redraw();
+      var pt = canvasPoint(e);
+      var s = { w: State.brush, pts: [] };
+      pt.push(widthAt(s, pt, e.pressure));
+      s.pts.push(pt);
+      State.strokes.push(s);
+      prepCtx(ctx);
+      drawStroke(ctx, s);
+      el.apply.disabled = false;
     });
+
     el.canvas.addEventListener('pointermove', function (e) {
       if (!State.drawing) return;
-      State.strokes[State.strokes.length - 1].pts.push(canvasPoint(e));
-      redraw();
+      var s = State.strokes[State.strokes.length - 1];
+      var pt = canvasPoint(e);
+      pt.push(widthAt(s, pt, e.pressure));
+      s.pts.push(pt);
+
+      /* 只畫新增的那一段,不整張重畫。
+         每次移動都重畫全部的話,畫久了會開始頓 —— 而頓的時候
+         取樣點會變疏,線條反而更醜,是會自己惡化的那種問題。 */
+      prepCtx(ctx);
+      drawStroke(ctx, { w: s.w, pts: s.pts.slice(-3) });
     });
+
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
-      el.canvas.addEventListener(ev, function () { State.drawing = false; });
+      el.canvas.addEventListener(ev, function () {
+        if (!State.drawing) return;
+        State.drawing = false;
+        var s = State.strokes[State.strokes.length - 1];
+        if (s && s.pts.length > 3) { taperEnd(s); redraw(); }
+      });
     });
 
     el.brush.addEventListener('input', function () { State.brush = Number(this.value); });
@@ -413,23 +506,31 @@
       .then(function (previewUrl) {
         el.submit.textContent = '儲 存 中...';
         var m = Auth.getStoredMember ? Auth.getStoredMember() : null;
-        var sb = window.LohasSupabase.getClient();
-        return sb.from('cloth_designs').insert({
-          erpid: (m && m.erpid) || null,
-          mid: (m && m.mid) || null,
-          member_name: (m && m.name) || null,
-          source: State.picked.source,
-          design_id: State.picked.design_id,
-          design_name: State.picked.name,
-          svg_url: svgUrl,
-          preview_url: previewUrl,
-          placement: {
-            scale: State.scale, x: State.x, y: State.y, basis: 'cloth_image'
-          }
-        });
+
+        /* ⚠ 不用前端的 anon key 直接寫資料表。
+           cloth_designs 是 RLS 全鎖、零政策 —— anon key 是公開的
+           (GitHub Pages),能寫就等於誰都能往這張表塞東西。
+           寫入一律經 cloth Edge Function,由它驗身分後以 service_role 執行。 */
+        return fetch(CONFIG.SAVE_FN, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'save',
+            token: token,
+            member_name: (m && m.name) || '',
+            source: State.picked.source,
+            design_id: State.picked.design_id,
+            design_name: State.picked.name,
+            svg_url: svgUrl,
+            preview_url: previewUrl,
+            placement: {
+              scale: State.scale, x: State.x, y: State.y, basis: 'cloth_image'
+            }
+          })
+        }).then(function (r) { return r.json(); });
       })
-      .then(function (res) {
-        if (res && res.error) throw res.error;
+      .then(function (j) {
+        if (String(j.code) !== '200') throw new Error(j.message || '儲存失敗');
         done();
       })
       .catch(function (e) {
