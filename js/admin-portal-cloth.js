@@ -17,7 +17,7 @@
 
   var FN = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/cloth-admin';
 
-  var state = { items: [], total: 0, loading: false, status: 'new' };
+  var state = { items: [], total: 0, loading: false, status: 'new', q: '' };
 
   function root() {
     return document.querySelector('.content-page[data-page="cloth"]');
@@ -81,8 +81,9 @@
       return;
     }
     if (!state.items.length) {
-      list.innerHTML = '<div class="cloth-empty">目前沒有' +
-        (STATUS[state.status] || '') + '的設計</div>';
+      list.innerHTML = '<div class="cloth-empty">' +
+        (state.q ? '找不到符合「' + esc(state.q) + '」的設計'
+                 : '目前沒有' + (STATUS[state.status] || '') + '的設計') + '</div>';
       return;
     }
 
@@ -120,7 +121,7 @@
 
   function load() {
     state.loading = true; render();
-    return call({ action: 'list', status: state.status, limit: 100 })
+    return call({ action: 'list', status: state.status, q: state.q, limit: 100 })
       .then(function (d) {
         state.items = d.items || [];
         state.total = d.total || 0;
@@ -203,8 +204,19 @@
       state.status = this.value; state.items = []; load();
     });
 
-    var rl = document.getElementById('clothReload');
-    if (rl) rl.addEventListener('click', load);
+    /* 搜尋不要每打一個字就打一次 API ——
+       打「28095839」會送出八次請求,而只有最後一次的結果有意義。 */
+    var search = document.getElementById('clothSearch');
+    if (search) {
+      var timer = 0;
+      search.addEventListener('input', function () {
+        var v = this.value;
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          state.q = v.trim(); state.items = []; load();
+        }, 350);
+      });
+    }
   }
 
   function init() {

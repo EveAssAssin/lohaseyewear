@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
-  <link rel="stylesheet" href="css/admin-portal.css?v=20260824-cloth">
+  <link rel="stylesheet" href="css/admin-portal.css?v=20260824-cloth2">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260601-drag">
   <link rel="stylesheet" href="css/admin-portal-pegavision.css?v=20260622">
   <link rel="stylesheet" href="css/admin-portal-categories.css?v=20260530-cpmfix">
@@ -1051,23 +1051,27 @@
           <div class="page-sub" id="clothSub">— 件</div>
           <div class="page-sub">客人在官網做好的眼鏡布設計。下載 SVG 或 DXF 交給製作端;DXF 是在瀏覽器由 SVG 即時轉出的,不另外存一份。</div>
         </div>
-        <div class="page-actions">
-          <select id="clothStatus" class="cloth-filter">
+      </div>
+
+      <!-- 篩選列 (對齊最新消息 / 創作者管理) -->
+      <div class="filter-row">
+        <input class="editor-input" id="clothSearch" placeholder="搜尋會員編號 / 姓名..." style="max-width:280px"/>
+        <div class="filter-group">
+          <label>狀態</label>
+          <select id="clothStatus">
             <option value="new">待處理</option>
             <option value="">全部</option>
             <option value="done">已完成</option>
             <option value="archived">已封存</option>
           </select>
-          <button class="action-btn-solid" id="clothReload"><i class="fa-solid fa-rotate"></i>重新整理</button>
         </div>
-      </div>
-
-      <div class="cloth-tools">
-        <label class="cloth-size">
-          成品寬度
-          <input type="number" id="clothWidthMm" value="150" min="20" max="600" step="1"> mm
-        </label>
-        <span class="cloth-size-note">DXF 會依這個寬度換算實際尺寸。改了之後再按下載即可。</span>
+        <div class="filter-group">
+          <!-- 這不是篩選,是 DXF 的輸出尺寸。放同一列是因為它跟下載綁在一起,
+               另開一條工具列會讓人以為是兩件事。 -->
+          <label>成品寬度</label>
+          <input type="number" id="clothWidthMm" value="150" min="20" max="600" step="1" style="max-width:110px"/>
+        </div>
+        <div class="spacer"></div>
       </div>
 
       <div id="clothList" class="cloth-list">
@@ -1964,7 +1968,7 @@
 <script src="js/admin-portal-pegavision.js?v=20260622"></script>
 <script src="js/admin-portal-categories.js?v=20260530-routeword"></script>
 <script src="js/dxf.js?v=20260824"></script>
-<script src="js/admin-portal-cloth.js?v=20260824"></script>
+<script src="js/admin-portal-cloth.js?v=20260824b"></script>
 
 </body>
 </html>

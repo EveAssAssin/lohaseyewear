@@ -4153,26 +4153,6 @@
    客製眼鏡布 (data-page="cloth")
    ============================================================= */
 
-.cloth-tools{
-  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-  margin-bottom:18px; padding:12px 16px;
-  background:#fff; border:1px solid var(--lohas-line, #E8DED1);
-  border-radius:12px;
-}
-.cloth-size{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--lohas-sub, #6B6257) }
-.cloth-size input{
-  width:90px; height:34px; padding:0 10px;
-  border:1px solid var(--lohas-line, #E8DED1); border-radius:8px;
-  font-family:inherit; font-size:14px;
-}
-.cloth-size-note{ font-size:12px; color:var(--lohas-muted, #9B9186) }
-
-.cloth-filter{
-  height:38px; padding:0 12px;
-  border:1px solid var(--lohas-line, #E8DED1); border-radius:999px;
-  background:#fff; font-family:inherit; font-size:13px;
-}
-
 .cloth-list{ display:flex; flex-direction:column; gap:12px }
 .cloth-loading, .cloth-empty{
   padding:40px 0; text-align:center;
