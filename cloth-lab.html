@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 工作用頁面,不要被搜尋引擎收錄 -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>眼鏡布製作單 · LOHAS 樂活眼鏡</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- LOHAS CSS · 載入順序: tokens → base → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/cloth-lab.css?v=20260824">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+</head>
+
+<body class="lab">
+
+  <header class="lab-top">
+    <span class="lab-brand">LOHAS</span>
+    <span class="lab-title">眼鏡布製作單</span>
+    <button type="button" class="lab-out" id="labOut" hidden title="換一台裝置或不再使用時按這裡">
+      <i class="fa-solid fa-arrow-right-from-bracket"></i>
+    </button>
+  </header>
+
+  <main class="lab-main">
+
+    <!-- 通行碼 -->
+    <section class="lab-gate" id="labGate">
+      <i class="fa-solid fa-lock lab-gate-ico"></i>
+      <p class="lab-gate-title">請輸入通行碼</p>
+      <p class="lab-gate-sub">輸入一次就好,這台裝置會記住。</p>
+      <input type="password" id="labCode" class="lab-input" placeholder="通行碼"
+             autocomplete="off" inputmode="text">
+      <div class="lab-msg is-err" id="labGateErr" hidden></div>
+      <button type="button" class="lab-btn" id="labEnter">進 入</button>
+    </section>
+
+    <!-- 列表 -->
+    <section class="lab-body" id="labBody" hidden>
+      <div class="lab-bar">
+        <div class="lab-seg" id="labStatus">
+          <button type="button" class="lab-seg-btn on" data-s="new">待製作</button>
+          <button type="button" class="lab-seg-btn" data-s="done">已完成</button>
+          <button type="button" class="lab-seg-btn" data-s="">全部</button>
+        </div>
+        <label class="lab-size" title="DXF 會依這個寬度換算成實際尺寸">
+          <span>DXF 寬度</span>
+          <input type="number" id="labWidthMm" value="150" min="20" max="600" step="1">
+          <em>mm</em>
+        </label>
+      </div>
+
+      <div class="lab-msg" id="labMsg" hidden></div>
+      <div id="labList"></div>
+    </section>
+
+  </main>
+
+  <script src="js/dxf.js?v=20260824"></script>
+  <script src="js/cloth-lab.js?v=20260824"></script>
+</body>
+</html>

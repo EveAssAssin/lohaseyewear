@@ -1,0 +1,193 @@
+/* =============================================================
+   cloth-lab.css — 眼鏡布製作單(簡易後台)
+   -------------------------------------------------------------
+   依賴:lohas-tokens.css → lohas-base.css
+
+   使用情境與管理後台不同:
+     製作的人站在機台旁邊、可能拿著手機、手上不乾淨。
+
+   因此:
+     - 手機優先,桌機只是把寬度撐開
+     - 觸控目標大,站著單手點得到
+     - 一眼要看到的是「刻什麼、刻在哪」,其餘往下放
+     - 不放任何裝飾 —— 這是工作用的畫面
+   ============================================================= */
+
+.lab{
+  background:var(--bg-warm);
+  color:var(--text-main);
+  min-height:100vh;
+  margin:0;
+}
+
+/* === 頂部 ===
+   不用站台的固定 header(那個有選單、對製作端是干擾) */
+.lab-top{
+  position:sticky; top:0; z-index:10;
+  display:flex; align-items:baseline; gap:10px;
+  padding:14px 16px;
+  background:var(--lohas-brand);
+  color:#fff;
+}
+.lab-brand{ font-size:13px; letter-spacing:.28em; opacity:.75 }
+.lab-title{ font-size:15px; font-weight:500; letter-spacing:.06em }
+.lab-out{
+  margin-left:auto; border:0; background:transparent; color:#fff;
+  opacity:.7; font-size:15px; cursor:pointer; padding:4px 6px;
+}
+.lab-out:hover{ opacity:1 }
+
+.lab-main{ max-width:900px; margin:0 auto; padding:20px 16px 60px }
+
+/* === 通行碼 === */
+
+.lab-gate{
+  max-width:340px; margin:40px auto 0; text-align:center;
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-lg, 18px);
+  padding:34px 24px;
+}
+.lab-gate-ico{ font-size:26px; color:var(--lohas-light, #CDBEA2) }
+.lab-gate-title{ margin:16px 0 6px; font-size:16px; font-weight:600; color:var(--lohas-brand) }
+.lab-gate-sub{ margin:0 0 20px; font-size:13px; line-height:1.8; color:var(--text-muted, #9B9186) }
+
+.lab-input{
+  width:100%; height:50px; padding:0 16px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-md, 14px);
+  background:#fff;
+  font-family:inherit;
+  font-size:17px;              /* iOS 小於 16px 會自動放大頁面 */
+  letter-spacing:.1em; text-align:center;
+  color:var(--text-main); outline:none;
+}
+.lab-input:focus{ border-color:var(--lohas-brand) }
+
+.lab-btn{
+  width:100%; min-height:48px; margin-top:14px;
+  border:0; border-radius:var(--r-pill, 999px);
+  background:var(--lohas-brand); color:#fff;
+  font-family:inherit; font-size:15px; letter-spacing:.16em; cursor:pointer;
+}
+.lab-btn:hover{ background:var(--lohas-hover, #765F4A) }
+.lab-btn:disabled{ opacity:.5; cursor:default }
+
+/* === 工具列 === */
+
+.lab-bar{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.lab-seg{ display:flex; gap:6px; flex:1 1 auto }
+.lab-seg-btn{
+  flex:1 1 auto; min-height:40px; padding:0 14px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  background:#fff; color:var(--text-sub);
+  font-family:inherit; font-size:13.5px; cursor:pointer;
+  white-space:nowrap;
+}
+.lab-seg-btn.on{
+  background:var(--lohas-brand); color:#fff; border-color:var(--lohas-brand);
+}
+
+.lab-size{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:5px 8px 5px 14px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  background:#fff;
+}
+.lab-size > span{ font-size:12.5px; color:var(--text-sub); white-space:nowrap }
+.lab-size input{
+  width:70px; height:32px; padding:0 10px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  font-family:inherit; font-size:13px; text-align:right;
+  color:var(--lohas-brand); outline:none;
+}
+.lab-size em{ font-style:normal; font-size:12px; color:var(--text-muted, #9B9186); padding-right:4px }
+
+/* === 訊息 === */
+
+.lab-msg{
+  padding:14px 16px; margin-bottom:14px;
+  border-radius:var(--r-md, 14px);
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  font-size:14px; line-height:1.8; color:var(--text-sub);
+  white-space:pre-line;
+}
+.lab-msg.is-err{
+  background:var(--err-bg, #FDEDEC);
+  border-color:var(--err, #C0392B);
+  color:var(--err, #C0392B);
+}
+
+/* === 卡片 === */
+
+.lab-card{
+  display:flex; gap:16px;
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-lg, 18px);
+  padding:14px; margin-bottom:12px;
+  align-items:flex-start;
+}
+/* contain 不用 cover:要看的是整條布連同刻圖的位置,
+   裁掉邊緣等於裁掉「刻在哪裡」,而那正是製作端最需要的 */
+.lab-thumb{
+  width:150px; height:150px; flex-shrink:0;
+  object-fit:contain; border-radius:12px;
+  background:var(--bg-soft, #F4F1EC);
+}
+.lab-info{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px }
+.lab-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+.lab-name{ font-size:16px; font-weight:500; color:var(--lohas-brand) }
+.lab-tag{
+  font-size:11px; padding:3px 9px; border-radius:var(--r-pill, 999px);
+  background:var(--bg-soft, #F4F1EC); color:var(--text-sub);
+}
+.lab-tag.is-done{ background:var(--ok-bg, #E7F4EE); color:var(--ok, #2E7D5B) }
+.lab-meta{ font-size:13px; line-height:1.7; color:var(--text-sub) }
+.lab-meta b{ color:var(--lohas-brand); font-weight:600 }
+
+.lab-btns{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px }
+.lab-file{
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  min-height:42px; padding:0 18px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  background:#fff; color:var(--lohas-brand);
+  font-family:inherit; font-size:13px; text-decoration:none;
+  cursor:pointer; white-space:nowrap;
+}
+.lab-file:hover{ border-color:var(--lohas-brand); background:var(--bg-soft, #F4F1EC) }
+.lab-file:disabled{ opacity:.5; cursor:default }
+
+.lab-done-wrap{ margin-left:auto }
+.lab-done{
+  display:inline-flex; align-items:center; gap:7px;
+  min-height:42px; padding:0 22px;
+  border:0; border-radius:var(--r-pill, 999px);
+  background:var(--ok, #2E7D5B); color:#fff;
+  font-family:inherit; font-size:13.5px; font-weight:500;
+  cursor:pointer;
+}
+.lab-done:hover{ background:#246347 }
+.lab-done:disabled{ opacity:.5; cursor:default }
+
+.lab-empty{
+  padding:50px 0; text-align:center;
+  font-size:14px; color:var(--text-muted, #9B9186);
+}
+
+@media (max-width:640px){
+  .lab-card{ flex-direction:column }
+  .lab-thumb{ width:100%; height:220px }
+  .lab-done-wrap{ margin-left:0; width:100% }
+  .lab-done{ width:100%; justify-content:center }
+  .lab-file{ flex:1 1 auto }
+  .lab-bar{ flex-direction:column; align-items:stretch }
+}

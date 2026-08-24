@@ -10,7 +10,11 @@
      暴露成客人也能呼叫的動作。分開就不會有這種事。
      (與 gift / store-lookup 的分法一致)
 
-   兩道關卡,缺一不可:
+   進得來的方式有兩種(見 Deno.serve 內的說明):
+     A. 管理後台 —— session token + admins 表
+     B. 製作端簡易頁 —— 共用通行碼 CLOTH_LAB_KEY(Secrets 設定)
+
+   A 的兩道關卡,缺一不可:
      1. 有效的 session token          確認「是誰」
      2. 該會員在 admins 表且狀態正常   確認「有沒有權限」
      只驗第一道的話,任何登入中的會員都能看到全部客人的作品。
@@ -66,18 +70,52 @@ Deno.serve(async (req) => {
   try { body = await req.json(); }
   catch { return reply('006', { message: '請求格式錯誤' }, 400); }
 
-  /* ---------- 關卡 1:身分 ---------- */
-  const caller = await erpidFromToken(String(body.token || ''));
-  if (!caller) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+  /* ---------- 兩種進得來的方式 ----------
+     A. 管理後台:session token + admins 表(與其他後台頁一致)
+     B. 製作端的簡易頁:一組共用通行碼(CLOTH_LAB_KEY)
 
-  /* ---------- 關卡 2:權限 ---------- */
-  const { data: admin, error: adminErr } = await db.from('admins')
-    .select('member_id, status').eq('member_id', caller).maybeSingle();
-  if (adminErr) return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
-  if (!admin || (admin.status && admin.status !== 'active')) {
-    // 刻意不說「你不是管理員」—— 回應內容不該幫人確認自己踩到了什麼
-    console.warn('[cloth-admin] 非管理員嘗試查詢', caller);
-    return reply('403', { message: '沒有查詢權限' }, 403);
+     為什麼要有 B:製作的人沒有管理員帳號,也不該為了下載一個檔案
+     去開一個。但也不能完全不設防 —— 這一頁列的是客人的作品與檔案,
+     網址一旦被轉貼或被搜尋引擎收錄,就擋不住任何人。
+
+     通行碼比對用逐字元累積,不要用 !== 直接比 ——
+     字串比較會在第一個不同的字元就返回,回應時間會洩漏「對了幾個字」。 */
+  let caller = '';
+
+  const labKey = Deno.env.get('CLOTH_LAB_KEY') || '';
+  const givenCode = String(body.code || '');
+
+  function sameSecret(a: string, b: string): boolean {
+    if (!a || !b || a.length !== b.length) return false;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    return diff === 0;
+  }
+
+  if (givenCode) {
+    if (!labKey) {
+      console.error('[cloth-admin] 未設定 CLOTH_LAB_KEY,簡易頁無法使用');
+      return reply('403', { message: '簡易後台尚未啟用' }, 403);
+    }
+    if (!sameSecret(givenCode, labKey)) {
+      console.warn('[cloth-admin] 通行碼錯誤');
+      return reply('403', { message: '通行碼不正確' }, 403);
+    }
+    caller = 'lab';
+  } else {
+    /* ---------- 關卡 1:身分 ---------- */
+    caller = await erpidFromToken(String(body.token || ''));
+    if (!caller) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+
+    /* ---------- 關卡 2:權限 ---------- */
+    const { data: admin, error: adminErr } = await db.from('admins')
+      .select('member_id, status').eq('member_id', caller).maybeSingle();
+    if (adminErr) return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    if (!admin || (admin.status && admin.status !== 'active')) {
+      // 刻意不說「你不是管理員」—— 回應內容不該幫人確認自己踩到了什麼
+      console.warn('[cloth-admin] 非管理員嘗試查詢', caller);
+      return reply('403', { message: '沒有查詢權限' }, 403);
+    }
   }
 
   const action = String(body.action || 'list');
@@ -123,7 +161,13 @@ Deno.serve(async (req) => {
 
   console.log('[cloth-admin] ' + caller + ' 列出 ' + (data || []).length + ' 筆');
 
+  /* 通行碼進來的(製作端)不給姓名。
+     他要的是「刻什麼、刻在哪、哪一件」,不是「誰」——
+     會員編號足以對得上人,姓名多給了只是多一份可外流的個資。 */
+  const items = (data || []).map((r: Record<string, any>) =>
+    caller === 'lab' ? { ...r, member_name: null, mid: null } : r);
+
   return reply('200', {
-    data: { items: data || [], total: count || 0, limit, offset },
+    data: { items, total: count || 0, limit, offset },
   });
 });
