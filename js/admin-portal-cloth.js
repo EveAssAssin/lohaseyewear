@@ -125,8 +125,9 @@
               '<a class="cloth-btn" href="' + esc(it.preview_url) + '" target="_blank" rel="noopener">' +
                 '<i class="fa-solid fa-eye"></i> 合成圖</a>' +
               (it.status === 'new'
-                ? '<button type="button" class="cloth-btn is-done" data-done="' + esc(it.id) + '">' +
-                  '<i class="fa-solid fa-check"></i> 標記完成</button>'
+                ? '<span class="cloth-done-wrap">' +
+                  '<button type="button" class="cloth-done" data-done="' + esc(it.id) + '">' +
+                  '<i class="fa-solid fa-check"></i>這件做好了</button></span>'
                 : '') +
             '</div>' +
           '</div>' +
