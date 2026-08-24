@@ -12,17 +12,26 @@
 
    進得來的方式有兩種(見 Deno.serve 內的說明):
      A. 管理後台 —— session token + admins 表
-     B. 製作端簡易頁 —— 共用通行碼 CLOTH_LAB_KEY(Secrets 設定)
+     B. 製作端簡易頁 —— 共用通行碼(填在 FALLBACK_LAB_KEY)
 
    A 的兩道關卡,缺一不可:
      1. 有效的 session token          確認「是誰」
      2. 該會員在 admins 表且狀態正常   確認「有沒有權限」
      只驗第一道的話,任何登入中的會員都能看到全部客人的作品。
 
-   部署:Supabase Dashboard → Edge Functions → 新增 cloth-admin → 貼上本檔
+   部署:Supabase Dashboard → Edge Functions → cloth-admin → 貼上本檔
         Verify JWT 要【關閉】
 
-   ⚠ 這支不需要任何金鑰,用的是 Supabase 自動注入的環境變數。
+   === ⚠ 通行碼要填在下面的 FALLBACK_LAB_KEY ===
+   使用者沒有 Secrets 權限,所以走與 shop / coupon-list 相同的做法:
+   值只填在【Dashboard 的編輯器裡】,repo 這一份永遠是空字串
+   (公開 repo,填了就等於公開)。
+
+   因此【每次取代這支函式之前,先按右上角 Download】——
+   下載的是含通行碼的線上版,貼上新版後把值填回去再 Deploy。
+   漏掉這一步,製作端那一頁會立刻進不去。
+
+   其餘用的是 Supabase 自動注入的環境變數,不需要另外設定。
    ============================================================= */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -32,6 +41,11 @@ const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+
+/* 製作端簡易頁(cloth-lab.html)的通行碼。
+   ⚠ 只在 Dashboard 填,不要提交回 GitHub。
+   留空 = 簡易頁停用(管理後台那條路不受影響)。 */
+const FALLBACK_LAB_KEY = '';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -72,7 +86,7 @@ Deno.serve(async (req) => {
 
   /* ---------- 兩種進得來的方式 ----------
      A. 管理後台:session token + admins 表(與其他後台頁一致)
-     B. 製作端的簡易頁:一組共用通行碼(CLOTH_LAB_KEY)
+     B. 製作端的簡易頁:一組共用通行碼(FALLBACK_LAB_KEY)
 
      為什麼要有 B:製作的人沒有管理員帳號,也不該為了下載一個檔案
      去開一個。但也不能完全不設防 —— 這一頁列的是客人的作品與檔案,
@@ -82,7 +96,7 @@ Deno.serve(async (req) => {
      字串比較會在第一個不同的字元就返回,回應時間會洩漏「對了幾個字」。 */
   let caller = '';
 
-  const labKey = Deno.env.get('CLOTH_LAB_KEY') || '';
+  const labKey = Deno.env.get('CLOTH_LAB_KEY') || FALLBACK_LAB_KEY;
   const givenCode = String(body.code || '');
 
   function sameSecret(a: string, b: string): boolean {
@@ -94,7 +108,7 @@ Deno.serve(async (req) => {
 
   if (givenCode) {
     if (!labKey) {
-      console.error('[cloth-admin] 未設定 CLOTH_LAB_KEY,簡易頁無法使用');
+      console.error('[cloth-admin] 通行碼未設定(FALLBACK_LAB_KEY 或 CLOTH_LAB_KEY),簡易頁停用');
       return reply('403', { message: '簡易後台尚未啟用' }, 403);
     }
     if (!sameSecret(givenCode, labKey)) {
