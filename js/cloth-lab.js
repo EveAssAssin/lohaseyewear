@@ -82,8 +82,12 @@
      製作端常常在手機或工廠的網路下開這一頁。 */
   function thumbUrl(u) {
     if (!u || u.indexOf('/storage/v1/object/public/') < 0) return u;
+    /* ⚠ width、height、resize 三個都要給。
+       只給 width 的話 Supabase【不會等比縮放】—— 實測 926x926 的圖
+       只給 width=320 會回 320x926,變成一條窄長的東西。
+       resize=contain 才會把整張圖放進指定的方框裡。 */
     return u.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') +
-           '?width=320&quality=70';
+           '?width=320&height=320&resize=contain&quality=70';
   }
 
   /* ---------- 呈現 ---------- */

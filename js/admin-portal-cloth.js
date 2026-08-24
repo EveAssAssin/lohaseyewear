@@ -65,8 +65,12 @@
      縮放失敗時 onerror 會退回原圖,不會變成破圖。 */
   function thumbUrl(u) {
     if (!u || u.indexOf('/storage/v1/object/public/') < 0) return u;
+    /* ⚠ width、height、resize 三個都要給。
+       只給 width 的話 Supabase【不會等比縮放】—— 實測 926x926 的圖
+       只給 width=320 會回 320x926,變成一條窄長的東西。
+       resize=contain 才會把整張圖放進指定的方框裡。 */
     return u.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') +
-           '?width=240&quality=70';
+           '?width=240&height=240&resize=contain&quality=70';
   }
 
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
