@@ -31,7 +31,7 @@
      categories  分類樹
      products    商品列表(tid / limit / offset / can_design_only)
      product     商品詳情(nid),含規格樹
-     cart_push   把客製完成品送回商城購物車,回傳 cart_url
+     cart_push   把客製完成品或禮物送回商城購物車,回傳 cart_url
                  ⚠ 這支需要 session token,規則見下方註解
                  ⚠ 這支會在 design_submissions 留一筆紀錄(成功與失敗都留)
    ============================================================= */
@@ -176,8 +176,15 @@ function buildCartBody(clientId: string, body: Record<string, any>, submissionId
   const main: Record<string, unknown> = {
     nid: Number(m.nid),
     amount: 1,          // 一次一件,不開放前端指定數量
-    design,
   };
+
+  /* design 只在真的有刻圖時才帶。
+     -----------------------------------------------------------
+     禮物 B 路線(送禮人買通用禮物、收禮人自己挑款式)在下單當下
+     還沒有任何刻圖 —— 硬塞一個空的 design 進去,商城會收到一筆
+     design_id 為空字串、placement 全是 0 的資料,那比沒有更糟:
+     後台會顯示「有客製」但點開什麼都沒有。 */
+  if (d.design_id) main.design = design;
   /* sid 只在「真的有規格」時才帶。商城端說明:無規格商品帶了 sid 會被擋,
      省略 / null / 0 都會被當成 0 通過。所以寧可不帶。 */
   const sid = Number(m.sid);
@@ -186,10 +193,37 @@ function buildCartBody(clientId: string, body: Record<string, any>, submissionId
   const out: Record<string, unknown> = {
     client_id: clientId,
     main,
-    // 刻圖費由商城依自己的設定計算,我方只表明「有含刻圖」。
-    // 規格明訂不得帶入任何金額欄位,帶了也會被忽略。
-    plus_buy: [{ type: 'engraving_fee', amount: 1 }],
   };
+
+  // 刻圖費由商城依自己的設定計算,我方只表明「有含刻圖」。
+  // 規格明訂不得帶入任何金額欄位,帶了也會被忽略。
+  // 沒有刻圖(B 路線)就不帶 —— 那一單本來就不含刻圖。
+  if (d.design_id) out.plus_buy = [{ type: 'engraving_fee', amount: 1 }];
+
+  /* 禮物:送禮人結帳時要讓商城知道這一單是禮物。
+     -----------------------------------------------------------
+     商城 2026-08-19 的規格:
+       is_gift / gift_id / fulfillment / recipient_erpid(非必填)
+
+     gift_id 是我方 gifts 那一列的主鍵 —— 付款完成時商城以它回拋
+     gift_paid,我方據此把禮物推進到「可領取」。沒有它,客人付了錢
+     而禮物永遠停在待付款。
+
+     金額與商品資訊刻意不帶:那些以商城的設定為準,
+     兩邊各存一份就會有「哪一份才算數」的問題(對方 8/19 亦如此說明)。 */
+  const g = body.gift || {};
+  const giftId = String(g.gift_id || '').slice(0, 64);
+  if (g.is_gift && giftId) {
+    const gift: Record<string, unknown> = {
+      is_gift: true,
+      gift_id: giftId,
+      // 未知值一律當宅配,與商城的處理一致
+      fulfillment: g.fulfillment === 'store' ? 'store' : 'ship',
+    };
+    const rec = String(g.recipient_erpid || '').slice(0, 40);
+    if (rec) gift.recipient_erpid = rec;
+    out.gift = gift;
+  }
 
   // 票券:有帶才附上。lock_token 由商城在建立訂單時拿去 redeem。
   const c = body.coupon || {};

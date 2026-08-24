@@ -130,6 +130,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </section>
 
       <!-- 送禮設定(僅送禮模式) -->
+      <!-- 送禮的兩種做法。放在最上面、且在「送給誰」之前 ——
+           這個選擇會決定下面要不要挑鏡框與刻圖,先問才不會讓人挑完才發現白挑。 -->
+      <section class="dz-card" id="dzGiftModeCard" style="display:none">
+        <h2 class="dz-card-h">這份禮物怎麼送</h2>
+        <div class="dz-seg" id="dzGiftMode">
+          <button class="dz-seg-btn on" type="button" data-g="self">我自己挑好</button>
+          <button class="dz-seg-btn" type="button" data-g="recipient">讓對方自己挑</button>
+        </div>
+        <p class="dz-seg-note" id="dzGiftModeNote"></p>
+      </section>
+
       <section class="dz-card" id="dzGiftCard" style="display:none">
         <h2 class="dz-card-h">送給誰</h2>
 
@@ -207,6 +218,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/supabase.js?v=20260513-2300"></script>
 <script src="js/layout.js?v=20260819-erp"></script>
-<script src="js/design.js?v=20260824-gift"></script>
+<script src="js/design.js?v=20260824-giftpay"></script>
 </body>
 </html>

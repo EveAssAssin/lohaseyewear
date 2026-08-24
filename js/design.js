@@ -23,6 +23,12 @@
 
   var CONFIG = {
     SHOP_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop',
+
+    /* 通用禮物商品(客製刻圖眼鏡・禮物)。
+       B 路線送禮人買的就是這一件 —— 款式由收禮人領取後自己挑。
+       售價與可客製的鏡框同為 990,收禮人挑哪一副都不必補差額。
+       商城正式站 2026-08-24 建立。 */
+    GIFT_PRODUCT_NID: 2929,
     GIFT_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gift',
     COUPON_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/coupon-lock',
     TIMEOUT_MS: 15000,
@@ -58,6 +64,10 @@
   var State = {
     // 送禮模式:從刻圖市集帶著 design 進來,眼鏡要在這頁挑
     gift: false,
+    /* 送禮的兩種做法:
+         self       送禮人自己挑好鏡框與刻圖(A 路線)
+         recipient  買一份通用禮物,款式由收禮人領取後自己挑(B 路線) */
+    giftMode: 'self',
     frames: [],
     fulfillment: 'store',
     recipMode: 'link',
@@ -143,13 +153,20 @@
 
   /* ---------- 商品 ---------- */
 
-  function loadProduct(nid) {
+  /**
+   * @param {number} nid
+   * @param {boolean} allowNonDesign
+   *        略過「可客製」檢查。只有通用禮物商品會用到 ——
+   *        那一件【刻意不勾可客製】,否則它會混進收禮人的鏡框清單裡,
+   *        變成可以挑一份禮物來刻字。
+   */
+  function loadProduct(nid, allowNonDesign) {
     return shopCall({ action: 'product', nid: nid }).then(function (d) {
       var p = d.product;
       if (!p) throw new Error('查無這件商品,或商品已下架。');
 
       // 防呆:有人手動改網址,對不可文創的商品發起流程
-      if (p.can_design === false) {
+      if (p.can_design === false && !allowNonDesign) {
         throw new Error('這件商品沒有開放客製文創。請回商城挑選標示「可文創」的款式。');
       }
 
@@ -749,23 +766,31 @@
 
        順帶產出的 guide_url 也一併存下 —— 門市兌換時加工人員要看它,
        而現在存的成本跟只存一張相同,等接上商城再回頭補就得重畫舊資料。 */
-    buildImages().then(function (images) {
+    /* B 路線沒有刻圖,也就沒有圖要產。
+       硬跑 buildImages() 會在沒有 State.design 的情況下爆掉,
+       而且那幾秒的等待對客人來說完全沒有意義。 */
+    var byRecipient = State.giftMode === 'recipient';
+    var imagesStep = byRecipient ? Promise.resolve({}) : buildImages();
+    var giftImages = {};
+
+    imagesStep.then(function (images) {
+      giftImages = images || {};
       el.submit.textContent = '建 立 禮 物...';
       return giftCall({
         action: 'create',
         token: token,
         sender_name: (m && m.name) || '',
-        design_id: State.design.id,
-        design_name: State.design.name,
-        design_image_url: designUrl(State.design),
-        preview_url: images.preview_url,
-        guide_url: images.guide_url,
+        design_id: byRecipient ? null : State.design.id,
+        design_name: byRecipient ? null : State.design.name,
+        design_image_url: byRecipient ? null : designUrl(State.design),
+        preview_url: images.preview_url || null,
+        guide_url: images.guide_url || null,
         product_nid: State.product.nid,
         product_sid: State.specSid,
         product_title: State.product.title,
         product_spec_title: State.specTitle,
         product_image: State.product.image,
-        engrave_placement: {
+        engrave_placement: byRecipient ? null : {
           lens: State.lens, scale: State.scale, x: State.x, y: State.y,
           basis: 'product_image'
         },
@@ -776,7 +801,7 @@
         recipient_label: (el.recipLabel.value || '').trim()
       });
     })
-      .then(function (d) { onGiftCreated(d.gift); })
+      .then(function (d) { return pushGiftToCart(d.gift, giftImages); })
       .catch(function (err) {
         showFormErr(err.message);
         el.submit.disabled = false;
@@ -784,16 +809,79 @@
       });
   }
 
-  function onGiftCreated(g) {
-    [el.frameCard, el.designCard, el.placeCard, el.giftCard,
+  /* 建立禮物之後,把它推進商城購物車讓送禮人付款。
+     -----------------------------------------------------------
+     這一段先前完全沒有 —— 禮物建立後就停在「待付款」,
+     而付款入口從來沒接上。商城的 gift 區塊 2026-08-19 開通,
+     這裡才補上。
+
+     ⚠ 推不進購物車【不能當成建立失敗】:
+     禮物已經在我方資料庫裡了,而且領取連結也已經產生。
+     這時候跳一個「建立失敗」會讓送禮人以為要重來,
+     再送一次就會多一份待付款的禮物。
+     所以推失敗時仍然顯示成功畫面,只是多一句「稍後可在禮物中心付款」。 */
+  function pushGiftToCart(g, images) {
+    if (!g || !g.id) { onGiftCreated(g); return; }
+
+    el.submit.textContent = '前 往 付 款...';
+
+    /* main 自己組,不重用 buildPayload —— 那一支假設一定有刻圖
+       (會讀 State.design.id),B 路線傳進去會直接爆。 */
+    var main = { nid: State.product.nid, amount: 1 };
+    if (State.specSid) main.sid = State.specSid;
+
+    if (State.design) {
+      main.design = {
+        design_id: State.design.id,
+        design_name: State.design.name,
+        engraving_url: State.design.image_url_svg || null,
+        preview_url: (images && images.preview_url) || null,
+        guide_url: (images && images.guide_url) || null,
+        placement: {
+          lens: State.lens, scale: State.scale,
+          x: State.x, y: State.y, basis: 'product_image'
+        }
+      };
+    }
+
+    return shopCall({
+      action: 'cart_push',
+      token: (window.LohasAuth && window.LohasAuth.getToken()) || '',
+      main: main,
+      gift: {
+        is_gift: true,
+        gift_id: g.id,
+        fulfillment: State.fulfillment
+      }
+    })
+      .then(function (data) {
+        if (!data || !data.cart_url) throw new Error('商城未回傳購物車網址');
+        // 一次性 token 只有 60 秒,而且必須整頁導轉
+        window.location.href = data.cart_url;
+      })
+      .catch(function (e) {
+        console.warn('[design] 禮物推進購物車失敗', e && e.message);
+        onGiftCreated(g, true);
+      });
+  }
+
+  /* 走到這裡只有一種情況:禮物建好了,但推進購物車失敗。
+     ---------------------------------------------------------------
+     正常流程會直接導去商城購物車,不會經過這一頁。
+
+     ⚠ 這裡【不能顯示成失敗】。禮物已經在資料庫裡、領取連結也產生了 ——
+     講成失敗會讓送禮人再送一次,結果多一份待付款的禮物。
+     所以講的是「已建立、還沒付款、去禮物中心付」。 */
+  function onGiftCreated(g, pushFailed) {
+    [el.giftModeCard, el.frameCard, el.designCard, el.placeCard, el.giftCard,
      el.submit, el.submitHint, el.note].forEach(hide);
     hide(el.formErr);
 
-    // cart/push 還沒開通,禮物會停在「待付款」。這件事一定要講白,
-    // 不然使用者會以為已經送出去了。
-    el.resultText.textContent = State.fulfillment === 'store'
-      ? '禮物已建立,目前狀態是「待付款」。商城付款介面尚未開通,接上後你會在禮物中心看到付款入口;完成付款後對方才能領取。'
-      : '禮物已建立,目前狀態是「待付款」。商城付款介面尚未開通,接上後你會在禮物中心看到付款入口。';
+    el.resultText.textContent = pushFailed
+      ? '禮物已經建立好了,但這次沒能帶你到付款頁面。' +
+        '到會員專區的禮物中心可以找到它並完成付款 —— 不用重新建立一次。' +
+        (State.fulfillment === 'store' ? '付款完成後對方才能領取。' : '')
+      : '禮物已建立,目前狀態是「待付款」。到禮物中心完成付款後,對方就能領取。';
 
     if (g && g.claim_url) {
       el.claimUrl.value = g.claim_url;
@@ -889,6 +977,15 @@
     }
 
     if (State.gift) {
+      /* 讓對方自己挑(B 路線):沒有刻圖也沒有鏡框要選,
+         商品固定是通用禮物商品,載到就可以送出。 */
+      if (State.giftMode === 'recipient') {
+        el.submit.disabled = !State.product;
+        el.submitHint.textContent = State.product
+          ? '建立後會出現在你的禮物中心,付款完成對方才能領取'
+          : '正在準備…';
+        return;
+      }
       var ready = !!State.design && !!State.product && !needSpec;
       el.submit.disabled = !ready;
       el.submitHint.textContent = !State.product ? '請先選一副眼鏡'
@@ -955,7 +1052,9 @@
   }
 
   function onSubmit() {
-    if (!State.design || !State.product) return;
+    // B 路線沒有刻圖,只要有商品就能送出
+    var needDesign = !(State.gift && State.giftMode === 'recipient');
+    if ((needDesign && !State.design) || !State.product) return;
     if (blockedByErp()) return;
     if (State.pickGiftId) { submitPick(); return; }
     if (State.gift) { createGift(); return; }
@@ -1059,6 +1158,8 @@
       reset: $('dzReset'), submit: $('dzSubmit'), submitHint: $('dzSubmitHint'),
       designCard: document.querySelector('.dz-card--design'),
       // 送禮模式專用
+      giftModeCard: $('dzGiftModeCard'), giftMode: $('dzGiftMode'),
+      giftModeNote: $('dzGiftModeNote'),
       frameCard: $('dzFrameCard'), frames: $('dzFrames'),
       giftCard: $('dzGiftCard'), fulfill: $('dzFulfill'), fulfillNote: $('dzFulfillNote'),
       recipMode: $('dzRecipMode'), recipKeyRow: $('dzRecipKeyRow'), recipKey: $('dzRecipKey'),
@@ -1132,6 +1233,13 @@
       State.y = parseFloat(el.y.value); applyPlacement();
     });
     el.reset.addEventListener('click', resetPlacement);
+    if (el.giftMode) {
+      el.giftMode.addEventListener('click', function (e) {
+        var b = e.target.closest('.dz-seg-btn');
+        if (b) setGiftMode(b.dataset.g);
+      });
+    }
+
     el.submit.addEventListener('click', onSubmit);
 
     // 送禮模式的事件
@@ -1497,6 +1605,58 @@
     applyPlacement();
   }
 
+  /* 送禮的兩種做法。
+     -----------------------------------------------------------
+     self       送禮人自己挑好鏡框與刻圖(A 路線)
+     recipient  買一份通用禮物,款式由收禮人領取後自己挑(B 路線)
+
+     這個選擇放在最上面、且問在「送給誰」之前 ——
+     它決定下面要不要挑鏡框與刻圖,先問才不會讓人挑完才發現白挑。 */
+  var GIFT_MODE_NOTE = {
+    self: '你先挑好鏡框與刻圖,對方領取後直接拿到成品。適合已經知道他喜歡什麼的時候。',
+    recipient: '你送的是一份「客製刻圖眼鏡」的禮物,鏡框與刻圖由對方自己挑。' +
+               '不確定他的喜好時,這樣最安全。'
+  };
+
+  function setGiftMode(mode) {
+    State.giftMode = mode === 'recipient' ? 'recipient' : 'self';
+    el.giftMode.querySelectorAll('.dz-seg-btn').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.g === State.giftMode);
+    });
+    el.giftModeNote.textContent = GIFT_MODE_NOTE[State.giftMode];
+
+    if (State.giftMode === 'recipient') {
+      /* 讓對方自己挑:這一頁就不需要鏡框、刻圖與位置了。
+         商品固定是通用禮物商品,送禮人不必也不能選。 */
+      hide(el.frameCard);
+      hide(el.designCard);
+      hide(el.placeCard);
+      el.submit.textContent = '建 立 禮 物';
+
+      /* 刻圖清掉,不然左邊還留著上一次選的圖疊在禮物商品照上 ——
+         那會讓人以為自己送的是那張刻圖。 */
+      State.design = null;
+
+      loadProduct(CONFIG.GIFT_PRODUCT_NID, true)
+        .then(function () { applyPlacement(); refreshSubmit(); })
+        .catch(function (err) {
+          /* 通用禮物商品拿不到就不能走這條路 —— 與其讓人填完才失敗,
+             現在就講,並退回「我自己挑」。 */
+          showFormErr('目前無法建立這種禮物(' + err.message + '),請改用「我自己挑好」。');
+          setGiftMode('self');
+        });
+    } else {
+      show(el.frameCard);
+      show(el.designCard);
+      show(el.placeCard);
+      State.product = null;
+      State.specSid = null;
+      renderFrames();
+      refreshSubmit();
+    }
+    refreshScrollBtn();
+  }
+
   function startGiftMode(presetDesign) {
     document.querySelector('.dz-title').textContent = '把這張刻圖送給朋友';
     document.querySelector('.dz-sub').textContent =
@@ -1507,10 +1667,12 @@
 
     hide(el.loading);
     show(el.body);
+    show(el.giftModeCard);
     show(el.frameCard);
     show(el.giftCard);
     setFulfillment('store');
     setRecipMode('link');
+    setGiftMode('self');
     applyPlacement();
 
     Promise.all([loadFrames(), loadDesigns()]).then(function () {
