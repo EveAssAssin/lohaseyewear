@@ -1438,7 +1438,18 @@
         State.coupon = {
           coupon_id: d.coupon_id || Number(couponId),
           lock_token: d.lock_token,
-          category_tid: Array.isArray(d.category_tid) ? d.category_tid : [],
+          /* 兩個欄位名都收。
+             主後端 2026-08-24 在鎖定紀錄新增了 site_category_tid,
+             而 lock 目前回的仍是 category_tid —— 哪天統一成新名字,
+             只認舊名的話會安靜地變成「不限分類」,客人挑到不能換的款式,
+             要到 cart/push 被伺服器擋下才知道。兩個都收就不會有那一天。 */
+          category_tid: Array.isArray(d.category_tid) ? d.category_tid
+            : (Array.isArray(d.site_category_tid) ? d.site_category_tid : []),
+
+          /* 贈品型券(兌換一件商品)與折抵型券的語意不同。
+             我方目前不依它改變介面 —— 折抵金額一律以商城結帳頁為準 ——
+             但存下來,日後要顯示「這張券可換一支」時不必再改一次取值。 */
+          is_gift: d.is_gift === true || d.is_gift === 1,
           /* ⚠ amount 不是折抵金額,不要拿去顯示。
              贈品型券(例如客製太陽眼鏡體驗券)的 amount 是票券中心的
              欄位設定值 —— 那張券的 amount 是 10,顯示成「折 10 元」
