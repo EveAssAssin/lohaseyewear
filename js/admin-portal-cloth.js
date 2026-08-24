@@ -55,6 +55,20 @@
            ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
 
+  /* 縮圖走 Supabase 的圖片縮放,不要直接載原圖。
+     -----------------------------------------------------------
+     原圖是合成圖(整張眼鏡布),而這裡只用 120px 顯示。
+     一列載一張全尺寸的圖,列表一多就會很慢 ——
+     實測同一張圖 15.8KB → 1.5KB,差十倍。
+
+     這也順便救了舊資料:早期存的是 PNG(更肥),不必重存也會變快。
+     縮放失敗時 onerror 會退回原圖,不會變成破圖。 */
+  function thumbUrl(u) {
+    if (!u || u.indexOf('/storage/v1/object/public/') < 0) return u;
+    return u.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') +
+           '?width=240&quality=70';
+  }
+
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
   var STATUS = { new: '待處理', done: '已完成', archived: '已封存' };
 
@@ -94,7 +108,8 @@
 
       return '' +
         '<div class="cloth-card" data-id="' + esc(it.id) + '">' +
-          '<img class="cloth-thumb" src="' + esc(it.preview_url) + '" alt="" loading="lazy">' +
+          '<img class="cloth-thumb" src="' + esc(thumbUrl(it.preview_url)) + '"' +
+            ' data-full="' + esc(it.preview_url) + '" alt="" loading="lazy">' +
           '<div class="cloth-info">' +
             '<div class="cloth-row"><b>' + esc(it.design_name || '(未命名)') + '</b>' +
               '<span class="cloth-tag">' + (SOURCE[it.source] || it.source) + '</span>' +
@@ -117,6 +132,16 @@
           '</div>' +
         '</div>';
     }).join('');
+
+    /* 縮放版取不到時退回原圖。
+       用事件而不是內聯 onerror —— 內聯的引號要在字串串接裡跳脫,
+       改一次就壞一次(這一行就被我改壞過)。 */
+    list.querySelectorAll('.cloth-thumb[data-full]').forEach(function (img) {
+      img.addEventListener('error', function fallback() {
+        img.removeEventListener('error', fallback);
+        img.src = img.dataset.full;
+      });
+    });
   }
 
   function load() {

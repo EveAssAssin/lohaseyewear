@@ -437,8 +437,13 @@
       var h = w * ratio;
       ctx.drawImage(art, SIZE * State.x - w / 2, SIZE * State.y - h / 2, w, h);
 
+      /* 存成 JPEG,不是 PNG。
+         這張是【照片】(眼鏡布的實拍圖 + 疊上去的線稿),
+         PNG 存照片會肥到兩三 MB,而後台列表只用 120px 顯示它 ——
+         客人與後台都要為那幾 MB 等。JPEG 同樣的畫面約是十分之一,
+         而合成圖不需要透明背景,沒有任何損失。 */
       return new Promise(function (res) {
-        cv.toBlob(function (b) { res(b); }, 'image/png', 0.92);
+        cv.toBlob(function (b) { res(b); }, 'image/jpeg', 0.88);
       });
     });
   }
@@ -501,7 +506,7 @@
         return buildPreview();
       })
       .then(function (blob) {
-        return uploadBlob(blob, 'cloth/' + stamp + '-preview.png', 'image/png');
+        return uploadBlob(blob, 'cloth/' + stamp + '-preview.jpg', 'image/jpeg');
       })
       .then(function (previewUrl) {
         el.submit.textContent = '儲 存 中...';
