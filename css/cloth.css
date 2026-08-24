@@ -1,0 +1,250 @@
+/* =============================================================
+   cloth.css — 客製眼鏡布 (cloth.html)
+   -------------------------------------------------------------
+   命名空間 .cl
+   依賴:lohas-tokens.css → lohas-base.css → lohas-components.css
+
+   版面刻意與客製文創(design.html)一致:左邊看成品、右邊調整。
+   兩頁做的是同一件事(把圖放到東西上),長得不一樣只會讓人重新學一次。
+   ============================================================= */
+
+.cl{ background:var(--bg-warm); color:var(--text-main) }
+
+.cl-main{ max-width:1180px; margin:0 auto; padding:40px 24px 80px }
+
+.cl-head{ text-align:center; margin-bottom:36px }
+.cl-title{
+  font-size:26px; font-weight:700; letter-spacing:2px;
+  color:var(--lohas-brand); margin:0;
+}
+.cl-title-line{ width:40px; height:2px; background:var(--lohas-brand); margin:15px auto }
+.cl-sub{ margin:0; font-size:15px; line-height:1.85; color:var(--text-sub) }
+
+.cl-body{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 380px;
+  gap:32px;
+  align-items:start;
+}
+
+/* === 左:預覽 === */
+
+.cl-stage{
+  position:relative;
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-lg, 18px);
+  overflow:hidden;
+  /* 底圖是正方形照片,固定比例才不會在載入前後跳動 */
+  aspect-ratio:1 / 1;
+  touch-action:none;          /* 手機上拖曳圖案時不要跟著捲頁 */
+  user-select:none;
+}
+.cl-base{ width:100%; height:100%; object-fit:contain; display:block }
+
+/* 疊上去的圖案。用 background-image 而不是 <img>,
+   因為 SVG 與 PNG 兩種來源都能用同一段程式處理。 */
+.cl-overlay{
+  position:absolute;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+  transform:translate(-50%, -50%);
+  pointer-events:none;        /* 拖曳事件掛在 stage 上,這層不擋 */
+  /* ⚠ 這裡【不要】寫 display:none。
+     JS 的 show() 是把 inline 的 display 清成 '',若預設藏在 CSS 裡,
+     清掉之後又會退回 none,永遠顯示不出來。
+     預設隱藏寫在 HTML 的 inline style,與站上其他頁一致。 */
+}
+
+.cl-hint{
+  margin:12px 2px 0; text-align:center;
+  font-size:13px; color:var(--text-muted, #9B9186);
+}
+.cl-hint i{ margin-right:6px }
+
+/* === 右:操作 === */
+
+.cl-right{ display:flex; flex-direction:column; gap:16px }
+
+.cl-card{
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-lg, 18px);
+  padding:18px 18px 20px;
+}
+.cl-card-title{
+  margin:0 0 14px;
+  font-size:14px; font-weight:600; letter-spacing:.08em;
+  color:var(--lohas-brand);
+}
+
+/* 來源切換 */
+.cl-seg{
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+}
+.cl-seg-btn{
+  min-height:42px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-md, 14px);
+  background:#fff; color:var(--text-sub);
+  font-family:inherit; font-size:14px; letter-spacing:.06em;
+  cursor:pointer; transition:.18s;
+}
+.cl-seg-btn.on{
+  background:var(--lohas-brand); color:#fff; border-color:var(--lohas-brand);
+}
+
+/* 搜尋 */
+.cl-search{ position:relative; margin-bottom:12px }
+.cl-search i{
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  color:var(--text-muted, #9B9186); font-size:13px; pointer-events:none;
+}
+.cl-input{
+  width:100%; height:42px; padding:0 38px 0 14px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-md, 14px);
+  background:#fff; font-family:inherit; font-size:14px;
+  color:var(--text-main); outline:none;
+}
+.cl-input:focus{ border-color:var(--lohas-brand) }
+
+/* 刻圖格 */
+.cl-designs{
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;
+}
+.cl-design{
+  aspect-ratio:1/1;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-md, 14px);
+  background:#fff; padding:6px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:.15s;
+}
+.cl-design img{ max-width:100%; max-height:100%; object-fit:contain }
+.cl-design:hover{ border-color:var(--lohas-light, #CDBEA2) }
+.cl-design.on{ border-color:var(--lohas-brand); box-shadow:0 0 0 1px var(--lohas-brand) }
+
+.cl-more, .cl-reset{
+  width:100%; min-height:38px; margin-top:12px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  background:#fff; color:var(--text-sub);
+  font-family:inherit; font-size:13px; cursor:pointer;
+}
+.cl-more:hover, .cl-reset:hover{ border-color:var(--lohas-brand); color:var(--lohas-brand) }
+
+.cl-empty{ margin:0; padding:20px 0; text-align:center;
+  font-size:13px; color:var(--text-muted, #9B9186) }
+
+/* === 手繪 === */
+
+.cl-canvas{
+  width:100%; aspect-ratio:1/1;
+  border:1px dashed var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-md, 14px);
+  background:#fff;
+  touch-action:none;          /* 手機上畫圖時不要捲頁 */
+  cursor:crosshair;
+  display:block;
+}
+.cl-draw-tools{ margin-top:12px; display:flex; flex-direction:column; gap:10px }
+.cl-brush{ display:flex; align-items:center; gap:10px;
+  font-size:13px; color:var(--text-sub) }
+.cl-brush input{ flex:1 }
+.cl-draw-btns{ display:grid; grid-template-columns:1fr 1fr; gap:8px }
+.cl-mini{
+  min-height:36px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  background:#fff; color:var(--text-sub);
+  font-family:inherit; font-size:13px; cursor:pointer;
+}
+.cl-mini:hover{ border-color:var(--lohas-brand); color:var(--lohas-brand) }
+
+.cl-apply{
+  width:100%; min-height:44px; margin-top:12px;
+  border:1px solid var(--lohas-brand);
+  border-radius:var(--r-pill, 999px);
+  background:#fff; color:var(--lohas-brand);
+  font-family:inherit; font-size:14px; letter-spacing:.1em; cursor:pointer;
+}
+.cl-apply:hover{ background:var(--lohas-brand); color:#fff }
+.cl-apply:disabled{ opacity:.5; cursor:default }
+
+.cl-note-sm{ margin:10px 0 0; font-size:12px; line-height:1.75;
+  color:var(--text-muted, #9B9186) }
+
+/* === 滑桿 === */
+
+.cl-range{ display:block; margin-bottom:14px }
+.cl-range > span{
+  display:block; margin-bottom:6px;
+  font-size:13px; color:var(--text-sub);
+}
+.cl-range b{ color:var(--lohas-brand); font-weight:600 }
+.cl-range input{ width:100% }
+
+/* === 說明與送出 === */
+
+.cl-note{
+  display:flex; gap:10px; align-items:flex-start;
+  padding:14px 16px;
+  border-radius:var(--r-md, 14px);
+  background:var(--bg-soft, #F4F1EC);
+  font-size:13px; line-height:1.8; color:var(--text-sub);
+}
+.cl-note i{ margin-top:3px; color:var(--lohas-light, #CDBEA2) }
+
+.cl-err{
+  padding:12px 14px;
+  border-radius:var(--r-md, 14px);
+  background:var(--err-bg, #FDEDEC);
+  color:var(--err, #C0392B);
+  font-size:13px; line-height:1.8;
+}
+
+.cl-submit{
+  width:100%; min-height:52px;
+  border:0; border-radius:var(--r-pill, 999px);
+  background:var(--lohas-brand); color:#fff;
+  font-family:inherit; font-size:15px; letter-spacing:.16em;
+  cursor:pointer; transition:background .18s;
+}
+.cl-submit:hover{ background:var(--lohas-hover, #765F4A) }
+.cl-submit:disabled{ opacity:.45; cursor:default }
+.cl-submit-hint{ margin:10px 0 0; text-align:center;
+  font-size:12px; color:var(--text-muted, #9B9186) }
+
+/* === 完成 === */
+
+.cl-done{
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-lg, 18px);
+  background:#fff; padding:28px 22px; text-align:center;
+}
+.cl-done > i{ font-size:32px; color:var(--lohas-brand) }
+.cl-done-title{ margin:14px 0 8px; font-size:17px; font-weight:600;
+  color:var(--lohas-brand) }
+.cl-done-text{ margin:0 0 18px; font-size:13.5px; line-height:1.85;
+  color:var(--text-sub) }
+.cl-done-btn{
+  display:inline-block; min-height:42px; line-height:40px; padding:0 26px;
+  border:1px solid var(--lohas-brand); border-radius:var(--r-pill, 999px);
+  color:var(--lohas-brand); text-decoration:none;
+  font-size:14px; letter-spacing:.08em;
+}
+.cl-done-btn:hover{ background:var(--lohas-brand); color:#fff }
+
+/* === RWD === */
+
+@media (max-width:960px){
+  .cl-body{ grid-template-columns:1fr; gap:24px }
+  .cl-main{ padding:28px 18px 60px }
+  /* 手機:預覽不要佔滿整個螢幕高度,不然要捲很久才看得到控制項 */
+  .cl-stage{ max-width:460px; margin:0 auto }
+}
+@media (max-width:420px){
+  .cl-designs{ grid-template-columns:repeat(3, 1fr) }
+}

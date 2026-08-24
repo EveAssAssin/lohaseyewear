@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客製眼鏡布 · LOHAS 樂活眼鏡</title>
+  <meta name="description" content="挑一張刻圖,或自己畫幾筆,做一條只有你有的眼鏡布。">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- LOHAS CSS · 載入順序: tokens → base → components → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/cloth.css?v=20260824">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+</head>
+
+<body class="cl">
+<div id="site-header"></div>
+
+<main class="cl-main">
+
+  <div class="cl-head">
+    <h1 class="cl-title">客製眼鏡布</h1>
+    <div class="cl-title-line"></div>
+    <p class="cl-sub">挑一張刻圖,或自己畫幾筆 —— 做一條只有你有的眼鏡布。</p>
+  </div>
+
+  <div class="cl-body">
+
+    <!-- ===== 左:預覽 ===== -->
+    <div class="cl-left">
+      <div class="cl-stage" id="clStage">
+        <img class="cl-base" id="clBase" src="images/carrier-cloth.jpg"
+             alt="樂活眼鏡布" draggable="false">
+        <!-- 刻圖疊在布上。位置與大小由右側控制,也可以直接拖曳 -->
+        <div class="cl-overlay" id="clOverlay" style="display:none"></div>
+      </div>
+      <p class="cl-hint">
+        <i class="fa-solid fa-hand-pointer"></i>
+        直接拖曳圖案調整位置,或用右側滑桿微調
+      </p>
+    </div>
+
+    <!-- ===== 右:操作 ===== -->
+    <div class="cl-right">
+
+      <!-- 來源切換 -->
+      <div class="cl-card">
+        <p class="cl-card-title">圖案從哪裡來</p>
+        <div class="cl-seg" id="clSource">
+          <button type="button" class="cl-seg-btn on" data-src="market">刻圖市集</button>
+          <button type="button" class="cl-seg-btn" data-src="draw">自己畫</button>
+        </div>
+      </div>
+
+      <!-- 市集刻圖 -->
+      <div class="cl-card" id="clMarketCard">
+        <p class="cl-card-title">選一張刻圖</p>
+        <div class="cl-search">
+          <input type="text" id="clSearch" class="cl-input" placeholder="搜尋刻圖名稱、創作者…">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <div class="cl-designs" id="clDesigns"></div>
+        <button type="button" class="cl-more" id="clMore" style="display:none">展開全部</button>
+      </div>
+
+      <!-- 手繪 -->
+      <div class="cl-card" id="clDrawCard" style="display:none">
+        <p class="cl-card-title">自己畫一個</p>
+        <!-- 白底黑線:轉成線稿的效果最好,也最接近實際印在布上的樣子 -->
+        <canvas class="cl-canvas" id="clCanvas" width="1000" height="1000"></canvas>
+        <div class="cl-draw-tools">
+          <label class="cl-brush">
+            筆畫粗細
+            <input type="range" id="clBrush" min="6" max="48" value="18" step="1">
+          </label>
+          <div class="cl-draw-btns">
+            <button type="button" class="cl-mini" id="clUndo">
+              <i class="fa-solid fa-rotate-left"></i> 上一步
+            </button>
+            <button type="button" class="cl-mini" id="clClear">
+              <i class="fa-regular fa-trash-can"></i> 全部清掉
+            </button>
+          </div>
+        </div>
+        <button type="button" class="cl-apply" id="clApply">把 這 張 放 上 去</button>
+        <p class="cl-note-sm">
+          線條會自動轉成印刷用的線稿,所以畫粗一點、筆畫清楚一點效果最好。
+        </p>
+      </div>
+
+      <!-- 位置 -->
+      <div class="cl-card" id="clPlaceCard">
+        <p class="cl-card-title">放在哪裡</p>
+        <label class="cl-range">
+          <span>大小 <b id="clScaleVal">22%</b></span>
+          <input type="range" id="clScale" min="6" max="60" value="22" step="1">
+        </label>
+        <label class="cl-range">
+          <span>左右 <b id="clXVal">65</b></span>
+          <input type="range" id="clX" min="0" max="100" value="65" step="1">
+        </label>
+        <label class="cl-range">
+          <span>上下 <b id="clYVal">58</b></span>
+          <input type="range" id="clY" min="0" max="100" value="58" step="1">
+        </label>
+        <button type="button" class="cl-reset" id="clReset">
+          <i class="fa-solid fa-rotate-left"></i> 回到預設位置
+        </button>
+      </div>
+
+      <div class="cl-note">
+        <i class="fa-solid fa-circle-info"></i>
+        此為示意畫面。實際印製的位置與顏色會在門市與你再次確認。
+      </div>
+
+      <div class="cl-err" id="clErr" style="display:none"></div>
+
+      <button type="button" class="cl-submit" id="clSubmit" disabled>儲 存 我 的 設 計</button>
+      <p class="cl-submit-hint" id="clSubmitHint">請先選一張刻圖,或自己畫一個</p>
+
+      <!-- 完成 -->
+      <div class="cl-done" id="clDone" style="display:none">
+        <i class="fa-solid fa-circle-check"></i>
+        <p class="cl-done-title">已經幫你存起來了</p>
+        <p class="cl-done-text" id="clDoneText"></p>
+        <a class="cl-done-btn" href="store.html">看門市據點</a>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/layout.js?v=20260819-erp"></script>
+<script src="js/auth.js?v=20260817-appmember"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/potrace-loader.js?v=20260515-25"></script>
+<script src="js/cloth.js?v=20260824"></script>
+</body>
+</html>
