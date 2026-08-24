@@ -104,6 +104,14 @@
             '<span class="lab-tag">' + (SOURCE[it.source] || esc(it.source)) + '</span>' +
             '<span class="lab-tag' + (it.status === 'done' ? ' is-done' : '') + '">' +
               (STATUS[it.status] || esc(it.status)) + '</span>' +
+            /* 尺寸每張卡各自一個,不是全域設定 ——
+               製作的人一次處理一件,全域的話得每下載一次改一次。 */
+            '<label class="lab-size" title="這一件的 DXF 會依這個尺寸輸出">' +
+              '<span>模擬刻在</span>' +
+              '<input type="number" data-w="' + esc(it.id) + '" value="150" ' +
+                'min="20" max="600" step="1">' +
+              '<em>mm 的眼鏡布</em>' +
+            '</label>' +
           '</div>' +
           '<div class="lab-meta">位置:<b>' + esc(placeText(it.placement)) + '</b></div>' +
           '<div class="lab-meta">' + who + '　·　' + esc(fmtTime(it.created_at)) + '</div>' +
@@ -157,8 +165,9 @@
 
   /* ---------- DXF ---------- */
 
-  function widthMm() {
-    var v = Number(el.width && el.width.value);
+  function widthMm(id) {
+    var input = el.list.querySelector('[data-w="' + id + '"]');
+    var v = Number(input && input.value);
     return Number.isFinite(v) && v > 0 ? v : 150;
   }
 
@@ -176,7 +185,7 @@
         return r.text();
       })
       .then(function (svg) {
-        var out = window.LohasDxf.fromSvg(svg, { widthMm: widthMm() });
+        var out = window.LohasDxf.fromSvg(svg, { widthMm: widthMm(it.id) });
         var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
         var blob = new Blob([out.dxf], { type: 'application/dxf' });
         var url = URL.createObjectURL(blob);
@@ -243,7 +252,7 @@
   function init() {
     el = {
       gate: $('labGate'), code: $('labCode'), enter: $('labEnter'), gateErr: $('labGateErr'),
-      body: $('labBody'), status: $('labStatus'), width: $('labWidthMm'),
+      body: $('labBody'), status: $('labStatus'),
       msg: $('labMsg'), list: $('labList'), out: $('labOut')
     };
     if (!el.gate) return;

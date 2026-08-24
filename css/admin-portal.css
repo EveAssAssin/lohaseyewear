@@ -4222,29 +4222,32 @@
   .cloth-thumb{ width:100%; height:180px }
 }
 
-/* DXF 輸出尺寸。
+/* 每張卡右上的尺寸設定。
    -------------------------------------------------------------
-   它跟旁邊的搜尋、狀態不是同一類東西 —— 那兩個是「看哪些」,
-   這個是「下載出來多大」。做成一個有邊框的小組件並推到最右邊,
-   一眼就看得出不是篩選條件。 */
-.cloth-dxf-size{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:6px 8px 6px 14px;
+   原本是工具列上的一個全域欄位,改成每張卡各自一個 ——
+   製作的人一次處理一件,全域的話得每下載一次改一次,
+   很容易改了之後忘了改回來,而那會直接刻錯尺寸。
+
+   靠右對齊(margin-left:auto),與左邊的名稱、狀態標籤同一列。 */
+.cloth-size-in{
+  margin-left:auto;
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 6px 4px 12px;
   border:1px solid var(--lohas-line, #E8DED1);
   border-radius:999px;
   background:var(--lohas-bg-soft, #F4F1EC);
 }
-.cloth-dxf-size > span{
-  font-size:12.5px; color:var(--lohas-sub, #6B6257); white-space:nowrap;
+.cloth-size-in > span{
+  font-size:12px; color:var(--lohas-sub, #6B6257); white-space:nowrap;
 }
-.cloth-dxf-size input{
-  width:72px; height:32px; padding:0 10px;
+.cloth-size-in input{
+  width:64px; height:28px; padding:0 8px;
   border:1px solid var(--lohas-line, #E8DED1); border-radius:999px;
-  background:#fff; font-family:inherit; font-size:13px; text-align:right;
+  background:#fff; font-family:inherit; font-size:12.5px; text-align:right;
   color:var(--lohas-brown, #50422D);
 }
-.cloth-dxf-size input:focus{ outline:none; border-color:var(--lohas-brown, #50422D) }
-.cloth-dxf-size em{
-  font-style:normal; font-size:12px; color:var(--text-muted, #9B9186);
-  padding-right:8px; white-space:nowrap;
+.cloth-size-in input:focus{ outline:none; border-color:var(--lohas-brown, #50422D) }
+.cloth-size-in em{
+  font-style:normal; font-size:12px; color:var(--lohas-muted, #9B9186);
+  padding-right:6px; white-space:nowrap;
 }

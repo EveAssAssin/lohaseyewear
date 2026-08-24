@@ -92,16 +92,20 @@
   background:var(--lohas-brand); color:#fff; border-color:var(--lohas-brand);
 }
 
+/* 每張卡右上的尺寸設定(原本在工具列,是全域的)。
+   製作的人一次處理一件,全域的話得每下載一次改一次,
+   很容易改了之後忘了改回來,而那會直接刻錯尺寸。 */
 .lab-size{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:5px 8px 5px 14px;
+  margin-left:auto;
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 6px 4px 12px;
   border:1px solid var(--lohas-bd, #E8DED1);
   border-radius:var(--r-pill, 999px);
-  background:#fff;
+  background:var(--bg-soft, #F4F1EC);
 }
 .lab-size > span{ font-size:12.5px; color:var(--text-sub); white-space:nowrap }
 .lab-size input{
-  width:70px; height:32px; padding:0 10px;
+  width:64px; height:30px; padding:0 8px;
   border:1px solid var(--lohas-bd, #E8DED1);
   border-radius:var(--r-pill, 999px);
   font-family:inherit; font-size:13px; text-align:right;
@@ -197,4 +201,6 @@
   .lab-done{ width:100%; justify-content:center }
   .lab-file{ flex:1 1 auto }
   .lab-bar{ flex-direction:column; align-items:stretch }
+  /* 手機上名稱與尺寸擠在同一列會換行得很難看,讓尺寸自己一列 */
+  .lab-size{ margin-left:0; width:100%; justify-content:space-between }
 }

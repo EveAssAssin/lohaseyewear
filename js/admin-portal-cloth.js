@@ -118,7 +118,17 @@
             '<div class="cloth-row"><b>' + esc(it.design_name || '(未命名)') + '</b>' +
               '<span class="cloth-tag">' + (SOURCE[it.source] || it.source) + '</span>' +
               '<span class="cloth-tag is-' + esc(it.status) + '">' +
-                (STATUS[it.status] || it.status) + '</span></div>' +
+                (STATUS[it.status] || it.status) + '</span>' +
+              /* 尺寸每張卡各自一個,不是全域設定。
+                 製作的人一次處理一件,而日後不同款布尺寸不同時,
+                 全域設定就得每下載一次改一次,很容易改了忘了改回來。 */
+              '<label class="cloth-size-in" title="這一件的 DXF 會依這個尺寸輸出">' +
+                '<span>模擬刻在</span>' +
+                '<input type="number" data-w="' + esc(it.id) + '" value="150" ' +
+                  'min="20" max="600" step="1">' +
+                '<em>mm 的眼鏡布</em>' +
+              '</label>' +
+            '</div>' +
             '<div class="cloth-meta">' + who + '　·　' + fmtTime(it.created_at) + '</div>' +
             '<div class="cloth-meta">位置:' + esc(placeText(it.placement)) + '</div>' +
             '<div class="cloth-btns">' +
@@ -165,8 +175,8 @@
 
   /* ---------- 下載 DXF ---------- */
 
-  function widthMm() {
-    var input = document.getElementById('clothWidthMm');
+  function widthMm(id) {
+    var input = document.querySelector('[data-w="' + id + '"]');
     var v = Number(input && input.value);
     return Number.isFinite(v) && v > 0 ? v : 150;
   }
@@ -199,7 +209,7 @@
         return r.text();
       })
       .then(function (svg) {
-        var out = window.LohasDxf.fromSvg(svg, { widthMm: widthMm() });
+        var out = window.LohasDxf.fromSvg(svg, { widthMm: widthMm(it.id) });
         var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
         saveText(out.dxf, name + '-' + String(it.id).slice(0, 8) + '.dxf');
         console.log('[cloth] DXF ' + out.paths + ' 條路徑,' +
