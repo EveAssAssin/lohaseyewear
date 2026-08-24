@@ -107,7 +107,10 @@
   font-family:inherit; font-size:13px; text-align:right;
   color:var(--lohas-brand); outline:none;
 }
-.lab-size em{ font-style:normal; font-size:12px; color:var(--text-muted, #9B9186); padding-right:4px }
+.lab-size em{
+  font-style:normal; font-size:12px; color:var(--text-muted, #9B9186);
+  padding-right:8px; white-space:nowrap;
+}
 
 /* === 訊息 === */
 

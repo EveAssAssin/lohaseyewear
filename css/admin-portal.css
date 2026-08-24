@@ -4245,6 +4245,6 @@
 }
 .cloth-dxf-size input:focus{ outline:none; border-color:var(--lohas-brown, #50422D) }
 .cloth-dxf-size em{
-  font-style:normal; font-size:12px; color:var(--lohas-muted, #9B9186);
-  padding-right:6px;
+  font-style:normal; font-size:12px; color:var(--text-muted, #9B9186);
+  padding-right:8px; white-space:nowrap;
 }
