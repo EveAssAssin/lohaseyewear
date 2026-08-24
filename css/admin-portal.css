@@ -4148,3 +4148,73 @@
   background:var(--lohas-brand, #c89f5c) !important; color:#fff !important;
   border-radius:16px 4px 16px 16px !important;
 }
+
+/* =============================================================
+   客製眼鏡布 (data-page="cloth")
+   ============================================================= */
+
+.cloth-tools{
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  margin-bottom:18px; padding:12px 16px;
+  background:#fff; border:1px solid var(--lohas-line, #E8DED1);
+  border-radius:12px;
+}
+.cloth-size{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--lohas-sub, #6B6257) }
+.cloth-size input{
+  width:90px; height:34px; padding:0 10px;
+  border:1px solid var(--lohas-line, #E8DED1); border-radius:8px;
+  font-family:inherit; font-size:14px;
+}
+.cloth-size-note{ font-size:12px; color:var(--lohas-muted, #9B9186) }
+
+.cloth-filter{
+  height:38px; padding:0 12px;
+  border:1px solid var(--lohas-line, #E8DED1); border-radius:999px;
+  background:#fff; font-family:inherit; font-size:13px;
+}
+
+.cloth-list{ display:flex; flex-direction:column; gap:12px }
+.cloth-loading, .cloth-empty{
+  padding:40px 0; text-align:center;
+  font-size:14px; color:var(--lohas-muted, #9B9186);
+}
+
+.cloth-card{
+  display:flex; gap:16px;
+  background:#fff; border:1px solid var(--lohas-line, #E8DED1);
+  border-radius:12px; padding:14px; align-items:flex-start;
+}
+/* 縮圖給大一點:後台的人是靠圖認出「這是哪一件」,不是靠編號 */
+.cloth-thumb{
+  width:120px; height:120px; flex-shrink:0;
+  object-fit:cover; border-radius:10px;
+  background:var(--lohas-bg-soft, #F4F1EC);
+}
+.cloth-info{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px }
+.cloth-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+.cloth-row b{ font-size:15px; color:var(--lohas-brown, #50422D) }
+.cloth-tag{
+  font-size:11px; padding:3px 9px; border-radius:999px;
+  background:var(--lohas-bg-soft, #F4F1EC); color:var(--lohas-sub, #6B6257);
+}
+.cloth-tag.is-done{ background:#E7F4EE; color:#2E7D5B }
+.cloth-tag.is-archived{ background:#EEE; color:#888 }
+.cloth-meta{ font-size:12.5px; color:var(--lohas-sub, #6B6257) }
+
+.cloth-btns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px }
+.cloth-btn{
+  display:inline-flex; align-items:center; gap:6px;
+  min-height:34px; padding:0 14px;
+  border:1px solid var(--lohas-line, #E8DED1); border-radius:999px;
+  background:#fff; color:var(--lohas-brown, #50422D);
+  font-family:inherit; font-size:12.5px; text-decoration:none;
+  cursor:pointer;
+}
+.cloth-btn:hover{ border-color:var(--lohas-brown, #50422D) }
+.cloth-btn:disabled{ opacity:.5; cursor:default }
+.cloth-btn.is-done{ border-color:#2E7D5B; color:#2E7D5B }
+
+@media (max-width:768px){
+  .cloth-card{ flex-direction:column }
+  .cloth-thumb{ width:100%; height:180px }
+}
