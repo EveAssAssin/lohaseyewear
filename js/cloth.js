@@ -24,10 +24,16 @@
 
   var CONFIG = {
     SAVE_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/cloth',
-    BASE_IMG: 'images/carrier-cloth.jpg',
-    /* 預設落點取自實際成品照(images/cloth-01.jpg 上那個「Louis」的位置)——
-       那是攝影時就決定好的版面,照著放比自己猜一個中間值準。 */
-    DEF: { scale: 0.22, x: 0.65, y: 0.58 },
+    /* ⚠ 這一頁專用的底圖,不是 images/carrier-cloth.jpg。
+       那一張還被 upload-design.js 的「刻在不同載體上的樣子」與
+       birthday-wall.js 用著,而前者把位置寫死成 x:72 y:60 ——
+       那組數字是照舊照片調的,共用一個檔名就會連帶把它們弄歪。 */
+    BASE_IMG: 'images/cloth-base.jpg',
+    /* 預設落點:置中偏上。
+       新底圖是平放的正方形,右下角有 LOHAS EYEWEAR 的燙印 ——
+       落在 y=0.58 以下會壓到那個標,所以往上移。
+       舊值(0.65 / 0.58)是照斜擺的實拍調的,那張照片裡布沒有填滿畫面。 */
+    DEF: { scale: 0.26, x: 0.5, y: 0.45 },
     DESIGN_PREVIEW: 12,        // 刻圖先顯示這麼多,其餘收在「展開全部」後面
     TRACE_SIZE: 1000,          // 手繪畫布的實際解析度
     MAX_SVG_BYTES: 400 * 1024  // 線稿超過這個大小多半是畫得太碎,擋下來
