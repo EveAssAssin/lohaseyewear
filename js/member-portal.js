@@ -2558,6 +2558,7 @@
     'creator-page': '創作者個人頁',
     'analytics': '創作數據',
     'earnings': '分潤紀錄',
+    'my-cloth': '客製眼鏡布',
     'gifts': '禮物中心',
     'profile': '會員資料'
   };
@@ -2593,6 +2594,7 @@
     // 票券的 Edge Function(coupon-list / lock / extend)仍在用 —— App 點票券
     // 跳進 design.html 客製時,官網要靠它們取得可換分類並定期續鎖。
     if (page === 'gifts' && window.LohasGifts) window.LohasGifts.load();
+    if (page === 'my-cloth' && window.LohasMyCloth) window.LohasMyCloth.load();
 
     // 進入分享頁 → 隱藏 sidebar 紅標 (已看過)
     if (page === 'shares') {
@@ -2874,7 +2876,15 @@
     var nav = root.querySelector('.nav-link[data-page="' + page + '"]');
     var panel = root.querySelector('.content-page[data-page="' + page + '"]');
     if (!nav || !panel) return;
-    if (nav.offsetParent === null) return;   // 被隱藏(如非創作者的創作者專區)
+
+    /* ⚠ 不要用 offsetParent 判斷「有沒有被隱藏」。
+       手機版整個側邊選單都是隱藏的(改走抽屜),於是每一個 nav-link 的
+       offsetParent 都是 null —— 深層連結在手機上會全部安靜地失效,
+       而那正是這整段程式要避免的症狀。2026-08-25 修正。
+
+       真正要擋的只有一件事:非創作者不能靠網址繞進創作者專區。
+       那個條件寫在 class 上(.mp.is-creator),與版面寬度無關。 */
+    if (nav.classList.contains('creator-only') && !root.classList.contains('is-creator')) return;
 
     goTo(page);
   }

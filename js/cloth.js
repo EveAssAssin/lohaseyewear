@@ -649,8 +649,7 @@
     [el.marketCard, el.drawCard, el.placeCard, el.sourceCard,
      el.submit, el.submitHint, el.note].forEach(hide);
     el.doneText.textContent =
-      '帶著會員編號到任一樂活門市,店員就能查到這張設計並為你製作。' +
-      '設計會一直保留著,不用急。';
+      '您已經成功送件,製作時間約 3~5 個工作天,完成後即可前往門市領取。';
     show(el.done);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }

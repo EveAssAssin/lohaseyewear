@@ -249,13 +249,28 @@
   color:var(--lohas-brand) }
 .cl-done-text{ margin:0 0 18px; font-size:13.5px; line-height:1.85;
   color:var(--text-sub) }
+/* 兩顆並排,窄螢幕自動變上下。
+   主要那顆(去門市領)實色,次要那顆(看自己存的)描邊 ——
+   兩顆都實色的話等於沒有主次,客人得自己讀完才知道該按哪個。 */
+.cl-done-btns{
+  display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+}
 .cl-done-btn{
-  display:inline-block; min-height:42px; line-height:40px; padding:0 26px;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  min-height:44px; padding:0 22px;
   border:1px solid var(--lohas-brand); border-radius:var(--r-pill, 999px);
   color:var(--lohas-brand); text-decoration:none;
-  font-size:14px; letter-spacing:.08em;
+  font-size:14px; letter-spacing:.06em;
+  transition:.15s;
 }
 .cl-done-btn:hover{ background:var(--lohas-brand); color:#fff }
+.cl-done-btn.primary{ background:var(--lohas-brand); color:#fff }
+.cl-done-btn.primary:hover{ background:var(--lohas-hover, #765F4A); border-color:var(--lohas-hover, #765F4A) }
+
+@media (max-width:420px){
+  .cl-done-btns{ flex-direction:column }
+  .cl-done-btn{ width:100% }
+}
 
 /* === RWD === */
 

@@ -103,12 +103,51 @@ Deno.serve(async (req) => {
   try { body = await req.json(); }
   catch { return reply('006', { message: '請求格式錯誤' }, 400); }
 
-  if (String(body.action || '') !== 'save') {
+  const action = String(body.action || '');
+  if (action !== 'save' && action !== 'list') {
     return reply('006', { message: '不支援的動作' }, 400);
   }
 
   const who = await whoFromToken(String(body.token || ''));
   if (!who) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+
+  /* ===== list:會員中心「我的眼鏡布」 =====
+     ---------------------------------------------------------------
+     只回這個人自己的。條件從 token 換出來的身分來,不看前端送什麼 ——
+     接受前端指定 erpid 的話,任何人都能看別人存了什麼。
+
+     erpid 與 mid 兩個都比:門市綁定之前存的那幾筆只有 mid,
+     綁定之後存的有 erpid。只比其中一個,客人會發現自己的東西「少了幾件」,
+     而那是最難解釋的一種 bug —— 資料還在,只是查不到。
+
+     svg_url 不回:那是製作端用的檔案,前端不需要,
+     回了等於把它散到瀏覽器紀錄與快取裡。 */
+  if (action === 'list') {
+    let q = db.from('cloth_designs')
+      .select('id, source, design_name, preview_url, status, created_at, done_at')
+      .order('created_at', { ascending: false })
+      .limit(60);
+
+    /* or() 收的是一段字串語法,值裡有逗號或括號會改變它的意思。
+       這兩個值來自上游會員 API 而不是前端,但「不是前端來的」不等於
+       「一定安全」—— 先確認只有英數與連字號,不合的就退回單欄比對。 */
+    const plain = (v: string) => /^[A-Za-z0-9_-]+$/.test(v);
+
+    if (who.erpid && who.mid && plain(who.erpid) && plain(who.mid)) {
+      q = q.or('erpid.eq.' + who.erpid + ',mid.eq.' + who.mid);
+    } else if (who.erpid) {
+      q = q.eq('erpid', who.erpid);
+    } else {
+      q = q.eq('mid', who.mid);
+    }
+
+    const { data, error } = await q;
+    if (error) {
+      console.error('[cloth] 列表失敗:', error.message);
+      return reply('500', { message: '讀取失敗,請稍後再試' }, 500);
+    }
+    return reply('200', { data: { items: data || [] } });
+  }
 
   if (rateLimited(who.erpid || who.mid)) {
     return reply('429', { message: '操作太頻繁,請稍候再試' }, 429);

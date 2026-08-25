@@ -24,6 +24,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <!-- 上傳 modal 所需資源 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
+  <link rel="stylesheet" href="css/cloth-mine.css?v=20260825a">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -84,6 +85,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button class="drawer-item" data-page="my-designs">
           <i class="fa-solid fa-pen-ruler"></i>
           <span>我的刻圖設計</span>
+          <i class="fa-solid fa-chevron-right drawer-arrow"></i>
+        </button>
+        <button class="drawer-item" data-page="my-cloth">
+          <i class="fa-solid fa-vector-square"></i>
+          <span>客製眼鏡布</span>
           <i class="fa-solid fa-chevron-right drawer-arrow"></i>
         </button>
         <button class="drawer-item" data-page="gifts">
@@ -151,6 +157,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="reject-badge" id="photoRejectBadge" style="display:none">0</span>
       </button>
       <button class="nav-link" data-page="my-designs"><i class="fa-solid fa-pen-ruler"></i><span>我的刻圖設計</span></button>
+      <button class="nav-link" data-page="my-cloth"><i class="fa-solid fa-vector-square"></i><span>客製眼鏡布</span></button>
       <button class="nav-link" data-page="gifts"><i class="fa-solid fa-gift"></i><span>禮物中心</span></button>
 
       <div class="nav-section-label creator-section-label" style="margin-top:10px">創 作 者</div>
@@ -340,6 +347,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="terms">每件設計被使用一次 = <b>$100 分潤</b> · 月底結算</div>
             <button class="cta" data-action="upload-design"><i class="fa-solid fa-pen-ruler"></i>設計一個刻圖</button>
           </div>
+        </div>
+      </div>
+
+      <!-- ===== 我的眼鏡布 =====
+           客人在 cloth.html 存下來的設計。清單由 js/cloth-mine.js 渲染,
+           資料走 cloth 函式的 list 動作(只回自己的,條件從 token 換出來)。 -->
+      <div class="content-page" data-page="my-cloth">
+        <div class="section-title"><h2>客製眼鏡布</h2></div>
+        <p class="section-intro">
+          你設計過的眼鏡布都在這裡。製作時間約 3~5 個工作天,完成後到門市出示會員編號就能領取。
+        </p>
+        <div id="myClothList">
+          <p class="empty-text">載入中...</p>
         </div>
       </div>
 
@@ -768,9 +788,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 <script src="js/subcategories.js?v=20260514"></script>
 <script src="js/upload-design.js?v=20260825-noreview3"></script>
-<script src="js/member-portal.js?v=20260820-midclaim"></script>
+<script src="js/member-portal.js?v=20260825-mycloth"></script>
 <script src="js/gift-center.js?v=20260820-midclaim"></script>
 <script src="js/upload.js?v=20260819-erp"></script>
+<script src="js/cloth-mine.js?v=20260825a"></script>
 
 </body>
 </html>

@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-carrieropt">
-  <link rel="stylesheet" href="css/cloth.css?v=20260825i">
+  <link rel="stylesheet" href="css/cloth.css?v=20260825j">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -147,7 +147,17 @@
         <i class="fa-solid fa-circle-check"></i>
         <p class="cl-done-title">已經幫你存起來了</p>
         <p class="cl-done-text" id="clDoneText"></p>
-        <a class="cl-done-btn" href="store.html">看門市據點</a>
+        <div class="cl-done-btns">
+          <!-- ⚠ 是 allstore.html(門市清單)不是 store.html。
+               store.html 是「單一門市」的內頁,沒帶門市代號進去就什麼都不顯示,
+               點了看起來像沒反應 —— 2026-08-25 修正。 -->
+          <a class="cl-done-btn primary" href="allstore.html">
+            <i class="fa-solid fa-location-dot"></i> 到門市據點領取
+          </a>
+          <a class="cl-done-btn" href="member-portal.html?page=my-cloth">
+            <i class="fa-regular fa-images"></i> 看我儲存的設計
+          </a>
+        </div>
       </div>
 
     </div>
@@ -168,6 +178,6 @@
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
 <script src="js/subcategories.js?v=20260513-2330"></script>
 <script src="js/upload-design.js?v=20260825-noreview3"></script>
-<script src="js/cloth.js?v=20260825j"></script>
+<script src="js/cloth.js?v=20260825k"></script>
 </body>
 </html>
