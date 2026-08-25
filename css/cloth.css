@@ -307,13 +307,15 @@
      兩顆按鈕會變成沒頭沒尾的兩塊,不知道自己在選什麼。 */
   #clSourceCard .cl-note-sm{ display:none }
 
-  /* 專心模式(JS 加 .cl-focus):已經選定要走哪條路的時候,
-     另一條路與上傳入口都收起來 —— 釘住的區域省下大約 100px,
-     下面挑刻圖、畫圖的空間就多一列。
-     圖放到布上之後 JS 會把 .cl-focus 拿掉,三個入口一起回來。 */
-  #clSourceCard.cl-focus .cl-seg{ grid-template-columns:1fr }
-  #clSourceCard.cl-focus .cl-seg-btn:not(.on){ display:none }
-  #clSourceCard.cl-focus .cl-upload{ display:none }
+  /* 還沒有圖之前不顯示眼鏡布(JS 在 body 加 .cl-has-art)。
+     -----------------------------------------------------------
+     手機的高度全部要用在「挑圖」這件事上。空的眼鏡布釘在上面
+     佔掉 276px,而它那時什麼都沒告訴你 —— 你還沒有東西可以看。
+     圖一放上去它就出現並釘住,之後拉滑桿、拖位置都看得到。
+
+     三個入口(刻圖市集、自己畫、上傳)一律常駐,不收合 ——
+     隨時想換來源都按得到。 */
+  body.cl:not(.cl-has-art) .cl-left{ display:none }
   /* 釘住之後這行提示佔的是寶貴的高度,而且手機是用拖曳不是滑桿 */
   .cl-hint{ display:none }
 }

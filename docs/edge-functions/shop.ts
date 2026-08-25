@@ -6,10 +6,22 @@
    部署:Supabase Dashboard → Edge Functions → shop
         Verify JWT 關閉(官網前端不帶 Supabase JWT)
 
+   ⚠【這一支的金鑰不在我方手上】
+     SHOP_SITE_API_KEY 由商城工程方於 2026-08-19 自行設在 Secrets,
+     我方從來沒有拿到那個值。所以:
+       · 下面的 FALLBACK_SITE_KEY 永遠是空的,不是漏填 ——
+         我方沒有東西可以填。
+       · 取代這支之前【不需要】從下載檔搶救金鑰(其他函式需要)。
+       · 這支不能用 FALLBACK 救。Secret 被刪掉的話只能請對方重設。
+
    金鑰兩種來源,擇一:
-     A. Secrets 設 SHOP_SITE_API_KEY(有權限時的正解)
-     B. 沒有 Secrets 權限時,把金鑰直接填在下面的 FALLBACK_SITE_KEY
+     A. Secrets 設 SHOP_SITE_API_KEY(這一支的實際情形)
+     B. 沒有 Secrets 權限時填 FALLBACK_SITE_KEY
         絕對不要把填好金鑰的版本回寫到 repo。
+
+   設定確認:用瀏覽器開這支的網址(GET)就會回自檢結果 ——
+     https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop
+   看 site_key_from_env 與 shop_base_host 兩欄。不需要終端機。
 
    ⚠ 這支讀的是 SHOP_SITE_API_KEY,【不是】SITE_API_KEY,也刻意不做備援。
 
@@ -303,6 +315,31 @@ function submissionRow(
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  /* 設定自檢(商城工程方 2026-08-19 加的,保留)。
+     只回「有沒有設」與「連到哪個主機」,不回金鑰內容。
+
+     這兩項設錯都不會報錯,所以特別需要一個看得到的地方:
+       金鑰錯 → 上游 403 被包成「無法連線到商城」
+       網址錯 → 完全正常運作,只是把客人推進另一個環境的購物車
+
+     ⚠ site_key_from_env 為 true 只代表【讀到了值】,不代表那個值是對的。
+       要確認金鑰真的可用,POST {"action":"categories"} 實打一次。 */
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({
+      function: 'shop',
+      project_ref: 'hqdmyxxrskvllkcedybl',
+      key_var: 'SHOP_SITE_API_KEY',
+      site_key_from_env: Deno.env.get('SHOP_SITE_API_KEY') ? true : false,
+      shop_base_host: new URL(SHOP_BASE).hostname,
+      shop_base_from_env: !!Deno.env.get('SHOP_BASE_URL'),
+      actions: Object.keys(ROUTES),
+      note: 'site_key_from_env 只表示讀到值;金鑰是否正確請以 categories 實打驗證。',
+    }, null, 2), {
+      headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' },
+    });
+  }
+
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
