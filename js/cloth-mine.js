@@ -51,7 +51,11 @@
      資料庫的值是 new / done / archived —— 直接顯示英文,
      或是把 archived 講成「已封存」,客人都會來問那是什麼意思。 */
   function statusText(s, doneAt) {
-    if (s === 'done') return { cls: 'ok', text: '已完成 · 可到門市領取' + (doneAt ? '(' + ymd(doneAt) + ' 完成)' : '') };
+    /* 不寫「可到門市領取」——實際要先確認門市有沒有備好、人在不在。
+       客人白跑一趟的成本遠高於這一行多幾個字。
+       完成日期不併在這一句裡:詳情頁另有「完成日期」欄位,
+       句子裡再塞一次會把重點(先連絡)擠掉。 */
+    if (s === 'done') return { cls: 'ok', text: '已完成，前往領取前請務必先連絡門市' };
     if (s === 'archived') return { cls: 'muted', text: '已結案' };
     return { cls: 'wait', text: '製作中 · 約 3~5 個工作天' };
   }
@@ -131,8 +135,8 @@
       '</dl>' +
       '<p class="mc-modal-note">' +
         (it.status === 'done'
-          ? '到任一樂活門市出示會員編號就能領取。'
-          : '製作時間約 3~5 個工作天,完成後可到門市領取。') +
+          ? '前往領取前請務必先連絡門市確認,並出示會員編號。'
+          : '製作時間約 3~5 個工作天,完成後我們會通知你。') +
       '</p>';
 
     modal.classList.add('on');
