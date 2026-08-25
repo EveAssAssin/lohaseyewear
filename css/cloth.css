@@ -316,6 +316,11 @@
      三個入口(刻圖市集、自己畫、上傳)一律常駐,不收合 ——
      隨時想換來源都按得到。 */
   body.cl:not(.cl-has-art) .cl-left{ display:none }
+
+  /* 正在自己畫、還沒把圖放上去 —— 連來源那一區也收掉。
+     畫布需要高度,而那三顆按鈕在畫的當下沒有用:他已經在畫了。
+     圖一放上去就整組回來(JS 拿掉 .cl-drawing),那時才可能想換。 */
+  body.cl.cl-drawing #clSourceCard{ display:none }
   /* 釘住之後這行提示佔的是寶貴的高度,而且手機是用拖曳不是滑桿 */
   .cl-hint{ display:none }
 }

@@ -246,7 +246,7 @@
 
   function applyOverlay() {
     // 市集、手繪、上傳三條路最後都會走到這裡,顯示與否只判斷一次
-    syncPreviewVisible();
+    syncChrome();
 
     /* 滑桿與數字先同步,而且要在下面那個 return 之前 ——
        清空時 State 已經回預設,若跟著 return 掉,畫面上會留著
@@ -692,6 +692,9 @@
     var open;
     if (src === 'market') { show(el.marketCard); hide(el.drawCard); open = el.marketCard; }
     else { hide(el.marketCard); show(el.drawCard); open = el.drawCard; }
+    /* 再算一次:clearPick 走到 syncChrome 的時候 State.source 還是舊的,
+       只有這裡設完新值之後算出來的才對。 */
+    syncChrome();
     if (scroll) scrollToCard(open);
   }
 
@@ -699,13 +702,25 @@
 
   var MOBILE = 960;
 
-  /* 有圖之前不顯示眼鏡布(只在手機,實際的隱藏寫在 cloth.css)。
-     空的布釘在上面會佔掉 276px,而那時它什麼都沒告訴你。 */
-  function syncPreviewVisible() {
+  /* 手機上「上面那一塊要不要在」由兩件事決定(實際的隱藏寫在 cloth.css):
+
+       cl-has-art   布上有圖 → 顯示眼鏡布。
+                    空的布釘在上面佔掉 276px,而那時它什麼都沒告訴你。
+
+       cl-drawing   正在自己畫、還沒把圖放上去 → 連來源那一區也收掉。
+                    畫布需要高度,而那三顆按鈕在畫的當下沒有用 ——
+                    他已經在畫了。圖一放上去就整組回來,那時才可能想換。 */
+  function syncChrome() {
     var has = !!State.picked;
-    if (document.body.classList.contains('cl-has-art') === has) return;
-    document.body.classList.toggle('cl-has-art', has);
-    syncSticky();               // 上面那塊的高度變了,底下那塊釘的位置要跟著改
+    var drawing = State.source === 'draw' && !has;
+    var b = document.body, changed = false;
+    if (b.classList.contains('cl-has-art') !== has) {
+      b.classList.toggle('cl-has-art', has); changed = true;
+    }
+    if (b.classList.contains('cl-drawing') !== drawing) {
+      b.classList.toggle('cl-drawing', drawing); changed = true;
+    }
+    if (changed) syncSticky();   // 上面那塊的高度變了,底下那塊釘的位置要跟著改
   }
 
   /* 「圖案從哪裡來」要釘在預覽正下方,而預覽高度隨螢幕變 —— CSS 算不出來,
