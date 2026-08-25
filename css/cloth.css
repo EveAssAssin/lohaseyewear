@@ -297,10 +297,16 @@
     position:sticky;
     top:var(--cl-stick2, 380px);
     z-index:4;
+    padding:14px;
     /* 卡片是圓角白底,兩側與上下要補一圈底色,
        不然捲動的內容會從卡片旁邊的縫透出來。 */
     box-shadow:0 0 0 20px var(--bg-warm);
   }
+  /* 釘住的東西每一行都在跟操作區搶高度。
+     標題與那段說明在桌機是幫助,在這裡是常駐佔位 ——
+     兩顆按鈕本身已經說明了要做什麼。 */
+  #clSourceCard .cl-card-title,
+  #clSourceCard .cl-note-sm{ display:none }
   /* 釘住之後這行提示佔的是寶貴的高度,而且手機是用拖曳不是滑桿 */
   .cl-hint{ display:none }
 }

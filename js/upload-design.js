@@ -1789,6 +1789,10 @@
 
          回傳的物件標了 __noReview,呼叫端據此知道沒有 design_id。 */
       if(state.noReview){
+        /* ⚠ 順序不能顛倒。closeModal() 有「上傳中不准關」的擋門
+           (state.submitting),成功時那個旗標還是 true ——
+           先關再清的話彈窗會留在畫面上不動。 */
+        setSubmitting(false);
         closeModal();
         resetForm();
         toast('已上傳,可以放到眼鏡布上了');
@@ -1841,6 +1845,8 @@
       }
 
       // 成功 → 關閉 + 清空 + 通知
+      // (setSubmitting 要先解,理由同上面 noReview 那段)
+      setSubmitting(false);
       closeModal();
       resetForm();
       toast(state.editId ? '已重新送審' : '已送出審核,我們會盡快通知你');
@@ -1858,8 +1864,16 @@
 
   function setSubmitting(s){
     state.submitting = s;
-    els.submit.disabled = s;
-    els.submit.querySelector('span').textContent = s ? '送出中...' : (state.editId ? '重 新 送 審' : '送 出 審 核');
+    var idle = state.noReview ? '確 定 上 傳'
+             : (state.editId ? '重 新 送 審' : '送 出 審 核');
+    // 兩個模式各一顆送出鈕,失敗退回時兩顆都要退回正確的字
+    ['#dumSubmit', '#dumSubmit2'].forEach(function(sel){
+      var b = modal && modal.querySelector(sel);
+      if(!b) return;
+      b.disabled = s;
+      var sp = b.querySelector('span');
+      if(sp) sp.textContent = s ? '送出中...' : idle;
+    });
     els.cancel.disabled = s;
   }
 
