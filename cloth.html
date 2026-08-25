@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-carrieropt">
-  <link rel="stylesheet" href="css/cloth.css?v=20260825j">
+  <link rel="stylesheet" href="css/cloth.css?v=20260825k">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -33,6 +33,21 @@
     <h1 class="cl-title">客製眼鏡布</h1>
     <div class="cl-title-line"></div>
     <p class="cl-sub">挑一張刻圖,或自己畫幾筆 —— 做一條只有你有的眼鏡布。</p>
+  </div>
+
+  <!-- ===== 來源列(置頂浮動)=====
+       刻意放在 .cl-body 之外。放在右欄裡的話,手機版它只能排在預覽下面 ——
+       而「先決定圖從哪來」是這一頁的第一個動作,它應該在最上面。
+       三個入口一律常駐,隨時想換都按得到。 -->
+  <div class="cl-sourcebar" id="clSourceCard">
+    <p class="cl-bar-title">圖案從哪裡來</p>
+    <div class="cl-seg" id="clSource">
+      <button type="button" class="cl-seg-btn on" data-src="market">刻圖市集</button>
+      <button type="button" class="cl-seg-btn" data-src="draw">自己畫</button>
+      <!-- 這一顆是「動作」不是「模式」(開一個視窗、做完就回來),
+           所以沒有 data-src,按了不會停在某個狀態。 -->
+      <button type="button" class="cl-seg-btn" id="clUpload">上傳我的圖</button>
+    </div>
   </div>
 
   <div class="cl-body">
@@ -53,27 +68,6 @@
 
     <!-- ===== 右:操作 ===== -->
     <div class="cl-right">
-
-      <!-- 來源切換。手機上與預覽一起釘在頂端(見 cloth.css) -->
-      <div class="cl-card" id="clSourceCard">
-        <p class="cl-card-title">圖案從哪裡來</p>
-        <div class="cl-seg" id="clSource">
-          <button type="button" class="cl-seg-btn on" data-src="market">刻圖市集</button>
-          <button type="button" class="cl-seg-btn" data-src="draw">自己畫</button>
-        </div>
-
-        <!-- 第三種來源。刻意不做成第三個切換鈕 ——
-             那兩個是「模式」(按了停在那裡),這個是「動作」(開一個視窗、
-             做完就回來)。長得一樣會讓人以為按了會切到某個上傳畫面。
-             用刻圖市集現成的上傳模組,不另做一套。 -->
-        <button type="button" class="cl-upload" id="clUpload">
-          <i class="fa-solid fa-arrow-up-from-bracket"></i> 上傳我自己的圖
-        </button>
-        <p class="cl-note-sm">
-          上傳的圖只用在你這條眼鏡布上,不會公開,也不需要等審核。
-          想讓其他人也用得到,可以另外投稿到刻圖市集。
-        </p>
-      </div>
 
       <!-- 市集刻圖 -->
       <div class="cl-card" id="clMarketCard">
@@ -178,6 +172,6 @@
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
 <script src="js/subcategories.js?v=20260513-2330"></script>
 <script src="js/upload-design.js?v=20260825-noreview3"></script>
-<script src="js/cloth.js?v=20260825k"></script>
+<script src="js/cloth.js?v=20260825m"></script>
 </body>
 </html>

@@ -85,7 +85,9 @@
     // 切分頁進來會重打一次,沒必要 —— 這份清單不會自己變
     if (loaded && !force) return;
 
-    var token = (window.Auth && window.Auth.getToken) ? window.Auth.getToken() : '';
+    // 全域是 LohasAuth,不是 Auth —— 寫錯的話會一路安靜地當成「沒登入」
+    var A = window.LohasAuth;
+    var token = (A && A.getToken) ? A.getToken() : '';
     if (!token) {
       box.innerHTML = '<p class="empty-text">請先登入</p>';
       return;

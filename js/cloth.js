@@ -691,9 +691,6 @@
     var open;
     if (src === 'market') { show(el.marketCard); hide(el.drawCard); open = el.marketCard; }
     else { hide(el.marketCard); show(el.drawCard); open = el.drawCard; }
-    /* 再算一次:clearPick 走到 syncChrome 的時候 State.source 還是舊的,
-       只有這裡設完新值之後算出來的才對。 */
-    syncChrome();
     if (scroll) scrollToCard(open);
   }
 
@@ -701,38 +698,29 @@
 
   var MOBILE = 960;
 
-  /* 手機上「上面那一塊要不要在」由兩件事決定(實際的隱藏寫在 cloth.css):
-
-       cl-has-art   布上有圖 → 顯示眼鏡布。
-                    空的布釘在上面佔掉 276px,而那時它什麼都沒告訴你。
-
-       cl-drawing   正在自己畫、還沒把圖放上去 → 連來源那一區也收掉。
-                    畫布需要高度,而那三顆按鈕在畫的當下沒有用 ——
-                    他已經在畫了。圖一放上去就整組回來,那時才可能想換。 */
+  /* 有圖之前不顯示眼鏡布(只在手機,實際的隱藏寫在 cloth.css)。
+     空的布佔掉 276px,而那時它什麼都沒告訴你 —— 還沒有東西可以看。
+     來源列不受影響:它永遠釘在最上面,三個入口隨時按得到。 */
   function syncChrome() {
     var has = !!State.picked;
-    var drawing = State.source === 'draw' && !has;
-    var b = document.body, changed = false;
-    if (b.classList.contains('cl-has-art') !== has) {
-      b.classList.toggle('cl-has-art', has); changed = true;
-    }
-    if (b.classList.contains('cl-drawing') !== drawing) {
-      b.classList.toggle('cl-drawing', drawing); changed = true;
-    }
-    if (changed) syncSticky();   // 上面那塊的高度變了,底下那塊釘的位置要跟著改
+    if (document.body.classList.contains('cl-has-art') === has) return;
+    document.body.classList.toggle('cl-has-art', has);
+    syncSticky();
   }
 
-  /* 「圖案從哪裡來」要釘在預覽正下方,而預覽高度隨螢幕變 —— CSS 算不出來,
-     量完寫進變數給 #clSourceCard 的 top 用。 */
+  /* 預覽要釘在來源列【正下方】,而來源列的高度隨字級與換行變 ——
+     CSS 算不出來,量完寫進變數給 .cl-left 的 top 用。 */
   function syncSticky() {
-    if (!el.left) return;
-    var h = window.innerWidth <= MOBILE ? 70 + el.left.offsetHeight : 0;
-    document.documentElement.style.setProperty('--cl-stick2', h + 'px');
+    if (!el.sourceCard) return;
+    var h = window.innerWidth <= MOBILE ? 70 + el.sourceCard.offsetHeight : 0;
+    document.documentElement.style.setProperty('--cl-preview-top', h + 'px');
   }
 
+  /* 捲動時要讓開的高度:header ＋ 來源列 ＋(有圖的話)預覽。
+     .cl-left 隱藏時 offsetHeight 是 0,不必另外判斷。 */
   function stickyBottom() {
     if (window.innerWidth > MOBILE) return 90;   // 只有 header 擋著
-    return 70 + el.left.offsetHeight + el.sourceCard.offsetHeight + 12;
+    return 70 + el.sourceCard.offsetHeight + el.left.offsetHeight + 12;
   }
 
   /* 切了來源就把那張卡捲到釘住的兩塊底下。
@@ -775,7 +763,10 @@
 
     el.source.addEventListener('click', function (e) {
       var b = e.target.closest('.cl-seg-btn');
-      if (b) setSource(b.dataset.src, true);
+      /* ⚠ 要看 data-src 有沒有值。「上傳我的圖」也在這一列、也是 .cl-seg-btn,
+         但它是動作不是模式 —— 少了這個判斷會呼叫 setSource(undefined),
+         結果是兩張卡都關掉、畫面空一塊。 */
+      if (b && b.dataset.src) setSource(b.dataset.src, true);
     });
 
     el.designs.addEventListener('click', function (e) {

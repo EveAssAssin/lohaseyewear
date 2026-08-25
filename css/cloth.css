@@ -82,9 +82,30 @@
   color:var(--lohas-brand);
 }
 
+/* === 來源列(置頂浮動)===
+   -------------------------------------------------------------
+   「先決定圖從哪來」是這一頁的第一個動作,所以它釘在最上面、
+   全寬、蓋過底下的內容。三個入口一律常駐。 */
+.cl-sourcebar{
+  position:sticky;
+  top:70px;                    /* .main-header 的高度 */
+  z-index:6;                   /* 要蓋過預覽(5)與卡片 */
+  margin:0 0 16px;
+  padding:12px 16px 14px;
+  background:#fff;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-lg, 18px);
+  box-shadow:0 4px 14px rgba(80,66,45,.06);
+}
+.cl-bar-title{
+  margin:0 0 10px;
+  font-size:13px; font-weight:600; letter-spacing:.08em;
+  color:var(--lohas-brand);
+}
+
 /* 來源切換 */
 .cl-seg{
-  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;
 }
 .cl-seg-btn{
   min-height:42px;
@@ -282,63 +303,47 @@
   .cl-body{ display:block }
   .cl-main{ padding:88px 18px 60px }
 
-  /* 手機:預覽 ＋「圖案從哪裡來」一起釘在上面。
-     -----------------------------------------------------------
-     操作都在下面,而預覽原本會被捲出畫面 —— 拉滑桿的時候看不到
-     自己在調什麼,只能拉一下、捲上去看、再捲下來,非常難用。
-     來源切換一起釘住的理由一樣:那是隨時會想換的東西,
-     捲到下面挑刻圖的時候它已經看不到了。
+  /* 來源列貼齊兩側,捲動時底下的內容不會從圓角旁邊透出來 */
+  .cl-sourcebar{
+    margin-left:-18px; margin-right:-18px;
+    border-left:0; border-right:0;
+    border-radius:0;
+  }
+  .cl-seg-btn{ font-size:13px; letter-spacing:0 }
 
-     釘住之後尺寸要縮小,不然兩塊加起來會吃掉整個螢幕。
-     32vh 是留給操作區的底線:一張卡片還看得到幾列刻圖。 */
+  /* 預覽釘在來源列【底下】。
+     -----------------------------------------------------------
+     top 必須等於「header ＋ 來源列實際高度」,而來源列的高度隨
+     字級與換行變 —— 寫死會疊在一起或中間開一條縫,
+     所以由 JS 量完寫進 --cl-preview-top(見 cloth.js 的 syncSticky)。
+
+     為什麼預覽也要釘住:操作都在下面,拉滑桿、拖位置的時候
+     看不到自己在調什麼的話,只能拉一下、捲上去看、再捲下來。 */
   .cl-left{
     position:sticky;
-    top:70px;                 /* .main-header 的高度 */
+    top:var(--cl-preview-top, 140px);
     z-index:5;
     background:var(--bg-warm);
-    padding:8px 0;
-    margin:0 -18px 16px;      /* 貼齊兩側,捲動時底下的內容不會從旁邊透出來 */
-    padding-left:18px; padding-right:18px;
+    padding:8px 18px;
+    margin:0 -18px 16px;
+    box-shadow:0 10px 10px -10px rgba(80,66,45,.10);
   }
   .cl-stage{
     max-width:min(320px, 32vh);
     margin:0 auto;
   }
 
-  /* 第二塊釘在預覽底下。top 必須等於「header ＋ 預覽區實際高度」,
-     而預覽高度隨螢幕變(32vh vs 320px),寫死會疊在一起或中間開一條縫,
-     所以由 JS 量完寫進 --cl-stick2(見 cloth.js 的 syncSticky)。 */
-  #clSourceCard{
-    position:sticky;
-    top:var(--cl-stick2, 380px);
-    z-index:4;
-    padding:14px;
-    /* 卡片是圓角白底,兩側與上下要補一圈底色,
-       不然捲動的內容會從卡片旁邊的縫透出來。 */
-    box-shadow:0 0 0 20px var(--bg-warm);
-  }
-  /* 那段說明是給「上傳我自己的圖」的補充,常駐在釘住的區域裡
-     等於一直在跟操作區搶高度。標題留著 —— 沒有它的話,
-     兩顆按鈕會變成沒頭沒尾的兩塊,不知道自己在選什麼。 */
-  #clSourceCard .cl-note-sm{ display:none }
-
-  /* 還沒有圖之前不顯示眼鏡布(JS 在 body 加 .cl-has-art)。
-     -----------------------------------------------------------
-     手機的高度全部要用在「挑圖」這件事上。空的眼鏡布釘在上面
-     佔掉 276px,而它那時什麼都沒告訴你 —— 你還沒有東西可以看。
-     圖一放上去它就出現並釘住,之後拉滑桿、拖位置都看得到。
-
-     三個入口(刻圖市集、自己畫、上傳)一律常駐,不收合 ——
-     隨時想換來源都按得到。 */
+  /* 還沒有圖之前不顯示眼鏡布。
+     手機的高度全部要用在「挑圖」這件事上,空的布佔掉 276px
+     而它那時什麼都沒告訴你 —— 你還沒有東西可以看。
+     圖一放上去它就出現並釘住。 */
   body.cl:not(.cl-has-art) .cl-left{ display:none }
 
-  /* 正在自己畫、還沒把圖放上去 —— 連來源那一區也收掉。
-     畫布需要高度,而那三顆按鈕在畫的當下沒有用:他已經在畫了。
-     圖一放上去就整組回來(JS 拿掉 .cl-drawing),那時才可能想換。 */
-  body.cl.cl-drawing #clSourceCard{ display:none }
   /* 釘住之後這行提示佔的是寶貴的高度,而且手機是用拖曳不是滑桿 */
   .cl-hint{ display:none }
 }
 @media (max-width:420px){
   .cl-designs{ grid-template-columns:repeat(3, 1fr) }
+  .cl-seg{ gap:6px }
+  .cl-seg-btn{ font-size:12.5px; padding:0 4px }
 }
