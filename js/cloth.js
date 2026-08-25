@@ -189,7 +189,12 @@
     /* 關掉「刻在不同載體上的樣子」——
        這一頁本身就是眼鏡布的即時預覽,再給一次六種載體的示意,
        會讓人以為自己還在挑要刻在什麼上面。 */
-    window.LohasUploadDesign.openModal({ hideCarriers: true });
+    window.LohasUploadDesign.openModal({
+      hideCarriers: true,
+      /* 不送審 —— 他只是想把自己的圖印在自己的眼鏡布上,那不是投稿。
+         寫「送出審核」卻不送審,他會一直等一個不會來的通知。 */
+      noReview: true
+    });
   }
 
   /* 上傳成功 → 直接套到布上。
@@ -197,10 +202,12 @@
      叫他等審核通過再回來做眼鏡布,他多半不會回來。 */
   function onUploaded(e) {
     var d = e && e.detail;
-    if (!d || !d.id) return;
+    if (!d) return;
+    // 市集那條路會有 id,不送審這條沒有
+    if (!d.__noReview && !d.id) return;
 
     if (!d.image_url_svg) {
-      showErr('圖已經送出審核了,但沒有產生線稿檔,暫時不能用在眼鏡布上。' +
+      showErr('圖傳上去了,但沒有產生線稿檔,暫時不能用在眼鏡布上。' +
               '試著換一張線條清楚一點的圖。');
       return;
     }
@@ -217,11 +224,15 @@
 
     hide(el.err);
     State.picked = {
-      source: 'market',        // 它確實是刻圖市集的一列,只是還沒過審
-      design_id: d.id,
+      /* 不送審的圖沒有寫進刻圖市集,所以不是 market ——
+         它跟手繪一樣是「這個人自己的圖」,歸在 draw。
+         標成 market 卻沒有 design_id,後台會出現一筆
+         「來自市集但查不到是哪一張」的紀錄。 */
+      source: d.__noReview ? 'draw' : 'market',
+      design_id: d.__noReview ? null : d.id,
       name: d.name || '我的圖',
       imageUrl: designThumb(d),
-      svgUrl: d.image_url_svg,
+      svgUrl: d.image_url_svg,     // 兩條路都已經有現成的 SVG 網址
       svgString: ''
     };
     renderDesigns();
@@ -563,9 +574,14 @@
     var stamp = Date.now() + '-' + randStr(6);
     var svgUrl = '';
 
-    /* 市集刻圖已經有現成的 SVG,直接沿用它的網址,不要重新上傳一份 ——
-       同一個檔案存兩次,日後更新原作時會有一份永遠是舊的。 */
-    var svgStep = State.picked.source === 'market'
+    /* 已經有現成 SVG 網址的就沿用(市集刻圖、上傳的圖都是)——
+       同一個檔案存兩次,日後更新原作時會有一份永遠是舊的。
+       只有手繪是當場產生的,那才需要上傳。
+
+       ⚠ 判斷用「有沒有 svgUrl」,不要用 source ——
+       不送審的上傳圖 source 是 draw 卻有現成網址,
+       用 source 判斷會拿一個空字串去上傳。 */
+    var svgStep = State.picked.svgUrl
       ? Promise.resolve(State.picked.svgUrl)
       : uploadBlob(
           new Blob([State.picked.svgString], { type: 'image/svg+xml' }),
@@ -641,13 +657,45 @@
       : '請先選一張刻圖,或自己畫一個';
   }
 
-  function setSource(src) {
+  function setSource(src, scroll) {
     State.source = src;
     el.source.querySelectorAll('.cl-seg-btn').forEach(function (b) {
       b.classList.toggle('on', b.dataset.src === src);
     });
-    if (src === 'market') { show(el.marketCard); hide(el.drawCard); }
-    else { hide(el.marketCard); show(el.drawCard); }
+    var open;
+    if (src === 'market') { show(el.marketCard); hide(el.drawCard); open = el.marketCard; }
+    else { hide(el.marketCard); show(el.drawCard); open = el.drawCard; }
+    if (scroll) scrollToCard(open);
+  }
+
+  /* ---------- 釘住的兩塊 ---------- */
+
+  var MOBILE = 960;
+
+  /* 「圖案從哪裡來」要釘在預覽正下方,而預覽高度隨螢幕變 —— CSS 算不出來,
+     量完寫進變數給 #clSourceCard 的 top 用。 */
+  function syncSticky() {
+    if (!el.left) return;
+    var h = window.innerWidth <= MOBILE ? 70 + el.left.offsetHeight : 0;
+    document.documentElement.style.setProperty('--cl-stick2', h + 'px');
+  }
+
+  function stickyBottom() {
+    if (window.innerWidth > MOBILE) return 90;   // 只有 header 擋著
+    return 70 + el.left.offsetHeight + el.sourceCard.offsetHeight + 12;
+  }
+
+  /* 切了來源就把那張卡捲到釘住的兩塊底下。
+     已經看得完整的就不要動 —— 沒事亂捲比不捲更讓人失去方向。 */
+  function scrollToCard(card) {
+    if (!card) return;
+    var top = stickyBottom();
+    var r = card.getBoundingClientRect();
+    if (r.top >= top && r.bottom <= window.innerHeight) return;
+    window.scrollTo({
+      top: Math.max(0, window.scrollY + r.top - top),
+      behavior: 'smooth'
+    });
   }
 
   /* ---------- 啟動 ---------- */
@@ -655,7 +703,8 @@
   function init() {
     el = {
       stage: $('clStage'), base: $('clBase'), overlay: $('clOverlay'),
-      sourceCard: document.querySelector('.cl-card'), source: $('clSource'),
+      left: document.querySelector('.cl-left'),
+      sourceCard: $('clSourceCard'), source: $('clSource'),
       marketCard: $('clMarketCard'), drawCard: $('clDrawCard'),
       search: $('clSearch'), designs: $('clDesigns'), more: $('clMore'),
       upload: $('clUpload'),
@@ -676,7 +725,7 @@
 
     el.source.addEventListener('click', function (e) {
       var b = e.target.closest('.cl-seg-btn');
-      if (b) setSource(b.dataset.src);
+      if (b) setSource(b.dataset.src, true);
     });
 
     el.designs.addEventListener('click', function (e) {
@@ -712,8 +761,14 @@
 
     el.submit.addEventListener('click', submit);
 
-    // 視窗大小變了要重算疊圖的像素尺寸(scale 是比例,像素得跟著算)
-    window.addEventListener('resize', applyOverlay);
+    // 視窗大小變了要重算疊圖的像素尺寸(scale 是比例,像素得跟著算),
+    // 釘住那兩塊的高度也跟著變(直橫向切換時差很多)
+    window.addEventListener('resize', function () {
+      applyOverlay();
+      syncSticky();
+    });
+    syncSticky();
+    requestAnimationFrame(syncSticky);   // 字體換好之後高度會再動一次
 
     loadDesigns();
     refreshSubmit();

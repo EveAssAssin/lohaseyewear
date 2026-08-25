@@ -1777,6 +1777,33 @@
         }
       }
 
+      /* 3a. 不送審的路徑(客製眼鏡布)。
+         -----------------------------------------------------------
+         檔案已經傳上去了,但【不寫進 engraving_designs】——
+         那張表是刻圖市集的作品庫,每一列都會進審核佇列。
+         客人只是想把自己的圖印在自己的眼鏡布上,那不是投稿。
+
+         寫進去再想辦法讓審核看不到(例如塞第三種 status)更糟:
+         那個欄位的允許值由資料庫決定,而市集、審核、統計三處都在
+         篩它 —— 多一種值就多三個地方要記得排除。
+
+         回傳的物件標了 __noReview,呼叫端據此知道沒有 design_id。 */
+      if(state.noReview){
+        closeModal();
+        resetForm();
+        toast('已上傳,可以放到眼鏡布上了');
+        window.dispatchEvent(new CustomEvent('lohas:design-upload-success', {
+          detail: {
+            __noReview:    true,
+            name:          name,
+            image_url:     pngUrl || null,
+            image_url_png: pngUrl || null,
+            image_url_svg: svgUrl || null,
+          }
+        }));
+        return;
+      }
+
       // 3. 寫進 engraving_designs
       var displayName = member.erpname || member.erpName || member.name || '';
       if(!displayName){
@@ -1855,9 +1882,20 @@
 
     var hideCarriers = !!(opt && opt.hideCarriers);
     modal.classList.toggle('dum--no-carrier', hideCarriers);
+
+    /* 不送審模式:檔案照傳,但不寫進刻圖市集的作品庫。
+       送出鈕的字也要跟著換 —— 寫「送出審核」卻不送審,
+       客人會一直在等一個永遠不會來的通知。 */
+    state.noReview = !!(opt && opt.noReview);
     await renderCategories();
     els.title.textContent = '新增刻圖設計';
-    els.submit.querySelector('span').textContent = '送 出 審 核';
+    /* 兩個模式各有一顆送出鈕(#dumSubmit 設計師、#dumSubmit2 快速),
+       只改一顆的話,走另一條路的人看到的還是「送出審核」。 */
+    var submitLabel = state.noReview ? '確 定 上 傳' : '送 出 審 核';
+    ['#dumSubmit', '#dumSubmit2'].forEach(function (sel) {
+      var sp = modal.querySelector(sel + ' span');
+      if (sp) sp.textContent = submitLabel;
+    });
     // 顯示入口頁、隱藏其他所有區塊(入口頁全屏獨立)
     var intro = modal.querySelector('#dumIntro');
     var tabs = modal.querySelector('.dum-tabs');

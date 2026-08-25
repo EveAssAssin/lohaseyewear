@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-carrieropt">
-  <link rel="stylesheet" href="css/cloth.css?v=20260825c">
+  <link rel="stylesheet" href="css/cloth.css?v=20260825e">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -54,8 +54,8 @@
     <!-- ===== 右:操作 ===== -->
     <div class="cl-right">
 
-      <!-- 來源切換 -->
-      <div class="cl-card">
+      <!-- 來源切換。手機上與預覽一起釘在頂端(見 cloth.css) -->
+      <div class="cl-card" id="clSourceCard">
         <p class="cl-card-title">圖案從哪裡來</p>
         <div class="cl-seg" id="clSource">
           <button type="button" class="cl-seg-btn on" data-src="market">刻圖市集</button>
@@ -70,8 +70,8 @@
           <i class="fa-solid fa-arrow-up-from-bracket"></i> 上傳我自己的圖
         </button>
         <p class="cl-note-sm">
-          上傳的圖會同時送進刻圖市集審核。審核通過後其他人也看得到,
-          但你這條眼鏡布現在就能用。
+          上傳的圖只用在你這條眼鏡布上,不會公開,也不需要等審核。
+          想讓其他人也用得到,可以另外投稿到刻圖市集。
         </p>
       </div>
 
@@ -167,7 +167,7 @@
 <script src="js/cropper-helper.js?v=20260513-2330"></script>
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
 <script src="js/subcategories.js?v=20260513-2330"></script>
-<script src="js/upload-design.js?v=20260825-carrieropt"></script>
-<script src="js/cloth.js?v=20260825d"></script>
+<script src="js/upload-design.js?v=20260825-noreview2"></script>
+<script src="js/cloth.js?v=20260825f"></script>
 </body>
 </html>

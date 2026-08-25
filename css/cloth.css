@@ -260,28 +260,46 @@
 /* === RWD === */
 
 @media (max-width:960px){
-  .cl-body{ grid-template-columns:1fr; gap:16px }
+  /* ⚠ 手機不能留著 grid。grid item 的 sticky 只在「自己那一格」裡有效,
+     而一欄版每個 item 各佔一列 —— 格子高度就等於自己的高度,
+     等於完全沒有可以釘的範圍,position:sticky 寫了也不會動。
+     改成 block,.cl-left 的範圍才會是整個 .cl-body。 */
+  .cl-body{ display:block }
   .cl-main{ padding:88px 18px 60px }
 
-  /* 手機:預覽釘在上面。
+  /* 手機:預覽 ＋「圖案從哪裡來」一起釘在上面。
      -----------------------------------------------------------
      操作都在下面,而預覽原本會被捲出畫面 —— 拉滑桿的時候看不到
      自己在調什麼,只能拉一下、捲上去看、再捲下來,非常難用。
+     來源切換一起釘住的理由一樣:那是隨時會想換的東西,
+     捲到下面挑刻圖的時候它已經看不到了。
 
-     釘住之後尺寸要縮小,不然它會吃掉整個螢幕、下面反而沒空間。
-     42vh 是留給操作區的底線:一張卡片加一顆按鈕還看得到。 */
+     釘住之後尺寸要縮小,不然兩塊加起來會吃掉整個螢幕。
+     32vh 是留給操作區的底線:一張卡片還看得到幾列刻圖。 */
   .cl-left{
     position:sticky;
     top:70px;                 /* .main-header 的高度 */
     z-index:5;
     background:var(--bg-warm);
     padding:8px 0;
-    margin:0 -18px;           /* 貼齊兩側,捲動時底下的內容不會從旁邊透出來 */
+    margin:0 -18px 16px;      /* 貼齊兩側,捲動時底下的內容不會從旁邊透出來 */
     padding-left:18px; padding-right:18px;
   }
   .cl-stage{
-    max-width:min(360px, 42vh);
+    max-width:min(320px, 32vh);
     margin:0 auto;
+  }
+
+  /* 第二塊釘在預覽底下。top 必須等於「header ＋ 預覽區實際高度」,
+     而預覽高度隨螢幕變(32vh vs 320px),寫死會疊在一起或中間開一條縫,
+     所以由 JS 量完寫進 --cl-stick2(見 cloth.js 的 syncSticky)。 */
+  #clSourceCard{
+    position:sticky;
+    top:var(--cl-stick2, 380px);
+    z-index:4;
+    /* 卡片是圓角白底,兩側與上下要補一圈底色,
+       不然捲動的內容會從卡片旁邊的縫透出來。 */
+    box-shadow:0 0 0 20px var(--bg-warm);
   }
   /* 釘住之後這行提示佔的是寶貴的高度,而且手機是用拖曳不是滑桿 */
   .cl-hint{ display:none }
