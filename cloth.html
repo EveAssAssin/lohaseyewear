@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260615-photobfix">
-  <link rel="stylesheet" href="css/cloth.css?v=20260825">
+  <link rel="stylesheet" href="css/cloth.css?v=20260825b">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -61,6 +61,18 @@
           <button type="button" class="cl-seg-btn on" data-src="market">刻圖市集</button>
           <button type="button" class="cl-seg-btn" data-src="draw">自己畫</button>
         </div>
+
+        <!-- 第三種來源。刻意不做成第三個切換鈕 ——
+             那兩個是「模式」(按了停在那裡),這個是「動作」(開一個視窗、
+             做完就回來)。長得一樣會讓人以為按了會切到某個上傳畫面。
+             用刻圖市集現成的上傳模組,不另做一套。 -->
+        <button type="button" class="cl-upload" id="clUpload">
+          <i class="fa-solid fa-arrow-up-from-bracket"></i> 上傳我自己的圖
+        </button>
+        <p class="cl-note-sm">
+          上傳的圖會同時送進刻圖市集審核。審核通過後其他人也看得到,
+          但你這條眼鏡布現在就能用。
+        </p>
       </div>
 
       <!-- 市集刻圖 -->
@@ -73,15 +85,6 @@
         <div class="cl-designs" id="clDesigns"></div>
         <button type="button" class="cl-more" id="clMore" style="display:none">展開全部</button>
 
-        <!-- 上傳自己的圖。用刻圖市集現成的上傳模組 ——
-             同一件事有兩套上傳介面,兩邊的裁切、向量化參數遲早會走鐘。 -->
-        <button type="button" class="cl-upload" id="clUpload">
-          <i class="fa-solid fa-arrow-up-from-bracket"></i> 上傳我自己的圖
-        </button>
-        <p class="cl-note-sm">
-          上傳的圖會同時送進刻圖市集審核。審核通過後其他人也看得到,
-          但你這條眼鏡布現在就能用。
-        </p>
       </div>
 
       <!-- 手繪 -->
@@ -165,6 +168,6 @@
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
 <script src="js/subcategories.js?v=20260513-2330"></script>
 <script src="js/upload-design.js?v=20260708-noemoji"></script>
-<script src="js/cloth.js?v=20260825"></script>
+<script src="js/cloth.js?v=20260825c"></script>
 </body>
 </html>
