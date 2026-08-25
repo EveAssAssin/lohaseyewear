@@ -142,8 +142,17 @@ Deno.serve(async (req) => {
     if (['new', 'done', 'archived'].indexOf(status) < 0) {
       return reply('006', { message: '狀態值不正確' }, 400);
     }
+    /* 記下完成的時間。App 會以它做增量抓取(只拿上次之後新完成的)——
+       沒有時間就只能整包重抓再自行比對,而比對一出錯就是重複推播,
+       客人會收到好幾次「你的眼鏡布做好了」。
+
+       改回 new / archived 時把時間清掉,不然那筆會一直被當成
+       「某天完成過」而重複出現在 App 的抓取結果裡。 */
+    const patch: Record<string, unknown> = { status };
+    patch.done_at = status === 'done' ? new Date().toISOString() : null;
+
     const { error } = await db.from('cloth_designs')
-      .update({ status }).eq('id', id);
+      .update(patch).eq('id', id);
     if (error) return reply('500', { message: '更新失敗' }, 500);
     console.log('[cloth-admin] ' + caller + ' 將 ' + id + ' 改為 ' + status);
     return reply('200', {});

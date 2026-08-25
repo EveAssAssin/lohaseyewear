@@ -61,6 +61,7 @@ env 優先 —— Secret 一旦被設定,`FALLBACK_*` 就再也沒有作用,
 | `shop-webhook` | — | 一把,由我方發給商城 |
 | `auth-session` | Render 代理 → 即時互動正式站 | `PROXY_KEY` ＋ `SESSION_SECRET` |
 | `cloth` / `cloth-admin` | 官網自己的資料表 | 不需金鑰;`cloth-admin` 另有 `FALLBACK_LAB_KEY`(製作端簡易頁的通行碼) |
+| `cloth-feed` | 供 App 抓「眼鏡布已完成」的紀錄 | `FALLBACK_APP_KEY`,與製作端那把**分開**(一把在後台人員的手機、一把在對方伺服器,保管方式不同) |
 | `bday-wall` | 主後端**正式站** | `SITE_API_KEY` |
 
 填錯金鑰的症狀是「改完之後全部回未授權」,很容易誤判成網址給錯。
