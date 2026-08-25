@@ -8,13 +8,17 @@
   <meta name="description" content="挑一張刻圖,或自己畫幾筆,做一條只有你有的眼鏡布。">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- 上傳刻圖用的裁切工具(與刻圖市集同一組) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 
   <!-- LOHAS CSS · 載入順序: tokens → base → components → page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/cloth.css?v=20260824b">
+  <link rel="stylesheet" href="css/upload-design.css?v=20260615-photobfix">
+  <link rel="stylesheet" href="css/cloth.css?v=20260825">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -68,6 +72,16 @@
         </div>
         <div class="cl-designs" id="clDesigns"></div>
         <button type="button" class="cl-more" id="clMore" style="display:none">展開全部</button>
+
+        <!-- 上傳自己的圖。用刻圖市集現成的上傳模組 ——
+             同一件事有兩套上傳介面,兩邊的裁切、向量化參數遲早會走鐘。 -->
+        <button type="button" class="cl-upload" id="clUpload">
+          <i class="fa-solid fa-arrow-up-from-bracket"></i> 上傳我自己的圖
+        </button>
+        <p class="cl-note-sm">
+          上傳的圖會同時送進刻圖市集審核。審核通過後其他人也看得到,
+          但你這條眼鏡布現在就能用。
+        </p>
       </div>
 
       <!-- 手繪 -->
@@ -145,6 +159,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="js/potrace-loader.js?v=20260515-25"></script>
-<script src="js/cloth.js?v=20260824d"></script>
+<!-- 上傳刻圖模組(與刻圖市集同一支)。它自己注入 modal、
+     完成時發 lohas:design-upload-success 事件。 -->
+<script src="js/cropper-helper.js?v=20260513-2330"></script>
+<script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
+<script src="js/subcategories.js?v=20260513-2330"></script>
+<script src="js/upload-design.js?v=20260708-noemoji"></script>
+<script src="js/cloth.js?v=20260825"></script>
 </body>
 </html>

@@ -157,6 +157,71 @@
     refreshSubmit();
   }
 
+  /* ---------- 上傳自己的圖 ----------
+     用刻圖市集現成的模組(js/upload-design.js)。
+     那一支自己注入 modal、自己做裁切與向量化,完成時發
+     lohas:design-upload-success 事件並附上寫進資料庫的那一列。
+
+     為什麼不另做一套:同一件事有兩套上傳介面,兩邊的裁切比例、
+     potrace 參數、命名規則遲早會走鐘,而走鐘的那天沒有人會發現 ——
+     只會有一批線稿品質莫名其妙比較差。
+
+     ⚠ 上傳需要 ERP 客編(那支模組拿它當 Storage 的路徑前綴)。
+     官網註冊而未綁定門市的會員用不了,要在按下去之前就講清楚。 */
+
+  function openUpload() {
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
+    if (!token) {
+      if (Auth && Auth.setRedirect) Auth.setRedirect('cloth.html');
+      window.location.href = 'login.html';
+      return;
+    }
+    if (Auth.isErpBound && !Auth.isErpBound()) {
+      showErr('上傳刻圖需要門市會員身分。' + Auth.erpRequiredNote() +
+              '在那之前可以用「自己畫」,一樣做得出眼鏡布。');
+      return;
+    }
+    if (!(window.LohasUploadDesign && window.LohasUploadDesign.openModal)) {
+      showErr('上傳功能還沒載入好,請重新整理頁面再試一次。');
+      return;
+    }
+    hide(el.err);
+    window.LohasUploadDesign.openModal();
+  }
+
+  /* 上傳成功 → 直接套到布上。
+     那張圖還在審核中(其他人看不到),但【這個人現在就能用】——
+     叫他等審核通過再回來做眼鏡布,他多半不會回來。 */
+  function onUploaded(e) {
+    var d = e && e.detail;
+    if (!d || !d.id) return;
+
+    if (!d.image_url_svg) {
+      showErr('圖已經送出審核了,但沒有產生線稿檔,暫時不能用在眼鏡布上。' +
+              '試著換一張線條清楚一點的圖。');
+      return;
+    }
+
+    // 放進清單最前面,讓他看得到自己剛上傳的那張被選中
+    State.designs.unshift(d);
+    State.filter = '';
+    if (el.search) el.search.value = '';
+    State.expanded = false;
+
+    hide(el.err);
+    State.picked = {
+      source: 'market',        // 它確實是刻圖市集的一列,只是還沒過審
+      design_id: d.id,
+      name: d.name || '我的圖',
+      imageUrl: designThumb(d),
+      svgUrl: d.image_url_svg,
+      svgString: ''
+    };
+    renderDesigns();
+    applyOverlay();
+    refreshSubmit();
+  }
+
   /* ---------- 疊圖 ---------- */
 
   function applyOverlay() {
@@ -586,6 +651,7 @@
       sourceCard: document.querySelector('.cl-card'), source: $('clSource'),
       marketCard: $('clMarketCard'), drawCard: $('clDrawCard'),
       search: $('clSearch'), designs: $('clDesigns'), more: $('clMore'),
+      upload: $('clUpload'),
       canvas: $('clCanvas'), brush: $('clBrush'),
       undo: $('clUndo'), clear: $('clClear'), apply: $('clApply'),
       placeCard: $('clPlaceCard'),
@@ -621,6 +687,8 @@
     });
 
     el.apply.addEventListener('click', applyDrawing);
+    if (el.upload) el.upload.addEventListener('click', openUpload);
+    window.addEventListener('lohas:design-upload-success', onUploaded);
 
     [['scale', 'scale', 100], ['x', 'x', 100], ['y', 'y', 100]].forEach(function (t) {
       el[t[0]].addEventListener('input', function () {
