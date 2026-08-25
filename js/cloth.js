@@ -260,6 +260,11 @@
     el.scale.value = Math.round(State.scale * 100);
     el.x.value = Math.round(State.x * 100);
     el.y.value = Math.round(State.y * 100);
+
+    // 圖已經在布上了 → 來源那一區恢復完整(三個入口都放回來)。
+    // 掛在這裡而不是三個挑圖的地方:市集、手繪、上傳最後都會走到這一行,
+    // 各自加一次的話,以後多一種來源就會漏掉。
+    setFocus(false);
   }
 
   function bindDrag() {
@@ -672,6 +677,20 @@
 
   var MOBILE = 960;
 
+  /* 專心模式:按下模式鈕之後,來源那一區只留他選的那一個,
+     另一顆模式鈕與上傳鈕都收起來(只在手機,見 cloth.css)。
+
+     為什麼不是一開始就收:載入時沒有人按過任何東西,
+     先收起來等於把「自己畫」藏到看不見,他不會知道有這個選項。
+     收起來的時機是「他已經表明要走哪條路」,放回來的時機是
+     「圖已經放到布上了」—— 那時他才可能想換一個。 */
+  function setFocus(on) {
+    if (!el.sourceCard) return;
+    if (el.sourceCard.classList.contains('cl-focus') === !!on) return;
+    el.sourceCard.classList.toggle('cl-focus', !!on);
+    syncSticky();               // 高度變了,底下那塊釘的位置要跟著改
+  }
+
   /* 「圖案從哪裡來」要釘在預覽正下方,而預覽高度隨螢幕變 —— CSS 算不出來,
      量完寫進變數給 #clSourceCard 的 top 用。 */
   function syncSticky() {
@@ -725,7 +744,9 @@
 
     el.source.addEventListener('click', function (e) {
       var b = e.target.closest('.cl-seg-btn');
-      if (b) setSource(b.dataset.src, true);
+      if (!b) return;
+      setFocus(true);                    // 先收合,捲動才量得到收合後的高度
+      setSource(b.dataset.src, true);
     });
 
     el.designs.addEventListener('click', function (e) {
