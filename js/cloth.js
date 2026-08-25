@@ -708,19 +708,19 @@
     syncSticky();
   }
 
-  /* 來源切換已經移到畫面底部,上面只剩 header ——
-     --cl-preview-top 這個變數留著是為了 CSS 那邊不必再改一次,
-     值就是 header 的高度。 */
+  /* 預覽要釘在來源列【正下方】,而來源列的高度隨字級與換行變 ——
+     CSS 算不出來,量完寫進變數給 .cl-left 的 top 用。 */
   function syncSticky() {
-    document.documentElement.style.setProperty('--cl-preview-top', '70px');
+    if (!el.sourceCard) return;
+    var h = window.innerWidth <= MOBILE ? 70 + el.sourceCard.offsetHeight : 0;
+    document.documentElement.style.setProperty('--cl-preview-top', h + 'px');
   }
 
-  /* 捲動時上方要讓開的高度:header ＋(有圖的話)預覽。
-     .cl-left 隱藏時 offsetHeight 是 0,不必另外判斷。
-     底部那顆膠囊不算 —— 它在下面,不影響「捲到哪裡才看得到」。 */
+  /* 捲動時上方要讓開的高度:header ＋ 來源列 ＋(有圖的話)預覽。
+     .cl-left 隱藏時 offsetHeight 是 0,不必另外判斷。 */
   function stickyBottom() {
     if (window.innerWidth > MOBILE) return 90;   // 只有 header 擋著
-    return 70 + el.left.offsetHeight + 12;
+    return 70 + el.sourceCard.offsetHeight + el.left.offsetHeight + 12;
   }
 
   /* 切了來源就把那張卡捲到釘住的兩塊底下。
