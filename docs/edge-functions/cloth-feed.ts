@@ -23,6 +23,19 @@
    不帶 since 預設只回最近 7 天 —— 對方第一次接上時,
    若整包回傳全部歷史,他們會對所有舊客人發一次推播。
 
+   === status(2026-08-25 新增)===
+   done(預設) / pending / all
+
+   done    已完成,走增量,以 done_at 為游標 → items / next_since
+   pending 製作中,回【當下的完整快照】,不受 since 影響 → pending
+   archived 一律不回:那是後台手動歸檔的,不該再出現在客人的 App 上。
+
+   ⚠ 兩者不共用游標,而且刻意如此。
+     增量只能說「有東西進來」,不能說「有東西離開」——
+     一筆做完之後就不再是 pending,若 pending 也走增量,
+     對方的「製作中」清單只會越積越多,永遠沒有人被移出去。
+     所以 pending 每次回全部,對方【整份取代】自己那一份。
+
    部署:Supabase Dashboard → Edge Functions → 新增 cloth-feed → 貼上本檔
         Verify JWT 要【關閉】
 
@@ -112,17 +125,70 @@ Deno.serve(async (req) => {
   const limit = Math.min(
     Math.max(Number(body.limit ?? url.searchParams.get('limit')) || 200, 1), 500);
 
-  const { data, error } = await db.from('cloth_designs')
-    .select('id, erpid, mid, source, design_name, preview_url, done_at')
-    .eq('status', 'done')
-    .gt('done_at', since.toISOString())
-    .order('done_at', { ascending: true })    // 由舊到新,對方好記「抓到哪」
-    .limit(limit);
+  /* status:要哪一種。done(預設)/ pending / all
+     -----------------------------------------------------------
+     2026-08-25 黃總來文 3-1:App 需要顯示「製作中」的卡片,
+     否則客人已經做完設計、正在等雕刻的那段期間,App 上看起來像
+     沒做過,他可能會再做一條。
 
-  if (error) {
-    console.error('[cloth-feed] 查詢失敗:', error.message);
-    return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+     ⚠ pending 與 done 【不共用同一個游標】,而且是刻意的:
+       done 走增量(以 done_at 為游標),pending 回的是【當下的完整快照】。
+
+       理由:增量只能告訴你「有東西進來」,不能告訴你「有東西離開」。
+       一筆紀錄做完之後就不再是 pending —— 若 pending 也走增量,
+       對方的「製作中」清單只會越積越多,永遠不會有人被移出去。
+       所以 pending 每次都回全部,對方直接【整份取代】自己那一份。
+
+     archived 不回:那是後台手動歸檔的,不該再出現在客人的 App 上。 */
+  const statusWant = String(body.status ?? url.searchParams.get('status') ?? 'done')
+    .toLowerCase();
+  const wantDone    = statusWant === 'done' || statusWant === 'all';
+  const wantPending = statusWant === 'pending' || statusWant === 'all';
+
+  if (!wantDone && !wantPending) {
+    return reply('006', { message: 'status 只接受 done / pending / all' }, 400);
   }
+
+  let data: any[] = [];
+  if (wantDone) {
+    const r = await db.from('cloth_designs')
+      .select('id, erpid, mid, source, design_name, preview_url, done_at')
+      .eq('status', 'done')
+      .gt('done_at', since.toISOString())
+      .order('done_at', { ascending: true })    // 由舊到新,對方好記「抓到哪」
+      .limit(limit);
+    if (r.error) {
+      console.error('[cloth-feed] 查詢失敗:', r.error.message);
+      return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    }
+    data = r.data || [];
+  }
+
+  /* 製作中的完整清單。不受 since 影響 —— 見上面那段。
+     筆數上限刻意比 done 寬:那是「目前還沒做完的」,
+     總量本來就有限,被截斷的話對方會少顯示幾張卡片而不自知。 */
+  let pending: Array<Record<string, unknown>> = [];
+  if (wantPending) {
+    const r = await db.from('cloth_designs')
+      .select('id, erpid, mid, source, design_name, preview_url, created_at')
+      .eq('status', 'new')
+      .order('created_at', { ascending: false })
+      .limit(1000);
+    if (r.error) {
+      console.error('[cloth-feed] 製作中查詢失敗:', r.error.message);
+      return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    }
+    pending = (r.data || []).map((x) => ({
+      id: x.id,
+      client_id: x.erpid || null,
+      mid: x.mid || null,
+      design_name: x.design_name,
+      source: x.source,
+      preview_url: x.preview_url,
+      created_at: x.created_at,
+    }));
+  }
+
 
   const items = (data || []).map((r) => ({
     id: r.id,
@@ -142,17 +208,29 @@ Deno.serve(async (req) => {
        沒有資料時原樣回傳這次的 since,對方下次照樣帶回來即可。 */
   const nextSince = items.length ? items[items.length - 1].done_at : since.toISOString();
 
-  console.log('[cloth-feed] since=' + since.toISOString() + ' → ' + items.length + ' 筆');
+  console.log('[cloth-feed] status=' + statusWant +
+              ' since=' + since.toISOString() +
+              ' → 完成 ' + items.length + ' 筆,製作中 ' + pending.length + ' 筆');
 
-  return reply('200', {
-    data: {
-      items,
-      count: items.length,
-      since: since.toISOString(),
-      next_since: nextSince,
-      /* 回傳筆數等於上限,代表可能還有沒抓完的。
-         對方看到 true 就帶 next_since 再抓一次,不必等明天。 */
-      has_more: items.length >= limit,
-    },
-  });
+  const out: Record<string, unknown> = {
+    items,
+    count: items.length,
+    since: since.toISOString(),
+    next_since: nextSince,
+    /* 回傳筆數等於上限,代表可能還有沒抓完的。
+       對方看到 true 就帶 next_since 再抓一次,不必等明天。 */
+    has_more: items.length >= limit,
+  };
+
+  /* 只有問了才給。沒問卻給的話,對方會以為那是增量的一部分而累加,
+     而它是快照 —— 兩種語意混在同一個回應裡遲早會被誤用。 */
+  if (wantPending) {
+    out.pending = pending;
+    out.pending_count = pending.length;
+    /* 明講語意,寫在回應裡而不是只寫在文件裡 ——
+       接手的人多半是看回應長什麼樣就開始寫,不會回頭翻信。 */
+    out.pending_is_snapshot = true;
+  }
+
+  return reply('200', { data: out });
 });

@@ -145,10 +145,18 @@
 
     msg.textContent = '登 入 成 功 , 即 將 跳 轉';
 
-    // safe redirect: 只允許同站 path
-    const target = (next.startsWith('/') && !next.startsWith('//'))
-      ? next
-      : DEFAULT_NEXT;
+    /* safe redirect:只允許同站。
+       ⚠ 2026-08-25 修正:原本用字串比對(開頭是 / 且不是 //),
+         被 `/\evil.com` 繞過 —— 瀏覽器把反斜線正規化成斜線,
+         於是它變成 //evil.com,也就是 https://evil.com/。
+         改成交給 URL 解析器判斷:它已經知道那些正規化規則。
+         這一層與 store-sso-login 那層是同一套判斷,兩層都要有 ——
+         發 token 的當下擋掉是主要防線,這裡是最後一道。 */
+    let target = DEFAULT_NEXT;
+    try {
+      const u = new URL(next, location.origin);
+      if (u.origin === location.origin) target = u.pathname + u.search + u.hash;
+    } catch (_) { /* 解析不了就用預設 */ }
     setTimeout(() => { location.replace(target); }, 600);
 
   } catch (e) {

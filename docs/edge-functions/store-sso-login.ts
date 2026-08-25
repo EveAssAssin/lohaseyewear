@@ -65,6 +65,23 @@ const API_KEYS: Array<{ key: string; label: string }> = [
 
 const API_VER = '1.0';
 const SSO_BASE = 'https://www.lohasglasses.com/ssologin.html';
+const SITE_ORIGIN = 'https://www.lohasglasses.com';
+
+/* next 是不是「真的只指向本站」。
+   ---------------------------------------------------------------
+   用解析器判斷,不用字串比對。字串比對要猜完瀏覽器所有的正規化規則
+   (反斜線、定位字元、多重斜線…),猜漏一種就是一個開放轉址;
+   解析器已經知道那些規則,問它就好。
+
+   ⚠ 只回 true/false,不回正規化後的值 —— 呼叫端存的仍是對方送來的
+     原字串,兩邊若不一致,日後查 log 會對不上。 */
+function isSiteRelative(next: string): boolean {
+  try {
+    return new URL(next, SITE_ORIGIN).origin === SITE_ORIGIN;
+  } catch {
+    return false;
+  }
+}
 const TOKEN_TTL_SECONDS = 30;
 
 /* ===== 速率限制與異常門檻 =====
@@ -160,11 +177,19 @@ serve(async (req: Request) => {
     return jsonResp(400, { status: 400, error: 'Missing required field: erpId' });
   }
 
-  // ===== next 檢查 =====
-  // 只接受站內相對路徑。擋 // 開頭是為了防 open redirect:
-  // //evil.example.com 在瀏覽器眼中是「同協定的絕對網址」,
-  // 放行的話這支 SSO 就成了釣魚跳板。
-  if (next && (!next.startsWith('/') || next.startsWith('//'))) {
+  /* ===== next 檢查 =====
+     只接受站內相對路徑。放行外部網址的話,這支 SSO 就成了釣魚跳板 ——
+     連結是我方網域寄出的、客人也真的登入了,然後被送到別人的站。
+
+     ⚠ 2026-08-25 修正:原本用字串比對(開頭是 / 且不是 //),
+       被 `/\evil.com` 繞過。瀏覽器會把反斜線正規化成斜線,
+       於是 `/\evil.com` 變成 `//evil.com`,解析結果是 https://evil.com/。
+       實測 new URL('/\\evil.com', 'https://www.lohasglasses.com').href
+       就是 'https://evil.com/'。
+
+       所以不要比對字串,要【交給同一個解析器解完再看 origin】——
+       我方猜不完瀏覽器所有的正規化規則,但可以問它答案。 */
+  if (next && !isSiteRelative(next)) {
     await log({ key_label: caller.label, erpid: erpId, ip,
                 result: 'bad_request', note: 'invalid next: ' + next.slice(0, 80) });
     return jsonResp(400, {
