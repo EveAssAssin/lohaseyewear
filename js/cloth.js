@@ -186,6 +186,8 @@
       return;
     }
     hide(el.err);
+    // 與換模式一致:按了上傳就當作要重來,布上先清空
+    clearPick();
     /* 關掉「刻在不同載體上的樣子」——
        這一頁本身就是眼鏡布的即時預覽,再給一次六種載體的示意,
        會讓人以為自己還在挑要刻在什麼上面。 */
@@ -245,6 +247,17 @@
   function applyOverlay() {
     // 市集、手繪、上傳三條路最後都會走到這裡,顯示與否只判斷一次
     syncPreviewVisible();
+
+    /* 滑桿與數字先同步,而且要在下面那個 return 之前 ——
+       清空時 State 已經回預設,若跟著 return 掉,畫面上會留著
+       上一張圖的「45%」,下次挑圖就從那個數字開始。 */
+    el.scaleVal.textContent = Math.round(State.scale * 100) + '%';
+    el.xVal.textContent = Math.round(State.x * 100);
+    el.yVal.textContent = Math.round(State.y * 100);
+    el.scale.value = Math.round(State.scale * 100);
+    el.x.value = Math.round(State.x * 100);
+    el.y.value = Math.round(State.y * 100);
+
     if (!State.picked) { hide(el.overlay); return; }
     var r = el.stage.getBoundingClientRect();
     var w = r.width * State.scale;
@@ -255,14 +268,6 @@
     el.overlay.style.left = (State.x * 100) + '%';
     el.overlay.style.top = (State.y * 100) + '%';
     show(el.overlay);
-
-    el.scaleVal.textContent = Math.round(State.scale * 100) + '%';
-    el.xVal.textContent = Math.round(State.x * 100);
-    el.yVal.textContent = Math.round(State.y * 100);
-    el.scale.value = Math.round(State.scale * 100);
-    el.x.value = Math.round(State.x * 100);
-    el.y.value = Math.round(State.y * 100);
-
   }
 
   function bindDrag() {
@@ -660,7 +665,26 @@
       : '請先選一張刻圖,或自己畫一個';
   }
 
+  /* 換來源就把布上的圖清掉,回到還沒挑圖的狀態。
+     -----------------------------------------------------------
+     留著上一個來源的圖會變成「畫面上是市集那張,但操作區是空畫布」——
+     兩邊對不起來,而客人以為存下去的是他看到的那一張。
+     位置與大小一併回預設:那組數字是為了上一張圖調的,對新的沒有意義。 */
+  function clearPick() {
+    if (!State.picked) return;
+    State.picked = null;
+    State.scale = CONFIG.DEF.scale;
+    State.x = CONFIG.DEF.x;
+    State.y = CONFIG.DEF.y;
+    hide(el.err);
+    renderDesigns();     // 取消市集那一格的選取外框
+    applyOverlay();      // 藏疊圖,連帶把眼鏡布收回去
+    refreshSubmit();
+  }
+
   function setSource(src, scroll) {
+    // 只有真的換了才清 —— 又按一次同一顆不該把人的圖弄掉
+    if (State.source !== src) clearPick();
     State.source = src;
     el.source.querySelectorAll('.cl-seg-btn').forEach(function (b) {
       b.classList.toggle('on', b.dataset.src === src);
