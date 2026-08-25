@@ -29,6 +29,13 @@
        售價與可客製的鏡框同為 990,收禮人挑哪一副都不必補差額。
        商城正式站 2026-08-24 建立。 */
     GIFT_PRODUCT_NID: 2929,
+
+    /* 允許未綁定門市的會員直接下單(以官網會員編號 mid 當 client_id)。
+       ⚠ 必須與 shop 函式的 ALLOW_MID_CHECKOUT 一致,而且【後端先開】——
+         前端先開的話,客人會等完產圖與上傳,才在最後一步拿到 403,
+         而那時圖都做完了。
+       票券與禮物不在此列:那兩者以 ERP 客編為索引,各自另有守門。 */
+    ALLOW_MID_CHECKOUT: false,
     GIFT_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gift',
     COUPON_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/coupon-lock',
     TIMEOUT_MS: 15000,
@@ -1055,7 +1062,11 @@
     // B 路線沒有刻圖,只要有商品就能送出
     var needDesign = !(State.gift && State.giftMode === 'recipient');
     if ((needDesign && !State.design) || !State.product) return;
-    if (blockedByErp()) return;
+
+    /* 單純買一件在 A 路線開啟後不需要客編;送禮與挑禮物仍然需要
+       (gift 函式的 create / pick 以客編為索引)。 */
+    var needsErp = !CONFIG.ALLOW_MID_CHECKOUT || State.gift || State.pickGiftId;
+    if (needsErp && blockedByErp()) return;
     if (State.pickGiftId) { submitPick(); return; }
     if (State.gift) { createGift(); return; }
 

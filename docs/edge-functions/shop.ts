@@ -57,6 +57,22 @@ const SITE_KEY  = Deno.env.get('SHOP_SITE_API_KEY') || FALLBACK_SITE_KEY;
 
 const AUTH_FN = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/auth-session';
 
+/* 允許未綁定門市的會員以官網會員編號(mid)下單。
+   ---------------------------------------------------------------
+   2026-08-25 商城確認可以收 mid 當 client_id,不強制 ERP 客編。
+   這一步解開的是【所有官網註冊會員】的下單問題 ——
+   註冊 8/19 就對外開放了,那批人現在就存在,而他們到目前為止
+   按下「加入購物車」拿到的是 401「登入狀態已失效」(他其實登入著)。
+
+   ⚠ 預設關著,照站上的慣例:先上線、自己跑一遍再開。
+     開之前要先做完:
+       1. 跑 docs/design-submissions-mid.sql(erpid 改可空、加 mid 欄位)
+       2. 這一行改 true 並 Deploy
+       3. 前端 js/design.js 的 ALLOW_MID_CHECKOUT 也改 true
+     ⚠ 順序不能顛倒。前端先開的話,客人會等完產圖與上傳
+       才在最後一步拿到 401,而那時圖都做完了。 */
+const ALLOW_MID_CHECKOUT = false;
+
 /* 送單紀錄用。這兩個是 Supabase 自動注入 Edge Function 的環境變數,
    不需要在 Secrets 裡設定,也不需要填 FALLBACK。 */
 const SB_URL = Deno.env.get('SUPABASE_URL') || '';
@@ -112,8 +128,9 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
    理由是商城無從驗證那個 ID 是否真的屬於當下登入者 —— 若接受前端指定,
    任何人都能把商品推進別人的購物車、用掉別人的票券。
    所以 client_id 只有這一個來源,前端送什麼都不看。 */
-async function erpidFromToken(token: string): Promise<string> {
-  if (!token) return '';
+async function whoFromToken(token: string): Promise<{ erpid: string; mid: string }> {
+  const none = { erpid: '', mid: '' };
+  if (!token) return none;
   try {
     const r = await fetch(AUTH_FN, {
       method: 'POST',
@@ -121,10 +138,15 @@ async function erpidFromToken(token: string): Promise<string> {
       body: JSON.stringify({ action: 'verify', token }),
     });
     const j = await r.json();
-    if (String(j?.code) !== '200') return '';
-    return String(j?.erpid || '').trim();
+    if (String(j?.code) !== '200') return none;
+    /* auth-session 一直都有回 mid,是這支先前自己丟掉的。
+       未綁定門市的人 erpid 是空字串、mid 有值。 */
+    return {
+      erpid: String(j?.erpid || '').trim(),
+      mid: String(j?.mid || '').trim(),
+    };
   } catch {
-    return '';
+    return none;
   }
 }
 
@@ -148,7 +170,7 @@ function clamp01(v: unknown): number {
 /* 組出要送給商城的 cart/push body。
    前端送來的東西一律當成不可信,逐欄挑出來重建 ——
    直接把 body 轉發等於把金鑰的權限開放給任何呼叫者。 */
-function buildCartBody(clientId: string, body: Record<string, any>, submissionId: string) {
+function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<string, any>, submissionId: string) {
   const m = body.main || {};
   const d = m.design || {};
   const p = d.placement || {};
@@ -204,6 +226,11 @@ function buildCartBody(clientId: string, body: Record<string, any>, submissionId
 
   const out: Record<string, unknown> = {
     client_id: clientId,
+    /* 告訴商城這個 client_id 是哪一種編號。
+       他們現在可能不讀這一欄(未知欄位會被忽略),但沒有它的話
+       兩種編號在對方眼中長得一樣 —— 而 ERP 客編與官網會員編號
+       是兩個不同的號碼空間,總有一天會撞號。 */
+    client_id_type: idType,
     main,
   };
 
@@ -287,6 +314,7 @@ async function logSubmission(row: Record<string, unknown>) {
 /** 把 buildCartBody 的產出 + 商城回應,攤平成一筆資料列 */
 function submissionRow(
   erpid: string,
+  mid: string,
   out: Record<string, any>,
   shop: { code: string; message: string; cartUrl: string },
 ): Record<string, unknown> {
@@ -296,7 +324,10 @@ function submissionRow(
     /* 主鍵用我方送給商城的那一組,不讓資料庫自己產 ——
        兩邊必須是同一個值,商城回拋時才對得上。 */
     id: design.submission_id,
-    erpid,
+    /* 兩欄擇一有值。不要把 mid 塞進 erpid ——
+       欄位名說謊之後,任何人用 erpid 查客人都會安靜地查錯。 */
+    erpid: erpid || null,
+    mid: mid || null,
     nid: main.nid ?? null,
     sid: main.sid ?? null,
     design_id:     design.design_id || null,
@@ -360,18 +391,36 @@ Deno.serve(async (req) => {
 
   let out: Record<string, unknown>;
   let erpid = '';
+  let mid = '';
 
   if (action === 'cart_push') {
-    erpid = await erpidFromToken(String(body.token || ''));
-    if (!erpid) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+    const who = await whoFromToken(String(body.token || ''));
+    erpid = who.erpid;
+    mid = who.mid;
+
+    /* 客編優先,沒有才用官網會員編號。
+       旗標關著的時候維持原本的行為:沒有客編就擋下來。 */
+    const clientId = erpid || (ALLOW_MID_CHECKOUT ? mid : '');
+    if (!clientId) {
+      /* 分兩種訊息。他明明登入著卻被告知「登入失效」是最難查的那一種 ——
+         客服會去看 session,而問題根本不在那裡。 */
+      if (mid) {
+        return reply('403', {
+          message: '這項服務目前需要門市會員身分,到門市綁定之後就能使用。',
+          reason: 'erp_required',
+        }, 403);
+      }
+      return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+    }
 
     if (!Number(body?.main?.nid)) return reply('006', { message: '缺少商品編號' }, 400);
 
     /* 送出前先決定這一筆的識別碼,而不是等寫紀錄時才由資料庫產生 ——
        商城要收到的和我方要存的必須是同一個值。 */
-    out = buildCartBody(erpid, body, crypto.randomUUID());
-    console.log('[shop] cart_push erpid=' + erpid + ' nid=' + (out as any).main.nid +
-                ' submission=' + (out as any).main.design.submission_id);
+    out = buildCartBody(clientId, erpid ? 'erp' : 'mid', body, crypto.randomUUID());
+    console.log('[shop] cart_push client=' + clientId + '(' + (erpid ? 'erp' : 'mid') + ')' +
+                ' nid=' + (out as any).main.nid +
+                ' submission=' + ((out as any).main.design?.submission_id || '-'));
   } else {
     // 讀取型的三支:只轉送白名單內的參數,
     // 前端傳什麼就照單全收會把金鑰的權限放大
@@ -398,7 +447,7 @@ Deno.serve(async (req) => {
     if (j && typeof j === 'object' && 'debug' in j) delete (j as any).debug;
 
     if (action === 'cart_push') {
-      await logSubmission(submissionRow(erpid, out, {
+      await logSubmission(submissionRow(erpid, mid, out, {
         code:    String(j?.code ?? r.status),
         message: String(j?.message ?? ''),
         cartUrl: String(j?.data?.cart_url ?? ''),
@@ -413,7 +462,7 @@ Deno.serve(async (req) => {
     // 連不上商城 / 對方回的不是 JSON。這種也要留紀錄,
     // 否則「客人說送不出去」在我方查不到任何東西。
     if (action === 'cart_push') {
-      await logSubmission(submissionRow(erpid, out, {
+      await logSubmission(submissionRow(erpid, mid, out, {
         code:    'FETCH_FAILED',
         message: e instanceof Error ? e.message : String(e),
         cartUrl: '',
