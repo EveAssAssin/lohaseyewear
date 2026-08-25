@@ -166,19 +166,22 @@
 }
 .cl-mini:hover{ border-color:var(--lohas-brand); color:var(--lohas-brand) }
 
-/* 上傳自己的圖。刻意做成次要外觀 ——
+/* 上傳自己的圖。做成次要外觀(實線細框、非實色)——
    多數人是來挑現成刻圖的,上傳是給少數已經有圖的人。
    做成主要按鈕會讓人以為「一定要先上傳點什麼」。 */
 .cl-upload{
   width:100%; min-height:44px; margin-top:12px;
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  border:1px dashed var(--lohas-bd, #E8DED1);
+  border:1px solid var(--lohas-bd, #E8DED1);
   border-radius:var(--r-md, 14px);
   background:#fff; color:var(--text-sub);
   font-family:inherit; font-size:13.5px; cursor:pointer;
   transition:.15s;
 }
-.cl-upload:hover{ border-color:var(--lohas-brand); color:var(--lohas-brand) }
+.cl-upload:hover{
+  border-color:var(--lohas-brand); color:var(--lohas-brand);
+  background:var(--bg-soft, #F4F1EC);
+}
 
 .cl-apply{
   width:100%; min-height:44px; margin-top:12px;
