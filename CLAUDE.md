@@ -56,13 +56,24 @@ env 優先 —— Secret 一旦被設定,`FALLBACK_*` 就再也沒有作用,
 |---|---|---|
 | `shop` | 商城**正式站** `www.lohaseyewear.com` | `SHOP_SITE_API_KEY` |
 | `coupon-list` | 主後端**正式站** `lohas.realtime.tw` | `SITE_API_KEY` |
+| `coupon-lock` | 主後端**正式站** | `SITE_API_KEY` |
 | `member-auth` | 主後端**正式站** `lohas.realtime.tw` | `SITE_API_KEY` |
+| `gift` | 主後端**正式站** | `SITE_API_KEY`(**無 FALLBACK**,只讀 Secret) |
 | `store-sso-login` | — | 三把:`app` / `shop` / `shop-test`,由我方發給對方 |
 | `shop-webhook` | — | 一把,由我方發給商城 |
 | `auth-session` | Render 代理 → 即時互動正式站 | `PROXY_KEY` ＋ `SESSION_SECRET` |
 | `cloth` / `cloth-admin` | 官網自己的資料表 | 不需金鑰;`cloth-admin` 另有 `FALLBACK_LAB_KEY`(製作端簡易頁的通行碼) |
 | `cloth-feed` | 供 App 抓眼鏡布紀錄 | `FALLBACK_APP_KEY` ＋ `FALLBACK_APP_KEY_OLD`(輪替用),與製作端那把**分開** |
-| `bday-wall` | 主後端**正式站** | `SITE_API_KEY` |
+| `bday-wall` | 主後端**正式站** | `SITE_API_KEY`(**無 FALLBACK**,只讀 Secret) |
+
+⚠ **吃 `SITE_API_KEY` 的是五支,不是三支。** 2026-08-26 清點才發現
+先前這張表漏了 `coupon-lock` 與 `gift` —— 輪替時漏掉那兩支,
+症狀是「票券鎖定與禮物中心突然壞掉」,而人會去查票券本身。
+
+`SITE_API_KEY` 是 Secret(2026-08-19 由對方在我方 Supabase 設定),
+所以**輪替時對方改 Secret,五支同時生效,我方不必重新部署**。
+但 `coupon-list` / `coupon-lock` / `member-auth` 的 `FALLBACK_SITE_KEY`
+仍留著舊值 —— 那是已外流的值躺在線上程式碼裡,輪替時應一併清成空字串。
 
 填錯金鑰的症狀是「改完之後全部回未授權」,很容易誤判成網址給錯。
 
@@ -98,6 +109,21 @@ env 優先 —— Secret 一旦被設定,`FALLBACK_*` 就再也沒有作用,
 到 2026-08-25 為止,`sso_login_log` 裡清一色是 `app`。
 所以那兩把**不能靠看紀錄判斷有沒有換好**,必須明確問商城。
 清舊槽之前沒問到答案的話,商城跳官網會全斷,而且要等客人踩到才會發現。
+
+2026-08-26 對方說明原因:商城那條路的入口只出現在商城「客製刻圖」的 CTA
+(`SiteDesign` 那一頁),而該功能 2026-08-22 才切到正式站。
+所以「極少被使用」是對的,不是走了別的入口 —— **等不到訊號是正常現象。**
+
+金鑰是從三個地方送出來的,變數名不只一個:
+
+| 送出的一端 | 對方的環境變數 | 我方的 label |
+|---|---|---|
+| 主後端 | `SITE_SSO_KEY` | `app` |
+| 商城正式站 | `SITE_DESIGN_SSO_KEY` | `shop` |
+| 商城測試站 | `SITE_DESIGN_SSO_KEY`(Render) | `shop-test` |
+
+**2026-08-26 現況:`app` 與 `cloth-feed` 已交付新金鑰,
+商城那兩把對方尚未更換 —— `-old` 槽必須保留,等對方來信說換好了才能清。**
 
 2026-08-25 對方(黃總)來文:內部查證作業把五把金鑰讀出來並留在工作紀錄裡,
 要求全部輪替。同一封信裡**沒有列到 `SHOP_SITE_API_KEY`** ——
