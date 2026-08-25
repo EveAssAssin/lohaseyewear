@@ -82,20 +82,18 @@
   color:var(--lohas-brand);
 }
 
-/* === 來源列(置頂浮動)===
+/* === 來源切換 ===
    -------------------------------------------------------------
-   「先決定圖從哪來」是這一頁的第一個動作,所以它釘在最上面、
-   全寬、蓋過底下的內容。三個入口一律常駐。 */
+   桌機:頁面最上面的一列,有標題。
+   手機:底部浮動膠囊(見下方 RWD),與門市據點的「列表／地圖」
+         同一種做法 —— 兩頁的「切換我在看什麼」長得一樣,
+         不必重新學一次。 */
 .cl-sourcebar{
-  position:sticky;
-  top:70px;                    /* .main-header 的高度 */
-  z-index:6;                   /* 要蓋過預覽(5)與卡片 */
   margin:0 0 16px;
   padding:12px 16px 14px;
   background:#fff;
   border:1px solid var(--lohas-bd, #E8DED1);
   border-radius:var(--r-lg, 18px);
-  box-shadow:0 4px 14px rgba(80,66,45,.06);
 }
 .cl-bar-title{
   margin:0 0 10px;
@@ -109,12 +107,15 @@
 }
 .cl-seg-btn{
   min-height:42px;
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
   border:1px solid var(--lohas-bd, #E8DED1);
   border-radius:var(--r-md, 14px);
   background:#fff; color:var(--text-sub);
   font-family:inherit; font-size:14px; letter-spacing:.06em;
   cursor:pointer; transition:.18s;
 }
+.cl-seg-btn i{ font-size:12px; opacity:.7 }
+.cl-seg-btn.on i{ opacity:1 }
 .cl-seg-btn.on{
   background:var(--lohas-brand); color:#fff; border-color:var(--lohas-brand);
 }
@@ -301,27 +302,39 @@
      等於完全沒有可以釘的範圍,position:sticky 寫了也不會動。
      改成 block,.cl-left 的範圍才會是整個 .cl-body。 */
   .cl-body{ display:block }
-  .cl-main{ padding:88px 18px 60px }
+  /* 底部那顆膠囊會蓋住最後一段內容,留出它的高度 */
+  .cl-main{ padding:88px 18px 110px }
 
-  /* 來源列貼齊兩側,捲動時底下的內容不會從圓角旁邊透出來 */
-  .cl-sourcebar{
-    margin-left:-18px; margin-right:-18px;
-    border-left:0; border-right:0;
-    border-radius:0;
-  }
-  .cl-seg-btn{ font-size:13px; letter-spacing:0 }
-
-  /* 預覽釘在來源列【底下】。
+  /* 來源切換改成底部浮動膠囊。
      -----------------------------------------------------------
-     top 必須等於「header ＋ 來源列實際高度」,而來源列的高度隨
-     字級與換行變 —— 寫死會疊在一起或中間開一條縫,
-     所以由 JS 量完寫進 --cl-preview-top(見 cloth.js 的 syncSticky)。
+     與 allstore 的「列表／地圖」同一種做法:固定在底部中央、
+     拇指構得到,而且完全不吃掉上面的高度 ——
+     放在頂端釘住的話,預覽與挑圖要共用剩下的空間。 */
+  .cl-sourcebar{
+    position:fixed;
+    bottom:20px; left:50%;
+    transform:translateX(-50%);
+    z-index:100;
+    margin:0;
+    padding:4px;
+    border-radius:var(--r-pill, 999px);
+    box-shadow:0 8px 24px rgba(80,66,45,.18);
+  }
+  /* 膠囊裡放不下標題,而三顆按鈕本身已經說明在選什麼 */
+  .cl-bar-title{ display:none }
+  .cl-seg{ display:inline-flex; gap:2px }
+  .cl-seg-btn{
+    border:0; background:transparent;
+    border-radius:var(--r-pill, 999px);
+    padding:10px 14px; min-height:0;
+    font-size:13px; font-weight:600; letter-spacing:0;
+    white-space:nowrap;
+  }
 
-     為什麼預覽也要釘住:操作都在下面,拉滑桿、拖位置的時候
-     看不到自己在調什麼的話,只能拉一下、捲上去看、再捲下來。 */
+  /* 預覽釘在 header 底下(來源切換已經移到畫面最下面,不佔上面的位置) */
   .cl-left{
     position:sticky;
-    top:var(--cl-preview-top, 140px);
+    top:70px;
     z-index:5;
     background:var(--bg-warm);
     padding:8px 18px;
@@ -329,14 +342,13 @@
     box-shadow:0 10px 10px -10px rgba(80,66,45,.10);
   }
   .cl-stage{
-    max-width:min(320px, 32vh);
+    max-width:min(320px, 34vh);
     margin:0 auto;
   }
 
   /* 還沒有圖之前不顯示眼鏡布。
      手機的高度全部要用在「挑圖」這件事上,空的布佔掉 276px
-     而它那時什麼都沒告訴你 —— 你還沒有東西可以看。
-     圖一放上去它就出現並釘住。 */
+     而它那時什麼都沒告訴你 —— 你還沒有東西可以看。 */
   body.cl:not(.cl-has-art) .cl-left{ display:none }
 
   /* 釘住之後這行提示佔的是寶貴的高度,而且手機是用拖曳不是滑桿 */
@@ -344,6 +356,6 @@
 }
 @media (max-width:420px){
   .cl-designs{ grid-template-columns:repeat(3, 1fr) }
-  .cl-seg{ gap:6px }
-  .cl-seg-btn{ font-size:12.5px; padding:0 4px }
+  .cl-seg-btn{ padding:10px 11px; font-size:12.5px }
+  .cl-seg-btn i{ display:none }   /* 窄螢幕先犧牲圖示,字比較重要 */
 }

@@ -214,15 +214,11 @@
       return;
     }
 
-    /* 上傳鈕在「圖案從哪裡來」那張卡上,所以在「自己畫」模式下也按得到。
-       切回市集模式 —— 不然選中的那張在被收起來的格子裡,他看不到。 */
-    setSource('market');
-
-    // 放進清單最前面,讓他看得到自己剛上傳的那張被選中
-    State.designs.unshift(d);
-    State.filter = '';
-    if (el.search) el.search.value = '';
-    State.expanded = false;
+    /* 切到 upload:挑圖與畫布都收起來。
+       他剛傳的那張已經在布上了,再給他一整片刻圖只會讓人以為
+       「是不是還要再選一張」。要換的話按底下那三顆就好。
+       ⚠ 要在設定 State.picked 之前 —— setSource 會清掉目前的圖。 */
+    setSource('upload');
 
     hide(el.err);
     State.picked = {
@@ -688,10 +684,14 @@
     el.source.querySelectorAll('.cl-seg-btn').forEach(function (b) {
       b.classList.toggle('on', b.dataset.src === src);
     });
-    var open;
+    /* 三種狀態。upload 是「圖已經傳好了」——
+       這時挑圖與畫布都沒有用處,收起來,畫面只留預覽與位置調整。
+       留著「選一張刻圖」的話,客人會以為自己還得再挑一張。 */
+    var open = null;
     if (src === 'market') { show(el.marketCard); hide(el.drawCard); open = el.marketCard; }
-    else { hide(el.marketCard); show(el.drawCard); open = el.drawCard; }
-    if (scroll) scrollToCard(open);
+    else if (src === 'draw') { hide(el.marketCard); show(el.drawCard); open = el.drawCard; }
+    else { hide(el.marketCard); hide(el.drawCard); }
+    if (scroll && open) scrollToCard(open);
   }
 
   /* ---------- 釘住的兩塊 ---------- */
@@ -708,19 +708,19 @@
     syncSticky();
   }
 
-  /* 預覽要釘在來源列【正下方】,而來源列的高度隨字級與換行變 ——
-     CSS 算不出來,量完寫進變數給 .cl-left 的 top 用。 */
+  /* 來源切換已經移到畫面底部,上面只剩 header ——
+     --cl-preview-top 這個變數留著是為了 CSS 那邊不必再改一次,
+     值就是 header 的高度。 */
   function syncSticky() {
-    if (!el.sourceCard) return;
-    var h = window.innerWidth <= MOBILE ? 70 + el.sourceCard.offsetHeight : 0;
-    document.documentElement.style.setProperty('--cl-preview-top', h + 'px');
+    document.documentElement.style.setProperty('--cl-preview-top', '70px');
   }
 
-  /* 捲動時要讓開的高度:header ＋ 來源列 ＋(有圖的話)預覽。
-     .cl-left 隱藏時 offsetHeight 是 0,不必另外判斷。 */
+  /* 捲動時上方要讓開的高度:header ＋(有圖的話)預覽。
+     .cl-left 隱藏時 offsetHeight 是 0,不必另外判斷。
+     底部那顆膠囊不算 —— 它在下面,不影響「捲到哪裡才看得到」。 */
   function stickyBottom() {
     if (window.innerWidth > MOBILE) return 90;   // 只有 header 擋著
-    return 70 + el.sourceCard.offsetHeight + el.left.offsetHeight + 12;
+    return 70 + el.left.offsetHeight + 12;
   }
 
   /* 切了來源就把那張卡捲到釘住的兩塊底下。

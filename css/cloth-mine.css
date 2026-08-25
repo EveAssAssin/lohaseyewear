@@ -19,6 +19,16 @@
   background:#fff;
   border:1px solid var(--lohas-bd, #E8DED1);
   border-radius:var(--r-lg, 18px);
+  cursor:pointer;
+  transition:.15s;
+}
+.mc-card:hover{
+  border-color:var(--lohas-light, #CDBEA2);
+  box-shadow:0 4px 14px rgba(80,66,45,.08);
+}
+.mc-card:focus-visible{
+  outline:2px solid var(--lohas-brand);
+  outline-offset:2px;
 }
 
 .mc-thumb{
@@ -59,3 +69,76 @@
   color:var(--lohas-brand); text-decoration:none; font-size:14px;
 }
 .mc-empty-btn:hover{ background:var(--lohas-brand); color:#fff }
+
+/* === 詳情 ===
+   列表的縮圖只有 84px,看不出刻圖放在布上的位置與比例 ——
+   而那正是客人想確認的事。 */
+
+.mc-modal{
+  position:fixed; inset:0; z-index:9000;
+  display:none; align-items:center; justify-content:center;
+  padding:20px;
+}
+.mc-modal.on{ display:flex }
+
+.mc-modal-backdrop{
+  position:absolute; inset:0;
+  background:rgba(40,33,24,.62);
+}
+
+.mc-modal-box{
+  position:relative;
+  width:min(520px, 100%);
+  max-height:calc(100vh - 40px);
+  overflow-y:auto;
+  background:#fff;
+  border-radius:var(--r-lg, 18px);
+  padding:18px;
+  box-shadow:0 20px 50px rgba(40,33,24,.28);
+}
+
+.mc-modal-x{
+  position:absolute; top:10px; right:10px;
+  width:34px; height:34px;
+  display:flex; align-items:center; justify-content:center;
+  border:0; border-radius:50%;
+  /* 圖是淺色的眼鏡布,關閉鈕壓在上面要有底才看得見 */
+  background:rgba(255,255,255,.9);
+  color:var(--text-sub); font-size:16px; cursor:pointer;
+}
+.mc-modal-x:hover{ background:var(--bg-soft, #F4F1EC); color:var(--lohas-brand) }
+
+.mc-modal-img{
+  border-radius:var(--r-md, 14px);
+  overflow:hidden;
+  background:var(--bg-soft, #F4F1EC);
+  aspect-ratio:1/1;
+}
+.mc-modal-img img{ width:100%; height:100%; object-fit:contain; display:block }
+
+.mc-modal-info{ padding:16px 2px 2px }
+.mc-modal-name{
+  margin:0 0 6px;
+  font-size:17px; font-weight:600; color:var(--text-main);
+}
+.mc-modal-status{ margin:0 0 14px; font-size:13px; font-weight:600 }
+.mc-modal-status.wait{ color:var(--lohas-brand, #50422D) }
+.mc-modal-status.ok{ color:var(--ok, #5F7A5A) }
+.mc-modal-status.muted{ color:var(--text-muted, #9B9186); font-weight:400 }
+
+/* 兩欄:左邊標籤、右邊值。用 dl 是因為那本來就是「名稱—值」的清單 */
+.mc-modal-dl{
+  display:grid; grid-template-columns:auto 1fr; gap:6px 16px;
+  margin:0 0 14px; padding:14px 0 0;
+  border-top:1px solid var(--lohas-bd, #E8DED1);
+  font-size:13.5px;
+}
+.mc-modal-dl dt{ color:var(--text-muted, #9B9186) }
+.mc-modal-dl dd{ margin:0; color:var(--text-main) }
+
+.mc-modal-note{
+  margin:0; padding:12px 14px;
+  border-radius:var(--r-md, 14px);
+  background:var(--bg-soft, #F4F1EC);
+  font-size:13px; line-height:1.8; color:var(--text-sub);
+}

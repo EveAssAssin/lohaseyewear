@@ -22,11 +22,15 @@
      一頁十幾張就是十幾 MB。
      ⚠ width 與 height 要一起給再加 resize=contain:
        只給 width 回來的是 320×926,不會等比縮。 */
-  function thumb(u) {
+  function sized(u, px, q) {
     if (!u) return '';
     return u.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') +
-           '?width=320&height=320&resize=contain&quality=70';
+           '?width=' + px + '&height=' + px + '&resize=contain&quality=' + q;
   }
+  function thumb(u) { return sized(u, 320, 70); }
+  /* 詳情用 900:視網膜螢幕上放到 450pt 還是清楚的,
+     而原圖是 1200 —— 差那 300 不值得多下載那些位元組。 */
+  function big(u) { return sized(u, 900, 82); }
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -55,7 +59,7 @@
   function card(it) {
     var st = statusText(it.status, it.done_at);
     return '' +
-      '<div class="mc-card">' +
+      '<div class="mc-card" data-id="' + esc(it.id) + '" role="button" tabindex="0">' +
         '<div class="mc-thumb"><img src="' + esc(thumb(it.preview_url)) + '" alt="" loading="lazy"></div>' +
         '<div class="mc-body">' +
           '<p class="mc-name">' + esc(it.design_name || (it.source === 'draw' ? '手繪設計' : '未命名')) + '</p>' +
@@ -77,6 +81,69 @@
       return;
     }
     box.innerHTML = '<div class="mc-list">' + items.map(card).join('') + '</div>';
+  }
+
+  /* ---------- 詳情 ----------
+     列表的縮圖只有 84px,看不出刻圖放在布上的位置與比例 ——
+     而那正是客人想確認的事。點一下放大到看得清楚為止。 */
+
+  var byId = {};
+  var modal;
+
+  function ensureModal() {
+    if (modal) return;
+    modal = document.createElement('div');
+    modal.className = 'mc-modal';
+    modal.innerHTML =
+      '<div class="mc-modal-backdrop" data-close="1"></div>' +
+      '<div class="mc-modal-box" role="dialog" aria-modal="true">' +
+        '<button type="button" class="mc-modal-x" data-close="1" aria-label="關閉">' +
+          '<i class="fa-solid fa-xmark"></i></button>' +
+        '<div class="mc-modal-img"><img alt=""></div>' +
+        '<div class="mc-modal-info"></div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', function (e) {
+      if (e.target.closest('[data-close]')) closeModal();
+    });
+    // Esc 關閉。掛在 document 上,不然焦點不在 modal 裡就沒反應
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal.classList.contains('on')) closeModal();
+    });
+  }
+
+  function openModal(id) {
+    var it = byId[id];
+    if (!it) return;
+    ensureModal();
+
+    var st = statusText(it.status, it.done_at);
+    modal.querySelector('.mc-modal-img img').src = big(it.preview_url);
+    modal.querySelector('.mc-modal-info').innerHTML =
+      '<p class="mc-modal-name">' +
+        esc(it.design_name || (it.source === 'draw' ? '手繪設計' : '未命名')) + '</p>' +
+      '<p class="mc-modal-status ' + st.cls + '">' + esc(st.text) + '</p>' +
+      '<dl class="mc-modal-dl">' +
+        '<dt>圖案來源</dt><dd>' + esc(it.source === 'draw' ? '自己畫的' : '刻圖市集') + '</dd>' +
+        '<dt>儲存日期</dt><dd>' + esc(ymd(it.created_at)) + '</dd>' +
+        (it.done_at ? '<dt>完成日期</dt><dd>' + esc(ymd(it.done_at)) + '</dd>' : '') +
+      '</dl>' +
+      '<p class="mc-modal-note">' +
+        (it.status === 'done'
+          ? '到任一樂活門市出示會員編號就能領取。'
+          : '製作時間約 3~5 個工作天,完成後可到門市領取。') +
+      '</p>';
+
+    modal.classList.add('on');
+    // 背後的清單不要跟著捲 —— 手機上最明顯
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.remove('on');
+    document.body.style.overflow = '';
   }
 
   function load(force) {
@@ -104,12 +171,35 @@
       .then(function (j) {
         if (String(j.code) !== '200') throw new Error(j.message || '讀取失敗');
         loaded = true;
-        render((j.data && j.data.items) || []);
+        var items = (j.data && j.data.items) || [];
+        byId = {};
+        items.forEach(function (x) { byId[String(x.id)] = x; });
+        render(items);
+        bindCards();
       })
       .catch(function (e) {
         console.error('[my-cloth]', e);
         box.innerHTML = '<p class="empty-text">讀取失敗,請重新整理再試一次</p>';
       });
+  }
+
+  /* 綁在容器上而不是每一張卡 —— 重新載入時不必記得解綁。
+     鍵盤也要能開:卡片是 role=button,Enter/空白鍵要有反應。 */
+  var bound = false;
+  function bindCards() {
+    if (bound || !box) return;
+    bound = true;
+    box.addEventListener('click', function (e) {
+      var c = e.target.closest('.mc-card');
+      if (c) openModal(c.dataset.id);
+    });
+    box.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var c = e.target.closest('.mc-card');
+      if (!c) return;
+      e.preventDefault();
+      openModal(c.dataset.id);
+    });
   }
 
   window.LohasMyCloth = { load: load };

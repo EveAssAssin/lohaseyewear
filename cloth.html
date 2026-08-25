@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-carrieropt">
-  <link rel="stylesheet" href="css/cloth.css?v=20260825k">
+  <link rel="stylesheet" href="css/cloth.css?v=20260825m">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -35,18 +35,25 @@
     <p class="cl-sub">挑一張刻圖,或自己畫幾筆 —— 做一條只有你有的眼鏡布。</p>
   </div>
 
-  <!-- ===== 來源列(置頂浮動)=====
-       刻意放在 .cl-body 之外。放在右欄裡的話,手機版它只能排在預覽下面 ——
-       而「先決定圖從哪來」是這一頁的第一個動作,它應該在最上面。
+  <!-- ===== 來源切換 =====
+       桌機:頁面最上面的一列(有標題)。
+       手機:底部浮動膠囊,與門市據點的「列表／地圖」同一種做法 ——
+             拇指構得到,而且不吃掉上面的高度。
        三個入口一律常駐,隨時想換都按得到。 -->
   <div class="cl-sourcebar" id="clSourceCard">
     <p class="cl-bar-title">圖案從哪裡來</p>
     <div class="cl-seg" id="clSource">
-      <button type="button" class="cl-seg-btn on" data-src="market">刻圖市集</button>
-      <button type="button" class="cl-seg-btn" data-src="draw">自己畫</button>
+      <button type="button" class="cl-seg-btn on" data-src="market">
+        <i class="fa-solid fa-shapes"></i><span>刻圖市集</span>
+      </button>
+      <button type="button" class="cl-seg-btn" data-src="draw">
+        <i class="fa-solid fa-pencil"></i><span>自己畫</span>
+      </button>
       <!-- 這一顆是「動作」不是「模式」(開一個視窗、做完就回來),
            所以沒有 data-src,按了不會停在某個狀態。 -->
-      <button type="button" class="cl-seg-btn" id="clUpload">上傳我的圖</button>
+      <button type="button" class="cl-seg-btn" id="clUpload">
+        <i class="fa-solid fa-arrow-up-from-bracket"></i><span>上傳圖</span>
+      </button>
     </div>
   </div>
 
@@ -172,6 +179,6 @@
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
 <script src="js/subcategories.js?v=20260513-2330"></script>
 <script src="js/upload-design.js?v=20260825-noreview3"></script>
-<script src="js/cloth.js?v=20260825m"></script>
+<script src="js/cloth.js?v=20260825n"></script>
 </body>
 </html>
