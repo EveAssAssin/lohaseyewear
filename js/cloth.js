@@ -186,7 +186,10 @@
       return;
     }
     hide(el.err);
-    window.LohasUploadDesign.openModal();
+    /* 關掉「刻在不同載體上的樣子」——
+       這一頁本身就是眼鏡布的即時預覽,再給一次六種載體的示意,
+       會讓人以為自己還在挑要刻在什麼上面。 */
+    window.LohasUploadDesign.openModal({ hideCarriers: true });
   }
 
   /* 上傳成功 → 直接套到布上。

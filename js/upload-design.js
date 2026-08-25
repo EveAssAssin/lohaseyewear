@@ -1838,9 +1838,23 @@
 
 
   // ===== Open / Close =====
-  async function openModal(){
+  /**
+   * @param {object} opt
+   *        hideCarriers  隱藏「刻在不同載體上的樣子(示意)」那一段。
+   *
+   *        客製眼鏡布(cloth.html)從這裡上傳時要關掉 ——
+   *        那一頁本身就是眼鏡布的即時預覽,再給一次六種載體的示意
+   *        會讓人以為自己在挑載體,而他已經在做眼鏡布了。
+   *
+   *        用 class 控制而不是直接把節點拿掉:modal 是共用的一份,
+   *        拿掉之後從市集開啟就再也長不回來。
+   */
+  async function openModal(opt){
     ensureModalInjected();
     resetForm();
+
+    var hideCarriers = !!(opt && opt.hideCarriers);
+    modal.classList.toggle('dum--no-carrier', hideCarriers);
     await renderCategories();
     els.title.textContent = '新增刻圖設計';
     els.submit.querySelector('span').textContent = '送 出 審 核';
