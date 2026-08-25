@@ -52,7 +52,23 @@ const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 /* App / 主後端呼叫這一支用的金鑰。
    ⚠ 只在 Dashboard 填,不要提交回 GitHub。留空 = 這支停用。 */
 const FALLBACK_APP_KEY = '';
+
+/* === 輪替用的舊金鑰槽 ===
+   ---------------------------------------------------------------
+   輪替時【不要】直接覆蓋上面那一把 —— 那會製造一段
+   「我方已經換、對方還沒換」的空窗,期間對方每天的抓取都回 403,
+   而 403 看起來像介面壞了,不像「金鑰換了」。
+
+   正確做法分兩次部署:
+     第一次  上面填【新】的、這裡填【舊】的 → 兩把都收,沒有空窗
+     第二次  對方確認換好之後,把這裡清成空字串
+
+   ⚠ 空字串會被 sameSecret 擋掉(它先檢查 !a || !b),
+     所以不輪替時留空不會變成後門。 */
+const FALLBACK_APP_KEY_OLD = '';
+
 const APP_KEY = Deno.env.get('CLOTH_FEED_KEY') || FALLBACK_APP_KEY;
+const APP_KEY_OLD = Deno.env.get('CLOTH_FEED_KEY_OLD') || FALLBACK_APP_KEY_OLD;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
@@ -112,9 +128,19 @@ Deno.serve(async (req) => {
     String(body.key || '') ||
     url.searchParams.get('key') || '';
 
-  if (!sameSecret(given, APP_KEY)) {
+  /* 新舊都比。兩個都要跑完再判斷 ——
+     用 || 短路的話,新的對上就不比舊的,回應時間會出現差異。
+     這支不是高風險端點,但比對金鑰時養成一致的習慣比較省事。 */
+  const okNew = sameSecret(given, APP_KEY);
+  const okOld = sameSecret(given, APP_KEY_OLD);
+  if (!okNew && !okOld) {
     console.warn('[cloth-feed] 金鑰不符');
     return reply('403', { message: 'forbidden' }, 403);
+  }
+  /* 對方還在用舊的就留一行紀錄。這是「第二次部署可以做了嗎」
+     唯一看得到的訊號 —— 沒有它只能用猜的。 */
+  if (okOld && !okNew) {
+    console.warn('[cloth-feed] ⚠ 呼叫方仍在使用【舊】金鑰,尚不可清掉舊槽');
   }
 
   /* 不帶 since 時只回最近 7 天。

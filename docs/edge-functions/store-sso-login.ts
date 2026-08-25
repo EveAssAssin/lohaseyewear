@@ -58,9 +58,33 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 // 開通順序:先在這裡填上金鑰 → Deploy → 才把值交付給對方。
 // 還沒要開通的來源就留空字串,那一把等於不存在。
 const API_KEYS: Array<{ key: string; label: string }> = [
-  { key: '', label: 'app'       },   // App 用(原本那把,值不要改)
+  { key: '', label: 'app'       },   // App 用
   { key: '', label: 'shop'      },   // 商城正式站
   { key: '', label: 'shop-test' },   // 商城測試站(2026-08-17 商城來文要求)
+
+  /* === 輪替用的舊金鑰槽 ===
+     ---------------------------------------------------------------
+     輪替金鑰時【不要】直接覆蓋上面那三把 —— 那會製造一段
+     「我方已經換、對方還沒換」的空窗,期間所有登入都回 401。
+
+     正確做法分兩次部署:
+       第一次  上面三把填【新】的,下面三把填【舊】的 → 兩者都能用,沒有空窗
+       第二次  確認沒有人再用舊的之後,把下面三把清成空字串
+
+     舊的刻意標成 -old,因為 label 會寫進 sso_login_log ——
+     查一下就知道還有誰在用舊金鑰,不必猜、不必等。
+     第二次部署的時機:下面這段查不到 -old 就是安全了。
+
+       select key_label, count(*), max(created_at)
+       from public.sso_login_log
+       where result = 'ok' and key_label like '%-old'
+       group by 1;
+
+     不輪替的時候這三格一律留空。空值會被下面的比對跳過
+     (k.key && k.key === apiKey),不會變成後門。 */
+  { key: '', label: 'app-old'       },
+  { key: '', label: 'shop-old'      },
+  { key: '', label: 'shop-test-old' },
 ];
 
 const API_VER = '1.0';
