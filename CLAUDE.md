@@ -61,7 +61,7 @@ env 優先 —— Secret 一旦被設定,`FALLBACK_*` 就再也沒有作用,
 | `shop-webhook` | — | 一把,由我方發給商城 |
 | `auth-session` | Render 代理 → 即時互動正式站 | `PROXY_KEY` ＋ `SESSION_SECRET` |
 | `cloth` / `cloth-admin` | 官網自己的資料表 | 不需金鑰;`cloth-admin` 另有 `FALLBACK_LAB_KEY`(製作端簡易頁的通行碼) |
-| `cloth-feed` | 供 App 抓「眼鏡布已完成」的紀錄 | `FALLBACK_APP_KEY`,與製作端那把**分開**(一把在後台人員的手機、一把在對方伺服器,保管方式不同) |
+| `cloth-feed` | 供 App 抓眼鏡布紀錄 | `FALLBACK_APP_KEY` ＋ `FALLBACK_APP_KEY_OLD`(輪替用),與製作端那把**分開** |
 | `bday-wall` | 主後端**正式站** | `SITE_API_KEY` |
 
 填錯金鑰的症狀是「改完之後全部回未授權」,很容易誤判成網址給錯。
@@ -79,6 +79,31 @@ env 優先 —— Secret 一旦被設定,`FALLBACK_*` 就再也沒有作用,
 `store-sso-login` 那把等同於「可為任意會員產生官網登入連結,不需要密碼」——
 它的敏感度高於一般 API 金鑰,呼叫紀錄寫在 `sso_login_log`。
 
+### 輪替金鑰:用 -old 槽,不要直接覆蓋
+
+`store-sso-login`(三個 `-old` 槽)與 `cloth-feed`(`FALLBACK_APP_KEY_OLD`)
+都能**同時接受新舊兩把**。直接覆蓋會製造一段「我方已換、對方還沒換」的空窗,
+期間全部回 401 / 403。正確做法是兩次部署:
+
+```
+第一次  新的填正槽、舊的填 -old 槽 → 兩把都能用,對方不必配合時間
+        (對方從容換)
+第二次  確認沒人用舊的之後,清空 -old 槽
+```
+
+`store-sso-login` 的舊槽 label 會寫進 `sso_login_log`,
+查 `key_label like '%-old'` 就知道還有誰在用舊的。
+
+⚠ **但商城那兩把(`shop` / `shop-test`)從來沒出現在紀錄裡** ——
+到 2026-08-25 為止,`sso_login_log` 裡清一色是 `app`。
+所以那兩把**不能靠看紀錄判斷有沒有換好**,必須明確問商城。
+清舊槽之前沒問到答案的話,商城跳官網會全斷,而且要等客人踩到才會發現。
+
+2026-08-25 對方(黃總)來文:內部查證作業把五把金鑰讀出來並留在工作紀錄裡,
+要求全部輪替。同一封信裡**沒有列到 `SHOP_SITE_API_KEY`** ——
+但 8/22 對方說「兩台正式站的金鑰是同一個值」,若那句話還成立,
+商城那把等於也外流了。此題已去信詢問,未回覆前不要當作只有五把。
+
 ## 不要隨手改的東西
 
 - **`js/register.js` 的 `NOT_READY`** — 2026-08-19 已對外開放(`false`)。
@@ -89,10 +114,34 @@ env 優先 —— Secret 一旦被設定,`FALLBACK_*` 就再也沒有作用,
   只拿掉連結擋不住任何人(網址會被分享、被收錄),只改旗標則會變成
   「連結點得到、進去說尚未開放」。改 `NOT_READY` 時 `register.html` 的
   `?v=` 版號也要跟著換,否則回訪者拿到的是快取裡的舊版。
+- **`shop` 的 `ALLOW_MID_CHECKOUT`** — 2026-08-25 新增,預設 `false`。
+  開啟後未綁定門市的會員可用官網會員編號(`mid`)當 `client_id` 下單,
+  不再回 401。**開的順序:先跑 `docs/design-submissions-mid.sql`
+  → `shop` 的旗標 → `js/design.js` 的同名旗標。**
+  顛倒的話客人會等完產圖與上傳,才在最後一步被擋。
+  商城已確認收得下 `mid`,但**營運端查不查得到那個客人是另一回事**,
+  開之前要有人確認。
 - **`shop` 的 `SHOP_BASE`** — 2026-08-22 已切至商城**正式站**
   (對方確認正式站為 v3.1.11,含 `placement` 白名單、`submission_id`、
   `items` 層合併、`site/entry` 建立登入狀態)。`SHOP_BASE_URL` 與
   `SHOP_SITE_API_KEY` 由對方在我方 Supabase 設定,**兩者綁環境,要換一起換**。
+
+## 2026-08-25 這一天加的東西(容易漏看)
+
+- `cloth` 函式多了 `list` 動作(會員中心「客製眼鏡布」那一頁在用),
+  只回自己的,`erpid` 與 `mid` 兩欄都比 —— 綁定門市之前存的那幾筆只有 `mid`。
+- `cloth-feed` 多了 `status` 參數(`done` / `pending` / `all`)。
+  **`pending` 是快照不是增量**,回應帶 `pending_is_snapshot: true`。
+  增量說不出「有東西離開」,對方的製作中清單會只增不減。
+- `design_submissions` 多了 `mid` 欄位,`erpid` 改為可空,
+  並加了「兩者必有其一」的約束。**不要把 mid 塞進 erpid** ——
+  `sso_login_log` 就是因為混了兩種編號,花了一整輪查詢才確認沒出事。
+- `store-sso-login` 與 `ssologin.html` 的 `next` 檢查改用 `new URL()` 判斷 origin。
+  原本的字串比對(開頭是 `/` 且不是 `//`)被 `/\evil.com` 繞過 ——
+  瀏覽器把反斜線正規化成斜線。**不要改回字串比對。**
+- 上傳模組與 `cloth.html` 的輸入框在手機上一律 16px。
+  iOS 在 focus 字級 <16px 的輸入框時會放大整頁**而且不縮回去**。
+  不要用 `maximum-scale=1` 解 —— 那會讓所有人都不能自己放大。
 
 ## 環境的現實
 
