@@ -602,7 +602,18 @@
     gap: 12px;
   }
   .as-search { flex: 1 1 100%; order: 1; }
-  .as-regions { order: 2; width: 100%; }
+
+  /* 手機:區域改成換行全部顯示,不做橫向捲動。
+     -----------------------------------------------------------
+     橫向捲動那一排沒有任何「後面還有」的提示(捲軸是藏起來的),
+     看得到的就是全部 —— 客人不會知道右邊還有自己要的那一區。
+     直接換行攤開,多佔一兩行的高度換「一眼看完」。 */
+  .as-regions {
+    order: 2;
+    width: 100%;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
   .as-list { grid-template-columns: 1fr; }
   .as-list-panel { padding: 22px 20px 100px; }
 }
