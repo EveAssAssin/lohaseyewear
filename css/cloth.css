@@ -359,3 +359,9 @@
   .cl-seg-btn{ padding:10px 11px; font-size:12.5px }
   .cl-seg-btn i{ display:none }   /* 窄螢幕先犧牲圖示,字比較重要 */
 }
+
+/* ⚠ 同上:iOS 在 focus 字級 <16px 的輸入框時會放大整頁而且不縮回去。
+   搜尋刻圖那一格也是輸入框,一樣要 16px。 */
+@media (max-width:768px){
+  .cl-input{ font-size:16px }
+}
