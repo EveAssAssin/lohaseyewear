@@ -908,6 +908,29 @@
               </div>
             </div>
 
+            <!-- Banner 連結 (選填)
+                 ------------------------------------------------------
+                 原本這一格叫「按鈕連結」,躲在文字內容裡面 ——
+                 那讓「純圖片的 banner」看起來沒辦法連到任何地方,
+                 因為不填按鈕文字就沒有按鈕,填了網址也沒有東西會用它。
+
+                 現在它獨立成一段,而且整張 banner 都會吃這個連結:
+                 有按鈕就按鈕用,沒按鈕整張圖可以點。 -->
+            <div class="editor-panel">
+              <h3 class="editor-panel-title">Banner 連結 (選填)</h3>
+
+              <div class="editor-row">
+                <label class="editor-label">點擊後前往</label>
+                <input type="text" class="editor-input" id="bmLinkUrl"
+                       placeholder="engraving.html 或 https://..."/>
+                <p class="editor-hint">
+                  填了之後<b>整張 Banner 都可以點</b>。若下方也填了按鈕文字,按鈕會連到同一個網址。<br>
+                  站內頁面直接填檔名(例如 <code>engraving.html</code>)會在原視窗開啟;
+                  外部網址會另開分頁。留空則整張不可點。
+                </p>
+              </div>
+            </div>
+
             <!-- 文字內容 -->
             <div class="editor-panel">
               <h3 class="editor-panel-title">文字內容 (選填)</h3>
@@ -924,15 +947,10 @@
                 <p class="editor-hint">顯示在主標題下方</p>
               </div>
 
-              <div class="editor-row-2col">
-                <div class="editor-row">
-                  <label class="editor-label">按鈕文字</label>
-                  <input type="text" class="editor-input" id="bmCtaText" placeholder="例如:立即預訂"/>
-                </div>
-                <div class="editor-row">
-                  <label class="editor-label">按鈕連結</label>
-                  <input type="text" class="editor-input" id="bmLinkUrl" placeholder="https://..."/>
-                </div>
+              <div class="editor-row">
+                <label class="editor-label">按鈕文字</label>
+                <input type="text" class="editor-input" id="bmCtaText" placeholder="例如:立即預訂" style="max-width:340px"/>
+                <p class="editor-hint">留空就不顯示按鈕。按鈕要連到哪裡,填在上面的「Banner 連結」。</p>
               </div>
             </div>
           </div>

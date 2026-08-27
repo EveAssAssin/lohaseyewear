@@ -12,6 +12,24 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  /* 判斷是不是站外連結。
+     ---------------------------------------------------------------
+     站內的東西不該另開分頁 —— 那會讓客人的返回鍵失效,而且分頁越開越多。
+     後台可能填的三種都要認得:
+       engraving.html          相對路徑
+       /engraving.html         絕對路徑
+       https://www.lohasglasses.com/engraving.html  完整網址(自家)
+     只有真的跑到別的網域,才另開分頁。 */
+  function isExternal(url) {
+    if (!url) return false;
+    if (/^(mailto:|tel:)/i.test(url)) return true;   // 交給系統處理,不要在頁內導航
+    try {
+      return new URL(url, window.location.href).origin !== window.location.origin;
+    } catch (e) {
+      return false;   // 解析不出來就當站內,至少不會把人送到奇怪的地方
+    }
+  }
+
   // ===== 載入首頁輪播小卡 (show_in_homepage = true) =====
   async function loadHomepageCards() {
     const container = document.getElementById('newsCarouselTrack');
@@ -155,10 +173,21 @@
     if (wrap) wrap.style.display = '';
 
     track.innerHTML = data.map((b, i) => {
-      const href = b.link_url || '#';
-      const target = b.link_url ? ' target="_blank" rel="noopener"' : '';
+      /* 連結:後台填了就整張可以點。
+         ---------------------------------------------------------
+         ⚠ 不是把整個 slide 包成 <a> —— 裡面若有按鈕就會變成
+         <a> 包 <a>,那是無效的 HTML,瀏覽器會自己拆開,結果是
+         按鈕連到哪裡變得無法預測。
+         改成疊一層鋪滿的透明 <a> 放在文字層下面,按鈕仍然是
+         獨立的一個連結,兩者不互相干擾。 */
+      const link = (b.link_url || '').trim();
+      const target = isExternal(link) ? ' target="_blank" rel="noopener"' : '';
+      const cover = link
+        ? `<a href="${escapeHtml(link)}" class="hmb-cover"${target}
+              aria-label="${escapeHtml(b.title || '前往活動頁')}"></a>`
+        : '';
       const cta = b.cta_text
-        ? `<a href="${escapeHtml(href)}" class="hmb-cta"${target}>${escapeHtml(b.cta_text)} <span>→</span></a>`
+        ? `<a href="${escapeHtml(link || '#')}" class="hmb-cta"${target}>${escapeHtml(b.cta_text)} <span>→</span></a>`
         : '';
       const overlay = (b.title || b.subtitle || b.cta_text)
         ? `<div class="hmb-overlay">
@@ -185,6 +214,7 @@
       const hasMobileImg = b.image_url_mobile ? ' has-mobile-img' : '';
       return `<div class="hmb-slide${i === 0 ? ' on' : ''}${hasMobileImg}" data-idx="${i}">
         ${imgHtml}
+        ${cover}
         ${overlay}
       </div>`;
     }).join('');

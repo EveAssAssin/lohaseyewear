@@ -36,6 +36,18 @@
     z-index: -1; /* 確保在文字下方 */
 }
 
+/* 首頁 hero 的圖層要能被點
+   ---------------------------------------------------------------
+   ⚠ z-index:-1 會讓整個 .hero-bg【連同裡面的東西】沉到
+   .hero-banner 自己的背後 —— 後台若替這個位置填了 banner 連結,
+   page-banner.js 疊上去的透明連結會看得到、點不到。
+
+   改成 0,並且把文字那一層明確地墊到 1。
+   兩者的上下關係跟原本一模一樣(圖在下、字在上),
+   差別只在圖層現在收得到滑鼠。 */
+.hero-banner .hero-bg { z-index: 0; }
+.hero-banner .hero-content { position: relative; z-index: 1; }
+
 .hero-bg img {
     width: 100%;
     height: 100%;
@@ -554,9 +566,22 @@
   object-fit: cover;
   display: block;
 }
+/* 鋪滿整張 slide 的透明連結。
+   放在文字層【下面】,所以按鈕仍然是獨立的一個連結。 */
+.home-main-banner .hmb-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+}
 .home-main-banner .hmb-overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
+  /* ⚠ overlay 是鋪滿的(它有漸層背景),不擋掉點擊的話
+     上面那層透明連結一格都收不到。文字本身不需要被點,
+     真正要點的按鈕再單獨開回來。 */
+  pointer-events: none;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -583,6 +608,7 @@
   text-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 .home-main-banner .hmb-cta {
+  pointer-events: auto;   /* overlay 關掉了,按鈕要自己開回來 */
   display: inline-flex;
   align-items: center;
   gap: 8px;
