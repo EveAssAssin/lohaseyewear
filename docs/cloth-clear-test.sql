@@ -47,9 +47,31 @@ order by created_at desc;
 -- 手動把這些檔案刪掉。
 -- =============================================================
 
+/* ⚠⚠ 兩個欄位【歸屬不同】,不可以一起刪。
+   -------------------------------------------------------------
+   從刻圖市集選圖時,眼鏡布【沿用市集那件作品的原始 SVG】,
+   不會另外上傳一份(見 js/cloth.js 的 svgStep:
+   `State.picked.svgUrl ? 直接用 : 才上傳`)。
+
+   所以那種資料列的 svg_url 長這樣:
+     engraving-uploads/designs/28394044/…svg   ← 市集作品的,共用
+   而 preview_url 才是這張眼鏡布自己產的:
+     cloth/1787841959835-mm3190-preview.jpg
+
+   刪掉前者 = 把市集裡那張刻圖弄壞,所有人都看不到。
+
+   ✅ 判斷方法:【路徑裡有 cloth/ 的才是眼鏡布自己的】。
+      下面那兩欄會標出來,只刪標著「✅ 可刪」的。 */
+
 select
-  regexp_replace(svg_url,     '^.*/cloth/', 'cloth/') as svg檔,
-  regexp_replace(preview_url, '^.*/cloth/', 'cloth/') as 合成圖
+  case when svg_url like '%/cloth/%'
+       then '✅ 可刪 · ' || regexp_replace(svg_url, '^.*/cloth/', 'cloth/')
+       else '⛔ 不要動(市集共用) · ' || svg_url
+  end as svg檔,
+  case when preview_url like '%/cloth/%'
+       then '✅ 可刪 · ' || regexp_replace(preview_url, '^.*/cloth/', 'cloth/')
+       else '⛔ 不要動 · ' || preview_url
+  end as 合成圖
 from public.cloth_designs
 order by created_at desc;
 
