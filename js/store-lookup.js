@@ -17,6 +17,9 @@
 
   var CONFIG = {
     ENDPOINT: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/store-lookup',
+    // 手機換會員編號用。與本支走同一道權限關卡(admins 表),
+    // 所以能開這一頁的店員就打得到,不需要額外授權。
+    MEMBER_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/member-lookup',
     TIMEOUT_MS: 15000
   };
 
@@ -151,6 +154,40 @@
 
   /* ---------- 查詢 ---------- */
 
+  /* 輸入可能是手機或會員編號。是手機就先換成編號再往下走。
+     查到多筆(同號碼多帳號)時交給店員選,不要自己挑第一筆 ——
+     挑錯的話他會拿著別人的禮物去配鏡。 */
+  function resolveErpid(token, input) {
+    var digits = input.replace(/\D/g, '');
+    if (!/^09\d{8}$/.test(digits)) return Promise.resolve(input);
+
+    return fetch(CONFIG.MEMBER_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token, mobile: digits })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (String(j.code) !== '200') {
+          /* 上游把「沒有客編的會員」濾掉了,所以官網註冊而未綁定門市的
+             客人在這裡一定查不到。那不是打錯字,要講清楚下一步。 */
+          throw new Error(
+            '用這支手機查不到已綁定的會員。\n' +
+            '若客人是在官網註冊、還沒到門市綁定過,請先在門市系統完成綁定,' +
+            '再請他用手機開一次官網的會員專區,禮物就會掛到編號底下。'
+          );
+        }
+        var ms = (j.data && j.data.members) || [];
+        if (ms.length === 1) return ms[0].erpid;
+        if (ms.length > 1) {
+          throw new Error('這支手機對應到 ' + ms.length + ' 個會員編號:' +
+            ms.map(function (m) { return m.erpid + '(' + (m.name || '未提供姓名') + ')'; }).join('、') +
+            '。請向客人確認是哪一個,再用編號查一次。');
+        }
+        throw new Error('用這支手機查不到會員。');
+      });
+  }
+
   function search() {
     var erpid = (el.erpid.value || '').trim();
     if (!erpid) { msg('請輸入會員編號。', true); el.erpid.focus(); return; }
@@ -166,7 +203,18 @@
     el.btn.textContent = '查 詢 中';
     msg('查詢中…', false);
 
-    call({ token: token, erpid: erpid })
+    /* 手機號碼要在這一頁就換成會員編號。
+       -----------------------------------------------------------
+       店員【沒有管理後台的權限】,叫他「先去會員列表換編號」等於
+       叫他去一個進不去的地方。而他手上最常有的就是手機號碼。
+
+       member-lookup 與 store-lookup 走的是同一道權限關卡(admins 表),
+       所以能開這一頁的店員本來就打得到會員查詢 —— 那一步在這裡做掉。 */
+    resolveErpid(token, erpid)
+      .then(function (id) {
+        erpid = id;
+        return call({ token: token, erpid: id });
+      })
       .then(function (d) {
         var list = d.gifts || [];
         if (!list.length) {
