@@ -239,7 +239,11 @@
         /* 還沒綁定門市會員的挑不了(挑選要送商城購物車,需要客編)。
            按鈕導去挑選等於送他去撞牆 —— 改成指路到門市,
            那本來就是 B 路線要把他帶去的地方。 */
-        : '<a class="gf-btn gf-btn--pri" href="store.html">' +
+        /* ⚠ allstore.html(門市清單)不是 store.html。
+           store.html 是「單一門市」的內頁,沒帶門市代號進去會顯示
+           「找不到此門市／缺少 erpid 參數」—— 客人以為按鈕壞了。
+           2026-08-27 修正,cloth.html 8/25 才踩過同一個。 */
+        : '<a class="gf-btn gf-btn--pri" href="allstore.html">' +
           '<i class="fa-solid fa-location-dot"></i> 看 門 市 據 點</a>' +
           '<span class="gf-hint">帶著手機到門市,店員開通會員後當場就能挑款式</span>';
 
