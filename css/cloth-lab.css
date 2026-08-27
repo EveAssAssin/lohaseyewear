@@ -22,20 +22,34 @@
 
 /* === 頂部 ===
    不用站台的固定 header(那個有選單、對製作端是干擾) */
+/* 淺色 header。
+   -----------------------------------------------------------------
+   ⚠ 改成淺底之後,底下那條線就不是裝飾了 —— 這一列是 sticky,
+   捲動時卡片會從它下面經過。沒有邊界的話兩塊白會黏在一起,
+   分不出哪裡是列表的開頭。 */
 .lab-top{
   position:sticky; top:0; z-index:10;
-  display:flex; align-items:baseline; gap:10px;
-  padding:14px 16px;
-  background:var(--lohas-brand);
-  color:#fff;
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px;
+  background:#fff;
+  color:var(--lohas-brand);
+  border-bottom:1px solid var(--lohas-bd, #E8DED1);
 }
-.lab-brand{ font-size:13px; letter-spacing:.28em; opacity:.75 }
-.lab-title{ font-size:15px; font-weight:500; letter-spacing:.06em }
+/* 官網同一支 SVG,本身是深色 —— 淺底上不必改色 */
+.lab-logo{ height:22px; width:auto; display:block }
+.lab-title{
+  font-size:15px; font-weight:600; letter-spacing:.06em;
+  color:var(--lohas-brand);
+  /* 與 LOGO 之間拉一條細分隔,不然兩組字會看起來像同一句 */
+  padding-left:12px;
+  border-left:1px solid var(--lohas-bd, #E8DED1);
+}
 .lab-out{
-  margin-left:auto; border:0; background:transparent; color:#fff;
-  opacity:.7; font-size:15px; cursor:pointer; padding:4px 6px;
+  margin-left:auto; border:0; background:transparent;
+  color:var(--lohas-sub, #8A7F70);
+  font-size:15px; cursor:pointer; padding:4px 6px;
 }
-.lab-out:hover{ opacity:1 }
+.lab-out:hover{ color:var(--lohas-brand) }
 
 .lab-main{ max-width:900px; margin:0 auto; padding:20px 16px 60px }
 
@@ -214,6 +228,13 @@
 }
 
 @media (max-width:640px){
+  /* 手機上 LOGO 與標題會把登出鈕擠出去。
+     縮一點,並允許標題自己換行 —— 「客製眼鏡布加工中心」九個字
+     在 375px 上放不下與 LOGO 同一行。 */
+  .lab-top{ gap:9px; padding:10px 12px }
+  .lab-logo{ height:18px }
+  .lab-title{ font-size:13px; padding-left:9px; line-height:1.35 }
+
   .lab-card{ flex-direction:column }
   .lab-thumb{ width:100%; height:220px }
   .lab-done-wrap{ margin-left:0; width:100% }
