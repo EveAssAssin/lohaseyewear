@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
-  <link rel="stylesheet" href="css/cloth.css?v=20260825p">
+  <link rel="stylesheet" href="css/cloth.css?v=20260827-store">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -142,13 +142,22 @@
            擋住一件已經畫完的設計 —— 沒選的會落在製作端的「其他」,
            人工處理一下就好,那比讓他重畫一次划算得多。 -->
       <div class="cl-card" id="clStoreCard">
-        <div class="cl-card-h">要到哪一家門市拿</div>
-        <select class="cl-input cl-select" id="clStore">
-          <option value="">載入門市中…</option>
-        </select>
-        <p class="cl-store-hint" id="clStoreHint">
-          之後想換也可以,到門市前先打個電話跟他們說一聲就好。
+        <!-- ⚠ 標題用 .cl-card-title,與其他三張卡同一個 class。
+             先前寫成 .cl-card-h —— 那個 class 不存在,所以整行沒有
+             任何樣式,看起來就跟旁邊的卡片不是同一套東西。 -->
+        <p class="cl-card-title">要到哪一家門市拿<span class="cl-req">*</span></p>
+        <div class="cl-select-wrap">
+          <select class="cl-input cl-select" id="clStore">
+            <option value="">載入門市中…</option>
+          </select>
+          <i class="fa-solid fa-chevron-down cl-select-ico"></i>
+        </div>
+        <p class="cl-field-hint" id="clStoreHint">
+          做好之後會送到這家門市,之後想換的話打個電話跟他們說一聲就好。
         </p>
+        <button type="button" class="cl-retry" id="clStoreRetry" style="display:none">
+          <i class="fa-solid fa-rotate-right"></i> 重新載入門市清單
+        </button>
       </div>
 
       <div class="cl-note">
@@ -201,6 +210,6 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260827-store2"></script>
+<script src="js/cloth.js?v=20260827-required"></script>
 </body>
 </html>

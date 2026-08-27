@@ -559,6 +559,8 @@
     var api = window.LohasApi && window.LohasApi.store;
     var sd  = (window.LohasStore && window.LohasStore.data) || null;
     if (!api || !sd || !el.store) { storeFallback('暫時取不到門市清單'); return; }
+    if (el.storeRetry) el.storeRetry.style.display = 'none';
+    el.store.innerHTML = '<option value="">載入門市中…</option>';
 
     api.getAllStores()
       .then(function (raw) {
@@ -592,6 +594,9 @@
             if (opt) el.store.value = last;
           }
         } catch (e) { /* 無痕模式讀 localStorage 會丟例外 */ }
+
+        if (el.storeRetry) el.storeRetry.style.display = 'none';
+        refreshSubmit();
       })
       .catch(function (e) {
         console.warn('[cloth] 門市清單載入失敗', e && e.message);
@@ -601,10 +606,15 @@
 
   function storeFallback(msg) {
     if (!el.store) return;
+    State.stores = [];
     el.store.innerHTML = '<option value="">' + esc(msg) + '</option>';
     if (el.storeHint) {
       el.storeHint.textContent = '沒關係,先存起來 —— 到門市時跟店員說一聲就可以領。';
     }
+    /* 必填 + 清單是空的 = 客人畫完了卻永遠存不了。
+       所以一定要給他一條路:重試,或直接存。 */
+    if (el.storeRetry) el.storeRetry.style.display = '';
+    refreshSubmit();
   }
 
   /* 送出時把店名與區域一起帶走,不是只帶編號。
@@ -739,12 +749,32 @@
 
   /* ---------- 狀態 ---------- */
 
+  /* 兩個條件都要滿足才能存:選了圖、選了取貨門市。
+     -----------------------------------------------------------------
+     ⚠ 門市是必填,但「清單載不出來」不算他沒填 ——
+     那種時候他【想填也填不了】,擋住等於讓一件畫完的設計死在這裡。
+     所以載入失敗時放行,那一筆會落在製作端的「其他」,人工處理。
+
+     提示文字要講【還差哪一個】。只寫「請完成必填」等於要他自己
+     一格一格找,而畫面上這時候通常已經捲到很下面了。 */
   function refreshSubmit() {
-    var ok = !!State.picked;
+    var hasPick = !!State.picked;
+    var hasStore = !el.store || !!el.store.value;
+    // 清單根本沒載出來 → 不能拿它當作沒填
+    var storeUnavailable = !State.stores.length;
+
+    var ok = hasPick && (hasStore || storeUnavailable);
     el.submit.disabled = !ok;
-    el.submitHint.textContent = ok
-      ? '存起來之後,到門市報會員編號就能製作'
-      : '請先選一張刻圖,或自己畫一個';
+
+    if (!hasPick) {
+      el.submitHint.textContent = '請先選一張刻圖,或自己畫一個';
+    } else if (!hasStore && !storeUnavailable) {
+      el.submitHint.textContent = '還差一個:請選擇要到哪一家門市拿';
+    } else if (storeUnavailable) {
+      el.submitHint.textContent = '門市清單暫時載不出來,先存起來 —— 到門市時跟店員說一聲就可以領';
+    } else {
+      el.submitHint.textContent = '存起來之後,到門市報會員編號就能製作';
+    }
   }
 
   /* 換來源就把布上的圖清掉,回到還沒挑圖的狀態。
@@ -841,6 +871,7 @@
       reset: $('clReset'), note: document.querySelector('.cl-note'),
       err: $('clErr'), submit: $('clSubmit'), submitHint: $('clSubmitHint'),
       storeCard: $('clStoreCard'), store: $('clStore'), storeHint: $('clStoreHint'),
+      storeRetry: $('clStoreRetry'),
       done: $('clDone'), doneText: $('clDoneText')
     };
     if (!el.stage) return;
@@ -898,6 +929,9 @@
     });
     syncSticky();
     requestAnimationFrame(syncSticky);   // 字體換好之後高度會再動一次
+
+    if (el.store) el.store.addEventListener('change', refreshSubmit);
+    if (el.storeRetry) el.storeRetry.addEventListener('click', loadStores);
 
     loadDesigns();
     loadStores();

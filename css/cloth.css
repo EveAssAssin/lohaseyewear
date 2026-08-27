@@ -136,6 +136,45 @@
 }
 .cl-input:focus{ border-color:var(--lohas-brand) }
 
+/* === 取貨門市 === */
+
+/* 原生 <select> 各家瀏覽器長得都不一樣(Windows 上是方角灰底、
+   iOS 上是圓角藍字),放在一排圓角卡片中間會很突兀。
+   把外觀關掉、自己畫一個箭頭,才會跟其他輸入框是同一套。 */
+.cl-select-wrap{ position:relative }
+.cl-select{
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  cursor:pointer;
+  /* ⚠ 手機上字級小於 16px,iOS 在 focus 時會把整頁放大【而且不縮回去】。
+     其他輸入框已經處理過同一件事,這裡不能漏。 */
+  font-size:15px;
+}
+.cl-select-ico{
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  pointer-events:none;                 /* 點到箭頭也要能打開下拉 */
+  font-size:12px; color:var(--text-muted, #9B9186);
+}
+.cl-select:focus + .cl-select-ico{ color:var(--lohas-brand) }
+
+/* 必填星號。與上傳模組、客製文創的 .req 同一個樣子 */
+.cl-req{ color:var(--err, #C0392B); margin-left:4px; font-weight:400 }
+
+.cl-field-hint{
+  margin:8px 0 0; font-size:12px; line-height:1.7;
+  color:var(--text-muted, #9B9186);
+}
+
+/* 門市清單載不出來時的救命鈕。
+   沒有它的話,必填 + 清單是空的 = 客人畫完了卻永遠存不了。 */
+.cl-retry{
+  margin-top:10px; padding:8px 16px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-pill, 999px);
+  background:#fff; color:var(--lohas-brand);
+  font-family:inherit; font-size:13px; cursor:pointer;
+}
+.cl-retry:hover{ border-color:var(--lohas-brand) }
+
 /* 刻圖格 */
 .cl-designs{
   display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;
