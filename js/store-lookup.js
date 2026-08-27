@@ -206,8 +206,12 @@
       if (e.key === 'Enter') search();
     });
 
-    // 櫃檯的動作是「客人一報編號就打」,游標先放好省一次點擊
-    el.erpid.focus();
+    /* 櫃檯的動作是「客人一報編號就打」,游標先放好省一次點擊。
+       ⚠ 但這一支現在也被管理後台載入(禮物中心加工管理共用同一份),
+       那邊載入時這一頁是隱藏的 —— 對隱藏的輸入框 focus 會把畫面
+       捲到奇怪的位置,而且搶走管理後台自己的焦點。
+       offsetParent 為 null 就是看不到,那時候不要碰。 */
+    if (el.erpid.offsetParent !== null) el.erpid.focus();
   }
 
   if (document.readyState === 'loading') {

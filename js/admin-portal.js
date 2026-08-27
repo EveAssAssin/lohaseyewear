@@ -156,6 +156,8 @@
     'manage-shares': '分享牆管理',
     'cm-footer': '頁尾管理',
     'cm-categories': '分類管理',
+    'cloth': '客製眼鏡布加工管理',
+    'gift-work': '禮物中心加工管理',
     'users': '會員列表',
     'creators': '創作者管理',
     'ip': '授權聯名管理'

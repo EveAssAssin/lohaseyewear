@@ -26,7 +26,9 @@
   <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
-  <link rel="stylesheet" href="css/admin-portal.css?v=20260824-cloth6">
+  <link rel="stylesheet" href="css/admin-portal.css?v=20260827-giftwork">
+  <!-- 禮物中心加工管理與門市查刻圖共用同一組樣式與程式 -->
+  <link rel="stylesheet" href="css/store-lookup.css?v=20260820-midclaim">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260601-drag">
   <link rel="stylesheet" href="css/admin-portal-pegavision.css?v=20260622">
   <link rel="stylesheet" href="css/admin-portal-categories.css?v=20260530-cpmfix">
@@ -114,7 +116,10 @@
       <i class="fa-solid fa-tags"></i><span>分類管理</span>
     </button>
     <button class="nav-link" data-page="cloth">
-      <i class="fa-solid fa-vector-square"></i><span>客製眼鏡布</span>
+      <i class="fa-solid fa-vector-square"></i><span>客製眼鏡布加工管理</span>
+    </button>
+    <button class="nav-link" data-page="gift-work">
+      <i class="fa-solid fa-gift"></i><span>禮物中心加工管理</span>
     </button>
   </div>
 
@@ -1047,10 +1052,15 @@
     <div class="content-page" data-page="cloth">
       <div class="page-head">
         <div>
-          <h1 class="page-title">客製眼鏡布</h1>
+          <h1 class="page-title">客製眼鏡布加工管理</h1>
           <div class="page-sub" id="clothSub">— 件</div>
           <div class="page-sub">客人在官網做好的眼鏡布設計。下載 SVG 或 DXF 交給製作端;DXF 是在瀏覽器由 SVG 即時轉出的,不另外存一份。</div>
         </div>
+        <!-- 製作端用的簡易頁:只要通行碼,不必登入管理後台。
+             後台人員在櫃檯或工作區多半是用手機開那一頁。 -->
+        <a class="editor-btn" href="cloth-lab.html" target="_blank" rel="noopener">
+          <i class="fa-solid fa-up-right-from-square"></i> 開啟眼鏡布製作單
+        </a>
       </div>
 
       <!-- 篩選列 (對齊最新消息 / 創作者管理) -->
@@ -1071,6 +1081,44 @@
       <div id="clothList" class="cloth-list">
         <div class="cloth-loading">載入中…</div>
       </div>
+    </div>
+
+    <!-- ============= 禮物中心加工管理 =============
+         ⚠ 這一頁與 store-lookup.html(門市查刻圖)【共用同一支程式】:
+         同樣的 sl- 元素 id、同樣的 js/store-lookup.js、同樣的 css。
+
+         不複製一份的理由:兩份查詢邏輯遲早會走鐘,而走鐘的那天
+         門市看到的與後台看到的不一樣,沒有人會知道哪一邊是對的。 -->
+    <div class="content-page" data-page="gift-work">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">禮物中心加工管理</h1>
+          <div class="page-sub">輸入會員編號,查出這位客人的禮物要刻什麼、刻在哪。與門市查刻圖同一份資料。</div>
+        </div>
+        <a class="editor-btn" href="store-lookup.html" target="_blank" rel="noopener">
+          <i class="fa-solid fa-up-right-from-square"></i> 開啟門市查刻圖
+        </a>
+      </div>
+
+      <section class="sl-search">
+        <label class="sl-label" for="slErpid">會員編號</label>
+        <div class="sl-search-row">
+          <!-- 不要放真實的會員編號當範例 -->
+          <input type="text" id="slErpid" class="sl-input" inputmode="numeric"
+                 placeholder="輸入 8 碼會員編號" autocomplete="off">
+          <button type="button" id="slBtn" class="sl-btn">查 詢</button>
+        </div>
+        <p class="sl-hint">
+          客人報會員編號或手機都可以 —— 手機請先用「會員列表」換成編號。
+        </p>
+      </section>
+
+      <div id="slMsg" class="sl-msg" style="display:none"></div>
+
+      <section id="slResult" class="sl-result" style="display:none">
+        <p class="sl-result-head" id="slResultHead"></p>
+        <div id="slList"></div>
+      </section>
     </div>
 
     <!-- ============= 授權聯名管理 ============= -->
@@ -1957,12 +2005,13 @@
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260809-nokey"></script>
+<script src="js/admin-portal.js?v=20260827-giftwork"></script>
 <script src="js/admin-portal-footer.js?v=20260601-drag"></script>
 <script src="js/admin-portal-pegavision.js?v=20260622"></script>
 <script src="js/admin-portal-categories.js?v=20260530-routeword"></script>
 <script src="js/dxf.js?v=20260824"></script>
 <script src="js/admin-portal-cloth.js?v=20260824g"></script>
+<script src="js/store-lookup.js?v=20260827-adminhost"></script>
 
 </body>
 </html>
