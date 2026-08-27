@@ -3188,6 +3188,12 @@ body {
 }
 .mp .gf-btn--ghost:hover{ border-color:var(--lohas-brown); color:var(--lohas-brown) }
 
+/* LINE 分享。用 LINE 自己的綠色而不是品牌色 ——
+   這顆按鈕在說「會開啟 LINE」,認得出來比配色一致重要。 */
+.mp .gf-btn--line{ background:#06C755; color:#fff }
+.mp .gf-btn--line:hover{ background:#05B14C; color:#fff }
+.mp .gf-btn--line i{ font-size:15px }
+
 /* 禮物中心的空狀態。
    不只寫「沒有東西」,還要給下一步 —— 那是這一頁唯一的出口。 */
 .mp .gf-empty{

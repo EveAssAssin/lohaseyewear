@@ -80,6 +80,26 @@
     });
   }
 
+  /* 用 LINE 把領取連結傳出去。
+     -----------------------------------------------------------------
+     用 line.me/R/msg/text/ 而不是官方的 lineit/share ——
+     後者【只吃一個網址】,傳出去就是一條孤零零的連結,
+     對方看到的是「不明人士傳來一個網址」,多半不敢點。
+     這個介面可以帶一整句話,把「誰送的、這是什麼」講完再附連結。
+
+     整段(文字+網址)一起編碼成 path,不是查詢字串 —— 這是
+     LINE 這支介面的規定,寫成 ?text= 會變成空白訊息。
+
+     ⚠ 這裡不放收禮人的稱呼。那是送禮人自己寫的備註(「小美」),
+     由他本人在 LINE 裡挑對象,訊息開頭再稱呼一次是多餘的,
+     而且傳錯人的時候會把備註洩漏給不相干的人。 */
+  function lineShareUrl(g) {
+    var what = g.product_title || g.design_name || '一份客製刻圖眼鏡';
+    var msg = '我送了你一份禮物:' + what + '\n' +
+              '點這個連結就能領取 👇\n' + g.claim_url;
+    return 'https://line.me/R/msg/text/?' + encodeURIComponent(msg);
+  }
+
   function fmtDate(iso) {
     if (!iso) return '';
     var d = new Date(iso);
@@ -160,6 +180,9 @@
       actions =
         '<button class="gf-btn gf-btn--pri" data-copy="' + esc(g.claim_url) + '">' +
           '<i class="fa-regular fa-copy"></i> 複製領取連結</button>' +
+        '<a class="gf-btn gf-btn--line" href="' + esc(lineShareUrl(g)) + '"' +
+          ' target="_blank" rel="noopener">' +
+          '<i class="fa-brands fa-line"></i> 用 LINE 傳給對方</a>' +
         '<input class="gf-link" type="text" readonly value="' + esc(g.claim_url) + '"' +
           ' onfocus="this.select()" aria-label="領取連結">' +
         '<span class="gf-hint">把這個連結傳給對方,他點開就能領取。' +
