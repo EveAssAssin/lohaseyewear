@@ -724,18 +724,18 @@ Deno.serve(async (req) => {
      不呼叫商城:A 已經付過款了,這一步只是補上「要做哪一副」。
      第一階段限定門市自取,店員查管理後台就看得到,商城不需要知道。 */
   if (action === 'pick') {
-    /* 挑款式會送 cart/push,商城要客編,所以這一步仍需綁定。
-       未綁定的人【領得到】B 路線的禮物(那是刻意的),只是還挑不了 ——
-       訊息要指路,不要只說「你不能用」:他到門市綁定後就能挑,
-       或請店員當場協助。禮物不會因此失效。 */
-    if (!erpid) {
-      return reply('403', {
-        reason: 'erp_required',
-        message: '挑選款式需要門市會員身分。帶著手機到樂活門市,' +
-                 '店員會協助你完成綁定,當場就能挑鏡框與刻圖。禮物會一直保留著。',
-      }, 403);
-    }
+    /* ⚠ 2026-08-27:未綁定門市的收禮人【也能挑】。
+       -----------------------------------------------------------
+       這裡原本擋掉沒有客編的人,理由寫的是「挑款式會送 cart/push,
+       商城要客編」—— 那是錯的。pick 完全不呼叫商城:送禮人早就付過款,
+       這一步只是把款式寫進禮物、發一張兌換券。
 
+       真正需要客編的只有兩處,而且都不硬:
+         · 擁有權比對 —— 未綁定的人記在 claimed_by_mid,比那一欄就好
+         · 寫進「我的最愛刻圖」—— 那張表綁 erpid,沒有就跳過
+
+       發券本來就支援 mid(見 issueCoupon 的 owner),
+       對方會記在 owner_mid,該會員日後綁定客編時自動回填。 */
     const giftId = String(body.gift_id || '').trim();
     if (!giftId) return reply('006', { message: '缺少禮物識別' }, 400);
 
@@ -744,8 +744,13 @@ Deno.serve(async (req) => {
     if (error) return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
     if (!g) return reply('007', { message: '查無此禮物' }, 404);
 
-    // 只有收禮人本人能挑。送禮人不行 —— 他送的就是「自己挑」這件事。
-    const mine = g.claimed_by_erpid === erpid || g.recipient_erpid === erpid;
+    /* 只有收禮人本人能挑。送禮人不行 —— 他送的就是「自己挑」這件事。
+       兩種身分都要認:綁定的記在 claimed_by_erpid,未綁定的記在 claimed_by_mid
+       (claim 那一段刻意只寫其中一欄,見那裡的註解)。
+       ⚠ 空字串不能算相符,否則沒有客編的人會對上沒有客編的禮物。 */
+    const mine =
+      (!!erpid && (g.claimed_by_erpid === erpid || g.recipient_erpid === erpid)) ||
+      (!!mid && g.claimed_by_mid === mid);
     if (!mine) return reply('033', { message: '這份禮物不是給你的' }, 403);
 
     if (g.status !== 'claimed') {
@@ -796,11 +801,15 @@ Deno.serve(async (req) => {
     await logEvent(g.id, 'claimed', 'claimed', 'recipient',
       `收禮人挑選:nid ${nid} / ${patch.design_name || ''}`);
 
-    // 挑好的刻圖收進他的「我的最愛刻圖」,與 claim 那邊一致
-    try {
-      await db.from('engraving_wishlist')
-        .insert({ member_id: erpid, design_id: body.design_id });
-    } catch { /* 已收藏過會撞唯一鍵,忽略 */ }
+    /* 挑好的刻圖收進他的「我的最愛刻圖」,與 claim 那邊一致。
+       ⚠ 那張表以 erpid 為鍵,未綁定的人沒有鍵可以寫 —— 跳過就好,
+       不要為此擋住挑選(收藏是附帶好處,不是這一步的目的)。 */
+    if (erpid) {
+      try {
+        await db.from('engraving_wishlist')
+          .insert({ member_id: erpid, design_id: body.design_id });
+      } catch { /* 已收藏過會撞唯一鍵,忽略 */ }
+    }
 
     /* 挑完才發券(2026-08-27 新增)。
        A 路線在 claim 當下就發了,B 路線的發券點在這裡 ——

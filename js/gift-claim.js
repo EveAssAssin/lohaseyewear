@@ -128,20 +128,19 @@
   function applyDoneBtn(g) {
     if (!el.doneBtn) return;
     if (g && g.status === 'claimed' && !g.design_id) {
-      /* 還沒綁定門市會員的人挑不了(挑選要送商城購物車,需要客編)。
-         把按鈕導去「挑選款式」等於送他去撞牆 —— 改成指路到門市。 */
-      var bound = !Auth || !Auth.isErpBound || Auth.isErpBound();
-      if (!bound) {
-        el.doneBtn.textContent = '看 門 市 據 點';
-        el.doneBtn.className = 'gc-btn gc-btn--pri';
-        // ⚠ allstore.html 是門市清單;store.html 是單店內頁,
-        //    沒帶門市代號進去會顯示「找不到此門市」。2026-08-27 修正。
-        el.doneBtn.href = 'allstore.html';
-        return;
-      }
-      el.doneBtn.textContent = '挑 選 款 式';
+      /* 兩條路並行,由他自己選 —— 不再依「有沒有綁定」替他決定。
+         線上挑:現在挑好,到店直接配鏡雷刻。
+         到店挑:什麼都不用做,帶著手機去讓店員協助。 */
+      el.doneBtn.textContent = '線 上 挑 選 款 式';
       el.doneBtn.className = 'gc-btn gc-btn--pri';
       el.doneBtn.href = 'design.html?pick=' + encodeURIComponent(g.id);
+
+      if (el.storeBtn) {
+        // ⚠ allstore.html 是門市清單;store.html 是單店內頁,
+        //    沒帶門市代號進去會顯示「找不到此門市」。
+        el.storeBtn.href = 'allstore.html';
+        el.storeBtn.style.display = '';
+      }
     }
   }
 
@@ -153,17 +152,14 @@
        這時候最該講的不是「已領取」,是「換你挑了」——
        他如果就這樣關掉頁面,那份禮物會一直停在未完成。 */
     if (g.status === 'claimed' && !g.design_id) {
+      /* 兩條路都講,讓他自己選。
+         未綁定的人也挑得了(pick 不需要客編),第一次到門市時
+         店員會順手完成綁定 —— 那不影響他現在能不能挑。 */
       var bound = !Auth || !Auth.isErpBound || Auth.isErpBound();
-      /* 未綁定的人也領得到 B 路線的禮物(那是刻意的),
-         但他還挑不了款式。這時候要指路,不是道歉 ——
-         他本來就要到門市取件,綁定在那裡順手就做完了。 */
-      if (!bound) {
-        return '禮物已經是你的了,會一直保留著。' +
-          '接下來帶著手機到任一樂活門市,店員會幫你開通會員,' +
-          '當場就能挑鏡框、挑刻圖,並現場為你配鏡雷刻。';
-      }
       return '接下來換你挑 —— 選一副喜歡的鏡框、挑一張刻圖,決定要刻在哪裡。' +
-        '挑好之後帶著會員編號到任一樂活門市,店員會現場為你配鏡並雷刻。';
+        '挑好之後到任一樂活門市,店員會現場為你配鏡並雷刻。' +
+        '不想現在挑也沒關係,帶著手機到門市讓店員陪你挑也可以。' +
+        (bound ? '' : '第一次到門市時,店員會順手幫你完成會員綁定。');
     }
 
     if (g.fulfillment === 'ship') return '已收進你的帳號,商品出貨後會另行通知。';
@@ -304,7 +300,8 @@
       needLogin: $('gcNeedLogin'), loginBtn: $('gcLoginBtn'),
       form: $('gcForm'), forWho: $('gcForWho'), claimNote: $('gcClaimNote'),
       formErr: $('gcFormErr'), submit: $('gcSubmit'),
-      done: $('gcDone'), doneText: $('gcDoneText'), doneBtn: $('gcDoneBtn')
+      done: $('gcDone'), doneText: $('gcDoneText'), doneBtn: $('gcDoneBtn'),
+      storeBtn: $('gcStoreBtn')
     };
     if (!el.body) return;
 

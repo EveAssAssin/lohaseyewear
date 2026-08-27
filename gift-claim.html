@@ -99,6 +99,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- 主要按鈕的去處依狀態而定(見 js 的 applyDoneBtn):
            未綁定 → 看門市據點;可挑款式 → 挑選款式;其餘 → 禮物中心。 -->
       <a class="gc-btn" id="gcDoneBtn" href="member-portal.html?page=gifts">到禮物中心查看</a>
+      <!-- 第二條路:什麼都不用做,直接到門市讓店員陪他挑。
+           預設藏著,只有 B 路線(還沒挑款式)才由 js 打開。 -->
+      <a class="gc-btn gc-btn--ghost" id="gcStoreBtn" style="display:none;margin-top:10px">
+        <i class="fa-solid fa-location-dot"></i> 到 門 市 挑 選
+      </a>
       <!-- ⚠ 這一條永遠都在。
            主要按鈕會被 applyDoneBtn 改寫成「看門市據點」或「挑選款式」,
            改寫之後就沒有任何回到禮物中心的路了 —— 而那是他之後
@@ -116,6 +121,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/utils.js?v=20260513-2300"></script>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/layout.js?v=20260819-erp"></script>
-<script src="js/gift-claim.js?v=20260827-portallink"></script>
+<script src="js/gift-claim.js?v=20260827-twoways"></script>
 </body>
 </html>

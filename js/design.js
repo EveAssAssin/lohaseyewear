@@ -1323,11 +1323,9 @@
 
     State.pickGiftId = giftId;
 
-    // 沒有客編的話 list 會回 401「登入狀態已失效」,而他其實登入得好好的
-    if (Auth && Auth.isErpBound && !Auth.isErpBound()) {
-      fail(Auth.erpRequiredNote());
-      return;
-    }
+    /* ⚠ 2026-08-27 拿掉了「未綁定不能挑」的守門。
+       pick 不呼叫商城,不需要客編 —— 未綁定的收禮人記在 claimed_by_mid,
+       gift 函式那一端兩種身分都認。 */
 
     /* 先確認這份禮物真的是他的、而且還沒挑過。
        不先確認就把介面開出來的話,他挑完才被拒絕 —— 那時候圖都產完了。 */
