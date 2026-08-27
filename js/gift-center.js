@@ -165,10 +165,23 @@
       if (g.product_nid) {
         actions +=
           '<button class="gf-btn gf-btn--pri" data-pay="' + esc(g.id) + '">' +
-            '<i class="fa-solid fa-credit-card"></i> 去付款</button>';
+            '<i class="fa-solid fa-cart-shopping"></i> 前往商城付款</button>';
       }
+      /* ⚠ 文案刻意保守。
+         -----------------------------------------------------------
+         我方判斷「付款了沒」的唯一依據是商城的 gift_paid 事件,
+         而 2026-08-27 實測發現:用【門市取貨付款】結帳,訂單在商城
+         成立了,我方卻收到零個事件 —— 這張卡會一直停在待付款。
+
+         也就是說「已經下過單」與「還沒下單」在我方看起來一模一樣。
+         再按一次就是第二張訂單,而我方擋不住。
+
+         所以不要寫「完成付款後這裡會自動更新」—— 那句話在取貨付款
+         那條路上是假的。只講「已經下過單就不用再按」,那是真的。
+         等對方確認哪些付款方式會通知我方,再回來改。 */
       actions +=
-        '<span class="gf-hint"><i class="fa-solid fa-circle-info"></i>完成付款後才會產生領取連結</span>' +
+        '<span class="gf-hint"><i class="fa-solid fa-circle-info"></i>' +
+          '已經在商城下過單的話就不用再按,門市會依訂單為準</span>' +
         '<button class="gf-btn gf-btn--ghost" data-cancel="' + esc(g.id) + '">取消</button>';
     } else if (['claimed', 'issued', 'shipped', 'redeemed'].indexOf(g.status) >= 0) {
       // 這裡刻意不顯示對方姓名 —— Edge Function 的白名單也不會給,
