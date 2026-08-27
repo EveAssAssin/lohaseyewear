@@ -145,9 +145,6 @@
 .cl-select{
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
   cursor:pointer;
-  /* ⚠ 手機上字級小於 16px,iOS 在 focus 時會把整頁放大【而且不縮回去】。
-     其他輸入框已經處理過同一件事,這裡不能漏。 */
-  font-size:15px;
 }
 .cl-select-ico{
   position:absolute; right:14px; top:50%; transform:translateY(-50%);
@@ -388,4 +385,23 @@
   .cl-seg{ gap:6px }
   .cl-seg-btn{ padding:0 6px; font-size:12.5px }
   .cl-seg-btn i{ display:none }   /* 窄螢幕先犧牲圖示,字比較重要 */
+}
+
+/* =============================================================
+   ⚠ 手機:輸入框字級不可小於 16px
+   -------------------------------------------------------------
+   iOS Safari 在 focus 一個字級小於 16px 的輸入框時會自動放大整頁,
+   而且【關掉之後不會縮回去】—— 客人接著回到眼鏡布,整頁還是放大的,
+   字被切掉、要自己雙指縮小才看得下去。
+
+   不用 maximum-scale=1 擋掉縮放來解:那會連帶讓所有人都不能
+   自己放大來看,視力不好的人首當其衝。
+
+   ⚠ 2026-08-27 補:這條規則 CLAUDE.md 早就寫著,但這個檔案裡
+   一直沒有 —— .cl-input 是 14px,所以搜尋框在 iOS 上一直會放大。
+   取貨門市那個下拉也是輸入框,一併納入。
+   (upload-design.css 1133 行有同一段,兩邊要一起維護)
+   ============================================================= */
+@media (max-width:768px){
+  .cl-input, .cl-select{ font-size:16px }
 }
