@@ -3122,10 +3122,21 @@ body {
 .mp .gf-meta i{ margin-right:5px }
 
 .mp .gf-foot{
-  display:flex; align-items:center; justify-content:space-between;
+  display:flex; align-items:center;
+  /* ⚠ 不要用 space-between。
+     一顆按鈕時它看起來是「按鈕靠左、說明靠右」,剛好;
+     但兩顆按鈕時中間會被撐開,像是兩個不相干的東西。
+     改成靠左排,按鈕自然成組,說明另外處理(見下)。 */
+  justify-content:flex-start;
   gap:10px; flex-wrap:wrap;
   margin-top:12px; padding-top:12px;
   border-top:1px dashed var(--lohas-line);
+}
+/* 說明只要前面有按鈕就自己占一行 ——
+   它多半是一兩句完整的話,擠在按鈕旁邊會被壓成很窄的一欄。
+   只有說明沒有按鈕的卡片維持原樣(它就是那一行的全部)。 */
+.mp .gf-foot > .gf-hint:not(:first-child){
+  flex-basis:100%; margin:2px 0 0;
 }
 .mp .gf-hint{
   font-size:12px; color:var(--lohas-mute); letter-spacing:.3px;

@@ -28,7 +28,7 @@
        那一張還被 upload-design.js 的「刻在不同載體上的樣子」與
        birthday-wall.js 用著,而前者把位置寫死成 x:72 y:60 ——
        那組數字是照舊照片調的,共用一個檔名就會連帶把它們弄歪。 */
-    BASE_IMG: 'images/cloth-base.jpg',
+    BASE_IMG: 'images/cloth-base.jpg?v=20260827',
     /* 預設落點:置中偏上。
        新底圖是平放的正方形,右下角有 LOHAS EYEWEAR 的燙印 ——
        落在 y=0.58 以下會壓到那個標,所以往上移。

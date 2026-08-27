@@ -1074,9 +1074,15 @@
     var needDesign = !(State.gift && State.giftMode === 'recipient');
     if ((needDesign && !State.design) || !State.product) return;
 
-    /* 單純買一件在 A 路線開啟後不需要客編;送禮與挑禮物仍然需要
-       (gift 函式的 create / pick 以客編為索引)。 */
-    var needsErp = !CONFIG.ALLOW_MID_CHECKOUT || State.gift || State.pickGiftId;
+    /* 哪些動作真的需要 ERP 客編:
+         挑禮物(pick)  —— 不需要。它不碰商城,送禮人早就付過款了,
+                          而 gift 函式那端認 claimed_by_mid。
+                          ⚠ 2026-08-27 修:這裡原本把 pick 也算進去,
+                          於是未綁定的收禮人按「完成挑選」什麼都不會發生。
+         送禮(create)  —— 需要。gift 函式以客編為索引建立禮物。
+         單純買一件    —— 看 ALLOW_MID_CHECKOUT 這個旗標。 */
+    var needsErp = !State.pickGiftId &&
+                   (State.gift || !CONFIG.ALLOW_MID_CHECKOUT);
     if (needsErp && blockedByErp()) return;
     if (State.pickGiftId) { submitPick(); return; }
     if (State.gift) { createGift(); return; }
