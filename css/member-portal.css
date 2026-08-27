@@ -3086,10 +3086,21 @@ body {
 .mp .gf-card:hover{ border-color:var(--lohas-light-brown) }
 
 /* 左側縮圖 */
+/* ⚠ 用 contain,不要用 cover。
+   -----------------------------------------------------------------
+   這一格的高度是【跟著卡片拉滿的】,而卡片高度差很多 ——
+   待付款那張只有按鈕,待領取那張多了領取連結欄與兩顆按鈕,
+   高出快一倍。cover 會把圖裁到剛好填滿,於是【同一張圖在不同
+   卡片上裁掉的比例完全不同】,高的卡片只看得到中間一條。
+
+   而這張是合成圖,它存在的意義就是「讓人看到刻上去的樣子」。
+   裁掉它是本末倒置。contain 讓整張都看得見,多出來的空間
+   用底色補 —— 那點留白遠比看不到刻圖便宜。 */
 .mp .gf-thumb{
   flex-shrink:0;
   width:118px;
-  background:var(--lohas-tip) center/cover no-repeat;
+  min-height:118px;                  /* 卡片很矮時不要把圖壓成一條 */
+  background:var(--lohas-tip) center/contain no-repeat;
   border-right:1px solid var(--lohas-line);
 }
 .mp .gf-thumb--empty{
