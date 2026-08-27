@@ -1693,6 +1693,12 @@
     // 這裡不要再寫一份 —— 兩處各寫一份就是先前不同步的原因。
     el.submit.textContent = '建 立 禮 物';
 
+    /* 還沒挑鏡框之前左邊是空的一大塊。放禮物盒那張當底 ——
+       這一頁的主詞是「送禮」,空白框框只會讓人以為圖沒載出來。
+       只在送禮模式設:一般客製(?nid=)進來時商品照馬上就到,
+       在那裡放預設圖只會多閃一次。 */
+    el.productImg.src = 'images/gift-hero.jpg';
+
     hide(el.loading);
     show(el.body);
     show(el.giftModeCard);
