@@ -89,13 +89,24 @@
 
 /* === 工具列 === */
 
+/* 兩組篩選各自一行,左邊掛名字。
+   -----------------------------------------------------------------
+   ⚠ 藥丸【不要】撐滿整行(先前是 flex:1 1 auto)。撐開之後每一顆
+   都一樣寬、鋪滿一整條,兩組併起來就變成六顆連在一起的東西,
+   看不出是兩組。改成自然寬度、靠左排,群組的界線就自己出來了。 */
 .lab-bar{
-  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-  margin-bottom:16px;
+  display:flex; flex-direction:column; gap:10px;
+  margin-bottom:18px;
 }
-.lab-seg{ display:flex; gap:6px; flex:1 1 auto }
+.lab-filter{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+.lab-filter-label{
+  flex:0 0 auto; width:2.6em;
+  font-size:12px; letter-spacing:.16em;
+  color:var(--lohas-sub, #8A7F70);
+}
+.lab-seg{ display:flex; gap:6px; flex-wrap:wrap }
 .lab-seg-btn{
-  flex:1 1 auto; min-height:40px; padding:0 14px;
+  flex:0 0 auto; min-height:38px; padding:0 16px;
   border:1px solid var(--lohas-bd, #E8DED1);
   border-radius:var(--r-pill, 999px);
   background:#fff; color:var(--text-sub);
@@ -240,7 +251,9 @@
   .lab-done-wrap{ margin-left:0; width:100% }
   .lab-done{ width:100%; justify-content:center }
   .lab-file{ flex:1 1 auto }
-  .lab-bar{ flex-direction:column; align-items:stretch }
+  /* 手機上標籤自己一行,藥丸才有整行的寬度可以排 */
+  .lab-filter{ align-items:flex-start }
+  .lab-filter-label{ width:100%; margin-bottom:-2px }
   /* 手機上名稱與尺寸擠在同一列會換行得很難看,讓尺寸自己一列 */
   .lab-size{ margin-left:0; width:100%; justify-content:space-between }
 }

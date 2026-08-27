@@ -14,7 +14,7 @@
   <!-- LOHAS CSS · 載入順序: tokens → base → page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
-  <link rel="stylesheet" href="css/cloth-lab.css?v=20260827-header">
+  <link rel="stylesheet" href="css/cloth-lab.css?v=20260827-tabs">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -47,11 +47,22 @@
 
     <!-- 列表 -->
     <section class="lab-body" id="labBody" hidden>
+      <!-- ⚠ 兩組分頁一定要分行、而且各自有名字。
+           -----------------------------------------------------------
+           先前兩組併在同一排,結果是六顆藥丸連成一條、其中兩顆
+           都寫著「全部」、兩顆都是深色 —— 看起來像同一組裡選了兩個,
+           而且分不出哪個「全部」管哪件事。
+
+           所以:分兩行、左邊標名字、第二組的「全部」改叫「全區」。
+           同一個詞在兩個地方各指一件事,是最省字也最容易誤讀的寫法。 -->
       <div class="lab-bar">
-        <div class="lab-seg" id="labStatus">
-          <button type="button" class="lab-seg-btn on" data-s="new">待製作</button>
-          <button type="button" class="lab-seg-btn" data-s="done">已完成</button>
-          <button type="button" class="lab-seg-btn" data-s="">全部</button>
+        <div class="lab-filter">
+          <span class="lab-filter-label">狀態</span>
+          <div class="lab-seg" id="labStatus">
+            <button type="button" class="lab-seg-btn on" data-s="new">待製作</button>
+            <button type="button" class="lab-seg-btn" data-s="done">已完成</button>
+            <button type="button" class="lab-seg-btn" data-s="">全部</button>
+          </div>
         </div>
 
         <!-- 產線分流。依客人選的取貨門市所在區域切。
@@ -59,11 +70,14 @@
              才會出現 —— 那些是沒選門市、或海外門市的件。
              不給它一個位置的話,那些件會從兩個分頁裡同時消失,
              而沒有人會發現。 -->
-        <div class="lab-seg" id="labArea">
-          <button type="button" class="lab-seg-btn on" data-a="">全部<em data-n></em></button>
-          <button type="button" class="lab-seg-btn" data-a="north">台中以北<em data-n></em></button>
-          <button type="button" class="lab-seg-btn" data-a="south">台南以南<em data-n></em></button>
-          <button type="button" class="lab-seg-btn" data-a="other" hidden>其他<em data-n></em></button>
+        <div class="lab-filter">
+          <span class="lab-filter-label">產線</span>
+          <div class="lab-seg" id="labArea">
+            <button type="button" class="lab-seg-btn on" data-a="">全區<em data-n></em></button>
+            <button type="button" class="lab-seg-btn" data-a="north">台中以北<em data-n></em></button>
+            <button type="button" class="lab-seg-btn" data-a="south">台南以南<em data-n></em></button>
+            <button type="button" class="lab-seg-btn" data-a="other" hidden>其他<em data-n></em></button>
+          </div>
         </div>
       </div>
 
@@ -74,6 +88,6 @@
   </main>
 
   <script src="js/dxf.js?v=20260824"></script>
-  <script src="js/cloth-lab.js?v=20260827-area"></script>
+  <script src="js/cloth-lab.js?v=20260827-tabs"></script>
 </body>
 </html>
