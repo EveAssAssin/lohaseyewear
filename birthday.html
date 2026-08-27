@@ -19,7 +19,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/birthday.css?v=20260821-wall3">
+  <link rel="stylesheet" href="css/birthday.css?v=20260827-giftcta">
   <script src="js/layout.js?v=20260819-erp" defer></script>
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -44,7 +44,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <div class="hero-btns">
             <a href="login.html" class="btn btn-primary">登入會員領好禮</a>
-            <a href="#gift" class="btn btn-outline">看生日禮物</a>
+            <!-- 取代原本的「看生日禮物」(#gift 錨點)。
+                 這一頁的訪客不一定是壽星本人,也可能是想幫壽星準備禮物的人 ——
+                 而錨點只是把人往下捲,往下捲的內容他自己也看得到。
+                 換成一個他做得到、而且別的地方沒有的動作。 -->
+            <a href="design.html?gift=1" class="btn btn-outline">我要送禮給別人</a>
         </div>
     </div>
     <div class="hero-bg">
