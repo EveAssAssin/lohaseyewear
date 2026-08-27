@@ -261,6 +261,25 @@ function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<str
     };
     const rec = String(g.recipient_erpid || '').slice(0, 40);
     if (rec) gift.recipient_erpid = rec;
+
+    /* 領取連結。2026-08-27 對方要求補送。
+       -----------------------------------------------------------
+       用途:商城的訂購完成頁要放「複製領取連結」與「用 LINE 傳給對方」。
+       送禮人付完款會被導回那一頁,而在此之前那一頁不會提到領取連結 ——
+       當下把視窗關掉的人就找不回來了。
+
+       ⚠ 提早交出去為什麼安全:gift 的 claim 硬性要求 status === 'paid',
+       pending_payment 明確擋掉。所以這串在付款事件回來之前領不了,
+       它只是「先放在對方頁面上」,不是「提前開放領取」。
+
+       只放行自家網域的網址。這一段是我方組給對方印在頁面上的連結,
+       若哪天上游改成回傳任意網址,不擋就成了把外部連結種進商城頁面
+       的管道 —— 同 imgOk() 的理由。 */
+    const cu = String(g.claim_url || '').slice(0, 300);
+    if (cu && /^https:\/\/(www\.)?lohasglasses\.com\//.test(cu)) {
+      gift.claim_url = cu;
+    }
+
     out.gift = gift;
   }
 

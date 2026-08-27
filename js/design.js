@@ -889,7 +889,12 @@
       gift: {
         is_gift: true,
         gift_id: g.id,
-        fulfillment: State.fulfillment
+        fulfillment: State.fulfillment,
+        /* 商城的訂購完成頁要用它放「複製領取連結」與「用 LINE 傳給對方」。
+           付款完成後送禮人被導回那一頁,而在此之前那一頁不會提到領取連結 ——
+           當下關掉視窗的人就找不回來了。
+           提早交出去領不了:claim 硬性要求 status === 'paid'。 */
+        claim_url: g.claim_url || ''
       }
     })
       .then(function (data) {
