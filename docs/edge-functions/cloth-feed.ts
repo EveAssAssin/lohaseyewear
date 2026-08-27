@@ -175,10 +175,24 @@ Deno.serve(async (req) => {
     return reply('006', { message: 'status 只接受 done / pending / all' }, 400);
   }
 
+  /* 取貨門市。2026-08-27 新增,對方(App)要求。
+     -----------------------------------------------------------
+     用途是通知文案:「你的眼鏡布做好了,可到○○店領取」——
+     少了店名,那句話只能寫成「可到門市領取」,而客人會回問
+     「哪一家」,那通推播就等於沒發。
+
+     ⚠ 舊資料兩欄都是 null(這個功能上線前存的),而且客人
+     【可以不選】—— 所以對方一定要能處理 null,不能假設有值。
+     null 的意思是「還沒指定」,不是「資料壞了」。 */
+  const storeOf = (r: Record<string, unknown>) => ({
+    store_erpid: r.store_erpid ?? null,
+    store_name: r.store_name ?? null,
+  });
+
   let data: any[] = [];
   if (wantDone) {
     const r = await db.from('cloth_designs')
-      .select('id, erpid, mid, source, design_name, preview_url, done_at')
+      .select('id, erpid, mid, source, design_name, preview_url, done_at, store_erpid, store_name')
       .eq('status', 'done')
       .gt('done_at', since.toISOString())
       .order('done_at', { ascending: true })    // 由舊到新,對方好記「抓到哪」
@@ -196,7 +210,7 @@ Deno.serve(async (req) => {
   let pending: Array<Record<string, unknown>> = [];
   if (wantPending) {
     const r = await db.from('cloth_designs')
-      .select('id, erpid, mid, source, design_name, preview_url, created_at')
+      .select('id, erpid, mid, source, design_name, preview_url, created_at, store_erpid, store_name')
       .eq('status', 'new')
       .order('created_at', { ascending: false })
       .limit(1000);
@@ -212,6 +226,7 @@ Deno.serve(async (req) => {
       source: x.source,
       preview_url: x.preview_url,
       created_at: x.created_at,
+      ...storeOf(x),
     }));
   }
 
@@ -228,6 +243,7 @@ Deno.serve(async (req) => {
     source: r.source,
     preview_url: r.preview_url,
     done_at: r.done_at,
+    ...storeOf(r),
   }));
 
   /* next_since 直接給出來,對方不必自己從清單裡挑最後一筆的時間。
