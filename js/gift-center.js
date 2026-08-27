@@ -260,9 +260,16 @@
           '已領取,現在不用做任何事 —— 兌換券產生中,好了這裡會變成「可到門市兌換」。</span>' +
           storeLinkHtml();
     } else if (g.status === 'issued') {
+      /* 「帶著這副眼鏡的樣子」語意含糊:前半像是要他準備什麼東西,
+         後半又說不用出示 —— 兩句互相打架,客人會不確定到底要不要帶。
+
+         門市是以客編查詢的,店員那邊看得到款式與刻圖,所以正確的說法是
+         「什麼都不用帶,報編號就好」,並且講明店員看得到什麼 ——
+         那才是他真正想知道的事(我挑的東西門市知不知道)。 */
       actions = '<span class="gf-hint"><i class="fa-solid fa-ticket"></i>' +
-                '可以兌換了 —— 帶著這副眼鏡的樣子到任一門市,報你的會員編號或手機即可,' +
-                '不需要另外出示什麼。</span>' + storeLinkHtml();
+                '可以兌換了 —— 到任一樂活門市報你的會員編號或手機就行。' +
+                '你挑的款式與刻圖店員都查得到,不用帶任何東西。</span>' +
+                storeLinkHtml();
     } else if (g.status === 'shipped') {
       actions = '<span class="gf-hint"><i class="fa-solid fa-truck"></i>已於 ' +
                 fmtDate(g.shipped_at) + ' 出貨</span>';
