@@ -25,7 +25,10 @@
     CODE_KEY: 'lohasClothLabCode'
   };
 
-  var State = { code: '', status: 'new', items: [], busy: false };
+  /* area:'' = 全部,north = 台中以北,south = 台南以南,other = 其他
+     ⚠ 記在 localStorage —— 兩個製作端各自固定看自己那一區,
+     每次進來都要重選一次是每天都會重複的摩擦。 */
+  var State = { code: '', status: 'new', area: '', items: [], total: 0, busy: false };
   var el = {};
 
   /* ---------- 工具 ---------- */
@@ -68,6 +71,37 @@
 
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
   var STATUS = { new: '待製作', done: '已完成', archived: '已封存' };
+
+  /* 產線分流:客人選的取貨門市在哪一區,這件就歸哪一條線。
+     -----------------------------------------------------------------
+     值是門市資料的 city 欄位原文(北區、台中區一、台南區…),
+     與 js/store-data.js 的 REGION_MAP 同一組字串。
+
+     ⚠ 兩張表要一起改。哪天總部新增一個區(例如「宜蘭區」),
+     這裡沒跟上的話,那一區的件會安靜地掉進「其他」——
+     不會報錯,只會有人某天問「怎麼一直沒收到宜蘭的布」。
+     所以「其他」那一格永遠存在,而且有東西時會自己冒出來。 */
+  var AREA_OF = {
+    '北區': 'north', '新竹區': 'north', '台中區一': 'north', '台中區二': 'north',
+    '台南區': 'south', '高雄區一': 'south', '高雄區二': 'south'
+  };
+  var AREA_LABEL = { north: '台中以北', south: '台南以南', other: '其他' };
+
+  function areaOf(it) {
+    return AREA_OF[String(it && it.store_city || '')] || 'other';
+  }
+
+  /* 取貨門市那一行。
+     沒選的要明確講出來,而且要顯眼 —— 那件東西做好之後
+     沒有人知道要送去哪,是要有人處理的,不是可以略過的空白。 */
+  function storeHtml(it) {
+    if (it.store_name) {
+      return '<span class="lab-store"><i class="fa-solid fa-location-dot"></i>' +
+             esc(it.store_name) + '</span>';
+    }
+    return '<span class="lab-store is-none"><i class="fa-solid fa-circle-question"></i>' +
+           '未指定取貨門市</span>';
+  }
 
   /* 座標翻成人看得懂的話。
      製作的人不需要知道 x=0.65,他需要知道「偏右下、約布寬的 22%」。 */
@@ -115,6 +149,7 @@
           '</div>' +
           '<div class="lab-meta">位置:<b>' + esc(placeText(it.placement)) + '</b></div>' +
           '<div class="lab-meta">' + who + '　·　' + esc(fmtTime(it.created_at)) + '</div>' +
+          '<div>' + storeHtml(it) + '</div>' +
           '<div class="lab-btns">' +
             '<a class="lab-file" href="' + esc(it.svg_url) + '" download>' +
               '<i class="fa-solid fa-file-arrow-down"></i>SVG</a>' +
@@ -131,13 +166,50 @@
       '</div>';
   }
 
+  /* 依區域篩,並把件數標在分頁上。
+     -----------------------------------------------------------------
+     篩在前端做:清單本來就一次抓 100 筆,再為了分區多打一次
+     沒有意義,而且切分頁會變成每次都要等網路。 */
+  function visibleItems() {
+    if (!State.area) return State.items;
+    return State.items.filter(function (it) { return areaOf(it) === State.area; });
+  }
+
+  function renderAreaTabs() {
+    if (!el.area) return;
+    var counts = { '': State.items.length, north: 0, south: 0, other: 0 };
+    State.items.forEach(function (it) { counts[areaOf(it)]++; });
+
+    el.area.querySelectorAll('.lab-seg-btn').forEach(function (b) {
+      var k = b.dataset.a;
+      var n = counts[k] || 0;
+      b.querySelector('em[data-n]').textContent = n ? n : '';
+      b.classList.toggle('on', k === State.area);
+      /* 「其他」平時藏著,有東西才出現 —— 但【正在看它的時候不能藏】,
+         否則按下去之後那顆鈕自己消失,人會以為畫面壞了。 */
+      if (k === 'other') b.hidden = !n && State.area !== 'other';
+    });
+  }
+
   function render() {
-    if (!State.items.length) {
-      el.list.innerHTML = '<div class="lab-empty">目前沒有' +
+    renderAreaTabs();
+    var items = visibleItems();
+
+    if (!items.length) {
+      el.list.innerHTML = '<div class="lab-empty">' +
+        (State.area ? AREA_LABEL[State.area] + '目前沒有' : '目前沒有') +
         (STATUS[State.status] || '') + '的項目</div>';
       return;
     }
-    el.list.innerHTML = State.items.map(cardHtml).join('');
+    el.list.innerHTML = items.map(cardHtml).join('');
+
+    /* ⚠ 一次只抓 100 筆。超過的要講出來,不能安靜地少給 ——
+       製作端看到清單見底會當成「做完了」,而那時候還有東西沒列出來。 */
+    if (State.total > State.items.length) {
+      el.list.innerHTML +=
+        '<div class="lab-empty">還有 ' + (State.total - State.items.length) +
+        ' 件沒有列出來(一次最多 100 件)。做完上面這些再重新整理就會出現。</div>';
+    }
 
     // 縮放版取不到時退回原圖(用事件,不用內聯 onerror)
     el.list.querySelectorAll('.lab-thumb[data-full]').forEach(function (img) {
@@ -152,7 +224,11 @@
     hide(el.msg);
     el.list.innerHTML = '<div class="lab-empty">載入中…</div>';
     return call({ action: 'list', status: State.status, limit: 100 })
-      .then(function (d) { State.items = d.items || []; render(); })
+      .then(function (d) {
+        State.items = d.items || [];
+        State.total = Number(d.total || State.items.length);
+        render();
+      })
       .catch(function (e) {
         /* 通行碼被換掉時要退回輸入畫面,不要留在一個永遠載不出東西的列表。 */
         if (e.code === '403') { forget(); return; }
@@ -252,7 +328,7 @@
   function init() {
     el = {
       gate: $('labGate'), code: $('labCode'), enter: $('labEnter'), gateErr: $('labGateErr'),
-      body: $('labBody'), status: $('labStatus'),
+      body: $('labBody'), status: $('labStatus'), area: $('labArea'),
       msg: $('labMsg'), list: $('labList'), out: $('labOut')
     };
     if (!el.gate) return;
@@ -270,6 +346,22 @@
       State.status = b.dataset.s;
       load();
     });
+
+    /* 換區域【不重新載入】—— 資料同一批,只是換一個看法。
+       打一次網路只為了篩掉幾張卡,在工廠的網路下是白等。 */
+    if (el.area) {
+      el.area.addEventListener('click', function (e) {
+        var b = e.target.closest('.lab-seg-btn');
+        if (!b) return;
+        State.area = b.dataset.a || '';
+        try { localStorage.setItem('lohas_lab_area', State.area); } catch (err) { /* 無痕 */ }
+        render();
+      });
+      try {
+        var saved = localStorage.getItem('lohas_lab_area');
+        if (saved && AREA_LABEL[saved] !== undefined || saved === '') State.area = saved || '';
+      } catch (err) { /* 無痕 */ }
+    }
 
     el.list.addEventListener('click', function (e) {
       var dxf = e.target.closest('[data-dxf]');

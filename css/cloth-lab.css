@@ -91,6 +91,25 @@
 .lab-seg-btn.on{
   background:var(--lohas-brand); color:#fff; border-color:var(--lohas-brand);
 }
+/* 分頁上的件數。製作端最常問的就是「我這區還有幾件」——
+   讓他不必切過去數。 */
+.lab-seg-btn em[data-n]{
+  font-style:normal; font-size:12px; opacity:.65; margin-left:5px;
+}
+.lab-seg-btn em[data-n]:empty{ display:none }
+
+/* 取貨門市。放在卡片上最顯眼的一行 ——
+   分完產線之後,製作的人下一個問題就是「這件要送去哪」。 */
+.lab-store{
+  display:inline-flex; align-items:center; gap:5px;
+  margin-top:6px; padding:3px 10px;
+  border-radius:var(--r-pill, 999px);
+  background:var(--lohas-brand); color:#fff;
+  font-size:12px; font-weight:600; letter-spacing:.5px;
+}
+.lab-store.is-none{
+  background:#fff; color:#B4453C; border:1px dashed #E0A9A3;
+}
 
 /* 每張卡右上的尺寸設定(原本在工具列,是全域的)。
    製作的人一次處理一件,全域的話得每下載一次改一次,

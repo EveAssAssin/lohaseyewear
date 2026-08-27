@@ -14,7 +14,7 @@
   <!-- LOHAS CSS · 載入順序: tokens → base → page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
-  <link rel="stylesheet" href="css/cloth-lab.css?v=20260824d">
+  <link rel="stylesheet" href="css/cloth-lab.css?v=20260827-area">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -51,6 +51,18 @@
           <button type="button" class="lab-seg-btn" data-s="done">已完成</button>
           <button type="button" class="lab-seg-btn" data-s="">全部</button>
         </div>
+
+        <!-- 產線分流。依客人選的取貨門市所在區域切。
+             ⚠「其他」那一格平時是藏著的,只有真的有東西落在那裡
+             才會出現 —— 那些是沒選門市、或海外門市的件。
+             不給它一個位置的話,那些件會從兩個分頁裡同時消失,
+             而沒有人會發現。 -->
+        <div class="lab-seg" id="labArea">
+          <button type="button" class="lab-seg-btn on" data-a="">全部<em data-n></em></button>
+          <button type="button" class="lab-seg-btn" data-a="north">台中以北<em data-n></em></button>
+          <button type="button" class="lab-seg-btn" data-a="south">台南以南<em data-n></em></button>
+          <button type="button" class="lab-seg-btn" data-a="other" hidden>其他<em data-n></em></button>
+        </div>
       </div>
 
       <div class="lab-msg" id="labMsg" hidden></div>
@@ -60,6 +72,6 @@
   </main>
 
   <script src="js/dxf.js?v=20260824"></script>
-  <script src="js/cloth-lab.js?v=20260824d"></script>
+  <script src="js/cloth-lab.js?v=20260827-area"></script>
 </body>
 </html>

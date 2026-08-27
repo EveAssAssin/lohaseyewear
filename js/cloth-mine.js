@@ -131,6 +131,12 @@
       '<dl class="mc-modal-dl">' +
         '<dt>圖案來源</dt><dd>' + esc(it.source === 'draw' ? '自己畫的' : '刻圖市集') + '</dd>' +
         '<dt>儲存日期</dt><dd>' + esc(ymd(it.created_at)) + '</dd>' +
+        /* 取貨門市。做的時候選過的東西,幾天後他一定不記得 ——
+           而「我要去哪裡拿」正是他點開這張卡最可能想問的事。
+           沒選的也要講,不然他會以為系統忘了。 */
+        '<dt>取貨門市</dt><dd>' +
+          (it.store_name ? esc(it.store_name) : '尚未指定 —— 到任一門市領取前請先電話確認') +
+        '</dd>' +
         (it.done_at ? '<dt>完成日期</dt><dd>' + esc(ymd(it.done_at)) + '</dd>' : '') +
       '</dl>' +
       '<p class="mc-modal-note">' +

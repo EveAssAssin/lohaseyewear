@@ -52,6 +52,9 @@
     y: CONFIG.DEF.y,
 
     // 手繪
+    // 取貨門市清單(正規化後)。載不到就是空陣列 —— 不擋儲存。
+    stores: [],
+
     strokes: [],         // 每一筆是 { w, pts:[[x,y],…] },保留才做得到「上一步」
     drawing: false,
     brush: 18,
@@ -541,6 +544,83 @@
     });
   }
 
+  /* ---------- 取貨門市 ---------- */
+
+  /* 依區域分組成 optgroup。
+     -----------------------------------------------------------------
+     六十幾家店平鋪在一個下拉裡找不到人 —— 客人心裡想的是
+     「我家附近那家」,而那是區域問題,不是店名問題。
+
+     ⚠ 這一段整段可以失敗。門市 API 掛掉、網路斷、正規化之後
+     一家都不剩,都只會讓下拉停在「暫時取不到門市清單」——
+     不擋儲存。一件已經畫完的設計不該因為一支查詢掛了而作廢;
+     沒選門市的會落在製作端的「其他」,人工處理一下就好。 */
+  function loadStores() {
+    var api = window.LohasApi && window.LohasApi.store;
+    var sd  = (window.LohasStore && window.LohasStore.data) || null;
+    if (!api || !sd || !el.store) { storeFallback('暫時取不到門市清單'); return; }
+
+    api.getAllStores()
+      .then(function (raw) {
+        var list = (raw || []).map(sd.normalizeStore).filter(Boolean)
+          .sort(function (a, b) {
+            return a.region.order - b.region.order || a.sort - b.sort;
+          });
+        if (!list.length) { storeFallback('暫時取不到門市清單'); return; }
+
+        State.stores = list;
+
+        var html = '<option value="">請選擇取貨門市</option>';
+        var curr = '';
+        list.forEach(function (st) {
+          if (st.region.label !== curr) {
+            if (curr) html += '</optgroup>';
+            curr = st.region.label;
+            html += '<optgroup label="' + esc(curr) + '">';
+          }
+          html += '<option value="' + esc(st.erpid) + '">' + esc(st.name) + '</option>';
+        });
+        if (curr) html += '</optgroup>';
+        el.store.innerHTML = html;
+
+        /* 上次選過的記起來 —— 同一個人做第二條布,多半還是去同一家。
+           清單裡沒有那家了(已停業)就當作沒存過。 */
+        try {
+          var last = localStorage.getItem('lohas_cloth_store');
+          if (last && /^[0-9A-Za-z_-]{1,32}$/.test(last)) {
+            var opt = el.store.querySelector('option[value="' + last + '"]');
+            if (opt) el.store.value = last;
+          }
+        } catch (e) { /* 無痕模式讀 localStorage 會丟例外 */ }
+      })
+      .catch(function (e) {
+        console.warn('[cloth] 門市清單載入失敗', e && e.message);
+        storeFallback('暫時取不到門市清單');
+      });
+  }
+
+  function storeFallback(msg) {
+    if (!el.store) return;
+    el.store.innerHTML = '<option value="">' + esc(msg) + '</option>';
+    if (el.storeHint) {
+      el.storeHint.textContent = '沒關係,先存起來 —— 到門市時跟店員說一聲就可以領。';
+    }
+  }
+
+  /* 送出時把店名與區域一起帶走,不是只帶編號。
+     製作端那一頁不登入,不能為了顯示店名去打門市 API ——
+     那台一掛,整張製作單就變成一排「未知門市」。 */
+  function pickedStore() {
+    if (!el.store || !el.store.value) return null;
+    var id = String(el.store.value);
+    var hit = (State.stores || []).filter(function (st) {
+      return String(st.erpid) === id;
+    })[0];
+    if (!hit) return null;
+    try { localStorage.setItem('lohas_cloth_store', id); } catch (e) { /* 無痕 */ }
+    return { erpid: id, name: hit.name || '', city: hit.city || '' };
+  }
+
   /* ---------- 存檔 ---------- */
 
   function uploadBlob(blob, path, type) {
@@ -628,7 +708,8 @@
             preview_url: previewUrl,
             placement: {
               scale: State.scale, x: State.x, y: State.y, basis: 'cloth_image'
-            }
+            },
+            store: pickedStore()
           })
         }).then(function (r) { return r.json(); });
       })
@@ -759,6 +840,7 @@
       scaleVal: $('clScaleVal'), xVal: $('clXVal'), yVal: $('clYVal'),
       reset: $('clReset'), note: document.querySelector('.cl-note'),
       err: $('clErr'), submit: $('clSubmit'), submitHint: $('clSubmitHint'),
+      storeCard: $('clStoreCard'), store: $('clStore'), storeHint: $('clStoreHint'),
       done: $('clDone'), doneText: $('clDoneText')
     };
     if (!el.stage) return;
@@ -818,6 +900,7 @@
     requestAnimationFrame(syncSticky);   // 字體換好之後高度會再動一次
 
     loadDesigns();
+    loadStores();
     refreshSubmit();
   }
 

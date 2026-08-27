@@ -61,6 +61,20 @@ function clamp01(v: unknown): number {
   return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
 }
 
+/* 取貨門市:只留這三個欄位,而且都截短。
+   erpid 限定英數,不是為了安全(它不授權任何事),
+   而是為了不讓奇怪的東西進到製作單的畫面上。 */
+function pickStore(v: unknown) {
+  const o = (v || {}) as Record<string, unknown>;
+  const id = String(o.erpid ?? '').trim();
+  if (!id || !/^[0-9A-Za-z_-]{1,32}$/.test(id)) return {};
+  return {
+    store_erpid: id,
+    store_name: String(o.name ?? '').slice(0, 80) || null,
+    store_city: String(o.city ?? '').slice(0, 40) || null,
+  };
+}
+
 /* 身分。erpid 或 mid 有一個就算數 ——
    眼鏡布只做體驗、不成交,不需要 ERP 客編。
    官網註冊的新會員也應該玩得到。 */
@@ -124,7 +138,7 @@ Deno.serve(async (req) => {
      回了等於把它散到瀏覽器紀錄與快取裡。 */
   if (action === 'list') {
     let q = db.from('cloth_designs')
-      .select('id, source, design_name, preview_url, status, created_at, done_at')
+      .select('id, source, design_name, preview_url, status, created_at, done_at, store_name')
       .order('created_at', { ascending: false })
       .limit(60);
 
@@ -180,6 +194,21 @@ Deno.serve(async (req) => {
       y: clamp01(p.y),
       basis: 'cloth_image',
     },
+
+    /* 取貨門市。前端傳的是 { erpid, name, city }。
+       -----------------------------------------------------------
+       ⚠ 三個值都是【前端給的】,所以只做長度與字元的限制,
+       不當成可信資料。它們的用途是「印在製作單上給人看」與
+       「分流到哪一條產線」,不是授權判斷 —— 沒有任何東西
+       因為這三個欄位而被允許或拒絕。
+
+       為什麼不在這裡用 erpid 去反查店名:這支要為每一次儲存
+       多打一次門市 API,而那台是外部系統。存下來的是當下的
+       快照,製作端不必連線就看得到,也不會因為門市改劃區域
+       而讓一件已排入產線的工作隔天跳到另一組人手上。
+
+       沒選門市是合法的:落在製作端的「其他」,人工處理。 */
+    ...pickStore(body.store),
   };
 
   const { data, error } = await db.from('cloth_designs').insert(row).select('id').single();

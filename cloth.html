@@ -132,6 +132,25 @@
         </button>
       </div>
 
+      <!-- 取貨門市。
+           -----------------------------------------------------------
+           對客人:他要知道去哪裡拿。
+           對我方:製作端(cloth-lab.html)靠這一欄把工作分成
+                   「台中以北」與「台南以南」兩條線。
+
+           ⚠ 不設必填。選不出來(門市 API 掛了、他還沒想好)不該
+           擋住一件已經畫完的設計 —— 沒選的會落在製作端的「其他」,
+           人工處理一下就好,那比讓他重畫一次划算得多。 -->
+      <div class="cl-card" id="clStoreCard">
+        <div class="cl-card-h">要到哪一家門市拿</div>
+        <select class="cl-input cl-select" id="clStore">
+          <option value="">載入門市中…</option>
+        </select>
+        <p class="cl-store-hint" id="clStoreHint">
+          之後想換也可以,到門市前先打個電話跟他們說一聲就好。
+        </p>
+      </div>
+
       <div class="cl-note">
         <i class="fa-solid fa-circle-info"></i>
         此為示意畫面。實際印製的位置與顏色會在門市與你再次確認。
@@ -178,6 +197,10 @@
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
 <script src="js/subcategories.js?v=20260513-2330"></script>
 <script src="js/upload-design.js?v=20260825-noreview3"></script>
-<script src="js/cloth.js?v=20260827-newbase"></script>
+<!-- 門市清單(取貨門市下拉用)。api-core 要先於 api-store。 -->
+<script src="js/api/api-core.js?v=20260517-1800"></script>
+<script src="js/api/api-store.js?v=20260517-1800"></script>
+<script src="js/store-data.js?v=20260814-kaoying"></script>
+<script src="js/cloth.js?v=20260827-store2"></script>
 </body>
 </html>
