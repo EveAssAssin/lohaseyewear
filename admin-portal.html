@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
-  <link rel="stylesheet" href="css/admin-portal.css?v=20260827-giftwork">
+  <link rel="stylesheet" href="css/admin-portal.css?v=20260827-heartbeat">
   <!-- 禮物中心加工管理與門市查刻圖共用同一組樣式與程式 -->
   <link rel="stylesheet" href="css/store-lookup.css?v=20260820-midclaim">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260601-drag">
@@ -1063,6 +1063,10 @@
         </a>
       </div>
 
+      <!-- App 排程存活探針。正常時是一行小字,超過 36 小時變紅色警示。
+           由 js/admin-portal-cloth.js 依 cloth-feed 的心跳決定。 -->
+      <div id="clothHeartbeat" class="cloth-hb" style="display:none"></div>
+
       <!-- 篩選列 (對齊最新消息 / 創作者管理) -->
       <div class="filter-row">
         <input class="editor-input" id="clothSearch" placeholder="搜尋會員編號 / 姓名..." style="max-width:280px"/>
@@ -2010,7 +2014,7 @@
 <script src="js/admin-portal-pegavision.js?v=20260622"></script>
 <script src="js/admin-portal-categories.js?v=20260530-routeword"></script>
 <script src="js/dxf.js?v=20260824"></script>
-<script src="js/admin-portal-cloth.js?v=20260824g"></script>
+<script src="js/admin-portal-cloth.js?v=20260827-heartbeat2"></script>
 <script src="js/store-lookup.js?v=20260827-byphone"></script>
 
 </body>

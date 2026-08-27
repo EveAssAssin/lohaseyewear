@@ -190,7 +190,24 @@ Deno.serve(async (req) => {
   const items = (data || []).map((r: Record<string, any>) =>
     caller === 'lab' ? { ...r, member_name: null, mid: null } : r);
 
+  /* 對方的排程有沒有停掉。
+     -----------------------------------------------------------
+     那 29 支排程共用同一個 Jenkins 觸發器(對方 2026-08-27 說明),
+     停掉的話全部一起安靜地死 —— 而三邊各自看都正常:
+     製作端按了完成、官網資料也對、App 只是沒有人來抓。
+
+     所以順便回一個「上次被抓是什麼時候」,由後台畫面判斷要不要示警。
+     ⚠ 讀失敗不影響列表:那是附帶資訊,不是這一支的職責。
+     製作端(通行碼)不給 —— 他不需要知道對方的排程狀況。 */
+  let heartbeat: Record<string, unknown> | null = null;
+  if (caller !== 'lab') {
+    const hb = await db.from('cloth_feed_heartbeat')
+      .select('last_fetch_at, last_status, last_count').eq('id', 1).maybeSingle();
+    if (hb.error) console.error('[cloth-admin] 心跳讀取失敗:', hb.error.message);
+    else if (hb.data) heartbeat = hb.data;
+  }
+
   return reply('200', {
-    data: { items, total: count || 0, limit, offset },
+    data: { items, total: count || 0, limit, offset, heartbeat },
   });
 });

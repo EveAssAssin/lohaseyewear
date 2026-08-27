@@ -4251,3 +4251,26 @@
   font-style:normal; font-size:12px; color:var(--lohas-muted, #9B9186);
   padding-right:6px; white-space:nowrap;
 }
+
+
+/* === App 排程存活探針(客製眼鏡布加工管理)===
+   正常時只是一行小字 —— 它的作用是讓人知道「這件事有人在看」;
+   真的停了才變成擋在眼前的紅色橫幅。
+   平時就很吵的警示,出事那天沒有人會注意到。 */
+.ad .cloth-hb{
+  display:flex; align-items:flex-start; gap:8px;
+  margin-bottom:14px; padding:8px 12px;
+  border-radius:10px;
+  background:var(--lohas-bg-soft, #F7F5F1);
+  font-size:12.5px; line-height:1.7;
+  color:var(--lohas-muted, #9B9186);
+}
+.ad .cloth-hb i{ margin-top:3px }
+.ad .cloth-hb.is-stale{
+  padding:12px 14px;
+  background:#FDEDEC;
+  border:1px solid #E8B4AE;
+  color:#8C3B30;
+  font-size:13.5px;
+}
+.ad .cloth-hb.is-stale b{ color:#7A2F26 }

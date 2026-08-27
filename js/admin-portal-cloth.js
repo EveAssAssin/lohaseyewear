@@ -85,11 +85,69 @@
     return h + v + ',寬約布的 ' + Math.round(Number(p.scale || 0) * 100) + '%';
   }
 
+  /* 對方的排程有沒有停掉。
+     -----------------------------------------------------------
+     眼鏡布做好之後通知客人那條線,靠對方每天 10:30 來抓 cloth-feed。
+     那支排程與其他 28 支共用同一個 Jenkins 觸發器,而那台不在對方
+     控制之下 —— 停掉的話全部一起【安靜地死,不報錯】。
+
+     後果:客人的眼鏡布做好了卻永遠收不到通知,
+     而製作端、官網、App 三邊各自看都正常。
+
+     所以這裡要偵測的不是「設定對不對」,是「有沒有東西在動」。
+
+     ⚠ 刻意不做郵件或推播:那需要另一支排程,而排程正是這裡
+     不能信任的東西 —— 用一個可能一起死掉的機制去監控它沒有意義。
+     這一頁後台天天有人開,看得到就夠了。 */
+  var STALE_HOURS = 36;   // 每日一次,留一天半的餘裕
+
+  function renderHeartbeat() {
+    var box = document.getElementById('clothHeartbeat');
+    if (!box) return;
+    var hb = state.heartbeat;
+    if (!hb || !hb.last_fetch_at) { box.style.display = 'none'; return; }
+
+    var hours = (Date.now() - new Date(hb.last_fetch_at).getTime()) / 3600000;
+    if (!isFinite(hours)) { box.style.display = 'none'; return; }
+
+    if (hours < STALE_HOURS) {
+      // 正常時不佔版面,只留一行小字說明「這件事有人在看」
+      box.className = 'cloth-hb';
+      box.innerHTML = '<i class="fa-regular fa-circle-check"></i> App 上次來抓紀錄:' +
+        esc(fmtAgo(hours)) + '(每日 10:30)';
+    } else {
+      box.className = 'cloth-hb is-stale';
+      box.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' +
+        '<b>App 已經 ' + esc(fmtDur(hours)) + '沒有來抓紀錄了。</b>' +
+        '客人的眼鏡布做好之後可能收不到通知 —— ' +
+        '這通常代表對方那組每日排程停了,請通知主後端確認。';
+    }
+    box.style.display = '';
+  }
+
+  /* 兩種說法不能共用一個函式:
+       fmtAgo 回的是【時間點】 ——「2 天前」
+       fmtDur 回的是【時間長度】——「2 天」
+     警示那句是「已經 X 沒有來抓了」,套時間點會變成
+     「已經 2 天前沒有來抓紀錄了」,讀起來不通。 */
+  function fmtAgo(hours) {
+    if (hours < 1) return Math.round(hours * 60) + ' 分鐘前';
+    if (hours < 48) return Math.round(hours) + ' 小時前';
+    return Math.round(hours / 24) + ' 天前';
+  }
+
+  function fmtDur(hours) {
+    if (hours < 48) return Math.round(hours) + ' 小時';
+    return Math.round(hours / 24) + ' 天';
+  }
+
   function render() {
     var r = root(); if (!r) return;
 
     var sub = document.getElementById('clothSub');
     if (sub) sub.textContent = state.total + ' 件';
+
+    renderHeartbeat();
 
     var list = document.getElementById('clothList');
     if (!list) return;
@@ -165,6 +223,7 @@
       .then(function (d) {
         state.items = d.items || [];
         state.total = d.total || 0;
+        state.heartbeat = d.heartbeat || null;
       })
       .catch(function (e) {
         var list = document.getElementById('clothList');

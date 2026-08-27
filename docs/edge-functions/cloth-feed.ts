@@ -234,6 +234,25 @@ Deno.serve(async (req) => {
        沒有資料時原樣回傳這次的 since,對方下次照樣帶回來即可。 */
   const nextSince = items.length ? items[items.length - 1].done_at : since.toISOString();
 
+  /* 記一次心跳。
+     -----------------------------------------------------------
+     用途是偵測【對方的排程有沒有停掉】—— 那 29 支排程共用同一個
+     Jenkins 觸發器(對方 2026-08-27 說明),停掉的話全部一起安靜地死,
+     而三邊各自看都正常。
+
+     ⚠ 寫失敗不能影響回應:對方要的是資料,不是我方的監控。
+     整段包住,錯了只記 log。 */
+  db.from('cloth_feed_heartbeat')
+    .update({
+      last_fetch_at: new Date().toISOString(),
+      last_status: statusWant,
+      last_count: items.length + pending.length,
+    })
+    .eq('id', 1)
+    .then((r) => {
+      if (r.error) console.error('[cloth-feed] 心跳寫入失敗:', r.error.message);
+    });
+
   console.log('[cloth-feed] status=' + statusWant +
               ' since=' + since.toISOString() +
               ' → 完成 ' + items.length + ' 筆,製作中 ' + pending.length + ' 筆');
