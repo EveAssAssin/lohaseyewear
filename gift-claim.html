@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/gift-claim.css?v=20260809-hdr">
+  <link rel="stylesheet" href="css/gift-claim.css?v=20260827-portallink">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -96,7 +96,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <i class="fa-solid fa-circle-check gc-done-ico"></i>
       <h2 class="gc-panel-h">已完成領取</h2>
       <p class="gc-panel-text" id="gcDoneText"></p>
-      <a class="gc-btn gc-btn--ghost" id="gcDoneBtn" href="member-portal.html?page=gifts">到禮物中心查看</a>
+      <!-- 主要按鈕的去處依狀態而定(見 js 的 applyDoneBtn):
+           未綁定 → 看門市據點;可挑款式 → 挑選款式;其餘 → 禮物中心。 -->
+      <a class="gc-btn" id="gcDoneBtn" href="member-portal.html?page=gifts">到禮物中心查看</a>
+      <!-- ⚠ 這一條永遠都在。
+           主要按鈕會被 applyDoneBtn 改寫成「看門市據點」或「挑選款式」,
+           改寫之後就沒有任何回到禮物中心的路了 —— 而那是他之後
+           要查狀態、找兌換券的唯一地方。 -->
+      <a class="gc-done-link" id="gcPortalLink" href="member-portal.html?page=gifts">
+        <i class="fa-solid fa-arrow-right-long"></i> 前往會員中心查看這份禮物
+      </a>
     </div>
 
   </div>
@@ -107,6 +116,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/utils.js?v=20260513-2300"></script>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/layout.js?v=20260819-erp"></script>
-<script src="js/gift-claim.js?v=20260827-storelink"></script>
+<script src="js/gift-claim.js?v=20260827-portallink"></script>
 </body>
 </html>

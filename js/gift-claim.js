@@ -133,14 +133,14 @@
       var bound = !Auth || !Auth.isErpBound || Auth.isErpBound();
       if (!bound) {
         el.doneBtn.textContent = '看 門 市 據 點';
-        el.doneBtn.className = 'gc-btn gc-btn--ghost';
+        el.doneBtn.className = 'gc-btn gc-btn--pri';
         // ⚠ allstore.html 是門市清單;store.html 是單店內頁,
         //    沒帶門市代號進去會顯示「找不到此門市」。2026-08-27 修正。
         el.doneBtn.href = 'allstore.html';
         return;
       }
       el.doneBtn.textContent = '挑 選 款 式';
-      el.doneBtn.className = 'gc-btn';
+      el.doneBtn.className = 'gc-btn gc-btn--pri';
       el.doneBtn.href = 'design.html?pick=' + encodeURIComponent(g.id);
     }
   }

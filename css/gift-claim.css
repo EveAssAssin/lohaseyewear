@@ -178,6 +178,18 @@
 }
 .gc-btn--ghost:hover{ border-color:var(--lohas-brand); color:var(--lohas-brand) }
 
+/* 主要按鈕底下那條回禮物中心的路。
+   做成文字連結而不是第二顆按鈕 —— 兩顆同樣份量的按鈕會讓人
+   停下來比較,而這一條只是「之後想看再回來」,不是現在要做的事。 */
+.gc-done-link{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  margin-top:14px;
+  font-size:13px; color:var(--text-sub);
+  text-decoration:none;
+}
+.gc-done-link i{ font-size:11px; opacity:.7 }
+.gc-done-link:hover{ color:var(--lohas-brand) }
+
 /* ---- RWD ---- */
 @media (max-width:480px){
   /* padding-top 不可低於固定 header 的 70px */
