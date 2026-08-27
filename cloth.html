@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
-  <link rel="stylesheet" href="css/cloth.css?v=20260827-store2">
+  <link rel="stylesheet" href="css/cloth.css?v=20260827-transform">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -63,12 +63,24 @@
       <div class="cl-stage" id="clStage">
         <img class="cl-base" id="clBase" src="images/cloth-base.jpg?v=20260827"
              alt="樂活眼鏡布" draggable="false">
-        <!-- 刻圖疊在布上。位置與大小由右側控制,也可以直接拖曳 -->
-        <div class="cl-overlay" id="clOverlay" style="display:none"></div>
+        <!-- 刻圖疊在布上。
+             外框與節點放在 overlay 裡面 —— 這樣它們會跟著一起旋轉,
+             節點永遠落在圖案真正的四個角上,而不是一個不會轉的方框。 -->
+        <div class="cl-overlay" id="clOverlay" style="display:none">
+          <span class="cl-node cl-node--nw" data-node="nw"></span>
+          <span class="cl-node cl-node--ne" data-node="ne"></span>
+          <span class="cl-node cl-node--sw" data-node="sw"></span>
+          <span class="cl-node cl-node--se" data-node="se"></span>
+          <span class="cl-rot-arm"></span>
+          <span class="cl-node cl-node--rot" data-node="rot"
+                title="拖曳可旋轉,按住 Shift 每 15 度一格">
+            <i class="fa-solid fa-rotate-right"></i>
+          </span>
+        </div>
       </div>
       <p class="cl-hint">
         <i class="fa-solid fa-hand-pointer"></i>
-        直接拖曳圖案調整位置,或用右側滑桿微調
+        拖曳圖案移動 · 拉四個角縮放 · 上面那個把手可旋轉
       </p>
     </div>
 
@@ -210,6 +222,6 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260827-required"></script>
+<script src="js/cloth.js?v=20260827-transform"></script>
 </body>
 </html>

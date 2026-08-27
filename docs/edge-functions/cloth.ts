@@ -61,6 +61,13 @@ function clamp01(v: unknown): number {
   return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
 }
 
+/* 角度正規化成 0–359。非數字一律當 0(沒轉)。 */
+function normDeg(v: unknown): number {
+  const n = Number(v);
+  if (!isFinite(n)) return 0;
+  return ((n % 360) + 360) % 360;
+}
+
 /* 取貨門市:只留這三個欄位,而且都截短。
    erpid 限定英數,不是為了安全(它不授權任何事),
    而是為了不讓奇怪的東西進到製作單的畫面上。 */
@@ -192,6 +199,12 @@ Deno.serve(async (req) => {
       scale: clamp01(p.scale),
       x: clamp01(p.x),
       y: clamp01(p.y),
+      /* 旋轉角(度,順時針)。2026-08-27 新增。
+         ⚠ 這個值會傳到製作端並套進 DXF —— 它不是裝飾,
+         做出來的東西會照著轉。所以要正規化成 0–359,
+         而不是原封不動存進去:負數或 400 度在畫面上看不出問題,
+         到了 DXF 那一端才會變成轉錯方向。 */
+      rot: normDeg(p.rot),
       basis: 'cloth_image',
     },
 

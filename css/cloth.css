@@ -52,7 +52,10 @@
   background-repeat:no-repeat;
   background-position:center;
   background-size:contain;
-  transform:translate(-50%, -50%);
+  /* ⚠ rotate 一定要在 translate 之後。
+     順序反過來的話,位移會先被旋轉帶著跑,圖案會繞著布的角落畫圓,
+     而不是原地轉。--cl-rot 由 JS 寫入。 */
+  transform:translate(-50%, -50%) rotate(var(--cl-rot, 0deg));
   pointer-events:none;        /* 拖曳事件掛在 stage 上,這層不擋 */
   /* ⚠ 這裡【不要】寫 display:none。
      JS 的 show() 是把 inline 的 display 清成 '',若預設藏在 CSS 裡,
@@ -404,4 +407,59 @@
    ============================================================= */
 @media (max-width:768px){
   .cl-input, .cl-select{ font-size:16px }
+}
+
+/* =============================================================
+   外框與節點(直接縮放 / 旋轉)
+   -------------------------------------------------------------
+   節點放在 .cl-overlay 裡面,所以會跟著圖案一起旋轉 ——
+   節點永遠落在圖案真正的四個角上,而不是一個不會轉的方框。
+
+   ⚠ .cl-overlay 是 pointer-events:none(移動的拖曳掛在 stage 上),
+   子元素會繼承那個值,所以每個節點都要自己開回 auto,
+   否則框看得到、拉不動。
+   ============================================================= */
+.cl-overlay::before{
+  content:''; position:absolute; inset:0;
+  border:1px dashed rgba(80,66,45,.55);
+  pointer-events:none;
+}
+.cl-node{
+  position:absolute; width:14px; height:14px;
+  margin:-7px 0 0 -7px;            /* 用 margin 對齊中心,不用 transform —— */
+                                   /* 那一格要留給旋轉手把自己的 transform */
+  border:1.5px solid var(--lohas-brand);
+  border-radius:3px; background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
+  pointer-events:auto;
+  touch-action:none;               /* 手機上不要被當成捲動 */
+}
+.cl-node--nw{ left:0;    top:0;    cursor:nwse-resize }
+.cl-node--ne{ left:100%; top:0;    cursor:nesw-resize }
+.cl-node--sw{ left:0;    top:100%; cursor:nesw-resize }
+.cl-node--se{ left:100%; top:100%; cursor:nwse-resize }
+
+/* 旋轉手把:圓的,而且離開框一段距離 ——
+   跟四個方形角點在外觀上要一眼分得出來,不然人會去拉錯的東西。 */
+.cl-node--rot{
+  left:50%; top:0; margin-top:-33px;
+  width:24px; height:24px; margin-left:-12px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--lohas-brand); font-size:11px;
+  cursor:grab;
+}
+.cl-node--rot:active{ cursor:grabbing }
+.cl-rot-arm{
+  position:absolute; left:50%; top:-22px;
+  width:1px; height:22px; margin-left:-.5px;
+  background:rgba(80,66,45,.55);
+  pointer-events:none;
+}
+
+/* 手機上手指比游標粗,節點要大一點才按得到 */
+@media (max-width:768px){
+  .cl-node{ width:18px; height:18px; margin:-9px 0 0 -9px }
+  .cl-node--rot{ width:30px; height:30px; margin-left:-15px; margin-top:-40px }
+  .cl-rot-arm{ top:-26px; height:26px }
 }

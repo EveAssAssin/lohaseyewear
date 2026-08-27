@@ -109,7 +109,14 @@
     if (!p) return '—';
     var h = Number(p.x) < 0.4 ? '偏左' : Number(p.x) > 0.6 ? '偏右' : '置中';
     var v = Number(p.y) < 0.4 ? '偏上' : Number(p.y) > 0.6 ? '偏下' : '置中';
-    return h + v + ',寬約布的 ' + Math.round(Number(p.scale || 0) * 100) + '%';
+    var t = h + v + ',寬約布的 ' + Math.round(Number(p.scale || 0) * 100) + '%';
+
+    /* 有轉過就要寫出來,而且要顯眼。
+       DXF 已經幫他轉好了,但製作的人手上還有合成圖與實體布 ——
+       不講的話他會以為是圖檔歪了,然後「好心」把它轉回正的。 */
+    var rot = Math.round(Number(p.rot) || 0);
+    if (rot) t += '　·　⟳ 順時針轉 ' + rot + '°(DXF 已含旋轉)';
+    return t;
   }
 
   /* 縮圖走 Supabase 的圖片縮放,不要載原圖 ——
@@ -261,7 +268,13 @@
         return r.text();
       })
       .then(function (svg) {
-        var out = window.LohasDxf.fromSvg(svg, { widthMm: widthMm(it.id) });
+        /* ⚠ 旋轉一定要一起帶。客人在眼鏡布那一頁把圖轉了幾度,
+           這裡不帶的話輸出的是【正的】—— 而那要等成品送到他手上
+           才會被發現。 */
+        var out = window.LohasDxf.fromSvg(svg, {
+          widthMm: widthMm(it.id),
+          rotateDeg: Number(it.placement && it.placement.rot) || 0,
+        });
         var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
         var blob = new Blob([out.dxf], { type: 'application/dxf' });
         var url = URL.createObjectURL(blob);

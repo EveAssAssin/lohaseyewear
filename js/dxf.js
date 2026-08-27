@@ -18,7 +18,7 @@
    不翻的話出來的圖是上下顛倒的,而那種錯誤在螢幕上看
    常常不明顯(對稱的圖案根本看不出來),要到刻壞才發現。
 
-   對外:window.LohasDxf.fromSvg(svgString, { widthMm })
+   對外:window.LohasDxf.fromSvg(svgString, { widthMm, rotateDeg })
    ============================================================= */
 
 (function (window) {
@@ -169,6 +169,12 @@
     opt = opt || {};
     var widthMm = Number(opt.widthMm) || 150;      // 預設 15 公分
     var layer = String(opt.layer || 'ENGRAVE');
+    /* 旋轉角(度,順時針,與客人在畫面上看到的一致)。
+       -----------------------------------------------------------
+       ⚠ 這不是選配的美化。客人在眼鏡布那一頁把圖轉了 30 度,
+       DXF 沒轉的話,做出來的東西就跟他看到的不一樣 ——
+       而那要等成品送到他手上才會被發現。 */
+    var rotDeg = Number(opt.rotateDeg) || 0;
 
     var parsed = parseSvg(svgString);
     var box = parsed.box;
@@ -184,6 +190,49 @@
       ];
     }
 
+    /* 先把所有點算出來(含旋轉),再決定圖框大小。
+       -----------------------------------------------------------
+       ⚠ 順序不能顛倒。轉過之後外框會變大(45 度時對角線最長),
+       沿用原本的 widthMm/heightMm 當 $EXTMAX,圖會超出宣告的範圍,
+       有些軟體會直接把超出的部分裁掉。
+
+       轉完再整體平移回第一象限,讓左下角落在原點 ——
+       維持這支函式原本的約定:輸出永遠從 (0,0) 開始。 */
+    var polys = parsed.polys.map(function (poly) { return poly.map(tx); });
+
+    if (rotDeg) {
+      /* y 軸已經翻過了,所以這裡要用 -rad 才會與畫面上的
+         「順時針」一致。用 +rad 的話畫面轉右、成品轉左,
+         而那種錯誤看圖檔看不出來,要等實物。 */
+      var rad = -rotDeg * Math.PI / 180;
+      var cos = Math.cos(rad), sin = Math.sin(rad);
+      var cx = widthMm / 2, cy = heightMm / 2;
+      polys = polys.map(function (poly) {
+        return poly.map(function (p) {
+          var dx = p[0] - cx, dy = p[1] - cy;
+          return [cx + dx * cos - dy * sin, cy + dx * sin + dy * cos];
+        });
+      });
+    }
+
+    // 重新量外框,並把整體平移到原點
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    polys.forEach(function (poly) {
+      poly.forEach(function (p) {
+        if (p[0] < minX) minX = p[0];
+        if (p[0] > maxX) maxX = p[0];
+        if (p[1] < minY) minY = p[1];
+        if (p[1] > maxY) maxY = p[1];
+      });
+    });
+    if (isFinite(minX)) {
+      polys = polys.map(function (poly) {
+        return poly.map(function (p) { return [p[0] - minX, p[1] - minY]; });
+      });
+      widthMm = maxX - minX;
+      heightMm = maxY - minY;
+    }
+
     var s = '';
     // 最小可用的 R12 標頭。$INSUNITS = 4 代表公釐,機器才知道尺寸單位。
     s += pair(0, 'SECTION') + pair(2, 'HEADER');
@@ -196,8 +245,7 @@
 
     s += pair(0, 'SECTION') + pair(2, 'ENTITIES');
 
-    parsed.polys.forEach(function (poly) {
-      var pts = poly.map(tx);
+    polys.forEach(function (pts) {
       /* 頭尾重合就標成封閉多段線(flag 70 = 1)。
          雷雕的路徑規劃看這個旗標決定要不要收尾,
          不標的話有些軟體會在接縫處留一個小缺口。 */
@@ -217,7 +265,10 @@
     });
 
     s += pair(0, 'ENDSEC') + pair(0, 'EOF');
-    return { dxf: s, widthMm: widthMm, heightMm: heightMm, paths: parsed.polys.length };
+    return {
+      dxf: s, widthMm: widthMm, heightMm: heightMm,
+      paths: parsed.polys.length, rotateDeg: rotDeg,
+    };
   }
 
   window.LohasDxf = { fromSvg: fromSvg };

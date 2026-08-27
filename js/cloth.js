@@ -34,6 +34,11 @@
        落在 y=0.58 以下會壓到那個標,所以往上移。
        舊值(0.65 / 0.58)是照斜擺的實拍調的,那張照片裡布沒有填滿畫面。 */
     DEF: { scale: 0.26, x: 0.5, y: 0.45 },
+    /* 縮放上下限。⚠ 與 cloth.html 那支滑桿的 min/max 是同一組數字,
+       改了要一起改 —— 兩邊不一致的話,拉節點拉得到滑桿到不了的值,
+       滑桿就會顯示一個它自己表達不出來的位置。 */
+    MIN_SCALE: 0.06,
+    MAX_SCALE: 0.60,
     DESIGN_PREVIEW: 12,        // 刻圖先顯示這麼多,其餘收在「展開全部」後面
     TRACE_SIZE: 1000,          // 手繪畫布的實際解析度
     MAX_SVG_BYTES: 400 * 1024  // 線稿超過這個大小多半是畫得太碎,擋下來
@@ -50,6 +55,15 @@
     scale: CONFIG.DEF.scale,
     x: CONFIG.DEF.x,
     y: CONFIG.DEF.y,
+    /* 旋轉角(度,順時針)。存進 placement 一起交給製作端 ——
+       只有畫面上轉、DXF 沒轉的話,客人看到的與做出來的會不一樣。 */
+    rot: 0,
+    // 已經量過比例的那張圖(URL)。用來判斷「圖換了沒」
+    ratioFor: '',
+    /* 圖案的高寬比。外框要貼著圖,不能是一個永遠的正方形 ——
+       寬扁的圖會出現一個大很多的框,節點也就不在圖的角上。
+       圖載入前先當 1,載好再重畫一次。 */
+    ratio: 1,
 
     // 手繪
     // 取貨門市清單(正規化後)。載不到就是空陣列 —— 不擋儲存。
@@ -264,37 +278,138 @@
     el.y.value = Math.round(State.y * 100);
 
     if (!State.picked) { hide(el.overlay); return; }
+
+    /* 換了一張圖就重量一次比例。掛在這裡而不是三個選圖的地方 ——
+       市集、上傳、手繪三條路最後都會經過這一支,只掛一處就不會漏。
+       量到之後 measureRatio 會再叫一次 applyOverlay,那時候 URL
+       已經相同,不會再進來,所以不會無限繞。 */
+    if (State.picked.imageUrl !== State.ratioFor) {
+      State.ratioFor = State.picked.imageUrl;
+      State.ratio = 1;
+      measureRatio();
+    }
+
     var r = el.stage.getBoundingClientRect();
     var w = r.width * State.scale;
 
     el.overlay.style.backgroundImage = 'url("' + State.picked.imageUrl + '")';
     el.overlay.style.width = w + 'px';
-    el.overlay.style.height = w + 'px';
+    /* ⚠ 高度用真實比例,不是正方形。
+       先前是 w × w + background-size:contain —— 畫面上看起來一樣
+       (圖被置中留白),但【外框會比圖大一圈】,四個節點就不在
+       圖案的角上了。合成圖那邊本來就是用比例算的,兩邊要一致。 */
+    el.overlay.style.height = (w * State.ratio) + 'px';
     el.overlay.style.left = (State.x * 100) + '%';
     el.overlay.style.top = (State.y * 100) + '%';
+    el.overlay.style.setProperty('--cl-rot', State.rot + 'deg');
     show(el.overlay);
   }
 
+  /* 量出圖案的高寬比,量完重畫一次。
+     -----------------------------------------------------------------
+     量不到就維持 1(正方形)—— 外框會比圖大一點,但不會壞掉。
+     這比「載不到就不顯示外框」好:客人還是能拖、能拉。 */
+  function measureRatio() {
+    if (!State.picked || !State.picked.imageUrl) return;
+    var url = State.picked.imageUrl;
+    loadImage(url)
+      .then(function (img) {
+        // 期間可能已經換了一張圖,對不上就不要覆蓋
+        if (!State.picked || State.picked.imageUrl !== url) return;
+        if (img.naturalWidth && img.naturalHeight) {
+          State.ratio = img.naturalHeight / img.naturalWidth;
+          applyOverlay();
+        }
+      })
+      .catch(function () { /* 量不到就用預設值,不影響操作 */ });
+  }
+
+  /* 三種拖曳共用一個手勢迴圈:移動、縮放、旋轉。
+     -----------------------------------------------------------------
+     為什麼不分成三組事件:三者互斥(同時只會有一個在進行),
+     而且都要處理 pointer capture 與收尾。分開寫會有三份幾乎一樣
+     的程式碼,而漏掉其中一份的 pointerup 就會出現「放開了還在跟著跑」。
+
+     ⚠ 節點的 pointerdown 會【冒泡到 stage】—— stage 那一支若不先
+     讓開,拉節點會同時觸發「把圖移到手指下面」,圖案會瞬間跳走。
+     所以進入點先看 e.target 是不是節點。 */
   function bindDrag() {
-    var dragging = false;
+    var mode = null;        // null | 'move' | 'scale' | 'rot'
+    var start = null;
+
+    function centerOf() {
+      var r = el.stage.getBoundingClientRect();
+      return { cx: r.left + r.width * State.x, cy: r.top + r.height * State.y, r: r };
+    }
 
     function move(e) {
-      if (!dragging || !State.picked) return;
-      var r = el.stage.getBoundingClientRect();
-      State.x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
-      State.y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+      if (!mode || !State.picked) return;
+      var c = centerOf();
+
+      if (mode === 'move') {
+        State.x = Math.min(1, Math.max(0, (e.clientX - c.r.left) / c.r.width));
+        State.y = Math.min(1, Math.max(0, (e.clientY - c.r.top) / c.r.height));
+
+      } else if (mode === 'scale') {
+        /* 用「手指到中心的距離」與按下當時的距離比,乘回原本的大小。
+           不直接拿距離換算,是因為那樣一按下去圖就會跳到手指的位置 ——
+           人期待的是「從我抓住的地方開始變」。 */
+        var d = Math.hypot(e.clientX - c.cx, e.clientY - c.cy);
+        if (start.dist > 4) {
+          var next = start.scale * (d / start.dist);
+          State.scale = Math.min(CONFIG.MAX_SCALE, Math.max(CONFIG.MIN_SCALE, next));
+        }
+
+      } else if (mode === 'rot') {
+        var a = Math.atan2(e.clientY - c.cy, e.clientX - c.cx) * 180 / Math.PI;
+        var deg = start.rot + (a - start.angle);
+        // Shift 每 15 度一格 —— 要正的水平或垂直時,徒手很難剛好對上
+        if (e.shiftKey) deg = Math.round(deg / 15) * 15;
+        State.rot = ((deg % 360) + 360) % 360;
+      }
+
       applyOverlay();
+    }
+
+    function stop(e) {
+      if (!mode) return;
+      mode = null;
+      try { el.stage.releasePointerCapture(e.pointerId); } catch (err) { /* 已釋放 */ }
     }
 
     el.stage.addEventListener('pointerdown', function (e) {
       if (!State.picked) return;
-      dragging = true;
+      var node = e.target.closest ? e.target.closest('[data-node]') : null;
+      var c = centerOf();
+
+      if (node) {
+        // 節點:縮放或旋轉。不要讓它同時被當成「移動」
+        e.preventDefault();
+        e.stopPropagation();
+        if (node.dataset.node === 'rot') {
+          mode = 'rot';
+          start = {
+            rot: State.rot,
+            angle: Math.atan2(e.clientY - c.cy, e.clientX - c.cx) * 180 / Math.PI
+          };
+        } else {
+          mode = 'scale';
+          start = {
+            scale: State.scale,
+            dist: Math.hypot(e.clientX - c.cx, e.clientY - c.cy)
+          };
+        }
+      } else {
+        mode = 'move';
+        move(e);            // 移動維持原本的行為:按下就跟到手指位置
+      }
+
       el.stage.setPointerCapture(e.pointerId);
-      move(e);
     });
+
     el.stage.addEventListener('pointermove', move);
-    el.stage.addEventListener('pointerup', function () { dragging = false; });
-    el.stage.addEventListener('pointercancel', function () { dragging = false; });
+    el.stage.addEventListener('pointerup', stop);
+    el.stage.addEventListener('pointercancel', stop);
   }
 
   /* ---------- 手繪 ---------- */
@@ -531,7 +646,16 @@
       var ratio = (art.naturalHeight && art.naturalWidth)
         ? art.naturalHeight / art.naturalWidth : 1;
       var h = w * ratio;
-      ctx.drawImage(art, SIZE * State.x - w / 2, SIZE * State.y - h / 2, w, h);
+
+      /* ⚠ 旋轉一定要跟畫面一致,而且是【繞圖案中心】轉。
+         把原點搬到中心 → 轉 → 以中心為基準畫,
+         這樣 State.rot 在畫面與這張圖是同一個意思。
+         少了這一段,客人看到轉過的圖、存下來的卻是正的。 */
+      ctx.save();
+      ctx.translate(SIZE * State.x, SIZE * State.y);
+      if (State.rot) ctx.rotate(State.rot * Math.PI / 180);
+      ctx.drawImage(art, -w / 2, -h / 2, w, h);
+      ctx.restore();
 
       /* 存成 JPEG,不是 PNG。
          這張是【照片】(眼鏡布的實拍圖 + 疊上去的線稿),
@@ -717,7 +841,9 @@
             svg_url: svgUrl,
             preview_url: previewUrl,
             placement: {
-              scale: State.scale, x: State.x, y: State.y, basis: 'cloth_image'
+              scale: State.scale, x: State.x, y: State.y,
+              rot: State.rot,                    // 度,順時針
+              basis: 'cloth_image'
             },
             store: pickedStore()
           })
@@ -788,6 +914,8 @@
     State.scale = CONFIG.DEF.scale;
     State.x = CONFIG.DEF.x;
     State.y = CONFIG.DEF.y;
+    State.rot = 0;
+    State.ratio = 1;
     hide(el.err);
     renderDesigns();     // 取消市集那一格的選取外框
     applyOverlay();      // 藏疊圖,連帶把眼鏡布收回去
@@ -916,6 +1044,7 @@
       State.scale = CONFIG.DEF.scale;
       State.x = CONFIG.DEF.x;
       State.y = CONFIG.DEF.y;
+      State.rot = 0;          // 「回到預設位置」當然包含轉回正的
       applyOverlay();
     });
 
