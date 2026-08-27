@@ -144,10 +144,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <section class="dz-card" id="dzGiftCard" style="display:none">
         <h2 class="dz-card-h">送給誰</h2>
 
-        <div class="dz-label">要怎麼給對方</div>
-        <div class="dz-seg" id="dzFulfill">
-          <button class="dz-seg-btn on" type="button" data-f="store">門市兌換</button>
-          <button class="dz-seg-btn" type="button" data-f="ship">宅配到府</button>
+        <!-- ⚠ 宅配目前關閉(js/design.js 的 ALLOW_SHIP)。
+             關的時候整段選擇一起藏起來 —— 只剩一個選項的切換鈕
+             不是選擇,是雜訊,而且會讓人以為另一個壞了。
+             說明文字留著,那是唯一還需要講的事。 -->
+        <div id="dzFulfillWrap">
+          <div class="dz-label">要怎麼給對方</div>
+          <div class="dz-seg" id="dzFulfill">
+            <button class="dz-seg-btn on" type="button" data-f="store">門市兌換</button>
+            <button class="dz-seg-btn" type="button" data-f="ship">宅配到府</button>
+          </div>
         </div>
         <p class="dz-seg-note" id="dzFulfillNote"></p>
 
@@ -218,6 +224,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/supabase.js?v=20260513-2300"></script>
 <script src="js/layout.js?v=20260819-erp"></script>
-<script src="js/design.js?v=20260827-pickerp"></script>
+<script src="js/design.js?v=20260827-noship"></script>
 </body>
 </html>

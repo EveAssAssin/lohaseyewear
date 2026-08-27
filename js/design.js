@@ -36,6 +36,12 @@
          而那時圖都做完了。
        票券與禮物不在此列:那兩者以 ERP 客編為索引,各自另有守門。 */
     ALLOW_MID_CHECKOUT: false,
+
+    /* 送禮的履約方式是否開放「宅配到府」。
+       2026-08-27 先關掉,只留門市兌換 —— 宅配那條路要送禮人在商城
+       結帳時填收件地址,而那一段還沒有走過一次。
+       關著的時候整個選擇會被藏起來(見 applyFulfillOptions)。 */
+    ALLOW_SHIP: false,
     GIFT_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gift',
     COUPON_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/coupon-lock',
     TIMEOUT_MS: 15000,
@@ -702,7 +708,19 @@
     ship:  '你在商城結帳時填收件地址(可以填對方家),商品直接寄出。刻圖位置以這裡設定的為準。'
   };
 
+  /* 宅配關閉時把整段選擇藏起來,並強制留在門市兌換。
+     只藏按鈕不夠 —— State.fulfillment 若還是 ship,送出去的
+     還是宅配單,而畫面上完全看不出來。 */
+  function applyFulfillOptions() {
+    if (CONFIG.ALLOW_SHIP) return;
+    var wrap = document.getElementById('dzFulfillWrap');
+    if (wrap) wrap.style.display = 'none';
+    setFulfillment('store');
+  }
+
   function setFulfillment(f) {
+    // 旗標關著時一律當成門市兌換,不接受別的值
+    if (!CONFIG.ALLOW_SHIP) f = 'store';
     State.fulfillment = f;
     el.fulfill.querySelectorAll('.dz-seg-btn').forEach(function (b) {
       b.classList.toggle('on', b.dataset.f === f);
@@ -1720,6 +1738,7 @@
     show(el.frameCard);
     show(el.giftCard);
     setFulfillment('store');
+    applyFulfillOptions();
     setRecipMode('link');
     setGiftMode('self');
     applyPlacement();
