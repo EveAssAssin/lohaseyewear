@@ -317,9 +317,26 @@
     var list = State.tab === 'sent' ? State.sent : State.received;
 
     if (!list.length) {
+      /* 空狀態要給出口,不能只寫「你還沒有送出過禮物」。
+         那句話描述了現況卻沒回答「所以我可以做什麼」——
+         而這一頁的答案很明確:去挑一張刻圖做成禮物。
+
+         「我收到的」不給按鈕:收禮物不是他能主動做的事,
+         給一顆按鈕反而像在說「你可以自己送自己」。 */
       box.innerHTML = State.tab === 'sent'
-        ? '<p class="empty-text">你還沒有送出過禮物。挑一張刻圖,送給值得的人。</p>'
-        : '<p class="empty-text">目前沒有收到禮物。</p>';
+        ? '<div class="gf-empty">' +
+            '<i class="fa-solid fa-gift"></i>' +
+            '<p>你還沒有送出過禮物</p>' +
+            '<a class="gf-btn gf-btn--pri" href="design.html?gift=1">' +
+              '<i class="fa-solid fa-wand-magic-sparkles"></i> 挑 一 張 刻 圖 送 人</a>' +
+            '<span class="gf-empty-note">選一副眼鏡、挑一張刻圖,' +
+              '或是讓對方自己挑款式。</span>' +
+          '</div>'
+        : '<div class="gf-empty">' +
+            '<i class="fa-regular fa-envelope-open"></i>' +
+            '<p>目前沒有收到禮物</p>' +
+            '<span class="gf-empty-note">別人送你的禮物會出現在這裡。</span>' +
+          '</div>';
       return;
     }
 
