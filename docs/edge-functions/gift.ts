@@ -264,6 +264,10 @@ async function retryIssue(rows: Record<string, any>[]) {
   const target = rows.find((g) =>
     g.status === 'claimed' &&
     g.fulfillment === 'store' &&
+    /* ⚠ 還沒挑款式的不補發 —— 理由同 claim 那一段。
+       少了這個條件,上面那個修正會被這裡抵銷掉:
+       B 路線的禮物停在 claimed 超過一分鐘,下次進禮物中心就被補發了。 */
+    g.design_id &&
     !g.coupon_id &&
     g.claimed_at && new Date(g.claimed_at).getTime() < cutoff
   );
@@ -684,10 +688,18 @@ Deno.serve(async (req) => {
     /* 門市自取:發一張兌換券給他。
        宅配不發券 —— 商城已依送禮者填的地址出貨,沒有東西要兌換。
 
+       ⚠ 但【還沒挑款式的不能發】(2026-08-27 修)。
+       B 路線送的是通用禮物,鏡框與刻圖由收禮人自己挑 ——
+       發券會把狀態推到 issued,而 pick 要求 status 是 claimed,
+       於是「挑選款式」那個入口永遠沒有機會出現,
+       收禮人拿到一張還沒決定款式的兌換券,到了門市才發現什麼都沒選。
+
+       這種禮物停在 claimed,等他挑完之後由 pick 那一段發券。
+
        發券失敗【不影響領取本身】:歸屬已經定了,這裡只是少一張券,
        由 list 的重試補上。所以整段包住,錯誤不往外丟。 */
     let finalGift = updated;
-    if (updated.fulfillment === 'store') {
+    if (updated.fulfillment === 'store' && updated.design_id) {
       const res = await issueCoupon(updated);
       if (res.ok) {
         finalGift = await applyIssued(updated, res.couponId, res.already);
@@ -790,7 +802,28 @@ Deno.serve(async (req) => {
         .insert({ member_id: erpid, design_id: body.design_id });
     } catch { /* 已收藏過會撞唯一鍵,忽略 */ }
 
-    return reply('200', { data: { gift: publicGift(updated, 'recipient') } });
+    /* 挑完才發券(2026-08-27 新增)。
+       A 路線在 claim 當下就發了,B 路線的發券點在這裡 ——
+       款式決定了,那張券才有意義。
+
+       失敗不影響挑選本身:款式已經寫進去了,只是少一張券,
+       由 list 的 retryIssue 補上(它現在也要求 design_id 有值,
+       所以這時候補得到)。 */
+    let picked = updated;
+    if (updated.fulfillment === 'store') {
+      const res = await issueCoupon(updated);
+      if (res.ok) {
+        picked = await applyIssued(updated, res.couponId, res.already);
+      } else {
+        console.warn('[gift] 挑選後發券失敗 ' + updated.id +
+                     ' code=' + res.code + ' retryable=' + res.retryable);
+        await logEvent(updated.id, 'claimed', 'claimed', 'system',
+          '挑選後發券失敗(' + res.code + ',' + (res.retryable ? '可重試' : '不可重試') +
+          '):' + res.message);
+      }
+    }
+
+    return reply('200', { data: { gift: publicGift(picked, 'recipient') } });
   }
 
   /* ---------- cancel ---------- */
