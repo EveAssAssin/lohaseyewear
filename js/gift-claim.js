@@ -252,11 +252,30 @@
 
   /* ---------- 登入 ---------- */
 
-  function gotoLogin() {
-    // requireLogin() 只保留檔名、會把 ?c= 洗掉,所以自己帶 search 存
+  /* 記下「領完要回哪裡」。
+     requireLogin() 只保留檔名、會把 ?c= 洗掉 —— 那串就是禮物本身,
+     掉了就等於把人送去一個空的領取頁,所以自己帶 search 存。 */
+  function rememberBack() {
     var back = window.location.pathname.split('/').pop() + window.location.search;
     if (Auth && Auth.setRedirect) Auth.setRedirect(back);
+  }
+
+  function gotoLogin() {
+    rememberBack();
     window.location.href = 'login.html';
+  }
+
+  /* 直接送去註冊。
+     -----------------------------------------------------------------
+     這條路是通的,而且不需要門市客編:
+       領取頁 → 註冊 → 前往登入 → 登入成功 → getRedirect() 帶回這一頁
+     中間那個 redirect 存在 localStorage,穿過註冊頁不會掉。
+
+     ⚠ 註冊完成【不會自動登入】(register.js 停在完成畫面),
+     所以那一頁的「前往登入」是必經的一步,不是多餘的。 */
+  function gotoRegister() {
+    rememberBack();
+    window.location.href = 'register.html';
   }
 
   /* ---------- 送出 ---------- */
@@ -297,7 +316,7 @@
       loading: $('gcLoading'), error: $('gcError'), errorText: $('gcErrorText'),
       body: $('gcBody'), title: $('gcTitle'), from: $('gcFrom'),
       visual: $('gcVisual'), item: $('gcItem'), design: $('gcDesign'), msg: $('gcMsg'),
-      needLogin: $('gcNeedLogin'), loginBtn: $('gcLoginBtn'),
+      needLogin: $('gcNeedLogin'), loginBtn: $('gcLoginBtn'), regBtn: $('gcRegBtn'),
       form: $('gcForm'), forWho: $('gcForWho'), claimNote: $('gcClaimNote'),
       formErr: $('gcFormErr'), submit: $('gcSubmit'),
       done: $('gcDone'), doneText: $('gcDoneText'), doneBtn: $('gcDoneBtn'),
@@ -306,6 +325,7 @@
     if (!el.body) return;
 
     el.loginBtn.addEventListener('click', gotoLogin);
+    if (el.regBtn) el.regBtn.addEventListener('click', gotoRegister);
     el.form.addEventListener('submit', onSubmit);
 
     var p = new URLSearchParams(window.location.search);

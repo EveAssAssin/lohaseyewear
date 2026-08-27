@@ -70,8 +70,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="gc-panel" id="gcNeedLogin" style="display:none">
       <!-- 2026-08-20 起官網註冊的會員也領得到(不需要門市客編),
            所以這裡可以放心邀請他註冊。 -->
-      <p class="gc-panel-text">登入樂活會員即可領取這份禮物。還不是會員也沒關係,註冊後回到這個連結就能領。</p>
+      <!-- ⚠ 兩顆鈕都要在。
+           -----------------------------------------------------------
+           收到這個連結的人【很可能根本不是會員】—— 那正是這條路線
+           存在的理由。原本只給「登入領取」,他得先點進登入頁,
+           才在角落找到一行「還不是會員?立即註冊」。
+
+           在這一頁多繞一步就會流失一個人,而流失的是一份
+           已經付過錢的禮物。 -->
+      <p class="gc-panel-text">
+        登入樂活會員即可領取這份禮物。<br>
+        還不是會員也沒關係 —— 註冊完成後會自動回到這一頁,直接領。
+      </p>
       <button class="gc-btn gc-btn--pri" id="gcLoginBtn">登 入 領 取</button>
+      <button class="gc-btn gc-btn--ghost" id="gcRegBtn" style="margin-top:10px">還 不 是 會 員 · 免 費 註 冊</button>
     </div>
 
     <!-- 2026-08-19 這裡曾有一個「這份禮物先幫你留著」的面板,
@@ -121,6 +133,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/utils.js?v=20260513-2300"></script>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/layout.js?v=20260819-erp"></script>
-<script src="js/gift-claim.js?v=20260827-twoways"></script>
+<script src="js/gift-claim.js?v=20260827-register"></script>
 </body>
 </html>
