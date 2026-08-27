@@ -3138,6 +3138,22 @@ body {
 .mp .gf-foot > .gf-hint:not(:first-child){
   flex-basis:100%; margin:2px 0 0;
 }
+
+/* 領取連結:看得見、點一下就全選。
+   做成 readonly input 而不是純文字 —— 剪貼簿被擋掉時這是唯一的退路。 */
+.mp .gf-link{
+  flex-basis:100%;
+  width:100%; box-sizing:border-box;
+  margin-top:8px; padding:8px 10px;
+  border:1px solid var(--lohas-bd); border-radius:10px;
+  background:var(--lohas-bg-soft, #F7F5F1);
+  font-family:inherit; font-size:12px; color:var(--lohas-muted, #9B9186);
+  /* 網址很長,溢出時讓它自己捲,不要把卡片撐寬 */
+  overflow-x:auto; white-space:nowrap;
+}
+.mp .gf-link:focus{
+  outline:none; border-color:var(--lohas-brown); color:var(--lohas-text, #2F2A24);
+}
 .mp .gf-hint{
   font-size:12px; color:var(--lohas-mute); letter-spacing:.3px;
 }

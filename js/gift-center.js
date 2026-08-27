@@ -149,9 +149,21 @@
     // 兩種模式都有領取碼(指定沒對上時就靠它),所以不分模式都顯示。
     var actions = '';
     if (g.status === 'paid' && g.claim_url) {
+      /* 連結本身也要看得見,不能只給一顆「複製」。
+         -----------------------------------------------------------
+         送禮人付完款會被導回商城的訂購成功頁,那一頁不會提到領取連結 ——
+         他得自己想到回這裡拿。回來之後如果只看到一顆按鈕,
+         他無從確認「我複製到的是不是對的東西」,也沒辦法用截圖傳給對方。
+
+         readonly 的 input 而不是純文字:點一下就整串選起來,
+         剪貼簿被瀏覽器擋掉時(權限、非 https 的內嵌情境)還有得救。 */
       actions =
         '<button class="gf-btn gf-btn--pri" data-copy="' + esc(g.claim_url) + '">' +
-          '<i class="fa-regular fa-copy"></i> 複製領取連結</button>';
+          '<i class="fa-regular fa-copy"></i> 複製領取連結</button>' +
+        '<input class="gf-link" type="text" readonly value="' + esc(g.claim_url) + '"' +
+          ' onfocus="this.select()" aria-label="領取連結">' +
+        '<span class="gf-hint">把這個連結傳給對方,他點開就能領取。' +
+          '連結一直有效,關掉視窗也能回這裡再拿一次。</span>';
     } else if (g.status === 'pending_payment') {
       /* 「去付款」不是可有可無的。
          -----------------------------------------------------------
