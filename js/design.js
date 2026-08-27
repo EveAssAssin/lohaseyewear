@@ -728,21 +728,10 @@
     el.fulfillNote.textContent = FULFILL_NOTE[f];
   }
 
-  function setRecipMode(m) {
-    State.recipMode = m;
-    el.recipMode.querySelectorAll('.dz-seg-btn').forEach(function (b) {
-      b.classList.toggle('on', b.dataset.m === m);
-    });
-    if (m === 'member') show(el.recipKeyRow); else hide(el.recipKeyRow);
-  }
-
-  /* 這一欄只認號碼(會員編號或手機)。填名字系統比對不到人,
-     禮物會退回連結領取 —— 不擋,但要當場講,不然使用者以為送到對方帳號了。 */
-  function checkRecipKey() {
-    var v = (el.recipKey.value || '').trim();
-    var looksLikeName = v && /[^\d\s\-+()]/.test(v);
-    el.recipKeyWarn.style.display = looksLikeName ? '' : 'none';
-  }
+  /* ⚠ setRecipMode() / checkRecipKey() 於 2026-08-27 移除。
+     「指定會員」不是一種送達方式 —— 填了對方的手機不會通知任何人,
+     只是把號碼記著,等對方自己登入官網打開禮物中心才比對。
+     State.recipMode 從此固定為 'link',介面上也不再問。 */
 
   function showFormErr(msg) {
     el.formErr.textContent = msg;
@@ -779,12 +768,6 @@
         Auth.setRedirect(location.pathname.split('/').pop() + location.search);
       }
       window.location.href = 'login.html';
-      return;
-    }
-
-    var key = (el.recipKey.value || '').trim();
-    if (State.recipMode === 'member' && !key) {
-      showFormErr('請填寫對方的會員編號或手機,或改用「產生領取連結」。');
       return;
     }
 
@@ -832,8 +815,8 @@
         },
         message: (el.message.value || '').trim(),
         fulfillment: State.fulfillment,
-        recipient_mode: State.recipMode,
-        recipient_key: key,
+        recipient_mode: State.recipMode,   // 固定 'link'
+        recipient_key: null,
         recipient_label: (el.recipLabel.value || '').trim()
       });
     })
@@ -1208,8 +1191,6 @@
       giftModeNote: $('dzGiftModeNote'),
       frameCard: $('dzFrameCard'), frames: $('dzFrames'),
       giftCard: $('dzGiftCard'), fulfill: $('dzFulfill'), fulfillNote: $('dzFulfillNote'),
-      recipMode: $('dzRecipMode'), recipKeyRow: $('dzRecipKeyRow'), recipKey: $('dzRecipKey'),
-      recipKeyWarn: $('dzRecipKeyWarn'),
       recipLabel: $('dzRecipLabel'), message: $('dzMessage'),
       formErr: $('dzFormErr'), noteText: $('dzNoteText'),
       result: $('dzResult'), resultText: $('dzResultText'),
@@ -1297,11 +1278,6 @@
       var b = e.target.closest('.dz-seg-btn');
       if (b) setFulfillment(b.dataset.f);
     });
-    el.recipMode.addEventListener('click', function (e) {
-      var b = e.target.closest('.dz-seg-btn');
-      if (b) setRecipMode(b.dataset.m);
-    });
-    el.recipKey.addEventListener('input', checkRecipKey);
     el.copy.addEventListener('click', function () {
       var url = el.claimUrl.value;
       var done = function () {
@@ -1332,7 +1308,7 @@
 
      與送禮模式共用同一組介面 —— 那三塊本來就寫好了,差別只在:
        進入點     ?pick=<gift_id> 而不是 ?gift=1
-       送給誰那卡  不顯示(他不是在送禮)
+       要怎麼送給對方那卡 不顯示(他不是在送禮)
        送出行為    呼叫 gift 的 pick 寫回,不建立新禮物、不打商城
                    (A 已經付過款了,這一步只是補上「要做哪一副」) */
   function startPickMode(giftId) {
@@ -1390,7 +1366,7 @@
     hide(el.loading);
     show(el.body);
     show(el.frameCard);
-    hide(el.giftCard);          // 他不是在送禮,不需要「送給誰」
+    hide(el.giftCard);          // 他不是在送禮,不需要「要怎麼送給對方」
     applyPlacement();
   }
 
@@ -1654,7 +1630,7 @@
      self       送禮人自己挑好鏡框與刻圖(A 路線)
      recipient  買一份通用禮物,款式由收禮人領取後自己挑(B 路線)
 
-     這個選擇放在最上面、且問在「送給誰」之前 ——
+     這個選擇放在最上面、且問在「要怎麼送給對方」之前 ——
      它決定下面要不要挑鏡框與刻圖,先問才不會讓人挑完才發現白挑。 */
   /* 兩條路線的文案。
      -----------------------------------------------------------
@@ -1665,13 +1641,13 @@
   var GIFT_MODE_COPY = {
     self: {
       title: '把這張刻圖送給朋友',
-      sub:   '選一副眼鏡、決定刻圖位置,填好要送給誰就完成。',
+      sub:   '選一副眼鏡、決定刻圖位置,付款後拿到領取連結傳給對方。',
       note:  '此為示意畫面。實際雷刻位置會在門市與收禮人再次確認,金額以商城結帳為準。',
       hint:  '你先挑好鏡框與刻圖,對方領取後直接拿到成品。適合已經知道他喜歡什麼的時候。'
     },
     recipient: {
       title: '送一份客製刻圖眼鏡',
-      sub:   '填好要送給誰就完成 —— 鏡框與刻圖由對方自己挑。',
+      sub:   '付款後拿到領取連結,傳給對方 —— 鏡框與刻圖由他自己挑。',
       note:  '鏡框、刻圖與雷刻位置都由收禮人挑選,並在門市確認,金額以商城結帳為準。',
       hint:  '你送的是一份「客製刻圖眼鏡」的禮物,鏡框與刻圖由對方自己挑。' +
              '不確定他的喜好時,這樣最安全。'
@@ -1739,7 +1715,6 @@
     show(el.giftCard);
     setFulfillment('store');
     applyFulfillOptions();
-    setRecipMode('link');
     setGiftMode('self');
     applyPlacement();
 

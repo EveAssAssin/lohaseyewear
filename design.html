@@ -74,7 +74,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="dz-right">
 
       <!-- 送禮設定(僅送禮模式) -->
-      <!-- 送禮的兩種做法。放在最上面、且在「送給誰」之前 ——
+      <!-- 送禮的兩種做法。放在最上面、且在「要怎麼送給對方」之前 ——
            這個選擇會決定下面要不要挑鏡框與刻圖,先問才不會讓人挑完才發現白挑。 -->
       <section class="dz-card" id="dzGiftModeCard" style="display:none">
         <h2 class="dz-card-h">這份禮物怎麼送</h2>
@@ -142,7 +142,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </section>
 
       <section class="dz-card" id="dzGiftCard" style="display:none">
-        <h2 class="dz-card-h">送給誰</h2>
+        <h2 class="dz-card-h">要怎麼送給對方</h2>
 
         <!-- ⚠ 宅配目前關閉(js/design.js 的 ALLOW_SHIP)。
              關的時候整段選擇一起藏起來 —— 只剩一個選項的切換鈕
@@ -157,23 +157,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <p class="dz-seg-note" id="dzFulfillNote"></p>
 
-        <div class="dz-label">收禮人</div>
-        <div class="dz-seg" id="dzRecipMode">
-          <button class="dz-seg-btn on" type="button" data-m="link">產生領取連結</button>
-          <button class="dz-seg-btn" type="button" data-m="member">指定會員</button>
-        </div>
+        <!-- ⚠ 2026-08-27 移除「收禮人:產生領取連結 / 指定會員」的切換。
+             -----------------------------------------------------------
+             「指定會員」名字取得不對 —— 它不會把禮物送到對方那裡。
+             填了對方的手機之後,系統【不發簡訊、不推播、不寄信】,
+             禮物只是記著那串號碼躺在資料庫裡;要等對方自己登入官網、
+             自己打開禮物中心,那一刻才會比對手機並掛到他名下。
+             對方若從來沒登入過官網,他永遠不會知道有這份禮物。
 
-        <div class="dz-row" id="dzRecipKeyRow" style="display:none">
-          <label class="dz-label" for="dzRecipKey">對方的<b>樂活會員編號</b>或<b>手機號碼</b></label>
-          <input class="dz-input" id="dzRecipKey" type="text" maxlength="40"
-                 inputmode="numeric" autocomplete="off"
-                 placeholder="例:28095198 或 0912345678">
-          <p class="dz-field-hint">這裡只認號碼。查不到對應的會員也沒關係,系統會自動改用領取連結,你再自己傳給對方。</p>
-          <p class="dz-field-warn" id="dzRecipKeyWarn" style="display:none">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            這看起來像名字。名字比對不到會員,請填號碼;想寫稱呼請用下面那欄。
-          </p>
-        </div>
+             也就是說:真正會送達的方式從頭到尾只有一種 ——
+             【領取連結,你自己傳給對方】。
+             留著那個切換只會讓人以為選了「指定會員」就送到了,
+             然後兩邊都在等對方。 -->
         <div class="dz-row">
           <label class="dz-label" for="dzRecipLabel">怎麼稱呼對方（選填）</label>
           <input class="dz-input" id="dzRecipLabel" type="text" maxlength="20" placeholder="例:小美、黃總">
@@ -224,6 +219,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/supabase.js?v=20260513-2300"></script>
 <script src="js/layout.js?v=20260819-erp"></script>
-<script src="js/design.js?v=20260827-noship"></script>
+<script src="js/design.js?v=20260827-recip"></script>
 </body>
 </html>
