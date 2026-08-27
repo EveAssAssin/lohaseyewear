@@ -43,7 +43,15 @@ const TOKEN_TTL_SEC = 7 * 24 * 60 * 60;
 /* 會員身分。erpid 與 mid 至少要有一個。
    bound=false 代表這是尚未綁定門市的 App 會員 —— 票券、禮物、預約
    這類需要 ERP 客編的功能對他不可用,但瀏覽、收藏、刻圖設計都可以。 */
-type Identity = { erpid: string; mid: string; bound: boolean };
+type Identity = { erpid: string; mid: string; bound: boolean; phone: string };
+
+/* 手機正規化。與 gift.ts 的同名函式必須一致 ——
+   一邊存 0912345678、另一邊比對 886912345678 的話,永遠對不上。 */
+function normPhone(v: string): string {
+  const d = String(v || "").replace(/[^0-9]/g, "");
+  if (d.startsWith("8869") && d.length === 12) return "0" + d.slice(3);
+  return d;
+}
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -75,12 +83,29 @@ async function hmac(payloadB64: string, secret: string): Promise<string> {
 }
 
 async function issueToken(id: Identity, secret: string): Promise<string> {
-  const payload = {
+  /* ⚠ ph(手機)為什麼可以放在這裡。
+     -----------------------------------------------------------
+     payload 是 base64,不是加密的 —— 拿到 token 的人讀得到它。
+
+     但拿到 token 的人本來就【等於這個會員】:他可以用它呼叫
+     profile 拿到姓名、Email、手機、生日。所以多這一欄不會
+     擴大任何人的能力,只是把已經拿得到的東西省一次往返。
+
+     反過來,它換到的是一件原本做不到的事:未綁定門市的會員
+     沒有客編,profile 對他直接回空的手機(見 fetchMember 的
+     `if (!id.erpid) return base0`),於是「用手機指定收禮人」
+     對最需要的那一群人永遠失效。
+
+     ⚠ 絕對不可以改成由前端傳手機。前端說「我的手機是 09xx」
+     就能領走指名給那支號碼的禮物 —— 必須是這裡簽出去的。 */
+  const payload: Record<string, unknown> = {
     erpid: id.erpid,
     mid: id.mid,
     bound: id.bound,
     exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SEC,
   };
+  // 沒有就不要放空欄位,payload 越短越好
+  if (id.phone) payload.ph = id.phone;
   const payloadB64 = b64urlEncode(
     new TextEncoder().encode(JSON.stringify(payload)),
   );
@@ -113,7 +138,12 @@ async function verifyToken(token: string, secret: string): Promise<Identity | nu
 
     // 舊 token 沒有 bound 欄位;有 erpid 就是已綁定
     const bound = payload?.bound === undefined ? !!erpid : !!payload.bound;
-    return { erpid, mid, bound };
+    /* 舊 token 沒有 ph。不能因此判定無效 ——
+       那會在部署當下把所有已登入的人踢出去。
+       沒有手機的 token 就是比對不到手機指定的禮物,
+       等他下次登入(最多七天)自然就有了。 */
+    const phone = normPhone(String(payload?.ph || ""));
+    return { erpid, mid, bound, phone };
   } catch {
     return null;
   }
@@ -166,15 +196,19 @@ function identityOf(loginData: Record<string, any>): Identity {
   const erpid = String(d.erpid ?? d.client_id ?? "").trim();
   const mid = String(d.mid ?? "").trim();
   const bound = d.is_erp_bound === undefined ? !!erpid : !!d.is_erp_bound;
+  /* 欄位名沒得確認,所以三個都試。上游哪天改叫別的名字,
+     這裡會安靜地拿到空字串 —— 下面那行 log 就是為了看見這件事。 */
+  const phone = normPhone(d.mobile ?? d.cellphone ?? d.phone ?? "");
 
   console.log(
     "[auth-session] 上游 login 回傳欄位:" + Object.keys(d).join(",") +
     " | erpid=" + (erpid ? "有" : "無") +
     " | mid=" + (mid ? "有" : "無") +
-    " | bound=" + bound,
+    " | bound=" + bound +
+    " | mobile=" + (phone ? "有" : "無"),
   );
 
-  return { erpid, mid, bound };
+  return { erpid, mid, bound, phone };
 }
 
 Deno.serve(async (req) => {
@@ -247,6 +281,11 @@ Deno.serve(async (req) => {
       mobile: loginRes?.data?.mobile || "",
       email: loginRes?.data?.email || "",
     });
+    /* 上游 login 沒給手機時的第二來源。
+       ⚠ 只對【已綁定】的人有用 —— fetchMember 對沒有客編的人
+       直接回 base0,那正是這件事最初卡住的地方。
+       所以未綁定會員的手機只能來自 login 回應本身。 */
+    if (!id.phone) id.phone = normPhone(String(member?.mobile ?? member?.phone ?? ""));
 
     return json({
       code: "200",
@@ -280,10 +319,17 @@ Deno.serve(async (req) => {
     }
 
     /* 從 App 進來的一定已綁定 ERP —— App 那側本來就是以客編識別。 */
-    const id: Identity = { erpid: String(v.erpid), mid: String(v.mid || ""), bound: true };
+    /* 從 App 進來的一定已綁定 ERP,手機下面會用客編查得到,
+       所以這裡拿不到也無妨 —— 有就順手記著。 */
+    const id: Identity = {
+      erpid: String(v.erpid), mid: String(v.mid || ""), bound: true,
+      phone: normPhone(v.mobile ?? v.cellphone ?? ""),
+    };
 
     // 一次性 token 已消耗,以下即使失敗仍須回傳成功,否則使用者會卡住
     const member = await fetchMember(PROXY_BASE, PROXY_KEY, id, { name: v.erpname || "" });
+    // 查得到就把手機補進 token(SSO 沒帶手機時的來源)
+    if (!id.phone) id.phone = normPhone(String(member?.mobile ?? member?.phone ?? ""));
 
     return json({
       code: "200",
@@ -308,7 +354,12 @@ Deno.serve(async (req) => {
     /* erpid 照舊回傳,呼叫端不必改就能繼續運作 ——
        未綁定的會員 erpid 是空字串,那些函式本來就會擋下來。
        要給出「綁定後即可使用」這種說明的,再自行讀 mid 與 bound。 */
-    return json({ code: "200", erpid: id.erpid, mid: id.mid, bound: id.bound });
+    /* phone 只給後端函式用(禮物比對)。這支是 Verify JWT 關閉的
+       公開端點,但呼叫者必須先持有有效 token —— 也就是他本人,
+       拿到的是自己的手機,沒有擴大任何人的可見範圍。 */
+    return json({
+      code: "200", erpid: id.erpid, mid: id.mid, bound: id.bound, phone: id.phone,
+    });
   }
 
   return json({ code: "400", message: "未知的 action" }, 400);

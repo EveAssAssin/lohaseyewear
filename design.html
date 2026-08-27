@@ -157,18 +157,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <p class="dz-seg-note" id="dzFulfillNote"></p>
 
-        <!-- ⚠ 2026-08-27 移除「收禮人:產生領取連結 / 指定會員」的切換。
+        <!-- ⚠ 2026-08-27:這裡原本是「產生領取連結 / 指定會員」的二選一。
              -----------------------------------------------------------
-             「指定會員」名字取得不對 —— 它不會把禮物送到對方那裡。
-             填了對方的手機之後,系統【不發簡訊、不推播、不寄信】,
-             禮物只是記著那串號碼躺在資料庫裡;要等對方自己登入官網、
-             自己打開禮物中心,那一刻才會比對手機並掛到他名下。
-             對方若從來沒登入過官網,他永遠不會知道有這份禮物。
+             那個切換取消了,因為它把兩件事講成互斥的,而事實是:
+             【領取連結一定會產生】,填不填手機都一樣。
 
-             也就是說:真正會送達的方式從頭到尾只有一種 ——
-             【領取連結,你自己傳給對方】。
-             留著那個切換只會讓人以為選了「指定會員」就送到了,
-             然後兩邊都在等對方。 -->
+             手機不是另一種送法,是一道保險 —— 對方用那支手機註冊
+             並登入之後,禮物會自己出現在他的會員中心,連連結都不用。
+
+             ⚠ 但我方【不會發簡訊給他】。這件事必須寫在畫面上,
+             不然送禮人會以為填了就送到了,然後兩邊都在等對方。 -->
+        <div class="dz-row">
+          <label class="dz-label" for="dzRecipPhone">對方的手機號碼（選填）</label>
+          <input class="dz-input" id="dzRecipPhone" type="text" maxlength="20"
+                 inputmode="numeric" autocomplete="off" placeholder="例:0912345678">
+          <p class="dz-field-hint">
+            填了的話,對方用<b>這支手機</b>在官網註冊並登入之後,
+            這份禮物會自動出現在他的會員中心 —— 他不必等你傳連結,也不需要門市會員編號。
+          </p>
+          <p class="dz-field-hint">
+            <i class="fa-solid fa-circle-info"></i>
+            我方<b>不會發簡訊通知他</b>,記得自己跟他說一聲。
+            領取連結一樣會產生,付款後可在禮物中心複製或用 LINE 傳給他。
+          </p>
+          <p class="dz-field-warn" id="dzRecipPhoneWarn" style="display:none">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            這不像手機號碼。請填 09 開頭的 10 碼數字,或整欄留空。
+          </p>
+        </div>
         <div class="dz-row">
           <label class="dz-label" for="dzRecipLabel">怎麼稱呼對方（選填）</label>
           <input class="dz-input" id="dzRecipLabel" type="text" maxlength="20" placeholder="例:小美、黃總">
@@ -219,6 +235,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/supabase.js?v=20260513-2300"></script>
 <script src="js/layout.js?v=20260819-erp"></script>
-<script src="js/design.js?v=20260827-recip"></script>
+<script src="js/design.js?v=20260827-bindphone"></script>
 </body>
 </html>

@@ -79,7 +79,7 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
 /* ---------- 身分 ----------
    不自行驗證 HMAC:密鑰只放在 auth-session 一處,
    任何一邊改了簽章格式都不會造成兩邊不同步。 */
-type Who = { erpid: string; mid: string };
+type Who = { erpid: string; mid: string; phone: string };
 
 /* 2026-08-20:改回傳 erpid 與 mid 兩者。
    -----------------------------------------------------------
@@ -109,7 +109,13 @@ async function whoFromToken(token: string): Promise<Who | null> {
     const erpid = String(rawErp || '').trim();
     const mid = String(rawMid || '').trim();
     if (!erpid && !mid) return null;      // 兩個都沒有才是真的無身分
-    return { erpid, mid };
+    /* 手機由 auth-session 在登入時簽進 token,這裡只是讀回來。
+       ⚠ 絕不接受請求 body 傳來的手機 —— 那等於讓任何人宣稱
+       自己是某支號碼,然後領走指名給那支號碼的禮物。
+       空字串是正常的:部署前簽出的舊 token 沒有這一欄,
+       那些人下次登入(最多七天)就會有。 */
+    const phone = normPhone(String(j?.data?.phone ?? j?.phone ?? ''));
+    return { erpid, mid, phone };
   } catch {
     return null;
   }
@@ -243,6 +249,12 @@ async function backfillMidGifts(erpid: string, mid: string) {
     await db.from('gifts')
       .update({ claimed_by_erpid: erpid, claimed_by_mid: null })
       .eq('claimed_by_mid', mid);
+    /* 「被指定但還沒領」的那一批也要搬。
+       漏掉的話,他到門市綁定之後這份禮物會從會員中心消失 ——
+       recipient_mid 還在,但列表已經改用客編查了。 */
+    await db.from('gifts')
+      .update({ recipient_erpid: erpid, recipient_mid: null })
+      .eq('recipient_mid', mid);
   } catch { /* 搬不動下次進頁再試,不影響這一次的查詢 */ }
 }
 
@@ -284,32 +296,60 @@ async function retryIssue(rows: Record<string, any>[]) {
   }
 }
 
-async function bindPending(erpid: string, token: string) {
-  const keys = [erpid];
+async function bindPending(who: Who, token: string) {
+  const keys: string[] = [];
+  if (who.erpid) keys.push(who.erpid);
 
-  // 手機要從 auth-session 的 profile 拿。拿不到就只用會員編號比對,
-  // 手機指定的那批會退回連結領取,不影響其他人。
-  try {
-    const r = await fetch(AUTH_FN, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'profile', token }),
-    });
-    const j = await r.json();
-    if (String(j?.code) === '200') {
-      const p = j?.data?.member ?? j?.data ?? j?.member ?? {};
-      const phone = normPhone(p.phone ?? p.mobile ?? p.cellphone ?? '');
-      if (phone) keys.push(phone);
-    }
-  } catch { /* profile 拿不到不是致命問題 */ }
+  /* 手機的來源有兩個,順序有意義。
+     -----------------------------------------------------------
+     ① token 裡簽好的(auth-session 於登入時放進去)
+        —— 未綁定門市的會員【只有這個來源】。
+
+     ② profile 查詢
+        —— 舊 token 沒有 ①,靠這個補;但它對沒有客編的人
+           直接回空的手機(fetchMember 的 `if (!id.erpid)`),
+           所以只有已綁定的人拿得到。
+
+     兩個都沒有的話,這個人就只比對會員編號 —— 手機指定的那批
+     對他不生效,不影響其他任何人。 */
+  let phone = who.phone;
+  if (!phone && who.erpid) {
+    try {
+      const r = await fetch(AUTH_FN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'profile', token }),
+      });
+      const j = await r.json();
+      if (String(j?.code) === '200') {
+        const p = j?.data?.member ?? j?.data ?? j?.member ?? {};
+        phone = normPhone(p.phone ?? p.mobile ?? p.cellphone ?? '');
+      }
+    } catch { /* profile 拿不到不是致命問題 */ }
+  }
+  if (phone) keys.push(phone);
+  if (!keys.length) return;
+
+  /* 有客編寫 recipient_erpid,沒有寫 recipient_mid。
+     兩欄不同時寫 —— 同時有值的話,這個人日後解除綁定,
+     兩個身分會各自從不同欄位都看得到同一份禮物。 */
+  const owner = who.erpid
+    ? { recipient_erpid: who.erpid }
+    : { recipient_mid: who.mid };
 
   try {
-    await db.from('gifts')
-      .update({ recipient_erpid: erpid })
+    let q = db.from('gifts')
+      .update(owner)
       .is('recipient_erpid', null)
+      .is('recipient_mid', null)     // ⚠ 少了這句,已經對上 mid 的會被重複掃
       .in('recipient_key', keys)
-      .neq('sender_erpid', erpid)                 // 不可能送給自己
       .not('status', 'in', '("cancelled","expired")');
+    /* 「不可能送給自己」只在有客編時才判斷得了 ——
+       送禮一定有客編(要付款),沒有客編的人不可能是送禮人。
+       先前寫死 .neq('sender_erpid', erpid),erpid 為空字串時
+       會拿空字串去比對,那種寫法遲早會撞上真的空值。 */
+    if (who.erpid) q = q.neq('sender_erpid', who.erpid);
+    await q;
   } catch { /* 綁定失敗下次進頁會再試 */ }
 }
 
@@ -487,15 +527,20 @@ Deno.serve(async (req) => {
 
   /* ---------- list ---------- */
   if (action === 'list') {
-    /* 認領待比對的禮物只在有客編時做:送禮人填的是會員編號或手機,
-       兩者都對應到客編,沒有客編就沒有東西可比對。
-       同時把先前以 mid 領的禮物搬到客編底下(剛綁定的人會走到這裡)。 */
-    if (erpid) {
-      await Promise.all([
-        bindPending(erpid, String(body.token || '')),
-        backfillMidGifts(erpid, mid),
-      ]);
-    }
+    /* ⚠ 2026-08-27:比對【不再限定有客編】。
+       -----------------------------------------------------------
+       原本的註解寫「沒有客編就沒有東西可比對」—— 那句在當時是對的,
+       因為比對成功後只有 recipient_erpid 一個欄位可以寫。
+
+       但它造成的結果是:最可能還不是會員的那一群人(收禮人),
+       正好是這個功能唯一照顧不到的。有了 recipient_mid 之後,
+       未綁定的人也接得住,所以這道閘門要拿掉。
+
+       backfillMidGifts 自己會擋(兩個都要有才動),放在外面不影響。 */
+    await Promise.all([
+      bindPending(who, String(body.token || '')),
+      backfillMidGifts(erpid, mid),
+    ]);
 
     /* 收到的禮物:客編與 mid 兩種擁有權都要查。
        未綁定時領的禮物記在 claimed_by_mid,綁定之後新的會記在客編,
@@ -504,6 +549,8 @@ Deno.serve(async (req) => {
       erpid ? `recipient_erpid.eq.${erpid}` : '',
       erpid ? `claimed_by_erpid.eq.${erpid}` : '',
       mid ? `claimed_by_mid.eq.${mid}` : '',
+      // 被指定、還沒領,而且他還沒有客編 —— 這一列就是靠它才看得到
+      mid ? `recipient_mid.eq.${mid}` : '',
     ].filter(Boolean).join(',');
 
     /* 收到的那一份用條件式串接,不要用「哨兵值」。
@@ -628,6 +675,11 @@ Deno.serve(async (req) => {
     if (g.recipient_erpid && g.recipient_erpid !== erpid) {
       return reply('033', { message: '這份禮物是指定給其他會員的' }, 403);
     }
+    /* recipient_mid 同理。少了這道,已經比對到 A 的禮物
+       仍然可以被拿到連結的 B 領走 —— 指定就形同虛設。 */
+    if (g.recipient_mid && g.recipient_mid !== mid) {
+      return reply('033', { message: '這份禮物是指定給其他會員的' }, 403);
+    }
 
     /* 兩條路線都放行給未綁定的會員,B 路線尤其不能擋。
        -----------------------------------------------------------
@@ -659,7 +711,7 @@ Deno.serve(async (req) => {
        (主後端的 owner_mid 回填也是同樣的取捨,見對方 8/20 來文) */
     const owner = erpid
       ? { claimed_by_erpid: erpid, recipient_erpid: g.recipient_erpid || erpid }
-      : { claimed_by_mid: mid };
+      : { claimed_by_mid: mid, recipient_mid: g.recipient_mid || mid };
 
     const { data: updated, error: upErr } = await db.from('gifts')
       .update({

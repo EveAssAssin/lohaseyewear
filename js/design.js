@@ -83,7 +83,6 @@
     giftMode: 'self',
     frames: [],
     fulfillment: 'store',
-    recipMode: 'link',
 
     /* 挑選模式(B 路線):收禮人領到「通用禮物」之後,自己挑鏡框與刻圖。
        有值代表在挑選模式,值就是那份禮物的 id。 */
@@ -728,10 +727,26 @@
     el.fulfillNote.textContent = FULFILL_NOTE[f];
   }
 
-  /* ⚠ setRecipMode() / checkRecipKey() 於 2026-08-27 移除。
-     「指定會員」不是一種送達方式 —— 填了對方的手機不會通知任何人,
-     只是把號碼記著,等對方自己登入官網打開禮物中心才比對。
-     State.recipMode 從此固定為 'link',介面上也不再問。 */
+  /* 對方的手機(選填)。
+     -----------------------------------------------------------------
+     不擋、不驗證真偽 —— 只在明顯不是手機時提醒一句。
+     擋下來沒有意義:號碼對不對要等對方註冊才知道,
+     而填錯的後果只是「那道保險沒生效」,領取連結照樣可用。 */
+  function checkRecipPhone() {
+    if (!el.recipPhone) return;
+    var v = (el.recipPhone.value || '').replace(/\D/g, '');
+    var bad = v.length > 0 && !/^09\d{8}$/.test(v);
+    el.recipPhoneWarn.style.display = bad ? '' : 'none';
+  }
+
+  /* 送出時用的正規化。與 gift.ts / auth-session 的 normPhone 一致 ——
+     一邊存 0912345678、另一邊比對 886912345678 的話永遠對不上。 */
+  function recipPhoneValue() {
+    if (!el.recipPhone) return '';
+    var d = (el.recipPhone.value || '').replace(/\D/g, '');
+    if (d.indexOf('8869') === 0 && d.length === 12) d = '0' + d.slice(3);
+    return /^09\d{8}$/.test(d) ? d : '';
+  }
 
   function showFormErr(msg) {
     el.formErr.textContent = msg;
@@ -775,6 +790,7 @@
     el.submit.disabled = true;
     el.submit.textContent = '產 生 預 覽 圖...';
 
+    var recipPhone = recipPhoneValue();
     var m = Auth && Auth.getStoredMember ? Auth.getStoredMember() : null;
 
     /* 先產合成圖再建立禮物。
@@ -815,8 +831,11 @@
         },
         message: (el.message.value || '').trim(),
         fulfillment: State.fulfillment,
-        recipient_mode: State.recipMode,   // 固定 'link'
-        recipient_key: null,
+        /* 填了手機就是 'member'(指定),沒填就是 'link'。
+           ⚠ 兩者都會產生領取連結 —— mode 只影響「有沒有預先指定人」,
+           不影響有沒有連結。禮物中心靠它顯示「指定 / 連結領取」。 */
+        recipient_mode: recipPhone ? 'member' : 'link',
+        recipient_key: recipPhone || null,
         recipient_label: (el.recipLabel.value || '').trim()
       });
     })
@@ -1192,6 +1211,7 @@
       frameCard: $('dzFrameCard'), frames: $('dzFrames'),
       giftCard: $('dzGiftCard'), fulfill: $('dzFulfill'), fulfillNote: $('dzFulfillNote'),
       recipLabel: $('dzRecipLabel'), message: $('dzMessage'),
+      recipPhone: $('dzRecipPhone'), recipPhoneWarn: $('dzRecipPhoneWarn'),
       formErr: $('dzFormErr'), noteText: $('dzNoteText'),
       result: $('dzResult'), resultText: $('dzResultText'),
       linkRow: $('dzLinkRow'), claimUrl: $('dzClaimUrl'), copy: $('dzCopy')
@@ -1278,6 +1298,7 @@
       var b = e.target.closest('.dz-seg-btn');
       if (b) setFulfillment(b.dataset.f);
     });
+    if (el.recipPhone) el.recipPhone.addEventListener('input', checkRecipPhone);
     el.copy.addEventListener('click', function () {
       var url = el.claimUrl.value;
       var done = function () {
