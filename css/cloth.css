@@ -287,6 +287,20 @@
   font-size:13px; line-height:1.8;
 }
 
+/* 本年度已完成的提示。刻意【不用】錯誤色 ——
+   這不是他做錯了什麼,是一件已經完成的好事。
+   用紅色的話,客人第一眼會以為自己的設計出了問題。 */
+.cl-lock{
+  display:flex; gap:10px; align-items:flex-start;
+  padding:12px 14px;
+  border-radius:var(--r-md, 14px);
+  background:#F1F7F2;
+  border:1px solid #CFE3D4;
+  color:#3D6B4A;
+  font-size:13px; line-height:1.8;
+}
+.cl-lock i{ margin-top:4px; flex:0 0 auto }
+
 .cl-submit{
   width:100%; min-height:52px;
   border:0; border-radius:var(--r-pill, 999px);

@@ -50,6 +50,18 @@
     expanded: false,
     source: 'market',
 
+    /* 年度生日禮一年一件。本年度存過就鎖住存檔。
+       -----------------------------------------------------------------
+       ⚠ 這只是介面。真正的關卡在 cloth 函式裡(save 會回 409),
+       因為停用一顆按鈕擋不住直接打 API 的人。
+       這裡做的是「不要讓他花二十分鐘做完才在送出時被拒」。
+
+       locked 預設 false:狀態還沒回來之前不要先鎖 ——
+       誤鎖的代價(客人以為自己已經做過了)比誤放大得多,
+       而誤放那一邊還有伺服器端接著。 */
+    locked: false,
+    current: null,       // 本年度那一件(含取貨門市),鎖住時用來還原畫面
+
     // 目前放在布上的圖案
     picked: null,        // { source, design_id, name, imageUrl, svgString }
     scale: CONFIG.DEF.scale,
@@ -779,6 +791,7 @@
 
   function submit() {
     if (!State.picked || State.busy) return;
+    if (State.locked) return;       // 已鎖定,按鈕本來就停用;這是最後一道保險
 
     /* 存檔要有身分,預覽不用。
        這是「免帳號試玩」的分界:玩到看見成品都不需要登入,
@@ -789,6 +802,24 @@
       window.location.href = 'login.html';
       return;
     }
+
+    /* 🚨 存檔前先講清楚:存下去就不能再改了。
+       -----------------------------------------------------------------
+       年度生日禮一年一件,而製作端會照著存檔當下的樣子做出實體。
+       客人如果以為「先存起來,之後再回來調」,那就是一個
+       他要等到明年才能修正的誤會。
+
+       ⚠ 這一段【必須】在上傳與存檔之前 ——
+         放在後面等於圖已經送出去了才問,那不是確認,是通知。
+
+       用原生 confirm 是刻意的:官網沒有測試站,自製對話框
+       在某些瀏覽器上壞掉的話,結果會是「按了存檔沒反應」,
+       而那個症狀查起來比難看的原生視窗貴得多。 */
+    if (!window.confirm(
+      '存檔後就不能再調整了。\n\n' +
+      '年度生日禮一年一件,製作端會照你現在看到的樣子做出來。\n' +
+      '確定要存檔嗎?'
+    )) return;
 
     State.busy = true;
     el.submit.disabled = true;
@@ -850,7 +881,19 @@
         }).then(function (r) { return r.json(); });
       })
       .then(function (j) {
+        /* 409 ＝ 本年度已經存過。這不是「這次輸入有問題」,
+           所以不能只丟一句錯誤就算了 —— 要把畫面切換成鎖定狀態,
+           否則他會一直按,而每一次都失敗。
+
+           會走到這裡的情況:另一個分頁剛存過、或狀態查詢當時失敗。 */
+        if (String(j.code) === '409') {
+          State.locked = true;
+          State.current = (j.data && j.data.current) || null;
+          applyLock();
+          throw new Error(j.message || '本年度已經完成過一件了。');
+        }
         if (String(j.code) !== '200') throw new Error(j.message || '儲存失敗');
+        State.locked = true;
         done();
       })
       .catch(function (e) {
@@ -883,7 +926,90 @@
 
      提示文字要講【還差哪一個】。只寫「請完成必填」等於要他自己
      一格一格找,而畫面上這時候通常已經捲到很下面了。 */
+  /* ---------- 本年度鎖定 ---------- */
+
+  /* 一進頁就問「本年度存過了嗎」。
+     -----------------------------------------------------------------
+     ⚠ 不擋畫面 —— 不 await、不顯示轉圈。狀態沒回來之前
+       他照樣可以挑圖、調位置,那些都不需要伺服器。
+       擋住的話,每個人都要為了一個多數情況是「沒存過」的查詢多等一秒。
+
+     ⚠ 查詢失敗時【不鎖】。誤鎖的代價是客人以為自己已經做過了 ——
+       他不會來問,只會覺得少了一份禮物。而誤放那一邊,
+       伺服器端的 409 還接得住。這個不對稱決定了要往哪邊倒。 */
+  function loadLockState() {
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
+    if (!token) return;             // 沒登入本來就存不了,等他登入再說
+
+    fetch(CONFIG.SAVE_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'list', token: token })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (String(j.code) !== '200' || !j.data) return;
+        State.locked = !!j.data.locked;
+        State.current = j.data.current || null;
+        applyLock();
+      })
+      .catch(function (e) {
+        console.error('[cloth] 查本年度狀態失敗,維持可存檔', e);
+      });
+  }
+
+  /* 鎖定時:還原他存的那一件,標明已完成與取貨門市,停用存檔。
+     編輯區【不停用】—— 他可以繼續拖著玩,只是存不了。 */
+  function applyLock() {
+    if (!State.locked) return;
+
+    var c = State.current;
+    if (c && c.svg_url) {
+      /* 還原成他當初存的樣子。
+         imageUrl 用 svg_url(線稿)而不是 preview_url(合成圖)——
+         合成圖裡已經有那塊布了,再疊一次會變成布中布。 */
+      State.picked = {
+        source: c.source === 'draw' ? 'draw' : 'market',
+        design_id: c.design_id || null,
+        name: c.design_name || '',
+        imageUrl: c.svg_url,
+        svgUrl: c.svg_url,
+        svgString: ''
+      };
+      var p = c.placement || {};
+      if (typeof p.scale === 'number') State.scale = p.scale;
+      if (typeof p.x === 'number') State.x = p.x;
+      if (typeof p.y === 'number') State.y = p.y;
+      if (typeof p.rot === 'number') State.rot = p.rot;
+      // applyOverlay() 本身就會把 State 同步回三個滑桿與數字,不必另外呼叫
+      applyOverlay();
+    }
+
+    if (el.lock) {
+      var where = c && c.store_name
+        ? '完成後可到「' + c.store_name + '」領取。'
+        : '完成後可到門市領取。';   // 門市可能是空的(舊資料、或當時清單載不出來)
+      el.lockText.textContent =
+        '本年度的客製眼鏡布已經完成,' + where +
+        ' 一年一件,明年可以再做一件。你仍然可以在這裡試著調整,但不會存檔。';
+      show(el.lock);
+    }
+
+    el.submit.disabled = true;
+    el.submit.textContent = '本 年 度 已 完 成';
+    if (el.submitHint) el.submitHint.textContent = '';
+  }
+
   function refreshSubmit() {
+    /* 鎖定優先於一切條件判斷 —— 少了這一行,
+       他挑一張新圖就會把按鈕重新打開。 */
+    if (State.locked) {
+      el.submit.disabled = true;
+      el.submit.textContent = '本 年 度 已 完 成';
+      if (el.submitHint) el.submitHint.textContent = '';
+      return;
+    }
+
     var hasPick = !!State.picked;
     var hasStore = !el.store || !!el.store.value;
     // 清單根本沒載出來 → 不能拿它當作沒填
@@ -998,6 +1124,7 @@
       scaleVal: $('clScaleVal'), xVal: $('clXVal'), yVal: $('clYVal'),
       reset: $('clReset'), note: document.querySelector('.cl-note'),
       err: $('clErr'), submit: $('clSubmit'), submitHint: $('clSubmitHint'),
+      lock: $('clLock'), lockText: $('clLockText'),
       storeCard: $('clStoreCard'), store: $('clStore'), storeHint: $('clStoreHint'),
       storeRetry: $('clStoreRetry'),
       done: $('clDone'), doneText: $('clDoneText')
@@ -1064,6 +1191,7 @@
 
     loadDesigns();
     loadStores();
+    loadLockState();     // 不 await:狀態沒回來之前照樣可以挑圖、調位置
     refreshSubmit();
   }
 

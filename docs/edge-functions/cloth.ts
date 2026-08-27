@@ -116,6 +116,64 @@ function rateLimited(key: string): boolean {
   return arr.length > 30;          // 每小時 30 件,遠高於正常使用
 }
 
+/* 「這個人自己的」查詢條件。
+   -----------------------------------------------------------------
+   erpid 與 mid 兩個都比:門市綁定之前存的那幾筆只有 mid,
+   綁定之後存的有 erpid。只比其中一個,客人會發現自己的東西「少了幾件」,
+   而那是最難解釋的一種 bug —— 資料還在,只是查不到。
+
+   ⚠ 抽成函式是刻意的:本年度鎖定與「我的眼鏡布」列表【必須】用
+   完全相同的條件。兩邊各寫一份的話,遲早出現「列表看得到、
+   但鎖定判斷看不到」——那等於鎖定失效,而且完全不會報錯。 */
+function mineOnly(q: any, who: { erpid: string; mid: string }) {
+  const plain = (v: string) => /^[A-Za-z0-9_-]+$/.test(v);
+  if (who.erpid && who.mid && plain(who.erpid) && plain(who.mid)) {
+    return q.or('erpid.eq.' + who.erpid + ',mid.eq.' + who.mid);
+  }
+  if (who.erpid) return q.eq('erpid', who.erpid);
+  return q.eq('mid', who.mid);
+}
+
+/* 本曆年的起點,以【台北時間】為準,轉成 UTC 的 ISO 字串。
+   -----------------------------------------------------------------
+   🚨 不可以直接用 new Date().getFullYear() 拼 '2026-01-01T00:00:00Z' ——
+   Edge Function 跑在 UTC,而 created_at 存的是 timestamptz。
+   台北的 1/1 00:30 是 UTC 的 12/31 16:30,用 UTC 的年界會把它算成去年,
+   於是那個人在元旦凌晨可以存第二張。
+
+   一年只發生一次、只影響那 8 小時,所以出事了也很難重現 ——
+   這種 bug 要在寫的時候就避開,不是等它被回報。 */
+function taipeiYearStartIso(): string {
+  const now = new Date();
+  // 台北固定 UTC+8,沒有日光節約,所以加 8 小時就是台北的牆上時間
+  const taipei = new Date(now.getTime() + 8 * 3600 * 1000);
+  const year = taipei.getUTCFullYear();
+  // 台北 year-01-01 00:00:00 ＝ UTC (year-1)-12-31 16:00:00
+  return new Date(Date.UTC(year, 0, 1, 0, 0, 0) - 8 * 3600 * 1000).toISOString();
+}
+
+/* 本年度已經存過的那一件(沒有就 null)。
+   年度生日禮一年一張,所以最多只會有一筆;取最新的一筆以防萬一。 */
+async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
+  const q = mineOnly(
+    db.from('cloth_designs')
+      .select('id, source, design_id, design_name, preview_url, svg_url, placement, status, created_at, done_at, store_erpid, store_name')
+      .gte('created_at', taipeiYearStartIso())
+      .order('created_at', { ascending: false })
+      .limit(1),
+    who,
+  );
+  const { data, error } = await q;
+  if (error) {
+    /* 🚨 查詢失敗時【不可以】當成「沒有存過」。
+       那會在資料庫抖一下的時候讓所有人都能再存一張,
+       而且完全沒有痕跡。呼叫端要把 undefined 當成「無法判斷」並拒絕存檔。 */
+    console.error('[cloth] 查本年度作品失敗:', error.message);
+    return undefined;
+  }
+  return (data && data[0]) || null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
@@ -144,34 +202,69 @@ Deno.serve(async (req) => {
      svg_url 不回:那是製作端用的檔案,前端不需要,
      回了等於把它散到瀏覽器紀錄與快取裡。 */
   if (action === 'list') {
-    let q = db.from('cloth_designs')
-      .select('id, source, design_name, preview_url, status, created_at, done_at, store_name')
-      .order('created_at', { ascending: false })
-      .limit(60);
-
-    /* or() 收的是一段字串語法,值裡有逗號或括號會改變它的意思。
-       這兩個值來自上游會員 API 而不是前端,但「不是前端來的」不等於
-       「一定安全」—— 先確認只有英數與連字號,不合的就退回單欄比對。 */
-    const plain = (v: string) => /^[A-Za-z0-9_-]+$/.test(v);
-
-    if (who.erpid && who.mid && plain(who.erpid) && plain(who.mid)) {
-      q = q.or('erpid.eq.' + who.erpid + ',mid.eq.' + who.mid);
-    } else if (who.erpid) {
-      q = q.eq('erpid', who.erpid);
-    } else {
-      q = q.eq('mid', who.mid);
-    }
+    const q = mineOnly(
+      db.from('cloth_designs')
+        .select('id, source, design_name, preview_url, status, created_at, done_at, store_erpid, store_name')
+        .order('created_at', { ascending: false })
+        .limit(60),
+      who,
+    );
 
     const { data, error } = await q;
     if (error) {
       console.error('[cloth] 列表失敗:', error.message);
       return reply('500', { message: '讀取失敗,請稍後再試' }, 500);
     }
-    return reply('200', { data: { items: data || [] } });
+
+    /* 本年度鎖定狀態一併回,讓眼鏡布頁一進來就知道要不要鎖。
+       ------------------------------------------------------------
+       ⚠ locked 為 true 時仍然回 current —— 前端要載入他存的那一張,
+       並顯示取貨門市。少了 current,畫面只能顯示一句「已完成」,
+       客人會以為自己做的東西不見了。
+
+       ⚠ 查不到年度狀態(undefined)時 locked 回 true(偏嚴格)。
+       這一支只是介面提示,真正的關卡在 save;
+       但寧可讓他看到「已完成」再去問客服,
+       也不要讓他花二十分鐘做完才在送出時被拒。 */
+    const cur = await thisYearOne(db, who);
+    return reply('200', {
+      data: {
+        items: data || [],
+        locked: cur !== null,           // undefined 也算 true
+        current: cur || null,
+      },
+    });
   }
 
   if (rateLimited(who.erpid || who.mid)) {
     return reply('429', { message: '操作太頻繁,請稍候再試' }, 429);
+  }
+
+  /* 🚨 年度生日禮一年一張 —— 這裡是【唯一】真正的關卡。
+     -----------------------------------------------------------------
+     前端會把存檔鈕停用,但那只是介面。直接 POST 這支就繞過去了,
+     而繞過去的結果是同一個人拿到兩張眼鏡布 —— 製作端會照做,
+     因為對他們而言那就是兩筆正常的工單。
+
+     ⚠ 擋在 insert 之前,不是靠資料庫的唯一索引 ——
+       目前沒有那個索引。因此兩個請求同時進來理論上都會通過。
+       速率限制讓這個窗口很窄,但它不是零。
+       要真正杜絕,需要一個以「台北年份」為鍵的唯一索引;
+       created_at 的時區轉換不是 immutable,得先加一個產生欄位。
+       **這件事還沒做,不要把現況說成「不可能重複」。**
+
+     ⚠ 回 409 而不是 400:前端要分得出「這次輸入有問題」與
+       「你本來就不能再存了」,兩者的處理方式完全不同。 */
+  const already = await thisYearOne(db, who);
+  if (already === undefined) {
+    // 查不到 = 無法判斷。此時放行等於在資料庫抖一下的時候讓所有人都能再存一張。
+    return reply('500', { message: '無法確認本年度狀態,請稍後再試' }, 500);
+  }
+  if (already) {
+    return reply('409', {
+      message: '本年度的客製眼鏡布已經完成,一年一件,明年才能再做一件。',
+      data: { current: already },
+    }, 409);
   }
 
   /* 兩個網址都必須是我方 Storage 的。
