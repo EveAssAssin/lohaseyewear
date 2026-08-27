@@ -22,6 +22,7 @@
 
   var CONFIG = {
     ENDPOINT: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gift',
+    SHOP_FN:  'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop',
     TIMEOUT_MS: 12000
   };
 
@@ -152,7 +153,21 @@
         '<button class="gf-btn gf-btn--pri" data-copy="' + esc(g.claim_url) + '">' +
           '<i class="fa-regular fa-copy"></i> 複製領取連結</button>';
     } else if (g.status === 'pending_payment') {
-      actions =
+      /* 「去付款」不是可有可無的。
+         -----------------------------------------------------------
+         建立禮物與推進購物車是兩支呼叫,前者成功、後者失敗是常態
+         (關掉分頁、網路斷一下、商城暫時拒絕都會)。沒有這顆按鈕的話,
+         那份禮物就永遠停在待付款 —— 而他已經填完留言、選完領取方式,
+         唯一的出路是取消重做。
+
+         沒有 product_nid 的舊資料不給按:按了也組不出購物車。 */
+      actions = '';
+      if (g.product_nid) {
+        actions +=
+          '<button class="gf-btn gf-btn--pri" data-pay="' + esc(g.id) + '">' +
+            '<i class="fa-solid fa-credit-card"></i> 去付款</button>';
+      }
+      actions +=
         '<span class="gf-hint"><i class="fa-solid fa-circle-info"></i>完成付款後才會產生領取連結</span>' +
         '<button class="gf-btn gf-btn--ghost" data-cancel="' + esc(g.id) + '">取消</button>';
     } else if (['claimed', 'issued', 'shipped', 'redeemed'].indexOf(g.status) >= 0) {
@@ -309,6 +324,8 @@
       box.addEventListener('click', function (e) {
         var copyBtn = e.target.closest('[data-copy]');
         if (copyBtn) { onCopy(copyBtn); return; }
+        var payBtn = e.target.closest('[data-pay]');
+        if (payBtn) { onPay(payBtn); return; }
         var cancelBtn = e.target.closest('[data-cancel]');
         if (cancelBtn) { onCancel(cancelBtn.dataset.cancel); return; }
       });
@@ -327,6 +344,52 @@
     } else {
       window.prompt('複製這個連結:', url);
     }
+  }
+
+  /* 把一份待付款的禮物重新推進購物車。
+     禮物已經存在,所以只是帶著同一個 gift_id 再推一次 ——
+     不會產生第二份禮物。 */
+  function onPay(btn) {
+    var g = (State.sent || []).filter(function (x) { return String(x.id) === btn.dataset.pay; })[0];
+    if (!g) return;
+
+    var token = Auth && Auth.getToken ? Auth.getToken() : '';
+    if (!token) { window.alert('登入狀態已失效,請重新登入'); return; }
+
+    var old = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 前往付款…';
+
+    var main = { nid: Number(g.product_nid), amount: 1 };
+    if (g.product_sid) main.sid = Number(g.product_sid);
+
+    fetch(CONFIG.SHOP_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'cart_push',
+        token: token,
+        main: main,
+        /* 刻意不帶 design:B 路線本來就沒有,而 A 路線的刻圖資料
+           在建立禮物時已經存進 gifts,商城靠 gift_id 對得回去。
+           在這裡重建一份 design 只會多一個「兩邊不一致」的來源。 */
+        gift: { is_gift: true, gift_id: g.id, fulfillment: g.fulfillment || 'store' }
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var url = j && j.data && j.data.cart_url;
+        if (String(j.code) !== '200' || !url) {
+          throw new Error(j && j.message ? j.message : '商城未回傳購物車網址');
+        }
+        // 一次性 token 只有 60 秒,必須整頁導轉
+        window.location.href = url;
+      })
+      .catch(function (e) {
+        btn.disabled = false;
+        btn.innerHTML = old;
+        window.alert('目前無法前往付款:' + e.message);
+      });
   }
 
   function onCancel(giftId) {

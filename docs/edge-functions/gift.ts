@@ -196,6 +196,15 @@ function publicGift(g: Record<string, any>, viewer: 'sender' | 'recipient' | 'an
   if (viewer === 'sender') {
     return {
       ...base,
+      /* 商品編號只給送禮人。
+         用途是「待付款的禮物要能再推一次購物車」——
+         建立成功但 cart/push 失敗時(關掉分頁、網路斷、商城拒絕),
+         禮物會停在待付款,而送禮人手上沒有任何能回到付款的東西。
+
+         不給收禮人:他不需要,而且那是送禮人買的東西。
+         nid 本身是商城的公開商品編號,不是機密。 */
+      product_nid: g.product_nid,
+      product_sid: g.product_sid,
       recipient_mode: g.recipient_mode,
       claim_code: g.claim_code,
       claim_url: g.claim_code ? `${SITE_ORIGIN}/gift-claim.html?c=${g.claim_code}` : null,

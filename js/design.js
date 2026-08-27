@@ -645,6 +645,17 @@
         // 缺貨的不給送,免得付了款出不了貨
         State.frames = (d.products || [])
           .filter(function (p) { return Number(p.stock) !== 0; })
+          /* ⚠ 排除通用禮物商品。
+             -----------------------------------------------------------
+             2026-08-27 商城把 nid 2929 標成可客製,好讓 B 路線的
+             cart/push 過得了 can_design 檢查。副作用是它會跟著出現在
+             這份清單裡 —— 客人會在「選一副眼鏡」看到一個禮物盒,
+             挑了之後被要求決定刻圖要刻在盒子的哪個位置。
+
+             那個旗標現在同時代表兩件事(能不能客製、要不要列進來),
+             我方無法只取其一,只能在這裡把它濾掉。
+             商城若把檢查改成「有帶 design 才驗」,這一行就可以拿掉。 */
+          .filter(function (p) { return Number(p.nid) !== CONFIG.GIFT_PRODUCT_NID; })
           .filter(frameAllowed);
         renderFrames();
       })
