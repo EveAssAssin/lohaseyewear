@@ -1623,10 +1623,26 @@
 
      這個選擇放在最上面、且問在「送給誰」之前 ——
      它決定下面要不要挑鏡框與刻圖,先問才不會讓人挑完才發現白挑。 */
-  var GIFT_MODE_NOTE = {
-    self: '你先挑好鏡框與刻圖,對方領取後直接拿到成品。適合已經知道他喜歡什麼的時候。',
-    recipient: '你送的是一份「客製刻圖眼鏡」的禮物,鏡框與刻圖由對方自己挑。' +
-               '不確定他的喜好時,這樣最安全。'
+  /* 兩條路線的文案。
+     -----------------------------------------------------------
+     ⚠ 標題與副標【必須】跟著模式換。先前它們寫死在 startGiftMode 裡,
+     於是切到「讓對方自己挑」之後,畫面上還寫著「把這張刻圖送給朋友」
+     與「選一副眼鏡、決定刻圖位置」—— 而那條路線兩件事都不做,
+     連刻圖都還不存在。送禮人會照著那句話找一個找不到的東西。 */
+  var GIFT_MODE_COPY = {
+    self: {
+      title: '把這張刻圖送給朋友',
+      sub:   '選一副眼鏡、決定刻圖位置,填好要送給誰就完成。',
+      note:  '此為示意畫面。實際雷刻位置會在門市與收禮人再次確認,金額以商城結帳為準。',
+      hint:  '你先挑好鏡框與刻圖,對方領取後直接拿到成品。適合已經知道他喜歡什麼的時候。'
+    },
+    recipient: {
+      title: '送一份客製刻圖眼鏡',
+      sub:   '填好要送給誰就完成 —— 鏡框與刻圖由對方自己挑。',
+      note:  '鏡框、刻圖與雷刻位置都由收禮人挑選,並在門市確認,金額以商城結帳為準。',
+      hint:  '你送的是一份「客製刻圖眼鏡」的禮物,鏡框與刻圖由對方自己挑。' +
+             '不確定他的喜好時,這樣最安全。'
+    }
   };
 
   function setGiftMode(mode) {
@@ -1634,7 +1650,11 @@
     el.giftMode.querySelectorAll('.dz-seg-btn').forEach(function (b) {
       b.classList.toggle('on', b.dataset.g === State.giftMode);
     });
-    el.giftModeNote.textContent = GIFT_MODE_NOTE[State.giftMode];
+    var copy = GIFT_MODE_COPY[State.giftMode];
+    el.giftModeNote.textContent = copy.hint;
+    document.querySelector('.dz-title').textContent = copy.title;
+    document.querySelector('.dz-sub').textContent = copy.sub;
+    el.noteText.textContent = copy.note;
 
     if (State.giftMode === 'recipient') {
       /* 讓對方自己挑:這一頁就不需要鏡框、刻圖與位置了。
@@ -1669,12 +1689,9 @@
   }
 
   function startGiftMode(presetDesign) {
-    document.querySelector('.dz-title').textContent = '把這張刻圖送給朋友';
-    document.querySelector('.dz-sub').textContent =
-      '選一副眼鏡、決定刻圖位置,填好要送給誰就完成。';
+    // 標題、副標與說明都由 setGiftMode 依模式設定(見 GIFT_MODE_COPY),
+    // 這裡不要再寫一份 —— 兩處各寫一份就是先前不同步的原因。
     el.submit.textContent = '建 立 禮 物';
-    el.noteText.textContent =
-      '此為示意畫面。實際雷刻位置會在門市與收禮人再次確認,金額以商城結帳為準。';
 
     hide(el.loading);
     show(el.body);
