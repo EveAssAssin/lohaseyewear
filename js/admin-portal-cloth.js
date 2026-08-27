@@ -110,6 +110,27 @@
     var hours = (Date.now() - new Date(hb.last_fetch_at).getTime()) / 3600000;
     if (!isFinite(hours)) { box.style.display = 'none'; return; }
 
+    /* ⚠ 建表時那一列是我方自己塞的(預設 now()),不是真的被抓過。
+       last_status 只有【真實抓取】才會有值 —— 沒有值就不要宣稱
+       「App 上次來抓是 0 小時前」,那是一句假話,而且會讓人以為
+       串接已經在跑了。
+
+       逾時的判斷照樣從那個時間算起:塞進去的時間等於給了 36 小時
+       的寬限期,若期限內都沒有人來抓,一樣會變成紅字。 */
+    if (!hb.last_status) {
+      box.className = 'cloth-hb';
+      box.innerHTML = '<i class="fa-regular fa-clock"></i> ' +
+        '尚未收到 App 的抓取紀錄(等待第一次每日 10:30 的抓取)。';
+      if (hours >= STALE_HOURS) {
+        box.className = 'cloth-hb is-stale';
+        box.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' +
+          '<b>建立監控後已經 ' + esc(fmtDur(hours)) + ',App 一次都沒有來抓過。</b>' +
+          '請確認對方的每日排程有沒有接上。';
+      }
+      box.style.display = '';
+      return;
+    }
+
     if (hours < STALE_HOURS) {
       // 正常時不佔版面,只留一行小字說明「這件事有人在看」
       box.className = 'cloth-hb';
