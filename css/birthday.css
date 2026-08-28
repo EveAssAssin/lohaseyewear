@@ -499,6 +499,19 @@
   align-items:start;
 }
 
+/* 張數少的時候:改成置中、每張限寬。
+   -----------------------------------------------------------------
+   固定四欄的 grid 放 1~3 張,會全部擠在左上角、右邊空一大片 ——
+   那看起來像「載壞了」,而不是「目前只有這幾張」。
+
+   auto-fit + 上限寬度 + justify-content:center,
+   一張就是一張置中的卡,三張就是三張並排置中。
+   四張以上不套這個 class,維持原本的滿版四欄。 */
+.bd .bd-wall.is-sparse{
+  grid-template-columns:repeat(auto-fit, minmax(0, 240px));
+  justify-content:center;
+}
+
 .bd .bd-wall-card{
   background:#fff;
   border-radius:var(--r-lg, 18px);

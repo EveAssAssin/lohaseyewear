@@ -29,9 +29,22 @@
     PAGE: 20,
 
     /* 不足這個數量就整區不顯示。
-       四欄的版面,少於兩排看起來像「沒人參加」,那比沒有這一區更糟。
-       對方說初期可能只有個位數,所以這個門檻是會真的用到的。 */
-    MIN_ITEMS: 8,
+       -----------------------------------------------------------------
+       ⚠ 2026-08-28 由 8 降為 1。
+
+       原本設 8 的理由是「四欄的版面,少於兩排看起來像沒人參加」——
+       但那其實是【版面的問題,不是數量的問題】:grid 固定四欄,
+       放 1~3 張會全部擠在左上角、右邊空一大片。
+
+       洞補起來了(見 .bd-wall.is-sparse:少於四張改成置中、
+       每張限寬),所以門檻不必再替版面擋。
+
+       這一區的價值是讓人看到「有人在參加」,而第一張照片
+       正是最需要被看到的那一張 —— 它會帶來第二張。 */
+    MIN_ITEMS: 1,
+
+    // 少於這個數量就改用置中的稀疏版面
+    SPARSE_BELOW: 4,
 
     TIMEOUT_MS: 15000
   };
@@ -152,6 +165,12 @@
     el.wall.insertAdjacentHTML('beforeend', html);
     State.offset += (page.items || []).length;
     State.total = page.total;
+
+    /* 張數少的時候換成置中版面。
+       ⚠ 用實際的卡片數,不是 total —— 這一支每載一頁就會重算,
+       而「載到第幾張」才是畫面上真正有幾張。 */
+    el.wall.classList.toggle('is-sparse',
+      el.wall.children.length < CONFIG.SPARSE_BELOW);
 
     // 用 total 判斷還有沒有下一頁(對方的回應以 total 為準,沒有 has_more)
     if (State.offset >= State.total || !(page.items || []).length) {
