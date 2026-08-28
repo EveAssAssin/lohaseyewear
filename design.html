@@ -171,9 +171,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <label class="dz-label" for="dzRecipPhone">對方的手機號碼（選填）</label>
           <input class="dz-input" id="dzRecipPhone" type="text" maxlength="20"
                  inputmode="numeric" autocomplete="off" placeholder="例:0912345678">
+          <!-- ⚠ 2026-08-28 改。原本寫「對方用這支手機在官網註冊並登入之後,
+               這份禮物會自動出現在他的會員中心」——【那對官網註冊的人是假的】。
+
+               我方比對手機的來源有兩個:上游登入回應、以及以客編查會員資料。
+               8/27 量到上游登入只回 erpid/erpname/mid/is_erp_bound,沒有 mobile;
+               而查會員資料要客編,官網註冊的人沒有。兩個來源都拿不到 ——
+               所以「在官網註冊」那一句正好落在唯一不成立的情況上。
+
+               等對方在 login 回應補上 mobile 就會成立,我方不必再改程式,
+               但在那之前這段文字必須講實話。 -->
           <p class="dz-field-hint">
-            填了的話,對方用<b>這支手機</b>在官網註冊並登入之後,
-            這份禮物會自動出現在他的會員中心 —— 他不必等你傳連結,也不需要門市會員編號。
+            填了的話,若對方<b>已經是樂活門市會員</b>,他用這支手機登入官網後,
+            這份禮物會自動出現在他的會員中心,不必等你傳連結。
+          </p>
+          <p class="dz-field-hint">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            若對方<b>還不是門市會員</b>(或只在官網註冊過),目前還比對不到他 ——
+            請直接把領取連結傳給他,那條路一定通。
           </p>
           <p class="dz-field-hint">
             <i class="fa-solid fa-circle-info"></i>
