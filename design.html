@@ -144,6 +144,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <section class="dz-card" id="dzGiftCard" style="display:none">
         <h2 class="dz-card-h">要怎麼送給對方</h2>
 
+        <!-- ⚠ 這一條要放在最前面,而且不能只寫在小字裡。
+             -----------------------------------------------------------
+             2026-08-28 主後端實查後確認:門市核銷【實質上要求收禮人
+             安裝樂活 App】—— 掃 App 出示的條碼是唯一走得通的路,
+             以客編查券那條這一輪不會開。
+
+             送禮人花 990 買的東西,對方可能領不了。那件事不能等到
+             他付完款、傳完連結、對方到了櫃檯才被發現 ——
+             那時候三個人都很難處理。 -->
+        <p class="dz-field-warn" style="display:block;margin:0 0 14px">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+          <b>對方到門市兌換時需要「樂活 App」</b>出示條碼(用同一個帳號登入即可)。
+          目前門市無法只憑會員編號核銷 —— 送出前建議先確認對方願意安裝。
+        </p>
+
         <!-- ⚠ 宅配目前關閉(js/design.js 的 ALLOW_SHIP)。
              關的時候整段選擇一起藏起來 —— 只剩一個選項的切換鈕
              不是選擇,是雜訊,而且會讓人以為另一個壞了。
