@@ -206,30 +206,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- ============ 壽星分享牆 ============
-       資料來自 App 的生日分享,需要商城/App 端提供列表 API
-       (需求見 docs/給黃總_生日分享牆API需求_0820c.md,尚未提供)。
-
-       ⚠ 在真實資料接上之前,這一區【預設不顯示】——
-       公開頁面放一牆假的客人照片,看的人不會知道那是假的。
-       要看版型加 ?wall=preview,規則寫在 js/birthday-wall.js。 -->
-  <section class="bd-sec bd-sec--soft" id="bdWallSec" hidden>
-    <div class="bd-sec-in">
-      <div class="bd-sec-head">
-        <h2 class="bd-sec-title">壽星們的生日</h2>
-        <div class="bd-title-line"></div>
-        <p class="bd-sec-desc">今年在樂活過生日的人,和他們收到的禮物。</p>
-      </div>
-
-      <div class="bd-wall" id="bdWall"></div>
-
-      <div class="bd-wall-foot">
-        <button type="button" class="bd-wall-more" id="bdWallMore">看 更 多</button>
-        <p class="bd-wall-end" id="bdWallEnd" hidden>已經到底了</p>
-      </div>
-    </div>
-  </section>
-
   <!-- ============ 注意事項 ============ -->
   <section class="bd-sec">
     <div class="bd-notes">
@@ -258,6 +234,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <a href="allstore.html" class="lohas-cta-btn lohas-cta-btn--ghost">
           預約門市
         </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 壽星分享牆(整頁最後一區)============
+       資料來自 App 的生日分享。2026-08-28 對方的 API 已上線並回真實資料。
+
+       ⚠ 位置是刻意放在最後的:
+       這一區是【看熱鬧】,不是行動。前面幾區都在講「你可以拿到什麼、
+       要怎麼拿」,那些才是客人來這一頁的目的。分享牆插在中間會把
+       那條線打斷,而它自己也不會因為靠前就比較多人看 ——
+       願意看別人生日照的人,本來就會滑到底。
+
+       ⚠ 這一區【沒有資料就整區不顯示】(js 的 MIN_ITEMS)。
+       要看版型加 ?wall=preview,規則寫在 js/birthday-wall.js。 -->
+  <section class="bd-sec bd-sec--soft" id="bdWallSec" hidden>
+    <div class="bd-sec-in">
+      <div class="bd-sec-head">
+        <h2 class="bd-sec-title">壽星們的生日</h2>
+        <div class="bd-title-line"></div>
+        <p class="bd-sec-desc">今年在樂活過生日的人,和他們收到的禮物。</p>
+      </div>
+
+      <div class="bd-wall" id="bdWall"></div>
+
+      <div class="bd-wall-foot">
+        <button type="button" class="bd-wall-more" id="bdWallMore">看 更 多</button>
+        <p class="bd-wall-end" id="bdWallEnd" hidden>已經到底了</p>
       </div>
     </div>
   </section>
