@@ -308,21 +308,6 @@
 }
 .bd .bd-gift-cta:hover{ gap:13px; opacity:.7 }
 
-/* 客製眼鏡布那一段的提醒。
-   ⚠ 放在 CTA 上方,不是底下 —— 存檔之後不能改,
-   客人若是按下去才知道,那就是一條做壞了又不能重來的布。 */
-.bd .bd-cloth-note{
-  display:flex; align-items:flex-start; gap:8px;
-  margin:20px 0 0;
-  padding:11px 14px;
-  border-radius:var(--r-md, 14px);
-  background:#fff;
-  border:1px solid var(--lohas-bd);
-  font-size:13.5px; line-height:1.75;
-  color:var(--text-sub);
-}
-.bd .bd-cloth-note i{ margin-top:4px; color:var(--lohas-brand) }
-.bd .bd-cloth-note b{ color:var(--lohas-brand) }
 .bd .bd-gift-cta i{ font-size:12px }
 
 /* =========================
