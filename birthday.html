@@ -19,7 +19,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/birthday.css?v=20260828-wall">
+  <link rel="stylesheet" href="css/birthday.css?v=20260831-cloth">
   <script src="js/layout.js?v=20260819-erp" defer></script>
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -131,7 +131,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="bd-gift-text">
             <span class="bd-gift-no">CLEANING CLOTH</span>
             <h3>專屬生日眼鏡布</h3>
-            <p>印上你的英文名字,全世界只有這一條。</p>
+            <p>自己挑一張刻圖,或自己畫一個,印成只有你有的那一條。</p>
           </div>
         </div>
 
@@ -145,6 +145,69 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <p>做好之後送給朋友,對方登入會員即可領取,替他過一個有心意的生日。</p>
             <a class="bd-gift-cta" href="market.html">
               挑一張刻圖開始<i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 客製眼鏡布 ============
+       ⚠ 用 bd-sec--soft,而且【緊接在生日禮物那一段之後】。
+       兩段都是 soft,粉色底會連成一整塊 —— 那是刻意的:
+       「你會拿到什麼」全部收在同一個色塊裡,到「怎麼參加」才換色。
+       中間插一段白的,反而會把同一件事切成兩半。
+
+       ⚠ soft 一定要有 .bd-sec-in 這層(見 css 的
+       .bd-sec--soft > .bd-sec-in),少了它左右會貼到螢幕邊。 -->
+  <section class="bd-sec bd-sec--soft" id="cloth">
+    <div class="bd-sec-in">
+      <div class="bd-sec-head">
+        <h2 class="bd-sec-title">今年的專屬眼鏡布</h2>
+        <div class="bd-title-line"></div>
+        <p class="bd-sec-desc">一年一條。自己挑圖或自己畫,做好之後到你指定的門市領取。</p>
+      </div>
+
+      <div class="bd-gift-rows">
+        <div class="bd-gift-row">
+          <div class="bd-gift-media">
+            <img src="images/cloth-base.jpg?v=20260827" alt="客製眼鏡布" loading="lazy">
+          </div>
+          <div class="bd-gift-text">
+            <span class="bd-gift-no">YOUR CLOTH</span>
+            <h3>從一張圖開始</h3>
+            <p>
+              到刻圖市集挑一張喜歡的,或直接在畫布上自己畫一個。
+              放上眼鏡布之後可以拖曳、縮放、旋轉,調到你滿意為止。
+            </p>
+
+            <div class="bd-pickup" style="margin-top:22px">
+              <div class="bd-pick">
+                <i class="fa-solid fa-calendar-check"></i>
+                <div>
+                  <b>一年一條</b>
+                  <span>年度生日禮,每人每年一件。</span>
+                </div>
+              </div>
+              <div class="bd-pick">
+                <i class="fa-solid fa-store"></i>
+                <div>
+                  <b>自己選取貨門市</b>
+                  <span>做好之後送到你選的那一家。</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ⚠ 這一句要在按鈕【上面】,不是做完才講。
+                 存檔之後不能改,而客人是在按下去之後才知道的話,
+                 那就是一條做壞了、又不能重來的布。 -->
+            <p class="bd-cloth-note">
+              <i class="fa-solid fa-circle-info"></i>
+              存檔後就會送去製作,<b>不能再修改</b>;製作約 3~5 個工作天。
+            </p>
+
+            <a class="bd-gift-cta" href="cloth.html">
+              開始做我的眼鏡布<i class="fa-solid fa-arrow-right"></i>
             </a>
           </div>
         </div>
