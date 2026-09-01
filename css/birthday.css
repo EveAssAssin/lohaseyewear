@@ -206,7 +206,7 @@
    限寬 + 置中,大小維持原本四欄時的樣子。 */
 .bd .bd-perks{
   display:grid;
-  grid-template-columns:repeat(2, minmax(0, 320px));
+  grid-template-columns:repeat(3, minmax(0, 320px));
   justify-content:center;
   gap:20px;
 }
@@ -592,4 +592,91 @@
 @media (max-width:640px){
   .bd .bd-wall{ grid-template-columns:repeat(2, 1fr); gap:12px }
   .bd .bd-wall-body{ padding:12px 13px 14px }
+}
+
+/* =============================================================
+   卡片詳細說明:可點的卡片 + 彈窗
+   ============================================================= */
+
+/* ⚠ 只有【真的有詳細內容】的卡片才會被加上 is-clickable(見 js)。
+   全部卡片都給游標的話,按下去沒反應的那幾張會被當成壞掉。 */
+.bd .bd-perk.is-clickable,
+.bd .bd-step.is-clickable,
+.bd .bd-pick.is-clickable{ cursor:pointer }
+.bd .is-clickable:focus-visible{
+  outline:2px solid var(--lohas-brand);
+  outline-offset:3px;
+}
+.bd .bd-detail{ display:none }
+
+/* 看得見的提示。沒有它,沒有人知道卡片可以點 —— 
+   hover 才出現的提示在手機上等於不存在。 */
+.bd .bd-more{
+  display:inline-flex; align-items:center; gap:5px;
+  margin-top:14px;
+  font-size:12.5px; font-weight:600; letter-spacing:1px;
+  color:var(--lohas-brand);
+}
+.bd .bd-more i{ font-size:10px; transition:transform .2s }
+.bd .is-clickable:hover .bd-more i{ transform:translateX(3px) }
+/* 取件卡是橫向排版(icon + 文字),提示要跟著文字走,不要飛到 icon 旁邊 */
+.bd .bd-pick .bd-more{ margin-top:8px }
+
+/* ---- 彈窗 ---- */
+.bd-modal{
+  position:fixed; inset:0; z-index:10000;
+  display:flex; align-items:center; justify-content:center;
+  padding:32px 18px;
+}
+.bd-modal[hidden]{ display:none }
+.bd-modal-backdrop{
+  position:absolute; inset:0;
+  background:rgba(47,42,36,.55);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+.bd-modal-box{
+  position:relative;
+  width:100%; max-width:520px;
+  max-height:calc(100vh - 64px);
+  overflow:auto;
+  background:#fff;
+  border-radius:var(--r-lg, 18px);
+  padding:34px 30px 30px;
+  box-shadow:0 18px 60px rgba(0,0,0,.28);
+}
+.bd-modal-x{
+  position:absolute; top:14px; right:14px;
+  width:34px; height:34px;
+  border:0; border-radius:50%;
+  background:transparent; color:var(--text-muted, #9B9186);
+  font-size:16px; cursor:pointer;
+}
+.bd-modal-x:hover{ background:var(--bd-pink-soft); color:var(--lohas-brand) }
+.bd-modal-title{
+  margin:0 34px 16px 0;
+  font-size:19px; font-weight:700; letter-spacing:1px;
+  color:var(--lohas-brand);
+}
+.bd-modal-body p{ margin:0 0 12px; font-size:14.5px; line-height:1.9; color:var(--text-sub) }
+.bd-modal-body ul{ margin:0 0 12px; padding-left:20px }
+.bd-modal-body li{ font-size:14px; line-height:1.95; color:var(--text-sub); margin-bottom:4px }
+.bd-modal-body b{ color:var(--lohas-brand) }
+.bd-modal-body .bd-detail-note{
+  margin:16px 0 0; padding:11px 14px;
+  border-radius:var(--r-md, 14px);
+  background:var(--bd-pink-soft);
+  font-size:13px; line-height:1.8;
+}
+
+@media (max-width:640px){
+  .bd-modal{ padding:0; align-items:flex-end }
+  /* 手機從底部推上來,並讓上緣留一段看得到底下的頁面 ——
+     那一段是「這是疊在上面的東西」最直接的訊號。 */
+  .bd-modal-box{
+    max-width:none;
+    max-height:88vh;
+    border-radius:20px 20px 0 0;
+    padding:30px 22px 26px;
+  }
 }
