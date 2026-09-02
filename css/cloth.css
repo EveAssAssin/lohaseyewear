@@ -477,3 +477,32 @@
   .cl-node--rot{ width:30px; height:30px; margin-left:-15px; margin-top:-40px }
   .cl-rot-arm{ top:-26px; height:26px }
 }
+
+/* === 打字 === */
+
+.cl-text-tools{ display:flex; flex-direction:column; gap:12px; margin-top:14px }
+.cl-text-row{ display:flex; align-items:center; gap:10px; position:relative }
+.cl-text-row > span{
+  flex:0 0 4.5em;
+  font-size:13px; letter-spacing:.08em;
+  color:var(--text-sub);
+}
+.cl-textarea{
+  height:auto; padding:10px 14px; line-height:1.7; resize:vertical;
+  min-height:64px;
+}
+/* select 的箭頭在這一列裡要對齊那個框,不是整列 */
+.cl-text-row .cl-select-ico{ right:14px }
+
+.cl-text-hint{
+  margin:10px 0 0; font-size:12px; line-height:1.75;
+  color:var(--text-muted, #9B9186);
+}
+.cl-text-hint b{ color:var(--text-sub) }
+
+@media (max-width:768px){
+  /* 手機上標籤自己一行,輸入框才有整行的寬度 */
+  .cl-text-row{ flex-direction:column; align-items:stretch; gap:6px }
+  .cl-text-row > span{ flex:none }
+  .cl-text-row .cl-select-ico{ top:auto; bottom:14px; transform:none }
+}

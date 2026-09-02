@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
-  <link rel="stylesheet" href="css/cloth.css?v=20260827-transform">
+  <link rel="stylesheet" href="css/cloth.css?v=20260903-text">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -47,6 +47,9 @@
       </button>
       <button type="button" class="cl-seg-btn" data-src="draw">
         <i class="fa-solid fa-pencil"></i><span>自己畫</span>
+      </button>
+      <button type="button" class="cl-seg-btn" data-src="text">
+        <i class="fa-solid fa-font"></i><span>打字</span>
       </button>
       <!-- 這一顆是「動作」不是「模式」(開一個視窗、做完就回來),
            所以沒有 data-src,按了不會停在某個狀態。 -->
@@ -122,6 +125,43 @@
         <p class="cl-note-sm">
           線條會自動轉成印刷用的線稿,所以畫粗一點、筆畫清楚一點效果最好。
         </p>
+      </div>
+
+      <!-- 打字 -->
+      <div class="cl-card" id="clTextCard" style="display:none">
+        <p class="cl-card-title">打一段文字</p>
+
+        <!-- ⚠ 這張畫布【就是】會被描成線稿的那一張,不是另外做的預覽。
+             所見即所得是刻意的:字型在不同裝置上長得不一樣
+             (楷書、圓體多半靠系統字型),而描邊是在客人自己的
+             瀏覽器上做的 —— 他看到什麼,刻出來就是什麼。
+             另外做一張「示意圖」的話,兩者遲早會不一致。 -->
+        <canvas class="cl-canvas" id="clTextCanvas" width="1000" height="1000"></canvas>
+
+        <div class="cl-text-tools">
+          <label class="cl-text-row">
+            <span>要刻的字</span>
+            <textarea id="clTextInput" class="cl-input cl-textarea" rows="2"
+                      maxlength="24" placeholder="例:生日快樂"></textarea>
+          </label>
+          <label class="cl-text-row">
+            <span>字型</span>
+            <select id="clTextFont" class="cl-input cl-select">
+              <option value="hei">黑體</option>
+              <option value="kai">楷書</option>
+              <option value="ming">明體</option>
+              <option value="round">圓體</option>
+            </select>
+            <i class="fa-solid fa-chevron-down cl-select-ico"></i>
+          </label>
+        </div>
+
+        <p class="cl-text-hint">
+          最多 24 字,可以換行。
+          <b>楷書、明體、圓體用的是你裝置上的系統字型</b> —— 畫面上看到的樣子就是刻出來的樣子。
+        </p>
+
+        <button type="button" class="cl-apply" id="clTextApply" disabled>把 這 段 字 放 上 去</button>
       </div>
 
       <!-- 位置 -->
@@ -230,6 +270,6 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260902-reject-9cm"></script>
+<script src="js/cloth.js?v=20260903-text"></script>
 </body>
 </html>

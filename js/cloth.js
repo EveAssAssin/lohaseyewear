@@ -602,8 +602,16 @@
   /* 手繪 → 線稿。
      用與刻圖市集上傳完全相同的 potrace 參數 ——
      兩邊產出的線稿要是同一種東西,不然後台下載到的檔案會有兩種脾氣。 */
-  function traceDrawing() {
-    var ctx = el.canvas.getContext('2d');
+  /* 把一張畫布描成線稿。
+     -----------------------------------------------------------------
+     ⚠ 參數化成「傳一張 canvas 進來」而不是寫死讀 el.canvas ——
+     打字那條路也要用同一條管線。
+
+     為什麼文字不能直接輸出 <text>:dxf.js 只解析 <path>,
+     <text> 進去會產出一個【空的雕刻檔而且不會報錯】——
+     師傅要下載之後打開才會發現。所以文字一律先變成外框。 */
+  function traceCanvas(canvas) {
+    var ctx = canvas.getContext('2d');
     var data = ctx.getImageData(0, 0, CONFIG.TRACE_SIZE, CONFIG.TRACE_SIZE);
 
     if (!(window.LohasPotrace && window.LohasPotrace.trace)) {
@@ -622,6 +630,8 @@
       return svg;
     });
   }
+
+  function traceDrawing() { return traceCanvas(el.canvas); }
 
   function applyDrawing() {
     if (!State.strokes.length || State.busy) return;
@@ -652,6 +662,108 @@
         State.busy = false;
         el.apply.disabled = !State.strokes.length;
         el.apply.textContent = '把 這 張 放 上 去';
+      });
+  }
+
+  /* ---------- 打字 ----------
+
+     ⚠ 字型全部用【裝置上的系統字型】,不另外下載。
+     -----------------------------------------------------------------
+     中文字型檔動輒好幾 MB,為了四個選項讓每個客人都下載那些,
+     代價遠大於好處。而系統字型的通病「不同裝置長得不一樣」
+     在這裡【不成立】—— 描邊是在客人自己的瀏覽器上做的,
+     他看到的那一張就是被描的那一張,所見即所得。
+
+     每一組都給多個候選,前面的沒有就往後退;最後一個是泛型,
+     保證一定有東西可用(退到什麼都沒有時,畫出來是空白,
+     那比拋錯更難查)。 */
+  var TEXT_FONTS = {
+    hei:   '"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif',
+    kai:   '"DFKai-SB","BiauKai","Kaiti TC","楷體",serif',
+    ming:  '"PMingLiU","Songti TC","宋體",serif',
+    round: '"Yuanti TC","圓體","Microsoft YaHei","Noto Sans TC",sans-serif'
+  };
+
+  /* 把文字畫到那張畫布上。
+     -----------------------------------------------------------------
+     字級不讓客人調 —— 大小由布上的縮放滑桿決定,兩個地方都能改
+     大小的話,客人會在這裡調半天,然後發現放上去又變了。
+     這裡只負責「把字填滿畫布」,實際多大是放上去之後的事。 */
+  function renderText() {
+    if (!el.textCanvas) return;
+    var cv = el.textCanvas;
+    var ctx = cv.getContext('2d');
+    var S = CONFIG.TRACE_SIZE;
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, S, S);
+
+    var raw = (el.textInput.value || '').replace(/\r/g, '');
+    var lines = raw.split('\n').map(function (t) { return t.trim(); })
+                   .filter(function (t) { return t.length; });
+
+    el.textApply.disabled = !lines.length || State.busy;
+    if (!lines.length) return;
+
+    var family = TEXT_FONTS[el.textFont.value] || TEXT_FONTS.hei;
+    var pad = S * 0.08;
+    var avail = S - pad * 2;
+
+    /* 字級用「試一個大的,再依實際量到的寬度收」的方式決定。
+       中文字寬與字級大致成比例,但標點與英數不是 —— 量過才準。 */
+    var lineH = avail / lines.length;
+    var size = Math.min(lineH * 0.82, avail);
+    ctx.font = '700 ' + size + 'px ' + family;
+    var widest = Math.max.apply(null, lines.map(function (t) {
+      return ctx.measureText(t).width;
+    }));
+    if (widest > avail) size = size * (avail / widest);
+
+    ctx.font = '700 ' + size + 'px ' + family;
+    ctx.fillStyle = '#000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    var step = size * 1.25;
+    var startY = S / 2 - step * (lines.length - 1) / 2;
+    lines.forEach(function (t, i) {
+      ctx.fillText(t, S / 2, startY + step * i);
+    });
+  }
+
+  function applyText() {
+    var raw = (el.textInput.value || '').trim();
+    if (!raw || State.busy) return;
+    State.busy = true;
+    el.textApply.disabled = true;
+    el.textApply.textContent = '轉 換 中...';
+    hide(el.err);
+
+    renderText();      // 送出前重畫一次,確保描的是畫面上那一張
+    traceCanvas(el.textCanvas)
+      .then(function (svg) {
+        if (svg.length > CONFIG.MAX_SVG_BYTES) {
+          throw new Error('這段字轉出來的檔案過大,試著少打幾個字。');
+        }
+        State.picked = {
+          /* ⚠ source 只能是 market 或 draw(資料表的 check 限制)。
+             文字不是市集作品,歸 draw —— 名稱裡帶上內容,
+             製作端才分得出這一件是打字還是手繪。 */
+          source: 'draw',
+          design_id: null,
+          name: '文字:' + raw.replace(/\s+/g, ' ').slice(0, 20),
+          imageUrl: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
+          svgUrl: '',
+          svgString: svg
+        };
+        applyOverlay();
+        refreshSubmit();
+      })
+      .catch(function (e) { showErr(e.message); })
+      .finally(function () {
+        State.busy = false;
+        el.textApply.disabled = !(el.textInput.value || '').trim();
+        el.textApply.textContent = '把 這 段 字 放 上 去';
       });
   }
 
@@ -1147,9 +1259,11 @@
        這時挑圖與畫布都沒有用處,收起來,畫面只留預覽與位置調整。
        留著「選一張刻圖」的話,客人會以為自己還得再挑一張。 */
     var open = null;
-    if (src === 'market') { show(el.marketCard); hide(el.drawCard); open = el.marketCard; }
-    else if (src === 'draw') { hide(el.marketCard); show(el.drawCard); open = el.drawCard; }
-    else { hide(el.marketCard); hide(el.drawCard); }
+    hide(el.marketCard); hide(el.drawCard); hide(el.textCard);
+    if (src === 'market') { show(el.marketCard); open = el.marketCard; }
+    else if (src === 'draw') { show(el.drawCard); open = el.drawCard; }
+    else if (src === 'text') { show(el.textCard); open = el.textCard; renderText(); }
+    // upload:圖已經傳好了,挑圖/畫布/打字都收起來
     if (scroll && open) scrollToCard(open);
   }
 
@@ -1206,6 +1320,8 @@
       search: $('clSearch'), designs: $('clDesigns'), more: $('clMore'),
       upload: $('clUpload'),
       canvas: $('clCanvas'), brush: $('clBrush'),
+      textCard: $('clTextCard'), textCanvas: $('clTextCanvas'),
+      textInput: $('clTextInput'), textFont: $('clTextFont'), textApply: $('clTextApply'),
       undo: $('clUndo'), clear: $('clClear'), apply: $('clApply'),
       placeCard: $('clPlaceCard'),
       scale: $('clScale'), x: $('clX'), y: $('clY'),
@@ -1246,6 +1362,11 @@
     });
 
     el.apply.addEventListener('click', applyDrawing);
+    if (el.textInput) {
+      el.textInput.addEventListener('input', renderText);
+      el.textFont.addEventListener('change', renderText);
+      el.textApply.addEventListener('click', applyText);
+    }
     if (el.upload) el.upload.addEventListener('click', openUpload);
     window.addEventListener('lohas:design-upload-success', onUploaded);
 
