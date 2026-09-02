@@ -305,6 +305,11 @@
           rotateDeg: Number(it.placement && it.placement.rot) || 0,
           mode: mode === 'fill' ? 'fill' : 'outline',
         });
+        /* ⚠ 轉不完整就要吵。理由見 cloth-lab.js 同一段。 */
+        if (out.warnings && out.warnings.length) {
+          alert('⚠ 這張圖有轉不完整的地方:\n\n' + out.warnings.join('\n') +
+                '\n\n檔案還是會下載,但刻之前請先跟原圖比對一下。');
+        }
         var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
         /* 檔名帶上模式 —— 兩個檔案放在同一個下載資料夾裡,
            少了這個就分不出哪個是哪個,而它們長得完全一樣。 */

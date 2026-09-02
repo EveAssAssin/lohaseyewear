@@ -36,7 +36,12 @@
      總比整份轉失敗好。 */
 
   function tokenize(d) {
-    var out = [], re = /([MmLlHhVvCcSsZzAaQqTt])|(-?\d*\.?\d+(?:[eE][-+]?\d+)?)/g, m;
+    /* ⚠ 這裡收【任何】字母,不是只收合法的那幾個。
+       原本只寫 [MmLlHhVvCcSsZzAaQqTt],於是不認得的指令字母在
+       這一步就被丟掉,連下面的解析都到不了 —— 也就沒有人會知道。
+       數字那一支排在後面,但 JS 的交替是就地嘗試,像 1e-5 這種
+       科學記號會被數字那一支整段吃掉,不會被拆成字母 e。 */
+    var out = [], re = /([A-Za-z])|(-?\d*\.?\d+(?:[eE][-+]?\d+)?)/g, m;
     while ((m = re.exec(d))) out.push(m[1] || parseFloat(m[2]));
     return out;
   }
@@ -47,6 +52,18 @@
       u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0],
       u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]
     ];
+  }
+
+  /* ---------- 沒能完整處理的東西,一定要浮出水面 ----------
+     2026-09-03 的教訓:Q 指令被當成「不認得的就跳過」,靜靜地
+     壞了兩個月 —— 492 張圖案裡有 56 張受影響,而輸出的檔案
+     看起來還是像那張圖,只是形狀不對。沒有人會去對照原圖。
+
+     所以現在:凡是沒能完整還原的地方都記下來,由 fromSvg 回傳,
+     下載的那一頁負責讓製作的人【看見】。寧可吵,不要安靜地錯。 */
+  var _warnings = [];
+  function warn(msg) {
+    if (_warnings.indexOf(msg) < 0) _warnings.push(msg);
   }
 
   /** 把一個 path 的 d 拆成多條折線(每條是一個 [x,y] 陣列) */
@@ -147,6 +164,7 @@
         cur = null; lastC2 = null; lastQ1 = null;
 
       } else if (C === 'A') {
+        warn('橢圓弧(A)');
         /* 橢圓弧。目前兩套描圖工具(potrace / imagetracer.js)都不產生 A,
            所以沒有實作完整的弧線換算。
            ⚠ 但【不能只是跳過】—— 跳過會讓筆尖留在舊位置,後面整段都歪。
@@ -156,12 +174,11 @@
         var ax = t[i++], ay = t[i++];
         push(rel ? x + ax : ax, rel ? y + ay : ay);
         lastC2 = null; lastQ1 = null;
-        if (window.console) {
-          console.warn('[dxf] 這份 SVG 有橢圓弧(A),目前以直線近似 —— 弧度會變平。');
-        }
 
       } else {
-        /* 真的不認得的指令:跳過一個參數,不要整份壞掉。 */
+        /* 真的不認得的指令:跳過一個參數,不要整份壞掉 ——
+           但一定要留下紀錄。這正是 Q 能躲兩個月的原因。 */
+        warn('未知指令 ' + C);
         i += 1;
         lastC2 = null; lastQ1 = null;
       }
@@ -392,6 +409,7 @@
   }
 
   function fromSvg(svgString, opt) {
+    _warnings = [];                                // 每次轉換各自累積
     opt = opt || {};
     var widthMm = Number(opt.widthMm) || 150;      // 預設 15 公分
     var layer = String(opt.layer || 'ENGRAVE');
@@ -520,6 +538,7 @@
         dxf: buildFill(rings, widthMm, heightMm, layer),
         widthMm: widthMm, heightMm: heightMm,
         paths: parsed.polys.length, rotateDeg: rotDeg, mode: 'fill',
+        warnings: _warnings.slice(),
       };
     }
 
@@ -552,6 +571,7 @@
     return {
       dxf: s, widthMm: widthMm, heightMm: heightMm,
       paths: parsed.polys.length, rotateDeg: rotDeg, mode: 'outline',
+      warnings: _warnings.slice(),
     };
   }
 

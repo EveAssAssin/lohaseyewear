@@ -345,6 +345,13 @@
           rotateDeg: Number(it.placement && it.placement.rot) || 0,
           mode: mode === 'fill' ? 'fill' : 'outline',
         });
+        /* ⚠ 轉檔時有沒完整還原的東西就一定要說。
+           2026-09-03 之前這種情況是靜默的,結果 Q 指令壞了兩個月 ——
+           檔案照樣下載得到、看起來也像那張圖,只是形狀不對。 */
+        if (out.warnings && out.warnings.length) {
+          alert('⚠ 這張圖有轉不完整的地方:\n\n' + out.warnings.join('\n') +
+                '\n\n檔案還是會下載,但刻之前請先跟原圖比對一下。');
+        }
         var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
         var blob = new Blob([out.dxf], { type: 'application/dxf' });
         var url = URL.createObjectURL(blob);
