@@ -362,14 +362,24 @@
 /* =========================
    取件方式
 ========================= */
+/* ⚠ 用 flex 不用 grid。
+   這個 class 有兩處在用:取件方式(現在只有一張)與眼鏡布那一段(兩張)。
+   · 寫死 repeat(2,1fr) → 只有一張時會靠左、右半空一片
+   · 改 auto-fit 也不行 → 空的那一欄雖然收成 0,【欄距還在】,
+     單張會被推偏半個 gap(實測差 9px),看起來就是沒對準
+   flex + justify-content:center 沒有那個問題,一張兩張都正。 */
 .bd .bd-pickup{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
   gap:18px;
   max-width:640px;
   margin:0 auto;
 }
 .bd .bd-pick{
+  /* 當 .bd-pickup 的 flex 項目:能長能縮,但不要寬到變成一條橫幅 */
+  flex:1 1 260px;
+  max-width:311px;
   background:#fff;
   border:1px solid var(--bd-pink-line);
   border-radius:var(--r-lg);
@@ -471,7 +481,9 @@
 @media (max-width:900px){
   .bd .bd-perks{ grid-template-columns:repeat(2,1fr) }
   .bd .bd-steps{ grid-template-columns:repeat(2,1fr) }
-  .bd .bd-pickup{ grid-template-columns:1fr }
+  /* .bd-pickup 已改為 flex,原本的 grid-template-columns 不再有作用。
+     手機讓每張自己佔一整行。 */
+  .bd .bd-pick{ flex-basis:100%; max-width:none }
   /* 手機:改上下排列,圖片一律在上 */
   .bd .bd-gift-rows{ gap:48px }
   .bd .bd-gift-row{ grid-template-columns:1fr; gap:24px }
@@ -619,8 +631,11 @@
 }
 .bd .bd-more i{ font-size:10px; transition:transform .2s }
 .bd .is-clickable:hover .bd-more i{ transform:translateX(3px) }
-/* 取件卡是橫向排版(icon + 文字),提示要跟著文字走,不要飛到 icon 旁邊 */
-.bd .bd-pick .bd-more{ margin-top:8px }
+/* ⚠ 取件卡是【橫向 flex】(icon + 文字區)。
+   「詳細說明」若當成卡片的直接子元素,會變成第三個並排的東西,
+   跑到文字右邊、把卡片撐寬 —— 2026-09-01 就是這樣壞掉的。
+   js 會把它塞進內層那個 div,所以這裡只調間距。 */
+.bd .bd-pick .bd-more{ margin-top:10px }
 
 /* ---- 彈窗 ---- */
 .bd-modal{
