@@ -61,6 +61,7 @@
        而誤放那一邊還有伺服器端接著。 */
     locked: false,
     current: null,       // 本年度那一件(含取貨門市),鎖住時用來還原畫面
+    rejected: null,      // 被師傅退件、等重做的那一件(2026-09-02 新增)
 
     // 目前放在布上的圖案
     picked: null,        // { source, design_id, name, imageUrl, svgString }
@@ -951,7 +952,9 @@
         if (String(j.code) !== '200' || !j.data) return;
         State.locked = !!j.data.locked;
         State.current = j.data.current || null;
+        State.rejected = j.data.rejected || null;
         applyLock();
+        applyRejected();
       })
       .catch(function (e) {
         console.error('[cloth] 查本年度狀態失敗,維持可存檔', e);
@@ -998,6 +1001,62 @@
     el.submit.disabled = true;
     el.submit.textContent = '本 年 度 已 完 成';
     if (el.submitHint) el.submitHint.textContent = '';
+  }
+
+  /* 被加工師傅退件時,告訴客人原因並請他重做。
+     -----------------------------------------------------------------
+     這是 2026-09-02 新增的流程:師傅發現這張圖根本做不出來(線太細會斷、
+     超出可雕刻範圍…),退回並附原因。
+
+     🚨 退件【不佔用一年一件的額度】,而且重做時【不再檢查生日月】——
+       那兩條都在 cloth 那支函式裡(存檔的入口),不在這裡。
+       這一頁只負責「讓他知道發生什麼事」。
+       所以這裡【不能】停用存檔鈕 —— 他就是要重做。
+
+     ⚠ 少了這一段,客人打開頁面看到的是一個完全正常、可以存檔的畫面,
+       完全不知道自己上一件被退了、也不知道要改什麼,
+       多半會原封不動再送一次,兩邊都白做。 */
+  function applyRejected() {
+    if (State.locked || !State.rejected) return;
+
+    var r = State.rejected;
+
+    if (el.lock && el.lockText) {
+      el.lockText.textContent =
+        '你上一件客製眼鏡布無法製作,已由加工師傅退回:' +
+        rejectText(r) +
+        ' 請重新設計後再送出一次 —— 這一次不會佔用「一年一件」的額度。';
+      show(el.lock);
+    }
+  }
+
+  /* 退件原因:代碼轉成客人看得懂的文字。
+     -----------------------------------------------------------------
+     ⚠ 這份對照【與 js/cloth-lab.js 的 REJECT_REASONS 是同一份東西】,
+       正本是 cloth-admin 函式裡的 REJECT_CODES(它決定收不收)。
+
+       三個地方各有一份是刻意的取捨,不是疏忽:把文案移到伺服器組
+       需要再部署一次 cloth,而官網沒有測試環境、當天已經動過兩次。
+       **新增或改動原因代碼時,三個地方都要改** ——
+       漏改這裡的後果是客人看到一句籠統的話(不會壞,但等於沒講清楚)。
+
+     代碼查不到時退回補充文字,兩個都沒有才回籠統的那一句。
+     絕不回空字串:畫面上出現「已退回:」後面什麼都沒有,
+     比講得含糊更讓人不知所措。 */
+  function rejectText(r) {
+    var MAP = {
+      line_too_thin: '線條太細,雕刻後會斷掉',
+      out_of_bounds: '圖案超出可雕刻範圍',
+      low_quality: '圖片解析度不足,刻出來會模糊',
+      content: '圖案內容不適合雕刻',
+      other: ''
+    };
+    var label = MAP[r.reject_code] || '';
+    var extra = (r.reject_reason || '').trim();
+    if (label && extra) return label + '(' + extra + ')';
+    if (label) return label;
+    if (extra) return extra;
+    return '此設計無法製作';
   }
 
   function refreshSubmit() {
