@@ -201,11 +201,15 @@
               /* 尺寸每張卡各自一個,不是全域設定。
                  製作的人一次處理一件,而日後不同款布尺寸不同時,
                  全域設定就得每下載一次改一次,很容易改了忘了改回來。 */
+              /* ⚠ 這個數字是【刻圖本身的寬度】,不是眼鏡布的寬度。
+                 原本寫「模擬刻在 ___ mm 的眼鏡布」、預設 150 ——
+                 那句話讀起來是布的尺寸,填 150 就等於整塊布刻滿,
+                 而刻圖上限是 90(9 公分)。2026-09-03 與製作頁對齊。 */
               '<label class="cloth-size-in" title="這一件的 DXF 會依這個尺寸輸出">' +
-                '<span>模擬刻在</span>' +
-                '<input type="number" data-w="' + esc(it.id) + '" value="150" ' +
-                  'min="20" max="600" step="1">' +
-                '<em>mm 的眼鏡布</em>' +
+                '<span>刻圖寬度</span>' +
+                '<input type="number" data-w="' + esc(it.id) + '" value="90" ' +
+                  'min="20" max="90" step="1">' +
+                '<em>mm(布寬 150)</em>' +
               '</label>' +
             '</div>' +
             '<div class="cloth-meta">' + who + '　·　' + fmtTime(it.created_at) + '</div>' +
@@ -213,8 +217,12 @@
             '<div class="cloth-btns">' +
               '<a class="cloth-btn" href="' + esc(it.svg_url) + '" download>' +
                 '<i class="fa-solid fa-file-arrow-down"></i> SVG</a>' +
-              '<button type="button" class="cloth-btn" data-dxf="' + esc(it.id) + '">' +
-                '<i class="fa-solid fa-vector-square"></i> DXF</button>' +
+              '<button type="button" class="cloth-btn" data-dxf="' + esc(it.id) + '" ' +
+                'data-mode="outline" title="只有外框線,機器沿著線走">' +
+                '<i class="fa-solid fa-vector-square"></i> DXF 走線</button>' +
+              '<button type="button" class="cloth-btn" data-dxf="' + esc(it.id) + '" ' +
+                'data-mode="fill" title="實心色塊,洞會保留">' +
+                '<i class="fa-solid fa-fill-drip"></i> DXF 填滿</button>' +
               '<a class="cloth-btn" href="' + esc(it.preview_url) + '" target="_blank" rel="noopener">' +
                 '<i class="fa-solid fa-eye"></i> 合成圖</a>' +
               (it.status === 'new'
@@ -258,7 +266,7 @@
   function widthMm(id) {
     var input = document.querySelector('[data-w="' + id + '"]');
     var v = Number(input && input.value);
-    return Number.isFinite(v) && v > 0 ? v : 150;
+    return Number.isFinite(v) && v > 0 ? v : 90;
   }
 
   function saveText(text, filename) {
@@ -271,7 +279,7 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
 
-  function downloadDxf(id, btn) {
+  function downloadDxf(id, btn, mode) {
     var it = state.items.filter(function (x) { return String(x.id) === String(id); })[0];
     if (!it) return;
     if (!window.LohasDxf) { alert('DXF 轉換工具沒有載入'); return; }
@@ -289,9 +297,19 @@
         return r.text();
       })
       .then(function (svg) {
-        var out = window.LohasDxf.fromSvg(svg, { widthMm: widthMm(it.id) });
+        /* ⚠ 旋轉一定要一起帶。客人在眼鏡布那一頁把圖轉了幾度,
+           這裡不帶的話輸出的是【正的】—— 而那要等成品送到客人
+           手上才會被發現。2026-09-03 之前這裡漏了。 */
+        var out = window.LohasDxf.fromSvg(svg, {
+          widthMm: widthMm(it.id),
+          rotateDeg: Number(it.placement && it.placement.rot) || 0,
+          mode: mode === 'fill' ? 'fill' : 'outline',
+        });
         var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
-        saveText(out.dxf, name + '-' + String(it.id).slice(0, 8) + '.dxf');
+        /* 檔名帶上模式 —— 兩個檔案放在同一個下載資料夾裡,
+           少了這個就分不出哪個是哪個,而它們長得完全一樣。 */
+        saveText(out.dxf, name + '-' + String(it.id).slice(0, 8) +
+                 (out.mode === 'fill' ? '-fill' : '-outline') + '.dxf');
         console.log('[cloth] DXF ' + out.paths + ' 條路徑,' +
           out.widthMm.toFixed(1) + ' × ' + out.heightMm.toFixed(1) + ' mm');
       })
@@ -307,7 +325,7 @@
 
     r.addEventListener('click', function (e) {
       var dxf = e.target.closest('[data-dxf]');
-      if (dxf) { downloadDxf(dxf.dataset.dxf, dxf); return; }
+      if (dxf) { downloadDxf(dxf.dataset.dxf, dxf, dxf.dataset.mode); return; }
 
       var done = e.target.closest('[data-done]');
       if (done) {
