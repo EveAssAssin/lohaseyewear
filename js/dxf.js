@@ -18,7 +18,8 @@
    不翻的話出來的圖是上下顛倒的,而那種錯誤在螢幕上看
    常常不明顯(對稱的圖案根本看不出來),要到刻壞才發現。
 
-   對外:window.LohasDxf.fromSvg(svgString, { widthMm, rotateDeg })
+   對外:window.LohasDxf.fromSvg(svgString, { widthMm, rotateDeg, mode })
+        mode: 'outline'(預設,走線,R12) | 'fill'(填滿,R2000 HATCH)
    ============================================================= */
 
 (function (window) {
@@ -165,6 +166,107 @@
    *        widthMm  成品實際寬度(公釐)。SVG 的 viewBox 寬會被縮放到這個值。
    *        layer    圖層名稱
    */
+  /* =============================================================
+     填滿版:用一個 SOLID HATCH 表達整張圖
+     -------------------------------------------------------------
+     為什麼需要這一版:
+       DXF 的 POLYLINE 【沒有「洞」這個概念】。潦草地說,
+       線稿在 SVG 裡是「外框一條、每個白色區塊各一條反向的」,
+       瀏覽器靠 fill-rule 挖洞;轉成一堆各自獨立的封閉多段線之後,
+       那個資訊就不見了 —— 會填色的軟體把洞也填黑,
+       整張圖變成實心色塊。
+
+     解法的關鍵:HATCH 有一個填充樣式叫【odd parity(奇偶)】,
+     與 SVG 的 even-odd 是同一套規則 —— 射線穿過奇數條邊界是實心、
+     偶數條是洞。所以【不必自己判斷誰是洞、誰包著誰】,
+     把每一條輪廓都當成邊界丟進去,渲染端自己算。
+
+     那省掉的是最貴的部分:1300 條輪廓要兩兩做包含測試,
+     是 O(n²) 次多邊形內判定。
+
+     ⚠ 代價:HATCH 是 R14 之後才有的實體,不能再用 R12(AC1009)。
+     這一版輸出 R2000(AC1015),而 R2000 比 R12 嚴格:
+       · 實體要有 handle(群組碼 5),標頭要有 $HANDSEED
+       · 用到的圖層要在 TABLES 裡真的存在
+     少了這些有些軟體會直接說檔案損毀,所以都補上。
+
+     ⚠ 我方沒有那些雕刻軟體可以實測,只能照規格寫。
+     第一次用請先拿一張圖試,確認洞是洞再進正式生產。
+     ============================================================= */
+  function buildFill(rings, widthMm, heightMm, layer) {
+    var h = 0x100;
+    function handle() { return (h++).toString(16).toUpperCase(); }
+
+    var s = '';
+
+    /* ---- HEADER ---- */
+    s += pair(0, 'SECTION') + pair(2, 'HEADER');
+    s += pair(9, '$ACADVER') + pair(1, 'AC1015');
+    s += pair(9, '$INSUNITS') + pair(70, 4);
+    s += pair(9, '$EXTMIN') + pair(10, 0) + pair(20, 0) + pair(30, 0);
+    s += pair(9, '$EXTMAX') + pair(10, widthMm.toFixed(4)) +
+         pair(20, heightMm.toFixed(4)) + pair(30, 0);
+    // 比所有用掉的 handle 都大,否則有些軟體會拒收
+    s += pair(9, '$HANDSEED') + pair(5, (0x100 + rings.length + 32).toString(16).toUpperCase());
+    s += pair(0, 'ENDSEC');
+
+    /* ---- TABLES:R2000 需要圖層真的存在 ---- */
+    s += pair(0, 'SECTION') + pair(2, 'TABLES');
+    s += pair(0, 'TABLE') + pair(2, 'LAYER') + pair(5, handle()) +
+         pair(100, 'AcDbSymbolTable') + pair(70, 1);
+    s += pair(0, 'LAYER') + pair(5, handle()) +
+         pair(100, 'AcDbSymbolTableRecord') + pair(100, 'AcDbLayerTableRecord') +
+         pair(2, layer) + pair(70, 0) + pair(62, 7) + pair(6, 'CONTINUOUS');
+    s += pair(0, 'ENDTAB');
+    s += pair(0, 'ENDSEC');
+
+    /* ---- ENTITIES:一個 HATCH,每條輪廓一個邊界 ---- */
+    s += pair(0, 'SECTION') + pair(2, 'ENTITIES');
+
+    s += pair(0, 'HATCH') + pair(5, handle()) +
+         pair(100, 'AcDbEntity') + pair(8, layer) +
+         pair(100, 'AcDbHatch');
+    // 基準點與擠出方向
+    s += pair(10, 0) + pair(20, 0) + pair(30, 0);
+    s += pair(210, 0) + pair(220, 0) + pair(230, 1);
+    s += pair(2, 'SOLID') + pair(70, 1) + pair(71, 0);
+    s += pair(91, rings.length);
+
+    /* 邊界路徑。92 是位元旗標:1=external、2=polyline。
+       ⚠ 面積最大的那一條標成 external —— 有些軟體要求至少有一條。
+       其餘標成單純的 polyline,實際的洞由下面 75=0 的奇偶規則決定,
+       不靠這裡的旗標。 */
+    var biggest = 0, bigArea = -1;
+    rings.forEach(function (r, i) {
+      var xs = r.pts.map(function (p) { return p[0]; });
+      var ys = r.pts.map(function (p) { return p[1]; });
+      var a = (Math.max.apply(null, xs) - Math.min.apply(null, xs)) *
+              (Math.max.apply(null, ys) - Math.min.apply(null, ys));
+      if (a > bigArea) { bigArea = a; biggest = i; }
+    });
+
+    rings.forEach(function (r, i) {
+      s += pair(92, i === biggest ? 3 : 2);   // external+polyline / polyline
+      s += pair(72, 0);                        // 沒有凸度(不是圓弧)
+      s += pair(73, 1);                        // 封閉
+      s += pair(93, r.pts.length);
+      r.pts.forEach(function (p) {
+        s += pair(10, p[0].toFixed(4)) + pair(20, p[1].toFixed(4));
+      });
+      s += pair(97, 0);                        // 沒有來源邊界物件
+    });
+
+    /* 75 = 0 是【奇偶規則】。整份檔案的洞就是靠這一行成立的,
+       改成 1(outer)或 2(ignore)會讓內部全部被填滿 —— 也就是
+       這一版原本要解決的那個問題。 */
+    s += pair(75, 0);
+    s += pair(76, 1);                          // 預定義圖案
+    s += pair(98, 0);                          // 沒有種子點
+
+    s += pair(0, 'ENDSEC') + pair(0, 'EOF');
+    return s;
+  }
+
   function fromSvg(svgString, opt) {
     opt = opt || {};
     var widthMm = Number(opt.widthMm) || 150;      // 預設 15 公分
@@ -175,11 +277,37 @@
        DXF 沒轉的話,做出來的東西就跟他看到的不一樣 ——
        而那要等成品送到他手上才會被發現。 */
     var rotDeg = Number(opt.rotateDeg) || 0;
+    /* 'outline'(預設)= 每條輪廓一條 POLYLINE,給走線/切割用,R12。
+       'fill'          = 一個 SOLID HATCH,給填滿雕刻用,R2000。
+       兩種是【不同用途】,不是新舊版本,見 buildFill 的說明。 */
+    var mode = opt.mode === 'fill' ? 'fill' : 'outline';
 
     var parsed = parseSvg(svgString);
     var box = parsed.box;
-    var k = widthMm / (box.w || 1);                // SVG 單位 → 公釐
-    var heightMm = box.h * k;
+
+    /* ⚠ 縮放的基準是【圖案本身的外框】,不是 viewBox。
+       -----------------------------------------------------------
+       原本用 viewBox 的寬去算,所以 SVG 邊緣有留白時,
+       要求 80mm 實際只會刻出 64mm —— 而製作端那一格寫的是
+       「刻圖寬度」,那個名字就成了假的。
+
+       量圖案自己的外框,widthMm 才真的等於刻出來的寬度。
+       量不到(沒有任何路徑)就退回 viewBox,至少不會除以零。 */
+    var ax0 = Infinity, ay0 = Infinity, ax1 = -Infinity, ay1 = -Infinity;
+    parsed.polys.forEach(function (poly) {
+      poly.forEach(function (p) {
+        if (p[0] < ax0) ax0 = p[0];
+        if (p[0] > ax1) ax1 = p[0];
+        if (p[1] < ay0) ay0 = p[1];
+        if (p[1] > ay1) ay1 = p[1];
+      });
+    });
+    var artW = isFinite(ax0) && ax1 > ax0 ? ax1 - ax0 : box.w;
+    var artH = isFinite(ay0) && ay1 > ay0 ? ay1 - ay0 : box.h;
+    if (isFinite(ax0)) { box = { x: ax0, y: ay0, w: artW, h: artH }; }
+
+    var k = widthMm / (artW || 1);                  // SVG 單位 → 公釐
+    var heightMm = artH * k;
 
     /* 座標轉換:平移到原點、縮放到公釐、y 軸翻轉。
        翻轉是必要的 —— SVG 的 y 向下,CAD 的 y 向上。 */
@@ -233,6 +361,26 @@
       heightMm = maxY - minY;
     }
 
+    /* 先把每一條輪廓整理成「封閉、不重複收尾點」的形式。
+       兩種輸出都要用,所以在分岔之前做完。 */
+    var rings = [];
+    polys.forEach(function (pts) {
+      var first = pts[0], last = pts[pts.length - 1];
+      var closed = Math.abs(first[0] - last[0]) < 1e-6 &&
+                   Math.abs(first[1] - last[1]) < 1e-6;
+      if (closed) pts = pts.slice(0, -1);
+      if (pts.length < 2) return;
+      rings.push({ pts: pts, closed: closed });
+    });
+
+    if (mode === 'fill') {
+      return {
+        dxf: buildFill(rings, widthMm, heightMm, layer),
+        widthMm: widthMm, heightMm: heightMm,
+        paths: parsed.polys.length, rotateDeg: rotDeg, mode: 'fill',
+      };
+    }
+
     var s = '';
     // 最小可用的 R12 標頭。$INSUNITS = 4 代表公釐,機器才知道尺寸單位。
     s += pair(0, 'SECTION') + pair(2, 'HEADER');
@@ -245,16 +393,10 @@
 
     s += pair(0, 'SECTION') + pair(2, 'ENTITIES');
 
-    polys.forEach(function (pts) {
-      /* 頭尾重合就標成封閉多段線(flag 70 = 1)。
-         雷雕的路徑規劃看這個旗標決定要不要收尾,
+    rings.forEach(function (r) {
+      var pts = r.pts, closed = r.closed;
+      /* 封閉的標成 flag 70 = 1。雷雕的路徑規劃看這個旗標決定要不要收尾,
          不標的話有些軟體會在接縫處留一個小缺口。 */
-      var first = pts[0], last = pts[pts.length - 1];
-      var closed = Math.abs(first[0] - last[0]) < 1e-6 &&
-                   Math.abs(first[1] - last[1]) < 1e-6;
-      if (closed) pts = pts.slice(0, -1);
-      if (pts.length < 2) return;
-
       s += pair(0, 'POLYLINE') + pair(8, layer) + pair(66, 1) +
            pair(10, 0) + pair(20, 0) + pair(30, 0) + pair(70, closed ? 1 : 0);
       pts.forEach(function (p) {
@@ -267,7 +409,7 @@
     s += pair(0, 'ENDSEC') + pair(0, 'EOF');
     return {
       dxf: s, widthMm: widthMm, heightMm: heightMm,
-      paths: parsed.polys.length, rotateDeg: rotDeg,
+      paths: parsed.polys.length, rotateDeg: rotDeg, mode: 'outline',
     };
   }
 

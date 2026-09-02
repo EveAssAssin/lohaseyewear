@@ -203,8 +203,15 @@
           '<div class="lab-btns">' +
             '<a class="lab-file" href="' + esc(it.svg_url) + '" download>' +
               '<i class="fa-solid fa-file-arrow-down"></i>SVG</a>' +
-            '<button type="button" class="lab-file" data-dxf="' + esc(it.id) + '">' +
-              '<i class="fa-solid fa-vector-square"></i>DXF</button>' +
+            /* 兩顆而不是一個切換:這兩個是【不同用途】,不是新舊版本。
+               走線給切割/描邊,填滿給雕刻。做成切換的話,
+               師傅得先記住自己現在切在哪一邊才敢按。 */
+            '<button type="button" class="lab-file" data-dxf="' + esc(it.id) + '"' +
+              ' data-mode="outline" title="每條輪廓一條線,給走線/切割用(R12)">' +
+              '<i class="fa-solid fa-vector-square"></i>DXF 走線</button>' +
+            '<button type="button" class="lab-file" data-dxf="' + esc(it.id) + '"' +
+              ' data-mode="fill" title="實心填滿,內部的洞會保留(R2000 HATCH)">' +
+              '<i class="fa-solid fa-fill-drip"></i>DXF 填滿</button>' +
             '<a class="lab-file" href="' + esc(it.preview_url) + '" target="_blank" rel="noopener">' +
               '<i class="fa-solid fa-eye"></i>看大圖</a>' +
             (it.status === 'new'
@@ -309,7 +316,7 @@
     return Number.isFinite(v) && v > 0 ? v : 90;
   }
 
-  function downloadDxf(id, btn) {
+  function downloadDxf(id, btn, mode) {
     var it = State.items.filter(function (x) { return String(x.id) === String(id); })[0];
     if (!it || !window.LohasDxf) return;
 
@@ -329,12 +336,17 @@
         var out = window.LohasDxf.fromSvg(svg, {
           widthMm: widthMm(it.id),
           rotateDeg: Number(it.placement && it.placement.rot) || 0,
+          mode: mode === 'fill' ? 'fill' : 'outline',
         });
         var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
         var blob = new Blob([out.dxf], { type: 'application/dxf' });
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
-        a.href = url; a.download = name + '-' + String(it.id).slice(0, 8) + '.dxf';
+        /* 檔名帶上模式 —— 兩個檔案放在同一個下載資料夾裡,
+           少了這個就分不出哪個是哪個,而它們長得完全一樣。 */
+        a.href = url;
+        a.download = name + '-' + String(it.id).slice(0, 8) +
+                     (out.mode === 'fill' ? '-fill' : '-outline') + '.dxf';
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
       })
@@ -433,7 +445,7 @@
 
     el.list.addEventListener('click', function (e) {
       var dxf = e.target.closest('[data-dxf]');
-      if (dxf) { downloadDxf(dxf.dataset.dxf, dxf); return; }
+      if (dxf) { downloadDxf(dxf.dataset.dxf, dxf, dxf.dataset.mode); return; }
 
       var done = e.target.closest('[data-done]');
       if (done) {
