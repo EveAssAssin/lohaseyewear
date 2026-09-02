@@ -220,9 +220,12 @@
               '<button type="button" class="cloth-btn" data-dxf="' + esc(it.id) + '" ' +
                 'data-mode="outline" title="只有外框線,機器沿著線走">' +
                 '<i class="fa-solid fa-vector-square"></i> DXF 走線</button>' +
+              /* ⚠ 2026-09-03:填滿版在加工端的軟體裡是空白的 ——
+                 檔案合法,但那套軟體的匯入不收 HATCH。詳見 cloth-lab.js。 */
               '<button type="button" class="cloth-btn" data-dxf="' + esc(it.id) + '" ' +
-                'data-mode="fill" title="實心色塊,洞會保留">' +
-                '<i class="fa-solid fa-fill-drip"></i> DXF 填滿</button>' +
+                'data-mode="fill" title="⚠ 實驗中:目前加工端的軟體讀不到,' +
+                '開起來會是空白。平常請用「DXF 走線」。">' +
+                '<i class="fa-solid fa-fill-drip"></i> DXF 填滿(實驗中)</button>' +
               '<a class="cloth-btn" href="' + esc(it.preview_url) + '" target="_blank" rel="noopener">' +
                 '<i class="fa-solid fa-eye"></i> 合成圖</a>' +
               (it.status === 'new'

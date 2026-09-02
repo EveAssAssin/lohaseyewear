@@ -209,9 +209,15 @@
             '<button type="button" class="lab-file" data-dxf="' + esc(it.id) + '"' +
               ' data-mode="outline" title="每條輪廓一條線,給走線/切割用(R12)">' +
               '<i class="fa-solid fa-vector-square"></i>DXF 走線</button>' +
+            /* ⚠ 2026-09-03:填滿版在加工端的軟體裡是【空白的】。
+               檔案本身合法(ezdxf 驗過,0 錯誤,HATCH 64 條邊界都在),
+               但那套軟體的匯入只收線條類實體,HATCH 整個跳過。
+               確認是哪一套軟體、決定新做法之前,先標成實驗中,
+               免得有人誤按拿到空白檔就直接上機。平常請用走線版。 */
             '<button type="button" class="lab-file" data-dxf="' + esc(it.id) + '"' +
-              ' data-mode="fill" title="實心填滿,內部的洞會保留(R2000 HATCH)">' +
-              '<i class="fa-solid fa-fill-drip"></i>DXF 填滿</button>' +
+              ' data-mode="fill" title="⚠ 實驗中:目前加工端的軟體讀不到這種格式,' +
+              '開起來會是空白。平常請用「DXF 走線」。">' +
+              '<i class="fa-solid fa-fill-drip"></i>DXF 填滿(實驗中)</button>' +
             '<a class="lab-file" href="' + esc(it.preview_url) + '" target="_blank" rel="noopener">' +
               '<i class="fa-solid fa-eye"></i>看大圖</a>' +
             (it.status === 'new'
