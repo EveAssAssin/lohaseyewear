@@ -54,7 +54,8 @@
     var t = tokenize(d);
     var polys = [], cur = null;
     var x = 0, y = 0, startX = 0, startY = 0;
-    var lastC2 = null;          // 給 S 指令接續用
+    var lastC2 = null;          // 給 S 指令接續用(三次曲線的第二控制點)
+    var lastQ1 = null;          // 給 T 指令接續用(二次曲線的控制點)
     var i = 0, cmd = '';
 
     function begin() { cur = [[x, y]]; polys.push(cur); }
@@ -68,7 +69,27 @@
         cur.push(pt);
       }
       x = p[0]; y = p[1];
-      lastC2 = c2;
+      lastC2 = c2; lastQ1 = null;
+    }
+
+    /* 二次貝茲(Q/T)。
+       ⚠ 這一段是 2026-09-03 補的。原本 Q 被當成「不認得的指令」整段跳過,
+       而且跳過時連筆尖位置都沒更新 —— 後面接的 L 會從錯的點畫出去。
+       客人上傳的圖走的是 imagetracer.js,它大量使用 Q;
+       市集的圖走 potrace,只有 C —— 所以這個 bug 只有上傳的圖會中,
+       而且圖看起來大致還像,只是轉角被削掉、弧線變直。 */
+    function quadTo(c, p) {
+      if (!cur) begin();
+      var p0 = [x, y];
+      for (var s = 1; s <= CURVE_STEPS; s++) {
+        var u = 1 - s / CURVE_STEPS, tt = s / CURVE_STEPS;
+        cur.push([
+          u*u*p0[0] + 2*u*tt*c[0] + tt*tt*p[0],
+          u*u*p0[1] + 2*u*tt*c[1] + tt*tt*p[1]
+        ]);
+      }
+      x = p[0]; y = p[1];
+      lastQ1 = c; lastC2 = null;
     }
 
     while (i < t.length) {
@@ -109,17 +130,40 @@
         var b1 = lastC2 ? [2*x - lastC2[0], 2*y - lastC2[1]] : [x, y];
         curveTo(b1, b2, b3);
 
+      } else if (C === 'Q') {
+        var q1 = [t[i++], t[i++]], q2 = [t[i++], t[i++]];
+        if (rel) { q1 = [x+q1[0], y+q1[1]]; q2 = [x+q2[0], y+q2[1]]; }
+        quadTo(q1, q2);
+
+      } else if (C === 'T') {
+        var s2 = [t[i++], t[i++]];
+        if (rel) { s2 = [x+s2[0], y+s2[1]]; }
+        // T 的控制點是上一段 Q 控制點的鏡射;前面不是 Q 就退化成直線
+        quadTo(lastQ1 ? [2*x - lastQ1[0], 2*y - lastQ1[1]] : [x, y], s2);
+
       } else if (C === 'Z') {
         if (cur && cur.length) cur.push([startX, startY]);
         x = startX; y = startY;
-        cur = null; lastC2 = null;
+        cur = null; lastC2 = null; lastQ1 = null;
+
+      } else if (C === 'A') {
+        /* 橢圓弧。目前兩套描圖工具(potrace / imagetracer.js)都不產生 A,
+           所以沒有實作完整的弧線換算。
+           ⚠ 但【不能只是跳過】—— 跳過會讓筆尖留在舊位置,後面整段都歪。
+           至少走一條直線到終點:形狀會少一個弧度,但不會錯位。
+           真的遇到就會在主控台看到,不是默默壞掉。 */
+        i += 5;                                   // rx ry rot large sweep
+        var ax = t[i++], ay = t[i++];
+        push(rel ? x + ax : ax, rel ? y + ay : ay);
+        lastC2 = null; lastQ1 = null;
+        if (window.console) {
+          console.warn('[dxf] 這份 SVG 有橢圓弧(A),目前以直線近似 —— 弧度會變平。');
+        }
 
       } else {
-        /* 不認得的指令(例如 A):跳過它的參數,不要整份壞掉。
-           potrace 不產生這些,會走到這裡多半是別的工具做的 SVG。 */
-        var skip = { A: 7, Q: 4, T: 2 }[C] || 0;
-        i += skip || 1;
-        lastC2 = null;
+        /* 真的不認得的指令:跳過一個參數,不要整份壞掉。 */
+        i += 1;
+        lastC2 = null; lastQ1 = null;
       }
     }
     return polys.filter(function (p) { return p.length > 1; });
