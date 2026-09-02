@@ -61,6 +61,11 @@
           <div class="lab-seg" id="labStatus">
             <button type="button" class="lab-seg-btn on" data-s="new">待製作</button>
             <button type="button" class="lab-seg-btn" data-s="done">已完成</button>
+            <!-- 已退件：師傅退回、等客人重新設計的。
+                 給它一個分頁是因為那些件會從「待製作」消失 ——
+                 沒有這一格的話，退完就等於從畫面上蒸發，
+                 沒有人知道有幾件卡在等客人。 -->
+            <button type="button" class="lab-seg-btn" data-s="rejected">已退件</button>
             <button type="button" class="lab-seg-btn" data-s="">全部</button>
           </div>
         </div>
@@ -88,6 +93,6 @@
   </main>
 
   <script src="js/dxf.js?v=20260827-rot"></script>
-  <script src="js/cloth-lab.js?v=20260827-rot"></script>
+  <script src="js/cloth-lab.js?v=20260902-reject"></script>
 </body>
 </html>

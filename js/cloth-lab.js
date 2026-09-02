@@ -70,7 +70,40 @@
   }
 
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
-  var STATUS = { new: '待製作', done: '已完成', archived: '已封存' };
+  var STATUS = { new: '待製作', done: '已完成', archived: '已封存', rejected: '已退件' };
+
+  /* 退件原因。代碼與後端 cloth-admin 的 REJECT_CODES 必須一致 ——
+     兩邊各寫一份的話，加了新原因卻只改一邊，師傅會選到一個後端不收的值，
+     而錯誤訊息只會說「請選擇退件原因」，看不出是版本沒對上。
+
+     ⚠ 這段文字【客人會直接看到】。所以寫的是「客人看得懂要怎麼改」，
+       不是內部用語 —— 「路徑閉合失敗」對師傅精確，對客人等於沒說。 */
+  var REJECT_REASONS = [
+    { code: 'line_too_thin', label: '線條太細，雕刻後會斷掉' },
+    { code: 'out_of_bounds', label: '圖案超出可雕刻範圍' },
+    { code: 'low_quality',   label: '圖片解析度不足，刻出來會模糊' },
+    { code: 'content',       label: '圖案內容不適合雕刻' },
+    { code: 'other',         label: '其他（請說明）' }
+  ];
+
+  /* 把退件代碼與補充文字組成一句話。
+     代碼查不到時退回補充文字，兩個都沒有才回一句籠統的 ——
+     絕不回空字串：畫面上出現「已退件：」後面什麼都沒有，
+     比講得含糊更讓人不知所措。 */
+  function rejectText(it) {
+    var label = '';
+    for (var i = 0; i < REJECT_REASONS.length; i++) {
+      if (REJECT_REASONS[i].code === it.reject_code) {
+        label = REJECT_REASONS[i].label.replace('（請說明）', '');
+        break;
+      }
+    }
+    var extra = (it.reject_reason || '').trim();
+    if (label && extra) return label + '－' + extra;
+    if (label) return label;
+    if (extra) return extra;
+    return '此設計無法製作，請重新設計';
+  }
 
   /* 產線分流:客人選的取貨門市在哪一區,這件就歸哪一條線。
      -----------------------------------------------------------------
@@ -166,7 +199,19 @@
               '<i class="fa-solid fa-eye"></i>看大圖</a>' +
             (it.status === 'new'
               ? '<span class="lab-done-wrap"><button type="button" class="lab-done" data-done="' +
-                esc(it.id) + '">完 成 製 作</button></span>'
+                esc(it.id) + '">完 成 製 作</button></span>' +
+                /* 退件：這張圖根本做不出來，退回請客人重新設計。
+                   ⚠ 樣式用行內寫法，不動 cloth-lab.css —— 那個檔案帶版本號快取，
+                     改它就要同時改 html 的 ?v=，多一個會忘記的步驟。 */
+                '<button type="button" class="lab-file" data-reject="' + esc(it.id) + '" ' +
+                  'style="color:#b4232a;border-color:#e6bcbe">' +
+                  '<i class="fa-solid fa-rotate-left"></i>退件</button>'
+              : '') +
+            (it.status === 'rejected'
+              ? '<span style="color:#b4232a;font-size:13px">已退件' +
+                (it.rejected_at ? '（' + esc(fmtTime(it.rejected_at)) + '）' : '') +
+                '：' + esc(rejectText(it)) +
+                '　客人可重新設計，不佔用一年一件的額度。</span>'
               : '') +
           '</div>' +
         '</div>' +
@@ -386,8 +431,61 @@
         call({ action: 'set_status', id: done.dataset.done, status: 'done' })
           .then(load)
           .catch(function (err) { alert(err.message); done.disabled = false; });
+        return;
       }
+
+      /* 退件。原因是必填 —— 客人看到的就是這段文字，
+         沒有原因的退件等於「退回去但不告訴他要改什麼」，
+         他只會原封不動再送一次，兩邊都白做。 */
+      var rej = e.target.closest('[data-reject]');
+      if (rej) { openRejectForm(rej); return; }
     });
+
+    /* 退件表單。刻意做成「就地展開」而不是彈窗：
+       師傅是對著這張圖判斷的，跳出彈窗會把圖蓋住。 */
+    function openRejectForm(btn) {
+      var id = btn.dataset.reject;
+      if (btn.parentNode.querySelector('[data-reject-form]')) { return; }
+
+      var opts = REJECT_REASONS.map(function (r) {
+        return '<option value="' + r.code + '">' + r.label + '</option>';
+      }).join('');
+
+      var box = document.createElement('div');
+      box.setAttribute('data-reject-form', '1');
+      box.style.cssText = 'flex:1 1 100%;margin-top:8px;padding:10px;border:1px solid #e6bcbe;'
+        + 'border-radius:8px;background:#fff8f8';
+      box.innerHTML =
+        '<div style="font-size:13px;color:#b4232a;margin-bottom:6px">'
+        + '退件原因（客人會看到這段文字）</div>'
+        + '<select data-r-code style="width:100%;padding:6px;margin-bottom:6px">' + opts + '</select>'
+        + '<textarea data-r-text rows="2" placeholder="補充說明（選「其他」時必填）"'
+        + ' style="width:100%;padding:6px;box-sizing:border-box"></textarea>'
+        + '<div style="margin-top:6px;display:flex;gap:8px">'
+        + '<button type="button" data-r-ok class="lab-file" style="color:#b4232a;border-color:#e6bcbe">確定退件</button>'
+        + '<button type="button" data-r-cancel class="lab-file">取消</button>'
+        + '</div>';
+
+      btn.parentNode.appendChild(box);
+
+      box.querySelector('[data-r-cancel]').addEventListener('click', function () {
+        box.remove();
+      });
+
+      box.querySelector('[data-r-ok]').addEventListener('click', function (ev) {
+        var code = box.querySelector('[data-r-code]').value;
+        var text = box.querySelector('[data-r-text]').value.trim();
+        if (code === 'other' && text === '') {
+          alert('選擇「其他」時請填寫說明，否則客人不知道要改什麼。');
+          return;
+        }
+        ev.target.disabled = true;
+        call({ action: 'set_status', id: id, status: 'rejected',
+               reject_code: code, reject_reason: text })
+          .then(load)
+          .catch(function (err) { alert(err.message); ev.target.disabled = false; });
+      });
+    }
 
     // 這台裝置記過通行碼就直接進去
     var saved = '';
