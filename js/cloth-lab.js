@@ -207,17 +207,18 @@
                走線給切割/描邊,填滿給雕刻。做成切換的話,
                師傅得先記住自己現在切在哪一邊才敢按。 */
             '<button type="button" class="lab-file" data-dxf="' + esc(it.id) + '"' +
-              ' data-mode="outline" title="每條輪廓一條線,給走線/切割用(R12)">' +
-              '<i class="fa-solid fa-vector-square"></i>DXF 走線</button>' +
-            /* ⚠ 2026-09-03:填滿版在加工端的軟體裡是【空白的】。
-               檔案本身合法(ezdxf 驗過,0 錯誤,HATCH 64 條邊界都在),
-               但那套軟體的匯入只收線條類實體,HATCH 整個跳過。
-               確認是哪一套軟體、決定新做法之前,先標成實驗中,
-               免得有人誤按拿到空白檔就直接上機。平常請用走線版。 */
-            '<button type="button" class="lab-file" data-dxf="' + esc(it.id) + '"' +
-              ' data-mode="fill" title="⚠ 實驗中:目前加工端的軟體讀不到這種格式,' +
-              '開起來會是空白。平常請用「DXF 走線」。">' +
-              '<i class="fa-solid fa-fill-drip"></i>DXF 填滿(實驗中)</button>' +
+              ' data-mode="outline" title="每條輪廓一條封閉線(R12)。要刻成實心的話,' +
+              '在雕刻軟體裡把它設成填充/掃描模式。">' +
+              '<i class="fa-solid fa-vector-square"></i>DXF</button>' +
+            /* ⚠ 這裡原本還有一顆「DXF 填滿」(R2000 HATCH)。
+               2026-09-03 移除 —— 加工端的軟體開起來是【全空白】。
+               檔案本身沒問題(ezdxf 驗過:0 錯誤、HATCH 64 條邊界、
+               931 個頂點都在),是那套軟體的匯入只收線條類實體,
+               HATCH 整個跳過。留著只會讓人下載到空白檔上機。
+
+               dxf.js 的 mode:'fill' 沒有刪,還能用,只是沒有入口。
+               要復活的話先確認軟體讀不讀 HATCH;若不讀,正解是改成
+               把洞從外框布林減掉、輸出不巢狀的封閉輪廓,而不是 HATCH。 */
             '<a class="lab-file" href="' + esc(it.preview_url) + '" target="_blank" rel="noopener">' +
               '<i class="fa-solid fa-eye"></i>看大圖</a>' +
             (it.status === 'new'
