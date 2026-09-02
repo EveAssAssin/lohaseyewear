@@ -76,11 +76,16 @@
       /* 看得見的提示。沒有這個,沒有人知道卡片可以點。
          ⚠ .bd-pick 是橫向 flex(icon + 文字區),直接掛在卡片上
          會變成第三個並排元素、跑到文字右邊並把卡片撐寬。
-         有內層容器就塞進去,讓它跟著文字走。 */
+         有內層容器就塞進去,讓它跟著文字走。
+
+         ⚠ :not(.bd-detail) 不能省。.bd-detail 自己就是一個 div,
+         少了這個條件時它會被選中 —— 提示被塞進「詳細內容」裡面,
+         然後整份被複製進彈窗,於是彈窗底部多出一行沒有作用的
+         「詳細說明 ›」。2026-09-02 踩過。 */
       var hint = document.createElement('span');
       hint.className = 'bd-more';
       hint.innerHTML = '詳細說明 <i class="fa-solid fa-chevron-right"></i>';
-      (card.querySelector(':scope > div') || card).appendChild(hint);
+      (card.querySelector(':scope > div:not(.bd-detail)') || card).appendChild(hint);
 
       card.addEventListener('click', function () { open(card); });
       card.addEventListener('keydown', function (e) {
