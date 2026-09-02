@@ -20,6 +20,21 @@ LOHAS 樂活眼鏡官方網站,靜態網頁專案,透過 GitHub Pages 部署,正
 4. **提供完整檔案,不給 patch/diff**
    需要修改檔案時,輸出「完整的檔案內容」讓使用者可以整份取代,不要只給片段 patch、diff 或「在第 N 行插入」這類局部指示。
 
+5. **🚨 絕不用 PowerShell 改本專案的檔案內容**(2026-09-03 踩到)
+   這裡所有檔案都是「UTF-8 無 BOM」,而 Windows PowerShell 5.1 的
+   `Get-Content` 沒指定編碼時是用系統 ANSI(CP950)讀 —— 中文會被讀成
+   亂碼,再用 `Set-Content -Encoding utf8` 寫回去就永久毀掉,而且
+   **不會有任何錯誤訊息**。
+
+   ```powershell
+   # ✗ 絕對不要。這一行毀掉了 admin-portal.html 與 cloth-lab.html
+   (Get-Content x.html -Raw) -replace 'a','b' | Set-Content x.html -Encoding utf8
+   ```
+
+   改檔案一律用 Edit / Write 工具。PowerShell 只拿來跑 git 與唯讀查詢。
+   萬一已經寫壞:`git checkout <好的commit> -- <檔案>` 還原,再用 Edit
+   重做,並且 `git diff <好的commit> HEAD -- <檔案>` 確認差異只剩該改的那幾行。
+
 ---
 
 ## Edge Function 的金鑰與環境(踩過坑,務必先讀)
