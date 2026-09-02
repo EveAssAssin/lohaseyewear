@@ -48,6 +48,18 @@
                  ⚠ 這支會在 design_submissions 留一筆紀錄(成功與失敗都留)
    ============================================================= */
 
+/* 這一份程式碼的版本標記。
+   ---------------------------------------------------------------
+   ⚠ 存在的理由:2026-09-02 發現 claim_url「改完了但從沒部署」,
+   而【沒有任何地方看得出來】—— GET 自檢的輸出新舊版一模一樣,
+   線上跑的是哪一份只能用猜的,對方也只能相信我方說詞。
+
+   改動這支函式時把這個值一起改(日期 + 這一版加了什麼),
+   然後用瀏覽器開這支的網址就知道線上是不是那一份。
+
+   ⚠ 這是給人看的字串,不參與任何邏輯。不要拿它來做版本判斷分支。 */
+const CODE_VERSION = '2026-09-02 · gift.claim_url';
+
 // ⚠ 只在 Dashboard 填,不要提交回 GitHub
 const FALLBACK_SITE_KEY = '';
 
@@ -378,13 +390,15 @@ Deno.serve(async (req) => {
   if (req.method === 'GET') {
     return new Response(JSON.stringify({
       function: 'shop',
+      code_version: CODE_VERSION,
       project_ref: 'hqdmyxxrskvllkcedybl',
       key_var: 'SHOP_SITE_API_KEY',
       site_key_from_env: Deno.env.get('SHOP_SITE_API_KEY') ? true : false,
       shop_base_host: new URL(SHOP_BASE).hostname,
       shop_base_from_env: !!Deno.env.get('SHOP_BASE_URL'),
       actions: Object.keys(ROUTES),
-      note: 'site_key_from_env 只表示讀到值;金鑰是否正確請以 categories 實打驗證。',
+      note: 'site_key_from_env 只表示讀到值;金鑰是否正確請以 categories 實打驗證。' +
+            ' code_version 是這支【線上實際跑的那一份】的標記,用來確認部署有沒有真的做到。',
     }, null, 2), {
       headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' },
     });
