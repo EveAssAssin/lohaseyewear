@@ -125,6 +125,79 @@
     return polys.filter(function (p) { return p.length > 1; });
   }
 
+  /* ---------- SVG 的 transform ----------
+     ⚠ 這一段不是為了完整支援 SVG,是為了 potrace。
+     potrace 產出的檔案長這樣:
+
+       <svg viewBox="0 0 266 266">
+         <g transform="translate(0.000000,266.000000) scale(0.100000,-0.100000)">
+           <path d="M100 900 L900 900 …"/>
+
+     也就是:座標放大 10 倍存著,再靠 g 的 transform 縮回來,而且
+     scale 的 Y 是【負的】。2026-09-03 之前這裡完全沒讀 transform,
+     於是同時壞了兩件事,而且兩件都不會報錯:
+
+       1. 尺寸 —— 要求 90mm 實際輸出 524mm(差 5.8 倍)
+       2. 方向 —— 負的 Y 已經翻過一次,下面 tx() 再翻一次 = 上下顛倒
+
+     第 2 項特別惡劣:對稱的圖(星座符號那種)看不出來,不對稱的圖
+     才會現形,所以它可以一直躲著。 */
+
+  function matMul(m, n) {
+    return [
+      m[0] * n[0] + m[2] * n[1],  m[1] * n[0] + m[3] * n[1],
+      m[0] * n[2] + m[2] * n[3],  m[1] * n[2] + m[3] * n[3],
+      m[0] * n[4] + m[2] * n[5] + m[4],
+      m[1] * n[4] + m[3] * n[5] + m[5]
+    ];
+  }
+
+  function parseTransform(str) {
+    var m = [1, 0, 0, 1, 0, 0];
+    var re = /(matrix|translate|scale|rotate)\s*\(([^)]*)\)/g, seg;
+    while ((seg = re.exec(str))) {
+      var a = seg[2].trim().split(/[\s,]+/).map(Number);
+      var t = null, sx, sy, r, c, s, cx, cy;
+      if (seg[1] === 'matrix') {
+        if (a.length === 6 && a.every(isFinite)) t = a;
+      } else if (seg[1] === 'translate') {
+        t = [1, 0, 0, 1, a[0] || 0, a.length > 1 ? (a[1] || 0) : 0];
+      } else if (seg[1] === 'scale') {
+        sx = isFinite(a[0]) ? a[0] : 1;
+        sy = (a.length > 1 && isFinite(a[1])) ? a[1] : sx;   // scale(2) = scale(2,2)
+        t = [sx, 0, 0, sy, 0, 0];
+      } else if (seg[1] === 'rotate') {
+        r = (a[0] || 0) * Math.PI / 180; c = Math.cos(r); s = Math.sin(r);
+        t = [c, s, -s, c, 0, 0];
+        if (a.length >= 3) {          // rotate(deg, cx, cy) = 繞指定點轉
+          cx = a[1] || 0; cy = a[2] || 0;
+          t = matMul(matMul([1, 0, 0, 1, cx, cy], t), [1, 0, 0, 1, -cx, -cy]);
+        }
+      }
+      if (t) m = matMul(m, t);
+    }
+    return m;
+  }
+
+  /* 從這個節點一路往上收到 <svg> 為止。外層的先套,內層的後套。 */
+  function ctmOf(node, root) {
+    var chain = [], n = node;
+    while (n && n !== root) { chain.push(n); n = n.parentNode; }
+    var m = [1, 0, 0, 1, 0, 0];
+    for (var i = chain.length - 1; i >= 0; i--) {
+      var t = chain[i].getAttribute && chain[i].getAttribute('transform');
+      if (t) m = matMul(m, parseTransform(t));
+    }
+    return m;
+  }
+
+  function applyMat(m, poly) {
+    return poly.map(function (p) {
+      return [m[0] * p[0] + m[2] * p[1] + m[4],
+              m[1] * p[0] + m[3] * p[1] + m[5]];
+    });
+  }
+
   /* ---------- SVG 解析 ---------- */
 
   function parseSvg(svgString) {
@@ -149,7 +222,14 @@
       if (fill === '#fff' || fill === '#ffffff' || fill === 'rgb(255,255,255)' || fill === 'white') return;
 
       var d = p.getAttribute('d');
-      if (d) polys = polys.concat(pathToPolylines(d));
+      if (!d) return;
+
+      /* 套上這條路徑身上累積的 transform,把座標搬回 viewBox 的空間。
+         沒有 transform 的檔案會拿到單位矩陣,結果完全不變。 */
+      var m = ctmOf(p, svg);
+      polys = polys.concat(pathToPolylines(d).map(function (poly) {
+        return applyMat(m, poly);
+      }));
     });
 
     if (!polys.length) throw new Error('這份 SVG 裡沒有可以轉換的線條');
