@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>樂活管理後台</title>
+  <title>璅暑蝞∠?敺</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
-  <!-- Supabase JS SDK (給 supabase.js 用的全域 window.supabase) -->
+  <!-- Supabase JS SDK (蝯?supabase.js ?函??典? window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -22,12 +22,12 @@
       min-height: 100vh;
     }
   </style>
-  <!-- LOHAS CSS · 載入順序: tokens → base → components → page -->
+  <!-- LOHAS CSS 繚 頛??: tokens ??base ??components ??page -->
   <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
   <link rel="stylesheet" href="css/admin-portal.css?v=20260827-heartbeat">
-  <!-- 禮物中心加工管理與門市查刻圖共用同一組樣式與程式 -->
+  <!-- 蝳桃銝剖??極蝞∠???撣?餃??梁??蝯見撘?蝔? -->
   <link rel="stylesheet" href="css/store-lookup.css?v=20260820-midclaim">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260601-drag">
   <link rel="stylesheet" href="css/admin-portal-pegavision.css?v=20260622">
@@ -43,29 +43,29 @@
 
 <div class="ad" id="ad">
 
-<!-- ====== 手機版獨立 Header (LOGO + 跳官網 + 漢堡) ====== -->
+<!-- ====== ???蝡?Header (LOGO + 頝喳?蝬?+ 瞍Ｗ) ====== -->
 <header class="ad-mobile-header">
-  <button type="button" class="ad-mobile-burger" id="adMobileBurger" aria-label="選單">
+  <button type="button" class="ad-mobile-burger" id="adMobileBurger" aria-label="?詨">
     <i class="fa-solid fa-bars"></i>
   </button>
   <img class="ad-mobile-logo" src="images/lohas-logo.svg" alt="LOHAS">
-  <a class="ad-mobile-front" href="index.html" target="_blank" title="在新分頁打開樂活官網">
+  <a class="ad-mobile-front" href="index.html" target="_blank" title="?冽????璅暑摰雯">
     <i class="fa-solid fa-up-right-from-square"></i>
-    <span>回到官網</span>
+    <span>?摰雯</span>
   </a>
 </header>
 
-<!-- ====== 手機版抽屜選單 ====== -->
+<!-- ====== ???撅??====== -->
 <div class="ad-drawer-overlay" id="adDrawerOverlay"></div>
 <aside class="ad-drawer" id="adDrawer">
   <div class="ad-drawer-header">
-    <h3>管理後台</h3>
-    <button type="button" class="ad-drawer-close" id="adDrawerClose" aria-label="關閉">
+    <h3>蝞∠?敺</h3>
+    <button type="button" class="ad-drawer-close" id="adDrawerClose" aria-label="??">
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
   <div class="ad-drawer-body" id="adDrawerBody">
-    <!-- 動態填入 sidebar 同樣的 nav-section -->
+    <!-- ??憛怠 sidebar ?見??nav-section -->
   </div>
 </aside>
 
@@ -73,78 +73,78 @@
 <aside class="sidebar">
   <div class="nav-section">
     <button class="nav-link on" data-page="dashboard">
-      <i class="fa-solid fa-gauge-high"></i><span>首頁</span>
+      <i class="fa-solid fa-gauge-high"></i><span>擐?</span>
     </button>
   </div>
 
   <div class="nav-section">
-    <div class="nav-section-label">審 核 中 心</div>
+    <div class="nav-section-label">撖???銝?敹?/div>
     <button class="nav-link" data-page="review-designs">
-      <i class="fa-regular fa-pen-to-square"></i><span>刻圖審核</span>
+      <i class="fa-regular fa-pen-to-square"></i><span>?餃?撖拇</span>
       <span class="badge" id="badgeDesigns">0</span>
     </button>
     <button class="nav-link" data-page="review-uploads">
-      <i class="fa-regular fa-image"></i><span>上傳照片審核</span>
+      <i class="fa-regular fa-image"></i><span>銝?抒?撖拇</span>
       <span class="badge" id="badgeUploads">0</span>
     </button>
   </div>
 
   <div class="nav-section">
-    <div class="nav-section-label">內 容 管 理</div>
+    <div class="nav-section-label">??摰?蝞???/div>
     <button class="nav-link" data-page="cm-banner">
-      <i class="fa-regular fa-images"></i><span>首頁與分頁 Banner</span>
+      <i class="fa-regular fa-images"></i><span>擐?????Banner</span>
     </button>
     <button class="nav-link" data-page="cm-news">
-      <i class="fa-regular fa-newspaper"></i><span>最新消息</span>
+      <i class="fa-regular fa-newspaper"></i><span>??唳???/span>
     </button>
     <button class="nav-link" data-page="admin-upload">
-      <i class="fa-solid fa-camera-retro"></i><span>樂活官方上傳</span>
+      <i class="fa-solid fa-camera-retro"></i><span>璅暑摰銝</span>
     </button>
     <button class="nav-link" data-page="manage-designs">
-      <i class="fa-solid fa-pen-ruler"></i><span>刻圖管理</span>
+      <i class="fa-solid fa-pen-ruler"></i><span>?餃?蝞∠?</span>
     </button>
     <button class="nav-link" data-page="manage-shares">
-      <i class="fa-solid fa-images"></i><span>分享牆管理</span>
+      <i class="fa-solid fa-images"></i><span>?澈?恣??/span>
     </button>
     <button class="nav-link" data-page="cm-footer">
-      <i class="fa-regular fa-window-maximize"></i><span>頁尾管理</span>
+      <i class="fa-regular fa-window-maximize"></i><span>?偏蝞∠?</span>
     </button>
     <button class="nav-link" data-page="cm-pegavision">
-      <i class="fa-solid fa-eye"></i><span>晶碩專頁</span>
+      <i class="fa-solid fa-eye"></i><span>?嗥◣撠?</span>
     </button>
     <button class="nav-link" data-page="cm-categories">
-      <i class="fa-solid fa-tags"></i><span>分類管理</span>
+      <i class="fa-solid fa-tags"></i><span>??蝞∠?</span>
     </button>
     <button class="nav-link" data-page="cloth">
-      <i class="fa-solid fa-vector-square"></i><span>客製眼鏡布加工管理</span>
+      <i class="fa-solid fa-vector-square"></i><span>摰Ｚˊ?潮撣?撌亦恣??/span>
     </button>
     <button class="nav-link" data-page="gift-work">
-      <i class="fa-solid fa-gift"></i><span>禮物中心加工管理</span>
+      <i class="fa-solid fa-gift"></i><span>蝳桃銝剖??極蝞∠?</span>
     </button>
   </div>
 
   <div class="nav-section">
-    <div class="nav-section-label">會 員 與 創 作 者</div>
+    <div class="nav-section-label">????????雿???/div>
     <button class="nav-link" data-page="users">
-      <i class="fa-regular fa-user"></i><span>會員列表</span>
+      <i class="fa-regular fa-user"></i><span>??”</span>
     </button>
     <button class="nav-link" data-page="creators">
-      <i class="fa-solid fa-star"></i><span>創作者管理</span>
+      <i class="fa-solid fa-star"></i><span>?萎??恣??/span>
     </button>
     <button class="nav-link" data-page="ip">
-      <i class="fa-solid fa-copyright"></i><span>授權聯名管理</span>
+      <i class="fa-solid fa-copyright"></i><span>???臬?蝞∠?</span>
     </button>
   </div>
 
   <div class="sidebar-footer">
     <a class="nav-link" href="member-portal.html" style="margin-bottom:12px">
-      <i class="fa-solid fa-arrow-left"></i><span>回到會員區</span>
+      <i class="fa-solid fa-arrow-left"></i><span>???</span>
     </a>
     <div class="admin-user">
-      <div class="admin-avatar">企</div>
+      <div class="admin-avatar">隡?/div>
       <div class="admin-info">
-        <div class="admin-name">企劃部 · 林</div>
-        <div class="admin-role">超級管理員</div>
+        <div class="admin-name">隡???繚 ??/div>
+        <div class="admin-role">頞?蝞∠???/div>
       </div>
       <button class="logout-btn" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
     </div>
@@ -155,141 +155,141 @@
 <main class="main">
 
   <div class="topbar">
-    <div class="breadcrumb"><a href="#" id="adBcHome">樂活管理後台</a> &nbsp;›&nbsp; <b id="breadcrumbCurrent">首頁</b></div>
+    <div class="breadcrumb"><a href="#" id="adBcHome">璅暑蝞∠?敺</a> &nbsp;??nbsp; <b id="breadcrumbCurrent">擐?</b></div>
     <div class="topbar-right">
-      <a class="icon-btn-lg has-text" id="btnOpenFront" href="index.html" target="_blank" title="在新分頁打開樂活官網"><i class="fa-solid fa-up-right-from-square"></i><span>回到官網</span></a>
+      <a class="icon-btn-lg has-text" id="btnOpenFront" href="index.html" target="_blank" title="?冽????璅暑摰雯"><i class="fa-solid fa-up-right-from-square"></i><span>?摰雯</span></a>
     </div>
   </div>
 
-  <!-- 規則 banner -->
+  <!-- 閬? banner -->
   <div class="rule-banner" id="ruleBanner">
     <i class="fa-solid fa-circle-info"></i>
-    <span><b>後台規則：</b>所有上傳內容預設待審核 · 通過後自動公開於前台 · 創作者首次刻圖通過後系統自動升級權限</span>
+    <span><b>敺閬?嚗?/b>????喳摰寥?閮剖?撖拇 繚 ??敺??? 繚 ?萎???甈∪??敺頂蝯梯??蝝???/span>
   </div>
 
   <div class="content">
 
-    <!-- ============= 首頁 ============= -->
+    <!-- ============= 擐? ============= -->
     <div class="content-page on" data-page="dashboard">
 
       <div class="page-head">
         <div>
-          <h1 class="page-title">首頁</h1>
+          <h1 class="page-title">擐?</h1>
           <div class="page-sub" id="dashboardDate"></div>
         </div>
         <div class="page-actions">
-          <button class="btn"><i class="fa-regular fa-calendar"></i>本月</button>
-          <button class="btn primary"><i class="fa-solid fa-arrow-down-to-line"></i>匯出報表</button>
+          <button class="btn"><i class="fa-regular fa-calendar"></i>?祆?</button>
+          <button class="btn primary"><i class="fa-solid fa-arrow-down-to-line"></i>?臬?梯”</button>
         </div>
       </div>
 
       <div class="kpi-grid">
         <div class="kpi-card alert">
-          <div class="kpi-label"><i class="fa-solid fa-circle-exclamation"></i>待 審 核 項 目</div>
-          <div class="kpi-value" id="kpiReviewTotal">—</div>
-          <div class="kpi-trend flat" id="kpiReviewBreakdown">— 設計 · — 照片 · — 故事</div>
+          <div class="kpi-label"><i class="fa-solid fa-circle-exclamation"></i>敺?撖???????/div>
+          <div class="kpi-value" id="kpiReviewTotal">??/div>
+          <div class="kpi-trend flat" id="kpiReviewBreakdown">??閮剛? 繚 ???抒? 繚 ????</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label"><i class="fa-solid fa-pen-ruler"></i>本 月 新 刻 圖 上 架</div>
-          <div class="kpi-value" id="kpiNewDesigns">—</div>
-          <div class="kpi-trend purple" id="kpiNewDesignsBreakdown">—</div>
+          <div class="kpi-label"><i class="fa-solid fa-pen-ruler"></i>??????????銝???/div>
+          <div class="kpi-value" id="kpiNewDesigns">??/div>
+          <div class="kpi-trend purple" id="kpiNewDesignsBreakdown">??/div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label"><i class="fa-regular fa-image"></i>本 月 上 傳 照 片</div>
-          <div class="kpi-value" id="kpiNewPhotos">—</div>
-          <div class="kpi-trend up" id="kpiNewPhotosTrend">—</div>
+          <div class="kpi-label"><i class="fa-regular fa-image"></i>????銝???????/div>
+          <div class="kpi-value" id="kpiNewPhotos">??/div>
+          <div class="kpi-trend up" id="kpiNewPhotosTrend">??/div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label"><i class="fa-solid fa-pencil"></i>本 月 雷 刻 預 約</div>
-          <div class="kpi-value" id="kpiNewOrders">—</div>
-          <div class="kpi-trend up" id="kpiNewOrdersTrend">—</div>
+          <div class="kpi-label"><i class="fa-solid fa-pencil"></i>??????????蝝?/div>
+          <div class="kpi-value" id="kpiNewOrders">??/div>
+          <div class="kpi-trend up" id="kpiNewOrdersTrend">??/div>
         </div>
       </div>
 
       <div class="dash-grid">
         <div class="dash-panel">
           <div class="dash-panel-head">
-            <h3 class="dash-panel-h">優先處理 · 待審核</h3>
+            <h3 class="dash-panel-h">?芸??? 繚 敺祟??/h3>
           </div>
           <div class="review-list">
-            <p class="empty-text" style="text-align:center;padding:40px 0;color:var(--lohas-mute);font-size:12px">載入中...</p>
+            <p class="empty-text" style="text-align:center;padding:40px 0;color:var(--lohas-mute);font-size:12px">頛銝?..</p>
           </div>
         </div>
 
         <div class="dash-panel">
           <div class="dash-panel-head">
-            <h3 class="dash-panel-h">最近活動</h3>
+            <h3 class="dash-panel-h">?餈暑??/h3>
           </div>
           <div class="activity-list" id="activityList">
-            <p class="empty-text" style="text-align:center;padding:40px 0;color:var(--lohas-mute);font-size:12px">載入中...</p>
+            <p class="empty-text" style="text-align:center;padding:40px 0;color:var(--lohas-mute);font-size:12px">頛銝?..</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ============= 刻圖審核 ============= -->
+    <!-- ============= ?餃?撖拇 ============= -->
     <div class="content-page" data-page="review-designs">
       <div class="page-head">
         <div>
-          <h1 class="page-title">刻圖審核</h1>
-          <div class="page-sub" id="reviewDesignsSub">— 件待審核 · 通過後自動上架創作者市集</div>
+          <h1 class="page-title">?餃?撖拇</h1>
+          <div class="page-sub" id="reviewDesignsSub">??隞嗅?撖拇 繚 ??敺???嗅雿???/div>
         </div>
       </div>
 
       <div class="filter-row">
-        <label>排序</label>
+        <label>??</label>
         <select id="reviewDesignsSort">
-          <option value="oldest">送審時間 · 最舊優先</option>
-          <option value="newest">送審時間 · 最新優先</option>
+          <option value="oldest">?祟?? 繚 ????/option>
+          <option value="newest">?祟?? 繚 ??啣??/option>
         </select>
-        <label>狀態</label>
+        <label>???/label>
         <select id="reviewDesignsStatus">
-          <option value="pending">待審核</option>
-          <option value="rejected">已駁回</option>
+          <option value="pending">敺祟??/option>
+          <option value="rejected">撌脤???/option>
         </select>
         <div class="spacer"></div>
-        <div class="filter-info" id="reviewDesignsFilterInfo">— 件</div>
+        <div class="filter-info" id="reviewDesignsFilterInfo">??隞?/div>
       </div>
 
       <div class="review-grid">
         <div class="rcard">
-          <div class="rcard-img"><span class="rcard-pill"><i class="fa-solid fa-star" style="color:#9D7E3F"></i>Creator</span>想 你 想 到 睡 不 著</div>
+          <div class="rcard-img"><span class="rcard-pill"><i class="fa-solid fa-star" style="color:#9D7E3F"></i>Creator</span>??雿???????銝???/div>
           <div class="rcard-info">
-            <div class="rcard-title">想你想到睡不著</div>
+            <div class="rcard-title">?喃??喳?∩???/div>
             <div class="rcard-by">by <b>EMO Bonnie</b> <span class="role-pill creator"><i class="fa-solid fa-star"></i>Creator</span></div>
-            <div class="rcard-quote">睡不著的不是身體,是想念。把這句話刻在眼鏡上,提醒自己晚上要早點睡。</div>
-            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>送審 2 小時前</div>
+            <div class="rcard-quote">?∩???銝頨恍?,?舀敹萸??閰勗?函?∩?,???芸楛??閬暺??/div>
+            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>?祟 2 撠???/div>
             <div class="rcard-actions">
-              <button class="approve"><i class="fa-solid fa-check"></i>通 過</button>
-              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>駁 回</button>
+              <button class="approve"><i class="fa-solid fa-check"></i>????/button>
+              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>擏???/button>
               <button class="more"><i class="fa-solid fa-ellipsis"></i></button>
             </div>
           </div>
         </div>
         <div class="rcard">
-          <div class="rcard-img g2"><span class="rcard-pill"><i class="fa-solid fa-crown" style="color:#9D7E3F"></i>Collab</span>D I N U 狗 狗</div>
+          <div class="rcard-img g2"><span class="rcard-pill"><i class="fa-solid fa-crown" style="color:#9D7E3F"></i>Collab</span>D I N U ????/div>
           <div class="rcard-info">
-            <div class="rcard-title">DINU 狗狗</div>
+            <div class="rcard-title">DINU ??</div>
             <div class="rcard-by">by <b>DTTO FRIENDS</b> <span class="role-pill ip"><i class="fa-solid fa-crown"></i>Collab</span></div>
-            <div class="rcard-quote">DTTO 經典角色 DINU,六款表情同款上線。</div>
-            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>送審 8 小時前</div>
+            <div class="rcard-quote">DTTO 蝬閫 DINU,?剜狡銵冽??狡銝???/div>
+            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>?祟 8 撠???/div>
             <div class="rcard-actions">
-              <button class="approve"><i class="fa-solid fa-check"></i>通 過</button>
-              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>駁 回</button>
+              <button class="approve"><i class="fa-solid fa-check"></i>????/button>
+              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>擏???/button>
               <button class="more"><i class="fa-solid fa-ellipsis"></i></button>
             </div>
           </div>
         </div>
         <div class="rcard">
-          <div class="rcard-img g3"><span class="rcard-pill">Member</span>初 戀 簽 名</div>
+          <div class="rcard-img g3"><span class="rcard-pill">Member</span>??? 蝪???/div>
           <div class="rcard-info">
-            <div class="rcard-title">初戀簽名</div>
-            <div class="rcard-by">by <b>林*婕</b> <span class="role-pill member">Member</span></div>
-            <div class="rcard-quote">把初戀寫的那張卡片掃描下來,變成眼鏡上唯一的紀念。</div>
-            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>送審 1 天前</div>
+            <div class="rcard-title">??蝪賢?</div>
+            <div class="rcard-by">by <b>??憍?/b> <span class="role-pill member">Member</span></div>
+            <div class="rcard-quote">???撖怎???撐?∠???銝?,霈??潮銝銝??敹萸?/div>
+            <div class="rcard-meta"><i class="fa-regular fa-clock"></i>?祟 1 憭拙?</div>
             <div class="rcard-actions">
-              <button class="approve"><i class="fa-solid fa-check"></i>通 過</button>
-              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>駁 回</button>
+              <button class="approve"><i class="fa-solid fa-check"></i>????/button>
+              <button class="reject openReject"><i class="fa-solid fa-xmark"></i>擏???/button>
               <button class="more"><i class="fa-solid fa-ellipsis"></i></button>
             </div>
           </div>
@@ -297,215 +297,214 @@
       </div>
     </div>
 
-    <!-- ============= 最新消息管理 v2 ============= -->
+    <!-- ============= ??唳??舐恣??v2 ============= -->
     <div class="content-page" data-page="cm-news">
       <div class="page-head">
         <div>
-          <h1 class="page-title">最新消息管理</h1>
-          <div class="page-sub" id="newsListSub">— 篇</div>
+          <h1 class="page-title">??唳??舐恣??/h1>
+          <div class="page-sub" id="newsListSub">??蝭?/div>
         </div>
       </div>
 
-      <!-- 篩選列 (對齊創作者管理) -->
+      <!-- 蝭拚??(撠??萎??恣?? -->
       <div class="filter-row">
-        <input class="editor-input" id="newsSearchInput" placeholder="搜尋標題 / Slug..." style="max-width:280px"/>
+        <input class="editor-input" id="newsSearchInput" placeholder="??璅? / Slug..." style="max-width:280px"/>
         <div class="filter-group">
-          <label>狀態</label>
+          <label>???/label>
           <select id="newsFilterStatus">
-            <option value="">全部</option>
-            <option value="published">已發佈</option>
-            <option value="scheduled">已排程</option>
-            <option value="draft">草稿</option>
-            <option value="archived">已下架</option>
+            <option value="">?券</option>
+            <option value="published">撌脩雿?/option>
+            <option value="scheduled">撌脫?蝔?/option>
+            <option value="draft">?阮</option>
+            <option value="archived">撌脖???/option>
           </select>
         </div>
         <div class="filter-group">
-          <label>分類</label>
+          <label>??</label>
           <select id="newsFilterCategory">
-            <option value="">全部</option>
-            <option value="story">品牌故事</option>
-            <option value="event">活動優惠</option>
-            <option value="engraving">雷刻服務</option>
-            <option value="people">人物誌</option>
-            <option value="member">會員專區</option>
-            <option value="official">官方公告</option>
+            <option value="">?券</option>
+            <option value="story">????</option>
+            <option value="event">瘣餃??芣?</option>
+            <option value="engraving">?瑕??</option>
+            <option value="people">鈭箇隤?/option>
+            <option value="member">?撠?</option>
+            <option value="official">摰?砍?</option>
           </select>
         </div>
         <div class="spacer"></div>
-        <button class="action-btn-solid" id="newsAddBtn"><i class="fa-solid fa-plus"></i>新增消息</button>
+        <button class="action-btn-solid" id="newsAddBtn"><i class="fa-solid fa-plus"></i>?啣?瘨</button>
       </div>
 
-      <!-- 列表 (用 creator-card 樣式) -->
+      <!-- ?” (??creator-card 璅??) -->
       <div class="creators-list" id="newsList">
-        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
+        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">頛銝?..</p>
       </div>
     </div>
 
-    <!-- ============= 最新消息編輯 Modal ============= -->
+    <!-- ============= ??唳??舐楊頛?Modal ============= -->
     <div class="ag-modal-overlay" id="newsEditModal" style="display:none">
       <div class="ag-modal">
         <div class="ag-modal-header">
-          <h2 class="ag-modal-title" id="newsModalTitle">編輯消息</h2>
-          <button class="ag-modal-close" id="newsModalClose" type="button" aria-label="關閉">
+          <h2 class="ag-modal-title" id="newsModalTitle">蝺刻摩瘨</h2>
+          <button class="ag-modal-close" id="newsModalClose" type="button" aria-label="??">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
         <div class="ag-modal-body">
 
-          <!-- 基本資料 -->
+          <!-- ?箸鞈? -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">基本資料</h3>
+            <h3 class="editor-panel-title">?箸鞈?</h3>
 
             <div class="editor-row">
-              <label class="editor-label">Slug (URL ID,系統自動生成)</label>
-              <input type="text" class="editor-input" id="news_slug" placeholder="儲存後自動產生" readonly style="background:#f0ebe2;color:#888;cursor:not-allowed" />
-              <p class="editor-hint">前台連結將是 news-detail.html?id=<span id="news_slug_preview">xxx</span></p>
+              <label class="editor-label">Slug (URL ID,蝟餌絞?芸???)</label>
+              <input type="text" class="editor-input" id="news_slug" placeholder="?脣?敺??? readonly style="background:#f0ebe2;color:#888;cursor:not-allowed" />
+              <p class="editor-hint">????撠 news-detail.html?id=<span id="news_slug_preview">xxx</span></p>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">狀態</label>
+                <label class="editor-label">???/label>
                 <select class="editor-input" id="news_status">
-                  <option value="draft">草稿 (前台看不到)</option>
-                  <option value="scheduled">已排程 (時間到自動發布)</option>
-                  <option value="published">已發佈</option>
-                  <option value="archived">已下架</option>
+                  <option value="draft">?阮 (?????</option>
+                  <option value="scheduled">撌脫?蝔?(???啗?撣?</option>
+                  <option value="published">撌脩雿?/option>
+                  <option value="archived">撌脖???/option>
                 </select>
               </div>
               <div class="editor-row">
-                <label class="editor-label">分類<span class="req">*</span></label>
+                <label class="editor-label">??<span class="req">*</span></label>
                 <select class="editor-input" id="news_category">
-                  <option value="story">品牌故事</option>
-                  <option value="event">活動優惠</option>
-                  <option value="engraving">雷刻服務</option>
-                  <option value="people">人物誌</option>
-                  <option value="member">會員專區</option>
-                  <option value="official">官方公告</option>
+                  <option value="story">????</option>
+                  <option value="event">瘣餃??芣?</option>
+                  <option value="engraving">?瑕??</option>
+                  <option value="people">鈭箇隤?/option>
+                  <option value="member">?撠?</option>
+                  <option value="official">摰?砍?</option>
                 </select>
               </div>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">標題<span class="req">*</span></label>
-              <input type="text" class="editor-input" id="news_title" placeholder="請輸入消息標題" />
+              <label class="editor-label">璅?<span class="req">*</span></label>
+              <input type="text" class="editor-input" id="news_title" placeholder="隢撓?交??舀?憿? />
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">摘要</label>
-              <textarea class="editor-input" id="news_excerpt" rows="2" placeholder="請輸入摘要,顯示在列表頁(建議 2 行內)"></textarea>
+              <label class="editor-label">??</label>
+              <textarea class="editor-input" id="news_excerpt" rows="2" placeholder="隢撓?交?閬?憿舐內?典?銵券?(撱箄降 2 銵)"></textarea>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">發佈時間</label>
+                <label class="editor-label">?潔???</label>
                 <input type="datetime-local" class="editor-input" id="news_published_at" />
-                <p class="editor-hint">選「已排程」狀態時必填,時間到了會自動發佈</p>
+                <p class="editor-hint">?詻歇??????敹‵,???唬???雿?/p>
               </div>
               <div class="editor-row">
-                <label class="editor-label">作者</label>
-                <input type="text" class="editor-input" id="news_author" placeholder="例如:樂活編輯部 / 雷刻技術組" />
+                <label class="editor-label">雿?/label>
+                <input type="text" class="editor-input" id="news_author" placeholder="靘?:璅暑蝺刻摩??/ ?瑕?銵?" />
               </div>
             </div>
           </div>
 
-          <!-- 封面 -->
+          <!-- 撠 -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">封面圖</h3>
+            <h3 class="editor-panel-title">撠??/h3>
             <div class="editor-row">
-              <label class="editor-label">封面圖片</label>
+              <label class="editor-label">撠??</label>
               <div class="img-upload-wrap" data-field="cover_image_url" data-aspect="4:3">
                 <div class="img-upload-preview" id="news_cover_preview">
-                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 暺?銝</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
-                <p class="editor-hint">建議比例 4:3 · 建議尺寸 800 × 600 px</p>
+                <p class="editor-hint">撱箄降瘥? 4:3 繚 撱箄降撠箏站 800 ? 600 px</p>
               </div>
             </div>
           </div>
 
-          <!-- 首頁曝光 -->
+          <!-- 擐??? -->
           <div class="editor-panel">
             <div class="editor-panel-head">
-              <h3 class="editor-panel-title" style="margin:0">首頁曝光 (首頁輪播小卡)</h3>
+              <h3 class="editor-panel-title" style="margin:0">擐??? (擐?頛芣撠)</h3>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">首頁 Tag</label>
+                <label class="editor-label">擐? Tag</label>
                 <input type="text" class="editor-input" id="news_homepage_tag" placeholder="LIMITED / NEW / EVENT" />
-                <p class="editor-hint">大寫英文較佳,顯示在首頁卡片左上角</p>
+                <p class="editor-hint">憭批神?望?頛蔔,憿舐內?券???椰銝?</p>
               </div>
               <div class="editor-row">
-                <label class="editor-label">首頁副標</label>
-                <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="不填則使用「摘要」" />
-                <p class="editor-hint">建議 1 行內</p>
+                <label class="editor-label">擐??舀?</label>
+                <input type="text" class="editor-input" id="news_homepage_subtitle" placeholder="銝‵?蝙?具?閬? />
+                <p class="editor-hint">撱箄降 1 銵</p>
               </div>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">首頁專用大圖</label>
+              <label class="editor-label">擐?撠憭批?</label>
               <div class="img-upload-wrap" data-field="homepage_image_url" data-aspect="4:3">
                 <div class="img-upload-preview" id="news_homepage_image_preview">
-                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 (不填則用封面)</span>
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 暺?銝 (銝‵?撠)</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
-                <p class="editor-hint">建議比例 4:3 · 800 × 600 px</p>
+                <p class="editor-hint">撱箄降瘥? 4:3 繚 800 ? 600 px</p>
               </div>
             </div>
 
             <div class="editor-row">
               <label class="editor-label">
                 <input type="checkbox" id="news_homepage_text_hidden" style="margin-right:6px;vertical-align:middle"/>
-                電腦版隱藏首頁卡片上的文字與按鈕(只顯示圖片)
+                ?餉????????摮???(?芷＊蝷箏???
               </label>
-              <p class="editor-hint" style="margin-left:24px">勾選後,首頁輪播小卡在「電腦版」只會顯示大圖,不顯示 Tag / 副標 / VIEW MORE 按鈕。手機版維持顯示文字與按鈕。</p>
+              <p class="editor-hint" style="margin-left:24px">?暸敺?擐?頛芣撠?具?衣???＊蝷箏之??銝＊蝷?Tag / ?舀? / VIEW MORE ????璈?蝬剜?憿舐內??????/p>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">按鈕連結目標</label>
+                <label class="editor-label">??????格?</label>
                 <select class="editor-input" id="news_homepage_link_type">
-                  <option value="news_detail">最新消息內頁 (預設)</option>
-                  <option value="custom">指定網址</option>
+                  <option value="news_detail">??唳??臬??(?身)</option>
+                  <option value="custom">??蝬脣?</option>
                 </select>
-                <p class="editor-hint">點卡片後跳到哪</p>
+                <p class="editor-hint">暺??頝喳??/p>
               </div>
               <div class="editor-row" id="news_homepage_link_url_row" style="display:none">
-                <label class="editor-label">指定網址</label>
-                <input type="text" class="editor-input" id="news_homepage_link_url" placeholder="/collab.html?id=xxx 或 https://..." />
-                <p class="editor-hint">可填內部相對路徑或完整外部網址</p>
+                <label class="editor-label">??蝬脣?</label>
+                <input type="text" class="editor-input" id="news_homepage_link_url" placeholder="/collab.html?id=xxx ??https://..." />
+                <p class="editor-hint">?臬‵?折?詨?頝臬????游??函雯?</p>
               </div>
             </div>
           </div>
 
-          <!-- CTA 按鈕管理 (顯示在文章底部) -->
+          <!-- CTA ??蝞∠? (憿舐內?冽?蝡??? -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">文章底部 CTA 按鈕</h3>
-            <p class="editor-hint" style="margin:-4px 0 12px">勾選後會顯示在文章內文下方,可選 0~2 個。</p>
+            <h3 class="editor-panel-title">??摨 CTA ??</h3>
+            <p class="editor-hint" style="margin:-4px 0 12px">?暸敺?憿舐內?冽?蝡?????舫 0~2 ??/p>
             <div class="editor-row">
               <label class="editor-label">
                 <input type="checkbox" id="news_cta_store" checked style="margin-right:6px;vertical-align:middle"/>
-                門市預約
-              </label>
-              <p class="editor-hint" style="margin-left:24px">連結:allstore.html</p>
+                ?撣?蝝?              </label>
+              <p class="editor-hint" style="margin-left:24px">???:allstore.html</p>
             </div>
             <div class="editor-row">
               <label class="editor-label">
                 <input type="checkbox" id="news_cta_student" style="margin-right:6px;vertical-align:middle"/>
-                學生預約
+                摮貊???
               </label>
-              <p class="editor-hint" style="margin-left:24px">連結:https://student.lohasglasses.com/</p>
+              <p class="editor-hint" style="margin-left:24px">???:https://student.lohasglasses.com/</p>
             </div>
           </div>
 
-          <!-- 內文 -->
+          <!-- ?扳? -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">內文</h3>
+            <h3 class="editor-panel-title">?扳?</h3>
             <div class="editor-row">
-              <label class="editor-label">文章內容</label>
-              <textarea class="editor-input editor-textarea" id="news_content" rows="14" placeholder="請輸入文章內容,支援純文字段落、HTML、或簡易 Markdown(## 大標、> 引用)"></textarea>
-              <p class="editor-hint">純文字會自動按空行分段。可使用 ## 大標、> 引用、HTML</p>
+              <label class="editor-label">???批捆</label>
+              <textarea class="editor-input editor-textarea" id="news_content" rows="14" placeholder="隢撓?交?蝡摰??舀蝝?摮挾?賬TML??蝪⊥? Markdown(## 憭扳??? 撘)"></textarea>
+              <p class="editor-hint">蝝?摮??芸??征銵?畾萸雿輻 ## 憭扳??? 撘?TML</p>
             </div>
           </div>
 
@@ -513,83 +512,83 @@
 
         <div class="ag-modal-footer">
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <button class="action-btn-solid" id="newsSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
-            <button class="btn" id="newsCancelBtn">關閉</button>
+            <button class="action-btn-solid" id="newsSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>?脣?</span></button>
+            <button class="btn" id="newsCancelBtn">??</button>
             <div class="spacer"></div>
             <button class="btn btn-danger" id="newsDeleteBtn" style="display:none">
-              <i class="fa-solid fa-trash"></i>刪除消息
+              <i class="fa-solid fa-trash"></i>?芷瘨
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ============= 會員列表 (v14) ============= -->
+    <!-- ============= ??” (v14) ============= -->
     <div class="content-page" data-page="users">
       <div class="page-head">
         <div>
-          <h1 class="page-title">會員列表</h1>
-          <div class="page-sub">所有註冊會員,可篩選身份、停權帳號、手動升級為 Creator</div>
+          <h1 class="page-title">??”</h1>
+          <div class="page-sub">??酉?????舐祟?貉澈隞賬?甈董????蝝 Creator</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
           <button class="action-btn-solid" id="usersAddBtn" type="button">
-            <i class="fa-solid fa-user-plus"></i>新增 / 升級會員
+            <i class="fa-solid fa-user-plus"></i>?啣? / ???
           </button>
         </div>
       </div>
 
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-label">總 會 員 數</div>
-          <div class="kpi-value" id="usersKpiTotal">—</div>
-          <div class="kpi-trend flat" id="usersKpiTotalSub">統計中</div>
+          <div class="kpi-label">蝮???????/div>
+          <div class="kpi-value" id="usersKpiTotal">??/div>
+          <div class="kpi-trend flat" id="usersKpiTotalSub">蝯梯?銝?/div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">CREATOR 總 數</div>
-          <div class="kpi-value" id="usersKpiCreator">—</div>
-          <div class="kpi-trend purple" id="usersKpiCreatorSub">含官方</div>
+          <div class="kpi-label">CREATOR 蝮???/div>
+          <div class="kpi-value" id="usersKpiCreator">??/div>
+          <div class="kpi-trend purple" id="usersKpiCreatorSub">?怠???/div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">官 方 創 作 者</div>
-          <div class="kpi-value" id="usersKpiOfficial">—</div>
-          <div class="kpi-trend flat" id="usersKpiOfficialSub">virt- 帳號</div>
+          <div class="kpi-label">摰?????雿???/div>
+          <div class="kpi-value" id="usersKpiOfficial">??/div>
+          <div class="kpi-trend flat" id="usersKpiOfficialSub">virt- 撣唾?</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">停 權 帳 號</div>
-          <div class="kpi-value" id="usersKpiSuspended">—</div>
-          <div class="kpi-trend flat" id="usersKpiSuspendedSub">已停權</div>
+          <div class="kpi-label">??甈?撣???/div>
+          <div class="kpi-value" id="usersKpiSuspended">??/div>
+          <div class="kpi-trend flat" id="usersKpiSuspendedSub">撌脣?甈?/div>
         </div>
       </div>
 
       <div class="role-legend">
-        <div class="role-legend-title"><i class="fa-solid fa-circle-info"></i>身 份 說 明</div>
+        <div class="role-legend-title"><i class="fa-solid fa-circle-info"></i>頨?隞?隤???/div>
         <div class="role-legend-grid">
           <div class="role-legend-item">
             <span class="row-role-pill member">Member</span>
             <div class="legend-text">
-              <div class="legend-cn">會員</div>
-              <div class="legend-desc">一般註冊會員</div>
+              <div class="legend-cn">?</div>
+              <div class="legend-desc">銝?祈酉????/div>
             </div>
           </div>
           <div class="role-legend-item">
             <span class="row-role-pill creator"><i class="fa-solid fa-star"></i>Creator</span>
             <div class="legend-text">
-              <div class="legend-cn">創作者</div>
-              <div class="legend-desc">可上架設計、享分潤</div>
+              <div class="legend-cn">?萎???/div>
+              <div class="legend-desc">?臭??嗉身閮澈?膜</div>
             </div>
           </div>
           <div class="role-legend-item">
             <span class="row-role-pill ip"><i class="fa-solid fa-crown"></i>Collab</span>
             <div class="legend-text">
-              <div class="legend-cn">獨家聯名</div>
-              <div class="legend-desc">合作 IP 帳號</div>
+              <div class="legend-cn">?典振?臬?</div>
+              <div class="legend-desc">?? IP 撣唾?</div>
             </div>
           </div>
           <div class="role-legend-item">
             <span class="row-role-pill admin"><i class="fa-solid fa-shield-halved"></i>Admin</span>
             <div class="legend-text">
-              <div class="legend-cn">管理員</div>
-              <div class="legend-desc">後台管理權限</div>
+              <div class="legend-cn">蝞∠???/div>
+              <div class="legend-desc">敺蝞∠?甈?</div>
             </div>
           </div>
         </div>
@@ -598,12 +597,12 @@
       <div class="filter-bar">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input id="userSearchInput" placeholder="搜尋姓名、電話、信箱、會員編號..."/>
+          <input id="userSearchInput" placeholder="??憪??閰晞縑蝞晞??∠楊??.."/>
         </div>
         <div class="filter-group">
-          <label>身份</label>
+          <label>頨思遢</label>
           <select id="filterRole">
-            <option value="">所有身份</option>
+            <option value="">??澈隞?/option>
             <option value="member">Member</option>
             <option value="creator">Creator</option>
             <option value="ip">Collab</option>
@@ -611,11 +610,11 @@
           </select>
         </div>
         <div class="filter-group">
-          <label>狀態</label>
+          <label>???/label>
           <select id="filterStatus">
-            <option value="">所有狀態</option>
-            <option value="active">正常</option>
-            <option value="suspended">已停權</option>
+            <option value="">?????/option>
+            <option value="active">甇?虜</option>
+            <option value="suspended">撌脣?甈?/option>
           </select>
         </div>
       </div>
@@ -624,26 +623,26 @@
         <table class="users-table" id="usersTable">
           <thead>
             <tr>
-              <th style="width:36%">會員</th>
-              <th>身份</th>
-              <th>狀態</th>
-              <th>累積上傳</th>
-              <th style="text-align:right;width:24%">操作</th>
+              <th style="width:36%">?</th>
+              <th>頨思遢</th>
+              <th>???/th>
+              <th>蝝舐?銝</th>
+              <th style="text-align:right;width:24%">??</th>
             </tr>
           </thead>
           <tbody id="usersTbody">
-            <!-- 由 JS 動態填入 -->
+            <!-- ??JS ??憛怠 -->
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- ============= 新增 / 升級會員 Modal ============= -->
+    <!-- ============= ?啣? / ??? Modal ============= -->
     <div class="ag-modal-overlay" id="userAddModal" style="display:none">
       <div class="ag-modal" style="max-width:520px">
         <div class="ag-modal-header">
-          <h2 class="ag-modal-title">查詢會員 / 升級身份</h2>
-          <button class="ag-modal-close" id="userAddClose" type="button" aria-label="關閉">
+          <h2 class="ag-modal-title">?亥岷? / ??頨思遢</h2>
+          <button class="ag-modal-close" id="userAddClose" type="button" aria-label="??">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -651,128 +650,126 @@
         <div class="ag-modal-body" style="padding:24px">
 
           <p style="color:#7A6B5C;font-size:13px;line-height:1.7;margin-bottom:20px">
-            輸入會員手機號碼或會員編號搜尋,從樂活 ERP 取得會員資料後,可選擇加入會員列表或升級為 Creator。
-          </p>
+            頛詨????Ⅳ???∠楊??撠?敺?瘣?ERP ???鞈?敺??舫???交??∪?銵冽?????Creator??          </p>
 
-          <!-- 搜尋區 -->
+          <!-- ??? -->
           <div style="margin-bottom:18px">
-            <label class="editor-label" style="display:block;margin-bottom:6px">會員手機號碼</label>
+            <label class="editor-label" style="display:block;margin-bottom:6px">????Ⅳ</label>
             <div style="display:flex;gap:8px">
-              <input type="tel" class="editor-input" id="uam_mobile" placeholder="例:0910768736" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff" />
+              <input type="tel" class="editor-input" id="uam_mobile" placeholder="靘?0910768736" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff" />
               <button type="button" id="uam_searchBtn" style="height:40px;padding:0 18px;background:#50422D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;letter-spacing:1px">
-                <i class="fa-solid fa-magnifying-glass"></i> 查詢
+                <i class="fa-solid fa-magnifying-glass"></i> ?亥岷
               </button>
             </div>
           </div>
 
-          <!-- 或用會員編號 -->
+          <!-- ??蝺刻? -->
           <div style="margin-bottom:18px">
-            <label class="editor-label" style="display:block;margin-bottom:6px">或用 會員編號 (ERP ID)</label>
+            <label class="editor-label" style="display:block;margin-bottom:6px">? ?蝺刻? (ERP ID)</label>
             <div style="display:flex;gap:8px">
-              <input type="text" class="editor-input" id="uam_erpid" placeholder="例:28211088" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff;font-family:monospace" />
+              <input type="text" class="editor-input" id="uam_erpid" placeholder="靘?28211088" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff;font-family:monospace" />
               <button type="button" id="uam_searchErpBtn" style="height:40px;padding:0 18px;background:#50422D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;letter-spacing:1px">
-                <i class="fa-solid fa-magnifying-glass"></i> 查詢
+                <i class="fa-solid fa-magnifying-glass"></i> ?亥岷
               </button>
             </div>
           </div>
 
-          <!-- 或用名字 -->
+          <!-- ??? -->
           <div style="margin-bottom:18px">
-            <label class="editor-label" style="display:block;margin-bottom:6px">或用 會員名字</label>
+            <label class="editor-label" style="display:block;margin-bottom:6px">? ???</label>
             <div style="display:flex;gap:8px">
-              <input type="text" class="editor-input" id="uam_name" placeholder="例:王小明 (支援部分字串模糊比對)" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff" />
+              <input type="text" class="editor-input" id="uam_name" placeholder="靘?????(?舀?典?摮葡璅∠?瘥?)" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff" />
               <button type="button" id="uam_searchNameBtn" style="height:40px;padding:0 18px;background:#50422D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;letter-spacing:1px">
-                <i class="fa-solid fa-magnifying-glass"></i> 查詢
+                <i class="fa-solid fa-magnifying-glass"></i> ?亥岷
               </button>
             </div>
           </div>
 
-          <!-- 查詢結果區 -->
+          <!-- ?亥岷蝯?? -->
           <div id="uam_result" style="display:none">
             <div style="padding:14px 16px;background:#FAF7F2;border:1px solid #E8DED1;border-radius:8px;margin-bottom:18px">
-              <div style="font-size:16px;font-weight:600;color:#50422D;margin-bottom:6px" id="uam_resultName">—</div>
-              <div style="font-size:12px;color:#7A6B5C;margin-bottom:2px">手機:<span id="uam_resultMobile">—</span></div>
-              <div style="font-size:12px;color:#7A6B5C">ERP ID:<span id="uam_resultErpid" style="font-family:monospace">—</span></div>
+              <div style="font-size:16px;font-weight:600;color:#50422D;margin-bottom:6px" id="uam_resultName">??/div>
+              <div style="font-size:12px;color:#7A6B5C;margin-bottom:2px">??:<span id="uam_resultMobile">??/span></div>
+              <div style="font-size:12px;color:#7A6B5C">ERP ID:<span id="uam_resultErpid" style="font-family:monospace">??/span></div>
             </div>
 
-            <!-- 升級選項 -->
-            <label class="editor-label" style="display:block;margin-bottom:8px">設定身份</label>
+            <!-- ???賊? -->
+            <label class="editor-label" style="display:block;margin-bottom:8px">閮剖?頨思遢</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <label style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;flex:1">
                 <input type="radio" name="uam_role" value="member" checked>
-                <span>加入會員列表</span>
+                <span>???”</span>
               </label>
               <label style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;flex:1">
                 <input type="radio" name="uam_role" value="creator">
-                <span>⭐ 升級為 Creator</span>
+                <span>潃?????Creator</span>
               </label>
             </div>
           </div>
 
-          <!-- 錯誤訊息 -->
+          <!-- ?航炊閮 -->
           <div id="uam_error" style="display:none;margin-top:14px;padding:10px 14px;background:#FDEDE8;border-left:3px solid #A04030;border-radius:4px;color:#A04030;font-size:13px"></div>
 
         </div>
 
         <div class="ag-modal-footer" style="padding:16px 24px;border-top:1px solid #E8DED1;display:flex;gap:8px;justify-content:flex-end">
-          <button type="button" id="uam_cancelBtn" style="padding:9px 18px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;color:#50422D">取消</button>
+          <button type="button" id="uam_cancelBtn" style="padding:9px 18px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;color:#50422D">??</button>
           <button type="button" id="uam_saveBtn" disabled style="padding:9px 18px;background:#9D7E3F;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;opacity:0.5">
-            <i class="fa-solid fa-check"></i> 確認加入
+            <i class="fa-solid fa-check"></i> 蝣箄??
           </button>
         </div>
       </div>
     </div>
 
-    <!-- ============= 查看會員 Modal ============= -->
+    <!-- ============= ?亦?? Modal ============= -->
     <div class="ag-modal-overlay" id="userViewModal" style="display:none">
       <div class="ag-modal" style="max-width:520px">
         <div class="ag-modal-header">
-          <h2 class="ag-modal-title">會員詳細資料</h2>
-          <button class="ag-modal-close" id="userViewClose" type="button" aria-label="關閉">
+          <h2 class="ag-modal-title">?閰喟敦鞈?</h2>
+          <button class="ag-modal-close" id="userViewClose" type="button" aria-label="??">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
         <div class="ag-modal-body" style="padding:24px" id="uvm_body">
           <div id="uvm_loading" style="text-align:center;padding:30px;color:#7A6B5C">
-            <i class="fa-solid fa-spinner fa-spin"></i> 載入中...
+            <i class="fa-solid fa-spinner fa-spin"></i> 頛銝?..
           </div>
 
           <div id="uvm_content" style="display:none">
-            <!-- 基本資料 -->
+            <!-- ?箸鞈? -->
             <div style="padding:18px;background:#FAF7F2;border:1px solid #E8DED1;border-radius:8px;margin-bottom:18px">
-              <div style="font-size:20px;font-weight:600;color:#50422D;margin-bottom:8px" id="uvm_name">—</div>
+              <div style="font-size:20px;font-weight:600;color:#50422D;margin-bottom:8px" id="uvm_name">??/div>
               <div style="display:grid;grid-template-columns:60px 1fr;gap:6px 12px;font-size:13px;color:#7A6B5C">
-                <div>ERP ID</div><div style="font-family:monospace" id="uvm_erpid">—</div>
-                <div>手機</div><div id="uvm_mobile">—</div>
-                <div>Email</div><div id="uvm_email">—</div>
-                <div>生日</div><div id="uvm_birthday">—</div>
+                <div>ERP ID</div><div style="font-family:monospace" id="uvm_erpid">??/div>
+                <div>??</div><div id="uvm_mobile">??/div>
+                <div>Email</div><div id="uvm_email">??/div>
+                <div>?</div><div id="uvm_birthday">??/div>
               </div>
             </div>
 
-            <!-- 身份 / 狀態 -->
+            <!-- 頨思遢 / ???-->
             <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
-              <div id="uvm_role">—</div>
-              <div id="uvm_status">—</div>
+              <div id="uvm_role">??/div>
+              <div id="uvm_status">??/div>
             </div>
 
-            <!-- 統計 -->
+            <!-- 蝯梯? -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
               <div style="padding:12px;background:#fff;border:1px solid #E8DED1;border-radius:6px;text-align:center">
                 <div style="font-size:24px;font-weight:600;color:#50422D" id="uvm_photoCount">0</div>
-                <div style="font-size:12px;color:#7A6B5C">上傳照片</div>
+                <div style="font-size:12px;color:#7A6B5C">銝?抒?</div>
               </div>
               <div style="padding:12px;background:#fff;border:1px solid #E8DED1;border-radius:6px;text-align:center">
                 <div style="font-size:24px;font-weight:600;color:#50422D" id="uvm_designCount">0</div>
-                <div style="font-size:12px;color:#7A6B5C">刻圖設計</div>
+                <div style="font-size:12px;color:#7A6B5C">?餃?閮剛?</div>
               </div>
             </div>
 
-            <!-- 創作者頁連結 -->
+            <!-- ?萎?????? -->
             <div id="uvm_creatorLinkBlock" style="display:none">
               <a id="uvm_creatorLink" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;text-decoration:none;color:#50422D;font-size:13px">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟創作者個人頁
-              </a>
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> ???萎??犖??              </a>
             </div>
           </div>
 
@@ -780,32 +777,32 @@
         </div>
 
         <div class="ag-modal-footer" style="padding:16px 24px;border-top:1px solid #E8DED1;display:flex;gap:8px;justify-content:flex-end">
-          <button type="button" id="uvm_closeBtn" style="padding:9px 18px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;color:#50422D">關閉</button>
+          <button type="button" id="uvm_closeBtn" style="padding:9px 18px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;color:#50422D">??</button>
         </div>
       </div>
     </div>
 
-    <!-- ============= 其他頁 placeholder ============= -->
-    <!-- ============= 照片審核 (合併: photo + story) ============= -->
+    <!-- ============= ?嗡???placeholder ============= -->
+    <!-- ============= ?抒?撖拇 (?蔥: photo + story) ============= -->
     <div class="content-page" data-page="review-uploads">
       <div class="page-head">
         <div>
-          <h1 class="page-title">上傳照片審核</h1>
-          <div class="page-sub" id="reviewUploadsSub">— 件待審核 · 通過後將出現在靈感牆</div>
+          <h1 class="page-title">銝?抒?撖拇</h1>
+          <div class="page-sub" id="reviewUploadsSub">??隞嗅?撖拇 繚 ??敺??箇?券???</div>
         </div>
       </div>
 
       <div class="filter-row">
-        <label>類型</label>
+        <label>憿?</label>
         <select id="reviewUploadsType">
-          <option value="all">全部</option>
-          <option value="photo">只有照片</option>
-          <option value="story">有故事 (≥50字)</option>
+          <option value="all">?券</option>
+          <option value="photo">?芣??抒?</option>
+          <option value="story">??鈭?(??0摮?</option>
         </select>
-        <label style="margin-left:14px">狀態</label>
+        <label style="margin-left:14px">???/label>
         <select id="reviewUploadsStatus">
-          <option value="pending">待審核</option>
-          <option value="rejected">已駁回</option>
+          <option value="pending">敺祟??/option>
+          <option value="rejected">撌脤???/option>
         </select>
         <div class="spacer"></div>
       </div>
@@ -813,156 +810,150 @@
       <div class="review-grid" id="reviewUploadsGrid">
         <div class="empty-page" style="grid-column:1/-1">
           <i class="fa-regular fa-image"></i>
-          <div class="empty-page-title">載入中...</div>
+          <div class="empty-page-title">頛銝?..</div>
         </div>
       </div>
     </div>
     <div class="content-page" data-page="cm-banner">
       <div class="page-head">
         <div>
-          <h1 class="page-title">首頁與分頁 Banner</h1>
-          <div class="page-sub">管理 5 個 banner 位置 · 首頁主打可多張輪播,其他單張</div>
+          <h1 class="page-title">擐?????Banner</h1>
+          <div class="page-sub">蝞∠? 5 ??banner 雿蔭 繚 擐?銝餅??臬?撘菔憚???嗡??桀撐</div>
         </div>
       </div>
 
-      <!-- 5 個位置 tab -->
+      <!-- 5 ??蝵?tab -->
       <div class="banner-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin:18px 0;border-bottom:1px solid var(--lohas-line);padding-bottom:0">
         <button class="banner-tab on" data-pos="home_main">
-          <i class="fa-solid fa-bullhorn"></i>首頁主打
-          <span class="badge">輪播</span>
+          <i class="fa-solid fa-bullhorn"></i>擐?銝餅?
+          <span class="badge">頛芣</span>
         </button>
         <button class="banner-tab" data-pos="home_hero">
-          <i class="fa-regular fa-flag"></i>首頁 Hero
+          <i class="fa-regular fa-flag"></i>擐? Hero
         </button>
         <button class="banner-tab" data-pos="engraving">
-          <i class="fa-solid fa-fire"></i>雷刻頁
-        </button>
+          <i class="fa-solid fa-fire"></i>?瑕??        </button>
         <button class="banner-tab" data-pos="market">
-          <i class="fa-solid fa-store"></i>刻圖市集頁
-        </button>
+          <i class="fa-solid fa-store"></i>?餃?撣???        </button>
         <button class="banner-tab" data-pos="gallery">
-          <i class="fa-regular fa-images"></i>靈感分享牆
-        </button>
+          <i class="fa-regular fa-images"></i>???澈??        </button>
       </div>
 
-      <!-- 當前位置 banner 列表 + 新增按鈕 -->
+      <!-- ?嗅?雿蔭 banner ?” + ?啣??? -->
       <div id="bannerListWrap" style="margin-top:14px"></div>
 
-      <!-- Banner 編輯 Modal (採最新消息 modal 樣式) -->
+      <!-- Banner 蝺刻摩 Modal (?⊥??唳???modal 璅??) -->
       <div class="ag-modal-overlay" id="bannerEditModal" style="display:none">
         <div class="ag-modal">
           <div class="ag-modal-header">
-            <h2 class="ag-modal-title" id="bannerModalTitle">編輯 Banner</h2>
-            <button class="ag-modal-close" id="bannerModalClose" type="button" aria-label="關閉">
+            <h2 class="ag-modal-title" id="bannerModalTitle">蝺刻摩 Banner</h2>
+            <button class="ag-modal-close" id="bannerModalClose" type="button" aria-label="??">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
 
           <div class="ag-modal-body">
 
-            <!-- 視覺 -->
+            <!-- 閬死 -->
             <div class="editor-panel">
-              <h3 class="editor-panel-title">Banner 視覺</h3>
+              <h3 class="editor-panel-title">Banner 閬死</h3>
 
               <div class="editor-row">
-                <label class="editor-label">Banner 圖<span class="req">*</span></label>
+                <label class="editor-label">Banner ??span class="req">*</span></label>
                 <div class="img-upload-wrap" data-field="banner_image" data-aspect="16:9" id="bmImageWrap">
                   <div class="img-upload-preview" id="bmImagePreview">
-                    <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳 <span id="bmAspectHint">(16:9)</span></span>
+                    <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 暺?銝 <span id="bmAspectHint">(16:9)</span></span>
                   </div>
-                  <button type="button" class="img-upload-clear" id="bmImageClear" aria-label="移除圖片" style="display:none">
+                  <button type="button" class="img-upload-clear" id="bmImageClear" aria-label="蝘駁??" style="display:none">
                     <i class="fa-solid fa-xmark"></i>
                   </button>
                   <input type="file" accept="image/*" class="img-upload-input">
-                  <p class="editor-hint" id="bmImageHint">建議比例 16:9 · 建議尺寸 1920 × 1080 px</p>
+                  <p class="editor-hint" id="bmImageHint">撱箄降瘥? 16:9 繚 撱箄降撠箏站 1920 ? 1080 px</p>
                 </div>
               </div>
 
-              <!-- 手機版上傳區 (依 position 動態 aspect,選填) -->
+              <!-- ?????喳? (靘?position ?? aspect,?詨‵) -->
               <div class="editor-row" id="bmImageMobileRow">
-                <label class="editor-label">Banner 圖 (手機版)</label>
+                <label class="editor-label">Banner ??(????</label>
                 <div class="img-upload-wrap" data-field="banner_image_mobile" data-aspect="3:4" id="bmImageMobileWrap">
                   <div class="img-upload-preview" id="bmImageMobilePreview">
-                    <span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 點擊上傳 (3:4)</span>
+                    <span class="img-upload-placeholder"><i class="fa-solid fa-mobile-screen"></i> 暺?銝 (3:4)</span>
                   </div>
-                  <button type="button" class="img-upload-clear" id="bmImageMobileClearBtn" aria-label="移除手機版圖" style="display:none">
+                  <button type="button" class="img-upload-clear" id="bmImageMobileClearBtn" aria-label="蝘駁????" style="display:none">
                     <i class="fa-solid fa-xmark"></i>
                   </button>
                   <input type="file" accept="image/*" class="img-upload-input">
-                  <p class="editor-hint" id="bmImageMobileHint">選填 · 未上傳時手機版會用上方桌機版圖</p>
+                  <p class="editor-hint" id="bmImageMobileHint">?詨‵ 繚 ?芯??單??????其??寞?璈???/p>
                 </div>
               </div>
 
               <div class="editor-row">
-                <label class="editor-label">啟用狀態</label>
+                <label class="editor-label">????/label>
                 <label class="editor-check">
                   <input type="checkbox" id="bmIsActive" checked>
-                  前台顯示此 Banner
+                  ?憿舐內甇?Banner
                 </label>
               </div>
 
               <div class="editor-row" id="bmSortRow" style="display:none">
-                <label class="editor-label">輪播順序</label>
+                <label class="editor-label">頛芣??</label>
                 <input type="number" class="editor-input" id="bmSortOrder" placeholder="0" style="max-width:160px"/>
-                <p class="editor-hint">數字越小越前面</p>
+                <p class="editor-hint">?詨?頞?頞???/p>
               </div>
             </div>
 
-            <!-- Banner 連結 (選填)
+            <!-- Banner ??? (?詨‵)
                  ------------------------------------------------------
-                 原本這一格叫「按鈕連結」,躲在文字內容裡面 ——
-                 那讓「純圖片的 banner」看起來沒辦法連到任何地方,
-                 因為不填按鈕文字就沒有按鈕,填了網址也沒有東西會用它。
-
-                 現在它獨立成一段,而且整張 banner 都會吃這個連結:
-                 有按鈕就按鈕用,沒按鈕整張圖可以點。 -->
+                 ????澆???????頨脣???批捆鋆⊿ ??                 ?????????banner??韏瑚?瘝齒瘜?隞颱??唳,
+                 ?銝‵????撠望?????憛思?蝬脣?銋??镼踵??典???
+                 ?曉摰蝡?銝畾????游撐 banner ?賣????:
+                 ???停????瘝??撘萄??臭誑暺?-->
             <div class="editor-panel">
-              <h3 class="editor-panel-title">Banner 連結 (選填)</h3>
+              <h3 class="editor-panel-title">Banner ??? (?詨‵)</h3>
 
               <div class="editor-row">
-                <label class="editor-label">點擊後前往</label>
+                <label class="editor-label">暺?敺?敺</label>
                 <input type="text" class="editor-input" id="bmLinkUrl"
-                       placeholder="engraving.html 或 https://..."/>
+                       placeholder="engraving.html ??https://..."/>
                 <p class="editor-hint">
-                  填了之後<b>整張 Banner 都可以點</b>。若下方也填了按鈕文字,按鈕會連到同一個網址。<br>
-                  站內頁面直接填檔名(例如 <code>engraving.html</code>)會在原視窗開啟;
-                  外部網址會另開分頁。留空則整張不可點。
-                </p>
+                  憛思?銋?<b>?游撐 Banner ?賢隞仿?</b>?銝銋‵鈭???摮????????雯???br>
+                  蝡??湔憛急???靘? <code>engraving.html</code>)???蝒???
+                  憭蝬脣??????蝛箏??游撐銝暺?                </p>
               </div>
             </div>
 
-            <!-- 文字內容 -->
+            <!-- ???批捆 -->
             <div class="editor-panel">
-              <h3 class="editor-panel-title">文字內容 (選填)</h3>
+              <h3 class="editor-panel-title">???批捆 (?詨‵)</h3>
 
               <div class="editor-row">
-                <label class="editor-label">標題</label>
-                <input type="text" class="editor-input" id="bmTitle" placeholder="例如:本月限定 雷刻 7 折"/>
-                <p class="editor-hint">顯示在 Banner 上的主標題</p>
+                <label class="editor-label">璅?</label>
+                <input type="text" class="editor-input" id="bmTitle" placeholder="靘?:?祆??? ?瑕 7 ??/>
+                <p class="editor-hint">憿舐內??Banner 銝?銝餅?憿?/p>
               </div>
 
               <div class="editor-row">
-                <label class="editor-label">副標題</label>
-                <input type="text" class="editor-input" id="bmSubtitle" placeholder="例如:把心意刻在鏡片上 · 母親節前下訂享優惠"/>
-                <p class="editor-hint">顯示在主標題下方</p>
+                <label class="editor-label">?舀?憿?/label>
+                <input type="text" class="editor-input" id="bmSubtitle" placeholder="靘?:????券?? 繚 瘥扛蝭??閮澈?芣?"/>
+                <p class="editor-hint">憿舐內?其蜓璅?銝</p>
               </div>
 
               <div class="editor-row">
-                <label class="editor-label">按鈕文字</label>
-                <input type="text" class="editor-input" id="bmCtaText" placeholder="例如:立即預訂" style="max-width:340px"/>
-                <p class="editor-hint">留空就不顯示按鈕。按鈕要連到哪裡,填在上面的「Banner 連結」。</p>
+                <label class="editor-label">????</label>
+                <input type="text" class="editor-input" id="bmCtaText" placeholder="靘?:蝡??" style="max-width:340px"/>
+                <p class="editor-hint">?征撠曹?憿舐內?????????芾ㄐ,憛怠銝?anner ?????/p>
               </div>
             </div>
           </div>
 
-          <!-- footer (固定底部) -->
+          <!-- footer (?箏?摨) -->
           <div class="ag-modal-footer">
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
-              <button class="btn" id="bmCancelBtn">關閉</button>
+              <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>?脣?</span></button>
+              <button class="btn" id="bmCancelBtn">??</button>
               <div class="spacer"></div>
               <button class="btn btn-danger" id="bmDeleteBtn" style="display:none">
-                <i class="fa-solid fa-trash"></i>刪除 Banner
+                <i class="fa-solid fa-trash"></i>?芷 Banner
               </button>
             </div>
             <div class="form-hint" id="bmHint" style="width:100%;margin-top:8px;text-align:right"></div>
@@ -970,77 +961,77 @@
         </div>
       </div>
     </div>
-    <!-- ============= 創作者管理 (列表 + 編輯/刪除) ============= -->
+    <!-- ============= ?萎??恣??(?” + 蝺刻摩/?芷) ============= -->
     <div class="content-page" data-page="creators">
       <div class="page-head">
         <div>
-          <h1 class="page-title">創作者管理</h1>
-          <div class="page-sub" id="creatorsListSub">— 位創作者</div>
+          <h1 class="page-title">?萎??恣??/h1>
+          <div class="page-sub" id="creatorsListSub">??雿雿?/div>
         </div>
       </div>
 
       <div class="filter-row">
-        <input class="editor-input" id="creatorsSearchInput" placeholder="搜尋名稱 / member_id..." style="max-width:280px"/>
+        <input class="editor-input" id="creatorsSearchInput" placeholder="???迂 / member_id..." style="max-width:280px"/>
         <div class="filter-group">
-          <label>類型</label>
+          <label>憿?</label>
           <select id="creatorsFilterType">
-            <option value="all">全部</option>
-            <option value="member">真實會員</option>
-            <option value="virt">樂活官方</option>
+            <option value="all">?券</option>
+            <option value="member">?祕?</option>
+            <option value="virt">璅暑摰</option>
           </select>
         </div>
         <div class="filter-group">
-          <label>狀態</label>
+          <label>???/label>
           <select id="creatorsFilterStatus">
-            <option value="all">全部</option>
-            <option value="active">顯示中</option>
-            <option value="inactive">已隱藏</option>
+            <option value="all">?券</option>
+            <option value="active">憿舐內銝?/option>
+            <option value="inactive">撌脤??/option>
           </select>
         </div>
         <div class="spacer"></div>
-        <button class="action-btn-solid" id="creatorsAddBtn"><i class="fa-solid fa-plus"></i>新增創作者</button>
+        <button class="action-btn-solid" id="creatorsAddBtn"><i class="fa-solid fa-plus"></i>?啣??萎???/button>
       </div>
 
       <div id="creatorsList">
-        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
+        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">頛銝?..</p>
       </div>
     </div>
 
-    <!-- ============= 頁尾管理 ============= -->
+    <!-- ============= ?偏蝞∠? ============= -->
     <div class="content-page" data-page="cm-footer">
-      <!-- 內容由 js/admin-portal-footer.js 動態渲染 -->
+      <!-- ?批捆??js/admin-portal-footer.js ??皜脫? -->
     </div>
 
-    <!-- ============= 晶碩專頁 ============= -->
+    <!-- ============= ?嗥◣撠? ============= -->
     <div class="content-page" data-page="cm-pegavision">
       <div class="page-head">
         <div>
-          <h1 class="page-title">晶碩專頁</h1>
-          <div class="page-sub">上傳一張長圖，會顯示在 pegavision.html 專頁（桌機 / 手機共用同一張）</div>
+          <h1 class="page-title">?嗥◣撠?</h1>
+          <div class="page-sub">銝銝撘菟???＊蝷箏 pegavision.html 撠?嚗?璈?/ ???梁??撘蛛?</div>
         </div>
         <div class="page-actions">
           <a class="btn" href="pegavision.html" target="_blank" rel="noopener">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i>預覽專頁
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>?汗撠?
           </a>
           <button class="action-btn-solid" id="pegaSaveBtn">
-            <i class="fa-solid fa-floppy-disk"></i><span>儲存</span>
+            <i class="fa-solid fa-floppy-disk"></i><span>?脣?</span>
           </button>
         </div>
       </div>
 
       <div class="pega-admin">
         <div class="pega-admin-upload">
-          <div class="pega-admin-label">專頁長圖</div>
-          <div class="pega-admin-hint">建議寬度 960px、JPG/PNG，高度不限（長條圖）。上傳後即為前台顯示內容。</div>
+          <div class="pega-admin-label">撠??瑕?</div>
+          <div class="pega-admin-hint">撱箄降撖砍漲 960px?PG/PNG嚗?摨虫????瑟??????喳??喟?憿舐內?批捆??/div>
 
           <input type="file" id="pegaFileInput" accept="image/*" style="display:none">
           <button type="button" class="btn" id="pegaPickBtn">
-            <i class="fa-solid fa-upload"></i> 選擇圖片
+            <i class="fa-solid fa-upload"></i> ?豢???
           </button>
 
           <div class="pega-admin-preview" id="pegaPreview" style="display:none">
-            <img id="pegaPreviewImg" src="" alt="預覽">
-            <button type="button" class="pega-admin-remove" id="pegaRemoveBtn" title="移除圖片">
+            <img id="pegaPreviewImg" src="" alt="?汗">
+            <button type="button" class="pega-admin-remove" id="pegaRemoveBtn" title="蝘駁??">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -1048,91 +1039,87 @@
       </div>
     </div>
 
-    <!-- ============= 分類管理 ============= -->
+    <!-- ============= ??蝞∠? ============= -->
     <div class="content-page" data-page="cm-categories">
       <div class="page-head">
         <div>
-          <h1 class="page-title">分類管理</h1>
-          <div class="page-sub" id="catListSub">— 個主分類</div>
-          <div class="page-sub cat-desc">分類用於 market 刻圖市集、gallery 等所有頁面。停用的分類不會出現在前台,但歷史資料仍保留對應。</div>
+          <h1 class="page-title">??蝞∠?</h1>
+          <div class="page-sub" id="catListSub">???蜓??</div>
+          <div class="page-sub cat-desc">???冽 market ?餃?撣??allery 蝑????Ｕ??函???銝??箇?典???雿風?脰???靽?撠???/div>
         </div>
         <div class="page-actions">
-          <button class="action-btn-solid" id="catAddMainBtn"><i class="fa-solid fa-plus"></i>新增主分類</button>
+          <button class="action-btn-solid" id="catAddMainBtn"><i class="fa-solid fa-plus"></i>?啣?銝餃?憿?/button>
         </div>
       </div>
 
       <div id="catList" class="cat-list">
-        <div class="cat-loading">載入中…</div>
+        <div class="cat-loading">頛銝凌?/div>
       </div>
     </div>
 
-    <!-- ============= 客製眼鏡布 ============= -->
+    <!-- ============= 摰Ｚˊ?潮撣?============= -->
     <div class="content-page" data-page="cloth">
       <div class="page-head">
         <div>
-          <h1 class="page-title">客製眼鏡布加工管理</h1>
-          <div class="page-sub" id="clothSub">— 件</div>
-          <div class="page-sub">客人在官網做好的眼鏡布設計。下載 SVG 或 DXF 交給製作端;DXF 是在瀏覽器由 SVG 即時轉出的,不另外存一份。</div>
+          <h1 class="page-title">摰Ｚˊ?潮撣?撌亦恣??/h1>
+          <div class="page-sub" id="clothSub">??隞?/div>
+          <div class="page-sub">摰Ｖ犖?典?蝬脣?憟賜??潮撣身閮?頛?SVG ??DXF 鈭斤策鋆賭?蝡?DXF ?臬?汗?函 SVG ?單?頧??銝憭?銝隞賬?/div>
         </div>
-        <!-- 製作端用的簡易頁:只要通行碼,不必登入管理後台。
-             後台人員在櫃檯或工作區多半是用手機開那一頁。 -->
+        <!-- 鋆賭?蝡舐?陛??:?芾???蝣?銝??餃蝞∠?敺??             敺鈭箏?冽?瑼舀?撌乩??憭??舐???銝??-->
         <a class="editor-btn" href="cloth-lab.html" target="_blank" rel="noopener">
-          <i class="fa-solid fa-up-right-from-square"></i> 開啟眼鏡布製作單
+          <i class="fa-solid fa-up-right-from-square"></i> ???潮撣ˊ雿
         </a>
       </div>
 
-      <!-- App 排程存活探針。正常時是一行小字,超過 36 小時變紅色警示。
-           由 js/admin-portal-cloth.js 依 cloth-feed 的心跳決定。 -->
+      <!-- App ??摮暑?ａ??迤撣豢??臭?銵?摮?頞? 36 撠?霈??脰郎蝷箝?           ??js/admin-portal-cloth.js 靘?cloth-feed ??頝單捱摰?-->
       <div id="clothHeartbeat" class="cloth-hb" style="display:none"></div>
 
-      <!-- 篩選列 (對齊最新消息 / 創作者管理) -->
+      <!-- 蝭拚??(撠???唳???/ ?萎??恣?? -->
       <div class="filter-row">
-        <input class="editor-input" id="clothSearch" placeholder="搜尋會員編號 / 姓名..." style="max-width:280px"/>
+        <input class="editor-input" id="clothSearch" placeholder="???蝺刻? / 憪?..." style="max-width:280px"/>
         <div class="filter-group">
-          <label>狀態</label>
+          <label>???/label>
           <select id="clothStatus">
-            <option value="new">待處理</option>
-            <option value="">全部</option>
-            <option value="done">已完成</option>
-            <option value="archived">已封存</option>
+            <option value="new">敺???/option>
+            <option value="">?券</option>
+            <option value="done">撌脣???/option>
+            <option value="archived">撌脣?摮?/option>
           </select>
         </div>
         <div class="spacer"></div>
       </div>
 
       <div id="clothList" class="cloth-list">
-        <div class="cloth-loading">載入中…</div>
+        <div class="cloth-loading">頛銝凌?/div>
       </div>
     </div>
 
-    <!-- ============= 禮物中心加工管理 =============
-         ⚠ 這一頁與 store-lookup.html(門市查刻圖)【共用同一支程式】:
-         同樣的 sl- 元素 id、同樣的 js/store-lookup.js、同樣的 css。
-
-         不複製一份的理由:兩份查詢邏輯遲早會走鐘,而走鐘的那天
-         門市看到的與後台看到的不一樣,沒有人會知道哪一邊是對的。 -->
+    <!-- ============= 蝳桃銝剖??極蝞∠? =============
+         ?????? store-lookup.html(?撣?餃?)??典?銝?舐?撘?
+         ?見??sl- ?? id??璅?? js/store-lookup.js??璅?? css??
+         銝?鋆賭?隞賜??:?拐遢?亥岷?摩?脫?粥???粥????予
+         ?撣??啁????啁??啁?銝?璅?瘝?鈭箸??仿??芯??撠???-->
     <div class="content-page" data-page="gift-work">
       <div class="page-head">
         <div>
-          <h1 class="page-title">禮物中心加工管理</h1>
-          <div class="page-sub">輸入會員編號,查出這位客人的禮物要刻什麼、刻在哪。與門市查刻圖同一份資料。</div>
+          <h1 class="page-title">蝳桃銝剖??極蝞∠?</h1>
+          <div class="page-sub">頛詨?蝺刻?,?亙??摰Ｖ犖?旨?抵??颱?暻潦?典???撣?餃???隞質???/div>
         </div>
         <a class="editor-btn" href="store-lookup.html" target="_blank" rel="noopener">
-          <i class="fa-solid fa-up-right-from-square"></i> 開啟門市查刻圖
+          <i class="fa-solid fa-up-right-from-square"></i> ???撣?餃?
         </a>
       </div>
 
       <section class="sl-search">
-        <label class="sl-label" for="slErpid">會員編號或手機</label>
+        <label class="sl-label" for="slErpid">?蝺刻???璈?/label>
         <div class="sl-search-row">
-          <!-- 不要放真實的會員編號當範例 -->
+          <!-- 銝??曄?撖衣??蝺刻??嗥?靘?-->
           <input type="text" id="slErpid" class="sl-input" inputmode="numeric"
-                 placeholder="輸入會員編號或手機號碼" autocomplete="off">
-          <button type="button" id="slBtn" class="sl-btn">查 詢</button>
+                 placeholder="頛詨?蝺刻???璈?蝣? autocomplete="off">
+          <button type="button" id="slBtn" class="sl-btn">??閰?/button>
         </div>
         <p class="sl-hint">
-          客人報會員編號或手機都可以,直接輸入即可。
-        </p>
+          摰Ｖ犖?望??∠楊?????賢隞??湔頛詨?喳??        </p>
       </section>
 
       <div id="slMsg" class="sl-msg" style="display:none"></div>
@@ -1143,58 +1130,58 @@
       </section>
     </div>
 
-    <!-- ============= 授權聯名管理 ============= -->
+    <!-- ============= ???臬?蝞∠? ============= -->
     <div class="content-page" data-page="ip">
       <div class="page-head">
         <div>
-          <h1 class="page-title">授權聯名管理</h1>
-          <div class="page-sub" id="collabListSub">— 個聯名活動</div>
+          <h1 class="page-title">???臬?蝞∠?</h1>
+          <div class="page-sub" id="collabListSub">????暑??/div>
         </div>
       </div>
 
-      <!-- 篩選列 (對齊創作者管理) -->
+      <!-- 蝭拚??(撠??萎??恣?? -->
       <div class="filter-row">
-        <input class="editor-input" id="collabSearchInput" placeholder="搜尋品牌名 / Slug..." style="max-width:280px"/>
+        <input class="editor-input" id="collabSearchInput" placeholder="??????/ Slug..." style="max-width:280px"/>
         <div class="filter-group">
-          <label>狀態</label>
+          <label>???/label>
           <select id="collabFilterStatus">
-            <option value="">全部</option>
-            <option value="draft">草稿</option>
-            <option value="upcoming">即將推出</option>
-            <option value="active">進行中</option>
-            <option value="ended">已結束</option>
-            <option value="archived">封存</option>
+            <option value="">?券</option>
+            <option value="draft">?阮</option>
+            <option value="upcoming">?喳??典</option>
+            <option value="active">?脰?銝?/option>
+            <option value="ended">撌脩???/option>
+            <option value="archived">撠?</option>
           </select>
         </div>
         <div class="filter-group">
-          <label>分類</label>
+          <label>??</label>
           <select id="collabFilterCategory">
-            <option value="">全部</option>
+            <option value="">?券</option>
             <option value="fashion">FASHION / SPORTS</option>
             <option value="character">CHARACTER</option>
             <option value="anime">ANIME / GAME</option>
           </select>
         </div>
         <div class="spacer"></div>
-        <button class="action-btn-solid" id="collabNewBtn"><i class="fa-solid fa-plus"></i>新增聯名</button>
+        <button class="action-btn-solid" id="collabNewBtn"><i class="fa-solid fa-plus"></i>?啣??臬?</button>
       </div>
 
-      <!-- 列表 (用 creator-card 樣式) -->
+      <!-- ?” (??creator-card 璅??) -->
       <div class="creators-list" id="collabList">
-        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
+        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">頛銝?..</p>
       </div>
     </div>
 
-    <!-- ============= IP 編輯 Modal (對齊 ag-modal 樣式) ============= -->
+    <!-- ============= IP 蝺刻摩 Modal (撠? ag-modal 璅??) ============= -->
     <div class="ag-modal-overlay" id="collabEditModal" style="display:none">
       <div class="ag-modal">
         <div class="ag-modal-header">
-          <h2 class="ag-modal-title" id="collabModalTitle">編輯聯名</h2>
+          <h2 class="ag-modal-title" id="collabModalTitle">蝺刻摩?臬?</h2>
           <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
             <button class="btn" id="collabApplyTemplateBtn" type="button" style="display:none">
-              <i class="fa-solid fa-wand-magic-sparkles"></i> 快速套公版
+              <i class="fa-solid fa-wand-magic-sparkles"></i> 敹恍??祉?
             </button>
-            <button class="ag-modal-close" id="collabModalClose" type="button" aria-label="關閉">
+            <button class="ag-modal-close" id="collabModalClose" type="button" aria-label="??">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -1202,368 +1189,368 @@
 
         <div class="ag-modal-body collab-body">
 
-          <!-- 基本資料 panel -->
+          <!-- ?箸鞈? panel -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">基本資料</h3>
+            <h3 class="editor-panel-title">?箸鞈?</h3>
 
             <div class="editor-row">
-              <label class="editor-label">Slug (URL ID,系統自動生成)</label>
-              <input type="text" class="editor-input" id="cm_slug" placeholder="儲存後自動產生" readonly style="background:#f0ebe2;color:#888;cursor:not-allowed" />
-              <p class="editor-hint">前台連結將是 collab.html?id=<span id="cm_slug_preview">xxx</span></p>
+              <label class="editor-label">Slug (URL ID,蝟餌絞?芸???)</label>
+              <input type="text" class="editor-input" id="cm_slug" placeholder="?脣?敺??? readonly style="background:#f0ebe2;color:#888;cursor:not-allowed" />
+              <p class="editor-hint">????撠 collab.html?id=<span id="cm_slug_preview">xxx</span></p>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">品牌名稱<span class="req">*</span></label>
-                <input type="text" class="editor-input" id="cm_brand_name" placeholder="請輸入品牌或 IP 名稱" />
+                <label class="editor-label">???迂<span class="req">*</span></label>
+                <input type="text" class="editor-input" id="cm_brand_name" placeholder="隢撓?亙??? IP ?迂" />
               </div>
               <div class="editor-row">
-                <label class="editor-label">分類<span class="req">*</span></label>
+                <label class="editor-label">??<span class="req">*</span></label>
                 <select class="editor-input" id="cm_category">
-                  <option value="character">CHARACTER 角色</option>
-                  <option value="fashion">FASHION / SPORTS 時尚運動</option>
-                  <option value="anime">ANIME / GAME 動畫遊戲</option>
+                  <option value="character">CHARACTER 閫</option>
+                  <option value="fashion">FASHION / SPORTS ????</option>
+                  <option value="anime">ANIME / GAME ??</option>
                 </select>
               </div>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">上架狀態</label>
+                <label class="editor-label">銝???/label>
                 <select class="editor-input" id="cm_status">
-                  <option value="draft">草稿 (前台看不到)</option>
-                  <option value="upcoming">即將推出</option>
-                  <option value="active">進行中</option>
-                  <option value="ended">已結束</option>
-                  <option value="archived">封存</option>
+                  <option value="draft">?阮 (?????</option>
+                  <option value="upcoming">?喳??典</option>
+                  <option value="active">?脰?銝?/option>
+                  <option value="ended">撌脩???/option>
+                  <option value="archived">撠?</option>
                 </select>
               </div>
               <div class="editor-row">
-                <label class="editor-label">活動階段</label>
+                <label class="editor-label">瘣餃??挾</label>
                 <select class="editor-input" id="cm_lifecycle_status">
-                  <option value="upcoming">即將推出 (倒數到上市)</option>
-                  <option value="preorder">預購中 (倒數結束)</option>
-                  <option value="on_sale">販售中 (拿掉預購字眼)</option>
-                  <option value="sold_out">已售完 (灰底,殘念全數售出)</option>
-                  <option value="ended">活動結束</option>
+                  <option value="upcoming">?喳??典 (??唬?撣?</option>
+                  <option value="preorder">?頃銝?(?蝯?)</option>
+                  <option value="on_sale">鞎拙銝?(?踵??頃摮)</option>
+                  <option value="sold_out">撌脣摰?(?啣?,畾艙?冽?桀)</option>
+                  <option value="ended">瘣餃?蝯?</option>
                 </select>
-                <p class="editor-hint">影響前台文案 / CTA / 倒數顯示</p>
+                <p class="editor-hint">敶梢??? / CTA / ?憿舐內</p>
               </div>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">排序 (數字越小越前)</label>
+              <label class="editor-label">?? (?詨?頞?頞?)</label>
               <input type="number" class="editor-input" id="cm_sort_order" value="0" />
             </div>
           </div>
 
-          <!-- Hero 區 panel -->
+          <!-- Hero ? panel -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">Hero 主視覺</h3>
+            <h3 class="editor-panel-title">Hero 銝餉?閬?/h3>
 
             <div class="editor-row">
-              <label class="editor-label">主視覺大圖</label>
+              <label class="editor-label">銝餉?閬箏之??/label>
               <div class="img-upload-wrap" data-field="hero_image_url" data-aspect="4:3">
                 <div class="img-upload-preview" id="cm_hero_image_preview" style="aspect-ratio:4/3">
-                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 暺?銝</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
-                <p class="editor-hint">建議比例 4:3 · 建議尺寸 800 × 600 px · 上傳會自動裁切</p>
+                <p class="editor-hint">撱箄降瘥? 4:3 繚 撱箄降撠箏站 800 ? 600 px 繚 銝?????/p>
               </div>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">Eyebrow 小標 (Hero 上方小字)</label>
-              <input type="text" class="editor-input" id="cm_hero_eyebrow" placeholder="例如:LIMITED EDITION · 200 套" />
-              <p class="editor-hint">例如:LIMITED EDITION · 200 套(可以直接編輯數字)</p>
+              <label class="editor-label">Eyebrow 撠? (Hero 銝撠?)</label>
+              <input type="text" class="editor-input" id="cm_hero_eyebrow" placeholder="靘?:LIMITED EDITION 繚 200 憟? />
+              <p class="editor-hint">靘?:LIMITED EDITION 繚 200 憟??臭誑?湔蝺刻摩?詨?)</p>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">Hero 標題</label>
-              <input type="text" class="editor-input" id="cm_hero_title" placeholder="例如:LOHAS × 品牌名" />
+              <label class="editor-label">Hero 璅?</label>
+              <input type="text" class="editor-input" id="cm_hero_title" placeholder="靘?:LOHAS ? ???? />
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">副標</label>
-              <input type="text" class="editor-input" id="cm_hero_subtitle" placeholder="品牌主軸 slogan(1 行)" />
+              <label class="editor-label">?舀?</label>
+              <input type="text" class="editor-input" id="cm_hero_subtitle" placeholder="??銝餉遘 slogan(1 銵?" />
             </div>
           </div>
 
-          <!-- 限量 / 倒數 panel -->
+          <!-- ?? / ? panel -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">限量與倒數</h3>
+            <h3 class="editor-panel-title">???</h3>
 
             <div class="editor-row-2col">
-              <label class="editor-check"><input type="checkbox" id="cm_show_countdown" /> 顯示倒數計時</label>
-              <label class="editor-check"><input type="checkbox" id="cm_show_limit" /> 顯示限量資訊</label>
+              <label class="editor-check"><input type="checkbox" id="cm_show_countdown" /> 憿舐內?閮?</label>
+              <label class="editor-check"><input type="checkbox" id="cm_show_limit" /> 憿舐內??鞈?</label>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">活動開始日</label>
+                <label class="editor-label">瘣餃?????/label>
                 <input type="datetime-local" class="editor-input" id="cm_start_date" />
               </div>
               <div class="editor-row">
-                <label class="editor-label">活動結束日 (倒數)</label>
+                <label class="editor-label">瘣餃?蝯???(?)</label>
                 <input type="datetime-local" class="editor-input" id="cm_end_date" />
               </div>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">日期區間文字 (例如 MAY 20 — JUNE 30)</label>
-              <input type="text" class="editor-input" id="cm_date_range_text" placeholder="例如:MAY 20 — JUNE 30" />
+              <label class="editor-label">?交????摮?(靘? MAY 20 ??JUNE 30)</label>
+              <input type="text" class="editor-input" id="cm_date_range_text" placeholder="靘?:MAY 20 ??JUNE 30" />
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">限量總數</label>
-                <input type="number" class="editor-input" id="cm_limit_total" placeholder="例如:200" />
+                <label class="editor-label">??蝮賣</label>
+                <input type="number" class="editor-input" id="cm_limit_total" placeholder="靘?:200" />
               </div>
               <div class="editor-row">
-                <label class="editor-label">已預約數</label>
+                <label class="editor-label">撌脤?蝝</label>
                 <input type="number" class="editor-input" id="cm_preorder_count" value="0" />
               </div>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">上市文字</label>
-                <input type="text" class="editor-input" id="cm_launch_date_text" placeholder="例如:2026.05.20" />
+                <label class="editor-label">銝???</label>
+                <input type="text" class="editor-input" id="cm_launch_date_text" placeholder="靘?:2026.05.20" />
               </div>
               <div class="editor-row">
-                <label class="editor-label">限定門市</label>
-                <input type="text" class="editor-input" id="cm_available_stores" placeholder="例如:北中南各 1 家 / 限線上預購" />
+                <label class="editor-label">???撣?/label>
+                <input type="text" class="editor-input" id="cm_available_stores" placeholder="靘?:?葉?? 1 摰?/ ??銝?鞈? />
               </div>
             </div>
           </div>
 
-          <!-- 故事 panel -->
+          <!-- ?? panel -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">故事介紹</h3>
+            <h3 class="editor-panel-title">??隞晶</h3>
 
             <div class="editor-row">
-              <label class="editor-label">故事圖片</label>
+              <label class="editor-label">????</label>
               <div class="img-upload-wrap" data-field="story_image_url" data-aspect="4:5">
                 <div class="img-upload-preview" id="cm_story_image_preview">
-                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 暺?銝</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
-                <p class="editor-hint">建議比例 4:5 · 建議尺寸 800 × 1000 px</p>
+                <p class="editor-hint">撱箄降瘥? 4:5 繚 撱箄降撠箏站 800 ? 1000 px</p>
               </div>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">故事段落</label>
+              <label class="editor-label">??畾菔</label>
               <div class="story-builder">
                 <div class="story-builder-list" id="cm_story_list">
-                  <!-- 動態插入 .story-row -->
+                  <!-- ??? .story-row -->
                 </div>
                 <div class="story-builder-actions">
-                  <button type="button" class="btn" data-add-story="p"><i class="fa-solid fa-plus"></i>新增段落</button>
-                  <button type="button" class="btn" data-add-story="quote"><i class="fa-solid fa-quote-right"></i>新增引用</button>
+                  <button type="button" class="btn" data-add-story="p"><i class="fa-solid fa-plus"></i>?啣?畾菔</button>
+                  <button type="button" class="btn" data-add-story="quote"><i class="fa-solid fa-quote-right"></i>?啣?撘</button>
                 </div>
-                <!-- 隱藏欄位:JS 同步轉成 JSON,儲存時直接讀 -->
+                <!-- ?梯?甈?:JS ?郊頧? JSON,?脣???亥? -->
                 <input type="hidden" id="cm_story_paragraphs" />
               </div>
             </div>
           </div>
 
-          <!-- 創作者訪談 panel -->
+          <!-- ?萎??赤隢?panel -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">創作者訪談</h3>
+            <h3 class="editor-panel-title">?萎??赤隢?/h3>
 
             <div class="editor-row">
-              <label class="editor-label">創作者頭像</label>
+              <label class="editor-label">?萎????/label>
               <div class="img-upload-wrap" data-field="creator_avatar_url" data-aspect="1:1">
                 <div class="img-upload-preview img-upload-circle" id="cm_creator_avatar_preview">
                   <span class="img-upload-placeholder"><i class="fa-solid fa-user"></i></span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
-                <p class="editor-hint">建議比例 1:1 · 建議尺寸 400 × 400 px</p>
+                <p class="editor-hint">撱箄降瘥? 1:1 繚 撱箄降撠箏站 400 ? 400 px</p>
               </div>
             </div>
 
             <div class="editor-row-2col">
               <div class="editor-row">
-                <label class="editor-label">創作者名稱</label>
-                <input type="text" class="editor-input" id="cm_creator_name" placeholder="例如:設計師 / 工作室名稱" />
+                <label class="editor-label">?萎???蝔?/label>
+                <input type="text" class="editor-input" id="cm_creator_name" placeholder="靘?:閮剛?撣?/ 撌乩?摰文?蝔? />
               </div>
               <div class="editor-row">
-                <label class="editor-label">創作者副標</label>
-                <input type="text" class="editor-input" id="cm_creator_subtitle" placeholder="例如:設計師 · 角色 創作者" />
+                <label class="editor-label">?萎??璅?/label>
+                <input type="text" class="editor-input" id="cm_creator_subtitle" placeholder="靘?:閮剛?撣?繚 閫 ?萎??? />
               </div>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">訪談標題</label>
-              <input type="text" class="editor-input" id="cm_interview_title" placeholder="訪談主標題(1 行)" />
+              <label class="editor-label">閮芾?璅?</label>
+              <input type="text" class="editor-input" id="cm_interview_title" placeholder="閮芾?銝餅?憿?1 銵?" />
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">訪談引言</label>
+              <label class="editor-label">閮芾?撘?</label>
               <textarea class="editor-input editor-textarea" id="cm_interview_quote" rows="4"></textarea>
             </div>
 
             <div class="editor-row">
-              <label class="editor-label">完整訪談連結</label>
+              <label class="editor-label">摰閮芾????</label>
               <input type="text" class="editor-input" id="cm_interview_full_link" />
             </div>
           </div>
 
-          <!-- 主題色 panel -->
+          <!-- 銝駁???panel -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">自訂色票</h3>
+            <h3 class="editor-panel-title">?芾??脩巨</h3>
 
             <div class="theme-color-grid">
               <div class="theme-color-row">
-                <label>主色</label>
+                <label>銝餉</label>
                 <input type="color" id="cm_theme_primary_picker" value="#7A2754" />
                 <input type="text" class="editor-input" id="cm_theme_primary" value="#7A2754" />
               </div>
               <div class="theme-color-row">
-                <label>副色</label>
+                <label>?航</label>
                 <input type="color" id="cm_theme_accent_picker" value="#F8E4ED" />
                 <input type="text" class="editor-input" id="cm_theme_accent" value="#F8E4ED" />
               </div>
               <div class="theme-color-row">
-                <label>底色</label>
+                <label>摨</label>
                 <input type="color" id="cm_theme_bg_picker" value="#FAF7F2" />
                 <input type="text" class="editor-input" id="cm_theme_bg" value="#FAF7F2" />
               </div>
             </div>
 
             <div class="theme-preview" id="themePreview">
-              <div class="tp-hero">Hero 主色 / 副色預覽</div>
+              <div class="tp-hero">Hero 銝餉 / ?航?汗</div>
             </div>
           </div>
 
-          <!-- 套餐子表 -->
+          <!-- 憟?摮” -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">套餐項目</h3>
+            <h3 class="editor-panel-title">憟??</h3>
 
-            <!-- 套餐合照 (顯示在前台「套餐內容」標題下,套餐 grid 上方) -->
+            <!-- 憟?? (憿舐內?典??啜?擗摰嫘?憿?,憟? grid 銝) -->
             <div class="editor-row">
-              <label class="editor-label">套餐合照 (全家福)</label>
+              <label class="editor-label">憟?? (?典振蝳?</label>
               <div class="img-upload-wrap" data-field="packages_group_photo_url" data-aspect="16:9">
                 <div class="img-upload-preview" id="cm_packages_group_photo_preview" style="aspect-ratio:16/9">
-                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
+                  <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 暺?銝</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
-                <p class="editor-hint">建議比例 16:9 · 建議尺寸 1920 × 1080 px · 顯示在「套餐內容」標題下方,套餐項目上方</p>
+                <p class="editor-hint">撱箄降瘥? 16:9 繚 撱箄降撠箏站 1920 ? 1080 px 繚 憿舐內?具?擗摰嫘?憿???憟??銝</p>
               </div>
             </div>
 
-            <p class="editor-hint">以下為個別套餐項目</p>
+            <p class="editor-hint">隞乩??箏憟??</p>
             <div class="subtable-list" id="cm_pkgList"></div>
-            <button class="btn-mini" id="cm_addPkg" type="button">+ 新增套餐內容</button>
-            <p class="editor-hint">建議比例 1:1 · 建議尺寸 800 × 800 px · 先儲存後才能上傳套餐圖片</p>
+            <button class="btn-mini" id="cm_addPkg" type="button">+ ?啣?憟??批捆</button>
+            <p class="editor-hint">撱箄降瘥? 1:1 繚 撱箄降撠箏站 800 ? 800 px 繚 ?摮??銝憟???</p>
           </div>
 
-          <!-- 設計子表 -->
+          <!-- 閮剛?摮” -->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">設計刻圖選項</h3>
+            <h3 class="editor-panel-title">閮剛??餃??賊?</h3>
             <div class="subtable-list" id="cm_designList"></div>
-            <button class="btn-mini" id="cm_addDesign" type="button">+ 新增設計</button>
-            <p class="editor-hint">建議比例 1:1 · 建議尺寸 800 × 800 px · 先儲存後才能上傳刻圖圖片</p>
+            <button class="btn-mini" id="cm_addDesign" type="button">+ ?啣?閮剛?</button>
+            <p class="editor-hint">撱箄降瘥? 1:1 繚 撱箄降撠箏站 800 ? 800 px 繚 ?摮??銝?餃???</p>
           </div>
 
-          <!-- 客人照子表 -->
+          <!-- 摰Ｖ犖?批?銵?-->
           <div class="editor-panel">
-            <h3 class="editor-panel-title">客人分享照片</h3>
+            <h3 class="editor-panel-title">摰Ｖ犖?澈?抒?</h3>
             <div id="cm_photoList"></div>
             <input type="file" id="cm_photoInput" accept="image/*" multiple class="visually-hidden">
-            <p class="editor-hint">建議比例 1:1 · 建議尺寸 800 × 800 px · 可直接上傳免審核</p>
+            <p class="editor-hint">撱箄降瘥? 1:1 繚 撱箄降撠箏站 800 ? 800 px 繚 ?舐?乩??喳?撖拇</p>
           </div>
 
         </div>
 
         <div class="ag-modal-footer">
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <button class="action-btn-solid" id="collabSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
-            <button class="btn" id="collabCancelBtn">關閉</button>
+            <button class="action-btn-solid" id="collabSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>?脣?</span></button>
+            <button class="btn" id="collabCancelBtn">??</button>
             <div class="spacer"></div>
             <button class="btn btn-danger" id="collabDeleteBtn" style="display:none">
-              <i class="fa-solid fa-trash"></i>刪除聯名
+              <i class="fa-solid fa-trash"></i>?芷?臬?
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ============= #4 樂活官方上傳照片 ============= -->
+    <!-- ============= #4 璅暑摰銝?抒? ============= -->
     <div class="content-page" data-page="admin-upload">
       <div class="page-head">
         <div>
-          <h1 class="page-title">樂活官方上傳</h1>
-          <div class="page-sub">代表「樂活企劃部」上傳照片到靈感牆 · 自動通過審核</div>
+          <h1 class="page-title">璅暑摰銝</h1>
+          <div class="page-sub">隞?”??瘣颱?????喟?????繚 ?芸???撖拇</div>
         </div>
       </div>
 
       <div class="form-card">
         <div class="form-row">
-          <label>顯示名稱</label>
-          <input class="editor-input" id="adminUploadName" value="LOHAS 企劃部" placeholder="LOHAS 企劃部"/>
-          <div class="form-hint">此名稱會顯示在靈感牆每張照片下方</div>
+          <label>憿舐內?迂</label>
+          <input class="editor-input" id="adminUploadName" value="LOHAS 隡??? placeholder="LOHAS 隡???/>
+          <div class="form-hint">甇文?蝔望?憿舐內?券???瘥撐?抒?銝</div>
         </div>
 
         <div class="form-row">
-          <label>標題</label>
-          <input class="editor-input" id="adminUploadTitle" maxlength="24" placeholder="例如：陪伴我10年的狗狗"/>
+          <label>璅?</label>
+          <input class="editor-input" id="adminUploadTitle" maxlength="24" placeholder="靘?嚗隡湔?10撟渡???"/>
         </div>
 
         <div class="form-row">
-          <label>靈感主題</label>
+          <label>??銝駁?</label>
           <select class="editor-input" id="adminUploadTopic">
-            <option value="愛情紀念">愛情紀念</option>
-            <option value="家人親情">家人親情</option>
-            <option value="寵物回憶">寵物回憶</option>
-            <option value="心靈寄託">心靈寄託</option>
-            <option value="個人簽名">個人簽名</option>
-            <option value="生日節慶">生日節慶</option>
-            <option value="企業團體">企業團體</option>
-            <option value="開運祝福">開運祝福</option>
-            <option value="客製圖案">客製圖案</option>
+            <option value="??蝝敹?>??蝝敹?/option>
+            <option value="摰嗡犖閬芣?">摰嗡犖閬芣?</option>
+            <option value="撖萇?">撖萇?</option>
+            <option value="敹?撖?">敹?撖?</option>
+            <option value="?犖蝪賢?">?犖蝪賢?</option>
+            <option value="?蝭??>?蝭??/option>
+            <option value="隡平??">隡平??</option>
+            <option value="??蟡?">??蟡?</option>
+            <option value="摰Ｚˊ??">摰Ｚˊ??</option>
           </select>
         </div>
 
         <div class="form-row">
-          <label>刻圖位置</label>
+          <label>?餃?雿蔭</label>
           <select class="editor-input" id="adminUploadCarrier">
-            <option value="鏡片">鏡片</option>
-            <option value="鏡腳">鏡腳</option>
-            <option value="眼鏡布">眼鏡布</option>
-            <option value="眼鏡盒">眼鏡盒</option>
-            <option value="鼻墊">鼻墊</option>
-            <option value="其他周邊配件">其他周邊配件</option>
+            <option value="?∠?">?∠?</option>
+            <option value="?∟">?∟</option>
+            <option value="?潮撣?>?潮撣?/option>
+            <option value="?潮??>?潮??/option>
+            <option value="曌餃?">曌餃?</option>
+            <option value="?嗡??券??辣">?嗡??券??辣</option>
           </select>
         </div>
 
         <div class="form-row">
-          <label>圖片</label>
+          <label>??</label>
           <div>
             <input type="file" id="adminUploadFileInput" class="hidden-file-input" accept="image/*"/>
             <div class="upload-grid admin-upload-grid">
               <div class="upload-box main-upload" data-admin-slot="0" tabindex="0" role="button">
-                <span class="badge-main">首圖</span>
+                <span class="badge-main">擐?</span>
                 <div class="upload-placeholder">
                   <i class="fa-regular fa-image"></i>
-                  <p>上傳首圖</p>
-                  <span class="upload-hint">點擊或拖曳圖片到這裡</span>
+                  <p>銝擐?</p>
+                  <span class="upload-hint">暺????喳???ㄐ</span>
                 </div>
               </div>
               <div class="sub-upload-container">
                 <div class="upload-box sub-upload" data-admin-slot="1" tabindex="0" role="button">
                   <div class="upload-placeholder">
                     <i class="fa-regular fa-image"></i>
-                    <p>上傳圖片</p>
-                    <span class="upload-hint">副圖二（選填）</span>
+                    <p>銝??</p>
+                    <span class="upload-hint">?臬?鈭??詨‵嚗?/span>
                   </div>
                 </div>
                 <div class="upload-box sub-upload" data-admin-slot="2" tabindex="0" role="button">
                   <div class="upload-placeholder">
                     <i class="fa-regular fa-image"></i>
-                    <p>上傳圖片</p>
-                    <span class="upload-hint">副圖三（選填）</span>
+                    <p>銝??</p>
+                    <span class="upload-hint">?臬?銝??詨‵嚗?/span>
                   </div>
                 </div>
               </div>
@@ -1572,156 +1559,156 @@
         </div>
 
         <div class="form-row">
-          <label>故事內容</label>
-          <textarea class="editor-input" id="adminUploadStory" rows="4" maxlength="100" placeholder="(可選) 分享背後故事 · 50 字以上會自動歸類為「故事」"></textarea>
+          <label>???批捆</label>
+          <textarea class="editor-input" id="adminUploadStory" rows="4" maxlength="100" placeholder="(?舫) ?澈???? 繚 50 摮誑銝??芸?甇賊??箝?鈭?></textarea>
         </div>
 
         <div class="form-row">
           <label></label>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn primary" id="adminUploadSubmit">
-              <i class="fa-solid fa-upload"></i>上傳並自動通過
+              <i class="fa-solid fa-upload"></i>銝銝西??
             </button>
-            <button class="btn" id="adminUploadReset">清空</button>
+            <button class="btn" id="adminUploadReset">皜征</button>
           </div>
           <div class="form-hint" id="adminUploadHint" style="margin-top:10px"></div>
         </div>
       </div>
     </div>
 
-    <!-- ============= #5 刻圖管理 ============= -->
+    <!-- ============= #5 ?餃?蝞∠? ============= -->
     <div class="content-page" data-page="manage-designs">
       <div class="page-head">
         <div>
-          <h1 class="page-title">刻圖管理</h1>
-          <div class="page-sub">編輯 / 刪除所有刻圖設計(含 legacy + 官網上傳 + 門市上傳)</div>
+          <h1 class="page-title">?餃?蝞∠?</h1>
+          <div class="page-sub">蝺刻摩 / ?芷???身閮???legacy + 摰雯銝 + ?撣???</div>
         </div>
       </div>
 
-      <!-- 工具列 -->
+      <!-- 撌亙??-->
       <div class="md-toolbar">
         <div class="md-filters">
           <select class="md-select" id="mdFilterStatus">
-            <option value="">全部狀態</option>
-            <option value="approved">已通過</option>
-            <option value="pending">待審核</option>
-            <option value="rejected">已駁回</option>
+            <option value="">?券???/option>
+            <option value="approved">撌脤?</option>
+            <option value="pending">敺祟??/option>
+            <option value="rejected">撌脤???/option>
           </select>
           <select class="md-select" id="mdFilterType">
-            <option value="">全部來源</option>
-            <option value="legacy">舊官網刻圖</option>
-            <option value="member">官網上傳</option>
-            <option value="store">門市上傳</option>
+            <option value="">?券靘?</option>
+            <option value="legacy">??蝬脣??/option>
+            <option value="member">摰雯銝</option>
+            <option value="store">?撣???/option>
           </select>
           <select class="md-select" id="mdFilterShow">
-            <option value="">全部上下架</option>
-            <option value="on">上架中</option>
-            <option value="off">已下架</option>
-            <option value="trash">垃圾桶</option>
+            <option value="">?券銝???/option>
+            <option value="on">銝銝?/option>
+            <option value="off">撌脖???/option>
+            <option value="trash">?獢?/option>
           </select>
-          <input class="md-search" id="mdSearch" type="text" placeholder="搜尋名稱 / 創作者 / 一句話故事...">
+          <input class="md-search" id="mdSearch" type="text" placeholder="???迂 / ?萎???/ 銝?亥店??...">
         </div>
         <div class="md-tool-right">
           <button class="md-btn-bulk" id="mdBulkPriceBtn" type="button">
-            <i class="fa-solid fa-tag"></i> 批次改價
+            <i class="fa-solid fa-tag"></i> ?寞活?孵
           </button>
-          <div class="md-meta" id="mdCount">載入中...</div>
+          <div class="md-meta" id="mdCount">頛銝?..</div>
         </div>
       </div>
 
-      <!-- 卡片 grid -->
+      <!-- ?∠? grid -->
       <div class="md-grid" id="mdGrid">
-        <div class="md-empty">載入中...</div>
+        <div class="md-empty">頛銝?..</div>
       </div>
     </div>
 
 
-    <!-- ============= #6 分享牆管理 ============= -->
+    <!-- ============= #6 ?澈?恣??============= -->
     <div class="content-page" data-page="manage-shares">
       <div class="page-head">
         <div>
-          <h1 class="page-title">分享牆管理</h1>
-          <div class="page-sub">編輯 / 刪除所有靈感牆分享(照片 + 故事)</div>
+          <h1 class="page-title">?澈?恣??/h1>
+          <div class="page-sub">蝺刻摩 / ?芷??????澈(?抒? + ??)</div>
         </div>
       </div>
 
       <div class="md-toolbar">
         <div class="md-filters">
           <select class="md-select" id="msFilterStatus">
-            <option value="">全部狀態</option>
-            <option value="approved">已通過</option>
-            <option value="pending">待審核</option>
-            <option value="rejected">已駁回</option>
+            <option value="">?券???/option>
+            <option value="approved">撌脤?</option>
+            <option value="pending">敺祟??/option>
+            <option value="rejected">撌脤???/option>
           </select>
           <select class="md-select" id="msFilterType">
-            <option value="">全部類型</option>
-            <option value="photo">照片</option>
-            <option value="story">故事</option>
+            <option value="">?券憿?</option>
+            <option value="photo">?抒?</option>
+            <option value="story">??</option>
           </select>
-          <input class="md-search" id="msSearch" type="text" placeholder="搜尋標題 / 會員 / 故事內容...">
+          <input class="md-search" id="msSearch" type="text" placeholder="??璅? / ? / ???批捆...">
         </div>
-        <div class="md-meta" id="msCount">載入中...</div>
+        <div class="md-meta" id="msCount">頛銝?..</div>
       </div>
 
       <div class="md-grid" id="msGrid">
-        <div class="md-empty">載入中...</div>
+        <div class="md-empty">頛銝?..</div>
       </div>
     </div>
 
 
-    <!-- ============= 分享牆編輯 Modal ============= -->
+    <!-- ============= ?澈?楊頛?Modal ============= -->
     <div class="md-modal-overlay" id="msModalOverlay" hidden>
       <div class="md-modal">
         <div class="md-modal-head">
-          <h2>編輯分享</h2>
+          <h2>蝺刻摩?澈</h2>
           <button class="md-modal-close" id="msModalClose" type="button"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="md-modal-body">
           <div class="md-form-row">
-            <label>標題 <span class="req">*</span></label>
+            <label>璅? <span class="req">*</span></label>
             <input type="text" id="msEditTitle" maxlength="40">
           </div>
           <div class="md-form-row">
-            <label>故事內容</label>
+            <label>???批捆</label>
             <textarea id="msEditStory" rows="4" maxlength="500" style="width:100%;padding:10px 12px;background:#FAF7F2;border:1px solid var(--lohas-line);border-radius:8px;font-size:13px;color:var(--lohas-text);font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
           </div>
           <div class="md-form-row">
-            <label>主題</label>
-            <input type="text" id="msEditTopic" placeholder="例如:寵物回憶 / 愛情紀念">
+            <label>銝駁?</label>
+            <input type="text" id="msEditTopic" placeholder="靘?:撖萇? / ??蝝敹?>
           </div>
           <div class="md-form-row">
-            <label>承載物</label>
-            <input type="text" id="msEditCarrier" placeholder="例如:眼鏡 / 杯子">
+            <label>?輯???/label>
+            <input type="text" id="msEditCarrier" placeholder="靘?:?潮 / ?臬?">
           </div>
         </div>
         <div class="md-modal-foot">
-          <button class="md-btn md-btn-cancel" id="msEditCancel">取消</button>
-          <button class="md-btn md-btn-save"   id="msEditSave">儲存</button>
+          <button class="md-btn md-btn-cancel" id="msEditCancel">??</button>
+          <button class="md-btn md-btn-save"   id="msEditSave">?脣?</button>
         </div>
       </div>
     </div>
 
 
-    <!-- ============= 刻圖審核 Modal ============= -->
+    <!-- ============= ?餃?撖拇 Modal ============= -->
     <div class="md-modal-overlay" id="approveDesignModal" hidden>
       <div class="md-modal">
         <div class="md-modal-head">
-          <h2><i class="fa-solid fa-pen-to-square"></i> 開始審核</h2>
+          <h2><i class="fa-solid fa-pen-to-square"></i> ??撖拇</h2>
           <button class="md-modal-close" id="apClose" type="button"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="md-modal-body">
           <input type="hidden" id="apDesignId">
           <div class="md-form-row">
-            <label>創作者</label>
+            <label>?萎???/label>
             <div class="md-form-readonly" id="apCreatorIdLabel">--</div>
           </div>
           <div class="md-form-row">
-            <label>名稱 <span class="req">*</span></label>
-            <input type="text" id="apName" maxlength="40" placeholder="設計名稱(可編輯)">
+            <label>?迂 <span class="req">*</span></label>
+            <input type="text" id="apName" maxlength="40" placeholder="閮剛??迂(?舐楊頛?">
           </div>
           <div class="md-form-row">
-            <label>分類</label>
-            <input type="text" id="apCategory" placeholder="例如:寵物回憶 / 愛情紀念(可編輯)">
+            <label>??</label>
+            <input type="text" id="apCategory" placeholder="靘?:撖萇? / ??蝝敹??舐楊頛?">
           </div>
           <div class="md-form-row">
             <label>Price <span class="req">*</span></label>
@@ -1734,186 +1721,183 @@
           </div>
         </div>
         <div class="md-modal-foot">
-          <button class="md-btn md-btn-chat" id="apOpenChat" type="button"><i class="fa-regular fa-message"></i> 與顧客對話</button>
+          <button class="md-btn md-btn-chat" id="apOpenChat" type="button"><i class="fa-regular fa-message"></i> ?“摰Ｗ?閰?/button>
           <span class="md-foot-spacer"></span>
-          <button class="md-btn md-btn-cancel" id="apCancel">取消</button>
-          <button class="md-btn md-btn-save"   id="apSubmit">完成審核</button>
+          <button class="md-btn md-btn-cancel" id="apCancel">??</button>
+          <button class="md-btn md-btn-save"   id="apSubmit">摰?撖拇</button>
         </div>
       </div>
     </div>
 
-    <!-- (舊客服對話 modal 已移除,改用動態建立的 cs-chat-panel) -->
+    <!-- (?恥??閰?modal 撌脩宏???寧??撱箇???cs-chat-panel) -->
 
 
-    <!-- ============= 刻圖編輯 Modal ============= -->
+    <!-- ============= ?餃?蝺刻摩 Modal ============= -->
     <div class="md-modal-overlay" id="mdModalOverlay" hidden>
       <div class="md-modal">
         <div class="md-modal-head">
-          <h2>編輯刻圖設計</h2>
+          <h2>蝺刻摩?餃?閮剛?</h2>
           <button class="md-modal-close" id="mdModalClose" type="button"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="md-modal-body">
           <div class="md-form-row">
-            <label>名稱 <span class="req">*</span></label>
+            <label>?迂 <span class="req">*</span></label>
             <input type="text" id="mdEditName" maxlength="20">
           </div>
           <div class="md-form-row">
-            <label>一句話故事</label>
+            <label>銝?亥店??</label>
             <input type="text" id="mdEditSlogan" maxlength="40">
           </div>
           <div class="md-form-row">
-            <label>分類</label>
-            <input type="text" id="mdEditCategory" placeholder="例如:寵物回憶 / 愛情紀念">
+            <label>??</label>
+            <input type="text" id="mdEditCategory" placeholder="靘?:撖萇? / ??蝝敹?>
           </div>
           <div class="md-form-row">
-            <label>標籤(逗號分隔)</label>
-            <input type="text" id="mdEditKeywords" placeholder="例如:寵物名字,寵物線稿">
+            <label>璅惜(????)</label>
+            <input type="text" id="mdEditKeywords" placeholder="靘?:撖萇??,撖萇蝺阮">
           </div>
           <div class="md-form-row">
-            <label>創作者姓名</label>
+            <label>?萎?????/label>
             <input type="text" id="mdEditDesigner">
           </div>
           <div class="md-form-row">
-            <label>ErpNumber(ERP 商品編號,分潤對應用)</label>
-            <input type="text" id="mdEditErp" placeholder="例如:128770923,留空 = 尚未建品項">
+            <label>ErpNumber(ERP ??蝺刻?,?膜撠???</label>
+            <input type="text" id="mdEditErp" placeholder="靘?:128770923,?征 = 撠撱箏???>
           </div>
           <div class="md-form-row">
-            <label>會員 erpid(分潤收款人,唯讀)</label>
-            <input type="text" id="mdEditCreator" readonly placeholder="未綁定" style="background:#f3f0eb;color:#6F665D;cursor:not-allowed">
+            <label>? erpid(?膜?嗆狡鈭??航?)</label>
+            <input type="text" id="mdEditCreator" readonly placeholder="?芰?摰? style="background:#f3f0eb;color:#6F665D;cursor:not-allowed">
           </div>
           <div class="md-form-row">
-            <label>售價(元)</label>
-            <input type="number" id="mdEditPrice" min="0" step="50" placeholder="0 = 未定價">
+            <label>?桀(??</label>
+            <input type="number" id="mdEditPrice" min="0" step="50" placeholder="0 = ?芸???>
           </div>
         </div>
         <div class="md-modal-foot">
-          <button class="md-btn md-btn-cancel" id="mdEditCancel">取消</button>
-          <button class="md-btn md-btn-save"   id="mdEditSave">儲存</button>
+          <button class="md-btn md-btn-cancel" id="mdEditCancel">??</button>
+          <button class="md-btn md-btn-save"   id="mdEditSave">?脣?</button>
         </div>
       </div>
     </div>
 
-    <!-- ============= 創作者編輯 Modal (新增 + 編輯共用) ============= -->
+    <!-- ============= ?萎??楊頛?Modal (?啣? + 蝺刻摩?梁) ============= -->
     <div class="ag-modal-overlay" id="agModalOverlay" style="display:none">
       <div class="ag-modal">
         <div class="ag-modal-header">
-          <h2 class="ag-modal-title" id="agModalTitle">新增創作者個人頁</h2>
-          <button class="ag-modal-close" id="agModalClose" type="button" aria-label="關閉">
+          <h2 class="ag-modal-title" id="agModalTitle">?啣??萎??犖??/h2>
+          <button class="ag-modal-close" id="agModalClose" type="button" aria-label="??">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
         <div class="ag-modal-body">
           <div class="creator-edit-wrap">
         <div class="editor-panel">
-          <h3 class="editor-panel-h"><i class="fa-regular fa-id-badge"></i>基本資訊</h3>
+          <h3 class="editor-panel-h"><i class="fa-regular fa-id-badge"></i>?箸鞈?</h3>
           <div class="editor-row">
-            <div class="editor-label">頭像</div>
+            <div class="editor-label">?剖?</div>
             <div style="display:flex;align-items:center;gap:14px">
               <div class="creator-avatar-wrap">
                 <div class="ed-avatar" id="agAvatar">LO</div>
-                <button class="ed-avatar-camera" id="agAvatarUploadBtn" type="button" aria-label="更換頭像">
+                <button class="ed-avatar-camera" id="agAvatarUploadBtn" type="button" aria-label="?湔??剖?">
                   <i class="fa-solid fa-camera"></i>
                 </button>
                 <input type="file" id="agAvatarInput" class="visually-hidden" accept="image/*">
               </div>
-              <p class="editor-hint" style="margin:0">建議比例 1:1 · 建議尺寸 400 × 400 px</p>
+              <p class="editor-hint" style="margin:0">撱箄降瘥? 1:1 繚 撱箄降撠箏站 400 ? 400 px</p>
             </div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">顯示名稱</div>
-            <div><input class="editor-input" id="agDisplayName" placeholder="請輸入創作者顯示名稱"/></div>
+            <div class="editor-label">憿舐內?迂</div>
+            <div><input class="editor-input" id="agDisplayName" placeholder="隢撓?亙雿＊蝷箏?蝔?/></div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">短標籤</div>
+            <div class="editor-label">?剜?蝐?/div>
             <div>
-              <input class="editor-input" id="agTagline" placeholder="例如:插畫家 / 平面設計師 / 工作室"/>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在名字下方</div>
+              <input class="editor-input" id="agTagline" placeholder="靘?:?摰?/ 撟喲閮剛?撣?/ 撌乩?摰?/>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">憿舐內?典?摮???/div>
             </div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">自我介紹</div>
-            <div><textarea class="editor-area" id="agBio" placeholder="請輸入創作者的自我介紹"></textarea></div>
+            <div class="editor-label">?芣?隞晶</div>
+            <div><textarea class="editor-area" id="agBio" placeholder="隢撓?亙雿??芣?隞晶"></textarea></div>
           </div>
         </div>
 
         <div class="editor-panel">
-          <h3 class="editor-panel-h"><i class="fa-regular fa-heart"></i>我的刻圖故事</h3>
+          <h3 class="editor-panel-h"><i class="fa-regular fa-heart"></i>???餃???</h3>
           <div class="editor-row">
-            <div class="editor-label">我的故事照片</div>
+            <div class="editor-label">?????抒?</div>
             <div class="img-upload-wrap" data-field="joining_photo" data-aspect="4:5" id="agJoiningPhotoWrap" style="max-width:200px">
               <div class="img-upload-preview" id="agJoiningPhotoPreview">
-                <span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>
+                <span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 暺?銝 (4:5)</span>
               </div>
-              <button type="button" class="img-upload-clear" id="agJoiningPhotoClear" aria-label="移除照片" style="display:none">
+              <button type="button" class="img-upload-clear" id="agJoiningPhotoClear" aria-label="蝘駁?抒?" style="display:none">
                 <i class="fa-solid fa-xmark"></i>
               </button>
               <input type="file" id="agJoiningPhotoInput" accept="image/*" class="img-upload-input">
               <input type="hidden" id="agJoiningPhoto"/>
-              <p class="editor-hint">4:5 直式照片,顯示在文字左側 · 建議尺寸 800 × 1000 px</p>
+              <p class="editor-hint">4:5 ?游??抒?,憿舐內?冽?摮椰??繚 撱箄降撠箏站 800 ? 1000 px</p>
             </div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">故事內容</div>
+            <div class="editor-label">???批捆</div>
             <div>
-              <textarea class="editor-area" id="agJoiningStory" placeholder="這位創作者跟樂活如何開始合作?說個小故事吧(空一行 = 段落分隔)" style="min-height:140px"></textarea>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">空一行 = 段落分隔</div>
+              <textarea class="editor-area" id="agJoiningStory" placeholder="???萎???璅暑憒??????隤芸?????蝛箔?銵?= 畾菔??)" style="min-height:140px"></textarea>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">蝛箔?銵?= 畾菔??</div>
             </div>
           </div>
         </div>
 
         <div class="editor-panel">
           <h3 class="editor-panel-h">
-            <i class="fa-regular fa-rectangle-list"></i>自訂內容區塊
-          </h3>
+            <i class="fa-regular fa-rectangle-list"></i>?芾??批捆?憛?          </h3>
           <div id="agCustomBlocksList">
-            <p class="empty-text" style="padding:30px 20px;font-size:12px">點下方「新增區塊」加入自訂的圖文段落</p>
+            <p class="empty-text" style="padding:30px 20px;font-size:12px">暺??嫘憓?憛??亥閮???畾菔</p>
           </div>
           <div style="display:flex;justify-content:flex-end;padding:8px 4px 0">
             <button class="btn" id="agAddCustomBlockBtn" type="button" style="font-size:12px;padding:8px 16px">
-              <i class="fa-solid fa-plus"></i>新增區塊
-            </button>
+              <i class="fa-solid fa-plus"></i>?啣??憛?            </button>
           </div>
         </div>
 
         <div class="editor-panel">
-          <h3 class="editor-panel-h"><i class="fa-regular fa-image"></i>KOL 配鏡分享</h3>
+          <h3 class="editor-panel-h"><i class="fa-regular fa-image"></i>KOL ??澈</h3>
           <div class="editor-row">
-            <div class="editor-label">主圖</div>
+            <div class="editor-label">銝餃?</div>
             <div class="img-upload-wrap" data-field="kol_main_image" data-aspect="4:5" id="agKolMainWrap" style="max-width:200px">
               <div class="img-upload-preview" id="agKolMainPreview">
-                <span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>
+                <span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 暺?銝 (4:5)</span>
               </div>
-              <button type="button" class="img-upload-clear" id="agKolMainClear" aria-label="移除" style="display:none">
+              <button type="button" class="img-upload-clear" id="agKolMainClear" aria-label="蝘駁" style="display:none">
                 <i class="fa-solid fa-xmark"></i>
               </button>
               <input type="file" id="agKolMainInput" accept="image/*" class="img-upload-input">
               <input type="hidden" id="agKolMainUrl"/>
-              <p class="editor-hint">4:5 直式圖,顯示在雷刻頁 KOL 配鏡分享區的小卡 · 建議尺寸 800 × 1000 px</p>
+              <p class="editor-hint">4:5 ?游???憿舐內?券?駁? KOL ??澈?????繚 撱箄降撠箏站 800 ? 1000 px</p>
             </div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">想跟大家說的話</div>
+            <div class="editor-label">?唾?憭批振隤芰?閰?/div>
             <div>
-              <input class="editor-input" id="agEngravingQuote" placeholder="例如:第一次知道眼鏡可以雷雕客製,把心意刻進鏡片裡,變成最特別的禮物。"/>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在雷刻頁的 KOL 配鏡分享區小卡</div>
+              <input class="editor-input" id="agEngravingQuote" placeholder="靘?:蝚砌?甈∠??∪隞仿?恥鋆?????脤?ㄐ,霈???孵?旨?押?/>
+              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">憿舐內?券?駁???KOL ??澈?撠</div>
             </div>
           </div>
         </div>
 
-        <!-- 分享照片區 (官方創作者用,管理員代上傳,自動通過審核) -->
+        <!-- ?澈?抒?? (摰?萎??,蝞∠??∩誨銝,?芸???撖拇) -->
         <div class="editor-panel" id="agShareSection" style="display:none">
           <h3 class="editor-panel-h">
-            <i class="fa-regular fa-images"></i>分享照片
+            <i class="fa-regular fa-images"></i>?澈?抒?
           </h3>
           <div style="padding:0 4px 12px;font-size:11.5px;color:var(--lohas-mute);letter-spacing:0.3px">
-            上傳的照片會出現在創作者公開頁的「分享照片」區與分享牆,直接通過審核。
-          </div>
+            銝????箇?典雿????鈭怎????鈭怎?,?湔??撖拇??          </div>
           <div id="agPhotosList"></div>
           <input type="file" id="agPhotoInput" class="visually-hidden" accept="image/*" multiple>
         </div>
 
 <div class="editor-panel">
-          <h3 class="editor-panel-h"><i class="fa-brands fa-youtube"></i>創作者影片 (選填)</h3>
+          <h3 class="editor-panel-h"><i class="fa-brands fa-youtube"></i>?萎??蔣??(?詨‵)</h3>
           <div class="editor-row">
             <div class="editor-label">YouTube URL</div>
             <div>
@@ -1921,28 +1905,27 @@
             </div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">影片標題</div>
-            <div><input class="editor-input" id="agVideoTitle" placeholder="請輸入影片標題"/></div>
+            <div class="editor-label">敶梁?璅?</div>
+            <div><input class="editor-input" id="agVideoTitle" placeholder="隢撓?亙蔣??憿?/></div>
           </div>
         </div>
 
         <div class="editor-panel">
-          <h3 class="editor-panel-h"><i class="fa-regular fa-comment-dots"></i>聯絡方式 / 社群連結</h3>
+          <h3 class="editor-panel-h"><i class="fa-regular fa-comment-dots"></i>?舐窗?孵? / 蝷曄黎???</h3>
           <div class="editor-row">
             <div class="editor-label">Instagram</div>
             <div><input class="editor-input" id="agIg" placeholder="https://instagram.com/yourname"/></div>
           </div>
           <div class="editor-row">
             <div class="editor-label">
-              IG 精選貼文
-              <div style="font-size:11px;color:#9D8E7D;font-weight:400;margin-top:2px">首頁主打／曝光用</div>
+              IG 蝎暸鞎潭?
+              <div style="font-size:11px;color:#9D8E7D;font-weight:400;margin-top:2px">擐?銝餅?嚗??</div>
             </div>
             <div>
               <input class="editor-input" id="agFeaturedIgUrl" placeholder="https://www.instagram.com/p/XXXXXXX/"/>
               <div class="form-hint" style="margin-top:4px;font-size:11px;color:#9D8E7D">
-                當「首頁主打」或「首頁曝光」勾選時，會嵌入這則貼文。<br>
-                支援 /p/ 與 /reel/ 兩種 URL。
-              </div>
+                ?嗚??蜓????????豢?嚗?撋??鞎潭???br>
+                ?舀 /p/ ??/reel/ ?拍車 URL??              </div>
             </div>
           </div>
           <div class="editor-row">
@@ -1950,7 +1933,7 @@
             <div><input class="editor-input" id="agFb" placeholder="https://facebook.com/yourname"/></div>
           </div>
           <div class="editor-row">
-            <div class="editor-label">自訂網站</div>
+            <div class="editor-label">?芾?蝬脩?</div>
             <div><input class="editor-input" id="agWebsite" placeholder="https://yoursite.com"/></div>
           </div>
           <div class="editor-row">
@@ -1964,15 +1947,15 @@
           <div class="editor-row" style="padding-top:18px;margin-top:6px">
             <div class="editor-label"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="action-btn-solid" id="agSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>建立創作者</span></button>
-              <button class="btn" id="agResetBtn">清空表單</button>
-              <button class="btn" id="agModalCloseBottom">關閉</button>
+              <button class="action-btn-solid" id="agSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>撱箇??萎???/span></button>
+              <button class="btn" id="agResetBtn">皜征銵典</button>
+              <button class="btn" id="agModalCloseBottom">??</button>
             </div>
             <div class="form-hint" id="agHint" style="margin-top:10px"></div>
           </div>
         </div>
 
-        <!-- KOL 配鏡分享主圖 (顯示在雷刻頁的 KOL 區) -->
+        <!-- KOL ??澈銝餃? (憿舐內?券?駁???KOL ?) -->
         
       </div>
         </div>
@@ -1982,56 +1965,56 @@
   </div>
 </main>
 
-<!-- ====== 駁回 modal ====== -->
+<!-- ====== 擏? modal ====== -->
 <div class="modal-ovl" id="rejectModal">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-head">
-      <h3 class="modal-h">駁回審核</h3>
-      <p class="modal-sub">請選擇或輸入駁回原因,作者會收到通知並看到原因說明</p>
+      <h3 class="modal-h">擏?撖拇</h3>
+      <p class="modal-sub">隢??頛詨擏???,雿??嗅?銝衣??啣??牧??/p>
       <button class="modal-close" id="closeRejectX"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
       <div class="modal-target">
         <div class="thumb"></div>
         <div>
-          <div class="info-t">想你想到睡不著</div>
-          <div class="info-m">by EMO Bonnie · 創作者作品</div>
+          <div class="info-t">?喃??喳?∩???/div>
+          <div class="info-m">by EMO Bonnie 繚 ?萎?????/div>
         </div>
       </div>
 
-      <label class="field-label">常用駁回原因</label>
+      <label class="field-label">撣貊擏???</label>
       <div class="reason-presets">
-        <button class="preset" data-text="圖片解析度不足 300 dpi,線條轉印後容易模糊。請重新上傳更高解析度版本。">解析度不足</button>
-        <button class="preset" data-text="圖案內容含有可辨識的版權元素,無法通過審核。請使用原創圖案重新提交。">疑似侵權</button>
-        <button class="preset" data-text="設計師的話文字內容不符合樂活內容規範,請修改後重新提交。">文字違規</button>
-        <button class="preset" data-text="圖片尺寸或比例不符合雷刻規格(建議 1:1 正方形)。請依規範重新上傳。">尺寸不符</button>
-        <button class="preset" data-text="圖片中有可辨識的他人面孔,基於肖像權考量無法公開。請重新上傳模糊處理或無他人入鏡的版本。">肖像權問題</button>
+        <button class="preset" data-text="??閫??摨虫?頞?300 dpi,蝺?頧敺捆?芋蝟??銝?湧?閫??摨衣??研?>閫??摨虫?頞?/button>
+        <button class="preset" data-text="???批捆?急??航儘霅?????,?⊥???撖拇??雿輻?????漱??>?撮靘菜?</button>
+        <button class="preset" data-text="閮剛?撣怎?閰望?摮摰嫣?蝚血?璅暑?批捆閬?,隢耨?孵???漱??>????</button>
+        <button class="preset" data-text="??撠箏站??靘?蝚血??瑕閬(撱箄降 1:1 甇?敶???靘?蝭??唬??喋?>撠箏站銝泵</button>
+        <button class="preset" data-text="??銝剜??航儘霅?隞犖?Ｗ?,?箸??甈??⊥??祇????銝璅∠????隞犖?仿???研?>??甈?憿?/button>
       </div>
 
-      <label class="field-label">駁回原因說明 <span class="req">(必填)</span></label>
-      <textarea class="reason-area" id="reasonText" placeholder="請說明駁回原因,作者會看到這段內容..."></textarea>
+      <label class="field-label">擏???隤芣? <span class="req">(敹‵)</span></label>
+      <textarea class="reason-area" id="reasonText" placeholder="隢牧??????雿???挾?批捆..."></textarea>
     </div>
     <div class="modal-foot">
-      <button class="btn" id="cancelReject">取消</button>
-      <button class="btn danger-solid" id="confirmReject"><i class="fa-solid fa-xmark"></i>確認駁回</button>
+      <button class="btn" id="cancelReject">??</button>
+      <button class="btn danger-solid" id="confirmReject"><i class="fa-solid fa-xmark"></i>蝣箄?擏?</button>
     </div>
   </div>
 </div>
 
 </div>
 
-<!-- ====== 依賴 (按順序載入) ====== -->
+<!-- ====== 靘陷 (??摨??? ====== -->
 <script src="js/utils.js?v=20260510-1720"></script>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/supabase.js?v=20260510-1720"></script>
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
-<!-- 後台主邏輯 -->
+<!-- 敺銝駁?頛?-->
 <script src="js/admin-portal.js?v=20260827-giftwork"></script>
 <script src="js/admin-portal-footer.js?v=20260601-drag"></script>
 <script src="js/admin-portal-pegavision.js?v=20260622"></script>
 <script src="js/admin-portal-categories.js?v=20260530-routeword"></script>
-<script src="js/dxf.js?v=20260903-xform"></script>
+<script src="js/dxf.js?v=20260903-xform2"></script>
 <script src="js/admin-portal-cloth.js?v=20260903-dxf2"></script>
 <script src="js/store-lookup.js?v=20260827-byphone"></script>
 

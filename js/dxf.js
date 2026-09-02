@@ -449,7 +449,11 @@
       var closed = Math.abs(first[0] - last[0]) < 1e-6 &&
                    Math.abs(first[1] - last[1]) < 1e-6;
       if (closed) pts = pts.slice(0, -1);
-      if (pts.length < 2) return;
+      /* ⚠ 少於 3 點的丟掉,不是少於 2。
+         封閉的 2 點迴圈面積是零 —— 描圖時的雜點會產生這種東西
+         (貓-a68d2841 那張螃蟹裡就有一條)。留著的話,填滿版會多算
+         一條邊界、走線版會多一段零長度的刀路,而有些軟體看到會報錯。 */
+      if (pts.length < 3) return;
       rings.push({ pts: pts, closed: closed });
     });
 

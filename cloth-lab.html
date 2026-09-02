@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- 工作用頁面,不要被搜尋引擎收錄 -->
+  <!-- 撌乩??券???銝?鋡急?撠????-->
   <meta name="robots" content="noindex, nofollow">
-  <title>客製眼鏡布加工中心 · LOHAS 樂活眼鏡</title>
+  <title>摰Ｚˊ?潮撣?撌乩葉敹?繚 LOHAS 璅暑?潮</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- LOHAS CSS · 載入順序: tokens → base → page -->
+  <!-- LOHAS CSS 繚 頛??: tokens ??base ??page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/cloth-lab.css?v=20260827-tabs">
@@ -23,65 +23,54 @@
 <body class="lab">
 
   <header class="lab-top">
-    <!-- 深色底換成淺色底,LOGO 用官網同一支 SVG。
-         那支 SVG 本身是深色(#47422C),放在淺底上不必改色。 -->
-    <img class="lab-logo" src="images/lohas-logo.svg" alt="LOHAS 樂活眼鏡">
-    <span class="lab-title">客製眼鏡布加工中心</span>
-    <button type="button" class="lab-out" id="labOut" hidden title="換一台裝置或不再使用時按這裡">
+    <!-- 瘛梯摨??滓?脣?,LOGO ?典?蝬脣?銝??SVG??         ?? SVG ?祈澈?舀楛??#47422C),?曉瘛箏?銝?敹?脯?-->
+    <img class="lab-logo" src="images/lohas-logo.svg" alt="LOHAS 璅暑?潮">
+    <span class="lab-title">摰Ｚˊ?潮撣?撌乩葉敹?/span>
+    <button type="button" class="lab-out" id="labOut" hidden title="???啗?蝵格?銝?雿輻???ㄐ">
       <i class="fa-solid fa-arrow-right-from-bracket"></i>
     </button>
   </header>
 
   <main class="lab-main">
 
-    <!-- 通行碼 -->
+    <!-- ??蝣?-->
     <section class="lab-gate" id="labGate">
       <i class="fa-solid fa-lock lab-gate-ico"></i>
-      <p class="lab-gate-title">請輸入通行碼</p>
-      <p class="lab-gate-sub">輸入一次就好,這台裝置會記住。</p>
-      <input type="password" id="labCode" class="lab-input" placeholder="通行碼"
+      <p class="lab-gate-title">隢撓?仿?蝣?/p>
+      <p class="lab-gate-sub">頛詨銝甈∪停憟??鋆蔭??雿?/p>
+      <input type="password" id="labCode" class="lab-input" placeholder="??蝣?
              autocomplete="off" inputmode="text">
       <div class="lab-msg is-err" id="labGateErr" hidden></div>
-      <button type="button" class="lab-btn" id="labEnter">進 入</button>
+      <button type="button" class="lab-btn" id="labEnter">????/button>
     </section>
 
-    <!-- 列表 -->
+    <!-- ?” -->
     <section class="lab-body" id="labBody" hidden>
-      <!-- ⚠ 兩組分頁一定要分行、而且各自有名字。
-           -----------------------------------------------------------
-           先前兩組併在同一排,結果是六顆藥丸連成一條、其中兩顆
-           都寫著「全部」、兩顆都是深色 —— 看起來像同一組裡選了兩個,
-           而且分不出哪個「全部」管哪件事。
-
-           所以:分兩行、左邊標名字、第二組的「全部」改叫「全區」。
-           同一個詞在兩個地方各指一件事,是最省字也最容易誤讀的寫法。 -->
+      <!-- ???拍???銝摰????????摮?           -----------------------------------------------------------
+           ???拍?雿萄????蝯??臬憿銝賊??銝璇銝剖憿?           ?賢神??具憿?舀楛?????絲靘???蝯ㄐ?訾??拙?
+           ?????箏??具恣?芯辣鈭?
+           ?隞??銵椰?????洵鈭???具?怒???           ?????典??孵???隞嗡?,?舀???銋?摰寞?隤方??神瘜?-->
       <div class="lab-bar">
         <div class="lab-filter">
-          <span class="lab-filter-label">狀態</span>
+          <span class="lab-filter-label">???/span>
           <div class="lab-seg" id="labStatus">
-            <button type="button" class="lab-seg-btn on" data-s="new">待製作</button>
-            <button type="button" class="lab-seg-btn" data-s="done">已完成</button>
-            <!-- 已退件：師傅退回、等客人重新設計的。
-                 給它一個分頁是因為那些件會從「待製作」消失 ——
-                 沒有這一格的話，退完就等於從畫面上蒸發，
-                 沒有人知道有幾件卡在等客人。 -->
-            <button type="button" class="lab-seg-btn" data-s="rejected">已退件</button>
-            <button type="button" class="lab-seg-btn" data-s="">全部</button>
+            <button type="button" class="lab-seg-btn on" data-s="new">敺ˊ雿?/button>
+            <button type="button" class="lab-seg-btn" data-s="done">撌脣???/button>
+            <!-- 撌脤隞塚?撣怠????摰Ｖ犖?閮剛???                 蝯血?銝???????隞嗆?敺?鋆賭???憭???                 瘝????潛?閰梧??摰停蝑敺?Ｖ??貊嚗?                 瘝?鈭箇??撟曆辣?∪蝑恥鈭箝?-->
+            <button type="button" class="lab-seg-btn" data-s="rejected">撌脤隞?/button>
+            <button type="button" class="lab-seg-btn" data-s="">?券</button>
           </div>
         </div>
 
-        <!-- 產線分流。依客人選的取貨門市所在區域切。
-             ⚠「其他」那一格平時是藏著的,只有真的有東西落在那裡
-             才會出現 —— 那些是沒選門市、或海外門市的件。
-             不給它一個位置的話,那些件會從兩個分頁裡同時消失,
-             而沒有人會發現。 -->
+        <!-- ?Ｙ?????摰Ｖ犖?貊??疏?撣??典?????             ?隞銝?澆像??????芣????镼輯?券鋆?             ???箇 ??????舀??賊?撣?瘚瑕??撣?隞嗚?             銝策摰???蝵桃?閰????隞嗆?敺???ㄐ??瘨仃,
+             ???犖??整?-->
         <div class="lab-filter">
-          <span class="lab-filter-label">產線</span>
+          <span class="lab-filter-label">?Ｙ?</span>
           <div class="lab-seg" id="labArea">
-            <button type="button" class="lab-seg-btn on" data-a="">全區<em data-n></em></button>
-            <button type="button" class="lab-seg-btn" data-a="north">台中以北<em data-n></em></button>
-            <button type="button" class="lab-seg-btn" data-a="south">台南以南<em data-n></em></button>
-            <button type="button" class="lab-seg-btn" data-a="other" hidden>其他<em data-n></em></button>
+            <button type="button" class="lab-seg-btn on" data-a="">?典?<em data-n></em></button>
+            <button type="button" class="lab-seg-btn" data-a="north">?唬葉隞亙?<em data-n></em></button>
+            <button type="button" class="lab-seg-btn" data-a="south">?啣?隞亙?<em data-n></em></button>
+            <button type="button" class="lab-seg-btn" data-a="other" hidden>?嗡?<em data-n></em></button>
           </div>
         </div>
       </div>
@@ -92,7 +81,7 @@
 
   </main>
 
-  <script src="js/dxf.js?v=20260903-xform"></script>
+  <script src="js/dxf.js?v=20260903-xform2"></script>
   <script src="js/cloth-lab.js?v=20260903-hatch"></script>
 </body>
 </html>
