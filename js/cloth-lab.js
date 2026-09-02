@@ -179,12 +179,22 @@
             '<span class="lab-tag' + (it.status === 'done' ? ' is-done' : '') + '">' +
               (STATUS[it.status] || esc(it.status)) + '</span>' +
             /* 尺寸每張卡各自一個,不是全域設定 ——
-               製作的人一次處理一件,全域的話得每下載一次改一次。 */
-            '<label class="lab-size" title="這一件的 DXF 會依這個尺寸輸出">' +
-              '<span>模擬刻在</span>' +
-              '<input type="number" data-w="' + esc(it.id) + '" value="150" ' +
-                'min="20" max="600" step="1">' +
-              '<em>mm 的眼鏡布</em>' +
+               製作的人一次處理一件,全域的話得每下載一次改一次。
+
+               ⚠ 這個數字是【刻圖本身的寬度】,不是眼鏡布的寬度。
+               dxf.js 的 fromSvg(svg, {widthMm}) 是把圖縮放到這個值。
+
+               原本寫「模擬刻在 ___ mm 的眼鏡布」、預設 150 ——
+               那句話讀起來是布的尺寸,師傅照著填 150,
+               出來的是一張【150mm 寬的刻圖】,在 150mm 的布上整片鋪滿。
+
+               預設改成 90:客人端的上限就是 9 公分(見 cloth.js 的
+               MAX_ART_MM),兩邊用同一個數字。 */
+            '<label class="lab-size" title="DXF 會把刻圖縮放到這個寬度(不是布的寬度)">' +
+              '<span>刻圖寬度</span>' +
+              '<input type="number" data-w="' + esc(it.id) + '" value="90" ' +
+                'min="10" max="150" step="1">' +
+              '<em>mm(布寬 150)</em>' +
             '</label>' +
           '</div>' +
           '<div class="lab-meta">位置:<b>' + esc(placeText(it.placement)) + '</b></div>' +
@@ -296,7 +306,7 @@
   function widthMm(id) {
     var input = el.list.querySelector('[data-w="' + id + '"]');
     var v = Number(input && input.value);
-    return Number.isFinite(v) && v > 0 ? v : 150;
+    return Number.isFinite(v) && v > 0 ? v : 90;
   }
 
   function downloadDxf(id, btn) {

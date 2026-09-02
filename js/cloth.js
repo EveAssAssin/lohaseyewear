@@ -34,9 +34,19 @@
        落在 y=0.58 以下會壓到那個標,所以往上移。
        舊值(0.65 / 0.58)是照斜擺的實拍調的,那張照片裡布沒有填滿畫面。 */
     DEF: { scale: 0.26, x: 0.5, y: 0.45 },
+    /* 眼鏡布本身的寬度(公釐)。與製作端 cloth-lab 的輸出尺寸同一個依據。
+       ⚠ 這是估計值(2026-08-19 決定照用),不是量過實品的數字。 */
+    CLOTH_MM: 150,
+    /* 刻圖的最大邊長(公釐)。9 公分。
+       ⚠ 限制的是【長邊】,不是寬 —— 見 maxScale()。 */
+    MAX_ART_MM: 90,
+
     /* 縮放上下限。⚠ 與 cloth.html 那支滑桿的 min/max 是同一組數字,
        改了要一起改 —— 兩邊不一致的話,拉節點拉得到滑桿到不了的值,
-       滑桿就會顯示一個它自己表達不出來的位置。 */
+       滑桿就會顯示一個它自己表達不出來的位置。
+
+       MAX_SCALE 是【正方形圖】的上限:90 / 150 = 0.60。
+       非正方形的圖由 maxScale() 再收一次。 */
     MIN_SCALE: 0.06,
     MAX_SCALE: 0.60,
     DESIGN_PREVIEW: 12,        // 刻圖先顯示這麼多,其餘收在「展開全部」後面
@@ -318,6 +328,21 @@
     show(el.overlay);
   }
 
+  /* 這一張圖能放到多大。
+     -----------------------------------------------------------------
+     ⚠ scale 是【寬度】佔布寬的比例,而疊圖的高度是 寬 × 高寬比。
+     所以只擋 scale 只擋到寬 —— 一張 1:2 的直圖在 0.60 時是
+     90mm 寬、180mm 高,比整條布還長,而畫面上看起來「只是大了點」。
+
+     要限制的是 9×9 公分這個【方框】,所以拿長邊去算:
+       長邊比例 = max(1, ratio)
+       上限     = MAX_SCALE / 長邊比例
+     正方形的圖照樣是 0.60;愈扁或愈長的圖,上限愈小。 */
+  function maxScale() {
+    var longSide = Math.max(1, Number(State.ratio) || 1);
+    return CONFIG.MAX_SCALE / longSide;
+  }
+
   /* 量出圖案的高寬比,量完重畫一次。
      -----------------------------------------------------------------
      量不到就維持 1(正方形)—— 外框會比圖大一點,但不會壞掉。
@@ -331,6 +356,10 @@
         if (!State.picked || State.picked.imageUrl !== url) return;
         if (img.naturalWidth && img.naturalHeight) {
           State.ratio = img.naturalHeight / img.naturalWidth;
+          /* ⚠ 換到一張更長的圖時,原本的 scale 可能已經超過新的上限。
+             不在這裡收的話,那一張會以超過 9 公分的尺寸存下去,
+             而客人完全不會察覺 —— 他沒有動過任何東西。 */
+          if (State.scale > maxScale()) State.scale = maxScale();
           applyOverlay();
         }
       })
@@ -370,7 +399,7 @@
         var d = Math.hypot(e.clientX - c.cx, e.clientY - c.cy);
         if (start.dist > 4) {
           var next = start.scale * (d / start.dist);
-          State.scale = Math.min(CONFIG.MAX_SCALE, Math.max(CONFIG.MIN_SCALE, next));
+          State.scale = Math.min(maxScale(), Math.max(CONFIG.MIN_SCALE, next));
         }
 
       } else if (mode === 'rot') {
@@ -1222,7 +1251,10 @@
 
     [['scale', 'scale', 100], ['x', 'x', 100], ['y', 'y', 100]].forEach(function (t) {
       el[t[0]].addEventListener('input', function () {
-        State[t[1]] = Number(this.value) / t[2];
+        var v = Number(this.value) / t[2];
+        // 滑桿的 max 是固定的 60,但長圖的實際上限更小,要在這裡收
+        if (t[1] === 'scale') v = Math.min(maxScale(), v);
+        State[t[1]] = v;
         applyOverlay();
       });
     });
