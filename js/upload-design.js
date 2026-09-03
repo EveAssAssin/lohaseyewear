@@ -1164,6 +1164,65 @@
    * @param {Blob} blob 裁切後的原始檔
    * @returns {Promise<{pngBlob: Blob, svgString: string}>}
    */
+  /* 描圖前把圖正規化到這個邊長(像素)。
+     =================================================================
+     🚨 這一行同時修掉兩個問題,兩個都是靜默的。
+
+     【上限】esm-potrace-wasm 0.4.1 在邊長超過約 1150 px 時會拋
+     `offset is out of bounds`(實測:1024 ✅ / 1100 ✅ / 1200 ✗ / 1400 ✗)。
+     而 2026-09-03 之前這裡是用【裁切後的原生解析度】描 ——
+     手機拍的照片動輒 3000 px,於是那些上傳【每一張】都讓 potrace 當場
+     拋錯,然後掉到 fallback 的 imagetracer。前台只看到圖被收下了,
+     沒有任何提示。線上那 55 張 imagetracer 的圖,一部分是這樣來的。
+
+     【下限】反過來,小圖描起來會被像素格子綁住。
+     220 px 的來源輸出成 90 mm 時,一個像素等於 0.41 mm,
+     而雷射光點約 0.05 mm —— 格子比光點大八倍,輪廓就是鋸齒。
+     先放大再重新二值化,potrace 才有次像素的空間可以擬合曲線。
+
+     為什麼是 1000:實測 path 數在 800 px 就飽和了(800/1000/1024/1100
+     都是 44 條),再往上只是檔案變大;而 1000 距離 1150 的天花板
+     還有餘裕,不會因為某張圖的長寬比而擦邊撞上。
+
+     成本:220 px 直接描 24 ms,正規化到 1000 px 是 57 ms。
+     多花 33 ms,而這一步發生在「正在轉換為雷雕格式…」那個
+     loading 裡面,客人不會察覺。 */
+  var TRACE_SIZE = 1000;
+
+  /* 把二值化後的畫布重新取樣到 TRACE_SIZE,並再二值化一次。
+     ⚠ 第二次二值化不能省:縮放是平滑內插,邊緣會產生灰階,
+     直接丟給 potrace 的話那些灰邊會被當成獨立的色階,描出雙重輪廓。 */
+  function resampleForTrace(srcCanvas, imgData, threshold, inkRgb){
+    var w = srcCanvas.width, h = srcCanvas.height;
+    var long = Math.max(w, h);
+    if (long === TRACE_SIZE) return imgData;
+
+    var k = TRACE_SIZE / long;
+    var tw = Math.max(1, Math.round(w * k));
+    var th = Math.max(1, Math.round(h * k));
+
+    // 把二值化的結果放回來源畫布,才有東西可以縮放
+    srcCanvas.getContext('2d').putImageData(imgData, 0, 0);
+
+    var cv = document.createElement('canvas');
+    cv.width = tw; cv.height = th;
+    var cx = cv.getContext('2d');
+    cx.imageSmoothingEnabled = true;
+    cx.imageSmoothingQuality = 'high';
+    cx.fillStyle = '#fff';
+    cx.fillRect(0, 0, tw, th);
+    cx.drawImage(srcCanvas, 0, 0, tw, th);
+
+    var d = cx.getImageData(0, 0, tw, th), p = d.data;
+    for (var i = 0; i < p.length; i += 4){
+      var lum = 0.299 * p[i] + 0.587 * p[i+1] + 0.114 * p[i+2];
+      if (lum > threshold){ p[i] = p[i+1] = p[i+2] = 255; }
+      else { p[i] = inkRgb.r; p[i+1] = inkRgb.g; p[i+2] = inkRgb.b; }
+      p[i+3] = 255;
+    }
+    return d;
+  }
+
   async function transformToTransparent(blob){
     // 1. 載入圖片到 Canvas
     var imgUrl = URL.createObjectURL(blob);
@@ -1245,6 +1304,12 @@
 
     // 4. SVG 追蹤路徑:優先用 Potrace (品質接近 Illustrator),失敗 fallback imagetracerjs
     //    用白底版的 imgDataForSvg (透明像素會混淆 tracer)
+    /* ⚠ 兩個 tracer 吃同一份正規化過的資料。理由見 TRACE_SIZE 上面那段:
+       太大 potrace 會拋 offset is out of bounds,太小則被像素格子綁住。
+       imagetracer 沒有那個上限,但讓兩條路吃同一份輸入,
+       才不會出現「換了 tracer 連解析度也一起換」這種難查的差異。 */
+    imgDataForSvg = resampleForTrace(canvas2, imgDataForSvg, threshold, inkRgb);
+
     var svgString = '';
 
     /* Potrace WASM (品質優先)
