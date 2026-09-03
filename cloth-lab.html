@@ -14,7 +14,7 @@
   <!-- LOHAS CSS · 載入順序: tokens → base → page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
-  <link rel="stylesheet" href="css/cloth-lab.css?v=20260827-tabs">
+  <link rel="stylesheet" href="css/cloth-lab.css?v=20260903-sim">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -92,7 +92,51 @@
 
   </main>
 
-  <script src="js/dxf.js?v=20260903-simplify"></script>
-  <script src="js/cloth-lab.js?v=20260903-warn"></script>
+  <!-- ===== EZCAD 填充模擬 =====
+       畫的是【DXF 檔案裡的幾何】,不是原始圖檔。
+       EZCAD 的「填充」是用固定間距的平行線在封閉輪廓內來回掃,
+       所以這裡也畫掃描線而不是實心色塊 —— 師傅要判斷的正是
+       「這個線間距蓋不蓋得到細節」,實心圖看不出那件事。 -->
+  <div class="sim-back" id="simBack" hidden>
+    <div class="sim-box" role="dialog" aria-modal="true" aria-labelledby="simTitle">
+      <div class="sim-head">
+        <b id="simTitle">EZCAD 填充模擬</b>
+        <button type="button" class="sim-x" id="simX" aria-label="關閉">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="sim-ctl">
+        <label>線間距
+          <select id="simGap">
+            <option value="0.03">0.03 mm</option>
+            <option value="0.05" selected>0.05 mm</option>
+            <option value="0.08">0.08 mm</option>
+            <option value="0.12">0.12 mm</option>
+            <option value="0.2">0.20 mm</option>
+            <option value="0.4">0.40 mm</option>
+          </select>
+        </label>
+        <label>角度
+          <select id="simAng">
+            <option value="0">0°</option>
+            <option value="45" selected>45°</option>
+            <option value="90">90°</option>
+          </select>
+        </label>
+        <label class="sim-chk">
+          <input type="checkbox" id="simEdge" checked> 顯示輪廓線
+        </label>
+        <span class="sim-info" id="simInfo"></span>
+      </div>
+      <div class="sim-stage" id="simStage"></div>
+      <p class="sim-note">
+        掃描線是照 EZCAD 的做法畫的（平行線 + 奇偶規則挖洞）。
+        線間距調大時如果細節開始斷掉，實際刻出來也會斷。
+      </p>
+    </div>
+  </div>
+
+  <script src="js/dxf.js?v=20260903-rings"></script>
+  <script src="js/cloth-lab.js?v=20260903-sim"></script>
 </body>
 </html>

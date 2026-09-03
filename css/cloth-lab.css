@@ -257,3 +257,73 @@
   /* 手機上名稱與尺寸擠在同一列會換行得很難看,讓尺寸自己一列 */
   .lab-size{ margin-left:0; width:100%; justify-content:space-between }
 }
+
+/* =============================================================
+   EZCAD 填充模擬(2026-09-03)
+   -------------------------------------------------------------
+   掃描線用 stroke-width 極細的線,靠瀏覽器自己抗鋸齒 ——
+   線距 0.05mm 在畫面上看起來會接近實心,那正是實際刻出來的樣子;
+   線距拉大時線與線之間的布色會露出來,師傅就看得到覆蓋率。
+   ============================================================= */
+.sim-back{
+  position:fixed; inset:0; z-index:80;
+  background:rgba(38,32,26,.55);
+  display:flex; align-items:center; justify-content:center;
+  padding:16px;
+}
+.sim-back[hidden]{ display:none !important }
+.sim-box{
+  background:#fff; border-radius:14px;
+  width:min(680px,100%); max-height:92vh;
+  display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 18px 50px rgba(0,0,0,.28);
+}
+.sim-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; padding:14px 16px; border-bottom:1px solid var(--lohas-line,#e6e1d8);
+}
+.sim-head b{ font-size:15px; letter-spacing:.5px }
+.sim-x{
+  border:0; background:transparent; cursor:pointer;
+  font-size:18px; color:#8a8178; padding:4px 8px; border-radius:8px;
+}
+.sim-x:hover{ background:#f2efe9; color:#3b332b }
+.sim-ctl{
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  padding:12px 16px; border-bottom:1px solid var(--lohas-line,#e6e1d8);
+  font-size:13px; color:#6b6459;
+}
+.sim-ctl label{ display:inline-flex; align-items:center; gap:6px }
+.sim-ctl select{
+  font:inherit; padding:4px 8px; border-radius:8px;
+  border:1px solid var(--lohas-line,#d8d2c7); background:#fff; color:#3b332b;
+}
+.sim-chk{ cursor:pointer }
+.sim-info{
+  margin-left:auto; font-size:12px; color:#8a8178;
+  font-variant-numeric:tabular-nums;
+}
+.sim-stage{ padding:16px; overflow:auto; background:#faf8f4 }
+.sim-canvas{ display:block; width:100%; height:auto; border-radius:8px;
+  /* canvas 是 3000px,縮到版面寬度時讓瀏覽器好好內插,不要變鋸齒 */
+  image-rendering:auto }
+.sim-cloth{ fill:#ece5d7 }
+/* ⚠ 線寬【不要】寫死,也【不要】用 vector-effect:non-scaling-stroke。
+   -----------------------------------------------------------------
+   non-scaling-stroke 會讓 stroke-width 變成螢幕像素 —— 0.02 等於看不見。
+   而且線寬在物理上就是【雷射光點的直徑】(約 0.05mm),
+   由 drawSim() 依 stroke-width 屬性給,單位是公釐:
+     線距 0.05 → 線與線相接,看起來實心(實際刻出來就是實心)
+     線距 0.40 → 0.05 的線配 0.35 的空隙,布色會露出來
+   這正是師傅要判斷的事,所以不能用一個好看的固定值蓋掉它。 */
+.sim-hatch line{ stroke:#2b2620 }
+.sim-solid{ fill:#2b2620 }
+.sim-edge{ stroke:#c0392b; stroke-width:.08 }
+.sim-note{
+  margin:0; padding:12px 16px; font-size:12px; line-height:1.8;
+  color:#8a8178; border-top:1px solid var(--lohas-line,#e6e1d8);
+}
+@media (max-width:520px){
+  .sim-ctl{ gap:10px }
+  .sim-info{ margin-left:0; width:100% }
+}

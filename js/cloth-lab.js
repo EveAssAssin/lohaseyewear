@@ -219,6 +219,11 @@
                dxf.js 的 mode:'fill' 沒有刪,還能用,只是沒有入口。
                要復活的話先確認軟體讀不讀 HATCH;若不讀,正解是改成
                把洞從外框布林減掉、輸出不巢狀的封閉輪廓,而不是 HATCH。 */
+            /* 模擬的是【DXF 裡的幾何】,所以放在 DXF 旁邊而不是「看大圖」旁邊 ——
+               「看大圖」給的是客人看到的合成圖,那是另一回事。 */
+            '<button type="button" class="lab-file" data-sim="' + esc(it.id) + '"' +
+              ' title="用 EZCAD 的方式(平行掃描線)預覽這個 DXF 填滿後的樣子">' +
+              '<i class="fa-solid fa-fill-drip"></i>模擬填滿</button>' +
             '<a class="lab-file" href="' + esc(it.preview_url) + '" target="_blank" rel="noopener">' +
               '<i class="fa-solid fa-eye"></i>看大圖</a>' +
             (it.status === 'new'
@@ -321,6 +326,170 @@
     var input = el.list.querySelector('[data-w="' + id + '"]');
     var v = Number(input && input.value);
     return Number.isFinite(v) && v > 0 ? v : 90;
+  }
+
+  /* =============================================================
+     EZCAD 填充模擬
+     -------------------------------------------------------------
+     EZCAD 的「填充」不是把區域塗黑,是用固定間距的平行線在封閉輪廓
+     內來回掃 —— 雷射本來就只能沿著線走。所以這裡也畫掃描線。
+
+     為什麼不畫實心色塊:師傅要判斷的是「這個線間距蓋不蓋得到細節」,
+     而實心圖【看不出那件事】。線距 0.4mm 的貓毛會斷成一截一截,
+     畫成實心就完全看不出來,等到刻壞才知道。
+
+     幾何來自 LohasDxf.fromSvg().rings —— 也就是【DXF 檔案裡的
+     那一份】,不是原始 SVG。兩者差在縮放、旋轉與簡化,
+     拿原圖來畫等於模擬了一個不存在的檔案。
+
+     挖洞靠 clip-rule="evenodd",與 dxf.js 輸出封閉輪廓的語意一致。
+     ============================================================= */
+  /* 雷射光點的直徑(公釐)。掃描線的線寬就是它 ——
+     線距小於光點時線會重疊,看起來實心;線距大於光點時中間會露出布色。
+     0.05 是常見的光纖雷雕機規格,不同機台略有出入,
+     但要改請改這裡,不要在 CSS 裡另外寫一個好看的值蓋掉。 */
+  var SPOT_MM = 0.05;
+
+  var Sim = { rings: null, w: 0, h: 0, name: '' };
+
+  /* 為什麼用 canvas 而不是 SVG:
+     -----------------------------------------------------------------
+     光點只有 0.05mm。畫面上 150mm 的布若畫成 250px,那是 0.08 個像素 ——
+     SVG 會把每一條線抗鋸齒成幾乎透明的灰,線距 0.05(實際上是實心)
+     看起來卻是淡灰色,完全誤導。而且那是兩三千個 DOM 節點。
+
+     canvas 可以自己決定解析度:下面用 20 px/mm,光點剛好 1 個像素,
+     線距與光點的比例就能被誠實地畫出來 ——
+     線距 0.05 時線與線相接(實心),線距 0.4 時中間露出布色。 */
+  var PX_PER_MM = 20;
+  var CLOTH_MM = 150;
+
+  function ringsPath() {
+    var p = new Path2D();
+    Sim.rings.forEach(function (r) {
+      r.forEach(function (pt, i) {
+        var x = pt[0], y = Sim.h - pt[1];          // DXF 的 Y 向上,畫布向下
+        if (i) p.lineTo(x, y); else p.moveTo(x, y);
+      });
+      p.closePath();
+    });
+    return p;
+  }
+
+  function drawSim() {
+    var stage = document.getElementById('simStage');
+    if (!stage || !Sim.rings) return;
+
+    var gap = Number(document.getElementById('simGap').value) || 0.05;
+    var ang = Number(document.getElementById('simAng').value) || 0;
+    var edge = document.getElementById('simEdge').checked;
+
+    var N = CLOTH_MM * PX_PER_MM;                  // 3000 px
+    var cv = stage.querySelector('canvas');
+    if (!cv) {
+      cv = document.createElement('canvas');
+      cv.className = 'sim-canvas';
+      cv.width = cv.height = N;
+      stage.innerHTML = '';
+      stage.appendChild(cv);
+    }
+    var cx = cv.getContext('2d');
+
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.fillStyle = '#ece5d7';                      // 布色
+    cx.fillRect(0, 0, N, N);
+
+    // 進入公釐座標系,圖案置中在布上
+    cx.save();
+    cx.scale(PX_PER_MM, PX_PER_MM);
+    cx.translate((CLOTH_MM - Sim.w) / 2, (CLOTH_MM - Sim.h) / 2);
+
+    var path = ringsPath();
+
+    cx.save();
+    cx.clip(path, 'evenodd');                      // 挖洞:與 dxf.js 的封閉輪廓語意一致
+
+    /* 掃描線。先在一個夠大的正方形裡畫滿水平線再整組旋轉 ——
+       用對角線當邊長,轉任何角度都不會露出邊緣。 */
+    var diag = Math.sqrt(Sim.w * Sim.w + Sim.h * Sim.h) + 2;
+    var n = Math.ceil(diag / gap);
+    cx.translate(Sim.w / 2, Sim.h / 2);
+    cx.rotate(ang * Math.PI / 180);
+    cx.strokeStyle = '#2b2620';
+    cx.lineWidth = Math.min(gap, SPOT_MM);         // 線寬＝光點,不可超過線距
+    cx.beginPath();
+    var half = diag / 2;
+    for (var i = 0; i <= n; i++) {
+      var y = -half + i * gap;
+      cx.moveTo(-half, y);
+      cx.lineTo(half, y);
+    }
+    cx.stroke();
+    cx.restore();
+
+    if (edge) {
+      cx.strokeStyle = '#c0392b';
+      cx.lineWidth = 0.08;
+      cx.stroke(path);
+    }
+    cx.restore();
+
+    var cover = Math.min(1, SPOT_MM / gap) * 100;
+    document.getElementById('simInfo').textContent =
+      Sim.rings.length + ' 條輪廓 · ' + n.toLocaleString() + ' 條掃描線 · 覆蓋 ' +
+      cover.toFixed(0) + '% · ' + Sim.w.toFixed(1) + '×' + Sim.h.toFixed(1) + ' mm';
+  }
+
+  function openSim(id, btn) {
+    var it = State.items.filter(function (x) { return String(x.id) === String(id); })[0];
+    if (!it || !window.LohasDxf) return;
+    var label = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = '計算中…';
+
+    fetch(it.svg_url)
+      .then(function (r) { if (!r.ok) throw new Error('線稿檔取不到(' + r.status + ')'); return r.text(); })
+      .then(function (svg) {
+        var out = window.LohasDxf.fromSvg(svg, {
+          widthMm: widthMm(it.id),
+          rotateDeg: Number(it.placement && it.placement.rot) || 0,
+          mode: 'outline',
+        });
+        Sim.rings = out.rings; Sim.w = out.widthMm; Sim.h = out.heightMm;
+        Sim.name = it.design_name || '';
+        document.getElementById('simTitle').textContent =
+          'EZCAD 填充模擬　' + Sim.name;
+        document.getElementById('simBack').hidden = false;
+        document.body.style.overflow = 'hidden';
+        drawSim();
+      })
+      .catch(function (e) { alert('模擬失敗:' + e.message); })
+      .finally(function () { btn.disabled = false; btn.innerHTML = label; });
+  }
+
+  function closeSim() {
+    var b = document.getElementById('simBack');
+    if (!b || b.hidden) return;
+    b.hidden = true;
+    document.body.style.overflow = '';
+    document.getElementById('simStage').innerHTML = '';   // 幾萬條線不要留在 DOM 裡
+    Sim.rings = null;
+  }
+
+  function bindSim() {
+    var back = document.getElementById('simBack');
+    if (!back || back.dataset.bound) return;
+    back.dataset.bound = '1';
+    back.addEventListener('click', function (e) {
+      // 點灰底或叉叉都關;點到框內不關
+      if (e.target === back || e.target.closest('#simX')) closeSim();
+    });
+    ['simGap', 'simAng', 'simEdge'].forEach(function (k) {
+      document.getElementById(k).addEventListener('change', drawSim);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeSim();
+    });
   }
 
   function downloadDxf(id, btn, mode) {
@@ -460,6 +629,9 @@
     el.list.addEventListener('click', function (e) {
       var dxf = e.target.closest('[data-dxf]');
       if (dxf) { downloadDxf(dxf.dataset.dxf, dxf, dxf.dataset.mode); return; }
+
+      var sim = e.target.closest('[data-sim]');
+      if (sim) { bindSim(); openSim(sim.dataset.sim, sim); return; }
 
       var done = e.target.closest('[data-done]');
       if (done) {

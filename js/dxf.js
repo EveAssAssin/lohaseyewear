@@ -628,6 +628,12 @@
       dxf: s, widthMm: widthMm, heightMm: heightMm,
       paths: parsed.polys.length, rotateDeg: rotDeg, mode: 'outline',
       warnings: _warnings.slice(),
+      /* 輪廓也一併回。加工頁的「EZCAD 模擬」要畫的是【這個檔案裡的
+         幾何】,不是原始 SVG —— 兩者差在縮放、旋轉、簡化。
+         讓它重新解析一次 DXF 文字也行,但那等於維護第二份解析器,
+         而且哪天輸出格式一改,模擬就會悄悄跟檔案對不上。
+         座標單位是公釐,Y 軸向上(與 DXF 一致)。 */
+      rings: rings.map(function (r) { return r.pts; }),
     };
   }
 
