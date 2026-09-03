@@ -136,7 +136,14 @@
     </div>
   </div>
 
+  <!-- 製作單上的 QR。
+       ⚠ 刻意載在這一頁而不是列印視窗裡：載不到的話，printSlip() 會在
+         按下去的當下就講清楚，而不是印出一張沒有 QR 的單子 ——
+         那種單子看起來完全正常，到了門市才發現掃不了，而布已經寄出去了。 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <div id="labQrTmp" style="display:none"></div>
+
   <script src="js/dxf.js?v=20260903-rings"></script>
-  <script src="js/cloth-lab.js?v=20260903-sim2"></script>
+  <script src="js/cloth-lab.js?v=20260903-print"></script>
 </body>
 </html>

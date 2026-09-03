@@ -105,6 +105,90 @@
     return '此設計無法製作，請重新設計';
   }
 
+  /* ---------- 列印製作單（80mm 熱感應）----------
+     -----------------------------------------------------------------
+     時機：師傅按下「完成製作」＝出貨，當下就印，單子跟著布一起寄到門市。
+     門市收到後掃單上的 QR → 登錄到店 → 客人 App 出現取件按鈕。
+
+     🚨 QR 裡放的是【這一筆的 id（cloth_designs.id）】，不是樂活那邊的 token。
+       token 要等對方每日同步才存在，而這張單是按下完成的當下就要印。
+
+     ⚠ 姓名是另外要的（action:'print'，一次一筆）——
+       清單本身對製作端不給姓名。但這張單會跟著布到門市，
+       門市需要姓名才找得到人。 */
+  var PRINT_PREFIX = 'CLOTHARV:';
+
+  /* 用 qrcodejs 在本頁畫出 QR，取 dataURL 帶進列印視窗。
+     在本頁畫而不是在列印視窗畫：列印視窗要等外部腳本載完才有圖，
+     而 print() 可能比它先執行 —— 那會印出一張空白的方框。 */
+  function qrDataUrl(text) {
+    if (typeof window.QRCode !== 'function') return '';
+    var box = document.getElementById('labQrTmp');
+    if (!box) return '';
+    box.innerHTML = '';
+    try {
+      new window.QRCode(box, {
+        text: text, width: 220, height: 220,
+        correctLevel: window.QRCode.CorrectLevel.M
+      });
+      var c = box.querySelector('canvas');
+      if (c) return c.toDataURL('image/png');
+      var img = box.querySelector('img');
+      return img ? img.src : '';
+    } catch (e) { return ''; }
+  }
+
+  function printSlip(id) {
+    if (typeof window.QRCode !== 'function') {
+      alert('條碼元件沒有載入成功，現在列印會印出一張沒有 QR 的單子。\n請重新整理這一頁再試一次。');
+      return;
+    }
+    call({ action: 'print', id: id })
+      .then(function (d) {
+        var qr = qrDataUrl(PRINT_PREFIX + d.id);
+        if (!qr) { alert('QR 產生失敗，請重新整理後再試。'); return; }
+
+        var w = window.open('', '_blank', 'width=380,height=640');
+        if (!w) { alert('瀏覽器擋掉了列印視窗，請允許彈出視窗後再試。'); return; }
+
+        var esc2 = function (x) { return esc(x == null ? '' : x); };
+        /* 80mm 熱感應：可列印寬度約 72mm。
+           字級刻意偏大 —— 這張單在門市是被快速掃過的，不是拿來細讀的。 */
+        w.document.write(
+          '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="utf-8">' +
+          '<title>眼鏡布製作單</title><style>' +
+          '@page{size:80mm auto;margin:3mm}' +
+          'body{width:72mm;margin:0;font-family:"Noto Sans TC",sans-serif;' +
+          'font-size:12px;line-height:1.7;color:#000}' +
+          'h1{font-size:15px;margin:0 0 4px;text-align:center}' +
+          '.hr{border-top:1px dashed #000;margin:6px 0}' +
+          '.big{font-size:16px;font-weight:700}' +
+          '.qr{text-align:center;margin:8px 0 4px}' +
+          '.qr img{width:46mm;height:46mm}' +
+          '.code{text-align:center;font-size:9px;word-break:break-all;color:#333}' +
+          '.tip{margin-top:6px;text-align:center;font-size:11px;font-weight:700}' +
+          '</style></head><body>' +
+          '<h1>樂活 客製眼鏡布</h1>' +
+          '<div class="hr"></div>' +
+          '<div>取貨門市　<span class="big">' + esc2(d.store_name || '未指定') + '</span></div>' +
+          '<div>客　　人　<span class="big">' + esc2(d.member_name || '（未提供）') + '</span></div>' +
+          '<div>會員編號　' + esc2(d.erpid || '—') + '</div>' +
+          '<div>作品名稱　' + esc2(d.design_name || '（未命名）') + '</div>' +
+          '<div>完成時間　' + esc2(fmtTime(d.done_at) || fmtTime(new Date().toISOString())) + '</div>' +
+          '<div class="hr"></div>' +
+          '<div class="qr"><img src="' + qr + '" alt=""></div>' +
+          '<div class="code">' + esc2(PRINT_PREFIX + d.id) + '</div>' +
+          '<div class="tip">門市收到後請掃描此碼登錄到店</div>' +
+          '</body></html>'
+        );
+        w.document.close();
+        /* 等圖片解碼完再列印。直接 print() 的話 QR 可能還沒畫出來，
+           印出來會是一個空白方塊 —— 而那要到門市掃不動才會發現。 */
+        w.onload = function () { w.focus(); w.print(); };
+      })
+      .catch(function (err) { alert(err.message); });
+  }
+
   /* 產線分流:客人選的取貨門市在哪一區,這件就歸哪一條線。
      -----------------------------------------------------------------
      值是門市資料的 city 欄位原文(北區、台中區一、台南區…),
@@ -235,6 +319,12 @@
                 '<button type="button" class="lab-file" data-reject="' + esc(it.id) + '" ' +
                   'style="color:#b4232a;border-color:#e6bcbe">' +
                   '<i class="fa-solid fa-rotate-left"></i>退件</button>'
+              : '') +
+            (it.status === 'done'
+              ? /* 補印：師傅按完成時若沒印到（印表機沒開、紙用完），
+                   沒有補印就只能整張單重來。 */
+                '<button type="button" class="lab-file" data-print="' + esc(it.id) + '">' +
+                  '<i class="fa-solid fa-print"></i>補印製作單</button>'
               : '') +
             (it.status === 'rejected'
               ? '<span style="color:#b4232a;font-size:13px">已退件' +
@@ -636,8 +726,15 @@
       var done = e.target.closest('[data-done]');
       if (done) {
         done.disabled = true;
-        call({ action: 'set_status', id: done.dataset.done, status: 'done' })
-          .then(load)
+        var doneId = done.dataset.done;
+        call({ action: 'set_status', id: doneId, status: 'done' })
+          .then(function () {
+            /* 完成＝出貨，當下就印製作單，單子跟著布走。
+               ⚠ 先印再重新載入清單：load() 會把這張卡重畫掉，
+                 而列印是同步開視窗的，順序反了會抓不到剛才那一筆。 */
+            printSlip(doneId);
+            return load();
+          })
           .catch(function (err) { alert(err.message); done.disabled = false; });
         return;
       }
@@ -645,6 +742,9 @@
       /* 退件。原因是必填 —— 客人看到的就是這段文字，
          沒有原因的退件等於「退回去但不告訴他要改什麼」，
          他只會原封不動再送一次，兩邊都白做。 */
+      var pr = e.target.closest('[data-print]');
+      if (pr) { printSlip(pr.dataset.print); return; }
+
       var rej = e.target.closest('[data-reject]');
       if (rej) { openRejectForm(rej); return; }
     });
