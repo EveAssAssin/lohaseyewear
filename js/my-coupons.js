@@ -64,7 +64,15 @@
      不是要看自己過期了幾張。 */
   var ORDER = { usable: 0, locked: 1, notyet: 2, used: 3, expired: 4 };
 
-  var State = { loaded: false, loading: false, list: [], err: '', needLogin: false };
+  /* 已失效的券預設收起來。
+     實測 28095839 這個帳號:27 張裡有 20 張已過期 —— 全部攤開的話
+     客人要一路捲過二十張灰卡才看得到能用的那幾張。
+     不直接濾掉是因為他會想確認「我那張是不是過期了」,
+     所以收起來但留一個開關,並且把張數寫在按鈕上。 */
+  var DEAD = { used: 1, expired: 1 };
+
+  var State = { loaded: false, loading: false, list: [], err: '',
+                needLogin: false, showDead: false };
   var timer = 0;
 
   function $(id) { return document.getElementById(id); }
@@ -219,15 +227,54 @@
       return;
     }
 
-    var list = State.list.slice().sort(function (a, b) {
+    var dead = State.list.filter(function (c) { return DEAD[c.status]; }).length;
+    var live = State.list.length - dead;
+    /* 有幾張真的能在官網用。全部都不能用時要講一句 ——
+       不然客人會一張一張點,每張都寫「限 App 使用」,
+       到最後也不確定是自己看漏了還是真的一張都沒有。 */
+    var onSite = State.list.filter(function (c) {
+      return c.site_usable === true && c.status === 'usable';
+    }).length;
+
+    var bar = '<div class="cp-sum">' +
+      '<span>共 <b>' + State.list.length + '</b> 張' +
+      (dead ? '，其中 <b>' + dead + '</b> 張已失效' : '') + '</span>' +
+      (dead ? '<button type="button" class="cp-toggle" data-toggle>' +
+              (State.showDead ? '收起已失效' : '顯示已失效 ' + dead + ' 張') +
+              '</button>' : '') +
+      '</div>';
+
+    if (live && !onSite) {
+      bar += '<div class="cp-hint cp-hint--warn">' +
+        '<i class="fa-solid fa-circle-info"></i>' +
+        '<div>你目前<b>沒有任何一張券可以在官網使用</b> —— 這些券都只開放在' +
+        '【樂活 App】或門市使用。官網這一頁可以查看有哪些券、還有多久到期。</div></div>';
+    }
+
+    var list = State.list.filter(function (c) {
+      return State.showDead || !DEAD[c.status];
+    }).sort(function (a, b) {
       var d = (ORDER[a.status] == null ? 9 : ORDER[a.status]) -
               (ORDER[b.status] == null ? 9 : ORDER[b.status]);
       if (d) return d;
       return (Number(a.end_time) || 0) - (Number(b.end_time) || 0);  // 快到期的排前面
     });
 
-    box.innerHTML = note + list.map(cardHtml).join('');
+    box.innerHTML = note + bar + (
+      list.length ? list.map(cardHtml).join('')
+                  : '<p class="empty-text">沒有生效中的票券。</p>'
+    );
+    bindToggle();
     startCountdown();
+  }
+
+  function bindToggle() {
+    var b = document.querySelector('#couponList [data-toggle]');
+    if (!b) return;
+    b.addEventListener('click', function () {
+      State.showDead = !State.showDead;
+      render();
+    });
   }
 
   /* 「使用中」的倒數。只在畫面上真的有這種券時才跑計時器 ——

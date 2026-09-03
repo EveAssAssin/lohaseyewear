@@ -3094,6 +3094,31 @@ body {
 }
 .mp .cp-hint i{ color:var(--lohas-brown); margin-top:3px; flex-shrink:0 }
 .mp .cp-hint b{ color:var(--lohas-brown) }
+/* 「一張都不能在官網用」那句。用站上既有的提醒色,不另定義新色 */
+.mp .cp-hint--warn{
+  background:var(--status-pending-bg);
+  border-color:var(--status-pending-bg);
+}
+.mp .cp-hint--warn i,
+.mp .cp-hint--warn b{ color:var(--status-pending) }
+
+/* 張數與「顯示已失效」的開關 */
+.mp .cp-sum{
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:8px;
+  padding:2px 2px 0;
+  font-size:12.5px; color:var(--lohas-mute); letter-spacing:.3px;
+}
+.mp .cp-sum b{ color:var(--lohas-brown); font-variant-numeric:tabular-nums }
+.mp .cp-toggle{
+  border:1px solid var(--lohas-line); background:#fff;
+  color:var(--lohas-sub);
+  border-radius:999px; padding:4px 13px;
+  font-size:12px; font-family:inherit; letter-spacing:.3px;
+  cursor:pointer; transition:all .18s;
+}
+.mp .cp-toggle:hover{ border-color:var(--lohas-light-brown); color:var(--lohas-brown) }
+.mp .cp-toggle:focus-visible{ outline:2px solid var(--lohas-brown); outline-offset:2px }
 
 .mp .cp-card{
   display:flex; align-items:stretch;
