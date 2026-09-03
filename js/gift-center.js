@@ -367,6 +367,23 @@
     if (cs) cs.textContent = State.sent.length;
     if (cr) cr.textContent = State.received.length;
 
+    /* 第三個分頁「我的票券」由 my-coupons.js 負責,兩份清單各自
+       一個容器,互相不知道對方的存在 —— 票券的資料來源、錯誤處理
+       與空狀態跟禮物完全不同,硬塞進同一個 render 只會兩邊都難改。
+       這裡只做一件事:決定誰現身。 */
+    var cbox = document.getElementById('couponList');
+    var onCoupons = State.tab === 'coupons';
+    box.hidden = onCoupons;
+    if (cbox) {
+      cbox.hidden = !onCoupons;
+      if (onCoupons) {
+        if (window.LohasCoupons) window.LohasCoupons.load();
+        return;                                   // 底下都是禮物的事
+      }
+      // 離開票券分頁就把倒數停掉,不要讓它在背景空轉
+      if (window.LohasCoupons && window.LohasCoupons.stop) window.LohasCoupons.stop();
+    }
+
     if (State.error) {
       box.innerHTML = '<div class="md-notice"><i class="fa-solid fa-circle-exclamation"></i>' +
                       '<div>' + esc(State.error) + '</div></div>';

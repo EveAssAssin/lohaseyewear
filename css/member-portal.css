@@ -3068,6 +3068,110 @@ body {
 
 
 /* =============================================================
+   我的票券(禮物中心第三個分頁 · my-coupons.js)
+   -------------------------------------------------------------
+   刻意與 .gf-card 同一套骨架(左側一塊 + 右側內文),兩個分頁切換時
+   卡片高度與邊界不會跳動。左側不是縮圖是一個票券圖示 —— 票券沒有圖。
+
+   ⚠ 這裡【沒有】金額欄。舊版(2026-08-11 刪除)左側是一塊大大的
+   「$3,000 折抵金額」,而那個數字是錯的:贈品型券的 amount 是票券
+   中心的欄位設定值,不是折抵金額。版面上留一個顯眼的位置給它,
+   等於逼後面的人把它填回去。所以連位置都不留。
+   ============================================================= */
+
+.mp .cp-list{ display:flex; flex-direction:column; gap:10px }
+
+/* 轉贈說明。不論有沒有券都會出現 —— 客人來這頁很可能就是要找轉贈,
+   找不到又沒有任何說明是最糟的結果。 */
+.mp .cp-hint{
+  display:flex; gap:10px; align-items:flex-start;
+  padding:12px 14px; margin-bottom:4px;
+  background:var(--lohas-tip);
+  border:1px solid var(--lohas-line);
+  border-radius:10px;
+  font-size:13px; line-height:1.7; letter-spacing:.3px;
+  color:var(--lohas-sub);
+}
+.mp .cp-hint i{ color:var(--lohas-brown); margin-top:3px; flex-shrink:0 }
+.mp .cp-hint b{ color:var(--lohas-brown) }
+
+.mp .cp-card{
+  display:flex; align-items:stretch;
+  border:1px solid var(--lohas-line);
+  border-radius:10px;
+  background:#fff;
+  overflow:hidden;
+  transition:border-color .18s;
+}
+.mp .cp-card:hover{ border-color:var(--lohas-light-brown) }
+/* 已使用/已過期的整張壓暗,但不要藏起來 —— 客人會想確認自己用掉了 */
+.mp .cp-card.is-dim{ opacity:.6 }
+
+.mp .cp-mark{
+  flex-shrink:0; width:64px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--lohas-tip);
+  border-right:1px solid var(--lohas-line);
+  color:var(--lohas-light-brown); font-size:22px;
+}
+
+.mp .cp-body{ flex:1; min-width:0; padding:16px 18px }
+
+.mp .cp-head{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:10px; margin-bottom:6px;
+}
+.mp .cp-title{
+  margin:0; font-size:15px; font-weight:700; letter-spacing:.3px;
+  color:var(--lohas-brown);
+  /* 券名可能很長(例:客製太陽眼鏡體驗券-生日限定)。
+     不用 nowrap+省略號 —— 券名被截掉客人就分不出兩張券的差別。 */
+  overflow-wrap:anywhere;
+}
+
+.mp .cp-desc{
+  margin:0 0 8px;
+  font-size:13px; line-height:1.75; letter-spacing:.3px;
+  color:var(--lohas-sub);
+}
+
+.mp .cp-meta{
+  display:flex; flex-wrap:wrap; gap:14px;
+  font-size:12px; color:var(--lohas-mute); letter-spacing:.3px;
+}
+.mp .cp-meta i{ margin-right:5px }
+
+.mp .cp-foot{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-top:12px; padding-top:12px;
+  border-top:1px dashed var(--lohas-line);
+}
+
+.mp .cp-use{
+  display:inline-block;
+  padding:8px 20px; border-radius:999px;
+  background:var(--lohas-brown); color:#fff;
+  font-size:13px; font-weight:600; letter-spacing:1px;
+  text-decoration:none; transition:opacity .18s;
+}
+.mp .cp-use:hover{ opacity:.85 }
+.mp .cp-use:focus-visible{ outline:2px solid var(--lohas-brown); outline-offset:2px }
+
+.mp .cp-wait,
+.mp .cp-blocked{
+  font-size:12px; letter-spacing:.3px; color:var(--lohas-mute);
+  display:inline-flex; align-items:center; gap:6px;
+}
+/* 倒數的秒數在跳,等寬數字才不會讓整行左右抖動 */
+.mp .cp-wait{ font-variant-numeric:tabular-nums }
+
+@media (max-width:520px){
+  .mp .cp-mark{ width:48px; font-size:18px }
+  .mp .cp-body{ padding:14px }
+}
+
+
+/* =============================================================
    禮物中心 (gift-center)
    -------------------------------------------------------------
    狀態徽章沿用 .cp-badge(我的票券已定義的那組),不重複造輪子
