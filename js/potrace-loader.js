@@ -26,17 +26,37 @@
   };
 
   var SRC = 'https://cdn.jsdelivr.net/npm/esm-potrace-wasm@0.4.1/dist/index.js';
+  var instance = 0;
 
   async function attempt(){
-    var mod = await import(SRC);
+    /* 每次都帶一個不同的查詢字串,強制拿到全新的模組實例。
+       理由見下面 trace() 的說明:壞掉的實例必須能被丟棄。 */
+    var mod = await import(SRC + '?i=' + (++instance));
     await mod.init();
+
     window.LohasPotrace.trace = function(imgData, opts){
-      return mod.potrace(imgData, opts || {});
+      return Promise.resolve()
+        .then(function(){ return mod.potrace(imgData, opts || {}); })
+        .catch(function(e){
+          /* 🚨 這一支拋錯之後【整個 WASM 實例就毀了】。
+             實測:先用 1251px 觸發 `offset is out of bounds`,
+             接著同一頁再描 1000px(單獨跑明明會成功)也一樣失敗。
+             不處理的話,一個客人上傳一張過大的圖之後,
+             【他這一輪之後的每一次上傳】都會靜靜降級成 imagetracer。
+
+             所以:出錯就把實例丟掉、重新載入一份,下一次是乾淨的。
+             這一次仍然向上拋 —— 呼叫端該走 fallback 就走 fallback,
+             不要在這裡假裝沒事。 */
+          console.warn('[LohasPotrace] 描圖失敗,實例可能已損毀,重新載入一份:', e && e.message);
+          window.LohasPotrace.ready = false;
+          window.LohasPotrace._initPromise = boot();
+          throw e;
+        });
     };
     window.LohasPotrace.ready = true;
   }
 
-  window.LohasPotrace._initPromise = (async function(){
+  async function boot(){
     for (var i = 1; i <= 2; i++) {
       try {
         await attempt();
@@ -50,7 +70,9 @@
     console.warn('[LohasPotrace] 兩次都失敗,upload-design 會 fallback 用 imagetracerjs');
     window.LohasPotrace.ready = false;
     return false;
-  })();
+  }
+
+  window.LohasPotrace._initPromise = boot();
 
   /* 等到它就緒為止,最多等 ms 毫秒。
      ⚠ 呼叫端請用這個,不要直接讀 .ready —— 直接讀等於在問
