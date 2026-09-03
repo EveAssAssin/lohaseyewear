@@ -1384,8 +1384,40 @@
     var imgDataForSvg = ctx2.getImageData(0, 0, canvas.width, canvas.height);
     var dataSvg = imgDataForSvg.data;
 
-    var threshold = CONFIG.WHITE_THRESHOLD;
     var inkRgb = hexToRgb(CONFIG.INK_COLOR); // {r,g,b}
+
+    /* 門檻要看輸入是哪一種圖,不能一律 220。
+       =================================================================
+       220 的用意是「寧可多收一點墨,免得淡鉛筆線被當成背景」——
+       那對照片、手繪稿是對的。
+
+       但輸入若【本來就是黑白線稿】(客人上傳 SVG、或已經去背的 PNG),
+       圖上根本沒有淡線可以救,220 唯一的作用就是把【邊緣抗鋸齒的灰】
+       全部吃成墨 —— 筆畫每邊各胖半個像素,細節互相黏死。
+
+       實測(三隻貓,原始線稿墨色 26.47%):
+           門檻 220 → 27.80%   線變胖 6.90%,左邊那隻貓的條紋糊成黑塊
+           門檻 150 → 26.5% 左右
+
+       怎麼分辨:數【中間調】。
+           已經二值化的線稿          中間調 0.00%
+           同一張光柵化之後          中間調 3.14%  ← 全部來自邊緣
+           照片 / 鉛筆稿             中間調數十 %
+       沒有中間調 = 沒有淡線要救,那 220 就只剩壞處。
+
+       10% 這個界線留了三倍餘裕(光柵化邊緣約 3%),
+       真正的鉛筆稿遠在其上。 */
+    var mid = 0, tot = dataPng.length / 4;
+    for(var q = 0; q < dataPng.length; q += 4){
+      var a0 = dataPng[q+3];
+      var l0 = 0.299 * dataPng[q] + 0.587 * dataPng[q+1] + 0.114 * dataPng[q+2];
+      if (a0 < 250) { var kk = a0 / 255; l0 = l0 * kk + 255 * (1 - kk); }
+      if (l0 >= 60 && l0 <= 200) mid++;
+    }
+    var lineArt = (mid / tot) < 0.10;
+    var threshold = lineArt ? RESAMPLE_THRESHOLD : CONFIG.WHITE_THRESHOLD;
+    console.info('[upload-design] 中間調 ' + (mid / tot * 100).toFixed(2) + '% → ' +
+                 (lineArt ? '判定為線稿,門檻 ' : '判定為照片/手繪,門檻 ') + threshold);
 
     for(var i = 0; i < dataPng.length; i += 4){
       var r = dataPng[i], g = dataPng[i+1], b = dataPng[i+2];
