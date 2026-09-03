@@ -223,7 +223,7 @@
                「看大圖」給的是客人看到的合成圖,那是另一回事。 */
             '<button type="button" class="lab-file" data-sim="' + esc(it.id) + '"' +
               ' title="用 EZCAD 的方式(平行掃描線)預覽這個 DXF 填滿後的樣子">' +
-              '<i class="fa-solid fa-fill-drip"></i>模擬填滿</button>' +
+              '<i class="fa-solid fa-fill-drip"></i>EZCAD模擬器</button>' +
             '<a class="lab-file" href="' + esc(it.preview_url) + '" target="_blank" rel="noopener">' +
               '<i class="fa-solid fa-eye"></i>看大圖</a>' +
             (it.status === 'new'
@@ -329,7 +329,7 @@
   }
 
   /* =============================================================
-     EZCAD 填充模擬
+     EZCAD模擬器
      -------------------------------------------------------------
      EZCAD 的「填充」不是把區域塗黑,是用固定間距的平行線在封閉輪廓
      內來回掃 —— 雷射本來就只能沿著線走。所以這裡也畫掃描線。
@@ -458,7 +458,7 @@
         Sim.rings = out.rings; Sim.w = out.widthMm; Sim.h = out.heightMm;
         Sim.name = it.design_name || '';
         document.getElementById('simTitle').textContent =
-          'EZCAD 填充模擬　' + Sim.name;
+          'EZCAD模擬器　' + Sim.name;
         document.getElementById('simBack').hidden = false;
         document.body.style.overflow = 'hidden';
         drawSim();
