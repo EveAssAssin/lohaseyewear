@@ -67,6 +67,16 @@ const FALLBACK_APP_KEY = '';
      所以不輪替時留空不會變成後門。 */
 const FALLBACK_APP_KEY_OLD = '';
 
+/* 線上實際跑的是哪一版。
+   -----------------------------------------------------------------
+   2026-08-28 踩過:程式改好、進了版控,信上寫「已上線」,
+   但那支函式從頭到尾沒有部署過,而對方照著那句話把接收端做完了。
+   從外面看不出線上是哪一版,是那次事故的根本原因。
+
+   每次改這支【一併更新這個字串】,對方就能自己確認,不必問也不必等回信。
+   (shop 函式的 code_version 是同一個做法。) */
+const CODE_VERSION = '2026-09-03 · product 標記';
+
 const APP_KEY = Deno.env.get('CLOTH_FEED_KEY') || FALLBACK_APP_KEY;
 const APP_KEY_OLD = Deno.env.get('CLOTH_FEED_KEY_OLD') || FALLBACK_APP_KEY_OLD;
 
@@ -184,9 +194,29 @@ Deno.serve(async (req) => {
      ⚠ 舊資料兩欄都是 null(這個功能上線前存的),而且客人
      【可以不選】—— 所以對方一定要能處理 null,不能假設有值。
      null 的意思是「還沒指定」,不是「資料壞了」。 */
+  /* 門市欄位 ＋ 用途標記。
+     -----------------------------------------------------------------
+     ⚠ product / product_name 是 2026-09-03 加的,不是裝飾。
+
+     在此之前這支回的每一筆都只有「店名 + 圖名 + source」,
+     而 source 是 'market' / 'draw' —— 那是【圖從哪裡來】,
+     不是【客人要來拿什麼】。門市端收到一筆取件通知,
+     看不出要拿的是眼鏡布還是別的東西。
+
+     現在多兩個欄位:
+       product       機器讀的類別,固定 'cloth'
+       product_name  直接可以放進推播文案的中文
+
+     兩個都給,是因為對方若只拿 product 去做判斷,
+     哪天多一種產品時文案要改兩處;給了中文就只改我方這一處。
+
+     新增欄位對舊的接收端無害(多的欄位會被忽略),
+     但仍要告知對方 —— 他們可能想把它放進推播。 */
   const storeOf = (r: Record<string, unknown>) => ({
     store_erpid: r.store_erpid ?? null,
     store_name: r.store_name ?? null,
+    product: 'cloth',
+    product_name: '客製眼鏡布',
   });
 
   let data: any[] = [];
@@ -274,6 +304,7 @@ Deno.serve(async (req) => {
               ' → 完成 ' + items.length + ' 筆,製作中 ' + pending.length + ' 筆');
 
   const out: Record<string, unknown> = {
+    code_version: CODE_VERSION,
     items,
     count: items.length,
     since: since.toISOString(),

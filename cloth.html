@@ -197,7 +197,11 @@
         <!-- ⚠ 標題用 .cl-card-title,與其他三張卡同一個 class。
              先前寫成 .cl-card-h —— 那個 class 不存在,所以整行沒有
              任何樣式,看起來就跟旁邊的卡片不是同一套東西。 -->
-        <p class="cl-card-title">要到哪一家門市拿<span class="cl-req">*</span></p>
+        <!-- ⚠ 標題要講清楚「拿什麼」。
+             客人在這一頁待了二十分鐘,腦子裡是刻圖;但這一格的答案
+             會變成門市端收到的取件通知,而那一端只看得到店名與圖名。
+             兩邊都寫明「客製眼鏡布」,客人與店員講的才是同一件事。 -->
+        <p class="cl-card-title">客製眼鏡布要到哪一家門市拿<span class="cl-req">*</span></p>
         <div class="cl-select-wrap">
           <select class="cl-input cl-select" id="clStore">
             <option value="">載入門市中…</option>
@@ -205,7 +209,7 @@
           <i class="fa-solid fa-chevron-down cl-select-ico"></i>
         </div>
         <p class="cl-field-hint" id="clStoreHint">
-          做好之後會送到這家門市,之後想換的話打個電話跟他們說一聲就好。
+          眼鏡布做好之後會送到這家門市,之後想換的話打個電話跟他們說一聲就好。
         </p>
         <button type="button" class="cl-retry" id="clStoreRetry" style="display:none">
           <i class="fa-solid fa-rotate-right"></i> 重新載入門市清單
@@ -270,6 +274,6 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260903-text"></script>
+<script src="js/cloth.js?v=20260903-store"></script>
 </body>
 </html>
