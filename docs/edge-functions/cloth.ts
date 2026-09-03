@@ -16,7 +16,8 @@
    部署:Supabase Dashboard → Edge Functions → 新增 cloth → 貼上本檔
         Verify JWT 要【關閉】
 
-   ⚠ 這支不需要任何金鑰,用的是 Supabase 自動注入的環境變數。
+   ⚠ 這支需要 Secret「SITE_API_KEY」(問我方生日資格用)。
+     其餘用的是 Supabase 自動注入的環境變數。
    ============================================================= */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -24,6 +25,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
+
+/* 主後端(我方)。生日只存在我方,官網不做任何日期判斷 ——
+   理由寫在我方 SiteClothApi 的檔頭:同一個業務規則在兩個系統
+   各實作一份的話,症狀會是「兩邊各自看都正常,合起來不對」。
+   所以這裡問的是【結論】,拿到什麼就顯示什麼。 */
+const SITE_KEY = Deno.env.get('SITE_API_KEY') || '';
+const TICKET_BASE = (Deno.env.get('TICKET_BASE_URL') ||
+  'https://lohas.realtime.tw').replace(/\/+$/, '');
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
@@ -35,7 +44,7 @@ const ASSET_HOST = 'hqdmyxxrskvllkcedybl.supabase.co';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 
 function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
@@ -82,9 +91,14 @@ function pickStore(v: unknown) {
   };
 }
 
-/* 身分。erpid 或 mid 有一個就算數 ——
-   眼鏡布只做體驗、不成交,不需要 ERP 客編。
-   官網註冊的新會員也應該玩得到。 */
+/* 身分。erpid 或 mid 有一個就算數。
+
+   ⚠ 2026-09-03 起加了生日閘門之後,只有 mid 的人(官網註冊、
+     尚未到門市綁定)實際上會被我方判成 no_birthday 而擋下 ——
+     因為生日來自 ERP 建檔,我方查不到就是查不到。
+     這不是這一支的判斷,是我方回的結論;訊息會請他去門市建檔。
+     (查證:2026-09-03 既有 54 筆作品全部都有 erpid,mid-only 是 0,
+      所以這個改動沒有影響到任何既有客人。) */
 async function whoFromToken(token: string): Promise<{ erpid: string; mid: string } | null> {
   if (!token) return null;
   try {
@@ -103,6 +117,60 @@ async function whoFromToken(token: string): Promise<{ erpid: string; mid: string
     return null;
   }
 }
+
+/* ===== 生日資格:問我方,不自己算 =====
+   -----------------------------------------------------------------
+   回 null ＝【問不到】(未設定金鑰 / 連線失敗 / 回應異常)。
+
+   🚨 呼叫端必須把 null 當成「不能做」並顯示系統異常。
+     放行才是危險的那一邊:我方一抖,全站就變成沒有生日限制,
+     而且完全不會有人發現 —— 客人做得出來、製作端照做,
+     一切看起來都正常。fail-closed 至少會有人來問客服。
+
+   ⚠ 與「不是生日月」要分得出來:那是客人的狀態(要顯示原因),
+     這是我方的故障(要顯示系統異常)。混在一起的話,我方斷線期間
+     所有客人都會看到「不是您的生日月」,然後去門市理論。 */
+type Eligible = { ok: boolean; reason: string; message: string; birth_month: number };
+
+async function askEligible(who: { erpid: string; mid: string }): Promise<Eligible | null> {
+  if (!SITE_KEY) {
+    console.error('[cloth] 缺少 SITE_API_KEY,無法確認生日資格');
+    return null;
+  }
+  try {
+    const r = await fetch(`${TICKET_BASE}/siteapi/cloth/eligible`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-Site-Key': SITE_KEY,
+      },
+      body: JSON.stringify({ client_id: who.erpid || '', mid: who.mid || '' }),
+    });
+    const j = await r.json();
+    if (String(j?.code) !== '200' || !j?.data) {
+      // 不記錄回應內容:那裡面有生日月,屬於個資,不要留副本在平台 log 上
+      console.warn('[cloth] 資格查詢上游回應 code=' + j?.code + ' http=' + r.status);
+      return null;
+    }
+    const d = j.data;
+    return {
+      ok: !!d.ok,
+      reason: String(d.reason || ''),
+      message: String(d.message || ''),
+      birth_month: Number(d.birth_month) || 0,
+    };
+  } catch {
+    console.error('[cloth] 資格查詢連線失敗');
+    return null;
+  }
+}
+
+const SYS_ERR_MSG = '系統異常,請聯繫客服。';
+
+/* 線上實際跑的是哪一版。每次改這支就一併更新 ——
+   從外面看不出線上是哪一版,是 2026-08-28 那次事故的根本原因
+   (程式改好、信上寫「已上線」,但那支函式從頭到尾沒有部署過)。 */
+const CODE_VERSION = '2026-09-03 · 生日閘門 + 退件重做';
 
 /* 速率限制。記憶體計數,多執行個體下不是嚴格上限,
    目的是擋掉「同一個人狂按」與明顯的腳本,不是防禦機制。 */
@@ -164,8 +232,8 @@ function taipeiYearStartIso(): string {
    ⚠ erpid 來自 whoFromToken(),是伺服器端從 session token 解出來的,
      前端傳什麼都會被忽略 —— 所以這份名單偽造不了。
 
-   ⚠ 用 erpid 不用 mid:mid 是官網註冊的會員編號,同一個人可能有多個;
-     erpid 是門市的客編,一人一個。 */
+   ⚠ 白名單同時略過【一年一件】與【生日月】兩道關卡:
+     測試流程本來就不會剛好在測試者的生日月。 */
 const UNLIMITED_ERPIDS = new Set(['28095839']);
 
 function isUnlimited(who: { erpid: string; mid: string }): boolean {
@@ -177,7 +245,7 @@ function isUnlimited(who: { erpid: string; mid: string }): boolean {
 async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
   const q = mineOnly(
     db.from('cloth_designs')
-      .select('id, source, design_id, design_name, preview_url, svg_url, placement, status, created_at, done_at, store_erpid, store_name')
+      .select('id, source, design_id, design_name, preview_url, svg_url, placement, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
       .gte('created_at', taipeiYearStartIso())
       .order('created_at', { ascending: false })
       .limit(1),
@@ -194,8 +262,59 @@ async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
   return (data && data[0]) || null;
 }
 
+/* 被退件而還沒重做。
+   -----------------------------------------------------------------
+   🚨 這個狀態要【略過生日月檢查】,而且順序必須排在生日之前。
+
+   情境:客人在生日月最後一天送出,隔天雕刻師退件 ——
+   這時已經不是生日月了。若照生日月擋,退件等於把他今年的
+   生日禮直接沒收,而畫面上只會說「限生日當月」,
+   沒有任何人看得出來是退件造成的。
+
+   (2026-09-03 查證:當時有 2 筆 rejected,兩位都沒有重做成功 ——
+    因為 thisYearOne 原本不分狀態,退件那一筆照樣把人擋在
+    「本年度已完成」的 409。退件功能上線但重做是斷的。) */
+function isRedoPending(cur: any): boolean {
+  return !!cur && String(cur.status) === 'rejected';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  /* GET = 自檢。回【設定狀態與端點主機,不回金鑰】。
+     -----------------------------------------------------------------
+     這支自 2026-09-03 起會 fail-closed:SITE_API_KEY 沒設的話
+     所有人都存不了檔,而客人看到的只有「系統異常」——
+     從外面完全看不出是設定漏了還是我方掛了。
+
+     官網沒有測試環境,所以需要一個「不必真的存一件」就能
+     確認設定的方法。同 shop / cloth-feed 的 code_version 做法。
+
+     ⚠ upstream 探測【故意不帶金鑰】:預期回 401,
+       收到 401 就證明路由存在且連得到,而過程中不需要用到金鑰。 */
+  if (req.method === 'GET') {
+    let upstream = 'unknown';
+    try {
+      const r = await fetch(`${TICKET_BASE}/siteapi/cloth/eligible`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: '{}',
+      });
+      const j = await r.json().catch(() => ({}));
+      upstream = 'http ' + r.status + ' / code ' + ((j as any)?.code ?? '?');
+    } catch {
+      upstream = 'unreachable';
+    }
+    return reply('200', {
+      data: {
+        code_version: CODE_VERSION,
+        site_key_set: !!SITE_KEY,
+        ticket_base: TICKET_BASE,
+        upstream_probe: upstream,
+      },
+    });
+  }
+
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
 
   let body: Record<string, any>;
@@ -215,16 +334,12 @@ Deno.serve(async (req) => {
      只回這個人自己的。條件從 token 換出來的身分來,不看前端送什麼 ——
      接受前端指定 erpid 的話,任何人都能看別人存了什麼。
 
-     erpid 與 mid 兩個都比:門市綁定之前存的那幾筆只有 mid,
-     綁定之後存的有 erpid。只比其中一個,客人會發現自己的東西「少了幾件」,
-     而那是最難解釋的一種 bug —— 資料還在,只是查不到。
-
      svg_url 不回:那是製作端用的檔案,前端不需要,
      回了等於把它散到瀏覽器紀錄與快取裡。 */
   if (action === 'list') {
     const q = mineOnly(
       db.from('cloth_designs')
-        .select('id, source, design_name, preview_url, status, created_at, done_at, store_erpid, store_name')
+        .select('id, source, design_name, preview_url, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
         .order('created_at', { ascending: false })
         .limit(60),
       who,
@@ -247,14 +362,45 @@ Deno.serve(async (req) => {
        但寧可讓他看到「已完成」再去問客服,
        也不要讓他花二十分鐘做完才在送出時被拒。 */
     const cur = await thisYearOne(db, who);
+    const redo = isRedoPending(cur);
+
+    /* 生日資格也在這裡一併回,讓客人【進頁面就知道】能不能做。
+       ------------------------------------------------------------
+       真正的關卡在 save —— 這裡只是提示。但少了它,客人會花
+       二十分鐘挑圖排版,按下送出才被告知「不是你的生日月」,
+       那比一開始就講更難解釋。
+
+       ⚠ 被退件的人不問資格:他本來就該被放行(見 isRedoPending)。
+       ⚠ 問不到時不擋畫面,只是不給提示 —— 這一支是提示層,
+         擋人是 save 的事;在提示層 fail-closed 會讓我方一抖
+         就變成所有人都看到系統異常,即使他們根本還沒要存檔。 */
+    let eligible: Eligible | null = null;
+    if (!redo && !isUnlimited(who)) {
+      eligible = await askEligible(who);
+    }
+
     /* 白名單的人永遠不鎖。
        ⚠ current 照樣回 —— 那是他本年度存的那一張,前端拿它還原畫面。
        只把 locked 關掉,不要連資料一起藏,不然畫面會像「東西不見了」。 */
     return reply('200', {
       data: {
         items: data || [],
-        locked: isUnlimited(who) ? false : cur !== null,   // undefined 也算 true
+        // 退件待重做時不算鎖定 —— 他就是要再做一件
+        locked: isUnlimited(who) ? false : (redo ? false : cur !== null),
         current: cur || null,
+        /* 🚨 前端(js/cloth.js)從 2026-09-02 起就在讀 j.data.rejected,
+           而這一支【從來沒有回過那個欄位】—— applyRejected() 因此
+           一次都沒有作用過:被退件的客人打開頁面看到的是一個完全正常、
+           可以存檔的畫面,不知道自己上一件被退了、也不知道要改什麼。
+
+           ⚠ 刻意【不】在這裡新增 rejected 欄位:redo_pending + current
+             已經足夠讓前端自己組出來,而官網沒有測試環境,
+             能少部署一次就少一次風險。前端已改為從這兩個欄位取值。 */
+        redo_pending: redo,
+        /* null = 問不到(前端就別顯示資格提示,不要自己編一句話)。
+           前端只負責顯示 message,不要用 birth_month 自己算月份 ——
+           那就是把規則複製到第三個地方。 */
+        eligible: eligible,
       },
     });
   }
@@ -282,18 +428,53 @@ Deno.serve(async (req) => {
      留一行 log —— 這是【刻意繞過業務規則】,出現在製作端的工單
      與一般客人的完全一樣,所以要在紀錄裡看得到是誰、什麼時候繞的。 */
   if (isUnlimited(who)) {
-    console.log('[cloth] 略過一年一件的限制 erpid=' + who.erpid);
+    console.log('[cloth] 略過一年一件與生日月的限制 erpid=' + who.erpid);
   }
-  const already = isUnlimited(who) ? null : await thisYearOne(db, who);
-  if (already === undefined) {
+
+  /* ===== 三道關卡,順序不可調換 =====
+       ① 有沒有待重做的退件 → 有就直接放行(略過②③)
+       ② 本年度做過了嗎     → 做過就 409
+       ③ 是不是生日月       → 問我方
+
+     ③ 排在最後,是因為它是唯一要跨網路的一道;
+     前兩道在本地就答得出來,先擋掉能少打我方一次。 */
+  const cur = isUnlimited(who) ? null : await thisYearOne(db, who);
+  if (cur === undefined) {
     // 查不到 = 無法判斷。此時放行等於在資料庫抖一下的時候讓所有人都能再存一張。
     return reply('500', { message: '無法確認本年度狀態,請稍後再試' }, 500);
   }
-  if (already) {
-    return reply('409', {
-      message: '本年度的客製眼鏡布已經完成,一年一件,明年才能再做一件。',
-      data: { current: already },
-    }, 409);
+
+  const redo = isRedoPending(cur);
+
+  if (!isUnlimited(who) && !redo) {
+    if (cur) {
+      return reply('409', {
+        message: '本年度的客製眼鏡布已經完成,一年一件,明年才能再做一件。',
+        data: { current: cur },
+      }, 409);
+    }
+
+    /* 生日月。問我方,拿到什麼顯示什麼。
+       null(問不到)一律擋下 —— 理由見 askEligible 的說明。 */
+    const el = await askEligible(who);
+    if (el === null) {
+      return reply('503', { message: SYS_ERR_MSG }, 503);
+    }
+    if (!el.ok) {
+      /* 403 而不是 409:409 的意思是「你已經做過了」,
+         這裡是「你現在還不能做」,前端的處理與文案都不同。 */
+      return reply('403', {
+        message: el.message || '目前尚未開放製作。',
+        data: { reason: el.reason, birth_month: el.birth_month },
+      }, 403);
+    }
+  }
+
+  if (redo) {
+    /* 重做會產生【新的一筆】,不覆蓋被退件的那一筆。
+       保留原件才看得出退件過幾次、退的理由是什麼;
+       覆蓋的話那段歷史就消失了,而它正是要拿來檢討的東西。 */
+    console.log('[cloth] 退件重做 previous=' + cur.id);
   }
 
   /* 兩個網址都必須是我方 Storage 的。
@@ -352,6 +533,6 @@ Deno.serve(async (req) => {
     return reply('500', { message: '儲存失敗,請再試一次' }, 500);
   }
 
-  console.log('[cloth] 存檔 ' + data.id + ' source=' + source);
+  console.log('[cloth] 存檔 ' + data.id + ' source=' + source + (redo ? ' (退件重做)' : ''));
   return reply('200', { data: { id: data.id } });
 });

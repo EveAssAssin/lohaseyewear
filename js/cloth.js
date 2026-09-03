@@ -73,6 +73,19 @@
     current: null,       // 本年度那一件(含取貨門市),鎖住時用來還原畫面
     rejected: null,      // 被師傅退件、等重做的那一件(2026-09-02 新增)
 
+    /* 生日資格(2026-09-03 新增)。客製眼鏡布是【年度生日禮】,
+       只有生日當月能做 —— 這件事在此之前官網完全沒有判斷,
+       非壽星任何時候都做得掉自己那一件。
+
+       ⚠ 結論由我方後端給(cloth 函式代問),這裡不做任何日期運算。
+         生日只存在我方,而且同一條規則在兩個系統各寫一份的話,
+         症狀會是「兩邊各自看都正常,合起來不對」。
+
+       null = 問不到 → 不顯示提示、也不擋畫面。
+       真正的關卡在存檔(save 會回 403),這裡只是不要讓他
+       花二十分鐘做完才在送出時被拒。 */
+    eligible: null,
+
     // 目前放在布上的圖案
     picked: null,        // { source, design_id, name, imageUrl, svgString }
     scale: CONFIG.DEF.scale,
@@ -1093,9 +1106,26 @@
         if (String(j.code) !== '200' || !j.data) return;
         State.locked = !!j.data.locked;
         State.current = j.data.current || null;
-        State.rejected = j.data.rejected || null;
+        /* 🚨 j.data.rejected 這個欄位【伺服器從來沒有回過】——
+           這一行從 2026-09-02 寫下就一直是 null,applyRejected()
+           一次都沒作用過:被退件的客人看到的是一個完全正常、
+           可以存檔的畫面,不知道自己上一件被退了、也不知道要改什麼。
+
+           2026-09-03 改為從 redo_pending + current 自己組 ——
+           那兩個欄位是伺服器真的有回的。保留 j.data.rejected 當第一順位,
+           萬一日後伺服器補上了,這裡不必再改一次。 */
+        State.rejected = j.data.rejected ||
+          (j.data.redo_pending ? (j.data.current || null) : null);
+        State.eligible = j.data.eligible || null;
+        /* 三者的優先序不可調換:
+             已完成  → 講「本年度已完成」
+             被退件  → 講退件原因並請他重做(這一條【不受生日月限制】)
+             非壽星  → 講生日當月才開放
+           被退件的人若先被生日擋住,等於退件把他今年的禮物沒收了,
+           而畫面上只會說「限生日當月」,沒有人看得出是退件造成的。 */
         applyLock();
         applyRejected();
+        applyEligible();
       })
       .catch(function (e) {
         console.error('[cloth] 查本年度狀態失敗,維持可存檔', e);
@@ -1171,6 +1201,41 @@
     }
   }
 
+  /* 不是生日當月(或還沒建檔)時,一進頁面就講清楚。
+     -----------------------------------------------------------------
+     🚨 文字【一律用後端給的 message】,不要在這裡自己組一句 ——
+       那會變成同一條規則的第三份實作(我方 SiteClothApi、
+       cloth 函式、這裡),而它們遲早分岔。
+
+     ⚠ 順序:已完成與退件都優先於這一條。
+       被退件的人本來就該略過生日月(見 loadLockState 的註解)。
+
+     ⚠ eligible 為 null(問不到)時什麼都不做 —— 不提示也不擋。
+       擋人是存檔那一端的事,在提示層 fail-closed 會讓我方一抖
+       就變成所有人都看到錯誤,即使他們根本還沒要存檔。 */
+  function applyEligible() {
+    if (State.locked || State.rejected) return;
+    if (!State.eligible || State.eligible.allowed) return;
+
+    var msg = (State.eligible.message || '').trim();
+    if (!msg) return;               // 沒有話可講就別畫一個空白的框
+
+    if (el.lock && el.lockText) {
+      el.lockText.textContent = msg;
+      show(el.lock);
+    }
+    el.submit.disabled = true;
+    el.submit.textContent = '尚 未 開 放';
+    if (el.submitHint) el.submitHint.textContent = '';
+  }
+
+  /* 現在是不是被生日月擋住。refreshSubmit 要用 ——
+     少了這個判斷,他挑一張新圖就會把按鈕重新打開(同 State.locked)。 */
+  function blockedByBirthday() {
+    return !State.locked && !State.rejected &&
+           !!State.eligible && !State.eligible.allowed;
+  }
+
   /* 退件原因:代碼轉成客人看得懂的文字。
      -----------------------------------------------------------------
      ⚠ 這份對照【與 js/cloth-lab.js 的 REJECT_REASONS 是同一份東西】,
@@ -1206,6 +1271,16 @@
     if (State.locked) {
       el.submit.disabled = true;
       el.submit.textContent = '本 年 度 已 完 成';
+      if (el.submitHint) el.submitHint.textContent = '';
+      return;
+    }
+
+    /* 生日月同理 —— 也要擋在所有條件判斷之前。
+       少了這一行,他挑一張新圖就會把按鈕重新打開,
+       然後在送出時才被伺服器擋(403),白做一場。 */
+    if (blockedByBirthday()) {
+      el.submit.disabled = true;
+      el.submit.textContent = '尚 未 開 放';
       if (el.submitHint) el.submitHint.textContent = '';
       return;
     }
