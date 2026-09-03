@@ -152,6 +152,26 @@ function taipeiYearStartIso(): string {
   return new Date(Date.UTC(year, 0, 1, 0, 0, 0) - 8 * 3600 * 1000).toISOString();
 }
 
+/* 不受「一年一件」限制的客編。
+   -----------------------------------------------------------------
+   目前只有內部人員的 28095839,用途是【測試】——
+   每改一次眼鏡布的流程都要能重跑一次,受年度限制的話一年只能測一次。
+
+   ⚠ 這是白名單,不是開關。加人進來之前先想清楚:
+     這些客編做出來的眼鏡布,在製作端看起來與一般工單【完全一樣】,
+     師傅會照做。所以只放真的知道自己在做什麼的人。
+
+   ⚠ erpid 來自 whoFromToken(),是伺服器端從 session token 解出來的,
+     前端傳什麼都會被忽略 —— 所以這份名單偽造不了。
+
+   ⚠ 用 erpid 不用 mid:mid 是官網註冊的會員編號,同一個人可能有多個;
+     erpid 是門市的客編,一人一個。 */
+const UNLIMITED_ERPIDS = new Set(['28095839']);
+
+function isUnlimited(who: { erpid: string; mid: string }): boolean {
+  return !!who.erpid && UNLIMITED_ERPIDS.has(who.erpid);
+}
+
 /* 本年度已經存過的那一件(沒有就 null)。
    年度生日禮一年一張,所以最多只會有一筆;取最新的一筆以防萬一。 */
 async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
@@ -227,10 +247,13 @@ Deno.serve(async (req) => {
        但寧可讓他看到「已完成」再去問客服,
        也不要讓他花二十分鐘做完才在送出時被拒。 */
     const cur = await thisYearOne(db, who);
+    /* 白名單的人永遠不鎖。
+       ⚠ current 照樣回 —— 那是他本年度存的那一張,前端拿它還原畫面。
+       只把 locked 關掉,不要連資料一起藏,不然畫面會像「東西不見了」。 */
     return reply('200', {
       data: {
         items: data || [],
-        locked: cur !== null,           // undefined 也算 true
+        locked: isUnlimited(who) ? false : cur !== null,   // undefined 也算 true
         current: cur || null,
       },
     });
@@ -255,7 +278,13 @@ Deno.serve(async (req) => {
 
      ⚠ 回 409 而不是 400:前端要分得出「這次輸入有問題」與
        「你本來就不能再存了」,兩者的處理方式完全不同。 */
-  const already = await thisYearOne(db, who);
+  /* 白名單的人跳過這道關卡。
+     留一行 log —— 這是【刻意繞過業務規則】,出現在製作端的工單
+     與一般客人的完全一樣,所以要在紀錄裡看得到是誰、什麼時候繞的。 */
+  if (isUnlimited(who)) {
+    console.log('[cloth] 略過一年一件的限制 erpid=' + who.erpid);
+  }
+  const already = isUnlimited(who) ? null : await thisYearOne(db, who);
   if (already === undefined) {
     // 查不到 = 無法判斷。此時放行等於在資料庫抖一下的時候讓所有人都能再存一張。
     return reply('500', { message: '無法確認本年度狀態,請稍後再試' }, 500);
