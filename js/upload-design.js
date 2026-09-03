@@ -1232,7 +1232,15 @@
     //    用白底版的 imgDataForSvg (透明像素會混淆 tracer)
     var svgString = '';
 
-    // Potrace WASM (品質優先)
+    /* Potrace WASM (品質優先)
+       ⚠ 一定要【等】它,不要直接讀 .ready。
+       這支是從 CDN 動態載入的 WASM,要一兩秒;而這裡是客人按下上傳
+       的那一刻。直接讀 .ready 等於問「這一刻好了沒」,客人動作快一點
+       答案就是「還沒」,於是靜靜地降級成 imagetracer ——
+       線上 492 張刻圖有 55 張是這樣來的(2026-09-03 查)。 */
+    if (window.LohasPotrace?.whenReady) {
+      try { await window.LohasPotrace.whenReady(8000); } catch(e){}
+    }
     if(window.LohasPotrace?.ready && window.LohasPotrace?.trace){
       try {
         svgString = await window.LohasPotrace.trace(imgDataForSvg, {

@@ -30,6 +30,60 @@
      16 段在眼鏡布這種尺寸下,肉眼已經看不出折線。 */
   var CURVE_STEPS = 16;
 
+  /* 縮到公釐之後的簡化門檻。
+     -----------------------------------------------------------------
+     固定切 16 段是「一段曲線不管多長都切 16 刀」——
+     短曲線因此被切得遠比需要的細。細節豐富的圖(potrace 描的線稿)
+     實測會產生四萬多個頂點,DXF 接近 2MB,EZCAD 匯入會很吃力。
+
+     所以在座標已經是公釐之後,用 Douglas-Peucker 把「拿掉也不會
+     偏離原線超過這個距離」的點刪掉。
+
+     0.02 mm 的依據:雕刻機的光點直徑約 0.05 mm,
+     偏差只有光點的四成,刻出來看不出來。
+     這是【幾何誤差】不是取樣間距 —— 直線段會被壓成兩點,
+     真正的曲線該留幾點就留幾點。 */
+  var SIMPLIFY_MM = 0.02;
+
+  /* Douglas-Peucker。遞迴改成堆疊,避免長路徑爆掉呼叫堆疊。 */
+  function simplify(pts, tol) {
+    if (pts.length < 3) return pts;
+    var keep = new Uint8Array(pts.length);
+    keep[0] = keep[pts.length - 1] = 1;
+    var stack = [[0, pts.length - 1]], t2 = tol * tol;
+
+    while (stack.length) {
+      var seg = stack.pop(), i0 = seg[0], i1 = seg[1];
+      if (i1 <= i0 + 1) continue;
+      var ax = pts[i0][0], ay = pts[i0][1];
+      var bx = pts[i1][0], by = pts[i1][1];
+      var dx = bx - ax, dy = by - ay;
+      var len2 = dx * dx + dy * dy;
+      var far = -1, farD = -1;
+
+      for (var i = i0 + 1; i < i1; i++) {
+        var px = pts[i][0] - ax, py = pts[i][1] - ay, d2;
+        if (len2 === 0) {                       // 起點終點重合,退化成點到點
+          d2 = px * px + py * py;
+        } else {
+          var t = (px * dx + py * dy) / len2;
+          t = t < 0 ? 0 : (t > 1 ? 1 : t);
+          var ex = px - t * dx, ey = py - t * dy;
+          d2 = ex * ex + ey * ey;
+        }
+        if (d2 > farD) { farD = d2; far = i; }
+      }
+      if (farD > t2) {
+        keep[far] = 1;
+        stack.push([i0, far], [far, i1]);
+      }
+    }
+
+    var out = [];
+    for (var k = 0; k < pts.length; k++) if (keep[k]) out.push(pts[k]);
+    return out;
+  }
+
   /* ---------- 路徑解析 ----------
      只處理 potrace 會產出的指令:M m L l H h V v C c S s Z z。
      A(弧)不處理 —— potrace 不產生弧,真的遇到就跳過那一段,
@@ -530,6 +584,8 @@
         a2 += pts[q][0] * r2[1] - r2[0] * pts[q][1];
       }
       if (Math.abs(a2 / 2) < 1e-4) return;
+      pts = simplify(pts, SIMPLIFY_MM);
+      if (pts.length < 3) return;
       rings.push({ pts: pts, closed: closed });
     });
 

@@ -488,7 +488,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/layout.js?v=20260819-erp"></script>
 <script src="js/lohas-api.js?v=20260513-2300"></script>
 <script src="js/auth.js?v=20260817-appmember"></script>
-<script src="js/upload-design.js?v=20260825-noreview3"></script>
+<!-- ⚠ 這一頁在 2026-09-03 之前【兩個 tracer 都沒載】。
+     upload-design.js 兩個都拿不到時,svgString 會是空字串,
+     設計照樣上傳成功但【沒有線稿】—— 那張圖之後刻不了,
+     而且只有主控台一行 warn,前台完全看不出來。 -->
+<script src="js/potrace-loader.js?v=20260903-retry"></script>
+<script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
+<script src="js/upload-design.js?v=20260903-await"></script>
 <script src="js/market-about.js?v=20260601-rules"></script>
 
 </body>
