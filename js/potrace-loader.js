@@ -25,7 +25,23 @@
     _initPromise: null,
   };
 
-  var SRC = 'https://cdn.jsdelivr.net/npm/esm-potrace-wasm@0.4.1/dist/index.js';
+  /* ⚠ 2026-09-03:0.4.1 → 0.5.1。這是【品質】的修正,不是例行升級。
+     -----------------------------------------------------------------
+     0.4.1 有一個沒寫在文件上的總像素上限(約 1.2M)。超過就拋
+     `offset is out of bounds`。因為這個限制,upload-design.js 必須先把
+     每一張圖縮到 1095x1095 才能描 —— 而【那一步縮小就是細節損失的來源】。
+
+     實測(每個尺寸都在全新實例上跑,避免前一次崩潰污染):
+
+         尺寸          總像素    0.4.1              0.5.1
+         1251x1251     1.57M    ✗ offset OOB       ✅  83 ms
+         1400x1400     1.96M    —                  ✅  85 ms
+         1800x1800     3.24M    —                  ✅ 129 ms
+         2400x2400     5.76M    —                  ✅ 225 ms
+
+     升上去之後可以描原生解析度,三個指標全面超越舊的 imagetracer 版
+     (三隻貓那張,細節見 upload-design.js 的 TRACE_PIXELS_MAX 註解)。 */
+  var SRC = 'https://cdn.jsdelivr.net/npm/esm-potrace-wasm@0.5.1/dist/index.js';
   var instance = 0;
 
   async function attempt(){

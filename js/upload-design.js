@@ -1233,7 +1233,43 @@
      真的踩到才降級,而不是每一張都先降級。
 
      換算:正方形 1095x1095、16:9 則是 1460x821。 */
-  var TRACE_PIXELS = 1200000;
+
+  /* ⚠ 2026-09-03 第四輪:上限不再是 1.20M,而且【落在範圍內就完全不動它】。
+     =================================================================
+     前三輪都在調門檻,想在「細線不見」和「線變胖」之間找一個好的折衷。
+     找不到,因為【問題不在門檻,在「必須縮小」這件事本身】。
+
+     舊版 Kamumi 之所以比較好看,不是 imagetracer 比較強,是它【沒有尺寸
+     上限,直接描 1251 原生解析度】;potrace 0.4.1 描不動 1251²(1.57M),
+     一定要先縮到 1095 —— 那一步就是損失的來源。
+
+     升到 potrace 0.5.1 之後那個上限消失了(見 potrace-loader.js)。
+     同一張三隻貓,實測:
+
+         版本                        墨色%    細節掉了  線變胖了  細線保住
+         Kamumi 舊版(imagetracer)   26.84%    1.55%    2.96%    93.0%
+         0.4.1 縮到 1095 門檻150     26.95%    1.37%    3.20%    93.9%
+         0.5.1 原生 1251 門檻150     26.93%    0.54%    2.29%    97.6%  ← 採用
+         0.5.1 原生 1251 門檻128     26.93%    0.54%    2.29%    97.6%
+
+     三個指標同時贏,細節掉的量剩下舊版的三分之一。
+     而且 150 跟 128 【結果一模一樣】—— 在原生解析度下門檻已經不重要了,
+     這正好反證前三輪調門檻是在調錯的東西。
+
+     所以規則改成一個【區間】:
+        大於上限  → 縮到上限(手機照片 4000x3000 還是得縮)
+        小於下限  → 放大到下限(向量/低解析度線稿仍需放大,理由見下)
+        落在中間  → 【原封不動】,連重新二值化都不做
+
+     上限 4.00M(2000x2000):實測 5.76M 只要 225 ms,留一倍餘裕給
+     行動裝置比較小的 WASM 記憶體;下面那道「失敗就縮小重試」照舊。 */
+  var TRACE_PIXELS_MAX = 4000000;
+
+  /* 下限。小圖描起來會被像素格子綁住:220 px 的來源輸出成 90 mm 時,
+     一個像素等於 0.41 mm,而雷射光點約 0.05 mm —— 格子比光點大八倍,
+     輪廓就是鋸齒。先放大再重新二值化,potrace 才有次像素的空間擬合曲線。
+     沿用原本的 1.20M 當下限。 */
+  var TRACE_PIXELS_MIN = 1200000;
 
   /* 重新取樣之後的二值化門檻 —— 固定 128,【不要】沿用
      CONFIG.WHITE_THRESHOLD(220)。
@@ -1289,13 +1325,24 @@
      自己開一張剛好大小的來源畫布,這個函式就變成可以重複呼叫的。 */
   function resampleForTrace(imgData, inkRgb, budget){
     var w = imgData.width, h = imgData.height;
-    var want = budget || TRACE_PIXELS;
+    var px = w * h;
 
-    /* 面積開根號就是縮放倍率。小圖放大、大圖縮小,兩邊都往預算靠。
-       ⚠ 小圖也要【放大】—— 向量與低解析度的線稿在原尺寸描,
-       會被像素格子綁住(220px 的圖輸出 90mm 時一格 0.41mm,
-       而雷射光點才 0.05mm)。 */
-    var k = Math.sqrt(want / (w * h));
+    /* budget 有給就是【強制】縮到那個面積 —— 只有下面「失敗重試」會用。
+       沒給就走區間規則:只有超出上下限才動它,落在中間原封不動。
+       ⚠「原封不動」不是省事,是【正確】:輸入已經是純黑白了,
+       不縮放就沒有內插灰邊,那第二次二值化也就沒有東西可修,
+       只會白白再走一次有損的 canvas 來回。 */
+    var want;
+    if (budget)            want = budget;
+    else if (px > TRACE_PIXELS_MAX) want = TRACE_PIXELS_MAX;
+    else if (px < TRACE_PIXELS_MIN) want = TRACE_PIXELS_MIN;
+    else {
+      console.info('[upload-design] ' + w + 'x' + h + '(' +
+                   (px / 1e6).toFixed(2) + 'M)在區間內,以原生解析度描圖');
+      return imgData;
+    }
+
+    var k = Math.sqrt(want / px);
     var tw = Math.max(1, Math.round(w * k));
     var th = Math.max(1, Math.round(h * k));
     if (tw === w && th === h) return imgData;
@@ -1350,8 +1397,21 @@
     var isVector = blob && blob.type === 'image/svg+xml';
     if (isVector || w < 2 || h < 2) {
       var ratio = (w > 1 && h > 1) ? (w / h) : 1;
-      // 面積 = TRACE_PIXELS 且長寬比 = ratio,解出邊長
-      var side = Math.sqrt(TRACE_PIXELS / ratio);
+      /* 面積 = 像素預算下限 且 長寬比 = ratio,解出邊長。
+         -----------------------------------------------------------------
+         ⚠ 這裡刻意取【下限 1.20M】,不是上限,雖然向量拉高解析度確實更準
+         (沒有「原生解析度」這回事,光柵化到多少就是多少)。理由是【檔案大小】:
+
+             描圖尺寸   輪廓數   DXF
+             1095       1096    967 KB   ← 目前線上,已知 EZCAD 讀得動
+             1251       1399   1153 KB   ← 點陣圖走原生,+19%
+             2000       2065   1682 KB   ← 向量若拉到上限,+74%
+
+         點陣圖 +19% 是可以接受的風險;向量 +74% 不是 ——
+         我們【沒有辦法在這裡驗證 EZCAD 讀不讀得動 1.7MB 的 DXF】,
+         而客訴的來源一直是點陣圖上傳,不是向量。
+         等實機確認過大檔沒問題,再把這裡換成 TRACE_PIXELS_MAX。 */
+      var side = Math.sqrt(TRACE_PIXELS_MIN / ratio);
       h = Math.max(1, Math.round(side));
       w = Math.max(1, Math.round(side * ratio));
       console.info('[upload-design] ' + (isVector ? '向量圖' : '量不到尺寸') +
@@ -1470,9 +1530,10 @@
 
     // 4. SVG 追蹤路徑:優先用 Potrace (品質接近 Illustrator),失敗 fallback imagetracerjs
     //    用白底版的 imgDataForSvg (透明像素會混淆 tracer)
-    /* ⚠ 兩個 tracer 吃同一份正規化過的資料。理由見 TRACE_PIXELS 上面那段:
-       太大 potrace 會拋 offset is out of bounds,太小則被像素格子綁住。
-       imagetracer 沒有那個上限,但讓兩條路吃同一份輸入,
+    /* ⚠ 兩個 tracer 吃同一份資料。理由見 TRACE_PIXELS_MAX 上面那段:
+       太大 potrace 仍會爆記憶體,太小則被像素格子綁住;
+       落在區間內就原封不動,直接描原生解析度。
+       imagetracer 沒有上限,但讓兩條路吃同一份輸入,
        才不會出現「換了 tracer 連解析度也一起換」這種難查的差異。 */
     imgDataForSvg = resampleForTrace(imgDataForSvg, inkRgb);
 
@@ -1492,7 +1553,7 @@
         svgString = await window.LohasPotrace.trace(imgDataForSvg, {
           /* 忽略小於這個面積(平方像素)的形狀。
              ⚠ 2026-09-03 從 2 降到 1。
-             描圖是在 1000px 做的,而成品寬 90mm —— 一個像素 0.09mm。
+             描圖約在 1000~2000px 做,而成品寬 90mm —— 一個像素 0.09mm 上下。
              turdsize 2 會丟掉小於 0.016 mm² 的東西(約 0.13mm 見方),
              但雷射光點才 0.05mm,那個尺寸【刻得出來】。
              三隻貓那張的貓毛就是這樣被整片吃掉的(輪廓 1010 → 689)。
@@ -1530,8 +1591,11 @@
         try {
           if (window.LohasPotrace?.whenReady) await window.LohasPotrace.whenReady(8000);
           if (window.LohasPotrace?.ready) {
+            /* ⚠ 減半的基準是【這張圖現在的大小】,不是那個常數。
+               改成區間規則之後 imgDataForSvg 可能根本沒被縮過,
+               寫死常數的話「重試」反而可能比第一次還大。 */
             var smaller = resampleForTrace(imgDataForSvg, inkRgb,
-                                           Math.round(TRACE_PIXELS * 0.5));
+                Math.round(imgDataForSvg.width * imgDataForSvg.height * 0.5));
             svgString = await window.LohasPotrace.trace(smaller, {
               turdsize: 1, turnpolicy: 4, alphamax: 0.5, opticurve: 1,
               opttolerance: 0.2, pathonly: false, extractcolors: false,
