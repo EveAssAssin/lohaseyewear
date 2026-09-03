@@ -71,8 +71,26 @@
      所以收起來但留一個開關,並且把張數寫在按鈕上。 */
   var DEAD = { used: 1, expired: 1 };
 
+  /* 這一頁只列【在官網用得到】的券。
+     -----------------------------------------------------------------
+     判斷標準有兩層,兩層都要過:
+       status      券本身有效嗎(已使用/已過期就沒了)
+       site_usable 這張券開放在官網用嗎(由主後端決定)
+
+     locked(使用中)算「用得到」—— 它是暫時的,最多四小時就自己放掉,
+     藏起來的話客人會覺得券憑空消失了,那比看到一張倒數更難解釋。
+
+     ⚠ 其餘的【藏起來但不是當作不存在】。客人的券還在,只是不在這裡用 ——
+     所以摘要那一行一定要把張數講出來,並指向 App。
+     直接讓畫面空白等於告訴他「你沒有券」,那是假的。 */
+  function usableHere(c) {
+    if (DEAD[c.status]) return false;
+    if (c.status === 'locked') return true;
+    return c.site_usable === true && c.status === 'usable';
+  }
+
   var State = { loaded: false, loading: false, list: [], err: '',
-                needLogin: false, showDead: false };
+                needLogin: false, showAll: false };
   var timer = 0;
 
   function $(id) { return document.getElementById(id); }
@@ -227,33 +245,36 @@
       return;
     }
 
-    var dead = State.list.filter(function (c) { return DEAD[c.status]; }).length;
-    var live = State.list.length - dead;
-    /* 有幾張真的能在官網用。全部都不能用時要講一句 ——
-       不然客人會一張一張點,每張都寫「限 App 使用」,
-       到最後也不確定是自己看漏了還是真的一張都沒有。 */
-    var onSite = State.list.filter(function (c) {
-      return c.site_usable === true && c.status === 'usable';
+    var here   = State.list.filter(usableHere);
+    var hidden = State.list.length - here.length;
+    var appOnly = State.list.filter(function (c) {
+      return !DEAD[c.status] && c.status !== 'locked' && c.site_usable !== true;
     }).length;
+    var dead = State.list.filter(function (c) { return DEAD[c.status]; }).length;
+
+    /* 摘要那一行是這一頁最重要的一句話。
+       藏起來的券【還在客人手上】,只是不在這裡用 —— 不把張數說出來,
+       空白的畫面等於告訴他「你沒有券」,而那是假的。 */
+    var parts = [];
+    if (appOnly) parts.push('<b>' + appOnly + '</b> 張只能在 App 用');
+    if (dead)    parts.push('<b>' + dead + '</b> 張已失效');
 
     var bar = '<div class="cp-sum">' +
       '<span>共 <b>' + State.list.length + '</b> 張' +
-      (dead ? '，其中 <b>' + dead + '</b> 張已失效' : '') + '</span>' +
-      (dead ? '<button type="button" class="cp-toggle" data-toggle>' +
-              (State.showDead ? '收起已失效' : '顯示已失效 ' + dead + ' 張') +
-              '</button>' : '') +
+      (parts.length ? '，其中 ' + parts.join('、') : '') + '</span>' +
+      (hidden ? '<button type="button" class="cp-toggle" data-toggle>' +
+                (State.showAll ? '只看能用的' : '全部顯示 ' + State.list.length + ' 張') +
+                '</button>' : '') +
       '</div>';
 
-    if (live && !onSite) {
+    if (!here.length && appOnly) {
       bar += '<div class="cp-hint cp-hint--warn">' +
-        '<i class="fa-solid fa-circle-info"></i>' +
-        '<div>你目前<b>沒有任何一張券可以在官網使用</b> —— 這些券都只開放在' +
-        '【樂活 App】或門市使用。官網這一頁可以查看有哪些券、還有多久到期。</div></div>';
+        '<i class="fa-solid fa-mobile-screen-button"></i>' +
+        '<div>你的券<b>目前都只開放在【樂活 App】或門市使用</b>，' +
+        '所以這裡列不出來。券沒有不見 —— 打開 App 的票券頁就看得到。</div></div>';
     }
 
-    var list = State.list.filter(function (c) {
-      return State.showDead || !DEAD[c.status];
-    }).sort(function (a, b) {
+    var list = (State.showAll ? State.list.slice() : here).sort(function (a, b) {
       var d = (ORDER[a.status] == null ? 9 : ORDER[a.status]) -
               (ORDER[b.status] == null ? 9 : ORDER[b.status]);
       if (d) return d;
@@ -262,7 +283,7 @@
 
     box.innerHTML = note + bar + (
       list.length ? list.map(cardHtml).join('')
-                  : '<p class="empty-text">沒有生效中的票券。</p>'
+                  : '<p class="empty-text">目前沒有可以在官網使用的票券。</p>'
     );
     bindToggle();
     startCountdown();
@@ -272,7 +293,7 @@
     var b = document.querySelector('#couponList [data-toggle]');
     if (!b) return;
     b.addEventListener('click', function () {
-      State.showDead = !State.showDead;
+      State.showAll = !State.showAll;
       render();
     });
   }
