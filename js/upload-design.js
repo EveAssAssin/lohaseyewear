@@ -1111,9 +1111,25 @@
     var ok = /^image\/(png|jpeg|jpg|svg\+xml)$/.test(file.type);
     if(!ok) return showError('只支援 PNG / JPG / SVG');
 
-    // SVG 不需要裁切,直接收下
+    /* SVG 不裁切,但【還是要走轉換管線】。
+       -----------------------------------------------------------------
+       ⚠ 2026-09-03 之前這裡是 `return setFile(file)` —— 直接收下、
+       整個跳過 transformToTransparent。後果是 state.svgString 永遠是 null,
+       送出時不會產生 image_url_svg,而眼鏡布那一頁要有線稿才收:
+
+           「圖傳上去了,但沒有產生線稿檔,暫時不能用在眼鏡布上。
+             試著換一張線條清楚一點的圖。」
+
+       客人上傳的【就是】SVG,卻因為沒有 SVG 被拒絕,而且訊息還指向
+       「線條不夠清楚」—— 換幾張圖都不會好。
+
+       為什麼不直接把他的 SVG 當線稿用:dxf.js 只解析 <path>。
+       用 <rect>/<circle>/<text> 畫的 SVG 會轉出一個空的或殘缺的雕刻檔,
+       而且不會報錯。走同一條管線(點陣化 → 二值化 → potrace)雖然
+       捨棄了原始向量的精度,但輸出保證只有 path、墨色一致、
+       與其他來源的圖同一種脾氣。 */
     if(file.type === 'image/svg+xml'){
-      return setFile(file);
+      return acceptForTrace(file, 'SVG');
     }
 
     // ===== 強制裁切流程 =====
@@ -1131,29 +1147,40 @@
       // 使用者按取消 → 不收檔
       if(!cropped) return;
 
-      // 進入透明轉換流程
-      showLoading(true, '正在轉換為雷雕格式...');
-      try {
-        var result = await transformToTransparent(cropped);
-        // 設置兩種產物
-        state.file            = cropped;             // 原始裁切檔(備援)
-        state.transparentBlob = result.pngBlob;      // 透明 PNG (預覽 + 上傳)
-        state.svgString       = result.svgString;    // SVG XML (上傳)
-        setFile(result.pngBlob);
-      } catch(transformErr){
-        console.error('[upload-design] 透明轉換失敗:', transformErr);
-        showError('透明轉換失敗,改用原圖預覽');
-        // fallback - 用原圖
-        state.file = cropped;
-        state.transparentBlob = null;
-        state.svgString = null;
-        setFile(cropped);
-      } finally {
-        showLoading(false);
-      }
+      await acceptForTrace(cropped, '裁切後的圖');
     } catch(e){
       console.error('[upload-design] Cropper 錯誤:', e);
       showError('裁切失敗:' + (e.message || '請再試一次'));
+    }
+  }
+
+  /* 把一份影像(裁切後的點陣圖,或客人直接上傳的 SVG)送進轉換管線,
+     產出「透明 PNG」與「線稿 SVG」兩種產物。
+     -----------------------------------------------------------------
+     ⚠ 抽成函式是刻意的。原本只有裁切那條路會呼叫 transformToTransparent,
+     SVG 那條路直接 setFile 就結束 —— 於是 svgString 是 null,
+     而那個差別要到【眼鏡布頁拒收】時才看得到。
+     兩條路共用同一段,就不會有一條路悄悄少做一件事。 */
+  async function acceptForTrace(blob, label){
+    showLoading(true, '正在轉換為雷雕格式...');
+    try {
+      var result = await transformToTransparent(blob);
+      state.file            = blob;                // 原始檔(備援)
+      state.transparentBlob = result.pngBlob;      // 透明 PNG (預覽 + 上傳)
+      state.svgString       = result.svgString;    // SVG XML (上傳)
+      setFile(result.pngBlob);
+    } catch(err){
+      console.error('[upload-design] 轉換失敗(' + label + '):', err);
+      /* ⚠ 這裡不能只說「改用原圖預覽」就算了。
+         沒有 svgString 的圖【在眼鏡布那一頁會被拒收】,
+         而客人此刻看到的是一張好好的預覽圖,完全不知道少了什麼。 */
+      showError('這張圖轉不出雷雕線稿,可以照常送出,但暫時不能用在客製眼鏡布上。');
+      state.file = blob;
+      state.transparentBlob = null;
+      state.svgString = null;
+      setFile(blob);
+    } finally {
+      showLoading(false);
     }
   }
 
@@ -1246,11 +1273,40 @@
     var imgUrl = URL.createObjectURL(blob);
     var img = await loadImage(imgUrl);
 
+    var w = img.naturalWidth  || 0;
+    var h = img.naturalHeight || 0;
+
+    /* ⚠ 向量圖要自己決定光柵化的解析度。
+       -----------------------------------------------------------------
+       SVG 沒有原生解析度。<img> 回報的 naturalWidth 是瀏覽器【猜】的:
+       有 width/height 屬性就照它;只有 viewBox 時各家不同 ——
+       實測 Chrome 給 150x150,有些瀏覽器給 0。
+
+       照那個數字開畫布的後果:一張向量圖被當成 150px 的小圖描,
+       之後再放大到 1000px。精度是白白丟掉的,而且不會有人發現。
+       0 更糟:canvas 變 0x0,getImageData 直接拋 IndexSizeError,
+       客人只看到「轉換失敗」。
+
+       所以 SVG 一律用 TRACE_SIZE 當長邊,長寬比沿用瀏覽器算的
+       (量不到就當正方形)。 */
+    var isVector = blob && blob.type === 'image/svg+xml';
+    if (isVector || w < 2 || h < 2) {
+      var ratio = (w > 1 && h > 1) ? (w / h) : 1;
+      if (ratio >= 1) { w = TRACE_SIZE; h = Math.round(TRACE_SIZE / ratio); }
+      else            { h = TRACE_SIZE; w = Math.round(TRACE_SIZE * ratio); }
+      console.info('[upload-design] ' + (isVector ? '向量圖' : '量不到尺寸') +
+                   ',以 ' + w + 'x' + h + ' 光柵化');
+    }
+
     var canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
+    canvas.width = w;
+    canvas.height = h;
     var ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
+    /* 白底再畫。SVG 多半是透明底,不鋪白的話下面那一步的
+       alpha 合成雖然接得住,但預覽圖會是一片透明,看不出東西。 */
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
     URL.revokeObjectURL(imgUrl);
 
     // 2. 像素掃描 → 產生兩份 imgData:
