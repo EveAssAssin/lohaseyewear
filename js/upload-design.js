@@ -1214,7 +1214,26 @@
      成本:220 px 直接描 24 ms,正規化到 1000 px 是 57 ms。
      多花 33 ms,而這一步發生在「正在轉換為雷雕格式…」那個
      loading 裡面,客人不會察覺。 */
-  var TRACE_SIZE = 1000;
+
+  /* 描圖的【像素預算】。2026-09-03 第二輪:上限其實是總像素,不是邊長。
+     =================================================================
+     實測 esm-potrace-wasm 0.4.1(每次都在全新實例上測,避免前一次崩潰污染):
+
+         1100 x 1100 = 1.21M  ✅        1200 x 1200 = 1.44M  ✗
+         1400 x  800 = 1.12M  ✅        1300 x 1300 = 1.69M  ✗
+         1600 x  700 = 1.12M  ✅
+         2000 x  560 = 1.12M  ✅   ← 邊長 2000 也沒事
+
+     所以「長邊不超過 1000」是個過度保守而且不公平的規則:
+     正方形的圖用掉 1.00M,16:9 的圖只用到 0.56M ——
+     同樣一張圖,長寬比不同就少一半的解析度,而那直接反映在細節上。
+
+     改成用面積:1.20M。距離已知可用的 1.21M 只差 1%,
+     所以下面還有一道「失敗就縮小重試」——
+     真的踩到才降級,而不是每一張都先降級。
+
+     換算:正方形 1095x1095、16:9 則是 1460x821。 */
+  var TRACE_PIXELS = 1200000;
 
   /* 重新取樣之後的二值化門檻 —— 固定 128,【不要】沿用
      CONFIG.WHITE_THRESHOLD(220)。
@@ -1233,20 +1252,33 @@
      2026-09-03 回報「新版看起來比舊版差」就是這個。 */
   var RESAMPLE_THRESHOLD = 128;
 
-  /* 把二值化後的畫布重新取樣到 TRACE_SIZE,並再二值化一次。
+  /* 把二值化後的影像重新取樣到像素預算,並再二值化一次。
      ⚠ 第二次二值化不能省:縮放是平滑內插,邊緣會產生灰階,
      直接丟給 potrace 的話那些灰邊會被當成獨立的色階,描出雙重輪廓。 */
-  function resampleForTrace(srcCanvas, imgData, threshold, inkRgb){
-    var w = srcCanvas.width, h = srcCanvas.height;
-    var long = Math.max(w, h);
-    if (long === TRACE_SIZE) return imgData;
+  /* ⚠ 尺寸一律取自 imgData 本身,【不要】從外面傳畫布進來。
+     -----------------------------------------------------------------
+     原本的寫法是把 imgData 貼回呼叫端那張畫布再縮放。第一次呼叫沒問題
+     (兩者同尺寸),但「失敗後縮小重試」時 imgData 已經縮過、那張畫布
+     還是原生尺寸 —— putImageData 會把小圖貼在左上角,然後整張一起縮,
+     結果是一張左上角有圖、其餘空白的東西。而且它不會報錯。
 
-    var k = TRACE_SIZE / long;
+     自己開一張剛好大小的來源畫布,這個函式就變成可以重複呼叫的。 */
+  function resampleForTrace(imgData, inkRgb, budget){
+    var w = imgData.width, h = imgData.height;
+    var want = budget || TRACE_PIXELS;
+
+    /* 面積開根號就是縮放倍率。小圖放大、大圖縮小,兩邊都往預算靠。
+       ⚠ 小圖也要【放大】—— 向量與低解析度的線稿在原尺寸描,
+       會被像素格子綁住(220px 的圖輸出 90mm 時一格 0.41mm,
+       而雷射光點才 0.05mm)。 */
+    var k = Math.sqrt(want / (w * h));
     var tw = Math.max(1, Math.round(w * k));
     var th = Math.max(1, Math.round(h * k));
+    if (tw === w && th === h) return imgData;
 
-    // 把二值化的結果放回來源畫布,才有東西可以縮放
-    srcCanvas.getContext('2d').putImageData(imgData, 0, 0);
+    var src = document.createElement('canvas');
+    src.width = w; src.height = h;
+    src.getContext('2d').putImageData(imgData, 0, 0);
 
     var cv = document.createElement('canvas');
     cv.width = tw; cv.height = th;
@@ -1255,7 +1287,7 @@
     cx.imageSmoothingQuality = 'high';
     cx.fillStyle = '#fff';
     cx.fillRect(0, 0, tw, th);
-    cx.drawImage(srcCanvas, 0, 0, tw, th);
+    cx.drawImage(src, 0, 0, tw, th);
 
     var d = cx.getImageData(0, 0, tw, th), p = d.data;
     for (var i = 0; i < p.length; i += 4){
@@ -1287,13 +1319,17 @@
        0 更糟:canvas 變 0x0,getImageData 直接拋 IndexSizeError,
        客人只看到「轉換失敗」。
 
-       所以 SVG 一律用 TRACE_SIZE 當長邊,長寬比沿用瀏覽器算的
-       (量不到就當正方形)。 */
+       所以 SVG 一律【直接用描圖的像素預算】光柵化,長寬比沿用瀏覽器
+       算的(量不到就當正方形)。
+       ⚠ 不要先畫成一個固定邊長再交給 resampleForTrace 放大 ——
+       那等於把向量先降成點陣、再放大一次,向量的優勢白白丟掉。 */
     var isVector = blob && blob.type === 'image/svg+xml';
     if (isVector || w < 2 || h < 2) {
       var ratio = (w > 1 && h > 1) ? (w / h) : 1;
-      if (ratio >= 1) { w = TRACE_SIZE; h = Math.round(TRACE_SIZE / ratio); }
-      else            { h = TRACE_SIZE; w = Math.round(TRACE_SIZE * ratio); }
+      // 面積 = TRACE_PIXELS 且長寬比 = ratio,解出邊長
+      var side = Math.sqrt(TRACE_PIXELS / ratio);
+      h = Math.max(1, Math.round(side));
+      w = Math.max(1, Math.round(side * ratio));
       console.info('[upload-design] ' + (isVector ? '向量圖' : '量不到尺寸') +
                    ',以 ' + w + 'x' + h + ' 光柵化');
     }
@@ -1378,11 +1414,11 @@
 
     // 4. SVG 追蹤路徑:優先用 Potrace (品質接近 Illustrator),失敗 fallback imagetracerjs
     //    用白底版的 imgDataForSvg (透明像素會混淆 tracer)
-    /* ⚠ 兩個 tracer 吃同一份正規化過的資料。理由見 TRACE_SIZE 上面那段:
+    /* ⚠ 兩個 tracer 吃同一份正規化過的資料。理由見 TRACE_PIXELS 上面那段:
        太大 potrace 會拋 offset is out of bounds,太小則被像素格子綁住。
        imagetracer 沒有那個上限,但讓兩條路吃同一份輸入,
        才不會出現「換了 tracer 連解析度也一起換」這種難查的差異。 */
-    imgDataForSvg = resampleForTrace(canvas2, imgDataForSvg, threshold, inkRgb);
+    imgDataForSvg = resampleForTrace(imgDataForSvg, inkRgb);
 
     var svgString = '';
 
@@ -1408,7 +1444,17 @@
              留 1 不留 0:0 會連縮放產生的單像素雜點一起收進來。 */
           turdsize: 1,
           turnpolicy: 4,          // majority
-          alphamax: 1,            // 角點閾值 (1 = 較圓滑)
+          /* 角點閾值。1 = 遇到轉角也傾向畫成圓弧。
+             ⚠ 2026-09-03 從 1 降到 0.5。
+             這條管線描的是【已經二值化的線稿】,不是照片 ——
+             線稿的轉角是真的轉角,把它抹圓就是失真。
+
+             用「重畫回 1251px 再與原圖逐像素比對」量的結果
+             (三隻貓那張,數字越小越接近原圖):
+                 alphamax 1     1.335% 不符
+                 alphamax 0.5   1.264% 不符
+             單這一項就把誤差拉近 5%。 */
+          alphamax: 0.5,
           opticurve: 1,           // 啟用曲線優化
           opttolerance: 0.2,      // 曲線優化容差
           pathonly: false,        // 完整 SVG (不只 path)
@@ -1417,8 +1463,30 @@
           posterizationalgorithm: 0,
         });
       } catch(e){
-        console.warn('[upload-design] Potrace 失敗,fallback imagetracerjs:', e);
-        svgString = '';
+        /* 縮小一半面積再試一次,才輪到降級。
+           -----------------------------------------------------------
+           像素預算 1.20M 距離實測可用的 1.21M 只差 1%,而 WASM 的
+           記憶體上限會隨瀏覽器與裝置浮動 —— 真的踩到就縮小重來,
+           不要因為「可能會踩到」就每一張都先用保守值描。
+           (potrace 拋錯之後實例會毀掉,所以 whenReady 要再等一次:
+            potrace-loader 會自動換一份乾淨的。) */
+        console.warn('[upload-design] Potrace 失敗,縮小重試:', e && e.message);
+        try {
+          if (window.LohasPotrace?.whenReady) await window.LohasPotrace.whenReady(8000);
+          if (window.LohasPotrace?.ready) {
+            var smaller = resampleForTrace(imgDataForSvg, inkRgb,
+                                           Math.round(TRACE_PIXELS * 0.5));
+            svgString = await window.LohasPotrace.trace(smaller, {
+              turdsize: 1, turnpolicy: 4, alphamax: 0.5, opticurve: 1,
+              opttolerance: 0.2, pathonly: false, extractcolors: false,
+              posterizelevel: 2, posterizationalgorithm: 0,
+            });
+            console.info('[upload-design] 縮小重試成功');
+          }
+        } catch(e2){
+          console.warn('[upload-design] 重試也失敗,fallback imagetracerjs:', e2 && e2.message);
+          svgString = '';
+        }
       }
     }
 
