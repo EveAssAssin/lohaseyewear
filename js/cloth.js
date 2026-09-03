@@ -900,7 +900,8 @@
     State.stores = [];
     el.store.innerHTML = '<option value="">' + esc(msg) + '</option>';
     if (el.storeHint) {
-      el.storeHint.textContent = '沒關係,先存起來 —— 到門市時跟店員說一聲就可以領。';
+      el.storeHint.textContent =
+        '沒關係,先存起來 —— 到門市時跟店員說「我有訂做客製眼鏡布」就可以領。';
     }
     /* 必填 + 清單是空的 = 客人畫完了卻永遠存不了。
        所以一定要給他一條路:重試,或直接存。 */
@@ -1298,7 +1299,8 @@
     } else if (!hasStore && !storeUnavailable) {
       el.submitHint.textContent = '還差一個:請選擇要到哪一家門市拿';
     } else if (storeUnavailable) {
-      el.submitHint.textContent = '門市清單暫時載不出來,先存起來 —— 到門市時跟店員說一聲就可以領';
+      el.submitHint.textContent =
+        '門市清單暫時載不出來,先存起來 —— 到門市時跟店員說「我有訂做客製眼鏡布」就可以領';
     } else {
       el.submitHint.textContent = '存起來之後,到門市報會員編號就能製作';
     }
