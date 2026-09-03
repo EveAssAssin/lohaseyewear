@@ -258,6 +258,11 @@
         sb.from('engraving_designs').select('id', { count: 'exact', head: true }).eq('status', 'approved').gte('listed_at', lastMonth.toISOString()).lt('listed_at', lastMonthEnd.toISOString())
       ]);
 
+      // ⚠ 一定要看 .error。理由見底下「本月雷刻預約」那一段。
+      if (thisM.error || lastM.error) {
+        throw new Error((thisM.error || lastM.error).message);
+      }
+
       const arr = thisM.data || [];
       const creatorCount = arr.filter(d => d.type === 'creator').length;
       const collabCount = arr.filter(d => d.type === 'collab').length;
@@ -269,7 +274,9 @@
       Utils.setText('#kpiNewDesigns', totalDesigns);
       Utils.setText('#kpiNewDesignsBreakdown', formatTrend(totalDesigns, lastCount, `Creator ${creatorCount} · Collab ${collabCount} · 門市 ${storeCount} · 官網 ${memberCount}`));
     } catch (err) {
-      console.error('[本月新刻圖統計失敗]', err);
+      console.error('[本月新刻圖統計失敗]', err && err.message);
+      Utils.setText('#kpiNewDesigns', '—');
+      Utils.setText('#kpiNewDesignsBreakdown', '統計暫時取不到');
     }
 
     // 本月上傳照片 (gallery_posts created_at 在本月)
@@ -281,23 +288,46 @@
         sb.from('gallery_posts').select('id', { count: 'exact', head: true }).gte('created_at', lastMonth.toISOString()).lt('created_at', lastMonthEnd.toISOString())
       ]);
 
+      // ⚠ 一定要看 .error。理由見底下「本月雷刻預約」那一段。
+      if (thisM.error || lastM.error) {
+        throw new Error((thisM.error || lastM.error).message);
+      }
+
       const thisCount = thisM.count || 0;
       const lastCount = lastM.count || 0;
 
       Utils.setText('#kpiNewPhotos', thisCount);
       Utils.setText('#kpiNewPhotosTrend', formatTrend(thisCount, lastCount));
     } catch (err) {
-      console.error('[本月上傳照片統計失敗]', err);
+      console.error('[本月上傳照片統計失敗]', err && err.message);
+      Utils.setText('#kpiNewPhotos', '—');
+      Utils.setText('#kpiNewPhotosTrend', '統計暫時取不到');
     }
 
-    // 本月雷刻預約 (engraving_orders created_at 在本月)
+    /* 本月雷刻預約。
+       ⚠ 日期欄位是 ordered_at,不是 created_at。
+       -----------------------------------------------------------------
+       2026-09-03 之前這裡寫 created_at,而 engraving_orders 根本沒有那個欄位:
+         column engraving_orders.created_at does not exist (42703)
+
+       而且它【不會壞給你看】—— supabase-js 把錯誤放在 .error 而不是丟例外,
+       所以下面的 try/catch 接不到,count 是 null、`|| 0` 之後變成 0,
+       這張卡就永遠顯示 0。真的有預約也一樣。
+       (member-portal.js 的創作數據一直是用 ordered_at,兩支對同一張表
+        用了不同的欄位名,而錯的那一支不出聲。)
+
+       所以除了改欄位名,也一定要看 .error。 */
     try {
       const { thisMonth, lastMonth, lastMonthEnd } = monthRanges();
 
       const [thisM, lastM] = await Promise.all([
-        sb.from('engraving_orders').select('id', { count: 'exact', head: true }).gte('created_at', thisMonth.toISOString()),
-        sb.from('engraving_orders').select('id', { count: 'exact', head: true }).gte('created_at', lastMonth.toISOString()).lt('created_at', lastMonthEnd.toISOString())
+        sb.from('engraving_orders').select('id', { count: 'exact', head: true }).gte('ordered_at', thisMonth.toISOString()),
+        sb.from('engraving_orders').select('id', { count: 'exact', head: true }).gte('ordered_at', lastMonth.toISOString()).lt('ordered_at', lastMonthEnd.toISOString())
       ]);
+
+      if (thisM.error || lastM.error) {
+        throw new Error((thisM.error || lastM.error).message);
+      }
 
       const thisCount = thisM.count || 0;
       const lastCount = lastM.count || 0;
@@ -305,7 +335,11 @@
       Utils.setText('#kpiNewOrders', thisCount);
       Utils.setText('#kpiNewOrdersTrend', formatTrend(thisCount, lastCount));
     } catch (err) {
-      console.error('[本月雷刻統計失敗]', err);
+      console.error('[本月雷刻統計失敗]', err && err.message);
+      /* 查不到就明講,不要顯示 0 —— 0 是一個【看起來正常的數字】,
+         沒有人會去懷疑它。 */
+      Utils.setText('#kpiNewOrders', '—');
+      Utils.setText('#kpiNewOrdersTrend', '統計暫時取不到');
     }
 
     // 載入 Dashboard 待審核小列表 (最早送審的前 4 筆)
