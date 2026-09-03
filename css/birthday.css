@@ -377,9 +377,16 @@
   margin:0 auto;
 }
 .bd .bd-pick{
-  /* 當 .bd-pickup 的 flex 項目:能長能縮,但不要寬到變成一條橫幅 */
+  /* 當 .bd-pickup 的 flex 項目:能長能縮。
+     ⚠ 這裡原本還有 max-width:311px。
+     311 是當初兩張並排在 640px 容器時算出來的寬度((640-18)/2),
+     被當成常數寫死了。後來卡片搬進 498px 的窄欄、變成一張一列,
+     311 的上限就讓它縮在欄位中間 —— 左邊空 93px、右邊空 94px,
+     跟同一欄的標題、段落、CTA 全部對不齊(2026-09-03 回報)。
+
+     拿掉之後兩種情況都對:640px 容器裡兩張並排,flex 算出來
+     還是各 311;窄欄裡一張一列,就長好長滿。 */
   flex:1 1 260px;
-  max-width:311px;
   background:#fff;
   border:1px solid var(--bd-pink-line);
   border-radius:var(--r-lg);
@@ -632,10 +639,15 @@
 .bd .bd-more i{ font-size:10px; transition:transform .2s }
 .bd .is-clickable:hover .bd-more i{ transform:translateX(3px) }
 /* ⚠ 取件卡是【橫向 flex】(icon + 文字區)。
-   「詳細說明」若當成卡片的直接子元素,會變成第三個並排的東西,
+   「詳細說明」是卡片的直接子元素,不處理的話會變成第三個並排的東西,
    跑到文字右邊、把卡片撐寬 —— 2026-09-01 就是這樣壞掉的。
-   js 會把它塞進內層那個 div,所以這裡只調間距。 */
-.bd .bd-pick .bd-more{ margin-top:10px }
+
+   原本的解法是叫 js 把它塞進內層的 div,但那需要猜「哪一個 div 是
+   文字區」,而 .bd-perk 的第一個 div 是圖示,猜錯就壓在圖示上
+   (2026-09-03 壞在正式站)。改成在這裡處理:讓它獨佔一整行。
+   排版的事留在 CSS,js 不必知道卡片長什麼樣子。 */
+.bd .bd-pick{ flex-wrap:wrap }
+.bd .bd-pick .bd-more{ margin-top:10px; flex-basis:100%; margin-left:34px }
 
 /* ---- 彈窗 ---- */
 .bd-modal{

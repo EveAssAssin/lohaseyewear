@@ -74,18 +74,26 @@
       card.setAttribute('tabindex', '0');
 
       /* 看得見的提示。沒有這個,沒有人知道卡片可以點。
-         ⚠ .bd-pick 是橫向 flex(icon + 文字區),直接掛在卡片上
-         會變成第三個並排元素、跑到文字右邊並把卡片撐寬。
-         有內層容器就塞進去,讓它跟著文字走。
 
-         ⚠ :not(.bd-detail) 不能省。.bd-detail 自己就是一個 div,
-         少了這個條件時它會被選中 —— 提示被塞進「詳細內容」裡面,
-         然後整份被複製進彈窗,於是彈窗底部多出一行沒有作用的
-         「詳細說明 ›」。2026-09-02 踩過。 */
+         ⚠ 一律掛在【卡片本身】的最後面,不要去猜該塞進哪個內層 div。
+         -----------------------------------------------------------
+         這裡原本寫的是:
+
+             (card.querySelector(':scope > div:not(.bd-detail)') || card)
+
+         用意是閃過 .bd-pick 的橫向 flex(直接掛上去會變成第三個並排
+         元素、把卡片撐寬)。但那個選擇器抓的是「第一個 div」,而
+         .bd-perk 的第一個 div 是 .bd-perk-ico —— 一個 39px 的圓形
+         圖示。提示被塞進去之後文字一個字一行,直接壓在圖示上面。
+         2026-09-03 在正式站上看到的就是這個。
+
+         排版問題就用排版解決:.bd-pick 的換行改由 CSS 處理
+         (見 birthday.css 的 .bd-pick .bd-more)。DOM 這裡只管
+         「把提示放進卡片」,不對卡片的內部結構做任何假設。 */
       var hint = document.createElement('span');
       hint.className = 'bd-more';
       hint.innerHTML = '詳細說明 <i class="fa-solid fa-chevron-right"></i>';
-      (card.querySelector(':scope > div:not(.bd-detail)') || card).appendChild(hint);
+      card.appendChild(hint);
 
       card.addEventListener('click', function () { open(card); });
       card.addEventListener('keydown', function (e) {
