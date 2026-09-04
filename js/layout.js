@@ -187,25 +187,58 @@ function initMemberLink() {
   });
 }
 
-/* 右上角那顆 pill:登入後顯示客人的名字,一眼看得出自己登入了。
+/* 右上角的會員區:登入後改成「歡迎，某某」＋一顆登出。
    =================================================================
+   未登入   維持原本那顆 CTA 按鈕「會員專區」,完全不動
+   已登入   歡迎，某某 ⟨登出⟩ —— 名字不再是 CTA 樣式,
+            因為 CTA 是給「還沒登入、快來登入」用的
+
    ⚠ 一定要用 textContent,不可以用 innerHTML。
      名字來自登入回應(ERP 建檔的資料),對前端而言是【外部輸入】。
      用 innerHTML 的話,一個叫 <img onerror=...> 的名字就是一個 XSS,
      而且它會出現在【每一頁的頁首】—— 影響面是全站,不是一頁。
+     (實測過:名字設成 <img src=x onerror=alert(1)> 時畫面上是純文字,
+      元素裡沒有產生任何 img。)
 
-   ⚠ 沒有名字時不要留白,改顯示「會員中心」。
-     官網註冊、還沒到門市綁定的會員 name 是空的(生日、姓名都來自 ERP)。
-     顯示空字串會變成一顆看不見的按鈕;沿用「會員專區」則跟未登入
-     長得一模一樣 —— 那正是這個功能要解決的問題。
+   ⚠ 名字要截短。這一整串跟導覽列擠在同一行,長名字擠壞的是全站頁首。
+     截掉的部分放進 title,滑過去仍看得到全名;沒截到就不要給 title,
+     不然每次滑過去都跳一個沒有用的提示。 */
+const NAV_LOGGED_OUT = '會員專區';
+/* 有名字就「歡迎，某某」;沒有名字時【不要】變成「歡迎，會員中心」——
+   那句話讀起來像在跟一個叫「會員中心」的人打招呼。
+   官網註冊、還沒到門市綁定的會員 name 是空的(姓名來自 ERP 建檔),
+   對他們講「歡迎回來」一樣看得出已登入,而且是通順的中文。 */
+const NAV_GREET      = '歡迎，';
+const NAV_NO_NAME    = '歡迎回來';
+/* 前面多了「歡迎，」三個字,所以名字要短一點 ——
+   這一整串跟導覽列擠在同一行,而擠壞的是全站頁首。 */
+const NAV_MAX_CHARS  = 6;
 
-   ⚠ 名字要截短。這顆 pill 在導覽列裡,長名字會把整條 nav 擠壞,
-     而擠壞的是全站頁首。截掉的部分放進 title,滑過去仍看得到全名。 */
-const PILL_LOGGED_OUT = '會員專區';
-const PILL_NO_NAME    = '會員中心';
-const PILL_MAX_CHARS  = 8;
+/* 樣式用注入的,不寫進 css/lohas-base.css。
+   ⚠ 理由是版本號:全站 lohas-base.css 有九種不同的 ?v=,
+     改它就要一頁一頁對照著改,漏一頁那頁的頁首就是壞的 ——
+     而且壞掉的樣子是「名字和登出擠成一團」,不會有錯誤訊息。
+     這裡沿用 ensureLegalAssets() 已經在用的注入模式,
+     版本只有一個、由這支自己控制。 */
+function ensureMemberNavStyles() {
+  if (document.getElementById('lh-user-style')) return;
+  const s = document.createElement('style');
+  s.id = 'lh-user-style';
+  s.textContent =
+    '.lh-user-name{font-weight:600;text-decoration:none;color:inherit;' +
+      'max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' +
+      'display:inline-block;vertical-align:middle}' +
+    '.lh-user-name:hover{text-decoration:underline}' +
+    '.lh-logout{margin-left:.6rem;padding:.25rem .7rem;font:inherit;font-size:.85em;' +
+      'line-height:1.6;color:inherit;background:transparent;cursor:pointer;' +
+      'border:1px solid currentColor;border-radius:999px;opacity:.7;' +
+      'vertical-align:middle}' +
+    '.lh-logout:hover{opacity:1}';
+  document.head.appendChild(s);
+}
 
 function applyMemberPill() {
+  ensureMemberNavStyles();
   const pills = document.querySelectorAll('[data-member-link]');
   if (!pills.length) return;
 
@@ -222,26 +255,67 @@ function applyMemberPill() {
   }
   const loggedIn = Auth && Auth.isLogin ? Auth.isLogin() : !!member;
 
-  let label = PILL_LOGGED_OUT;
+  let label = NAV_LOGGED_OUT;
   let full = '';
+  let truncated = false;      // 只有真的截短才給 title,不然每次滑過去都跳一個沒用的提示
   if (loggedIn) {
     full = String((member && member.name) || '').trim();
     if (full) {
-      label = full.length > PILL_MAX_CHARS
-        ? full.slice(0, PILL_MAX_CHARS) + '…'
-        : full;
+      truncated = full.length > NAV_MAX_CHARS;
+      label = NAV_GREET + (truncated ? full.slice(0, NAV_MAX_CHARS) + '…' : full);
     } else {
-      label = PILL_NO_NAME;
+      label = NAV_NO_NAME;
     }
   }
 
   pills.forEach(pill => {
-    pill.textContent = label;                       // ⚠ 不是 innerHTML
-    pill.classList.toggle('is-logged-in', loggedIn);
-    if (full && full !== label) pill.title = full;  // 被截短才給 title
+    /* 先移除上一次加的登出鍵。
+       ⚠ 這個函式會被重複呼叫(storage 事件、其他分頁登入登出),
+         不清掉的話每呼叫一次就多一顆「登出」。 */
+    const stale = pill.parentNode &&
+      pill.parentNode.querySelector('[data-member-logout]');
+    if (stale) stale.remove();
+
+    pill.textContent = label;                 // ⚠ 不是 innerHTML,理由見上面
+    if (truncated) pill.title = full;
     else pill.removeAttribute('title');
+
+    if (!loggedIn) {
+      /* 未登入維持原本那顆 CTA 按鈕,完全不動 —— 這個改動只影響登入之後。 */
+      pill.className = 'btn-primary';
+      return;
+    }
+
+    /* 已登入:名字不再是一顆 CTA 按鈕(那是給「還沒登入、快來登入」用的),
+       改成純文字連結,旁邊擺登出 —— 就是一般網站的作法。
+       ⚠ 這個元素仍然帶著 data-member-link,所以點名字進會員中心
+         那段路由沿用 initMemberLink(),沒有第二份實作。 */
+    pill.className = 'lh-user-name';
+
+    const out = document.createElement('button');
+    out.type = 'button';
+    out.className = 'lh-logout';
+    out.setAttribute('data-member-logout', '1');
+    out.textContent = '登出';
+    if (pill.parentNode) pill.parentNode.insertBefore(out, pill.nextSibling);
   });
 }
+
+/* 登出:一律走 LohasAuth.logout(),不要自己清 localStorage ——
+   那支會同時清掉 member 與 token 並導回登入頁,
+   自己清一半的話會留下「有 token 沒 member」這種半登入狀態。 */
+document.addEventListener('click', event => {
+  if (!event.target.closest('[data-member-logout]')) return;
+  event.preventDefault();
+  if (window.LohasAuth && window.LohasAuth.logout) {
+    window.LohasAuth.logout();
+  } else {
+    // auth.js 沒載到時的退路:至少要真的登出,不能什麼都不做
+    localStorage.removeItem('lohasMember');
+    localStorage.removeItem('lohasSessionToken');
+    window.location.href = 'login.html';
+  }
+});
 
 /* 在別的分頁登出(或登入)時,這一頁的 pill 也要跟著改 ——
    不然會出現「這頁顯示著名字,點下去卻要求登入」。 */
