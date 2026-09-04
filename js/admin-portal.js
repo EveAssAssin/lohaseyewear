@@ -5457,6 +5457,11 @@
               : (
                 '<button class="md-act-btn" data-act="edit"><i class="fa-solid fa-pen"></i> 編輯</button>' +
                 (d.image_url_svg ? '<button class="md-act-btn" data-act="download-svg"><i class="fa-solid fa-file-arrow-down"></i> SVG</button>' : '') +
+                /* 重新描圖:只有【有 PNG 可以重描】時才出現。
+                   沒有 PNG 的話按了也只會失敗,不如不要給。 */
+                ((mdValidUrl(d.image_url_png) || mdValidUrl(d.image_url))
+                  ? '<button class="md-act-btn" data-act="retrace" title="用現在的描圖管線,從 PNG 重新產生 SVG"><i class="fa-solid fa-wand-magic-sparkles"></i> 重新描圖</button>'
+                  : '') +
                 '<button class="md-act-btn danger" data-act="delete"><i class="fa-solid fa-trash"></i> 刪除</button>'
               )
             ) +
@@ -5478,6 +5483,7 @@
         if (act === 'purge')        { mdPurgeDesign(id); return; }
         if (act === 'toggle-show')  { mdToggleShow(id); return; }
         if (act === 'download-svg') { mdDownloadSvg(id); return; }
+        if (act === 'retrace')      { mdRetrace(id, e.target.closest('[data-act]')); return; }
         // 垃圾桶的卡:點其他地方不開編輯
         const dd = mdState.designs.find(x => String(x.id) === String(id));
         if (dd && (dd.is_show || '上架') === '垃圾桶') return;
@@ -5512,6 +5518,168 @@
     } catch (err) {
       console.error('[mdDownloadSvg]', err);
       alert('下載失敗:' + (err.message || err));
+    }
+  }
+
+
+  /* ===== 重新描圖:從 PNG 重新產生 SVG =====
+     ===================================================================
+     為什麼需要這個(2026-09-03):
+
+     刻圖市集上架中、有 SVG 的 472 張裡,有 45 張的 SVG 是
+     【imagetracer 描的】—— 那是 potrace 失敗時的 fallback,品質明顯較差。
+     它們會變成這樣不是因為圖不好,而是客人按上傳的那一刻 potrace 的 WASM
+     還沒從 CDN 載完,於是靜靜降級(這個 bug 已在 potrace-loader.js 修掉,
+     但【已經存下來的 SVG 不會自己變好】)。
+
+     實例:楊承翰的「Domo」(戴螃蟹帽的貓)
+         現在線上   14KB · 22 條路徑 · imagetracer
+         重新描圖   49KB · 47 條路徑 · potrace     ← 條紋與鬍鬚回來了
+
+     那 45 張【全部都有 PNG 可以重描】,所以這件事做得完。
+
+     ⚠ 描圖用的是 upload-design.js 開出來的 traceImage —— 也就是客人上傳時
+       走的【同一條管線】。不要在這裡自己寫一份:那條管線的每個常數都是
+       量出來的、改過四輪,兩份會各自演化,而不一致不會有錯誤訊息。
+
+     ⚠ 新的 SVG 存成【新檔案】,舊檔案一律保留不刪。
+       這是在改線上資料,而覆蓋掉就沒有退路了。
+       舊網址同時寫進 console 與 localStorage(mdRetraceHistory),要還原時
+       把舊網址填回 image_url_svg 即可。 */
+
+  // ⚠ 刻圖存在 engraving-uploads,【不是】LohasSupabase.CONFIG.STORAGE_BUCKET
+  //   (那個是 gallery-uploads)。沿用那個常數會把 SVG 傳到錯的桶子,
+  //   而上傳本身會成功 —— 錯誤要等到有人打開刻圖才看得出來。
+  const MD_DESIGN_BUCKET = 'engraving-uploads';
+
+  /* 從 SVG 內容判斷是誰描的。
+     imagetracer 大量使用二次貝茲(Q),potrace 只產生三次貝茲(C) ——
+     這是最可靠的指紋,比看檔名或時間準。 */
+  function mdSvgProfile(text) {
+    const ds = [...text.matchAll(/\sd="([^"]*)"/g)].map(m => m[1]).join('');
+    const hasQ = /[Qq]/.test(ds);
+    const hasC = /[Cc]/.test(ds);
+    return {
+      kb: Math.round(text.length / 1024),
+      paths: (text.match(/<path/g) || []).length,
+      tracer: hasQ ? 'imagetracer' : (hasC ? 'potrace' : '未知'),
+    };
+  }
+
+  function mdRememberRetrace(entry) {
+    try {
+      const KEY = 'mdRetraceHistory';
+      const list = JSON.parse(localStorage.getItem(KEY) || '[]');
+      list.unshift(entry);
+      localStorage.setItem(KEY, JSON.stringify(list.slice(0, 50)));
+    } catch (e) {
+      // 存不進去不影響重描本身,console 那一份才是主要紀錄
+      console.warn('[mdRetrace] 歷史紀錄寫入失敗', e);
+    }
+  }
+
+  async function mdRetrace(id, btn) {
+    const d = mdState.designs.find(x => String(x.id) === String(id));
+    if (!d) return;
+
+    const srcUrl = mdValidUrl(d.image_url_png) || mdValidUrl(d.image_url);
+    if (!srcUrl) { alert('這張刻圖沒有 PNG,沒有東西可以重描。'); return; }
+    if (/\.svg(\?|$)/i.test(srcUrl)) {
+      alert('這張的來源本身就是 SVG(向量),重新描圖只會把它降成點陣再描一次,反而更差。');
+      return;
+    }
+    if (!window.LohasUploadDesign || !window.LohasUploadDesign.traceImage) {
+      alert('描圖模組沒有載入,請重新整理頁面再試。');
+      return;
+    }
+
+    const sb = getSb();
+    if (!sb) { alert('資料庫連線失敗'); return; }
+
+    const original = btn ? btn.innerHTML : '';
+    const setBtn = (html, disabled) => {
+      if (!btn) return;
+      btn.innerHTML = html;
+      btn.disabled = !!disabled;
+    };
+
+    try {
+      setBtn('描圖中…', true);
+
+      // 1. 先記下舊的長什麼樣,等一下拿來比 —— 沒有比較就看不出有沒有變好
+      let before = null;
+      if (d.image_url_svg) {
+        try {
+          const r = await fetch(d.image_url_svg);
+          if (r.ok) before = mdSvgProfile(await r.text());
+        } catch (e) {
+          console.warn('[mdRetrace] 舊 SVG 讀不到,跳過比較', e);
+        }
+      }
+
+      // 2. 抓 PNG,走跟客人上傳時完全同一條管線
+      const res = await fetch(srcUrl);
+      if (!res.ok) throw new Error('PNG 讀取失敗(HTTP ' + res.status + ')');
+      const out = await window.LohasUploadDesign.traceImage(await res.blob());
+      if (!out || !out.svgString) throw new Error('描圖沒有產生任何線稿');
+      const after = mdSvgProfile(out.svgString);
+
+      // 3. 把數字攤開讓人決定,不要默默覆蓋
+      const msg = [
+        '「' + (d.name || '未命名') + '」重新描圖完成',
+        '',
+        before
+          ? '原本:' + before.paths + ' 條路徑 · ' + before.kb + 'KB · ' + before.tracer + ' 描的'
+          : '原本:沒有 SVG',
+        '現在:' + after.paths + ' 條路徑 · ' + after.kb + 'KB · potrace',
+        '',
+      ];
+      if (before && after.paths < before.paths) {
+        msg.push('⚠ 新的路徑數比舊的【少】,可能反而變差。', '建議先取消,把兩個 SVG 都下載下來看過再決定。', '');
+      }
+      msg.push('要用新的取代嗎?(舊檔案會保留,不會刪掉)');
+      if (!confirm(msg.join('\n'))) { setBtn(original, false); return; }
+
+      setBtn('儲存中…', true);
+
+      // 4. 存成新檔案,舊的不動
+      const path = 'designs/retrace/' + d.id + '-' + Date.now() + '.svg';
+      const { error: upErr } = await sb.storage
+        .from(MD_DESIGN_BUCKET)
+        .upload(path, new Blob([out.svgString], { type: 'image/svg+xml' }),
+                { contentType: 'image/svg+xml', upsert: false });
+      if (upErr) throw new Error('SVG 上傳失敗:' + upErr.message);
+
+      const { data: pub } = sb.storage.from(MD_DESIGN_BUCKET).getPublicUrl(path);
+      const newUrl = pub && pub.publicUrl;
+      if (!newUrl) throw new Error('拿不到新 SVG 的公開網址');
+
+      /* 5. 換掉欄位。
+         ⚠ 一定要檢查 .error —— supabase-js 失敗時【不會拋例外】,
+           只把錯誤放在 .error 裡。不看的話這裡會安靜地什麼都沒改,
+           而畫面照樣顯示成功。 */
+      const { error: updErr } = await sb.from('engraving_designs')
+        .update({ image_url_svg: newUrl })
+        .eq('id', d.id);
+      if (updErr) throw new Error('資料庫更新失敗:' + updErr.message);
+
+      const record = {
+        id: d.id, name: d.name || '', at: new Date().toISOString(),
+        oldUrl: d.image_url_svg || null, newUrl: newUrl,
+        oldPaths: before ? before.paths : null, newPaths: after.paths,
+      };
+      console.info('[mdRetrace] 完成', record);
+      mdRememberRetrace(record);
+
+      d.image_url_svg = newUrl;
+      alert('完成:' + (before ? before.paths + ' → ' : '') + after.paths + ' 條路徑。\n\n' +
+            '舊檔案沒有刪除。要還原的話,舊網址在 Console 與 localStorage 的 mdRetraceHistory 裡。');
+      mdRenderTable();
+
+    } catch (err) {
+      console.error('[mdRetrace]', err);
+      alert('重新描圖失敗:' + (err.message || err));
+      setBtn(original, false);
     }
   }
 

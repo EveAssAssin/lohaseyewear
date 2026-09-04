@@ -2026,8 +2026,18 @@
 <script src="js/supabase.js?v=20260510-1720"></script>
 <script src="js/cropper-helper.js?v=20260510-1720"></script>
 
+<!-- 刻圖管理的「重新描圖」用。三支都要,而且順序不能換:
+     potrace-loader 要先開始載 WASM(它是非同步的,早一點開始就少等一點),
+     imagetracer 是 potrace 失敗時的 fallback,
+     upload-design 會把描圖管線本身開成 LohasUploadDesign.traceImage。
+     ⚠ upload-design.js 在模組層【不碰 DOM】,所以載進後台不會有副作用;
+       它只在被呼叫時才注入自己的 modal。 -->
+<script src="js/potrace-loader.js?v=20260903-native"></script>
+<script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
+<script src="js/upload-design.js?v=20260903-retrace"></script>
+
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260903-kpifix"></script>
+<script src="js/admin-portal.js?v=20260903-retrace"></script>
 <script src="js/admin-portal-footer.js?v=20260601-drag"></script>
 <script src="js/admin-portal-pegavision.js?v=20260622"></script>
 <script src="js/admin-portal-categories.js?v=20260530-routeword"></script>

@@ -2458,6 +2458,19 @@
     openModal:          openModal,
     openModalForEdit:   openModalForEdit,
     closeModal:         closeModal,
+
+    /* 把【描圖管線本身】開出去,給刻圖管理的「重新描圖」用。
+       -----------------------------------------------------------------
+       ⚠ 刻意直接開放這一支,而不是在 admin-portal.js 那邊照抄一份。
+       這條管線的每一個常數(門檻 150/220、像素區間 1.20M~4.00M、
+       turdsize 1、alphamax 0.5)都是量出來的,而且改過四輪;
+       複製一份的下一步一定是兩份各自演化,然後某一天
+       「重新描圖」描出來的東西跟客人上傳時描的不一樣,
+       而那種不一致【沒有任何錯誤訊息】。
+
+       傳入:PNG/JPG 的 Blob。回傳:{ pngBlob, svgString }。
+       它不碰任何模組狀態,也不上傳 —— 存哪裡由呼叫端決定。 */
+    traceImage:         transformToTransparent,
   };
 
 })(window);
