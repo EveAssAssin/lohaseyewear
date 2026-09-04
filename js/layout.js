@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initFooterAccordion();
   initCookieBanner();
   initMemberLink();
+  applyMemberPill();
 
   // 啟動：嘗試從 Supabase 拿動態頁尾資料覆蓋
   applyDynamicFooter();
@@ -185,6 +186,75 @@ function initMemberLink() {
     window.location.href = "login.html";
   });
 }
+
+/* 右上角那顆 pill:登入後顯示客人的名字,一眼看得出自己登入了。
+   =================================================================
+   ⚠ 一定要用 textContent,不可以用 innerHTML。
+     名字來自登入回應(ERP 建檔的資料),對前端而言是【外部輸入】。
+     用 innerHTML 的話,一個叫 <img onerror=...> 的名字就是一個 XSS,
+     而且它會出現在【每一頁的頁首】—— 影響面是全站,不是一頁。
+
+   ⚠ 沒有名字時不要留白,改顯示「會員中心」。
+     官網註冊、還沒到門市綁定的會員 name 是空的(生日、姓名都來自 ERP)。
+     顯示空字串會變成一顆看不見的按鈕;沿用「會員專區」則跟未登入
+     長得一模一樣 —— 那正是這個功能要解決的問題。
+
+   ⚠ 名字要截短。這顆 pill 在導覽列裡,長名字會把整條 nav 擠壞,
+     而擠壞的是全站頁首。截掉的部分放進 title,滑過去仍看得到全名。 */
+const PILL_LOGGED_OUT = '會員專區';
+const PILL_NO_NAME    = '會員中心';
+const PILL_MAX_CHARS  = 8;
+
+function applyMemberPill() {
+  const pills = document.querySelectorAll('[data-member-link]');
+  if (!pills.length) return;
+
+  /* 判斷登入與否的寫法與 initMemberLink 保持一致 ——
+     兩處若用不同標準,會出現「pill 顯示名字但點下去被送回登入頁」。 */
+  const Auth = window.LohasAuth;
+  let member = null;
+  try {
+    member = Auth && Auth.getStoredMember
+      ? Auth.getStoredMember()
+      : JSON.parse(localStorage.getItem('lohasMember') || 'null');
+  } catch (e) {
+    member = null;      // localStorage 壞掉或被關閉:當成未登入,不要讓頁首整個掛掉
+  }
+  const loggedIn = Auth && Auth.isLogin ? Auth.isLogin() : !!member;
+
+  let label = PILL_LOGGED_OUT;
+  let full = '';
+  if (loggedIn) {
+    full = String((member && member.name) || '').trim();
+    if (full) {
+      label = full.length > PILL_MAX_CHARS
+        ? full.slice(0, PILL_MAX_CHARS) + '…'
+        : full;
+    } else {
+      label = PILL_NO_NAME;
+    }
+  }
+
+  pills.forEach(pill => {
+    pill.textContent = label;                       // ⚠ 不是 innerHTML
+    pill.classList.toggle('is-logged-in', loggedIn);
+    if (full && full !== label) pill.title = full;  // 被截短才給 title
+    else pill.removeAttribute('title');
+  });
+}
+
+/* 在別的分頁登出(或登入)時,這一頁的 pill 也要跟著改 ——
+   不然會出現「這頁顯示著名字,點下去卻要求登入」。 */
+window.addEventListener('storage', event => {
+  /* ⚠ key 名向 LohasAuth.CONFIG 要,不要在這裡再抄一份字串。
+     我第一版寫死成 'lohasToken',而實際上是 'lohasSessionToken' ——
+     那種錯誤不會報錯,只會讓這個監聽【安靜地永遠不觸發】。
+     auth.js 還沒載到時才退回字面值。 */
+  const C = (window.LohasAuth && window.LohasAuth.CONFIG) || {};
+  const memberKey = C.STORAGE_KEY || 'lohasMember';
+  const tokenKey  = C.TOKEN_KEY   || 'lohasSessionToken';
+  if (event.key === memberKey || event.key === tokenKey) applyMemberPill();
+});
 
 /* 手機版選單 */
 function initMobileMenu() {
