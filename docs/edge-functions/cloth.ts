@@ -153,6 +153,27 @@ async function askEligible(who: { erpid: string; mid: string }): Promise<Eligibl
       return null;
     }
     const d = j.data;
+
+    /* 🚨 每一次資格判定都留一行。
+       -----------------------------------------------------------------
+       2026-09-04 門市回報「客人是當月壽星,畫面卻顯示尚未開放」時,
+       【兩邊都沒有任何紀錄】—— 查不出是誰、被什麼原因擋下。
+       而門市不可能開 DevTools 把 console 讀給我們聽,
+       所以唯一可行的地方就是這裡。
+
+       ⚠ 不記 birth_month 的【值】—— 那是個資,不要在平台 log 上留副本。
+         只記「它是不是本月」,而那已經足以分辨兩種完全不同的病因:
+           是本月卻被擋 → 對方的判斷邏輯有問題
+           不是本月     → ERP 那筆生日資料本身不對(或客人記錯) */
+    const taipeiMonth = new Date(Date.now() + 8 * 3600 * 1000).getUTCMonth() + 1;
+    console.log(
+      '[cloth] 生日資格 erpid=' + (who.erpid || '-') +
+      ' mid=' + (who.mid || '-') +
+      ' ok=' + !!d.ok +
+      ' reason=' + (String(d.reason || '') || '-') +
+      ' 生日月是否為本月=' + (Number(d.birth_month) === taipeiMonth),
+    );
+
     return {
       ok: !!d.ok,
       reason: String(d.reason || ''),
@@ -170,7 +191,7 @@ const SYS_ERR_MSG = '系統異常,請聯繫客服。';
 /* 線上實際跑的是哪一版。每次改這支就一併更新 ——
    從外面看不出線上是哪一版,是 2026-08-28 那次事故的根本原因
    (程式改好、信上寫「已上線」,但那支函式從頭到尾沒有部署過)。 */
-const CODE_VERSION = '2026-09-03 · 生日閘門 + 退件重做';
+const CODE_VERSION = '2026-09-04 · 生日閘門判定留紀錄';
 
 /* 速率限制。記憶體計數,多執行個體下不是嚴格上限,
    目的是擋掉「同一個人狂按」與明顯的腳本,不是防禦機制。 */
