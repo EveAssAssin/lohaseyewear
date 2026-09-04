@@ -1260,14 +1260,25 @@
        這一層只是提示,真正把關的是存檔那一端(cloth 函式會回 403)。
        在提示層 fail-closed 的代價是:欄位名再變一次,
        全部的客人又會被鎖在門外,而且一樣沒有任何錯誤訊息。 */
+  /* ⚠ ok 與 allowed 兩個都認,不是偷懶。
+     -----------------------------------------------------------------
+     repo 裡的 cloth.ts 寫的是 ok,但【線上那支是對方部署的,
+     我方讀不到它的原始碼】(GET 自檢只回版本號,不回欄位)。
+     只認一個的代價是不對稱的:
+       猜錯而「該擋沒擋」→ 客人白做一場,存檔時被 403 擋下,體感差;
+       猜錯而「不該擋卻擋」→ 真壽星領不到禮物,而且沒有任何錯誤訊息。
+     後者就是這次出的事。兩個都認,兩種部署下都正確。 */
   function eligibleBlocks() {
     var e = State.eligible;
     if (!e) return false;
-    if (typeof e.ok !== 'boolean') {
-      console.warn('[cloth] eligible 沒有 ok 欄位,不擋畫面。實際收到:', e);
+    var v = (typeof e.ok === 'boolean') ? e.ok
+          : (typeof e.allowed === 'boolean') ? e.allowed
+          : null;
+    if (v === null) {
+      console.warn('[cloth] eligible 既沒有 ok 也沒有 allowed,不擋畫面。實際收到:', e);
       return false;
     }
-    return e.ok === false;
+    return v === false;
   }
 
   /* 現在是不是被生日月擋住。refreshSubmit 要用 ——
