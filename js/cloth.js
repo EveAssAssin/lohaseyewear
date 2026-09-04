@@ -1118,6 +1118,19 @@
         State.rejected = j.data.rejected ||
           (j.data.redo_pending ? (j.data.current || null) : null);
         State.eligible = j.data.eligible || null;
+        /* 🚨 擋人的時候一定要留下痕跡。
+           2026-09-04 門市回報「當月壽星卻顯示尚未開放」時,
+           【兩邊都沒有任何紀錄】—— 查不出是我方送錯身分、
+           對方查不到生日、還是生日資料本身就錯,
+           只能靠讀原始碼比對欄位名才發現。
+           message 是給客人看的一句話,reason 才是能拿去對帳的東西。 */
+        if (State.eligible) {
+          console.info('[cloth] 生日資格:', {
+            ok: State.eligible.ok,
+            reason: State.eligible.reason,
+            birth_month: State.eligible.birth_month,
+          });
+        }
         /* 三者的優先序不可調換:
              已完成  → 講「本年度已完成」
              被退件  → 講退件原因並請他重做(這一條【不受生日月限制】)
@@ -1216,7 +1229,7 @@
        就變成所有人都看到錯誤,即使他們根本還沒要存檔。 */
   function applyEligible() {
     if (State.locked || State.rejected) return;
-    if (!State.eligible || State.eligible.allowed) return;
+    if (!eligibleBlocks()) return;
 
     var msg = (State.eligible.message || '').trim();
     if (!msg) return;               // 沒有話可講就別畫一個空白的框
@@ -1230,11 +1243,37 @@
     if (el.submitHint) el.submitHint.textContent = '';
   }
 
+  /* 資格結果到底算不算「擋下來」。
+     =================================================================
+     🚨 2026-09-04 修:原本兩處都寫 `!State.eligible.allowed`,
+        而伺服器回的欄位【叫 ok,不叫 allowed】
+        (cloth.ts 的 type Eligible = { ok, reason, message, birth_month })。
+
+        undefined 是 falsy,所以 `!undefined` 永遠是 true ——
+        【每一個非白名單的客人都被擋住,包含真正的當月壽星】。
+        門市回報「客人明明是當月壽星,畫面卻說尚未開放」就是這個。
+
+        內部測試帳號在白名單裡(eligible 恆為 null,整段跳過),
+        所以這個 bug 在內部怎麼測都測不出來。
+
+     ⚠ 只有【明確的 false】才算擋,拿不到 ok 就【不擋】。
+       這一層只是提示,真正把關的是存檔那一端(cloth 函式會回 403)。
+       在提示層 fail-closed 的代價是:欄位名再變一次,
+       全部的客人又會被鎖在門外,而且一樣沒有任何錯誤訊息。 */
+  function eligibleBlocks() {
+    var e = State.eligible;
+    if (!e) return false;
+    if (typeof e.ok !== 'boolean') {
+      console.warn('[cloth] eligible 沒有 ok 欄位,不擋畫面。實際收到:', e);
+      return false;
+    }
+    return e.ok === false;
+  }
+
   /* 現在是不是被生日月擋住。refreshSubmit 要用 ——
      少了這個判斷,他挑一張新圖就會把按鈕重新打開(同 State.locked)。 */
   function blockedByBirthday() {
-    return !State.locked && !State.rejected &&
-           !!State.eligible && !State.eligible.allowed;
+    return !State.locked && !State.rejected && eligibleBlocks();
   }
 
   /* 退件原因:代碼轉成客人看得懂的文字。
