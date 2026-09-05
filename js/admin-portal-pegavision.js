@@ -98,16 +98,14 @@
         imageUrl = urlData.publicUrl;
       }
 
-      // 寫進 site_settings
-      const { data, error } = await sb
-        .from('site_settings')
-        .upsert({ key: STORAGE_KEY, value: { image_url: imageUrl } }, { onConflict: 'key' })
-        .select();
-
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        throw new Error('沒有任何資料被更新（可能 RLS 擋住寫入）');
-      }
+      /* 寫進 site_settings —— 走 admin-write,不直接打表。
+         理由與呼叫器在 js/admin-portal.js 的 adminWrite 上面。
+         ⚠ 原本這裡自己檢查「影響 0 列」並提示可能被 RLS 擋住,
+           那個判斷是對的;現在由 admin-write 統一做(0 列回 007),
+           所以這裡不必再檢查一次。 */
+      if (!window.LohasAdminWrite) throw new Error('後台寫入模組未載入,請重新整理');
+      await window.LohasAdminWrite('site_settings', 'upsert',
+        { key: STORAGE_KEY, value: { image_url: imageUrl } });
 
       // 同步本地 state
       state.existingImageUrl = imageUrl;

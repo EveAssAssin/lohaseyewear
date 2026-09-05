@@ -43,6 +43,54 @@
     return Supabase.getClient();
   }
 
+  /* 後台寫入一律走 admin-write 函式,不要直接打表。
+     =================================================================
+     🚨 後台跟前台用的是【同一把公開的 anon key】(在 GitHub 上的
+     js/supabase.js 裡)。所以後台能改的每一張表,都必須開一條
+     `for all / public / true` 的 RLS 政策 —— 而那條政策擋不住
+     任何直接打 REST 的人。「你是不是管理員」是前端查 admins 表
+     決定的,對繞過前端的人完全沒有作用。
+
+     實際後果(2026-09-05 盤點):
+       member_status  任何人可以停權任何會員,或把自己解停權
+       site_settings  任何人可以改掉全站頁尾的連結
+
+     admin-write 走 service_role,而且在伺服器端驗兩道:
+     有效 session token + admins 表且狀態正常。
+     搬完之後那些表的 anon 寫入政策就能整條拿掉。
+
+     ⚠ 不要為了少一次網路來回而改回直接打表。 */
+  var ADMIN_WRITE_FN =
+    'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/admin-write';
+
+  async function adminWrite(table, op, row, matchValue) {
+    const token = (window.LohasAuth && window.LohasAuth.getToken)
+      ? window.LohasAuth.getToken() : '';
+    const payload = { token: token, table: table, op: op, row: row };
+    if (matchValue !== undefined) payload.match_value = matchValue;
+
+    const r = await fetch(ADMIN_WRITE_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const j = await r.json().catch(function () { return {}; });
+    /* ⚠ 看 j.code,不要只看 r.ok —— 這些函式失敗時 HTTP 也可能是 200,
+       只看 r.ok 會把「權限不足」當成成功。 */
+    if (String(j.code) !== '200') {
+      const e = new Error(j.message || ('操作失敗(HTTP ' + r.status + ')'));
+      e.code = String(j.code);
+      throw e;
+    }
+    return j.data || {};
+  }
+
+  /* 開給同一頁的其他後台模組用(admin-portal-footer / -pegavision)。
+     它們是各自獨立的 IIFE,但都在這一支之後載入。
+     ⚠ 不要在那些檔案裡各寫一份 —— 三份呼叫器遲早會分岔,
+       而分岔的樣子是「某一頁的後台寫入沒有驗管理員」。 */
+  window.LohasAdminWrite = adminWrite;
+
   function escapeHtml(str) {
     if (str == null) return '';
     return String(str)
@@ -1380,15 +1428,15 @@
         }
         alert(`已將「${name}」升級為 Creator`);
       } else {
-        const { error } = await sb.from('member_status').upsert({
-          member_id: erpid,
-          status:    'active',
-          reason:    '手動加入:' + name,
-        }, { onConflict: 'member_id' });
-
-        if(error){
-          console.error(error);
-          showAddError('加入失敗:' + error.message);
+        try {
+          await adminWrite('member_status', 'upsert', {
+            member_id: erpid,
+            status:    'active',
+            reason:    '手動加入:' + name,
+          });
+        } catch (err) {
+          console.error(err);
+          showAddError('加入失敗:' + (err.message || err));
           return;
         }
         alert(`已加入會員「${name}」`);
@@ -1465,39 +1513,29 @@
     if (reason === null) return; // 取消
     if (!reason.trim()) return alert('請輸入停權原因');
 
-    const sb = getSb();
-    if (!sb) return;
-
     try {
-      const { error } = await sb.from('member_status').upsert({
+      /* ⚠ 不再送 suspended_by —— 那是「誰停的」,由伺服器用驗過的
+         身分填。前端送等於稽核紀錄可以偽造(State.member 來自
+         localStorage,想寫誰就寫誰)。 */
+      await adminWrite('member_status', 'upsert', {
         member_id: erpid,
         status: 'suspended',
         reason: reason.trim(),
         suspended_at: new Date().toISOString(),
-        suspended_by: State.member.erpid
-      }, { onConflict: 'member_id' });
-
-      if (error) return alert('停權失敗: ' + error.message);
+      });
 
       alert(`「${name}」已停權`);
       loadUsers();
     } catch (err) {
-      alert('停權失敗: ' + err.message);
+      alert('停權失敗: ' + (err.message || err));
     }
   }
 
   async function restoreUser(erpid) {
     if (!confirm('確定恢復這個帳號?')) return;
 
-    const sb = getSb();
-    if (!sb) return;
-
     try {
-      const { error } = await sb.from('member_status')
-        .update({ status: 'active' })
-        .eq('member_id', erpid);
-
-      if (error) return alert('恢復失敗: ' + error.message);
+      await adminWrite('member_status', 'update', { status: 'active' }, erpid);
 
       alert('已恢復');
       loadUsers();

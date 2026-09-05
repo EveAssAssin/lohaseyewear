@@ -81,10 +81,12 @@
       return false;
     }
     try {
-      const { error } = await sb
-        .from('site_settings')
-        .upsert({ key: STORAGE_KEY, value: state }, { onConflict: 'key' });
-      if (error) throw error;
+      /* 走 admin-write,不直接打表 —— site_settings 的 anon 政策是
+         無條件放行,任何人都能改掉全站頁尾的連結(釣魚)。
+         理由與呼叫器在 js/admin-portal.js 的 adminWrite 上面。 */
+      if (!window.LohasAdminWrite) throw new Error('後台寫入模組未載入,請重新整理');
+      await window.LohasAdminWrite('site_settings', 'upsert',
+        { key: STORAGE_KEY, value: state });
       return true;
     } catch (e) {
       console.error('[cm-footer] save failed:', e);
