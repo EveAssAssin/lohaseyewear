@@ -979,16 +979,11 @@
           .eq('member_id', State.member.erpid)
           .eq('design_id', did);
         if (!error) {
-          // like_count -1
-          try {
-            const { data: cur } = await sb.from('engraving_designs')
-              .select('like_count').eq('id', did).single();
-            if (cur) {
-              const newCount = Math.max(0, (cur.like_count || 0) - 1);
-              await sb.from('engraving_designs')
-                .update({ like_count: newCount }).eq('id', did);
-            }
-          } catch (e) { console.warn('[wishlist] like_count -1 失敗', e); }
+          /* like_count -1。走 RPC,不再「讀出來自己減、再寫回去」——
+             前端算好數字再 update,等於任何人都能把讚數設成任意值。
+             RPC 只收一個 id,沒有可以指定數字的入口。 */
+          const dec = await sb.rpc('design_like_dec', { p_id: did });
+          if (dec && dec.error) console.warn('[wishlist] like_count -1 失敗:', dec.error.message);
 
           loadWishlist();
         }

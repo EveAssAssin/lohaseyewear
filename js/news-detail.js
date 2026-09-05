@@ -97,12 +97,17 @@
       return;
     }
 
-    // 累加瀏覽數 (失敗無關緊要)
-    try {
-      sb.rpc('increment_news_view', { p_id: data.id }).catch(() => {});
-      // 沒寫 rpc 也沒關係,fallback 直接 update
-      sb.from('news').update({ view_count: (data.view_count || 0) + 1 }).eq('id', data.id).then(() => {});
-    } catch (e) {}
+    /* 累加瀏覽數。失敗無關緊要,但【不要兩條路一起打】。
+       -----------------------------------------------------------------
+       🚨 原本這裡同時呼叫 RPC 與直接 update,註解寫著「沒寫 rpc 也沒關係,
+         fallback 直接 update」—— 但那不是 fallback,是【兩條都會跑】。
+         RPC 若存在,瀏覽數就會一次加二,而且沒有人會發現。
+
+       改成只走 RPC:前端算好數字再 update 等於任何人都能把瀏覽數
+       設成任意值,而 RPC 只收一個 id,沒有指定數字的入口。 */
+    sb.rpc('news_view_inc', { p_id: data.id }).then(r => {
+      if (r && r.error) console.warn('[news] view_count +1 失敗:', r.error.message);
+    });
 
     render(data);
   }

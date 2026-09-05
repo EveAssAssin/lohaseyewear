@@ -841,15 +841,24 @@
     }
   }
 
-  // 分享次數 +1 (share_count)
+  /* 分享次數 +1。
+     🚨 2026-09-05:改用 RPC,不再「讀出來自己加、再寫回去」。
+     -----------------------------------------------------------------
+     原本是前端算好數字再 update,而 engraving_designs 的 anon 政策
+     是無條件放行 —— 那等於任何人都能把 share_count 設成任意值,
+     連「一次只能加一」都保證不了(送 999999 一樣會被寫進去)。
+
+     RPC 收的參數只有一個 id,【沒有可以指定數字的入口】,
+     加多少是資料庫那端決定的。這也是之後能把 UPDATE 政策
+     收掉的前提。 */
   async function bumpShareCount(d){
     var sb = window.LohasSupabase?.getClient?.() || window.Supabase?.client;
-    if(!sb || typeof sb.from !== 'function') return;
-    try {
-      var cur = (d.shares || 0) + 1;
-      d.shares = cur;
-      await sb.from('engraving_designs').update({ share_count: cur }).eq('id', d.id);
-    } catch(e){ /* 靜默 */ }
+    if(!sb || typeof sb.rpc !== 'function') return;
+    d.shares = (d.shares || 0) + 1;      // 畫面先動,不等伺服器
+    /* ⚠ supabase-js 失敗時【不拋例外】,錯誤在 .error 裡。
+       只包 try/catch 會漏掉,而漏掉的樣子是「數字沒加,也沒人知道」。 */
+    var r = await sb.rpc('design_share_inc', { p_id: d.id });
+    if (r && r.error) console.warn('[market] share_count +1 失敗:', r.error.message);
   }
 
   function closeModal(){
@@ -906,16 +915,9 @@
       if(sb){
         await sb.from('engraving_wishlist').delete()
           .eq('member_id', memberId).eq('design_id', idStr);
-        // like_count -1 (用 RPC 或讀 → 寫)
-        try {
-          var dec = await sb.from('engraving_designs')
-            .select('like_count').eq('id', idStr).single();
-          if(dec?.data){
-            var newCount = Math.max(0, (dec.data.like_count || 0) - 1);
-            await sb.from('engraving_designs')
-              .update({ like_count: newCount }).eq('id', idStr);
-          }
-        } catch(e){ console.warn('[wishlist] like_count -1 失敗', e); }
+        // like_count -1。走 RPC,理由見 bumpShareCount 上面那段。
+        var dec = await sb.rpc('design_like_dec', { p_id: idStr });
+        if (dec && dec.error) console.warn('[wishlist] like_count -1 失敗:', dec.error.message);
       }
       // 通知其他頁面 (member-portal 同視窗會自動 reload)
       window.dispatchEvent(new CustomEvent('lohas:wishlist-changed', {
@@ -931,16 +933,9 @@
           design_id: idStr,
           created_at: new Date().toISOString(),
         });
-        // like_count +1
-        try {
-          var inc = await sb.from('engraving_designs')
-            .select('like_count').eq('id', idStr).single();
-          if(inc?.data){
-            var newCount = (inc.data.like_count || 0) + 1;
-            await sb.from('engraving_designs')
-              .update({ like_count: newCount }).eq('id', idStr);
-          }
-        } catch(e){ console.warn('[wishlist] like_count +1 失敗', e); }
+        // like_count +1。走 RPC,理由見 bumpShareCount 上面那段。
+        var inc = await sb.rpc('design_like_inc', { p_id: idStr });
+        if (inc && inc.error) console.warn('[wishlist] like_count +1 失敗:', inc.error.message);
       }
       window.dispatchEvent(new CustomEvent('lohas:wishlist-changed', {
         detail: { action: 'add', designId: idStr }
