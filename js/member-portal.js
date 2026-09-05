@@ -1418,19 +1418,16 @@
         if (isOff) {
           // 重新上架 → 重走審核
           if (!confirm(`確定要重新上架「${name}」?\n\n· 重新上架需要重新走刻圖審核流程\n· 通過後才會再次出現在市集`)) return;
-          updates = { status: 'pending', is_show: '上架' };
+          updates = '上架';
         } else {
           // 下架
           if (!confirm(`確定下架「${name}」?\n\n· 會從市集隱藏\n· 重新上架需重新走審核流程`)) return;
-          updates = { is_show: '下架' };
+          updates = '下架';
         }
 
         toggleBtn.disabled = true;
         try {
-          const { error } = await sb.from('engraving_designs')
-            .update(updates)
-            .eq('id', id);
-          if (error) throw error;
+          await designCall('set_show', { id: id, show: updates });
           modalBg.classList.remove('on');
           loadMyDesigns();
           if (typeof loadAnalytics === 'function') loadAnalytics();
@@ -1447,14 +1444,9 @@
     if (trashBtn) {
       trashBtn.addEventListener('click', async () => {
         if (!confirm(`確定刪除「${name}」?\n\n· 會從市集下架\n· 刪除後永久無法恢復上架`)) return;
-        const sb = getSupabase();
-        if (!sb) return;
         trashBtn.disabled = true;
         try {
-          const { error } = await sb.from('engraving_designs')
-            .update({ is_show: '垃圾桶' })
-            .eq('id', id);
-          if (error) throw error;
+          await designCall('set_show', { id: id, show: '垃圾桶' });
           modalBg.classList.remove('on');
           loadMyDesigns();
           if (typeof loadAnalytics === 'function') loadAnalytics();
@@ -1671,12 +1663,15 @@
 
      現在身分由伺服器從 session token 解出來,前端傳什麼都沒用。
      ⚠ 不要為了「少一次網路來回」而改回直接打表。 */
-  const PAYOUT_FN = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/payout';
+  const FN_BASE = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/';
 
-  async function payoutCall(action, extra) {
+  /* 共用的呼叫器:帶上 session token,把非 200 轉成例外。
+     ⚠ 一定要看 j.code —— 這些函式失敗時 HTTP 也可能是 200,
+       只看 r.ok 會把「登入失效」當成成功。 */
+  async function fnCall(name, action, extra) {
     const token = (window.LohasAuth && window.LohasAuth.getToken)
       ? window.LohasAuth.getToken() : '';
-    const r = await fetch(PAYOUT_FN, {
+    const r = await fetch(FN_BASE + name, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(Object.assign({ action: action, token: token }, extra || {})),
@@ -1689,6 +1684,18 @@
     }
     return j.data || {};
   }
+
+  const payoutCall = (action, extra) => fnCall('payout', action, extra);
+
+  /* 刻圖的上下架 / 刪除。
+     🚨 2026-09-05 改。原本是前端直接
+        `update({ is_show: '垃圾桶' }).eq('id', id)` ——
+     注意那行【沒有任何擁有者條件】,只有一個 id。
+     配上 engraving_designs 無條件放行的 anon 政策,
+     等於任何人都能把市集裡【任何一張刻圖】下架或丟垃圾桶,
+     而畫面上不會有任何異常,創作者只會發現作品「不見了」。
+     現在擁有者由伺服器比對 creator_id。 */
+  const designCall = (action, extra) => fnCall('design', action, extra);
 
   async function saveBankForm() {
     if (!State.member) return;
