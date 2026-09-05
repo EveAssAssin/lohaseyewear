@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-05 · member_status + site_settings';
+const CODE_VERSION = '2026-09-05b · +banners +featured_creators';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -61,20 +61,36 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
    ops   : 允許的動作
    cols  : 允許寫入的欄位。沒列到的一律拒絕。
 
-   ⚠ 目前只放兩張表 —— 這一支是逐張搬進來的,不是一次全開。
-     搬一張、後台驗一次、再搬下一張;因為後台沒有測試環境,
-     一次搬七張出事了會分不出是哪一張。 */
+   ⚠ 這一支是【逐批】搬進來的,不是一次全開。
+     搬一批、後台驗一次、再搬下一批;因為後台沒有測試環境,
+     一次搬七張表出事了會分不出是哪一張。
+       第一批(已驗)  member_status、site_settings
+       第二批        banners、featured_creators
+       還沒搬        news、categories、collabs、collab_customer_photos */
 type Rule = { key: string; ops: string[]; cols: string[] };
 const ALLOW: Record<string, Rule> = {
   member_status: {
     key: 'member_id',
     ops: ['upsert', 'update'],
     cols: ['member_id', 'status', 'reason', 'suspended_at', 'updated_at'],
+    // suspended_by 不在這裡:由伺服器填,見下面「伺服器自己填的欄位」
   },
   site_settings: {
     key: 'key',
     ops: ['upsert'],
     cols: ['key', 'value', 'updated_at'],
+  },
+  banners: {
+    key: 'id',
+    ops: ['insert', 'update', 'delete'],
+    cols: ['position', 'image_url', 'image_url_mobile', 'title', 'subtitle',
+           'cta_text', 'link_url', 'is_active', 'sort_order', 'updated_at'],
+  },
+  featured_creators: {
+    key: 'featured_month',
+    ops: ['insert', 'delete'],
+    cols: ['creator_id', 'featured_month', 'sort_order'],
+    // featured_by 不在這裡:同 suspended_by,由伺服器填
   },
 };
 
@@ -147,7 +163,8 @@ Deno.serve(async (req) => {
   const op = String(body.op || '');
   if (rule.ops.indexOf(op) < 0) return reply('006', { message: '這張表不支援這個動作' }, 400);
 
-  const row = body.row;
+  /* delete 不帶 row,其餘都要。 */
+  const row = (op === 'delete') ? {} : body.row;
   if (!row || typeof row !== 'object' || Array.isArray(row)) {
     return reply('006', { message: '缺少資料內容' }, 400);
   }
@@ -170,9 +187,35 @@ Deno.serve(async (req) => {
   if (table === 'member_status' && row.status === 'suspended') {
     row.suspended_by = caller;
   }
+  /* 同理:本月精選是誰設定的。原本後台送
+     `featured_by: LohasAuth.getStoredMember().erpid || 'admin'` ——
+     來自 localStorage,而且拿不到時退回字串 'admin',
+     等於這個欄位既可偽造、又可能根本沒有意義。 */
+  if (table === 'featured_creators' && op === 'insert') {
+    row.featured_by = caller;
+  }
 
   try {
-    if (op === 'upsert') {
+    if (op === 'insert') {
+      const { data, error } = await db.from(table).insert(row).select(rule.key);
+      if (error) throw error;
+      if (!data || !data.length) {
+        return reply('007', { message: '沒有寫入任何資料' }, 404);
+      }
+
+    } else if (op === 'delete') {
+      /* ⚠ 條件只能是白名單指定的那個鍵,而且一定要有值 ——
+         少了這道,`delete` 不帶條件就是「清空整張表」。 */
+      const matchVal = body.match_value;
+      if (matchVal === undefined || matchVal === null || matchVal === '') {
+        return reply('006', { message: '缺少 ' + rule.key }, 400);
+      }
+      const { error } = await db.from(table).delete().eq(rule.key, matchVal);
+      if (error) throw error;
+      /* 刪除【不檢查影響幾列】:後台有幾處是「先刪掉本月的,再新增」,
+         本來就常常是 0 列。把 0 列當失敗會讓那個流程每次都報錯。 */
+
+    } else if (op === 'upsert') {
       if (row[rule.key] === undefined || row[rule.key] === null || row[rule.key] === '') {
         return reply('006', { message: '缺少 ' + rule.key }, 400);
       }

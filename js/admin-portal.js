@@ -2982,7 +2982,10 @@
     const sb = getSb();
     if (!sb) return;
     try {
-      const { error } = await sb.from('banners').update({ is_active: active }).eq('id', id);
+      const { error } = await (async () => {
+        try { await adminWrite('banners', 'update', { is_active: active }, id); return {}; }
+        catch (e) { return { error: e }; }
+      })();
       if (error) { alert('更新失敗: ' + error.message); return; }
       await loadBannerList(BannerState.currentPos);
     } catch (err) {
@@ -2998,7 +3001,10 @@
     const sb = getSb();
     if (!sb) return;
     try {
-      const { error } = await sb.from('banners').delete().eq('id', id);
+      const { error } = await (async () => {
+        try { await adminWrite('banners', 'delete', null, id); return {}; }
+        catch (e) { return { error: e }; }
+      })();
       if (error) { alert('刪除失敗: ' + error.message); return; }
       await loadBannerList(BannerState.currentPos);
     } catch (err) {
@@ -3257,13 +3263,15 @@
 
     hint.textContent = '寫入資料庫...';
     let error;
-    if (BannerState.editing) {
-      const r = await sb.from('banners').update(payload).eq('id', BannerState.editing.id);
-      error = r.error;
-    } else {
-      const r = await sb.from('banners').insert(payload);
-      error = r.error;
-    }
+    /* 走 admin-write —— banners 的 anon 政策是無條件放行,
+       任何人都能改掉首頁主視覺。理由見 adminWrite 上面那段。 */
+    try {
+      if (BannerState.editing) {
+        await adminWrite('banners', 'update', payload, BannerState.editing.id);
+      } else {
+        await adminWrite('banners', 'insert', payload);
+      }
+    } catch (e) { error = e; }
 
     if (error) {
       hint.style.color = 'var(--status-rejected)';
@@ -3283,7 +3291,10 @@
     if (!BannerState.editing) return;
     if (!confirm('確定刪除這個 Banner?')) return;
     const sb = window.LohasSupabase?.getClient?.();
-    const { error } = await sb.from('banners').delete().eq('id', BannerState.editing.id);
+    const { error } = await (async () => {
+      try { await adminWrite('banners', 'delete', null, BannerState.editing.id); return {}; }
+      catch (e) { return { error: e }; }
+    })();
     if (error) { alert('刪除失敗: ' + error.message); return; }
     closeBannerModal();
     loadBannerList(BannerState.currentPos);
@@ -4656,22 +4667,18 @@
     const wasMarketFeatured = featuredCreatorId === creatorId;
     if (settings.market && !wasMarketFeatured) {
       // 新增：先刪除本月已有的
-      await sb.from('featured_creators').delete().eq('featured_month', month);
-      const adminMember = (window.LohasAuth?.getStoredMember?.()) || {};
-      const adminId = adminMember.erpid || 'admin';
-      const { error: e2 } = await sb.from('featured_creators').insert({
+      /* 走 admin-write。⚠ 不再送 featured_by —— 那是「誰設定的」,
+         原本取自 localStorage 而且拿不到時退回字串 'admin',
+         既可偽造又可能沒有意義。改由伺服器用驗過的身分填。 */
+      await adminWrite('featured_creators', 'delete', null, month);
+      await adminWrite('featured_creators', 'insert', {
         creator_id: creatorId,
         featured_month: month,
-        featured_by: adminId,
       });
-      if (e2) throw e2;
       featuredCreatorId = creatorId;
     } else if (!settings.market && wasMarketFeatured) {
       // 取消
-      const { error: e3 } = await sb.from('featured_creators')
-        .delete()
-        .eq('featured_month', month);
-      if (e3) throw e3;
+      await adminWrite('featured_creators', 'delete', null, month);
       featuredCreatorId = null;
     }
   }
@@ -4685,10 +4692,11 @@
     // 如果已經是本月精選 → 取消
     if (featuredCreatorId === creatorId) {
       if (!confirm(`取消本月精選「${creatorId}」?`)) return;
-      const { error } = await sb.from('featured_creators')
-        .delete()
-        .eq('featured_month', month);
-      if (error) return alert('取消失敗:' + error.message);
+      try {
+        await adminWrite('featured_creators', 'delete', null, month);
+      } catch (e) {
+        return alert('取消失敗:' + (e.message || e));
+      }
       featuredCreatorId = null;
       alert('已取消本月精選');
       applyCreatorsFilter();
@@ -4699,19 +4707,16 @@
     if (!confirm(`設定為本月 (${month}) 精選創作者?\n\n本月只能選一位,如已有其他精選會被取代`)) return;
 
     // 先刪除本月已有的(若存在)
-    await sb.from('featured_creators').delete().eq('featured_month', month);
-
-    // 取得當前管理員 id (簡化:從現有 admin session 拿,或寫死)
-    var adminMember = (window.LohasAuth?.getStoredMember?.()) || {};
-    var adminId = adminMember.erpid || 'admin';
-
-    const { error } = await sb.from('featured_creators').insert({
-      creator_id: creatorId,
-      featured_month: month,
-      featured_by: adminId,
-    });
-
-    if (error) return alert('設定失敗:' + error.message);
+    /* 走 admin-write。featured_by 由伺服器填,不再從 localStorage 取。 */
+    try {
+      await adminWrite('featured_creators', 'delete', null, month);
+      await adminWrite('featured_creators', 'insert', {
+        creator_id: creatorId,
+        featured_month: month,
+      });
+    } catch (e) {
+      return alert('設定失敗:' + (e.message || e));
+    }
 
     featuredCreatorId = creatorId;
     alert('已設為本月精選,將出現在創作者市集首頁');
