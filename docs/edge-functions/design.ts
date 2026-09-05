@@ -38,7 +38,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-05 · 上下架改由伺服器驗擁有者';
+const CODE_VERSION = '2026-09-05b · 上下架 + 後台重新描圖';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -103,7 +103,8 @@ Deno.serve(async (req) => {
   try { body = await req.json(); }
   catch { return reply('006', { message: '請求格式錯誤' }, 400); }
 
-  if (String(body.action || '') !== 'set_show') {
+  const action = String(body.action || '');
+  if (action !== 'set_show' && action !== 'retrace') {
     return reply('006', { message: '不支援的動作' }, 400);
   }
 
@@ -117,6 +118,60 @@ Deno.serve(async (req) => {
   const id = String(body.id || '').trim();
   if (!/^[0-9a-fA-F-]{36}$/.test(id)) {
     return reply('006', { message: '缺少作品編號' }, 400);
+  }
+
+  /* ===== retrace:後台「重新描圖」換掉 image_url_svg =====
+     -----------------------------------------------------------------
+     🚨 2026-09-05 補。刻圖管理的「重新描圖」原本是後台以 anon 直接
+     `update({ image_url_svg }).eq('id', id)`。當天稍晚把 UPDATE 政策
+     縮成「只有 creator_id is null 的列」之後,那個 update 就變成
+     影響 0 列 —— 而 supabase-js 對「RLS 濾掉」不回錯誤,
+     畫面照樣顯示「完成 22 → 47」,SVG 也照樣傳上 Storage,
+     只有資料庫那一行沒變。無聲。
+
+     所以搬進來。這一支走 service_role,不受那條政策影響。
+
+     ⚠ 這是【管理員動作】,與 set_show 的擁有者判斷不同 ——
+       後台改的是別人的作品,本來就不該用 creator_id 比對。 */
+  if (action === 'retrace') {
+    const { data: admin, error: admErr } = await db.from('admins')
+      .select('member_id, status').eq('member_id', erpid).maybeSingle();
+    if (admErr) return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    if (!admin || (admin.status && admin.status !== 'active')) {
+      // 刻意不說「你不是管理員」—— 回應不該幫人確認自己踩到了什麼
+      console.warn('[design] 非管理員嘗試重新描圖', erpid);
+      return reply('403', { message: '沒有操作權限' }, 403);
+    }
+
+    /* 只收我方 Storage 上的網址。這個值會直接變成製作端下載的檔案 ——
+       接受任意網址等於開一條「讓自己人從後台點進外部連結」的路。 */
+    const url = String(body.svg_url || '').slice(0, 500);
+    let ok = false;
+    try {
+      const u = new URL(url);
+      ok = u.protocol === 'https:' && u.hostname === 'hqdmyxxrskvllkcedybl.supabase.co';
+    } catch { ok = false; }
+    if (!ok) return reply('006', { message: '線稿網址不合法' }, 400);
+
+    const { data: done, error: upErr } = await db
+      .from('engraving_designs')
+      .update({ image_url_svg: url })
+      .eq('id', id)
+      .select('id');
+
+    if (upErr) {
+      console.error('[design] 重新描圖寫入失敗:', upErr.message);
+      return reply('500', { message: '寫入失敗,請再試一次' }, 500);
+    }
+    /* ⚠ 一定要看影響了幾列。這整段就是因為「0 列但沒有錯誤」才存在的,
+       不檢查的話同一個坑會再踩一次。 */
+    if (!done || !done.length) {
+      console.warn('[design] 重新描圖影響 0 列 id=' + id);
+      return reply('007', { message: '找不到這件作品' }, 404);
+    }
+
+    console.log('[design] ' + erpid + ' 重新描圖 ' + id);
+    return reply('200', {});
   }
 
   const patch = SHOW_VALUES[String(body.show || '')];

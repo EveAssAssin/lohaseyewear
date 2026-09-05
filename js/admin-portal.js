@@ -5654,14 +5654,35 @@
       const newUrl = pub && pub.publicUrl;
       if (!newUrl) throw new Error('拿不到新 SVG 的公開網址');
 
-      /* 5. 換掉欄位。
-         ⚠ 一定要檢查 .error —— supabase-js 失敗時【不會拋例外】,
-           只把錯誤放在 .error 裡。不看的話這裡會安靜地什麼都沒改,
-           而畫面照樣顯示成功。 */
-      const { error: updErr } = await sb.from('engraving_designs')
-        .update({ image_url_svg: newUrl })
-        .eq('id', d.id);
-      if (updErr) throw new Error('資料庫更新失敗:' + updErr.message);
+      /* 5. 換掉欄位 —— 走 design 函式,不要直接打表。
+         🚨 2026-09-05:原本這裡是
+              sb.from('engraving_designs').update({image_url_svg}).eq('id', d.id)
+            同一天稍晚把 UPDATE 政策縮成「只有 creator_id is null 的列」
+            之後,這個 update 就變成【影響 0 列】—— 而 supabase-js 對
+            「被 RLS 濾掉」不回錯誤,所以 updErr 是 null,
+            畫面照樣顯示「完成 22 → 47」,SVG 也照樣傳上 Storage,
+            只有資料庫那一行沒變。無聲。
+
+         design 函式走 service_role,不受那條政策影響,而且它會檢查
+         「到底改到幾列」,0 列會明確回 404。 */
+      const fnRes = await fetch(
+        'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/design',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'retrace',
+            token: (window.LohasAuth && window.LohasAuth.getToken)
+              ? window.LohasAuth.getToken() : '',
+            id: d.id,
+            svg_url: newUrl,
+          }),
+        },
+      );
+      const fnJson = await fnRes.json().catch(() => ({}));
+      if (String(fnJson.code) !== '200') {
+        throw new Error('資料庫更新失敗:' + (fnJson.message || ('HTTP ' + fnRes.status)));
+      }
 
       const record = {
         id: d.id, name: d.name || '', at: new Date().toISOString(),
