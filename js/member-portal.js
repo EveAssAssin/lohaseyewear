@@ -1661,10 +1661,42 @@
     if (deleteBtn) deleteBtn.style.display = 'none';
   }
 
+  /* =============================================================
+     匯款帳戶:一律經過 payout 這支 Edge Function,不直接打表
+     -------------------------------------------------------------
+     🚨 2026-09-05 改。原本是前端直接 select / upsert / delete
+     payout_accounts,用 .eq('member_id', State.member.erpid) 限定
+     「只動自己那筆」—— 而 State.member 來自 localStorage,
+     也就是【客戶端自己宣告的身分】。
+
+     那張表的 RLS 是 ALL / public / true / true(無條件放行),
+     所以任何人拿公開的 anon key 配上別人的客編,就能讀出別人的
+     銀行帳號、甚至把別人的收款帳號改成自己的 —— 而且改完畫面
+     一切正常,直到對方沒收到分潤才會發現。
+
+     現在身分由伺服器從 session token 解出來,前端傳什麼都沒用。
+     ⚠ 不要為了「少一次網路來回」而改回直接打表。 */
+  const PAYOUT_FN = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/payout';
+
+  async function payoutCall(action, extra) {
+    const token = (window.LohasAuth && window.LohasAuth.getToken)
+      ? window.LohasAuth.getToken() : '';
+    const r = await fetch(PAYOUT_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action: action, token: token }, extra || {})),
+    });
+    const j = await r.json().catch(function () { return {}; });
+    if (String(j.code) !== '200') {
+      const e = new Error(j.message || '操作失敗');
+      e.code = String(j.code);
+      throw e;
+    }
+    return j.data || {};
+  }
+
   async function saveBankForm() {
     if (!State.member) return;
-    const sb = getSupabase();
-    if (!sb) return;
 
     const bank_name = document.getElementById('bankName')?.value?.trim();
     const branch = document.getElementById('bankBranch')?.value?.trim();
@@ -1680,21 +1712,12 @@
       return;
     }
 
-    // upsert (有就 update, 沒就 insert)
-    const { error } = await sb
-      .from('payout_accounts')
-      .upsert({
-        member_id: State.member.erpid,
-        bank_name,
-        branch,
-        account_number,
-        recipient_name,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'member_id' });
-
-    if (error) {
-      console.error('[儲存匯款失敗]', error);
-      alert('儲存失敗:' + error.message);
+    /* ⚠ 不傳 member_id —— 伺服器從 token 自己解,傳了也會被忽略。 */
+    try {
+      await payoutCall('save', { bank_name, branch, account_number, recipient_name });
+    } catch (err) {
+      console.error('[儲存匯款失敗]', err);
+      alert('儲存失敗:' + (err.message || err));
       return;
     }
 
@@ -1710,13 +1733,14 @@
       loadEarnings();
     });
     document.getElementById('bankEditBtn')?.addEventListener('click', async () => {
-      if (!sb || !State.member) return;
-      const { data: account } = await sb
-        .from('payout_accounts')
-        .select('*')
-        .eq('member_id', State.member.erpid)
-        .maybeSingle();
-      showBankForm(account);
+      if (!State.member) return;
+      try {
+        const d = await payoutCall('get');
+        showBankForm(d.account || null);
+      } catch (err) {
+        console.error('[讀取匯款資料失敗]', err);
+        alert('讀取失敗:' + (err.message || err));
+      }
     });
     document.getElementById('bankDeleteBtn')?.addEventListener('click', deleteBankAccount);
   }
@@ -1725,20 +1749,11 @@
     if (!State.member) return;
     if (!confirm('確定要刪除匯款資料?\n\n刪除後將無法領取分潤,需重新建立匯款資料才能繼續領取。')) return;
 
-    const sb = getSupabase();
-    if (!sb) {
-      alert('Supabase 連線失敗');
-      return;
-    }
-
-    const { error } = await sb
-      .from('payout_accounts')
-      .delete()
-      .eq('member_id', State.member.erpid);
-
-    if (error) {
-      console.error('[刪除匯款失敗]', error);
-      alert('刪除失敗: ' + error.message);
+    try {
+      await payoutCall('delete');
+    } catch (err) {
+      console.error('[刪除匯款失敗]', err);
+      alert('刪除失敗:' + (err.message || err));
       return;
     }
 
@@ -1871,15 +1886,21 @@
 
   async function loadEarnings() {
     if (!State.isCreator) return;
-    const sb = getSupabase();
-    if (!sb || !State.member) return;
+    /* ⚠ 這裡不再需要 Supabase client —— 匯款資料改走 payout 函式了。
+       原本的 `if (!sb) return` 留著會變成一個假的相依:
+       Supabase 初始化失敗時連匯款區塊都不畫,而它其實不需要。 */
+    if (!State.member) return;
 
-    // 載入匯款資料
-    const { data: account } = await sb
-      .from('payout_accounts')
-      .select('*')
-      .eq('member_id', State.member.erpid)
-      .maybeSingle();
+    /* 載入匯款資料。走 payout 函式,理由見 payoutCall 上面那段。
+       ⚠ 讀不到就當成「還沒建立」往下走,不要 return ——
+         這一段下面還要顯示分潤紀錄,為了匯款區塊讀失敗就整塊不畫,
+         創作者會以為自己的分潤不見了。 */
+    let account = null;
+    try {
+      account = (await payoutCall('get')).account || null;
+    } catch (err) {
+      console.warn('[member-portal] 匯款資料讀取失敗,當作未建立:', err && err.message);
+    }
 
     const bankInfo = document.getElementById('bankInfoList');
     const bankForm = document.getElementById('bankForm');
