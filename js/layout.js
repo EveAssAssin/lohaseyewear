@@ -39,13 +39,27 @@ async function loadLayout() {
   const headerTarget = document.getElementById("site-header");
   const footerTarget = document.getElementById("site-footer");
 
+  /* ⚠ cache: 'no-cache' —— 這兩個檔【沒有 ?v=】,而且不能有。
+     -----------------------------------------------------------------
+     它們是全站共用的片段,是這支 JS 在執行期抓的,不是寫在 HTML 裡的
+     <script src>,所以沒有地方可以掛版本號。原本什麼都不加的後果是:
+     改了 header 之後,回頭客拿到的是快取裡的舊導覽列 ——
+     2026-09-05 在導覽列加「壽星生日禮」時就踩到,本機看得到、
+     瀏覽器卻還是舊的那一份。而且【每一次改 header 都會這樣】。
+
+     'no-cache' 不是「不要快取」,是「每次都跟伺服器確認一下」:
+     沒變就回 304(幾個 byte),變了才重新下載。
+     這樣以後改 header/footer 不必記得去動任何版本號 ——
+     而「要記得動版本號」正是遲早會忘記的那種事。 */
+  const opts = { cache: 'no-cache' };
+
   if (headerTarget) {
-    const header = await fetch("components/header.html").then(res => res.text());
+    const header = await fetch("components/header.html", opts).then(res => res.text());
     headerTarget.innerHTML = header;
   }
 
   if (footerTarget) {
-    const footer = await fetch("components/footer.html").then(res => res.text());
+    const footer = await fetch("components/footer.html", opts).then(res => res.text());
     footerTarget.innerHTML = footer;
   }
 }
