@@ -506,3 +506,159 @@
   .cl-text-row > span{ flex:none }
   .cl-text-row .cl-select-ico{ top:auto; bottom:14px; transform:none }
 }
+
+/* =============================================================
+   分享活動(2026-09-05)
+   -------------------------------------------------------------
+   ⚠ 「取貨要出示貼文」是取貨條件,不是提醒。所以它在三個地方
+     都要看得到:存檔前的告知、確認彈窗、完成畫面。
+     只講一次的話,客人會在門市才知道。
+   ============================================================= */
+
+/* 存檔鈕上方的事前告知 */
+.cl-campaign {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    border: 1px solid #e6d3a3;
+    border-left: 4px solid #c9a227;
+    border-radius: 8px;
+    background: #fdf8ec;
+    font-size: .88rem;
+    line-height: 1.65;
+    color: #4a3f28;
+}
+.cl-campaign i { color: #c9a227; margin-top: 3px; }
+.cl-campaign b { display: block; margin-bottom: 2px; }
+.cl-campaign-more,
+.cl-linklike {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: #8a6d1f;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* 彈窗 */
+.cl-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, .5);
+}
+.cl-modal[hidden] { display: none; }
+.cl-modal-box {
+    width: 100%;
+    max-width: 460px;
+    /* ⚠ 手機上內容比螢幕高時要能捲,不然按鈕會被擠到看不見 */
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 22px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .25);
+}
+.cl-modal-title { margin: 0 0 10px; font-size: 1.12rem; font-weight: 700; }
+.cl-modal-lead  { margin: 0 0 14px; font-size: .92rem; line-height: 1.7; color: #444; }
+
+.cl-steps { margin: 0 0 14px; padding: 0; list-style: none; }
+.cl-steps li {
+    display: flex;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-size: .9rem;
+    line-height: 1.6;
+}
+/* 唯一會讓客人白跑一趟的一條,視覺要最重 */
+.cl-steps li.key { background: #fdf8ec; border: 1px solid #e6d3a3; }
+.cl-step-n {
+    flex: 0 0 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #3b3222;
+    color: #fff;
+    font-size: .78rem;
+    line-height: 22px;
+    text-align: center;
+}
+.cl-steps em { display: block; margin-top: 2px; font-size: .8rem; color: #7a7266; font-style: normal; }
+
+.cl-modal-alt {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f4f4f2;
+    font-size: .84rem;
+    line-height: 1.65;
+    color: #4a4a44;
+}
+.cl-modal-warn {
+    margin: 0 0 14px;
+    font-size: .84rem;
+    line-height: 1.6;
+    color: #9a3b32;
+}
+.cl-modal-warn i { margin-right: 5px; }
+
+.cl-agree {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    margin: 0 0 16px;
+    font-size: .88rem;
+    line-height: 1.55;
+    cursor: pointer;
+}
+.cl-agree input { margin-top: 3px; flex: 0 0 auto; }
+
+.cl-modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+.cl-modal-cancel,
+.cl-modal-ok {
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: .9rem;
+    cursor: pointer;
+}
+.cl-modal-cancel { border: 1px solid #cfcabd; background: #fff; color: #55503f; }
+.cl-modal-ok     { border: 0; background: #3b3222; color: #fff; }
+.cl-modal-ok:disabled { background: #c4bfb3; cursor: not-allowed; }
+
+.cl-rules { margin: 0 0 16px; padding-left: 20px; font-size: .86rem; line-height: 1.75; color: #444; }
+.cl-rules li { margin-bottom: 7px; }
+
+/* 完成畫面的分享區 */
+.cl-share {
+    margin: 18px 0;
+    padding: 16px;
+    border: 1px solid #e6d3a3;
+    border-radius: 12px;
+    background: #fdf8ec;
+    text-align: center;
+}
+.cl-share-title { margin: 0 0 6px; font-size: 1rem; font-weight: 700; color: #4a3f28; }
+.cl-share-title i { color: #c9584f; margin-right: 6px; }
+.cl-share-note  { margin: 0 0 12px; font-size: .86rem; line-height: 1.6; color: #5c5240; }
+.cl-share-img {
+    max-width: 260px;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #e3dccb;
+    background: #fff;
+}
+.cl-share-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+}
+.cl-share-hint { margin: 10px 0 0; font-size: .8rem; line-height: 1.55; color: #7a7266; min-height: 1.2em; }

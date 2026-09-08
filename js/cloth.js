@@ -971,12 +971,65 @@
        用原生 confirm 是刻意的:官網沒有測試站,自製對話框
        在某些瀏覽器上壞掉的話,結果會是「按了存檔沒反應」,
        而那個症狀查起來比難看的原生視窗貴得多。 */
-    if (!window.confirm(
-      '存檔後就不能再調整了。\n\n' +
-      '年度生日禮一年一件,製作端會照你現在看到的樣子做出來。\n' +
-      '確定要存檔嗎?'
-    )) return;
+    /* 送出前的確認彈窗。回 Promise —— 所以底下整段要移進 .then。
+       ⚠ 彈窗開不起來時會退回原生 confirm(見 askCampaign),
+         不會變成「按了沒反應」。 */
+    askCampaign().then(function (ok) {
+      if (ok) doSubmit(token);
+    });
+  }
 
+  /* 送出前的確認:不可修改 ＋ 取貨要出示貼文,一次講完。
+     -----------------------------------------------------------------
+     ⚠ 兩件事合成一個彈窗,不要連續跳兩個對話框 —— 第二個一定會被無視。
+
+     ⚠ 勾選框【不預設打勾】。預設打勾的同意在爭議時站不住,
+       而這一條是取貨條件,真的會有人到門市才說「我不知道」。
+
+     ⚠ 開不起來就退回原生 confirm:官網沒有測試站,自製對話框在某個
+       瀏覽器上壞掉的話,症狀是「按了存檔沒反應」—— 那比難看的
+       原生視窗貴得多。這是原本這一段就寫著的取捨,保留。 */
+  function askCampaign() {
+    var box = document.getElementById('clCampaignModal');
+    var agree = document.getElementById('clAgree');
+    var okBtn = document.getElementById('clCampaignOk');
+    var cancel = document.getElementById('clCampaignCancel');
+
+    if (!box || !agree || !okBtn || !cancel) {
+      return Promise.resolve(window.confirm(
+        '送出前請確認:\n\n' +
+        '1. 取貨時需出示帶 #樂活眼鏡 的貼文才能領取。\n' +
+        '2. 存檔後不能再調整,製作端會照現在的樣子做出來。\n\n' +
+        '確定要送出製作嗎?'
+      ));
+    }
+
+    return new Promise(function (resolve) {
+      agree.checked = false;
+      okBtn.disabled = true;
+      box.hidden = false;
+
+      function cleanup(v) {
+        box.hidden = true;
+        agree.removeEventListener('change', onChange);
+        okBtn.removeEventListener('click', onOk);
+        cancel.removeEventListener('click', onCancel);
+        document.removeEventListener('keydown', onKey);
+        resolve(v);
+      }
+      function onChange() { okBtn.disabled = !agree.checked; }
+      function onOk() { if (agree.checked) cleanup(true); }
+      function onCancel() { cleanup(false); }
+      function onKey(e) { if (e.key === 'Escape') cleanup(false); }
+
+      agree.addEventListener('change', onChange);
+      okBtn.addEventListener('click', onOk);
+      cancel.addEventListener('click', onCancel);
+      document.addEventListener('keydown', onKey);
+    });
+  }
+
+  function doSubmit(token) {
     State.busy = true;
     el.submit.disabled = true;
     el.submit.textContent = '產 生 圖 檔...';
@@ -1005,6 +1058,11 @@
         return buildPreview();
       })
       .then(function (blob) {
+        /* 留一份在記憶體給完成畫面的「分享」用。
+           ⚠ 不要之後再從 preview_url 抓回來:那是跨網域的圖,
+             navigator.share 需要的是 File 物件,而重抓會遇到 CORS,
+             失敗時剛好落在客人最需要它的那一刻。 */
+        State.previewBlob = blob;
         return uploadBlob(blob, 'cloth/' + stamp + '-preview.jpg', 'image/jpeg');
       })
       .then(function (previewUrl) {
@@ -1059,17 +1117,113 @@
       .finally(function () {
         State.busy = false;
         el.submit.disabled = false;
-        el.submit.textContent = '儲 存 我 的 設 計';
+        el.submit.textContent = '確 認 製 作 並 儲 存';
       });
   }
+
+  /* 分享文案。hashtag 是整個活動的樞紐 ——
+     沒有它,月底無從統計愛心數,店員也不知道看到什麼才算數。 */
+  var SHARE_TAG = '#樂活眼鏡';
+  var SHARE_TEXT =
+    '在樂活眼鏡做了一條專屬的客製眼鏡布 ✨\n' +
+    '自己挑的圖，刻上去就是獨一無二的。\n' + SHARE_TAG;
 
   function done() {
     [el.marketCard, el.drawCard, el.placeCard, el.sourceCard,
      el.submit, el.submitHint, el.note].forEach(hide);
+    var note = document.getElementById('clCampaignNote');
+    if (note) hide(note);
     el.doneText.textContent =
       '您已經成功送件,製作時間約 3~5 個工作天,完成後即可前往門市領取。';
+    setupShare();
     show(el.done);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* 完成畫面的分享。
+     =================================================================
+     ⚠ 圖片【不能】用網址預填給社群平台 —— 所有平台都禁止,
+       不然任何網站都能替人發圖。所以只有兩條路:
+         手機  navigator.share({files}) → 系統分享選單 → 選 THREADS,
+               圖和文案一次帶進去。這是唯一真正的一鍵。
+         桌機  複製文案 ＋ 下載圖 ＋ 開啟 THREADS(intent 可預填文字)
+
+     ⚠ 按下分享時【先複製文案】再叫系統分享:部分 App 收到檔案時
+       會忽略 text,只吃到圖。先複製的話,客人貼上就有文案。 */
+  function setupShare() {
+    var wrap  = document.getElementById('clShare');
+    var img   = document.getElementById('clShareImg');
+    var shareB= document.getElementById('clShareBtn');
+    var copyB = document.getElementById('clCopyBtn');
+    var downB = document.getElementById('clDownBtn');
+    var thB   = document.getElementById('clThreadsBtn');
+    var hint  = document.getElementById('clShareHint');
+    if (!wrap) return;
+
+    var blob = State.previewBlob;
+    var objUrl = blob ? URL.createObjectURL(blob) : '';
+    if (img && objUrl) img.src = objUrl;
+    if (downB && objUrl) downB.href = objUrl;
+
+    /* THREADS 的 web intent:文字可以預填,圖不行。 */
+    if (thB) {
+      thB.href = 'https://www.threads.net/intent/post?text=' +
+                 encodeURIComponent(SHARE_TEXT);
+    }
+
+    function say(msg) { if (hint) hint.textContent = msg; }
+
+    function copyText() {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(SHARE_TEXT);
+      }
+      /* 沒有 clipboard API 的舊瀏覽器:用一個暫時的 textarea。
+         失敗也不要擋住分享 —— 文案在畫面上看得到,客人可以自己選取。 */
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = SHARE_TEXT;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        return Promise.resolve();
+      } catch (e) { return Promise.reject(e); }
+    }
+
+    if (copyB) {
+      copyB.addEventListener('click', function () {
+        copyText().then(function () { say('文案已複製,貼到貼文裡就可以了。'); })
+                  .catch(function () { say('複製失敗,請手動選取上面的文字。'); });
+      });
+    }
+
+    /* 系統分享只在支援【檔案分享】時才出現。
+       只支援文字的話按下去只會分享一段字、沒有圖,
+       那比不給這顆按鈕更容易讓人以為分享過了。 */
+    var file = null;
+    if (blob && window.File) {
+      try { file = new File([blob], 'lohas-cloth.jpg', { type: 'image/jpeg' }); }
+      catch (e) { file = null; }
+    }
+    var canShareFile = !!(file && navigator.canShare &&
+                          navigator.canShare({ files: [file] }) && navigator.share);
+
+    if (canShareFile && shareB) {
+      shareB.hidden = false;
+      shareB.addEventListener('click', function () {
+        copyText().catch(function () {});     // 先複製,理由見上面
+        navigator.share({ files: [file], text: SHARE_TEXT })
+          .then(function () { say('分享出去之後,取貨時記得出示那則貼文。'); })
+          .catch(function (e) {
+            if (e && e.name === 'AbortError') return;   // 客人自己取消,不是錯誤
+            say('系統分享沒成功,可以改用下面的「下載圖片」再自己發。');
+          });
+      });
+    } else {
+      say('在手機上開這一頁,可以一鍵把圖和文案一起分享到 THREADS。');
+    }
   }
 
   /* ---------- 狀態 ---------- */
@@ -1515,6 +1669,23 @@
     });
 
     el.submit.addEventListener('click', submit);
+
+    /* 活動辦法:事前告知的「看說明」與確認彈窗裡的「活動辦法」共用同一個。
+       ⚠ 存檔完成之後客人一定會忘記細節,所以這一份要能單獨打開,
+         不是只在送出那一刻閃過一次。 */
+    var rules = document.getElementById('clRulesModal');
+    function openRules() { if (rules) rules.hidden = false; }
+    function closeRules() { if (rules) rules.hidden = true; }
+    ['clCampaignMore', 'clRulesBtn'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b) b.addEventListener('click', openRules);
+    });
+    var rulesClose = document.getElementById('clRulesClose');
+    if (rulesClose) rulesClose.addEventListener('click', closeRules);
+    if (rules) {
+      // 點空白處也能關,手機上比找按鈕快
+      rules.addEventListener('click', function (e) { if (e.target === rules) closeRules(); });
+    }
 
     // 視窗大小變了要重算疊圖的像素尺寸(scale 是比例,像素得跟著算),
     // 釘住那兩塊的高度也跟著變(直橫向切換時差很多)

@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
-  <link rel="stylesheet" href="css/cloth.css?v=20260903-text">
+  <link rel="stylesheet" href="css/cloth.css?v=20260905-campaign">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -231,14 +231,134 @@
         <span id="clLockText"></span>
       </div>
 
-      <button type="button" class="cl-submit" id="clSubmit" disabled>儲 存 我 的 設 計</button>
+      <!-- 活動條件的【事前告知】。
+           ⚠ 這一段刻意放在按鈕【上方】而不是只在彈窗裡講 ——
+             「取貨要出示貼文」是取貨條件,不是提醒。只在存檔後才說的話,
+             客人已經花二十分鐘挑圖排版,那不是確認,是埋伏;
+             不願意的人白做一場,而東西已經進製作端了。 -->
+      <div class="cl-campaign" id="clCampaignNote">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <div>
+          <b>領取前要先分享作品</b>
+          <span>這是免費服務，取貨時需出示你在 THREADS 的貼文（帶 #樂活眼鏡）。
+            沒有社群帳號也有替代方式，<button type="button" class="cl-campaign-more" id="clCampaignMore">看說明</button></span>
+        </div>
+      </div>
+
+      <button type="button" class="cl-submit" id="clSubmit" disabled>確 認 製 作 並 儲 存</button>
       <p class="cl-submit-hint" id="clSubmitHint">請先選一張刻圖,或自己畫一個</p>
+
+      <!-- ===== 存檔前的確認彈窗 =====
+           一次講完兩件事(不可修改 ＋ 取貨條件),一個勾選、一顆按鈕。
+           ⚠ 不要拆成兩個對話框連續跳 —— 第二個一定會被無視。
+
+           ⚠ 這裡【沒有】分享按鈕:此刻合成圖還沒產生。
+             分享放在存檔完成之後(見 .cl-share)。 -->
+      <div class="cl-modal" id="clCampaignModal" hidden>
+        <div class="cl-modal-box" role="dialog" aria-modal="true"
+             aria-labelledby="clCampaignTitle">
+          <h3 class="cl-modal-title" id="clCampaignTitle">送出前，有兩件事要先說</h3>
+
+          <p class="cl-modal-lead">
+            這個客製眼鏡布是<b>免費</b>的。為了讓它繼續辦下去，我們請你把成品分享出來。
+          </p>
+
+          <ol class="cl-steps">
+            <li>
+              <span class="cl-step-n">1</span>
+              <div>把作品發到 <b>THREADS</b>，貼文帶上 <b>#樂活眼鏡</b>
+                <em>存檔完成後會有一鍵分享，不用自己打字</em></div>
+            </li>
+            <li class="key">
+              <span class="cl-step-n">2</span>
+              <div><b>取貨時出示這則貼文，才能領取眼鏡布</b>
+                <em>這是領取條件，不是提醒</em></div>
+            </li>
+            <li>
+              <span class="cl-step-n">3</span>
+              <div>每月底愛心數最高的一位，送<b>日本來回機票一張</b>
+                <em><button type="button" class="cl-linklike" id="clRulesBtn">活動辦法</button></em></div>
+            </li>
+          </ol>
+
+          <p class="cl-modal-alt">
+            <b>沒有 THREADS 帳號？</b>
+            IG 或 Facebook 的公開貼文同樣算數（一樣帶 #樂活眼鏡）；
+            完全不使用社群的話，取貨時跟店員說一聲，改為同意我們把作品放上官網分享牆即可。
+          </p>
+
+          <p class="cl-modal-warn">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            存檔後<b>不能再調整</b>。年度生日禮一年一件，製作端會照你現在看到的樣子做出來。
+          </p>
+
+          <label class="cl-agree">
+            <input type="checkbox" id="clAgree">
+            <span>我知道取貨時要出示貼文，也確認設計不再修改</span>
+          </label>
+
+          <div class="cl-modal-btns">
+            <button type="button" class="cl-modal-cancel" id="clCampaignCancel">再看看</button>
+            <button type="button" class="cl-modal-ok" id="clCampaignOk" disabled>我知道，送出製作</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 活動辦法(從彈窗或事前告知打開) -->
+      <div class="cl-modal" id="clRulesModal" hidden>
+        <div class="cl-modal-box" role="dialog" aria-modal="true" aria-labelledby="clRulesTitle">
+          <h3 class="cl-modal-title" id="clRulesTitle">分享活動辦法</h3>
+          <ul class="cl-rules">
+            <li><b>取貨條件</b>：取貨時出示帶 <b>#樂活眼鏡</b> 的公開貼文（THREADS／IG／Facebook 皆可）。不使用社群者，取貨時告知店員，改為同意作品放上官網分享牆。</li>
+            <li><b>抽獎期間</b>：每月 1 日 00:00 至當月最後一日 23:59（台北時間）。</li>
+            <li><b>計算方式</b>：以次月 1 日 12:00 的愛心數為準，貼文須為公開可見。同一人多則貼文，取愛心數最高的一則。</li>
+            <li><b>獎項</b>：每月 1 名，日本來回經濟艙機票一張（含稅，出發地台灣）。航點與效期以實際開票為準，不含住宿及其他費用，不得折現或轉讓。</li>
+            <li><b>平手</b>：以貼文時間較早者優先。</li>
+            <li><b>兌獎</b>：得獎人須提供身分證資料以辦理所得申報；經通知後 7 日內未回覆視同放棄。</li>
+          </ul>
+          <div class="cl-modal-btns">
+            <button type="button" class="cl-modal-ok" id="clRulesClose">我知道了</button>
+          </div>
+        </div>
+      </div>
 
       <!-- 完成 -->
       <div class="cl-done" id="clDone" style="display:none">
         <i class="fa-solid fa-circle-check"></i>
         <p class="cl-done-title">已經幫你存起來了</p>
         <p class="cl-done-text" id="clDoneText"></p>
+
+        <!-- ===== 分享區。放在【存檔完成之後】,因為合成圖到這一刻才產生。
+             手機走系統分享(圖＋文一次帶進 THREADS),桌機退回
+             「複製文案 ＋ 下載圖 ＋ 開啟 THREADS」三顆。
+             ⚠ 圖片無法用網址預填 —— 所有社群平台都禁止,
+               不然任何網站都能替人發圖。所以一定要走檔案或手動選。 -->
+        <div class="cl-share" id="clShare">
+          <p class="cl-share-title">
+            <i class="fa-solid fa-heart"></i>
+            最後一步：把作品分享出來
+          </p>
+          <p class="cl-share-note">
+            <b>取貨時要出示這則貼文</b>，記得帶上 <b>#樂活眼鏡</b>。
+          </p>
+          <img class="cl-share-img" id="clShareImg" alt="你的眼鏡布成品">
+          <div class="cl-share-btns">
+            <button type="button" class="cl-done-btn primary" id="clShareBtn" hidden>
+              <i class="fa-solid fa-share-nodes"></i> 分享到 THREADS
+            </button>
+            <button type="button" class="cl-done-btn" id="clCopyBtn">
+              <i class="fa-regular fa-copy"></i> 複製文案
+            </button>
+            <a class="cl-done-btn" id="clDownBtn" download="lohas-cloth.jpg">
+              <i class="fa-solid fa-download"></i> 下載圖片
+            </a>
+            <a class="cl-done-btn" id="clThreadsBtn" target="_blank" rel="noopener">
+              <i class="fa-solid fa-at"></i> 開啟 THREADS
+            </a>
+          </div>
+          <p class="cl-share-hint" id="clShareHint"></p>
+        </div>
+
         <div class="cl-done-btns">
           <!-- ⚠ 是 allstore.html(門市清單)不是 store.html。
                store.html 是「單一門市」的內頁,沒帶門市代號進去就什麼都不顯示,
@@ -274,6 +394,6 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260904-eligible-both"></script>
+<script src="js/cloth.js?v=20260905-campaign"></script>
 </body>
 </html>
