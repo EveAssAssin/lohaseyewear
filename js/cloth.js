@@ -1647,6 +1647,23 @@
     bindDrag();
     bindDraw();
 
+    /* 按過左邊任何一顆之後,把頁面大標題收起來(只在手機)。
+       -----------------------------------------------------------------
+       「客製眼鏡布」那個標題加底線在 375px 上佔掉約 120px 的高度。
+       進頁面時它有用 —— 告訴人這一頁是什麼;開始挑圖之後就只是
+       把工作區往下推,而手機上每一次捲動都是成本。
+
+       ⚠ 綁在這一列的【任何一顆】,包含「上傳圖」——
+         它是動作不是模式,但按下去一樣代表「我開始做了」。
+       ⚠ 收起來就不再放回去:反覆出現/消失會讓版面在指下跳動,
+         比一直佔著更糟。 */
+    el.source.addEventListener('click', function (e) {
+      if (e.target.closest('.cl-seg-btn')) {
+        document.body.classList.add('cl-working');
+        syncSticky();          // 標題收掉之後,釘住的高度要重算
+      }
+    });
+
     el.source.addEventListener('click', function (e) {
       var b = e.target.closest('.cl-seg-btn');
       /* ⚠ 要看 data-src 有沒有值。「上傳我的圖」也在這一列、也是 .cl-seg-btn,

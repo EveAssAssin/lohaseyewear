@@ -789,3 +789,11 @@
   }
   body.cl .cl-stage { max-width: 100%; }
 }
+
+/* 開始挑圖之後把大標題收起來(手機)。
+   「客製眼鏡布」加底線在 375px 上佔約 120px 高度 —— 進頁面時它有用,
+   開始工作之後就只是把工作區往下推,而手機每一次捲動都是成本。
+   class 由 cloth.js 在按下來源列任何一顆時加上,加了就不再拿掉。 */
+@media (max-width: 960px) {
+  body.cl.cl-working .cl-head { display: none; }
+}
