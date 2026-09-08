@@ -206,7 +206,7 @@
       const newOrder = (i + 1) * 10;
       if (item.sort_order !== newOrder) {
         item.sort_order = newOrder;
-        updates.push(sb.from('categories').update({ sort_order: newOrder }).eq('id', item.id));
+        updates.push(catWrite('update', { sort_order: newOrder }, item.id));
       }
     });
     try { if (updates.length) await Promise.all(updates); }
@@ -218,7 +218,10 @@
     if (!newName || newName === oldName) { input.value = oldName; return; }
     const sb = getSb();
     try {
-      const { error } = await sb.from('categories').update({ name: newName }).eq('id', id);
+      const { error } = await (async () => {
+        try { await catWrite('update', { name: newName }, id); return {}; }
+        catch (e) { return { error: e }; }
+      })();
       if (error) throw error;
       input.dataset.old = newName; updateLocalName(id, newName);
     } catch (err) { alert('改名失敗:' + err.message); input.value = oldName; }
@@ -228,7 +231,10 @@
     const id = checkbox.dataset.id, newActive = checkbox.checked;
     const sb = getSb();
     try {
-      const { error } = await sb.from('categories').update({ is_active: newActive }).eq('id', id);
+      const { error } = await (async () => {
+        try { await catWrite('update', { is_active: newActive }, id); return {}; }
+        catch (e) { return { error: e }; }
+      })();
       if (error) throw error;
       updateLocalActive(id, newActive); render();
     } catch (err) { alert('操作失敗:' + err.message); checkbox.checked = !newActive; }
@@ -242,12 +248,20 @@
     const nextOrder = main.subs.length ? Math.max.apply(null, main.subs.map(s => s.sort_order || 0)) + 10 : 10;
     const sb = getSb();
     try {
-      const { data, error } = await sb.from('categories')
-        .insert({ parent_id: parentId, name: name.trim(), sort_order: nextOrder, is_active: true })
-        .select().single();
-      if (error) throw error;
-      main.subs.push(data); render();
+      const d = await catWrite('insert',
+        { parent_id: parentId, name: name.trim(), sort_order: nextOrder, is_active: true });
+      main.subs.push(d.row); render();
     } catch (err) { alert('新增失敗:' + err.message); }
+  }
+
+  /* 後台寫入一律走 admin-write —— categories 的 anon 政策是無條件放行,
+     任何人都能改掉刻圖分類。理由與呼叫器在 js/admin-portal.js 的
+     adminWrite 上面(那一支在這個檔案之前載入,所以拿得到)。 */
+  function catWrite(op, row, matchValue) {
+    if (!window.LohasAdminWrite) {
+      return Promise.reject(new Error('後台寫入模組未載入,請重新整理'));
+    }
+    return window.LohasAdminWrite('categories', op, row, matchValue);
   }
 
   async function handleAddMain() {
@@ -256,11 +270,9 @@
     const nextOrder = state.mains.length ? Math.max.apply(null, state.mains.map(m => m.sort_order || 0)) + 10 : 10;
     const sb = getSb();
     try {
-      const { data, error } = await sb.from('categories')
-        .insert({ parent_id: null, name: name.trim(), sort_order: nextOrder, is_active: true })
-        .select().single();
-      if (error) throw error;
-      state.mains.push({ ...data, subs: [] }); render();
+      const d = await catWrite('insert',
+        { parent_id: null, name: name.trim(), sort_order: nextOrder, is_active: true });
+      state.mains.push({ ...d.row, subs: [] }); render();
     } catch (err) { alert('新增失敗:' + err.message); }
   }
 
@@ -275,8 +287,7 @@
     if (!confirm(msg)) return;
     const sb = getSb();
     try {
-      const { error } = await sb.from('categories').delete().eq('id', id);
-      if (error) throw error;
+      await catWrite('delete', null, id);
       if (isMain) state.mains = state.mains.filter(m => m.id !== id);
       else state.mains.forEach(m => { m.subs = m.subs.filter(s => s.id !== id); });
       render();
@@ -421,10 +432,7 @@
     const saveBtn = document.querySelector('#catPromptsModal .cpm-btn-save');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '儲存中...'; }
     try {
-      const { error } = await sb.from('categories')
-        .update({ designer_prompts: payload })
-        .eq('id', pmState.catId);
-      if (error) throw error;
+      await catWrite('update', { designer_prompts: payload }, pmState.catId);
       const m = findMain(pmState.catId);
       if (m) m.designer_prompts = payload;
       closePromptsModal();

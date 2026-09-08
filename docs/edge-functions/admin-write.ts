@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-05b · +banners +featured_creators';
+const CODE_VERSION = '2026-09-07 · +news +categories +collabs(含三張子表)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -91,6 +91,57 @@ const ALLOW: Record<string, Rule> = {
     ops: ['insert', 'delete'],
     cols: ['creator_id', 'featured_month', 'sort_order'],
     // featured_by 不在這裡:同 suspended_by,由伺服器填
+  },
+
+  news: {
+    key: 'id',
+    ops: ['insert', 'update', 'delete', 'news_clear_featured'],
+    cols: ['id', 'title', 'slug', 'category', 'summary', 'content', 'cover_image_url',
+           'status', 'is_featured', 'sort_order', 'published_at', 'view_count',
+           'tags', 'link_url', 'updated_at'],
+    // author_id 不在這裡:同 suspended_by / featured_by,由伺服器填
+  },
+  categories: {
+    key: 'id',
+    ops: ['insert', 'update', 'delete'],
+    cols: ['id', 'parent_id', 'name', 'sort_order', 'is_active', 'designer_prompts'],
+  },
+  collabs: {
+    key: 'id',
+    ops: ['insert', 'update', 'delete'],
+    /* 聯名頁欄位很多,而且都是後台自己填的內容。
+       這裡不逐欄列出會失去白名單的意義,所以照著後台的 payload 抄。 */
+    cols: ['id', 'slug', 'brand_name', 'category', 'status', 'lifecycle_status',
+           'hero_eyebrow', 'hero_title', 'hero_subtitle', 'hero_image_url',
+           'story_image_url', 'story_paragraphs', 'packages_group_photo_url',
+           'creator_name', 'creator_subtitle', 'creator_avatar_url',
+           'interview_title', 'interview_quote', 'interview_full_link',
+           'date_range_text', 'launch_date_text', 'start_date', 'end_date',
+           'show_countdown', 'show_limit', 'limit_total', 'preorder_count',
+           'preorder_link', 'store_link', 'available_stores', 'is_locked',
+           'theme_primary', 'theme_accent', 'theme_bg', 'sort_order', 'updated_at'],
+  },
+  /* ===== 聯名子表 =====
+     🚨 2026-09-07 補。這三張在 Tier 1 被誤判成「沒人寫」而收掉了 ALL 政策 ——
+     因為後台的 saveSubtable() 用【變數】當表名(client.from(table)),
+     grep 字面表名只看得到 select。實際上編輯聯名頁按儲存時
+     會對它們 delete + upsert,收掉之後那個儲存就壞了。
+
+     教訓:判斷「有沒有人寫這張表」不能只 grep 字面的表名。 */
+  collab_packages: {
+    key: 'id',
+    ops: ['upsert', 'delete'],
+    cols: ['id', 'collab_id', 'name', 'image_url', 'meta', 'sort_order'],
+  },
+  collab_designs: {
+    key: 'id',
+    ops: ['upsert', 'delete'],
+    cols: ['id', 'collab_id', 'label', 'preview_image_url', 'sort_order'],
+  },
+  collab_customer_photos: {
+    key: 'id',
+    ops: ['insert', 'upsert', 'delete'],
+    cols: ['id', 'collab_id', 'image_url', 'caption', 'sort_order'],
   },
 };
 
@@ -163,18 +214,31 @@ Deno.serve(async (req) => {
   const op = String(body.op || '');
   if (rule.ops.indexOf(op) < 0) return reply('006', { message: '這張表不支援這個動作' }, 400);
 
-  /* delete 不帶 row,其餘都要。 */
-  const row = (op === 'delete') ? {} : body.row;
-  if (!row || typeof row !== 'object' || Array.isArray(row)) {
-    return reply('006', { message: '缺少資料內容' }, 400);
+  /* delete 與 news_clear_featured 不帶資料,其餘都要。
+     upsert 另外接受 rows 陣列(後台的聯名子表是一次存一整批)。 */
+  const noBody = (op === 'delete' || op === 'news_clear_featured');
+  const rowsIn: any[] = noBody ? []
+    : (Array.isArray(body.rows) ? body.rows : [body.row]);
+
+  if (!noBody) {
+    if (!rowsIn.length) return reply('006', { message: '缺少資料內容' }, 400);
+    if (rowsIn.length > 200) return reply('006', { message: '一次最多 200 筆' }, 400);
+    for (const r of rowsIn) {
+      if (!r || typeof r !== 'object' || Array.isArray(r)) {
+        return reply('006', { message: '資料格式錯誤' }, 400);
+      }
+    }
   }
+  const row = rowsIn[0] || {};
 
   /* ⚠ 沒列在白名單的欄位【直接拒絕】,不要默默丟掉。
      默默丟掉的話呼叫端會以為存進去了,而那正是今天已經踩過一次的
      「畫面說成功、資料沒變」。 */
-  const bad = Object.keys(row).filter((k) => rule.cols.indexOf(k) < 0);
-  if (bad.length) {
-    return reply('006', { message: '不允許寫入這些欄位:' + bad.join(', ') }, 400);
+  for (const r of rowsIn) {
+    const bad = Object.keys(r).filter((k) => rule.cols.indexOf(k) < 0);
+    if (bad.length) {
+      return reply('006', { message: '不允許寫入這些欄位:' + bad.join(', ') }, 400);
+    }
   }
 
   /* ===== 伺服器自己填的欄位 =====
@@ -194,37 +258,73 @@ Deno.serve(async (req) => {
   if (table === 'featured_creators' && op === 'insert') {
     row.featured_by = caller;
   }
+  /* 同理:最新消息是誰建的。 */
+  if (table === 'news' && op === 'insert') {
+    for (const r of rowsIn) r.author_id = caller;
+  }
 
   try {
-    if (op === 'insert') {
-      const { data, error } = await db.from(table).insert(row).select(rule.key);
+    if (op === 'news_clear_featured') {
+      /* 「把本月精選換成另一篇」的第一步:先清掉現有的那一篇。
+         ⚠ 這是唯一一個【條件不是主鍵】的動作(eq('is_featured', true)),
+           所以做成專用動作而不是開放任意條件 —— 開放的話
+           `update ... where 任意欄位` 就變成一個合法請求。
+           這個動作【不接受任何客戶端參數】,條件寫死在這裡。 */
+      const { error } = await db.from('news')
+        .update({ is_featured: false }).eq('is_featured', true);
+      if (error) throw error;
+      // 本來就可能一篇都沒有,0 列是正常的,不檢查
+
+    } else if (op === 'insert') {
+      /* ⚠ 回傳整列。後台新增聯名之後要拿 id 去存子表 ——
+         只回主鍵的話那條流程接不下去。呼叫端是已驗證的管理員,
+         回整列不會多洩漏任何他本來看不到的東西。 */
+      const { data, error } = await db.from(table).insert(rowsIn).select('*');
       if (error) throw error;
       if (!data || !data.length) {
         return reply('007', { message: '沒有寫入任何資料' }, 404);
       }
+      return reply('200', { data: { row: data[0], rows: data } });
 
     } else if (op === 'delete') {
       /* ⚠ 條件只能是白名單指定的那個鍵,而且一定要有值 ——
          少了這道,`delete` 不帶條件就是「清空整張表」。 */
+      /* 單筆用 match_value,多筆用 match_values(陣列)——
+         後台的聯名子表是「這一批被刪掉的一起刪」。
+         ⚠ 兩個都沒給就拒絕:少了這道,delete 不帶條件就是清空整張表。 */
+      const many = Array.isArray(body.match_values) ? body.match_values : null;
       const matchVal = body.match_value;
-      if (matchVal === undefined || matchVal === null || matchVal === '') {
-        return reply('006', { message: '缺少 ' + rule.key }, 400);
+      if (many) {
+        const list = many.filter(function (v: any) {
+          return v !== undefined && v !== null && v !== '';
+        });
+        if (!list.length) return reply('006', { message: '缺少 ' + rule.key }, 400);
+        if (list.length > 200) return reply('006', { message: '一次最多 200 筆' }, 400);
+        const { error } = await db.from(table).delete().in(rule.key, list);
+        if (error) throw error;
+      } else {
+        if (matchVal === undefined || matchVal === null || matchVal === '') {
+          return reply('006', { message: '缺少 ' + rule.key }, 400);
+        }
+        const { error } = await db.from(table).delete().eq(rule.key, matchVal);
+        if (error) throw error;
       }
-      const { error } = await db.from(table).delete().eq(rule.key, matchVal);
-      if (error) throw error;
       /* 刪除【不檢查影響幾列】:後台有幾處是「先刪掉本月的,再新增」,
          本來就常常是 0 列。把 0 列當失敗會讓那個流程每次都報錯。 */
 
     } else if (op === 'upsert') {
-      if (row[rule.key] === undefined || row[rule.key] === null || row[rule.key] === '') {
-        return reply('006', { message: '缺少 ' + rule.key }, 400);
+      // 每一筆都要有主鍵 —— 沒有的話 onConflict 無從比對
+      for (const r of rowsIn) {
+        if (r[rule.key] === undefined || r[rule.key] === null || r[rule.key] === '') {
+          return reply('006', { message: '缺少 ' + rule.key }, 400);
+        }
       }
       const { data, error } = await db.from(table)
-        .upsert(row, { onConflict: rule.key })
+        .upsert(rowsIn, { onConflict: rule.key })
         .select(rule.key);
       if (error) throw error;
       if (!data || !data.length) {
-        console.warn('[admin-write] upsert 影響 0 列', table, row[rule.key]);
+        console.warn('[admin-write] upsert 影響 0 列', table);
         return reply('007', { message: '沒有寫入任何資料' }, 404);
       }
     } else {

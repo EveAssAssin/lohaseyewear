@@ -63,11 +63,18 @@
   var ADMIN_WRITE_FN =
     'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/admin-write';
 
-  async function adminWrite(table, op, row, matchValue) {
+  /* adminWrite(表, 動作, 資料, 單筆條件, 多筆條件)
+       資料      物件 = 一筆;陣列 = 一批(upsert 用)
+       單筆條件  delete / update 用
+       多筆條件  陣列,delete 一次刪多筆用(聯名子表) */
+  async function adminWrite(table, op, row, matchValue, matchValues) {
     const token = (window.LohasAuth && window.LohasAuth.getToken)
       ? window.LohasAuth.getToken() : '';
-    const payload = { token: token, table: table, op: op, row: row };
-    if (matchValue !== undefined) payload.match_value = matchValue;
+    const payload = { token: token, table: table, op: op };
+    if (Array.isArray(row)) payload.rows = row;
+    else if (row) payload.row = row;
+    if (matchValue !== undefined && matchValue !== null) payload.match_value = matchValue;
+    if (Array.isArray(matchValues)) payload.match_values = matchValues;
 
     const r = await fetch(ADMIN_WRITE_FN, {
       method: 'POST',
@@ -3392,7 +3399,10 @@
     if (!confirm('確定刪除這則消息?')) return;
     const sb = getSb();
     if (!sb) return;
-    const { error } = await sb.from('news').delete().eq('id', id);
+      const { error } = await (async () => {
+        try { await adminWrite('news', 'delete', null, id); return {}; }
+        catch (e) { return { error: e }; }
+      })();
     if (error) return alert('刪除失敗: ' + error.message);
     loadNews();
   }
@@ -3406,14 +3416,15 @@
     const sb = getSb();
     if (!sb) return;
 
-    const { error } = await sb.from('news').insert({
-      title: title.trim(),
-      category: category.trim(),
-      status: 'draft',
-      author_id: State.member.erpid
-    });
-
-    if (error) return alert('建立失敗: ' + error.message);
+    /* ⚠ 不再送 author_id —— 那是「誰建的」,由伺服器用驗過的身分填。
+       State.member 來自 localStorage,前端送等於作者欄可以偽造。 */
+    try {
+      await adminWrite('news', 'insert', {
+        title: title.trim(),
+        category: category.trim(),
+        status: 'draft',
+      });
+    } catch (e) { return alert('建立失敗: ' + (e.message || e)); }
     alert('已建立草稿');
     loadNews();
   }
@@ -6917,7 +6928,10 @@
 
       // 1. 刪 collab_customer_photos
       if(item.id){
-        const { error: e1 } = await client.from('collab_customer_photos').delete().eq('id', item.id);
+        const { error: e1 } = await (async () => {
+          try { await adminWrite('collab_customer_photos', 'delete', null, item.id); return {}; }
+          catch (e) { return { error: e }; }
+        })();
         if(e1){ alert('刪除聯名照片失敗:' + e1.message); return; }
       }
 
@@ -7107,13 +7121,13 @@
 
         let collabId = currentCollab && currentCollab.id;
         if(collabId){
-          const { error } = await client.from('collabs').update(payload).eq('id', collabId);
-          if(error) throw error;
+          await adminWrite('collabs', 'update', payload, collabId);
         } else {
-          const { data, error } = await client.from('collabs').insert(payload).select('*').single();
-          if(error) throw error;
-          collabId = data.id;
-          currentCollab = data;
+          /* ⚠ 新增之後要拿回整列 —— 下面要用 id 去存三張子表。
+             admin-write 的 insert 回 { row, rows }。 */
+          const d = await adminWrite('collabs', 'insert', payload);
+          currentCollab = d.row;
+          collabId = d.row.id;
         }
 
         // 子表上傳 + 儲存
@@ -7174,7 +7188,10 @@
       // 刪除標記
       const toDelete = arr.filter(x => x._deleted && x.id).map(x => x.id);
       if(toDelete.length){
-        await client.from(table).delete().in('id', toDelete);
+        /* 走 admin-write。⚠ 這裡是【變數表名】—— 2026-09-07 之前
+           用 grep 找「誰在寫 collab_packages」完全看不到這一段,
+           結果那兩張表的政策被誤收,聯名頁按儲存就壞了。 */
+        await adminWrite(table, 'delete', null, null, toDelete);
       }
 
       // upsert
@@ -7195,8 +7212,8 @@
       });
 
       if(rows.length){
-        const { error } = await client.from(table).upsert(rows);
-        if(error) throw error;
+        // 一次送一整批,不要迴圈逐筆 —— 那會打 N 次函式
+        await adminWrite(table, 'upsert', rows);
       }
     }
 
@@ -7210,8 +7227,9 @@
       if(!confirm('確定刪除「' + currentCollab.brand_name + '」?\n所有套餐 / 設計 / 客人照都會一起刪除,無法復原。')) return;
 
       const client = sb();
-      const { error } = await client.from('collabs').delete().eq('id', currentCollab.id);
-      if(error){ toast('刪除失敗:' + error.message); return; }
+      try {
+        await adminWrite('collabs', 'delete', null, currentCollab.id);
+      } catch (e) { toast('刪除失敗:' + (e.message || e)); return; }
       toast('已刪除');
       closeModal();
       loadList();
@@ -7442,8 +7460,11 @@
             sort_order: currentPhotos.filter(p => !p._deleted).length
           };
           if(typeof crypto !== 'undefined' && crypto.randomUUID) photoRow.id = crypto.randomUUID();
-          const { data: cpData, error: cpErr } = await client.from('collab_customer_photos').insert(photoRow).select('*').single();
-          if(cpErr){ console.error('[collab_customer_photos insert 失敗]', cpErr); continue; }
+          try {
+            await adminWrite('collab_customer_photos', 'insert', photoRow);
+          } catch (cpErr) {
+            console.error('[collab_customer_photos insert 失敗]', cpErr); continue;
+          }
 
           // 4. 同步寫 gallery_posts (分享牆)
           // member_id 用 collab- 前綴 + collabId,標示為聯名客人照
@@ -7738,7 +7759,10 @@
           const id = btn.dataset.id;
           const sb = window.LohasSupabase?.getClient?.();
           if (!sb) return;
-          const { error } = await sb.from('news').update({ status: 'archived' }).eq('id', id);
+      const { error } = await (async () => {
+            try { await adminWrite('news', 'update', { status: 'archived' }, id); return {}; }
+            catch (e) { return { error: e }; }
+          })();
           if (error) { toast('隱藏失敗: ' + error.message); return; }
           const item = allNews.find(x => x.id === id);
           if (item) item.status = 'archived';
@@ -7754,7 +7778,10 @@
           const id = btn.dataset.id;
           const sb = window.LohasSupabase?.getClient?.();
           if (!sb) return;
-          const { error } = await sb.from('news').update({ status: 'published' }).eq('id', id);
+      const { error } = await (async () => {
+            try { await adminWrite('news', 'update', { status: 'published' }, id); return {}; }
+            catch (e) { return { error: e }; }
+          })();
           if (error) { toast('恢復失敗: ' + error.message); return; }
           const item = allNews.find(x => x.id === id);
           if (item) item.status = 'published';
@@ -7772,7 +7799,10 @@
           if (!confirm(`確定要刪除消息「${title}」?\n\n此操作無法復原。`)) return;
           const sb = window.LohasSupabase?.getClient?.();
           if (!sb) return;
-          const { error } = await sb.from('news').delete().eq('id', id);
+      const { error } = await (async () => {
+            try { await adminWrite('news', 'delete', null, id); return {}; }
+            catch (e) { return { error: e }; }
+          })();
           if (error) { toast('刪除失敗: ' + error.message); return; }
           allNews = allNews.filter(x => x.id !== id);
           toast('已刪除');
@@ -7793,14 +7823,28 @@
 
           if (item.is_featured) {
             // 取消精選
-            const { error } = await sb.from('news').update({ is_featured: false }).eq('id', id);
+      const { error } = await (async () => {
+              try { await adminWrite('news', 'update', { is_featured: false }, id); return {}; }
+              catch (e) { return { error: e }; }
+            })();
             if (error) { toast('取消失敗: ' + error.message); return; }
             item.is_featured = false;
             toast('已取消精選');
           } else {
             // 設為精選: 先把其他全部設 false, 再把這篇設 true (確保只有一篇)
-            await sb.from('news').update({ is_featured: false }).eq('is_featured', true);
-            const { error } = await sb.from('news').update({ is_featured: true }).eq('id', id);
+            /* ⚠ 這一步的條件不是主鍵(eq('is_featured', true)),所以
+               admin-write 做成一個【不接受任何客戶端參數】的專用動作,
+               條件寫死在伺服器 —— 開放任意條件的話,
+               `update ... where 任意欄位` 就變成一個合法請求。 */
+      const { error: e0 } = await (async () => {
+              try { await adminWrite('news', 'news_clear_featured'); return {}; }
+              catch (e) { return { error: e }; }
+            })();
+            if (e0) { toast('設定失敗: ' + e0.message); return; }
+      const { error } = await (async () => {
+              try { await adminWrite('news', 'update', { is_featured: true }, id); return {}; }
+              catch (e) { return { error: e }; }
+            })();
             if (error) { toast('設定失敗: ' + error.message); return; }
             // 同步 local state
             allNews.forEach(x => { x.is_featured = (x.id === id); });
@@ -7867,7 +7911,10 @@
       try {
         // Supabase 沒 batch update, 逐一更新
         for (const u of updates) {
-          const { error } = await client.from('news').update({ sort_order: u.sort_order }).eq('id', u.id);
+      const { error } = await (async () => {
+            try { await adminWrite('news', 'update', { sort_order: u.sort_order }, u.id); return {}; }
+            catch (e) { return { error: e }; }
+          })();
           if (error) {
             console.error('[news sort_order update 失敗]', u.id, error);
           }
@@ -8097,10 +8144,16 @@
         };
 
         if(currentNews && currentNews.id){
-          const { error } = await client.from('news').update(payload).eq('id', currentNews.id);
+      const { error } = await (async () => {
+            try { await adminWrite('news', 'update', payload, currentNews.id); return {}; }
+            catch (e) { return { error: e }; }
+          })();
           if(error) throw error;
         } else {
-          const { error } = await client.from('news').insert(payload);
+      const { error } = await (async () => {
+            try { await adminWrite('news', 'insert', payload); return {}; }
+            catch (e) { return { error: e }; }
+          })();
           if(error) throw error;
         }
 
@@ -8121,7 +8174,10 @@
       if(!confirm('確定刪除「' + currentNews.title + '」?\n此操作無法復原。')) return;
 
       const client = sb();
-      const { error } = await client.from('news').delete().eq('id', currentNews.id);
+      const { error } = await (async () => {
+        try { await adminWrite('news', 'delete', null, currentNews.id); return {}; }
+        catch (e) { return { error: e }; }
+      })();
       if(error){ toast('刪除失敗:' + error.message); return; }
       toast('已刪除');
       closeModal();
