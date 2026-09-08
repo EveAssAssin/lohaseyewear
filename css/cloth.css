@@ -548,7 +548,11 @@
 .cl-modal {
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    /* ⚠ 必須高於全站 header(.main-header 是 z-index:9999)。
+       原本寫 1000,結果彈窗被 header 蓋掉一角 ——
+       而這個彈窗是【強制流程】(要勾選才能送出),被蓋住的話
+       客人會以為卡住了。任何全螢幕遮罩都要比 header 高。 */
+    z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
