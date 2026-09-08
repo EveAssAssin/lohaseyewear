@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-07 · +news +categories +collabs(含三張子表)';
+const CODE_VERSION = '2026-09-08 · news 欄位白名單修正(對照實際資料表)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -96,9 +96,19 @@ const ALLOW: Record<string, Rule> = {
   news: {
     key: 'id',
     ops: ['insert', 'update', 'delete', 'news_clear_featured'],
-    cols: ['id', 'title', 'slug', 'category', 'summary', 'content', 'cover_image_url',
-           'status', 'is_featured', 'sort_order', 'published_at', 'view_count',
-           'tags', 'link_url', 'updated_at'],
+    /* ⚠ 2026-09-08 修正。這串原本是【憑印象寫的】,結果:
+         · 少了首頁曝光那一整組(show_in_homepage、homepage_* 六欄)、
+           excerpt、cta_buttons、author —— 一存檔就被自己的白名單擋下
+         · 多了 summary / tags / link_url —— 這三欄在 news 表【根本不存在】
+       下面這串是對著資料表實際欄位抄的,不是想出來的。
+       加欄位時請先確認資料表真的有,多寫一個不會報錯,只會在
+       某天有人真的送它的時候才爆。 */
+    cols: ['id', 'title', 'slug', 'category', 'excerpt', 'content', 'cover_image_url',
+           'status', 'is_featured', 'sort_order', 'published_at', 'scheduled_at',
+           'view_count', 'author', 'updated_at',
+           'show_in_homepage', 'homepage_tag', 'homepage_subtitle',
+           'homepage_image_url', 'homepage_link_type', 'homepage_link_url',
+           'homepage_text_hidden', 'cta_buttons'],
     // author_id 不在這裡:同 suspended_by / featured_by,由伺服器填
   },
   categories: {
