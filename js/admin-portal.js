@@ -1698,10 +1698,11 @@
           const sb = getSb();
           if (!sb) return;
           try {
-            const { error } = await sb.from('engraving_designs')
-              .update({ status: 'pending', reject_reason: null, reviewed_at: null, reviewed_by: null })
-              .eq('id', b.dataset.id);
-            if (error) throw error;
+            /* reviewed_by 不送 —— status 退回 pending 時由伺服器清成 null。
+               前端送這個欄位會被白名單擋下(稽核欄位不接受前端指定)。 */
+            await adminWrite('engraving_designs', 'update',
+              { status: 'pending', reject_reason: null, reviewed_at: null },
+              b.dataset.id);
             loadDesignReview();
             refreshReviewCounts && refreshReviewCounts();
           } catch (err) {
@@ -1715,10 +1716,7 @@
           const sb = getSb();
           if (!sb) return;
           try {
-            const { error } = await sb.from('engraving_designs')
-              .delete()
-              .eq('id', b.dataset.id);
-            if (error) throw error;
+            await adminWrite('engraving_designs', 'delete', null, b.dataset.id);
             loadDesignReview();
           } catch (err) {
             alert('刪除失敗:' + err.message);
@@ -2248,11 +2246,8 @@
       // erp_number 只在有填時才寫入,空值不覆蓋(避免重新上架重審清掉原編號)
       if (erpNumber) approveUpdate.erp_number = erpNumber;
 
-      const { error } = await sb.from('engraving_designs')
-        .update(approveUpdate)
-        .eq('id', id);
-
-      if (error) throw error;
+      // reviewed_by 由伺服器從驗過的身分填,見 admin-write
+      await adminWrite('engraving_designs', 'update', approveUpdate, id);
 
       // 審核通過後,發客服通知給會員 (失敗不影響審核)
       try {
@@ -2638,11 +2633,14 @@
     const table = tableMap[type];
     if (!table) return;
 
-    const { error } = await sb.from(table)
-      .update({ status: 'approved', reviewed_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (error) return alert('通過失敗: ' + error.message);
+    /* ⚠ table 是變數(依 type 決定 engraving_designs / gallery_posts)。
+       admin-write 的白名單會驗表名,所以傳變數是安全的 ——
+       但也因為是變數,grep 字面表名看不到這個寫入點。
+       兩張表都必須在白名單裡,少一張這裡就會裂成兩條路。 */
+    try {
+      await adminWrite(table, 'update',
+        { status: 'approved', reviewed_at: new Date().toISOString() }, id);
+    } catch (err) { return alert('通過失敗: ' + err.message); }
     alert('已通過');
     loadDashboard(); refreshReviewCounts?.();
   }
@@ -2692,15 +2690,14 @@
     const targetId = currentRejectTarget.id;
     const targetType = currentRejectTarget.type;
 
-    const { error } = await sb.from(table)
-      .update({
+    // table 同上,是變數;reviewed_by 由伺服器填
+    try {
+      await adminWrite(table, 'update', {
         status: 'rejected',
         reject_reason: reason,
         reviewed_at: new Date().toISOString()
-      })
-      .eq('id', targetId);
-
-    if (error) return alert('駁回失敗: ' + error.message);
+      }, targetId);
+    } catch (err) { return alert('駁回失敗: ' + err.message); }
 
     // 刻圖駁回 → 通知作者 (兩支:樂活訊息 + 客服對話),失敗不影響駁回
     if (targetType === 'design') {
@@ -5795,12 +5792,14 @@
 
     try {
       const ids = mdState.filtered.map(d => d.id);
-      // 一次 update 多個 (用 in)
-      const { error } = await sb.from('engraving_designs')
-        .update({ price: finalPrice })
-        .in('id', ids);
-
-      if (error) throw error;
+      /* 一次改多筆 —— 走 admin-write 的 match_values。
+         它會回實際改到幾列,對不上就講出來:篩選 40 筆只改到 3 筆
+         是一個要看得見的事實,不是可以無聲吞掉的差異。 */
+      const res = await adminWrite('engraving_designs', 'update',
+        { price: finalPrice }, null, ids);
+      if (res && typeof res.affected === 'number' && res.affected !== ids.length) {
+        alert('注意:預期改 ' + ids.length + ' 筆,實際改到 ' + res.affected + ' 筆。\n請重新整理確認。');
+      }
 
       // 同步本地
       mdState.designs.forEach(d => {
@@ -5830,10 +5829,7 @@
     if (!sb) return;
 
     try {
-      const { error } = await sb.from('engraving_designs')
-        .update({ is_show: newShow })
-        .eq('id', id);
-      if (error) throw error;
+      await adminWrite('engraving_designs', 'update', { is_show: newShow }, id);
 
       d.is_show = newShow;
       mdApplyFilters();
@@ -5914,11 +5910,7 @@
         return;
       }
 
-      const { error } = await sb.from('engraving_designs')
-        .update(payload)
-        .eq('id', mdState.editId);
-
-      if (error) throw error;
+      await adminWrite('engraving_designs', 'update', payload, mdState.editId);
 
       // 同步本地資料
       const idx = mdState.designs.findIndex(x => String(x.id) === String(mdState.editId));
@@ -5950,10 +5942,7 @@
     if (!sb) return;
 
     try {
-      const { error } = await sb.from('engraving_designs')
-        .update({ is_show: '垃圾桶' })
-        .eq('id', id);
-      if (error) throw error;
+      await adminWrite('engraving_designs', 'update', { is_show: '垃圾桶' }, id);
 
       d.is_show = '垃圾桶';
       mdApplyFilters();
@@ -5993,11 +5982,7 @@
       }
 
       // 2. 刪資料庫紀錄
-      const { error } = await sb.from('engraving_designs')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await adminWrite('engraving_designs', 'delete', null, id);
 
       // 2.5 連這張刻圖的客服對話一起刪 (避免孤兒對話 → 會員端紅點消不掉)
       try {

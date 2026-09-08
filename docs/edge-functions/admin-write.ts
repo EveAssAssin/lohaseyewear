@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-08 · news 欄位白名單修正(對照實際資料表)';
+const CODE_VERSION = '2026-09-09 · +engraving_designs +gallery_posts(審核用)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -152,6 +152,35 @@ const ALLOW: Record<string, Rule> = {
     key: 'id',
     ops: ['insert', 'upsert', 'delete'],
     cols: ['id', 'collab_id', 'image_url', 'caption', 'sort_order'],
+  },
+
+  /* ===== 刻圖與投稿的【後台】寫入(2026-09-09 第四批) =====
+     ⚠ 這兩張表【不能因此就收政策】。它們還有客人端的寫入點:
+         · engraving_designs —— member-portal 的 Auto-Creator
+           (認領孤兒作品 + 匯入 icons.json 舊作品)
+         · gallery_posts     —— 客人投稿、客人刪自己的投稿
+     那些要另外進 design.ts、而且需要伺服器端拿得到客人姓名
+     (auth-session 的 verify 目前不回姓名)。搬完那些才能收。
+
+     reviewed_by 不在 cols 裡:誰審的由伺服器填,見下面「伺服器自己填的欄位」。 */
+  engraving_designs: {
+    key: 'id',
+    ops: ['update', 'delete'],
+    cols: ['status', 'reject_reason', 'reviewed_at',
+           'name', 'slogan', 'category', 'keywords', 'designer_name',
+           'erp_number', 'price', 'is_show'],
+    /* 刻意【不開】creator_id 與 image_url* ——
+       前者是「這件作品屬於誰」,後者是作品本身。
+       後台沒有改它們的功能,開了只是把攻擊面留在那裡。
+       重新描圖改 image_url_svg 走 design 函式,那支會檢查影響幾列。 */
+  },
+  gallery_posts: {
+    key: 'id',
+    ops: ['update'],
+    /* 只給審核用的三欄。後台其他寫 gallery_posts 的地方還沒搬,
+       但那些不必經過這裡 —— 這條白名單只服務「快速通過 / 駁回」,
+       那段程式用 tableMap 依類型決定表名,刻圖與投稿共用同一段。 */
+    cols: ['status', 'reject_reason', 'reviewed_at'],
   },
 };
 
@@ -272,6 +301,16 @@ Deno.serve(async (req) => {
   if (table === 'news' && op === 'insert') {
     for (const r of rowsIn) r.author_id = caller;
   }
+  /* 同理:這件刻圖／投稿是誰審的。
+     ⚠ 「重新開放審核」是把狀態退回 pending,那時要把 reviewed_by
+        清成 null —— 不是留著上一個審核者的名字。前端不必(也不能)
+        送這個欄位,狀態決定它的值。 */
+  if ((table === 'engraving_designs' || table === 'gallery_posts') && op === 'update') {
+    for (const r of rowsIn) {
+      if (r.status === 'approved' || r.status === 'rejected') r.reviewed_by = caller;
+      else if (r.status === 'pending') r.reviewed_by = null;
+    }
+  }
 
   try {
     if (op === 'news_clear_featured') {
@@ -339,18 +378,36 @@ Deno.serve(async (req) => {
       }
     } else {
       /* update:條件只能是白名單指定的那個鍵。
-         接受任意條件的話,`update where true` 就是一個合法請求。 */
+         接受任意條件的話,`update where true` 就是一個合法請求。
+
+         單筆用 match_value,多筆用 match_values(陣列)——
+         後台「批次改價」是把篩選結果一次改掉,原本是 .in('id', ids)。 */
+      const manyU = Array.isArray(body.match_values) ? body.match_values : null;
       const matchVal = body.match_value;
-      if (matchVal === undefined || matchVal === null || matchVal === '') {
-        return reply('006', { message: '缺少 ' + rule.key }, 400);
+      let q = db.from(table).update(row);
+      if (manyU) {
+        const list = manyU.filter(function (v: any) {
+          return v !== undefined && v !== null && v !== '';
+        });
+        if (!list.length) return reply('006', { message: '缺少 ' + rule.key }, 400);
+        if (list.length > 500) return reply('006', { message: '一次最多 500 筆' }, 400);
+        q = q.in(rule.key, list);
+      } else {
+        if (matchVal === undefined || matchVal === null || matchVal === '') {
+          return reply('006', { message: '缺少 ' + rule.key }, 400);
+        }
+        q = q.eq(rule.key, matchVal);
       }
-      const { data, error } = await db.from(table)
-        .update(row).eq(rule.key, matchVal).select(rule.key);
+      const { data, error } = await q.select(rule.key);
       if (error) throw error;
       if (!data || !data.length) {
-        console.warn('[admin-write] update 影響 0 列', table, matchVal);
+        console.warn('[admin-write] update 影響 0 列', table, matchVal ?? '(批次)');
         return reply('007', { message: '找不到要更新的資料' }, 404);
       }
+      /* ⚠ 批次時把【實際改到幾列】回給呼叫端。
+         篩選結果 40 筆卻只改到 3 筆是一個要看得見的事實,
+         不然又是一次「畫面說成功、資料沒動」。 */
+      if (manyU) return reply('200', { data: { affected: data.length } });
     }
   } catch (e) {
     console.error('[admin-write] 寫入失敗:', table, op, (e as Error).message);
