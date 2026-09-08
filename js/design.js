@@ -433,6 +433,24 @@
     return url ? IMG_PROXY + '?url=' + encodeURIComponent(url) : '';
   }
 
+  /* 把「能換哪些鏡框分類」正規化成數字陣列。
+     來源可能是陣列,也可能是逗號分隔的字串(視哪一支 API 而定)。
+     ⚠ 空字串要回空陣列,不要回 [NaN] —— 那會讓每一款鏡框都比不中。 */
+  function toTidList() {
+    for (var i = 0; i < arguments.length; i++) {
+      var v = arguments[i];
+      if (Array.isArray(v)) {
+        var a = v.map(Number).filter(function (n) { return !isNaN(n); });
+        if (a.length) return a;
+      } else if (typeof v === 'string' && v.trim()) {
+        var b = v.split(',').map(function (x) { return Number(String(x).trim()); })
+                 .filter(function (n) { return !isNaN(n); });
+        if (b.length) return b;
+      }
+    }
+    return [];
+  }
+
   function loadImage(src) {
     return new Promise(function (resolve, reject) {
       var img = new Image();
@@ -1603,13 +1621,18 @@
         State.coupon = {
           coupon_id: d.coupon_id || Number(couponId),
           lock_token: d.lock_token,
-          /* 兩個欄位名都收。
+          /* 兩個欄位名都收,而且【兩種型別都收】。
+             -----------------------------------------------------------
              主後端 2026-08-24 在鎖定紀錄新增了 site_category_tid,
-             而 lock 目前回的仍是 category_tid —— 哪天統一成新名字,
-             只認舊名的話會安靜地變成「不限分類」,客人挑到不能換的款式,
-             要到 cart/push 被伺服器擋下才知道。兩個都收就不會有那一天。 */
-          category_tid: Array.isArray(d.category_tid) ? d.category_tid
-            : (Array.isArray(d.site_category_tid) ? d.site_category_tid : []),
+             lock 回的仍是 category_tid —— 哪天統一成新名字,只認舊名的話
+             會安靜地變成「不限分類」,客人挑到不能換的款式,要到 cart/push
+             被伺服器擋下才知道。
+
+             🚨 2026-09-07 修:原本兩個都要求 Array.isArray,而對方回信
+             說明 site_category_tid 在 lockinfo 是【字串,逗號分隔】——
+             也就是那條「退路」其實是假的,真的走到它會拿到 [],
+             症狀跟只認舊名一模一樣。現在陣列與逗號字串都認得。 */
+          category_tid: toTidList(d.category_tid, d.site_category_tid),
 
           /* 贈品型券(兌換一件商品)與折抵型券的語意不同。
              我方目前不依它改變介面 —— 折抵金額一律以商城結帳頁為準 ——
