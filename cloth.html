@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
-  <link rel="stylesheet" href="css/cloth.css?v=20260905-campaign">
+  <link rel="stylesheet" href="css/cloth.css?v=20260905-wall">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -374,6 +374,29 @@
 
     </div>
   </div>
+  <!-- ===== 分享牆:已完成的眼鏡布 =====
+       ⚠ 只顯示 status = done 的(由 cloth-wall 函式決定,不是前端過濾)。
+         還在製作中的放上來,客人會問「別人的都好了我的怎麼還沒好」——
+         那是製作端的排程,不是客服答得出來的。
+
+       ⚠ 姓名遮罩在【伺服器端】做。前端遮罩等於把完整姓名送到每一個
+         訪客的瀏覽器再請它別顯示,看 network 面板就拿得到。
+
+       ⚠ 載入失敗或一張都沒有時,這一區【整個收起來】——
+         它是錦上添花,不是功能;在客製眼鏡布的主流程上放一塊紅色錯誤,
+         會讓人以為自己的設計出問題了。 -->
+  <section class="cw-sec" id="clWallSec">
+    <div class="cw-head">
+      <h2 class="cw-title">大家做的眼鏡布</h2>
+      <p class="cw-sub">這些都是已經完成、拿到手的作品。你的也會出現在這裡。</p>
+    </div>
+    <div class="cw-wall" id="clWall"></div>
+    <div class="cw-foot">
+      <button type="button" class="cw-more" id="clWallMore">看 更 多</button>
+      <p class="cw-end" id="clWallEnd" hidden>已經到底了</p>
+    </div>
+  </section>
+
 </main>
 
 <div id="site-footer"></div>
@@ -389,11 +412,12 @@
 <script src="js/cropper-helper.js?v=20260513-2330"></script>
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
 <script src="js/subcategories.js?v=20260513-2330"></script>
-<script src="js/upload-design.js?v=20260903-retrace"></script>
+<script src="js/upload-design.js?v=20260905-crossorigin"></script>
 <!-- 門市清單(取貨門市下拉用)。api-core 要先於 api-store。 -->
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260905-campaign"></script>
+<script src="js/cloth.js?v=20260905-wall"></script>
+<script src="js/cloth-wall.js?v=20260905-wall"></script>
 </body>
 </html>

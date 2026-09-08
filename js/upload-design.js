@@ -1659,7 +1659,18 @@
   function loadImage(src){
     return new Promise(function(resolve, reject){
       var img = new Image();
-      img.crossOrigin = 'anonymous';
+      /* ⚠ 只有【跨網域】的圖才設 crossOrigin —— 同網域(含 blob:/data:)
+         本來就不會污染 canvas,設了沒有用處只有副作用:
+         同一張圖若已被 <img> 標籤(沒有 crossOrigin)載入並快取,
+         這次帶 CORS 的請求會重用那筆沒有 CORS 標頭的快取而失敗。
+         症狀是「圖明明顯示得出來,卻報圖片載入失敗」,iOS Safari 尤其常見。
+         2026-09-05 在 cloth.js 踩到,這裡是同一個寫法,一併修。 */
+      try {
+        if (/^https?:/i.test(src) &&
+            new URL(src, location.href).origin !== location.origin) {
+          img.crossOrigin = 'anonymous';
+        }
+      } catch (e) { /* 解析不出來就當同網域,頂多少設一個屬性 */ }
       img.onload  = function(){ resolve(img); };
       img.onerror = function(){ reject(new Error('圖片載入失敗')); };
       img.src = src;

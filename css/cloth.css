@@ -662,3 +662,52 @@
     margin-top: 12px;
 }
 .cl-share-hint { margin: 10px 0 0; font-size: .8rem; line-height: 1.55; color: #7a7266; min-height: 1.2em; }
+
+/* =============================================================
+   分享牆(2026-09-05)
+   ⚠ 只顯示已完成的作品,姓名遮罩在伺服器端做。
+   ⚠ 沒資料或載入失敗時整區由 JS 收起來 —— 空的分享牆比沒有難看。
+   ============================================================= */
+.cw-sec { max-width: 1080px; margin: 40px auto 8px; padding: 0 16px; }
+.cw-sec[hidden] { display: none; }
+.cw-head { text-align: center; margin-bottom: 18px; }
+.cw-title { margin: 0 0 6px; font-size: 1.25rem; font-weight: 700; color: #3b3222; }
+.cw-sub { margin: 0; font-size: .88rem; line-height: 1.65; color: #7a7266; }
+
+.cw-wall {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+}
+.cw-card {
+    border: 1px solid #e8e3d7;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+}
+/* 固定比例的框:圖還沒載進來時版面不會跳動 */
+.cw-media { aspect-ratio: 1 / 1; background: #f4f2ee; }
+.cw-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cw-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 10px;
+    font-size: .8rem;
+}
+.cw-name { font-weight: 600; color: #4a3f28; }
+.cw-date { color: #9a9284; font-size: .74rem; white-space: nowrap; }
+
+.cw-foot { text-align: center; margin-top: 16px; }
+.cw-more {
+    padding: 9px 26px;
+    border: 1px solid #cfcabd;
+    border-radius: 999px;
+    background: #fff;
+    font-size: .88rem;
+    color: #55503f;
+    cursor: pointer;
+}
+.cw-more[hidden] { display: none; }
+.cw-end { margin: 0; font-size: .82rem; color: #9a9284; }

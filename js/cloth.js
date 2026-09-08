@@ -782,10 +782,37 @@
 
   /* ---------- 合成圖 ---------- */
 
+  /* 這張圖是不是跨網域。相對路徑一律算同網域。 */
+  function isCrossOrigin(src) {
+    try {
+      return new URL(src, location.href).origin !== location.origin;
+    } catch (e) {
+      return false;      // 解析不出來就當同網域,頂多是少設一個屬性
+    }
+  }
+
   function loadImage(src) {
     return new Promise(function (res, rej) {
       var img = new Image();
-      img.crossOrigin = 'anonymous';   // 要畫進 canvas 再匯出,不能讓它污染畫布
+
+      /* 🚨 只有【跨網域】的圖才設 crossOrigin。
+         -----------------------------------------------------------------
+         原本一律設 'anonymous',註解寫著「要畫進 canvas 再匯出,
+         不能讓它污染畫布」—— 前半句對,但同網域的圖【本來就不會
+         污染 canvas】,那個屬性對它沒有用處,只有副作用。
+
+         副作用是:同一張圖若已經被頁面上的 <img> 標籤(沒有 crossOrigin)
+         載入並存進快取,這一次帶 CORS 的請求會重用那筆【沒有 CORS 標頭】
+         的快取回應,然後因為缺 Access-Control-Allow-Origin 而失敗。
+
+         2026-09-05 手機回報:眼鏡布主頁跳「圖片載入失敗:
+         images/cloth-base.jpg」,而那張布【明明就顯示在上面】——
+         就是這個。iOS Safari 特別容易踩到,桌機常常重現不出來。
+
+         跨網域的圖(Supabase Storage 上的刻圖)仍然要設,
+         不然畫進 canvas 之後 toBlob 會被擋。 */
+      if (isCrossOrigin(src)) img.crossOrigin = 'anonymous';
+
       img.onload = function () { res(img); };
       img.onerror = function () { rej(new Error('圖片載入失敗:' + src)); };
       img.src = src;
