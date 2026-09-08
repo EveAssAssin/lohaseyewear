@@ -310,6 +310,85 @@ R12 POLYLINE(`70=1`),實心是在 EZCAD 裡開「填充」做的。
 那正是師傅要判斷的事。用 canvas 不用 SVG:0.05mm 在畫面上只有 0.08 個像素,
 SVG 會抗鋸齒成淡灰,把「實心」畫成「灰的」。
 
+## 🚨 後台寫入一律走 `admin-write`(2026-09-07~09 搬完)
+
+後台原本是**以 anon 身分直接打資料表**,所以每張後台要改的表都開著一條
+`for all / public / true` 的 RLS 政策 —— 而 anon key 是公開的
+(就在 GitHub 上的 `js/supabase.js`)。後台的「你是不是管理員」是
+**前端查 `admins` 表**決定的,擋不住直接打 REST 的人。
+
+現在十張表的寫入都收進 `admin-write` 這支 Edge Function
+(service_role 執行,先驗 session token、再驗 `admins`):
+
+```
+member_status  site_settings  banners  featured_creators  news
+categories  collabs  collab_packages  collab_designs  collab_customer_photos
+```
+
+前端只透過 `window.LohasAdminWrite(表, 動作, 資料, 單筆條件, 多筆條件)`。
+**不要為了方便繞回 `client.from(表).update(...)`** —— 那些表的 anon 政策
+已經收成只剩 SELECT,繞回去的症狀是 **HTTP 200、0 列、沒有錯誤訊息**。
+
+⚠ **`engraving_designs` 還沒搬,政策仍然全開。** 它有 11 個直接寫入點
+(`admin-portal.js` ×9、`legacy-icons.js`、`member-portal.js`),
+其中 `member-portal.js` 那個是**客人改自己的作品**,權限規則與管理員不同,
+所以要搬進 `design.ts` 而不是 `admin-write`。**搬完之前不要收它的政策。**
+
+### 白名單的四件事,加表時要一起想
+
+`ALLOW` 裡每張表要同時定義:能動的**表**、能寫的**欄位**、能做的**動作**、
+以及 match 只能用**哪一個鍵**。少了最後一項,`delete where true` 就是一個
+合法請求。
+
+**欄位一定要對著資料表實際欄位抄,不要憑印象寫。** 2026-09-08 就踩到:
+`news` 的白名單少了 `excerpt`/`author`/`cta_buttons` 與首頁曝光那六欄、
+又多了三個**資料表根本不存在**的欄位,結果編輯消息一存檔就被自己擋下。
+查法(anon 讀得到的表):`select=*&limit=1` 拿一列回來看 key。
+
+沒列在白名單的欄位是**大聲拒絕**,不是默默丟掉 —— 別改成跳過。
+跳過的話畫面會說「儲存成功」而設定沒進去,要等客人回報才會發現。
+
+`suspended_by` / `featured_by` / `author_id` **刻意不在白名單裡**:
+由伺服器用驗過的身分填。原本是前端從 localStorage 送的,
+等於稽核紀錄上寫誰都可以 —— 能被偽造的紀錄沒有意義。
+
+### 🚨 判斷「有沒有人寫這張表」不能只 grep 字面表名(同一個盲點踩了三次)
+
+2026-09-07 收政策時連續弄壞三個地方,三次都是同一個原因:
+
+1. **變數表名** —— `saveSubtable(client, table, ...)` 寫的是
+   `client.from(table)`,grep `from('collab_packages')` 只看得到 select。
+   收掉政策後聯名編輯的儲存壞了。
+2. **只查前端** —— `engraving_designs` 有 8 個**後台**寫入點
+   (審核/定價/上架/刪除),只看客人端會以為沒人寫。
+3. **資料庫 trigger** —— `auto_upgrade_to_creator` 是 trigger,
+   `INSERT INTO creators`,**任何程式碼 grep 都看不到**。
+   收掉 `creators_all` 之後刻圖審核通過會噴 `42501`。
+
+所以收政策之前三件都要做:
+
+```
+① grep 字面表名的 insert/update/upsert/delete
+② grep 用變數當表名的 .from(x) 寫入
+③ 查 pg_trigger —— 誰寫這張表,而且該 trigger 函式是不是 SECURITY DEFINER
+```
+
+trigger 函式要能在 RLS 之下寫入,必須是
+`SECURITY DEFINER` + `set search_path = public`(2026-09-08 已把
+`auto_upgrade_to_creator` 與 `auto_upgrade_to_creator_on_insert` 改過來)。
+
+### 探測 RLS 不能用 API 回應判斷
+
+**被 RLS 擋掉的 UPDATE / DELETE 回的是 200 / 204、0 列、沒有錯誤。**
+拿 REST 回應判斷「這條政策收了沒」會得到相反的結論(2026-09-07 判錯兩次)。
+**以 `pg_policies` 為準**,要驗行為就看**影響幾列**。
+`supabase-js` 本身也不 throw,錯誤在 `.error` 裡。
+
+### 收完政策一定要重測一次
+
+寫入路徑換了(從 anon 直接寫 → 只能走 admin-write),**收政策前測過不算數**。
+2026-09-07 就是收完沒重測,隔了幾小時才發現聯名儲存壞掉。
+
 ## 不要隨手改的東西
 
 - **`js/register.js` 的 `NOT_READY`** — 2026-08-19 已對外開放(`false`)。
