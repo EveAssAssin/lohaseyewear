@@ -1021,6 +1021,10 @@
     var agree = document.getElementById('clAgree');
     var okBtn = document.getElementById('clCampaignOk');
     var cancel = document.getElementById('clCampaignCancel');
+    /* 右上角的叉叉等同「再看看」—— 一樣是取消,一樣要解除監聽。
+       ⚠ 沒有它的話關掉彈窗只有兩條路(按再看看、按 Esc),
+         而手機沒有 Esc,客人只剩一顆按鈕可按。 */
+    var xBtn = document.getElementById('clCampaignX');
 
     if (!box || !agree || !okBtn || !cancel) {
       return Promise.resolve(window.confirm(
@@ -1041,6 +1045,7 @@
         agree.removeEventListener('change', onChange);
         okBtn.removeEventListener('click', onOk);
         cancel.removeEventListener('click', onCancel);
+        if (xBtn) xBtn.removeEventListener('click', onCancel);
         document.removeEventListener('keydown', onKey);
         resolve(v);
       }
@@ -1052,6 +1057,7 @@
       agree.addEventListener('change', onChange);
       okBtn.addEventListener('click', onOk);
       cancel.addEventListener('click', onCancel);
+      if (xBtn) xBtn.addEventListener('click', onCancel);
       document.addEventListener('keydown', onKey);
     });
   }
@@ -1734,8 +1740,10 @@
       var b = document.getElementById(id);
       if (b) b.addEventListener('click', openRules);
     });
-    var rulesClose = document.getElementById('clRulesClose');
-    if (rulesClose) rulesClose.addEventListener('click', closeRules);
+    ['clRulesClose', 'clRulesX'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b) b.addEventListener('click', closeRules);
+    });
     if (rules) {
       // 點空白處也能關,手機上比找按鈕快
       rules.addEventListener('click', function (e) { if (e.target === rules) closeRules(); });

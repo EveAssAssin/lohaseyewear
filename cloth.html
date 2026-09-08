@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
-  <link rel="stylesheet" href="css/cloth.css?v=20260905-cardtip">
+  <link rel="stylesheet" href="css/cloth.css?v=20260905-modalx">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -257,6 +257,9 @@
       <div class="cl-modal" id="clCampaignModal" hidden>
         <div class="cl-modal-box" role="dialog" aria-modal="true"
              aria-labelledby="clCampaignTitle">
+          <button type="button" class="cl-modal-x" id="clCampaignX" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
           <h3 class="cl-modal-title" id="clCampaignTitle">送出前，有兩件事要先說</h3>
 
           <p class="cl-modal-lead">
@@ -312,6 +315,9 @@
       <!-- 活動辦法(從彈窗或事前告知打開) -->
       <div class="cl-modal" id="clRulesModal" hidden>
         <div class="cl-modal-box" role="dialog" aria-modal="true" aria-labelledby="clRulesTitle">
+          <button type="button" class="cl-modal-x" id="clRulesX" aria-label="關閉">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
           <h3 class="cl-modal-title" id="clRulesTitle">分享活動辦法</h3>
           <ul class="cl-rules">
             <li><b>取貨條件</b>：取貨時出示帶 <b>#樂活眼鏡</b> 的公開貼文（THREADS／IG／Facebook 皆可）。不方便自己發文者，取貨時可請店員代為操作。</li>
@@ -423,7 +429,7 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260905-shareat"></script>
+<script src="js/cloth.js?v=20260905-modalx"></script>
 <script src="js/cloth-wall.js?v=20260905-wall"></script>
 </body>
 </html>
