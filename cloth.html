@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
-  <link rel="stylesheet" href="css/cloth.css?v=20260905-consent">
+  <link rel="stylesheet" href="css/cloth.css?v=20260905-cardtip">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -92,7 +92,7 @@
 
       <!-- 市集刻圖 -->
       <div class="cl-card" id="clMarketCard">
-        <p class="cl-card-title">選一張刻圖</p>
+        <p class="cl-card-title">選一張刻圖<span class="cl-card-tip">完成後往下滑動</span></p>
         <div class="cl-search">
           <input type="text" id="clSearch" class="cl-input" placeholder="搜尋刻圖名稱、創作者…">
           <i class="fa-solid fa-magnifying-glass"></i>
@@ -104,7 +104,7 @@
 
       <!-- 手繪 -->
       <div class="cl-card" id="clDrawCard" style="display:none">
-        <p class="cl-card-title">自己畫一個</p>
+        <p class="cl-card-title">自己畫一個<span class="cl-card-tip">完成後往下滑動</span></p>
         <!-- 白底黑線:轉成線稿的效果最好,也最接近實際印在布上的樣子 -->
         <canvas class="cl-canvas" id="clCanvas" width="1000" height="1000"></canvas>
         <div class="cl-draw-tools">
@@ -129,7 +129,7 @@
 
       <!-- 打字 -->
       <div class="cl-card" id="clTextCard" style="display:none">
-        <p class="cl-card-title">打一段文字</p>
+        <p class="cl-card-title">打一段文字<span class="cl-card-tip">完成後往下滑動</span></p>
 
         <!-- ⚠ 這張畫布【就是】會被描成線稿的那一張,不是另外做的預覽。
              所見即所得是刻意的:字型在不同裝置上長得不一樣

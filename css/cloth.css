@@ -801,3 +801,32 @@
 @media (max-width: 960px) {
   body.cl.cl-working .cl-head { display: none; }
 }
+
+/* 卡片標題右邊的提示:「完成後往下滑動」。
+   -------------------------------------------------------------
+   挑完圖之後下一步(放在哪裡、取貨門市、送出)在下面,而手機上
+   挑圖卡片本身就佔滿一屏 —— 不講的話,客人挑完會停在原地,
+   以為自己已經做完了。
+
+   ⚠ 用 margin-left:auto 推到最右,不要用 float:
+     .cl-card-title 需要 flex 才能讓長標題與提示各自不換行。 */
+.cl-card-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.cl-card-tip {
+    margin-left: auto;
+    flex: 0 0 auto;
+    font-size: .74rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: #c0392b;
+    white-space: nowrap;
+}
+.cl-card-tip::before {
+    content: '\f107';                 /* fa-chevron-down */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-right: 4px;
+}
