@@ -54,6 +54,28 @@
     MAX_SVG_BYTES: 400 * 1024  // 線稿超過這個大小多半是畫得太碎,擋下來
   };
 
+  /* 被生日月擋住時,按鈕上的字。
+     -----------------------------------------------------------------
+     🚨 2026-09-09 從「尚 未 開 放」改成這一句。
+
+       「尚未開放」讀起來像【功能還沒上線】—— 客人會等,
+       或者以為系統壞了,兩種都不會去問「那我什麼時候可以做」。
+
+       而且 2026-09-04 真的壞掉時(生日資格讀錯欄位,每個非白名單
+       客人都被擋,包含真壽星),症狀就是同一句話 ——
+       連我方都因此花了 27 小時才發現那不是設定而是故障。
+       一句話同時代表「規則如此」與「系統壞了」,就等於什麼都沒說。
+
+       換成「生日月份開放」之後,按鈕本身就講清楚了規則:
+       看到的人知道自己不是壽星月,而不是不知道在等什麼。
+
+     ⚠ 兩處在用(applyEligible 與 refreshSubmit),所以抽成常數 ——
+       只改其中一處的話,「進頁面時」與「挑了新圖之後」會顯示不同的字。
+
+     ⚠ 字距與其他狀態一致。按鈕是 width:100%,6 個字放得下
+       (「確 認 製 作 並 儲 存」有 7 個字)。 */
+  var BTN_BIRTHDAY_ONLY = '生 日 月 份 開 放';
+
   var State = {
     designs: [],
     filter: '',
@@ -1449,7 +1471,7 @@
       show(el.lock);
     }
     el.submit.disabled = true;
-    el.submit.textContent = '尚 未 開 放';
+    el.submit.textContent = BTN_BIRTHDAY_ONLY;
     if (el.submitHint) el.submitHint.textContent = '';
   }
 
@@ -1541,7 +1563,7 @@
        然後在送出時才被伺服器擋(403),白做一場。 */
     if (blockedByBirthday()) {
       el.submit.disabled = true;
-      el.submit.textContent = '尚 未 開 放';
+      el.submit.textContent = BTN_BIRTHDAY_ONLY;
       if (el.submitHint) el.submitHint.textContent = '';
       return;
     }
