@@ -389,10 +389,11 @@
     margin:0 auto;
   }
 
-  /* 還沒有圖之前不顯示眼鏡布。
-     手機的高度全部要用在「挑圖」這件事上,空的布佔掉 276px
-     而它那時什麼都沒告訴你 —— 你還沒有東西可以看。 */
-  body.cl:not(.cl-has-art) .cl-left{ display:none }
+  /* ⚠ 2026-09-05 移除「還沒選圖就不顯示眼鏡布」。
+     原本的理由是「空的布佔掉 276px 的高度,而它什麼都沒告訴你」——
+     那個理由在【一欄版】成立。改成左按鈕右預覽的兩欄之後,
+     眼鏡布是擺在按鈕旁邊的空白處,不再吃掉任何垂直空間,
+     而一進頁面就看到布,才知道自己在做什麼東西。 */
 
   /* 釘住之後這行提示佔的是寶貴的高度,而且手機是用拖曳不是滑桿 */
   .cl-hint{ display:none }
@@ -728,49 +729,57 @@
      動 HTML 的代價是桌機版也要跟著改,那是更大的風險。
    ============================================================= */
 @media (max-width: 960px) {
-  body.cl.cl-has-art .cl-main {
+  body.cl .cl-main {
     display: grid;
     grid-template-columns: auto 1fr;
     align-items: start;
-    column-gap: 10px;
+    column-gap: 8px;
+    /* 側邊留白收窄 —— 省下來的 12px 全部給眼鏡布。
+       這一頁在手機上最重要的就是那張布看得清不清楚。 */
+    padding-left: 12px;
+    padding-right: 12px;
   }
-  body.cl.cl-has-art .cl-body { display: contents; }
-  body.cl.cl-has-art .cl-head,
-  body.cl.cl-has-art .cl-right,
-  body.cl.cl-has-art .cw-sec { grid-column: 1 / -1; }
+  body.cl .cl-body { display: contents; }
+  body.cl .cl-head,
+  body.cl .cl-right,
+  body.cl .cw-sec { grid-column: 1 / -1; }
 
   /* 左欄:四顆直排 */
-  body.cl.cl-has-art .cl-sourcebar {
+  body.cl .cl-sourcebar {
     grid-column: 1;
     position: sticky;
     top: 70px;                    /* 與預覽同高,兩邊一起釘住 */
     z-index: 6;
     margin: 0 0 16px;
-    padding: 8px;
+    padding: 6px;
     border: 1px solid var(--line-soft, #e8e3d7);
     border-radius: 10px;
     box-shadow: none;
     width: max-content;
   }
-  body.cl.cl-has-art .cl-bar-title { display: none; }   /* 兩欄時這行標題吃掉高度 */
+  body.cl .cl-bar-title { display: none; }   /* 兩欄時這行標題吃掉高度 */
   /* ⚠ .cl-seg 是 grid 不是 flex(基準樣式是 repeat(3,1fr))——
      寫 flex-direction:column 完全沒有作用,而且不會有任何錯誤,
      只是四顆按鈕照樣橫排。要改的是 grid-template-columns。 */
-  body.cl.cl-has-art .cl-seg {
+  body.cl .cl-seg {
     grid-template-columns: 1fr;
     gap: 6px;
   }
-  body.cl.cl-has-art .cl-seg-btn {
+  /* 按鈕欄壓到剛好放得下四個字,多出來的寬度留給眼鏡布 */
+  body.cl .cl-seg-btn {
     width: 100%;
     justify-content: flex-start;
     white-space: nowrap;
-    padding: 0 12px;
-    font-size: 12.5px;
+    padding: 0 9px;
+    gap: 5px;
+    min-height: 38px;
+    font-size: 12px;
+    letter-spacing: 0;
   }
-  body.cl.cl-has-art .cl-seg-btn i { display: inline-block; }  /* 直排放得下圖示 */
+  body.cl .cl-seg-btn i { display: inline-block; }  /* 直排放得下圖示 */
 
   /* 右欄:預覽。兩欄時它不再需要貼齊兩側的滿版底 */
-  body.cl.cl-has-art .cl-left {
+  body.cl .cl-left {
     grid-column: 2;
     top: 70px;
     margin: 0 0 16px;
@@ -778,5 +787,5 @@
     background: transparent;
     box-shadow: none;
   }
-  body.cl.cl-has-art .cl-stage { max-width: 100%; }
+  body.cl .cl-stage { max-width: 100%; }
 }
