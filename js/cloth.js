@@ -1172,8 +1172,21 @@
     '自己挑的圖，刻上去就是獨一無二的。\n' + SHARE_AT + ' ' + SHARE_TAG;
 
   function done() {
-    [el.marketCard, el.drawCard, el.placeCard, el.sourceCard,
-     el.submit, el.submitHint, el.note].forEach(hide);
+    /* ⚠ el.left(眼鏡布預覽)也要收起來。
+       -----------------------------------------------------------------
+       它在手機上是 position:sticky 釘在最上面的 —— 不收的話,送出之後
+       第一眼看到的還是那塊布,「已經成功送出訂單」被推到下面,
+       客人不確定到底成功了沒。
+
+       而且完成畫面本來就會把合成圖顯示在分享區,留著預覽是重複的。 */
+    [el.marketCard, el.drawCard, el.textCard, el.placeCard, el.sourceCard,
+     el.storeCard, el.left, el.submit, el.submitHint, el.note].forEach(hide);
+
+    /* 頁面大標題也收掉 —— 送出之後這一頁只剩一件事要講。
+       ⚠ 這是【送出後】才做,與 cl-working 的手機規則不同:
+         那個只在手機生效,這裡桌機也要收,不然完成訊息還是被推下去。 */
+    var head = document.querySelector('.cl-head');
+    if (head) hide(head);
     var note = document.getElementById('clCampaignNote');
     if (note) hide(note);
     el.doneText.textContent =
