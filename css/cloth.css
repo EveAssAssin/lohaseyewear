@@ -711,3 +711,72 @@
 }
 .cw-more[hidden] { display: none; }
 .cw-end { margin: 0; font-size: .82rem; color: #9a9284; }
+
+/* =============================================================
+   手機:四個來源按鈕改成左側直排,預覽放右邊(2026-09-05)
+   -------------------------------------------------------------
+   原本來源列是整條橫的,在 375px 上會排成兩列(三顆 ＋ 上傳圖一顆),
+   加上底下整張眼鏡布,光是「還沒開始挑圖」就吃掉大半個螢幕。
+   改成左直排 ＋ 右預覽之後,同樣的內容只佔一個區塊的高度。
+
+   ⚠ 只在【已經選了圖】之後才變兩欄。還沒有圖的時候右邊是空的,
+     留一條窄窄的按鈕欄配一大塊空白很奇怪;那時維持原本的整條橫列。
+
+   ⚠ 用 display:contents 讓 .cl-left / .cl-right 直接參與 .cl-main 的
+     grid —— 因為 .cl-sourcebar 與 .cl-body 是兄弟,而預覽在 .cl-body
+     裡面,不動 HTML 就沒辦法讓它們並排。
+     動 HTML 的代價是桌機版也要跟著改,那是更大的風險。
+   ============================================================= */
+@media (max-width: 960px) {
+  body.cl.cl-has-art .cl-main {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    column-gap: 10px;
+  }
+  body.cl.cl-has-art .cl-body { display: contents; }
+  body.cl.cl-has-art .cl-head,
+  body.cl.cl-has-art .cl-right,
+  body.cl.cl-has-art .cw-sec { grid-column: 1 / -1; }
+
+  /* 左欄:四顆直排 */
+  body.cl.cl-has-art .cl-sourcebar {
+    grid-column: 1;
+    position: sticky;
+    top: 70px;                    /* 與預覽同高,兩邊一起釘住 */
+    z-index: 6;
+    margin: 0 0 16px;
+    padding: 8px;
+    border: 1px solid var(--line-soft, #e8e3d7);
+    border-radius: 10px;
+    box-shadow: none;
+    width: max-content;
+  }
+  body.cl.cl-has-art .cl-bar-title { display: none; }   /* 兩欄時這行標題吃掉高度 */
+  /* ⚠ .cl-seg 是 grid 不是 flex(基準樣式是 repeat(3,1fr))——
+     寫 flex-direction:column 完全沒有作用,而且不會有任何錯誤,
+     只是四顆按鈕照樣橫排。要改的是 grid-template-columns。 */
+  body.cl.cl-has-art .cl-seg {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  body.cl.cl-has-art .cl-seg-btn {
+    width: 100%;
+    justify-content: flex-start;
+    white-space: nowrap;
+    padding: 0 12px;
+    font-size: 12.5px;
+  }
+  body.cl.cl-has-art .cl-seg-btn i { display: inline-block; }  /* 直排放得下圖示 */
+
+  /* 右欄:預覽。兩欄時它不再需要貼齊兩側的滿版底 */
+  body.cl.cl-has-art .cl-left {
+    grid-column: 2;
+    top: 70px;
+    margin: 0 0 16px;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  body.cl.cl-has-art .cl-stage { max-width: 100%; }
+}
