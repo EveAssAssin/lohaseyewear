@@ -43,7 +43,7 @@ const TOKEN_TTL_SEC = 7 * 24 * 60 * 60;
 /* 會員身分。erpid 與 mid 至少要有一個。
    bound=false 代表這是尚未綁定門市的 App 會員 —— 票券、禮物、預約
    這類需要 ERP 客編的功能對他不可用,但瀏覽、收藏、刻圖設計都可以。 */
-type Identity = { erpid: string; mid: string; bound: boolean; phone: string };
+type Identity = { erpid: string; mid: string; bound: boolean; phone: string; name: string };
 
 /* 手機正規化。與 gift.ts 的同名函式必須一致 ——
    一邊存 0912345678、另一邊比對 886912345678 的話,永遠對不上。 */
@@ -106,6 +106,22 @@ async function issueToken(id: Identity, secret: string): Promise<string> {
   };
   // 沒有就不要放空欄位,payload 越短越好
   if (id.phone) payload.ph = id.phone;
+  /* ⚠ nm(姓名)為什麼要在這裡,理由與 ph 相同。
+     -----------------------------------------------------------
+     刻圖市集有一批「舊作品」只記了 designer_name(中文姓名),
+     沒有 creator_id。要把它們認回給本人,唯一的線索就是姓名。
+
+     原本這件事是在【客人的瀏覽器】做的:
+         .update({ creator_id: member.erpid })
+         .eq('designer_name', member.name).is('creator_id', null)
+     條件與要寫的值全都來自前端 —— 也就是任何人只要送出別人的
+     姓名,就能把別人的無主作品認領成自己的,而且那些作品會開始
+     算他的分潤。
+
+     姓名簽在這裡之後,design 函式只認這一份,前端說什麼都不算數。
+     它不會擴大任何人的能力:拿到 token 的人本來就能呼叫 profile
+     拿到自己的姓名。 */
+  if (id.name) payload.nm = id.name;
   const payloadB64 = b64urlEncode(
     new TextEncoder().encode(JSON.stringify(payload)),
   );
@@ -143,7 +159,11 @@ async function verifyToken(token: string, secret: string): Promise<Identity | nu
        沒有手機的 token 就是比對不到手機指定的禮物,
        等他下次登入(最多七天)自然就有了。 */
     const phone = normPhone(String(payload?.ph || ""));
-    return { erpid, mid, bound, phone };
+    /* 舊 token 沒有 nm,同 ph:不能因此判定無效。
+       拿不到姓名的人只是暫時不會自動認領舊作品,
+       等他下次登入(最多七天)就有了。 */
+    const name = String(payload?.nm || "").trim();
+    return { erpid, mid, bound, phone, name };
   } catch {
     return null;
   }
@@ -199,16 +219,20 @@ function identityOf(loginData: Record<string, any>): Identity {
   /* 欄位名沒得確認,所以三個都試。上游哪天改叫別的名字,
      這裡會安靜地拿到空字串 —— 下面那行 log 就是為了看見這件事。 */
   const phone = normPhone(d.mobile ?? d.cellphone ?? d.phone ?? "");
+  /* 姓名。上游 login 回的是 erpname(2026-08-27 量到的四個欄位之一),
+     其餘兩個名字是保險 —— 同上,拿不到會是空字串,看 log。 */
+  const name = String(d.erpname ?? d.name ?? d.erpName ?? "").trim();
 
   console.log(
     "[auth-session] 上游 login 回傳欄位:" + Object.keys(d).join(",") +
     " | erpid=" + (erpid ? "有" : "無") +
     " | mid=" + (mid ? "有" : "無") +
     " | bound=" + bound +
-    " | mobile=" + (phone ? "有" : "無"),
+    " | mobile=" + (phone ? "有" : "無") +
+    " | name=" + (name ? "有" : "無"),
   );
 
-  return { erpid, mid, bound, phone };
+  return { erpid, mid, bound, phone, name };
 }
 
 Deno.serve(async (req) => {
@@ -286,6 +310,8 @@ Deno.serve(async (req) => {
        直接回 base0,那正是這件事最初卡住的地方。
        所以未綁定會員的手機只能來自 login 回應本身。 */
     if (!id.phone) id.phone = normPhone(String(member?.mobile ?? member?.phone ?? ""));
+    // 姓名的第二來源:login / SSO 沒給時,profile 查得到就補上
+    if (!id.name) id.name = String(member?.name ?? "").trim();
 
     return json({
       code: "200",
@@ -324,12 +350,15 @@ Deno.serve(async (req) => {
     const id: Identity = {
       erpid: String(v.erpid), mid: String(v.mid || ""), bound: true,
       phone: normPhone(v.mobile ?? v.cellphone ?? ""),
+      name: String(v.erpname ?? v.name ?? "").trim(),
     };
 
     // 一次性 token 已消耗,以下即使失敗仍須回傳成功,否則使用者會卡住
     const member = await fetchMember(PROXY_BASE, PROXY_KEY, id, { name: v.erpname || "" });
     // 查得到就把手機補進 token(SSO 沒帶手機時的來源)
     if (!id.phone) id.phone = normPhone(String(member?.mobile ?? member?.phone ?? ""));
+    // 姓名的第二來源:login / SSO 沒給時,profile 查得到就補上
+    if (!id.name) id.name = String(member?.name ?? "").trim();
 
     return json({
       code: "200",
@@ -357,8 +386,12 @@ Deno.serve(async (req) => {
     /* phone 只給後端函式用(禮物比對)。這支是 Verify JWT 關閉的
        公開端點,但呼叫者必須先持有有效 token —— 也就是他本人,
        拿到的是自己的手機,沒有擴大任何人的可見範圍。 */
+    /* name 同 phone,只給後端函式用(design 的舊作品認領)。
+       ⚠ 呼叫端【絕對不可以】改成收前端傳來的姓名 ——
+         那等於任何人都能認領別人的無主作品。 */
     return json({
-      code: "200", erpid: id.erpid, mid: id.mid, bound: id.bound, phone: id.phone,
+      code: "200", erpid: id.erpid, mid: id.mid, bound: id.bound,
+      phone: id.phone, name: id.name,
     });
   }
 

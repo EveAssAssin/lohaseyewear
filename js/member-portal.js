@@ -14,6 +14,12 @@
   const Auth = window.LohasAuth;
   const Supabase = window.LohasSupabase;
 
+  /* 刻圖相關的伺服器端動作(上下架、舊作品認領)。
+     ⚠ 不要改回在這裡直接打 engraving_designs —— 那張表的寫入
+       條件與值若來自前端,等於誰都能認領別人的作品。 */
+  const DESIGN_FN =
+    'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/design';
+
   if (!Utils || !Auth) {
     console.error('[member-portal] 缺少 LohasUtils 或 LohasAuth,請先載入 utils.js / auth.js');
     return;
@@ -136,75 +142,41 @@
           State.isAdmin = true;
         }
 
-        // === 舊 designer 自動升級為 Creator ===
-        // 條件:1) 還不是 creator  2) 有中文名
-        // 來源順序:
-        //   A. engraving_designs 已有但沒掛 creator_id 的孤兒作品
-        //   B. icons.json (legacy 來源,即時匯入 → 變成 A)
-        if (!State.isCreator && member.name) {
+        /* === 舊 designer 自動升級為 Creator ===
+           -----------------------------------------------------------
+           🚨 2026-09-09 整段搬進 design 函式(action: auto_creator)。
+
+           原本這裡做兩件 anon 身分的寫入,而且條件與值全在前端:
+             · update engraving_designs set creator_id = 我
+               where designer_name = 我的名字 and creator_id is null
+             · insert engraving_designs(status:'approved') ← icons.json 匯入
+           前者等於任何人都能認領別人的無主作品(還會開始算分潤),
+           後者等於任何人都能塞一件免審核的作品進市集。
+
+           搬進去之後姓名只認 token 裡簽的那一份,這裡【什麼都不送】。
+           拿不到姓名(舊 token)時伺服器回 skipped,下次登入就會有。 */
+        if (!State.isCreator) {
           try {
-            // --- A. 先查 Supabase 既有孤兒作品 ---
-            const orphanRes = await sb.from('engraving_designs')
-              .select('id')
-              .eq('designer_name', member.name)
-              .is('creator_id', null)
-              .limit(1);
-
-            let hasOrphan = !orphanRes.error && orphanRes.data && orphanRes.data.length > 0;
-
-            // --- B. 若 Supabase 沒有孤兒,改試 icons.json ---
-            if (!hasOrphan && window.LohasLegacyIcons) {
-              try {
-                const importResult = await window.LohasLegacyIcons.importForMember(sb, member);
-                if (importResult && importResult.imported > 0) {
-                  console.log('[Auto-Creator] icons.json 匯入完成:', importResult);
-                  hasOrphan = true; // 剛剛 insert 進去的 creator_id 已經是 erpid,不需要再 update
-                } else if (importResult && importResult.skipped > 0) {
-                  // 全都已存在 (應該不會走到這條,因為 A 沒查到)
-                  // 但保險:重查一次看 creator_id 是否已被綁
-                  const reCheck = await sb.from('engraving_designs')
-                    .select('id, creator_id')
-                    .eq('designer_name', member.name)
-                    .limit(1);
-                  if (!reCheck.error && reCheck.data && reCheck.data.length > 0) {
-                    hasOrphan = true;
-                  }
-                }
-              } catch (legacyErr) {
-                console.warn('[Auto-Creator] icons.json fallback 失敗:', legacyErr);
-              }
-            }
-
-            if (hasOrphan) {
-              console.log('[Auto-Creator] 偵測到舊作品,自動建立 creator_info:', member.name);
-
-              // 1. 補 engraving_designs.creator_id = erpid (所有同名 + 沒 creator_id 的)
-              //    (icons.json 匯入時已直接帶 creator_id,但 Supabase 既有資料可能沒帶,一律 update 一次)
-              await sb.from('engraving_designs')
-                .update({ creator_id: member.erpid })
-                .eq('designer_name', member.name)
-                .is('creator_id', null);
-
-              // 2. 插 creator_info (status=active)
-              const { data: newCreator, error: insErr } = await sb.from('creator_info')
-                .insert({
-                  member_id: member.erpid,
-                  display_name: member.name,
-                  status: 'active'
-                })
-                .select()
-                .maybeSingle();
-
-              if (!insErr) {
-                State.isCreator = true;
-                State.creatorInfo = newCreator || { member_id: member.erpid, display_name: member.name, status: 'active' };
-                console.log('[Auto-Creator] 升級成功');
-              } else {
-                console.warn('[Auto-Creator] creator_info insert 失敗:', insErr);
-              }
+            const r = await fetch(DESIGN_FN, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'auto_creator',
+                token: (Auth && Auth.getToken) ? Auth.getToken() : ''
+              })
+            });
+            const j = await r.json().catch(function () { return {}; });
+            /* ⚠ 看 j.code,不要只看 r.ok —— 這支失敗時 HTTP 也可能是 200。 */
+            if (String(j.code) === '200' && j.data && j.data.creator_info) {
+              State.isCreator = true;
+              State.creatorInfo = j.data.creator_info;
+              console.log('[Auto-Creator] 升級成功,認領 ' + j.data.claimed +
+                          ' 件、匯入 ' + j.data.imported + ' 件');
+            } else if (j.data && j.data.skipped) {
+              console.log('[Auto-Creator] 略過:' + j.data.skipped);
             }
           } catch (autoErr) {
-            console.warn('[Auto-Creator] 偵測失敗:', autoErr);
+            console.warn('[Auto-Creator] 呼叫失敗:', autoErr);
           }
         }
       } catch (err) {

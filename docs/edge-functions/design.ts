@@ -38,7 +38,12 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-05b · 上下架 + 後台重新描圖';
+const CODE_VERSION = '2026-09-09 · +auto_creator(舊作品認領與匯入)';
+
+/* 舊站留下來的作品清單。伺服器自己抓 —— 前端送進來的話,
+   等於「匯入什麼由客人決定」。 */
+const ICONS_URL = 'https://www.lohasglasses.com/data/icons.json';
+const MAX_IMPORT = 300;   // 一個人一次最多匯入幾件
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -53,7 +58,12 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
   });
 }
 
-async function whoFromToken(token: string): Promise<string | null> {
+/* 回 { erpid, name }。
+   ⚠ name 只能來自這裡(auth-session 簽在 token 裡的),
+     絕對不可以改成從 body 讀 —— 見 auto_creator 那一段。 */
+async function whoFromToken(
+  token: string,
+): Promise<{ erpid: string; name: string } | null> {
   if (!token) return null;
   try {
     const r = await fetch(AUTH_FN, {
@@ -64,7 +74,8 @@ async function whoFromToken(token: string): Promise<string | null> {
     const j = await r.json();
     if (String(j?.code) !== '200') return null;
     const erpid = String(j?.erpid ?? j?.data?.erpid ?? '').trim();
-    return erpid || null;
+    if (!erpid) return null;
+    return { erpid, name: String(j?.name ?? j?.data?.name ?? '').trim() };
   } catch {
     return null;
   }
@@ -104,15 +115,142 @@ Deno.serve(async (req) => {
   catch { return reply('006', { message: '請求格式錯誤' }, 400); }
 
   const action = String(body.action || '');
-  if (action !== 'set_show' && action !== 'retrace') {
+  if (action !== 'set_show' && action !== 'retrace' && action !== 'auto_creator') {
     return reply('006', { message: '不支援的動作' }, 400);
   }
 
-  const erpid = await whoFromToken(String(body.token || ''));
-  if (!erpid) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+  const who = await whoFromToken(String(body.token || ''));
+  if (!who) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
+  const erpid = who.erpid;
 
   if (rateLimited(erpid)) {
     return reply('429', { message: '操作太頻繁,請稍候再試' }, 429);
+  }
+
+  /* ===== auto_creator:舊作品自動認回本人,並升級為創作者 =====
+     -----------------------------------------------------------------
+     🚨 2026-09-09 從前端搬進來。原本這整段跑在【客人的瀏覽器】:
+
+       js/member-portal.js
+         .update({ creator_id: member.erpid })
+         .eq('designer_name', member.name).is('creator_id', null)
+       js/legacy-icons.js
+         .insert({ ...icons.json 的一筆, status: 'approved' })
+
+     兩個都是 anon 身分直接打表,而條件與要寫的值全都來自前端。
+     也就是說:
+       · 送別人的姓名 → 把別人的無主作品認領成自己的(而且開始算分潤)
+       · 自己組一筆 payload → 塞一件 status='approved' 的作品進市集,
+         完全不經過審核
+
+     搬進來之後,姓名只認 token 裡簽出來的那一份(auth-session 的
+     verify 回傳),icons.json 由伺服器自己去抓、自己比對。
+     ⚠ 這一段【不接受任何前端傳入的欄位】,body 只有 token。
+
+     沒有 id,所以放在下面那道作品編號檢查【之前】。 */
+  if (action === 'auto_creator') {
+    // 沒有姓名就什麼都不做。舊 token 沒簽姓名,下次登入(最多七天)就有了
+    if (!who.name) return reply('200', { data: { skipped: 'no_name' } });
+
+    // 已經是創作者就不必再跑
+    const { data: already } = await db.from('creator_info')
+      .select('member_id').eq('member_id', erpid).eq('status', 'active').maybeSingle();
+    if (already) return reply('200', { data: { skipped: 'already_creator' } });
+
+    /* A. 先認領 Supabase 既有的孤兒作品(同名 + 還沒有主人)。
+       ⚠ 同名不同人是這個做法先天的風險 —— 但它跟搬進來之前一樣,
+         不是這次改動造成的。差別在於現在姓名是伺服器簽的,
+         而不是前端說了算。 */
+    const { data: claimed, error: claimErr } = await db.from('engraving_designs')
+      .update({ creator_id: erpid })
+      .eq('designer_name', who.name)
+      .is('creator_id', null)
+      .select('id');
+    if (claimErr) {
+      console.error('[design/auto_creator] 認領失敗', erpid, claimErr.message);
+      return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    }
+    let claimedCount = claimed?.length || 0;
+    let importedCount = 0;
+
+    /* B. 一件都沒有才去翻 icons.json(舊站留下來的作品清單)。
+       這是靜態檔,伺服器自己抓 —— 前端送進來的話等於可以自訂內容。 */
+    if (!claimedCount) {
+      try {
+        const res = await fetch(ICONS_URL, { headers: { 'Cache-Control': 'no-cache' } });
+        if (res.ok) {
+          const all = await res.json();
+          const mine = (Array.isArray(all) ? all : [])
+            .filter((x: any) => String(x?.designer || '').trim() === who.name)
+            .slice(0, MAX_IMPORT);
+
+          if (mine.length) {
+            /* 查重:同一個 designer_name + name + type='legacy' 只留一筆。
+               少了這道,重整頁面就會再匯入一次。 */
+            const { data: exist } = await db.from('engraving_designs')
+              .select('name').eq('designer_name', who.name).eq('type', 'legacy');
+            const seen = new Set((exist || []).map((r: any) => String(r.name || '')));
+
+            const rows = mine
+              .filter((x: any) => !seen.has(String(x?.name || '')))
+              .map((x: any) => {
+                const row: Record<string, unknown> = {
+                  name:          String(x?.name || ''),
+                  slogan:        String(x?.slogan || ''),
+                  category:      String(x?.category || ''),
+                  keywords:      String(x?.keywords || ''),
+                  creator_id:    erpid,
+                  designer_name: who.name,
+                  status:        'approved',   // 舊作品視為已上架,與搬進來之前一致
+                  type:          'legacy',
+                };
+                if (x?.image_jpg) row.image_url = String(x.image_jpg);
+                if (x?.image_png) row.image_url_png = String(x.image_png);
+                const t = String(x?.timestamp || '');
+                if (/^\d{14}$/.test(t)) {
+                  const iso = t.slice(0, 4) + '-' + t.slice(4, 6) + '-' + t.slice(6, 8) +
+                              'T' + t.slice(8, 10) + ':' + t.slice(10, 12) + ':' + t.slice(12, 14);
+                  const d = new Date(iso);
+                  if (!isNaN(d.getTime())) row.listed_at = d.toISOString();
+                }
+                return row;
+              });
+
+            if (rows.length) {
+              const { data: ins, error: insErr } = await db.from('engraving_designs')
+                .insert(rows).select('id');
+              if (insErr) {
+                console.error('[design/auto_creator] 匯入失敗', erpid, insErr.message);
+              } else {
+                importedCount = ins?.length || 0;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // 匯入失敗不影響認領,也不該把客人擋在外面
+        console.warn('[design/auto_creator] icons.json 讀取失敗', (e as Error).message);
+      }
+    }
+
+    if (!claimedCount && !importedCount) {
+      return reply('200', { data: { skipped: 'no_works' } });
+    }
+
+    // C. 兩者有其一才建立創作者身分
+    const { data: created, error: ciErr } = await db.from('creator_info')
+      .insert({ member_id: erpid, display_name: who.name, status: 'active' })
+      .select().maybeSingle();
+    if (ciErr) {
+      console.error('[design/auto_creator] creator_info 建立失敗', erpid, ciErr.message);
+      return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    }
+
+    console.log('[design/auto_creator] ' + erpid + ' 認領 ' + claimedCount +
+                ' 匯入 ' + importedCount);
+    return reply('200', {
+      data: { claimed: claimedCount, imported: importedCount, creator_info: created },
+    });
   }
 
   const id = String(body.id || '').trim();
