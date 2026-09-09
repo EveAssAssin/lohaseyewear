@@ -38,7 +38,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-09 · +auto_creator(舊作品認領與匯入)';
+const CODE_VERSION = '2026-09-09b · +auto_creator +submit/update_own';
 
 /* 舊站留下來的作品清單。伺服器自己抓 —— 前端送進來的話,
    等於「匯入什麼由客人決定」。 */
@@ -114,8 +114,9 @@ Deno.serve(async (req) => {
   try { body = await req.json(); }
   catch { return reply('006', { message: '請求格式錯誤' }, 400); }
 
+  const ACTIONS = ['set_show', 'retrace', 'auto_creator', 'submit', 'update_own'];
   const action = String(body.action || '');
-  if (action !== 'set_show' && action !== 'retrace' && action !== 'auto_creator') {
+  if (ACTIONS.indexOf(action) < 0) {
     return reply('006', { message: '不支援的動作' }, 400);
   }
 
@@ -251,6 +252,98 @@ Deno.serve(async (req) => {
     return reply('200', {
       data: { claimed: claimedCount, imported: importedCount, creator_info: created },
     });
+  }
+
+  /* ===== submit / update_own:客人送審與修改自己的作品 =====
+     -----------------------------------------------------------------
+     🚨 2026-09-09 從 js/upload-design.js 搬進來。原本是:
+
+       sb.from(CONFIG.TABLE).insert(payload)                    ← 新作品
+       sb.from(CONFIG.TABLE).update(payload).eq('id', editId)   ← 修改
+
+     兩個問題:
+       · payload 帶 `creator_id: String(member.erpid)`,而 member
+         來自 localStorage —— 作品掛在誰名下由前端說了算
+       · update 的條件【只有 id】,沒有比對這件作品是不是他的。
+         擋住它的一直只有 RLS,而那條政策是無條件放行 ——
+         也就是任何人都能改掉任何一件刻圖的名稱與圖檔。
+
+     搬進來之後 creator_id / designer_name 一律由伺服器從 token 填,
+     update 先讀出原列比對擁有者,對不上直接 403。 */
+  if (action === 'submit' || action === 'update_own') {
+    const name = String(body.name || '').trim();
+    if (!name) return reply('006', { message: '作品名稱不可空白' }, 400);
+
+    /* 圖檔網址只收自家 Storage 的公開網址。
+       不驗的話,前端可以把 image_url 指到任意網站 ——
+       那些圖會出現在市集,而且我方無法控管內容。 */
+    const PREFIX = `${SUPABASE_URL}/storage/v1/object/public/`;
+    const urlOk = (u: string) => !u || u.startsWith(PREFIX);
+    const imgs: Record<string, string> = {
+      image_url:     String(body.image_url || ''),
+      image_url_png: String(body.image_url_png || ''),
+      image_url_svg: String(body.image_url_svg || ''),
+    };
+    for (const k of Object.keys(imgs)) {
+      if (!urlOk(imgs[k])) {
+        console.warn('[design] 外部圖檔網址被拒', erpid, imgs[k].slice(0, 80));
+        return reply('006', { message: '圖檔網址不正確' }, 400);
+      }
+    }
+
+    const row: Record<string, unknown> = {
+      name,
+      slogan:   String(body.slogan || ''),
+      category: String(body.category || ''),
+      keywords: String(body.keywords || ''),
+      /* 🚨 這三個由伺服器填,不看 body。
+         designer_name 是顯示用的作者名,跟認領用的是同一個來源。 */
+      creator_id:    erpid,
+      designer_name: who.name,
+      status:        'pending',   // 送審與改後重新送審都是 pending
+      type:          'member',
+    };
+    for (const k of Object.keys(imgs)) if (imgs[k]) row[k] = imgs[k];
+
+    try {
+      if (action === 'submit') {
+        const { data, error } = await db.from('engraving_designs')
+          .insert(row).select().single();
+        if (error) throw error;
+        return reply('200', { data: { row: data } });
+      }
+
+      /* update_own —— 先確認這件作品是他的。
+         ⚠ 用讀出來的 creator_id 比對,不是把條件寫進 update ——
+           兩者結果一樣,但分開寫才能區分「不是你的」與「不存在」,
+           而 RLS 濾掉的 update 是 0 列且不報錯,分不出是哪一種。 */
+      const target = String(body.id || '').trim();
+      if (!/^[0-9a-fA-F-]{36}$/.test(target)) {
+        return reply('006', { message: '缺少作品編號' }, 400);
+      }
+      const { data: own, error: readErr } = await db.from('engraving_designs')
+        .select('id, creator_id').eq('id', target).maybeSingle();
+      if (readErr) throw readErr;
+      if (!own) return reply('007', { message: '找不到這件作品' }, 404);
+      if (String(own.creator_id || '') !== erpid) {
+        console.warn('[design] 拒絕修改他人作品 erpid=' + erpid + ' id=' + target);
+        return reply('403', { message: '這不是你的作品' }, 403);
+      }
+
+      const { data, error } = await db.from('engraving_designs')
+        .update(row).eq('id', target).select().single();
+      if (error) throw error;
+      return reply('200', { data: { row: data } });
+
+    } catch (e) {
+      const err = e as { code?: string; message?: string };
+      // 名稱唯一索引。這句要照原樣傳回去,前端會直接顯示給客人
+      if (err.code === '23505' || /duplicate key|unique/i.test(err.message || '')) {
+        return reply('009', { message: '「' + name + '」這個名稱已經有人用了,請換一個' }, 409);
+      }
+      console.error('[design] ' + action + ' 失敗', erpid, err.message);
+      return reply('500', { message: '資料寫入失敗,請再試一次' }, 500);
+    }
   }
 
   const id = String(body.id || '').trim();

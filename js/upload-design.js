@@ -26,7 +26,10 @@
   // ===== 設定 =====
   var CONFIG = {
     STORAGE_BUCKET:   'engraving-uploads',
-    TABLE:            'engraving_designs',
+    TABLE:            'engraving_designs',   // 只剩讀取在用(件數統計)
+    /* 寫入一律走這一支。⚠ 不要改回 sb.from(CONFIG.TABLE).insert/update ——
+       那條路的 creator_id 由前端決定,而 update 沒有擁有者條件。 */
+    DESIGN_FN:        'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/design',
     MAX_SIZE_MB:      5,
     ACCEPT:           'image/png,image/jpeg,image/jpg,image/svg+xml',
     CROP_ASPECT:      1,                   // 1:1
@@ -2178,20 +2181,30 @@
       }
 
       // 3. 寫進 engraving_designs
-      var displayName = member.erpname || member.erpName || member.name || '';
-      if(!displayName){
-        console.warn('[upload-design] 會員物件沒有 name 欄位:', member);
-      }
+      /* 🚨 2026-09-09 改走 design 函式。原本這裡是
+             sb.from(CONFIG.TABLE).insert(payload)
+             sb.from(CONFIG.TABLE).update(payload).eq('id', state.editId)
+
+         兩個都是 anon 身分直接打表:
+           · payload 帶 creator_id: member.erpid,而 member 來自
+             localStorage —— 作品掛在誰名下由前端決定
+           · update 只用 id 當條件,沒有比對擁有者。擋住它的一直
+             只有 RLS,而那條政策無條件放行 —— 任何人都能改掉
+             任何一件刻圖
+
+         現在 creator_id / designer_name / status / type 全部由
+         伺服器從驗過的 token 填,這裡【不送】那四個欄位。
+         修改時伺服器會先讀出原列比對擁有者,不是你的就回 403。 */
       var payload = {
-        name:           name,
-        slogan:         slogan,
-        category:       state.selectedCategory,
-        keywords:       state.selectedTags.join(','),
-        creator_id:     String(member.erpid),
-        designer_name:  displayName,
-        status:         'pending',
-        type:           'member',
+        action:   state.editId ? 'update_own' : 'submit',
+        token:    (window.LohasAuth && window.LohasAuth.getToken)
+                    ? window.LohasAuth.getToken() : '',
+        name:     name,
+        slogan:   slogan,
+        category: state.selectedCategory,
+        keywords: state.selectedTags.join(','),
       };
+      if(state.editId) payload.id = state.editId;
       if(pngUrl){
         payload.image_url     = pngUrl;
         payload.image_url_png = pngUrl;
@@ -2200,18 +2213,18 @@
         payload.image_url_svg = svgUrl;
       }
 
-      var resp;
-      if(state.editId){
-        resp = await sb.from(CONFIG.TABLE).update(payload).eq('id', state.editId).select().single();
-      } else {
-        resp = await sb.from(CONFIG.TABLE).insert(payload).select().single();
+      var fnRes = await fetch(CONFIG.DESIGN_FN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      var fnJson = await fnRes.json().catch(function(){ return {}; });
+      /* ⚠ 看 code,不要只看 fnRes.ok —— 這支失敗時 HTTP 也可能是 200。
+         名稱重複(009)的訊息要原樣顯示給客人,那句是寫給他看的。 */
+      if(String(fnJson.code) !== '200'){
+        throw new Error(fnJson.message || '資料寫入失敗,請稍後再試');
       }
-      if(resp.error){
-        if(resp.error.code === '23505' || /duplicate key|unique/i.test(resp.error.message || '')){
-          throw new Error('「' + name + '」這個名稱已經有人用了,請換一個');
-        }
-        throw new Error('資料寫入失敗:' + resp.error.message);
-      }
+      var resp = { data: fnJson.data && fnJson.data.row };
 
       // 成功 → 關閉 + 清空 + 通知
       // (setSubmitting 要先解,理由同上面 noReview 那段)
