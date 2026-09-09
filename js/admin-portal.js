@@ -2561,11 +2561,11 @@
     const sb = getSb();
     if (!sb) return;
 
-    const { error } = await sb.from('gallery_posts')
-      .update({ status: 'approved' })
-      .eq('id', id);
-
-    if (error) return alert('通過失敗: ' + error.message);
+    // reviewed_by / reviewed_at 由伺服器從驗過的身分填,見 admin-write
+    try {
+      await adminWrite('gallery_posts', 'update',
+        { status: 'approved', reviewed_at: new Date().toISOString() }, id);
+    } catch (err) { return alert('通過失敗: ' + err.message); }
 
     // 立刻從 DOM 移除這張卡
     removeReviewCardFromDOM(id);
@@ -2585,11 +2585,11 @@
     const sb = getSb();
     if (!sb) return;
 
-    const { error } = await sb.from('gallery_posts')
-      .update({ status: 'pending' })
-      .eq('id', id);
-
-    if (error) return alert('取消失敗: ' + error.message);
+    /* 退回待審核時,伺服器會把 reviewed_by 清成 null(status=pending 的規則)。 */
+    try {
+      await adminWrite('gallery_posts', 'update',
+        { status: 'pending', reviewed_at: null }, id);
+    } catch (err) { return alert('取消失敗: ' + err.message); }
 
     removeReviewCardFromDOM(id);
     setTimeout(() => {
@@ -3836,8 +3836,7 @@
 
       hint.textContent = '寫入資料庫中...';
 
-      const { error: insertError } = await sb.from('gallery_posts').insert(payload);
-      if (insertError) throw insertError;
+      await adminWrite('gallery_posts', 'insert', payload);
 
       hint.style.color = 'var(--status-approved)';
       hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})`;
@@ -5010,16 +5009,19 @@
         const { data: urlData } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
         const photoUrl = urlData.publicUrl;
 
-        const { error: insErr } = await sb.from('gallery_posts').insert({
-          title: name + ' 的照片',
-          type: 'photo',
-          customer_name: name,
-          member_id: mid,
-          image_urls: [photoUrl],
-          main_image_url: photoUrl,
-          status: 'approved'
-        });
-        if (insErr) console.error('[gallery_posts insert 失敗]', insErr);
+        /* member_id 這裡是【指定別人】(那位創作者的 mid)——
+           管理員動作才有這個能力,客人端那一支不開這個欄位。 */
+        try {
+          await window.LohasAdminWrite('gallery_posts', 'insert', {
+            title: name + ' 的照片',
+            type: 'photo',
+            customer_name: name,
+            member_id: mid,
+            image_urls: [photoUrl],
+            main_image_url: photoUrl,
+            status: 'approved'
+          });
+        } catch (insErr) { console.error('[gallery_posts insert 失敗]', insErr); }
         done++;
         if (tipEl) tipEl.textContent = `上傳中 (${done}/${files.length})…`;
       } catch (err) {
@@ -5075,8 +5077,9 @@
     if (!confirm('確定要刪除這張照片?(從前台立即消失)')) return;
     const sb = window.LohasSupabase?.getClient?.();
     if (!sb) return;
-    const { error } = await sb.from('gallery_posts').delete().eq('id', id);
-    if (error) { alert('刪除失敗: ' + error.message); return; }
+    try {
+      await window.LohasAdminWrite('gallery_posts', 'delete', null, id);
+    } catch (err) { alert('刪除失敗: ' + err.message); return; }
     loadCreatorPhotos(AGState.editMemberId);
   };
 
@@ -6180,11 +6183,7 @@
 
       if (!payload.title) { alert('標題不可為空'); return; }
 
-      const { error } = await sb.from('gallery_posts')
-        .update(payload)
-        .eq('id', msState.editId);
-
-      if (error) throw error;
+      await adminWrite('gallery_posts', 'update', payload, msState.editId);
 
       const idx = msState.posts.findIndex(x => String(x.id) === String(msState.editId));
       if (idx >= 0) Object.assign(msState.posts[idx], payload);
@@ -6229,11 +6228,7 @@
       }
 
       // 2. 刪資料庫紀錄
-      const { error } = await sb.from('gallery_posts')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await adminWrite('gallery_posts', 'delete', null, id);
 
       msState.posts = msState.posts.filter(x => String(x.id) !== String(id));
       msApplyFilters();
@@ -6920,10 +6915,19 @@
         if(e1){ alert('刪除聯名照片失敗:' + e1.message); return; }
       }
 
-      // 2. 同步刪 gallery_posts (用 image_url 反查最快)
+      /* 2. 同步刪 gallery_posts。
+         ⚠ 原本是 .delete().eq('main_image_url', ...) —— 用非主鍵當條件。
+           admin-write 刻意【只允許用主鍵當條件】(不然 delete 可以帶
+           任意條件,等於清空整張表是一個合法請求),所以改成
+           先查出 id、再照主鍵刪。 */
       if(item.image_url){
-        const { error: e2 } = await client.from('gallery_posts').delete().eq('main_image_url', item.image_url);
-        if(e2) console.warn('[gallery_posts 刪除警告]', e2);
+        try {
+          const { data: gp } = await client.from('gallery_posts')
+            .select('id').eq('main_image_url', item.image_url);
+          for(const g of (gp || [])){
+            await window.LohasAdminWrite('gallery_posts', 'delete', null, g.id);
+          }
+        } catch(e2){ console.warn('[gallery_posts 刪除警告]', e2); }
       }
 
       // 3. 從 state 移除
@@ -7463,14 +7467,11 @@
             status: 'approved',
             topic: '授權聯名'
           };
-          const { data: gpData, error: gpErr } = await client.from('gallery_posts')
-            .insert(galleryPayload)
-            .select('*')
-            .single();
-          if(gpErr){
+          try {
+            const gp = await window.LohasAdminWrite('gallery_posts', 'insert', galleryPayload);
+            if(gp && gp.row) cpData._galleryPostId = gp.row.id;
+          } catch(gpErr){
             console.error('[gallery_posts insert 失敗]', gpErr);
-          } else if(gpData){
-            cpData._galleryPostId = gpData.id;
           }
 
           // 5. push 到 state

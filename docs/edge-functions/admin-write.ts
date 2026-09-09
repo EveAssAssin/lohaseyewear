@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-09 · +engraving_designs +gallery_posts(審核用)';
+const CODE_VERSION = '2026-09-09b · gallery_posts 擴到後台九個寫入點';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -176,11 +176,19 @@ const ALLOW: Record<string, Rule> = {
   },
   gallery_posts: {
     key: 'id',
-    ops: ['update'],
-    /* 只給審核用的三欄。後台其他寫 gallery_posts 的地方還沒搬,
-       但那些不必經過這裡 —— 這條白名單只服務「快速通過 / 駁回」,
-       那段程式用 tableMap 依類型決定表名,刻圖與投稿共用同一段。 */
-    cols: ['status', 'reject_reason', 'reviewed_at'],
+    ops: ['insert', 'update', 'delete'],
+    /* 2026-09-09 從「只有審核那三欄」擴到後台九個寫入點都用得到。
+       客人自己的投稿走另一支(gallery 函式),那邊會比對擁有者;
+       這裡是管理員,本來就會動別人的東西,所以不比對。
+
+       ⚠ member_id 開著是因為【官方上傳與聯名照片要指定作者】:
+         樂活官方上傳寫 'OFFICIAL',聯名照片寫 'collab-<id>'。
+         這是管理員動作,呼叫端已經驗過是 admins 表裡的人。
+         客人端那一支【沒有】開這個欄位 —— 那裡的作者只能是他自己。 */
+    cols: ['title', 'topic', 'carrier', 'story', 'type',
+           'customer_name', 'member_id', 'image_urls', 'main_image_url',
+           'is_public', 'subcategories',
+           'status', 'reject_reason', 'reviewed_at'],
   },
 };
 

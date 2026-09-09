@@ -20,6 +20,28 @@
   const DESIGN_FN =
     'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/design';
 
+  /* 客人自己的投稿(靈感牆)。同理:不要改回直接打 gallery_posts。 */
+  const GALLERY_FN =
+    'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gallery';
+
+  async function galleryWrite(action, extra) {
+    const payload = Object.assign({
+      action: action,
+      token: (Auth && Auth.getToken) ? Auth.getToken() : ''
+    }, extra || {});
+    const r = await fetch(GALLERY_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json().catch(function () { return {}; });
+    /* ⚠ 看 j.code,不要只看 r.ok —— 這支失敗時 HTTP 也可能是 200。 */
+    if (String(j.code) !== '200') {
+      throw new Error(j.message || ('操作失敗(HTTP ' + r.status + ')'));
+    }
+    return j.data || {};
+  }
+
   if (!Utils || !Auth) {
     console.error('[member-portal] 缺少 LohasUtils 或 LohasAuth,請先載入 utils.js / auth.js');
     return;
@@ -788,22 +810,16 @@
       return;
     }
 
-    const postsTable = (Supabase.CONFIG && Supabase.CONFIG.POSTS_TABLE) || 'gallery_posts';
-
-    const { data, error } = await sb
-      .from(postsTable)
-      .delete()
-      .eq('id', postId)
-      .select('id');
-
-    if (error) {
-      console.error('[deletePhoto] 刪除失敗:', error);
-      window.alert('刪除失敗:' + (error.message || '請確認權限'));
-      return;
-    }
-    if (!data || data.length === 0) {
-      console.warn('[deletePhoto] 沒有資料被刪除,可能是 RLS 阻擋或 ID 不存在', postId);
-      window.alert('刪除失敗:沒有資料被刪除(RLS 權限不足或資料不存在)');
+    /* 🚨 2026-09-09 改走 gallery 函式。原本是
+           .from(postsTable).delete().eq('id', postId)
+       條件只有 id,沒有比對這張照片是不是他的 —— 擋住它的一直只有
+       RLS,而 gallery_posts 的政策是無條件放行,等於任何人都能刪掉
+       任何一位客人的投稿。伺服器會先讀出原列比對 member_id。 */
+    try {
+      await galleryWrite('delete_own', { id: postId });
+    } catch (err) {
+      console.error('[deletePhoto] 刪除失敗:', err);
+      window.alert('刪除失敗:' + err.message);
       return;
     }
 
@@ -1051,14 +1067,16 @@
   async function deleteStory(id) {
     if (!id) return;
     if (!window.confirm('確定刪除這篇故事?')) return;
-    const sb = getSupabase();
-    const { error } = await sb.from('gallery_posts')
-      .delete()
-      .eq('id', id)
-      .eq('member_id', State.member.erpid);
-    if (error) {
-      console.error('[deleteStory] 失敗:', error);
-      window.alert('刪除失敗:' + (error.message || ''));
+    /* 🚨 2026-09-09 改走 gallery 函式。原本是
+           .delete().eq('id', id).eq('member_id', State.member.erpid)
+       有比對 member_id,但那個值來自 localStorage —— 改一下就過了。
+       那是宣稱,不是驗證。而且被濾掉時是影響 0 列且不報錯,
+       畫面會顯示「刪除成功」但東西還在。 */
+    try {
+      await galleryWrite('delete_own', { id: id });
+    } catch (err) {
+      console.error('[deleteStory] 失敗:', err);
+      window.alert('刪除失敗:' + err.message);
       return;
     }
     loadStories();

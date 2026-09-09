@@ -3,7 +3,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseClient = Supabase?.getClient?.() || null;
 
   const SUPABASE_BUCKET = Supabase?.CONFIG?.STORAGE_BUCKET || "gallery-uploads";
-  const SUPABASE_TABLE = Supabase?.CONFIG?.POSTS_TABLE || "gallery_posts";
+  const SUPABASE_TABLE = Supabase?.CONFIG?.POSTS_TABLE || "gallery_posts";  // 只剩讀取在用
+
+  /* 投稿的寫入一律走這一支。
+     ⚠ 不要改回 supabaseClient.from(SUPABASE_TABLE).insert/update ——
+       那條路的 member_id 由前端決定,而 update 沒有擁有者條件。 */
+  const GALLERY_FN =
+    "https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gallery";
 
   const state = {
     selectedSlot: null,
@@ -442,47 +448,47 @@ document.addEventListener("DOMContentLoaded", () => {
       imageUrls = await uploadImagesToSupabase();
     }
 
-    // 自動分流: 故事文字 >= 50 字 = story 卡, 否則 = photo 卡
+    // 自動分流(故事 >= 50 字 = story 卡)已移到 gallery 函式,這裡只送原文
     const storyText = shareText.value.trim();
-    const cardType = storyText.length >= 50 ? "story" : "photo";
 
-    const postPayload = {
-      title: getTitle(),
-      topic: workCategory.value,
+    /* 🚨 2026-09-09 改走 gallery 函式。原本這裡是
+           .insert(postPayload)
+           .update(postPayload).eq("id", state.editId)
+
+       兩個都是 anon 身分直接打表:
+         · postPayload 帶 member_id / customer_name,而 member 來自
+           localStorage —— 投稿掛在誰名下由前端決定
+         · update 的條件只有 id,沒有比對擁有者。擋住它的一直只有
+           RLS,而 gallery_posts 的政策是無條件放行 ——
+           任何人都能改掉任何一位客人的投稿
+
+       現在 member_id / customer_name / status / type 由伺服器從
+       驗過的 token 填,這裡【不送】那四個欄位。
+       type 的分流規則(故事 >= 50 字)也移到伺服器,兩邊各算一次
+       遲早會分岔。 */
+    const payload = {
+      action:  state.editId ? "update_own" : "submit",
+      token:   (window.LohasAuth && window.LohasAuth.getToken)
+                 ? window.LohasAuth.getToken() : "",
+      title:   getTitle(),
+      topic:   workCategory.value,
       carrier: carrierCategory.value,
-      story: storyText,
-      type: cardType,
-      customer_name: member.name || "顧客",
-      member_id: member.erpid,
-      image_urls: imageUrls,
-      main_image_url: imageUrls[0],
-      is_public: true,
-      status: "pending"   // 重新送審
+      story:   storyText,
+      image_urls: imageUrls
     };
+    if (state.editId) payload.id = state.editId;
 
-    if (state.editId) {
-      // 編輯模式: update (重新送審, 清掉 reject_reason)
-      postPayload.reject_reason = null;
-      const { data, error } = await supabaseClient
-        .from(SUPABASE_TABLE)
-        .update(postPayload)
-        .eq("id", state.editId)
-        .select("id,title,topic,carrier,story,type,customer_name,member_id,image_urls,main_image_url,created_at,is_public,status")
-        .single();
-      if (error) throw error;
-      return data;
+    const res = await fetch(GALLERY_FN, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json().catch(function () { return {}; });
+    /* ⚠ 看 code,不要只看 res.ok —— 這支失敗時 HTTP 也可能是 200。 */
+    if (String(json.code) !== "200") {
+      throw new Error(json.message || "資料寫入失敗,請稍後再試");
     }
-
-    // 新建模式
-    const { data, error } = await supabaseClient
-      .from(SUPABASE_TABLE)
-      .insert(postPayload)
-      .select("id,title,topic,carrier,story,type,customer_name,member_id,image_urls,main_image_url,created_at,is_public,status")
-      .single();
-
-    if (error) throw error;
-
-    return data;
+    return json.data && json.data.row;
   }
 
   function clearForm() {
