@@ -330,19 +330,28 @@ engraving_designs  gallery_posts(只開審核那三欄)
 **不要為了方便繞回 `client.from(表).update(...)`** —— 那些表的 anon 政策
 已經收成只剩 SELECT,繞回去的症狀是 **HTTP 200、0 列、沒有錯誤訊息**。
 
-⚠ **`engraving_designs` 的政策仍然全開,還不能收。**
-後台那 10 個寫入點 2026-09-09 已搬完並實測,但**客人端還有兩個**:
+### `engraving_designs` 的寫入路徑(2026-09-09 全部搬完並收好政策)
 
-| 位置 | 做什麼 | 為什麼危險 |
-|---|---|---|
-| `js/legacy-icons.js` | 匯入 icons.json 舊作品 | `status` 直接寫 `'approved'`,等於**任何人都能塞一件免審核的作品進市集** |
-| `js/member-portal.js` | 認領 `designer_name` 相同且無主的作品 | 條件與值全在前端,等於**任何人都能認領別人的無主作品** |
+| 誰 | 走哪裡 |
+|---|---|
+| 後台(審核、定價、上下架、刪除) | `admin-write` |
+| 客人送審 / 修改自己的作品 | `design` 的 `submit` / `update_own` |
+| 客人上下架 / 移垃圾桶 | `design` 的 `set_show` |
+| 舊作品認領與 icons.json 匯入 | `design` 的 `auto_creator` |
+| 按讚 / 分享計數 | `design_like_inc` / `_dec` / `_share_inc`(SECURITY DEFINER) |
+| **門市上傳** | **外部客戶端直接 INSERT(不在本 repo)** |
 
-兩個是同一條流程(member-portal 的「舊 designer 自動升級為 Creator」),
-要一起搬進 `design.ts`。卡在**伺服器端拿不到客人姓名** ——
-`auth-session` 的 `verify` 只回 `erpid / mid / bound / phone`,
-而認領要靠姓名比對。得讓 token 帶上姓名,那是全站登入的入口,
-**單獨一次部署、單獨驗證,不要跟其他改動綁在一起。**
+政策現況:**只剩 SELECT(全開)與 INSERT(限 `status='pending'`)**,
+沒有 UPDATE 也沒有 DELETE。
+
+`update_own` 刻意「先讀出來比對 creator_id,再決定要不要寫」,
+而不是把擁有者條件塞進 `update` 的 where —— 後者影響 0 列且不報錯,
+分不出「不是你的」與「這件不存在」。
+
+⚠ **`auth-session` 的 token 多簽了 `nm`(姓名)** 給認領用。
+姓名【只能】來自這裡,`design` 不從 body 讀 ——
+前端說了算的話,任何人都能認領別人的無主作品。
+舊 token 沒有 `nm` 照樣有效(同 `ph`),那些人下次登入就有了。
 
 ### ⚠ `engraving_designs.updated_at` 沒人維護,不要拿它判斷有沒有寫進去
 
@@ -386,13 +395,56 @@ engraving_designs  gallery_posts(只開審核那三欄)
    `INSERT INTO creators`,**任何程式碼 grep 都看不到**。
    收掉 `creators_all` 之後刻圖審核通過會噴 `42501`。
 
-所以收政策之前三件都要做:
+2026-09-09 又栽了第四次(`js/upload-design.js` 用 `CONFIG.TABLE`),
+所以**不要再靠「記得也要 grep 變數」** —— 記得是沒有用的,要換方法:
+
+```bash
+# 掃全站每一個 .from(...),再看後面四行有沒有接寫入動作。
+# 這樣寫法是固定字串還是變數都跑不掉,一次列出全部。
+for f in $(find js -name '*.js'); do
+  grep -n "\.from(" "$f" | while IFS=: read -r n rest; do
+    op=$(sed -n "${n},$((n+4))p" "$f" \
+         | grep -o "\.\(insert\|update\|upsert\|delete\)(" | head -1)
+    [ -z "$op" ] && continue
+    tbl=$(printf '%s' "$rest" | sed -n "s/.*\.from(\([^)]*\)).*/\1/p")
+    case "$tbl" in \'*) kind="   固定" ;; *) kind="⚠ 變數" ;; esac
+    echo "$kind  $f:$n  from($tbl)  $op"
+  done
+done | sort
+```
+
+2026-09-09 這樣掃出全站 45 個寫入點,其中 10 個是變數表名。
+⚠ 掃出來的結果會**把註解裡的範例也算進去**(那天有兩個誤判),
+所以每一筆都要打開看一眼,不要照著清單直接改。
+
+所以收政策之前四件都要做:
 
 ```
-① grep 字面表名的 insert/update/upsert/delete
-② grep 用變數當表名的 .from(x) 寫入
-③ 查 pg_trigger —— 誰寫這張表,而且該 trigger 函式是不是 SECURITY DEFINER
+① 用上面那段掃全站的寫入點(固定與變數表名一起)
+② 查 pg_trigger —— 誰寫這張表,該 trigger 函式是不是 SECURITY DEFINER
+③ 查 pg_proc —— 有沒有函式(RPC)在寫這張表,同樣要看 prosecdef
+④ 🚨 查【資料】,不是只查程式碼 —— 見下一段
 ```
+
+### 🚨 ④ 寫入方可能根本不在這個 repo 裡(2026-09-09 差點踩到)
+
+`engraving_designs` 有 92 筆 `type='store'`,最新一筆是前一天寫的,
+而**這個 repo 裡沒有任何一行程式碼會產生它們** ——
+門市那條上傳路徑是外部客戶端直接拿 anon key 打資料表。
+
+程式碼掃得再乾淨都看不到這種寫入方。**只有資料看得到。**
+所以收任何一張表的政策之前,先問:
+
+```sql
+-- 這張表最近是誰在寫?有沒有我方程式產生不出來的資料?
+select type, count(*), max(created_at) from <表> group by type;
+```
+
+出現「我方解釋不了的來源」就是有外部寫入方,那條政策不能收 ——
+收了對方會直接壞掉,而且**我方收不到任何錯誤**,要等人來反映。
+
+`engraving_designs` 的 INSERT 因此刻意保留,只加了
+`with check (status = 'pending')`,擋掉「直接塞一件 approved 進市集」。
 
 trigger 函式要能在 RLS 之下寫入,必須是
 `SECURITY DEFINER` + `set search_path = public`(2026-09-08 已把
