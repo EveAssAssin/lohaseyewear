@@ -450,6 +450,29 @@ trigger 函式要能在 RLS 之下寫入,必須是
 `SECURITY DEFINER` + `set search_path = public`(2026-09-08 已把
 `auto_upgrade_to_creator` 與 `auto_upgrade_to_creator_on_insert` 改過來)。
 
+### 🚨 `for all` 政策不只是寫入 —— 它同時也在授予 SELECT
+
+2026-09-09 收 `news` / `collabs` 的 `for all using(true)` 時踩到:
+那條政策拿掉之後,剩下的 SELECT 政策是**有條件的**
+(`news` 只給已發布、`collabs` 只給 active/upcoming/ended),
+於是**草稿在後台的清單上消失了** —— 而後台是用 anon 直接讀這兩張表。
+
+症狀是「清單少了東西」,沒有錯誤訊息。
+`collabs` 那筆草稿聯名就這樣不見了十幾分鐘。
+
+所以收 `for all` 之前一定要問:**剩下的 SELECT 政策夠不夠後台用?**
+比對方式(不必開後台):
+
+```
+擁有者側:select status, count(*) from <表> group by status;   ← SQL Editor
+anon  側:用 anon key 打 REST,同樣分組數一次
+兩邊對不上的那些列,就是後台會看不到的東西
+```
+
+⚠ 目前 `news` 與 `collabs` 各補了一條 `for select using(true)` 讓後台能讀,
+**代價是未發布的草稿等於公開可讀**。真正的解法是把後台的「讀取」
+也搬到伺服器端(像寫入那樣),那還沒做。
+
 ### 探測 RLS 不能用 API 回應判斷
 
 **被 RLS 擋掉的 UPDATE / DELETE 回的是 200 / 204、0 列、沒有錯誤。**
