@@ -323,16 +323,37 @@ SVG 會抗鋸齒成淡灰,把「實心」畫成「灰的」。
 ```
 member_status  site_settings  banners  featured_creators  news
 categories  collabs  collab_packages  collab_designs  collab_customer_photos
+engraving_designs  gallery_posts(只開審核那三欄)
 ```
 
 前端只透過 `window.LohasAdminWrite(表, 動作, 資料, 單筆條件, 多筆條件)`。
 **不要為了方便繞回 `client.from(表).update(...)`** —— 那些表的 anon 政策
 已經收成只剩 SELECT,繞回去的症狀是 **HTTP 200、0 列、沒有錯誤訊息**。
 
-⚠ **`engraving_designs` 還沒搬,政策仍然全開。** 它有 11 個直接寫入點
-(`admin-portal.js` ×9、`legacy-icons.js`、`member-portal.js`),
-其中 `member-portal.js` 那個是**客人改自己的作品**,權限規則與管理員不同,
-所以要搬進 `design.ts` 而不是 `admin-write`。**搬完之前不要收它的政策。**
+⚠ **`engraving_designs` 的政策仍然全開,還不能收。**
+後台那 10 個寫入點 2026-09-09 已搬完並實測,但**客人端還有兩個**:
+
+| 位置 | 做什麼 | 為什麼危險 |
+|---|---|---|
+| `js/legacy-icons.js` | 匯入 icons.json 舊作品 | `status` 直接寫 `'approved'`,等於**任何人都能塞一件免審核的作品進市集** |
+| `js/member-portal.js` | 認領 `designer_name` 相同且無主的作品 | 條件與值全在前端,等於**任何人都能認領別人的無主作品** |
+
+兩個是同一條流程(member-portal 的「舊 designer 自動升級為 Creator」),
+要一起搬進 `design.ts`。卡在**伺服器端拿不到客人姓名** ——
+`auth-session` 的 `verify` 只回 `erpid / mid / bound / phone`,
+而認領要靠姓名比對。得讓 token 帶上姓名,那是全站登入的入口,
+**單獨一次部署、單獨驗證,不要跟其他改動綁在一起。**
+
+### ⚠ `engraving_designs.updated_at` 沒人維護,不要拿它判斷有沒有寫進去
+
+2026-09-09 我方用它當「這次寫入有沒有生效」的依據,連續三次判成「沒寫進去」,
+讓使用者白按兩輪、多開了一次 Console —— 實際上每次都寫成功了。
+
+那個欄位存在,但**前端 payload 不含它,資料庫也沒有 trigger 去更新它**,
+所以它永遠停在該列建立的時間。要判斷寫入有沒有生效,**看欄位值本身**
+(改了什麼就查什麼),或看 `reviewed_at` 這種真的會被寫的欄位。
+
+同理:任何拿 `updated_at` 排序「最近改過什麼」的功能在這張表上都是錯的。
 
 ### 白名單的四件事,加表時要一起想
 
