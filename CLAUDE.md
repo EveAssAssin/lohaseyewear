@@ -348,6 +348,23 @@ engraving_designs  gallery_posts(只開審核那三欄)
 而不是把擁有者條件塞進 `update` 的 where —— 後者影響 0 列且不報錯,
 分不出「不是你的」與「這件不存在」。
 
+### `gallery_posts` 的寫入路徑(2026-09-10 全部搬完並收好政策)
+
+| 誰 | 走哪裡 |
+|---|---|
+| 客人新增 / 修改 / 刪除自己的投稿 | `gallery` 的 `submit` / `update_own` / `delete_own` |
+| 後台(審核、官方上傳、分享牆管理、創作者照片、聯名照片) | `admin-write` |
+
+政策現況:**只剩 `posts_select`(SELECT / true)**,寫入政策一條都沒有。
+讀取刻意保持全開,後台要看得到待審核與已駁回的投稿
+(收 `for all` 時差點又踩到 news 那個坑)。
+
+⚠ `js/member.js` 已刪除 —— 它有一份「刪除投稿不比對擁有者」的程式,
+但**沒有任何頁面載入它**。死程式碼一樣會被當成參考範本抄走。
+
+`gallery` 與 `design` 的 `update_own` / `delete_own` 是同一個寫法:
+**先讀出原列比對擁有者,再決定要不要寫**。不要改成把條件塞進 where。
+
 ⚠ **`auth-session` 的 token 多簽了 `nm`(姓名)** 給認領用。
 姓名【只能】來自這裡,`design` 不從 body 讀 ——
 前端說了算的話,任何人都能認領別人的無主作品。
