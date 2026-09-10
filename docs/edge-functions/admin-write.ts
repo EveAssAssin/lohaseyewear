@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-09b · gallery_posts 擴到後台九個寫入點';
+const CODE_VERSION = '2026-09-10 · +creator_info(後台十個寫入點)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -64,9 +64,12 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
    ⚠ 這一支是【逐批】搬進來的,不是一次全開。
      搬一批、後台驗一次、再搬下一批;因為後台沒有測試環境,
      一次搬七張表出事了會分不出是哪一張。
-       第一批(已驗)  member_status、site_settings
-       第二批        banners、featured_creators
-       還沒搬        news、categories、collabs、collab_customer_photos */
+       第一批  member_status、site_settings
+       第二批  banners、featured_creators
+       第三批  news、categories、collabs＋三張聯名子表
+       第四批  engraving_designs、gallery_posts
+       第五批  creator_info
+     以上全部已搬完並實測,對應資料表的寫入政策也都收乾淨了。 */
 type Rule = { key: string; ops: string[]; cols: string[] };
 const ALLOW: Record<string, Rule> = {
   member_status: {
@@ -190,6 +193,24 @@ const ALLOW: Record<string, Rule> = {
            'is_public', 'subcategories',
            'status', 'reject_reason', 'reviewed_at'],
   },
+
+  /* ===== 創作者個人頁(2026-09-10)=====
+     創作者【自己】編輯走 creator 函式,那邊只開他可以改的欄位;
+     這裡是後台,可以動 status 與首頁曝光。
+
+     🚨 bank_name / bank_code / bank_branch / bank_account /
+        account_holder 刻意【不開】—— 後台沒有改別人匯款帳戶的功能,
+        開了只是把攻擊面留在那裡。匯款資料現在存在 payout_accounts,
+        走 payout 函式,那張表連一條政策都沒有。 */
+  creator_info: {
+    key: 'member_id',
+    ops: ['insert', 'update', 'upsert', 'delete', 'creator_clear_homepage_featured'],
+    cols: ['member_id', 'display_name', 'tagline', 'bio', 'avatar_url',
+           'joining_photo_url', 'joining_story', 'engraving_quote',
+           'video_url', 'video_title', 'social_links', 'custom_blocks',
+           'featured_ig_post_url', 'kol_main_image_url',
+           'is_homepage_featured', 'homepage_exposure_order', 'status'],
+  },
 };
 
 async function erpidFromToken(token: string): Promise<string> {
@@ -263,7 +284,8 @@ Deno.serve(async (req) => {
 
   /* delete 與 news_clear_featured 不帶資料,其餘都要。
      upsert 另外接受 rows 陣列(後台的聯名子表是一次存一整批)。 */
-  const noBody = (op === 'delete' || op === 'news_clear_featured');
+  const noBody = (op === 'delete' || op === 'news_clear_featured'
+                  || op === 'creator_clear_homepage_featured');
   const rowsIn: any[] = noBody ? []
     : (Array.isArray(body.rows) ? body.rows : [body.row]);
 
@@ -331,6 +353,20 @@ Deno.serve(async (req) => {
         .update({ is_featured: false }).eq('is_featured', true);
       if (error) throw error;
       // 本來就可能一篇都沒有,0 列是正常的,不檢查
+
+    } else if (op === 'creator_clear_homepage_featured') {
+      /* 「把首頁主打換成另一位」的第一步:先把現有的清掉。
+         ⚠ 同 news_clear_featured —— 條件不是主鍵,所以做成專用動作,
+           而且【不接受任何客戶端參數】,條件寫死在這裡。
+           原本後台是
+             .update({is_homepage_featured:false})
+              .eq('is_homepage_featured', true).neq('member_id', 這一位)
+           清「全部」與清「除了這一位以外」結果相同 ——
+           因為下一步就會把這一位設成 true。少一個參數少一個破口。 */
+      const { error } = await db.from('creator_info')
+        .update({ is_homepage_featured: false }).eq('is_homepage_featured', true);
+      if (error) throw error;
+      // 本來就可能一位都沒有,0 列是正常的,不檢查
 
     } else if (op === 'insert') {
       /* ⚠ 回傳整列。後台新增聯名之後要拿 id 去存子表 ——

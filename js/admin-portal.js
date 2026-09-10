@@ -1050,11 +1050,11 @@
       //    這樣下次會員列表就能顯示正確名字
       if(erpName && erpName !== creatorInfo?.display_name){
         try {
-          await sb.from('creator_info').upsert({
+          await adminWrite('creator_info', 'upsert', {
             member_id: erpid,
             display_name: erpName,
             status: creatorInfo?.status || 'pending'  // 沒記錄就建 pending,不誤升 creator
-          }, { onConflict: 'member_id' });
+          });
           console.log('[補名字]', erpid, '→', erpName, '(原:', creatorInfo?.display_name || '無', ')');
         } catch(e){ console.warn('[補名字失敗]', e); }
       }
@@ -1127,11 +1127,14 @@
     if (!sb) return alert('Supabase 連線失敗');
 
     try {
-      const { error } = await sb.from('creator_info').upsert({
-        member_id: erpid,
-        display_name: realName,
-        status: 'active'
-      }, { onConflict: 'member_id' });
+      const { error } = await (async () => {
+        try {
+          await adminWrite('creator_info', 'upsert', {
+            member_id: erpid, display_name: realName, status: 'active'
+          });
+          return {};
+        } catch (e) { return { error: e }; }
+      })();
 
       if (error) {
         console.error('[升級失敗]', error);
@@ -1422,11 +1425,14 @@
 
     try {
       if(role === 'creator'){
-        const { error } = await sb.from('creator_info').upsert({
-          member_id:    erpid,
-          display_name: name,
-          status:       'active',
-        }, { onConflict: 'member_id' });
+        const { error } = await (async () => {
+          try {
+            await adminWrite('creator_info', 'upsert', {
+              member_id: erpid, display_name: name, status: 'active'
+            });
+            return {};
+          } catch (e) { return { error: e }; }
+        })();
 
         if(error){
           console.error(error);
@@ -4277,18 +4283,14 @@
       hint.textContent = '寫入資料庫中...';
 
       let error;
-      if (isEdit) {
-        // 編輯模式: UPDATE
-        const res = await sb.from('creator_info')
-          .update(payload)
-          .eq('member_id', AGState.editMemberId);
-        error = res.error;
-      } else {
-        // 新建模式: INSERT (補 member_id)
-        payload.member_id = memberId;
-        const res = await sb.from('creator_info').insert(payload);
-        error = res.error;
-      }
+      try {
+        if (isEdit) {
+          await adminWrite('creator_info', 'update', payload, AGState.editMemberId);
+        } else {
+          payload.member_id = memberId;   // 新建才送 member_id
+          await adminWrite('creator_info', 'insert', payload);
+        }
+      } catch (e) { error = e; }
 
       if (error) {
         hint.style.color = 'var(--status-rejected)';
@@ -4312,7 +4314,7 @@
           if (!upErr) {
             const { data: urlData } = sb.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
             const kolUrl = urlData.publicUrl;
-            await sb.from('creator_info').update({ kol_main_image_url: kolUrl }).eq('member_id', finalId);
+            await adminWrite('creator_info', 'update', { kol_main_image_url: kolUrl }, finalId);
           } else {
             console.error('[KOL 主圖上傳失敗]', upErr);
           }
@@ -4619,11 +4621,12 @@
 
     // ===== 1. 更新 IG URL + 首頁主打狀態 =====
     // 若勾首頁主打 → 先把所有其他人的 is_homepage_featured 設 false
+    /* ⚠ 原本是 .eq('is_homepage_featured', true).neq('member_id', ...) ——
+       非主鍵條件。admin-write 只允許用主鍵,所以做成專用動作,
+       而且清「全部」而不是「除了這一位」—— 下一步就會把這一位設成
+       true,結果相同,但少一個客戶端參數就少一個破口。 */
     if (settings.homepage) {
-      await sb.from('creator_info')
-        .update({ is_homepage_featured: false })
-        .eq('is_homepage_featured', true)
-        .neq('member_id', creatorId);
+      await adminWrite('creator_info', 'creator_clear_homepage_featured');
     }
 
     // 計算 homepage_exposure_order
@@ -4641,14 +4644,16 @@
     }
 
     // 寫入這位的設定
-    const { data, error } = await sb.from('creator_info')
-      .update({
-        featured_ig_post_url: settings.ig_url,
-        is_homepage_featured: settings.homepage,
-        homepage_exposure_order: exposureOrder,
-      })
-      .eq('member_id', creatorId)
-      .select();
+    const { data, error } = await (async () => {
+      try {
+        await adminWrite('creator_info', 'update', {
+          featured_ig_post_url: settings.ig_url,
+          is_homepage_featured: settings.homepage,
+          homepage_exposure_order: exposureOrder,
+        }, creatorId);
+        return { data: [{ member_id: creatorId }] };
+      } catch (e) { return { error: e }; }
+    })();
 
     if (error) throw error;
     if (!data || data.length === 0) {
@@ -4839,10 +4844,12 @@
     if (!sb) return;
 
     // 加 select() 才能拿到刪除後的 rows
-    const { data, error } = await sb.from('creator_info')
-      .delete()
-      .eq('member_id', memberId)
-      .select();
+    const { data, error } = await (async () => {
+      try {
+        await adminWrite('creator_info', 'delete', null, memberId);
+        return { data: [{ member_id: memberId }] };
+      } catch (e) { return { error: e }; }
+    })();
 
     if (error) return alert('刪除失敗: ' + error.message);
 
@@ -4878,11 +4885,9 @@
     const sb = getSb();
     if (!sb) return;
 
-    const { error } = await sb.from('creator_info')
-      .update({ status: newStatus })
-      .eq('member_id', memberId);
-
-    if (error) return alert('更新失敗: ' + error.message);
+    try {
+      await adminWrite('creator_info', 'update', { status: newStatus }, memberId);
+    } catch (err) { return alert('更新失敗: ' + err.message); }
 
     loadCreatorsList();
   }

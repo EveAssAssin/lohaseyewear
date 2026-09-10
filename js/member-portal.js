@@ -20,6 +20,10 @@
   const DESIGN_FN =
     'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/design';
 
+  /* 創作者編輯自己的個人頁。同理:不要改回直接打 creator_info。 */
+  const CREATOR_FN =
+    'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/creator';
+
   /* 客人自己的投稿(靈感牆)。同理:不要改回直接打 gallery_posts。 */
   const GALLERY_FN =
     'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/gallery';
@@ -1508,24 +1512,38 @@
 
     const customBlocks = collectCustomBlocks();
 
-    const { error } = await sb
-      .from('creator_info')
-      .update({
-        display_name: dn,
-        tagline: tagline,
-        bio: bio,
-        joining_photo_url: joiningPhoto,
-        joining_story: joiningStory,
-        video_url: videoUrl,
-        video_title: videoTitle,
-        social_links: social_links,
-        custom_blocks: customBlocks
-      })
-      .eq('member_id', State.member.erpid);
+    /* 🚨 2026-09-10 改走 creator 函式。原本是
+           .update({...}).eq('member_id', State.member.erpid)
+       條件看起來有比對本人,但 State.member 來自 localStorage ——
+       改一下裡面的 erpid 就能編輯任何一位創作者的個人頁,而
+       creator_info 的 anon 政策是無條件放行。那是宣稱,不是驗證。
 
-    if (error) {
-      console.error('[儲存失敗]', error);
-      alert('儲存失敗:' + error.message);
+       現在 member_id 只認 token 裡簽出來的,這裡不送。
+       status 與首頁曝光那幾欄伺服器也不收 —— 那是後台決定的。 */
+    try {
+      const r = await fetch(CREATOR_FN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save_profile',
+          token: (Auth && Auth.getToken) ? Auth.getToken() : '',
+          display_name: dn,
+          tagline: tagline,
+          bio: bio,
+          joining_photo_url: joiningPhoto,
+          joining_story: joiningStory,
+          video_url: videoUrl,
+          video_title: videoTitle,
+          social_links: social_links,
+          custom_blocks: customBlocks
+        })
+      });
+      const j = await r.json().catch(function () { return {}; });
+      /* ⚠ 看 j.code,不要只看 r.ok。 */
+      if (String(j.code) !== '200') throw new Error(j.message || '儲存失敗');
+    } catch (err) {
+      console.error('[儲存失敗]', err);
+      alert('儲存失敗:' + err.message);
       return;
     }
 
