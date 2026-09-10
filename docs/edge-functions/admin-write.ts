@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-10 · +creator_info(後台十個寫入點)';
+const CODE_VERSION = '2026-09-11 · +cs_messages(sender 由伺服器寫死)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -69,6 +69,7 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
        第三批  news、categories、collabs＋三張聯名子表
        第四批  engraving_designs、gallery_posts
        第五批  creator_info
+       第六批  cs_messages
      以上全部已搬完並實測,對應資料表的寫入政策也都收乾淨了。 */
 type Rule = { key: string; ops: string[]; cols: string[] };
 const ALLOW: Record<string, Rule> = {
@@ -192,6 +193,18 @@ const ALLOW: Record<string, Rule> = {
            'customer_name', 'member_id', 'image_urls', 'main_image_url',
            'is_public', 'subcategories',
            'status', 'reject_reason', 'reviewed_at'],
+  },
+
+  /* ===== 客服對話(2026-09-11)=====
+     🚨 sender 刻意【不在 cols 裡】,由伺服器寫死 'staff'。
+        原本後台是前端送 `sender: 'staff'`,而同一張表客人端也在寫 ——
+        那等於「這則訊息是誰說的」由呼叫端決定。
+        偽造客服訊息可以拿來改約定價格、要客人匯款到別的帳號。
+        客人那一側走 cs 函式,那邊一律寫死 'member'。 */
+  cs_messages: {
+    key: 'id',
+    ops: ['insert', 'update', 'delete'],
+    cols: ['member_erpid', 'design_id', 'message', 'is_read'],
   },
 
   /* ===== 創作者個人頁(2026-09-10)=====
@@ -330,6 +343,12 @@ Deno.serve(async (req) => {
   /* 同理:最新消息是誰建的。 */
   if (table === 'news' && op === 'insert') {
     for (const r of rowsIn) r.author_id = caller;
+  }
+  /* 同理:這則客服訊息是誰說的。後台送出的一律是客服。
+     ⚠ 這一行是「偽造客服訊息」那個洞的補丁,不要因為
+       「前端本來就送 staff」而把它加回 cols。 */
+  if (table === 'cs_messages' && op === 'insert') {
+    for (const r of rowsIn) r.sender = 'staff';
   }
   /* 同理:這件刻圖／投稿是誰審的。
      ⚠ 「重新開放審核」是把狀態退回 pending,那時要把 reviewed_by

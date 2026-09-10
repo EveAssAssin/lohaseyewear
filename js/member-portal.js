@@ -20,6 +20,29 @@
   const DESIGN_FN =
     'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/design';
 
+  /* 客服對話。⚠ 不要改回直接打 cs_messages —— 那條路的 sender
+     由前端決定,等於誰都能偽造客服訊息。 */
+  const CS_FN =
+    'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/cs';
+
+  async function csWrite(action, extra) {
+    const payload = Object.assign({
+      action: action,
+      token: (Auth && Auth.getToken) ? Auth.getToken() : ''
+    }, extra || {});
+    const r = await fetch(CS_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json().catch(function () { return {}; });
+    /* ⚠ 看 j.code,不要只看 r.ok。 */
+    if (String(j.code) !== '200') {
+      throw new Error(j.message || ('操作失敗(HTTP ' + r.status + ')'));
+    }
+    return j.data || {};
+  }
+
   /* 創作者編輯自己的個人頁。同理:不要改回直接打 creator_info。 */
   const CREATOR_FN =
     'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/creator';
@@ -2701,11 +2724,10 @@
     setCsNavDot(0);   // 先隱藏,避免等待網路造成延遲感
 
     try {
-      await sb.from('cs_messages')
-        .update({ is_read: true })
-        .eq('member_erpid', erpid)
-        .eq('sender', 'staff')
-        .eq('is_read', false);
+      /* 🚨 改走 cs 函式。原本條件是前端組的(member_erpid 來自
+         localStorage),等於任何人都能把別人的未讀紅點清掉 ——
+         而客人不會知道有訊息沒看到。現在條件由伺服器用 token 組。 */
+      await csWrite('mark_read', {});
     } catch (e) {
       console.warn('[cs] 標記已讀失敗,下次進頁會再試:', e);
       refreshCsUnread();   // 寫入失敗則還原紅點,不誤導使用者
@@ -2816,12 +2838,8 @@
         .order('created_at', { ascending: true });
       if (error) throw error;
       renderCsMessages(data || []);
-      await sb.from('cs_messages')
-        .update({ is_read: true })
-        .eq('member_erpid', erpid)
-        .eq('design_id', csCurrentDesignId)
-        .eq('sender', 'staff')
-        .eq('is_read', false);
+      // 同上,只是限定這一張刻圖的對話
+      await csWrite('mark_read', { design_id: csCurrentDesignId });
       refreshCsUnread();
     } catch (e) {
       stream.innerHTML = '<div class="cs-chat-empty">載入失敗</div>';
@@ -2856,10 +2874,11 @@
     if (!text) return;
     input.value = '';
     try {
-      const { error } = await sb.from('cs_messages').insert({
-        member_erpid: erpid, design_id: csCurrentDesignId, sender: 'member', message: text, is_read: false
-      });
-      if (error) throw error;
+      /* 🚨 改走 cs 函式。原本 member_erpid 與 sender 都是前端決定的 ——
+         也就是任何人都能送出一則 sender:'staff' 的訊息塞進任何一位
+         客人的對話裡,在客人眼裡那就是樂活客服講的話。
+         現在 sender 由伺服器寫死 'member',這一支永遠產不出 staff。 */
+      await csWrite('send', { design_id: csCurrentDesignId, message: text });
       loadCsMessages();
     } catch (e) {
       alert('送出失敗,請稍後再試');

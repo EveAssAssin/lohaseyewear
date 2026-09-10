@@ -1897,10 +1897,12 @@
     const sb = (window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient())
             || (window.Supabase && window.Supabase.client) || null;
     if (!sb) throw new Error('no supabase');
-    const row = { member_erpid: String(memberErpId), sender: 'staff', message: message, is_read: false };
+    /* sender 不送 —— 由 admin-write 寫死 'staff'。
+       前端送這個欄位會被白名單擋下:「這則訊息是誰說的」
+       不接受呼叫端指定。 */
+    const row = { member_erpid: String(memberErpId), message: message, is_read: false };
     if (designId) row.design_id = String(designId);
-    const { error } = await sb.from('cs_messages').insert(row);
-    if (error) throw error;
+    await window.LohasAdminWrite('cs_messages', 'insert', row);
     return true;
   }
 
@@ -2069,11 +2071,16 @@
         .order('created_at', { ascending: true });
       if (error) throw error;
       renderCsMessages(data || []);
-      await sb.from('cs_messages')
-        .update({ is_read: true })
-        .eq('design_id', csChat.designId)
-        .eq('sender', 'member')
-        .eq('is_read', false);
+      /* ⚠ 原本是非主鍵條件(design_id + sender + is_read)。
+         admin-write 只允許用主鍵,所以先查出 id 再照主鍵一次改完。
+         沒有未讀時 ids 是空的,直接跳過 —— 不要送空陣列。 */
+      const { data: unread } = await sb.from('cs_messages')
+        .select('id').eq('design_id', csChat.designId)
+        .eq('sender', 'member').eq('is_read', false);
+      const ids = (unread || []).map(function (r) { return r.id; });
+      if (ids.length) {
+        await adminWrite('cs_messages', 'update', { is_read: true }, null, ids);
+      }
     } catch (e) {
       console.error('[客服對話] 載入失敗:', e);
       stream.innerHTML = '<div class="cs-chat-empty">載入失敗:' + escapeHtml(e.message || '') + '</div>';
@@ -2107,10 +2114,10 @@
     if (!text) return;
     input.value = '';
     try {
-      const { error } = await sb.from('cs_messages').insert({
-        member_erpid: csChat.erpId, design_id: csChat.designId, sender: 'staff', message: text, is_read: false
+      // sender 不送,由伺服器寫死 'staff'
+      await adminWrite('cs_messages', 'insert', {
+        member_erpid: csChat.erpId, design_id: csChat.designId, message: text, is_read: false
       });
-      if (error) throw error;
       loadCsChatHistory();
     } catch (err) {
       alert('送出失敗,請稍後再試');
@@ -5993,8 +6000,16 @@
       await adminWrite('engraving_designs', 'delete', null, id);
 
       // 2.5 連這張刻圖的客服對話一起刪 (避免孤兒對話 → 會員端紅點消不掉)
+      /* ⚠ 原本是 .delete().eq('design_id', id) —— 非主鍵條件。
+         同上:先查 id,再照主鍵刪(match_values 一次最多 200 筆,
+         單一作品的對話不會到那個量)。 */
       try {
-        await sb.from('cs_messages').delete().eq('design_id', id);
+        const { data: msgs } = await sb.from('cs_messages')
+          .select('id').eq('design_id', id);
+        const msgIds = (msgs || []).map(function (r) { return r.id; });
+        if (msgIds.length) {
+          await adminWrite('cs_messages', 'delete', null, null, msgIds);
+        }
       } catch (csErr) {
         console.warn('[manage-designs] 刪除對話失敗(不影響):', csErr);
       }
