@@ -365,6 +365,35 @@ engraving_designs  gallery_posts(只開審核那三欄)
 `gallery` 與 `design` 的 `update_own` / `delete_own` 是同一個寫法:
 **先讀出原列比對擁有者,再決定要不要寫**。不要改成把條件塞進 where。
 
+### `creator_info` 的寫入路徑(2026-09-10 全部搬完並收好政策)
+
+| 誰 | 走哪裡 |
+|---|---|
+| 創作者編輯自己的個人頁 | `creator` 的 `save_profile` |
+| 後台(升級、建立、編輯、KOL 主圖、首頁曝光、停用、刪除) | `admin-write` |
+| 舊作品認領時自動建立 | `design` 的 `auto_creator`(service_role) |
+
+政策現況:**只剩 `creator_info_read_all`(SELECT / true)**。
+
+🚨 **`creator` 函式只開創作者【自己可以改】的九個欄位。**
+`status`、`is_homepage_featured`、`homepage_exposure_order`、
+`featured_ig_post_url`、`kol_main_image_url` 都不收 ——
+少了這道,創作者可以自己把 status 設成 active、自己上首頁主打。
+
+⚠ `admin-write` 的 `creator_info` 白名單**刻意不開 `bank_*` 與
+`account_holder`**:後台沒有改別人匯款帳戶的介面,開著只是留攻擊面。
+匯款資料在 `payout_accounts`,走 `payout` 函式,那張表**一條政策都沒有**。
+
+「首頁主打換人」原本是 `.eq('is_homepage_featured', true).neq('member_id', 這位)`
+—— 非主鍵條件。做成專用動作 `creator_clear_homepage_featured`,
+而且清「全部」而不是「除了這一位」:下一步就會把這一位設成 true,
+結果相同,但**少一個客戶端參數就少一個破口**。
+
+> 判斷「`creator` 函式有沒有真的寫過某一列」的小技巧:它寫的是
+> **空字串**不是 null(`String(body.x || '')`)。欄位還是 `null`
+> 就代表那條路沒被走過。這比看 `updated_at` 可靠 —— 那個欄位
+> 在好幾張表上根本沒人維護。
+
 ⚠ **`auth-session` 的 token 多簽了 `nm`(姓名)** 給認領用。
 姓名【只能】來自這裡,`design` 不從 body 讀 ——
 前端說了算的話,任何人都能認領別人的無主作品。
