@@ -2689,15 +2689,12 @@
     const sb = getSupabase();
     if (!erpid || !sb) return;
     try {
-      // 撈該會員所有未讀的後台訊息(含 design_id)
-      const { data, error } = await sb.from('cs_messages')
-        .select('design_id')
-        .eq('member_erpid', erpid)
-        .eq('sender', 'staff')
-        .eq('is_read', false);
-      if (error) throw error;
-
-      const rows = data || [];
+      /* 🚨 改走 cs 函式。原本的 .eq('member_erpid', erpid) 看起來像
+         限制,其實只是「前端自己挑」—— cs_messages 的 SELECT 政策是
+         true,把那一行拿掉就能讀走全部客人的對話。條件現在由伺服器
+         用 token 組。 */
+      const d = await csWrite('unread', {});
+      const rows = (d.design_ids || []).map(function (id) { return { design_id: id }; });
       // 取出有 design_id 的,比對刻圖是否還存在(孤兒不算)
       const designIds = [...new Set(rows.map(r => r.design_id).filter(Boolean))];
       let validIds = new Set();
@@ -2835,13 +2832,9 @@
     const stream = document.getElementById('csChatStream');
     if (!erpid || !sb || !stream || !csCurrentDesignId) return;
     try {
-      const { data, error } = await sb.from('cs_messages')
-        .select('id, sender, message, created_at')
-        .eq('member_erpid', erpid)
-        .eq('design_id', csCurrentDesignId)
-        .order('created_at', { ascending: true });
-      if (error) throw error;
-      renderCsMessages(data || []);
+      // 同上:讀取也走 cs 函式,條件由伺服器用 token 組
+      const d = await csWrite('list', { design_id: csCurrentDesignId });
+      renderCsMessages(d.rows || []);
       // 同上,只是限定這一張刻圖的對話
       await csWrite('mark_read', { design_id: csCurrentDesignId });
       refreshCsUnread();

@@ -62,6 +62,8 @@
      ⚠ 不要為了少一次網路來回而改回直接打表。 */
   var ADMIN_WRITE_FN =
     'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/admin-write';
+  var ADMIN_READ_FN =
+    'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/admin-read';
 
   /* adminWrite(表, 動作, 資料, 單筆條件, 多筆條件)
        資料      物件 = 一筆;陣列 = 一批(upsert 用)
@@ -91,6 +93,35 @@
     }
     return j.data || {};
   }
+
+  /* adminRead(表, 條件, 選項) —— 讀取的入口,與 adminWrite 對稱。
+     ⚠ 個資的讀取不能靠前端 .eq() 限制:那只是「前端自己挑」,
+       anon key 是公開的,把條件拿掉就整張表都拿得到。
+       所以要讀 cs_messages 這類表一律走這一支。 */
+  async function adminRead(table, where, opt) {
+    const o = opt || {};
+    const token = (window.LohasAuth && window.LohasAuth.getToken)
+      ? window.LohasAuth.getToken() : '';
+    const payload = { token: token, table: table, where: where || [] };
+    if (o.order_by) payload.order_by = o.order_by;
+    if (o.ascending !== undefined) payload.ascending = o.ascending;
+    if (o.limit) payload.limit = o.limit;
+    if (o.head) payload.head = true;
+
+    const r = await fetch(ADMIN_READ_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const j = await r.json().catch(function () { return {}; });
+    if (String(j.code) !== '200') {
+      const e = new Error(j.message || ('查詢失敗(HTTP ' + r.status + ')'));
+      e.code = String(j.code);
+      throw e;
+    }
+    return j.data || { rows: [], count: null };
+  }
+  window.LohasAdminRead = adminRead;
 
   /* 開給同一頁的其他後台模組用(admin-portal-footer / -pegavision)。
      它們是各自獨立的 IIFE,但都在這一支之後載入。
@@ -467,9 +498,10 @@
 
       // 客服未讀 (會員發的未讀)
       try {
-        const cs = await sb.from('cs_messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('sender', 'member').eq('is_read', false);
+        const cs = await adminRead('cs_messages', [
+          { col: 'sender', op: 'eq', value: 'member' },
+          { col: 'is_read', op: 'eq', value: false },
+        ], { head: true });
         setCsInboxBadge(cs.count || 0);
       } catch (e) { /* 靜默 */ }
 
@@ -1925,13 +1957,9 @@
     listEl.innerHTML = '<div class="empty-page"><div class="empty-page-title">載入中...</div></div>';
     try {
       // 撈全部訊息(時間新→舊),前端聚合成每個會員一條
-      const { data, error } = await sb.from('cs_messages')
-        .select('member_erpid, sender, message, is_read, created_at')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-      if (error) throw error;
-
-      const rows = data || [];
+      const d = await adminRead('cs_messages', [],
+        { order_by: 'created_at', ascending: false, limit: 1000 });
+      const rows = d.rows || [];
       const byMember = {};
       rows.forEach(function (m) {
         const k = m.member_erpid;
@@ -2065,19 +2093,19 @@
     if (!csChat.designId) { stream.innerHTML = '<div class="cs-chat-empty">找不到刻圖編號</div>'; return; }
     stream.innerHTML = '<div class="cs-chat-empty">讀取中...</div>';
     try {
-      const { data, error } = await sb.from('cs_messages')
-        .select('id, sender, message, created_at')
-        .eq('design_id', csChat.designId)
-        .order('created_at', { ascending: true });
-      if (error) throw error;
-      renderCsMessages(data || []);
+      const d = await adminRead('cs_messages',
+        [{ col: 'design_id', op: 'eq', value: csChat.designId }],
+        { order_by: 'created_at', ascending: true, limit: 500 });
+      renderCsMessages(d.rows || []);
       /* ⚠ 原本是非主鍵條件(design_id + sender + is_read)。
          admin-write 只允許用主鍵,所以先查出 id 再照主鍵一次改完。
          沒有未讀時 ids 是空的,直接跳過 —— 不要送空陣列。 */
-      const { data: unread } = await sb.from('cs_messages')
-        .select('id').eq('design_id', csChat.designId)
-        .eq('sender', 'member').eq('is_read', false);
-      const ids = (unread || []).map(function (r) { return r.id; });
+      const un = await adminRead('cs_messages', [
+        { col: 'design_id', op: 'eq', value: csChat.designId },
+        { col: 'sender', op: 'eq', value: 'member' },
+        { col: 'is_read', op: 'eq', value: false },
+      ], { limit: 500 });
+      const ids = (un.rows || []).map(function (r) { return r.id; });
       if (ids.length) {
         await adminWrite('cs_messages', 'update', { is_read: true }, null, ids);
       }
@@ -2134,11 +2162,11 @@
     const did = document.getElementById('apDesignId')?.value;
     if (!did) { setCsChatBtnDot(0); return; }
     try {
-      const { count } = await sb.from('cs_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('design_id', did)
-        .eq('sender', 'member')
-        .eq('is_read', false);
+      const { count } = await adminRead('cs_messages', [
+        { col: 'design_id', op: 'eq', value: did },
+        { col: 'sender', op: 'eq', value: 'member' },
+        { col: 'is_read', op: 'eq', value: false },
+      ], { head: true });
       setCsChatBtnDot(count || 0);
     } catch (e) { /* 靜默 */ }
   }
@@ -6004,9 +6032,9 @@
          同上:先查 id,再照主鍵刪(match_values 一次最多 200 筆,
          單一作品的對話不會到那個量)。 */
       try {
-        const { data: msgs } = await sb.from('cs_messages')
-          .select('id').eq('design_id', id);
-        const msgIds = (msgs || []).map(function (r) { return r.id; });
+        const ms = await adminRead('cs_messages',
+          [{ col: 'design_id', op: 'eq', value: id }], { limit: 200 });
+        const msgIds = (ms.rows || []).map(function (r) { return r.id; });
         if (msgIds.length) {
           await adminWrite('cs_messages', 'delete', null, null, msgIds);
         }

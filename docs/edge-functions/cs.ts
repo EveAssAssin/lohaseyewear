@@ -1,7 +1,7 @@
 /* =============================================================
    Supabase Edge Function: cs
    -------------------------------------------------------------
-   客人這一側的客服對話(cs_messages)：送出訊息、標記已讀。
+   客人這一側的客服對話(cs_messages)：送出訊息、讀取、標記已讀。
 
    === 為什麼要有這一支 ===
    原本會員中心是【以 anon 身分直接打資料表】送訊息:
@@ -43,7 +43,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-11 · 客人端客服對話(送出/已讀)';
+const CODE_VERSION = '2026-09-11b · 客人端客服對話(送出/已讀/讀取)';
 
 const MAX_LEN = 2000;
 
@@ -99,8 +99,9 @@ Deno.serve(async (req) => {
   try { body = await req.json(); }
   catch { return reply('006', { message: '請求格式錯誤' }, 400); }
 
+  const ACTIONS = ['send', 'mark_read', 'list', 'unread'];
   const action = String(body.action || '');
-  if (action !== 'send' && action !== 'mark_read') {
+  if (ACTIONS.indexOf(action) < 0) {
     return reply('006', { message: '不支援的動作' }, 400);
   }
 
@@ -112,6 +113,45 @@ Deno.serve(async (req) => {
   }
 
   const designId = String(body.design_id || '').trim();
+
+  /* ===== list:讀【自己的】對話 =====
+     🚨 2026-09-11 補。原本前端是直接
+         sb.from('cs_messages').select(...).eq('member_erpid', erpid)
+     而這張表的 SELECT 政策是 true —— 那個 .eq() 只是「前端自己挑」,
+     不是限制。拿公開的 anon key 把 .eq() 拿掉,就能讀走全部 217 則、
+     65 位客人的對話(誰投了什麼、被退什麼理由、講了什麼)。
+
+     現在條件由伺服器用 token 組,前端只能指定 design_id。 */
+  if (action === 'list') {
+    let q = db.from('cs_messages')
+      .select('id, sender, message, created_at, is_read, design_id')
+      .eq('member_erpid', erpid)            // ← token 裡的
+      .order('created_at', { ascending: true })
+      .limit(500);
+    if (designId) q = q.eq('design_id', designId);
+
+    const { data, error } = await q;
+    if (error) {
+      console.error('[cs] 讀取失敗', erpid, error.message);
+      return reply('500', { message: '載入失敗,請稍後再試' }, 500);
+    }
+    return reply('200', { data: { rows: data || [] } });
+  }
+
+  /* ===== unread:我有哪些刻圖有客服的未讀訊息(紅點用) ===== */
+  if (action === 'unread') {
+    const { data, error } = await db.from('cs_messages')
+      .select('design_id')
+      .eq('member_erpid', erpid)
+      .eq('sender', 'staff')
+      .eq('is_read', false);
+    if (error) {
+      console.error('[cs] 未讀查詢失敗', erpid, error.message);
+      return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    }
+    const ids = Array.from(new Set((data || []).map((r) => r.design_id).filter(Boolean)));
+    return reply('200', { data: { count: (data || []).length, design_ids: ids } });
+  }
 
   /* ===== mark_read:把「客服傳給我的」未讀訊息標成已讀 =====
      條件全部由伺服器組,前端唯一能指定的是 design_id
