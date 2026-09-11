@@ -692,7 +692,11 @@
 
   var DASH_PAGE = 200;          // list 動作的單次上限
   var DASH_MAX  = 5000;         // 保險絲:再多就不要一直打
-  var Dash = { rows: null, range: '', loading: false };
+  /* from / to 是 YYYY-MM-DD,空字串代表不限。
+     快捷鍵(近 30 天…)也是換算成 from,不另外存一個 range ——
+     兩套狀態並存的話,一定會出現「按了近 30 天但日期框還寫著上個月」
+     這種畫面與數字對不起來的情況。 */
+  var Dash = { rows: null, from: '', to: '', loading: false };
 
   function dashDays(a, b) {
     if (!a || !b) return null;
@@ -729,10 +733,43 @@
     return next(0);
   }
 
+  /* 把時間戳換成台北時區的 YYYY-MM-DD。
+     ⚠ 不能直接切 ISO 字串的前 10 碼 —— 那是 UTC 的日期。
+       台北 9/1 早上 7 點在 UTC 是 8/31,照 UTC 切的話,
+       選「9/1 到 9/30」會漏掉每天早上 8 點前送的件,
+       而漏掉的量很小、看起來只是「那天比較少」。 */
+  function dayKey(s) {
+    if (!s) return '';
+    var d = new Date(s);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' });  // YYYY-MM-DD
+  }
+
+  /* 起訖都是【含當天】。使用者說「9/1 到 9/30」時,
+     心裡想的一定是包含 9/30 那一整天。 */
   function dashInRange(it) {
-    if (!Dash.range) return true;
-    var days = dashDays(it.created_at, new Date().toISOString());
-    return days !== null && days <= Number(Dash.range);
+    if (!Dash.from && !Dash.to) return true;
+    var k = dayKey(it.created_at);
+    if (!k) return false;
+    if (Dash.from && k < Dash.from) return false;
+    if (Dash.to && k > Dash.to) return false;
+    return true;
+  }
+
+  function rangeText() {
+    if (!Dash.from && !Dash.to) return '全部';
+    if (Dash.from && Dash.to) return Dash.from + ' ～ ' + Dash.to;
+    if (Dash.from) return Dash.from + ' 起';
+    return '至 ' + Dash.to;
+  }
+
+  /* 檔名用的區間字串。沒有選就用今天當日期戳。 */
+  function rangeStamp() {
+    if (Dash.from || Dash.to) {
+      return (Dash.from || '開始').replace(/-/g, '') + '-' +
+             (Dash.to || '今天').replace(/-/g, '');
+    }
+    return dashStamp();
   }
 
   function dashGroup(rows, keyFn, labelFn) {
@@ -816,8 +853,7 @@
     var members = {};
     rows.forEach(function (it) { if (it.erpid || it.mid) members[it.erpid || it.mid] = 1; });
 
-    note.textContent = '共 ' + rows.length + ' 件' +
-      (Dash.range ? '(近 ' + Dash.range + ' 天)' : '(全部)') +
+    note.textContent = '共 ' + rows.length + ' 件(' + rangeText() + ')' +
       (Dash.rows.length >= DASH_MAX ? '　⚠ 已達 ' + DASH_MAX + ' 筆上限,較舊的沒有計入' : '');
 
     kpis.innerHTML =
@@ -874,6 +910,133 @@
         '眼鏡布是一年一件,同一個編號出現多次通常是退件重做或內部測試帳號。');
   }
 
+  /* ===== 匯出 =====
+     -------------------------------------------------------------
+     兩種都給:
+       CSV   零依賴、任何工具都讀得開,但只有一張表
+       Excel 多工作表(明細＋五張統計各一頁),排產在看的人比較好用
+
+     ⚠ Excel 用 SheetJS,而且是【按下去才載】。
+       那支約 400KB —— 製作端多數時候只是看儀表板,
+       沒有理由讓每個人開頁就多背一個函式庫。
+       CDN 只用 cdnjs(這一頁的 qrcodejs 也是從那裡來的)。 */
+  var XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  var xlsxLoading = null;
+
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (xlsxLoading) return xlsxLoading;
+    xlsxLoading = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = XLSX_URL;
+      s.onload = function () {
+        if (window.XLSX) resolve(window.XLSX);
+        else reject(new Error('Excel 元件載入失敗'));
+      };
+      /* 載不到要講清楚是「載不到元件」,不是「匯出壞了」——
+         公司網路擋 CDN 是很常見的情況,而那時 CSV 仍然可用。 */
+      s.onerror = function () {
+        xlsxLoading = null;
+        reject(new Error('Excel 元件載入失敗(可能是網路擋掉了 CDN)。\n請改用「匯出 CSV」,內容一樣。'));
+      };
+      document.head.appendChild(s);
+    });
+    return xlsxLoading;
+  }
+
+  function dashStamp() {
+    var d = new Date();
+    return String(d.getFullYear()) +
+           String(d.getMonth() + 1).padStart(2, '0') +
+           String(d.getDate()).padStart(2, '0');
+  }
+
+  /* 明細的欄位定義,CSV 與 Excel 共用一份 ——
+     兩邊各寫一份的話,加了欄位只改一邊,而沒有人會發現。 */
+  function detailCols() {
+    return [
+      ['會員編號', function (r) { return r.erpid || r.mid || ''; }],
+      ['門市代號', function (r) { return r.store_erpid || ''; }],
+      ['門市',     function (r) { return r.store_name || ''; }],
+      ['縣市',     function (r) { return r.store_city || ''; }],
+      ['來源',     function (r) { return SRC_LABEL[r.source] || r.source || ''; }],
+      ['刻圖名稱', function (r) { return r.design_name || ''; }],
+      ['狀態',     function (r) { return ST_LABEL[r.status] || r.status || ''; }],
+      ['送單時間', function (r) { return fmtTime(r.created_at); }],
+      ['完成時間', function (r) { return r.done_at ? fmtTime(r.done_at) : ''; }],
+      ['製作天數', function (r) {
+        var d = dashDays(r.created_at, r.done_at);
+        /* Excel 要的是數字不是字串,不然沒辦法排序與加總。
+           CSV 那一側會再轉成文字。 */
+        return d === null ? '' : Number(d.toFixed(2));
+      }],
+      ['編號',     function (r) { return r.id || ''; }]
+    ];
+  }
+
+  function dashRowsNow() {
+    return Dash.rows ? Dash.rows.filter(dashInRange) : [];
+  }
+
+  function dashXlsx() {
+    if (!Dash.rows) { alert('資料還沒載入完成,請稍候'); return; }
+    var rows = dashRowsNow();
+    if (!rows.length) { alert('這個期間沒有資料'); return; }
+
+    var btn = $('dashXlsx');
+    if (btn) { btn.disabled = true; btn.textContent = '產生中…'; }
+
+    loadXlsx().then(function (XLSX) {
+      var wb = XLSX.utils.book_new();
+
+      // 明細
+      var cols = detailCols();
+      var aoa = [cols.map(function (c) { return c[0]; })];
+      rows.forEach(function (r) {
+        aoa.push(cols.map(function (c) { return c[1](r); }));
+      });
+      var wsDetail = XLSX.utils.aoa_to_sheet(aoa);
+      wsDetail['!cols'] = [
+        { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 10 }, { wch: 10 },
+        { wch: 20 }, { wch: 9 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 38 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsDetail, '明細');
+
+      // 五張統計。avg 給數字,讓 Excel 可以再排序
+      function statSheet(name, groups, keyTitle) {
+        var a = [[keyTitle, '件數', '已完成', '待製作', '平均製作天數']];
+        groups.forEach(function (g) {
+          var avg = dashAvg(g.days);
+          a.push([g.label || g.key, g.n, g.done, g.wait,
+                  avg === null ? '' : Number(avg.toFixed(2))]);
+        });
+        var ws = XLSX.utils.aoa_to_sheet(a);
+        ws['!cols'] = [{ wch: 20 }, { wch: 8 }, { wch: 9 }, { wch: 9 }, { wch: 14 }];
+        XLSX.utils.book_append_sheet(wb, ws, name);
+      }
+
+      statSheet('依門市', dashGroup(rows,
+        function (it) { return it.store_erpid || it.store_name || '(未選門市)'; },
+        function (it) { return it.store_name || it.store_erpid || '(未選門市)'; }), '門市');
+      statSheet('依縣市', dashGroup(rows,
+        function (it) { return it.store_city || '(未填)'; }), '縣市');
+      statSheet('依月份', dashGroup(rows,
+        function (it) { return dashMonth(it.created_at); })
+        .sort(function (a, b) { return a.key < b.key ? 1 : -1; }), '月份');
+      statSheet('依來源', dashGroup(rows,
+        function (it) { return it.source || '(未知)'; },
+        function (it) { return SRC_LABEL[it.source] || it.source || '(未知)'; }), '來源');
+      statSheet('依會員', dashGroup(rows,
+        function (it) { return it.erpid || it.mid || '(無編號)'; }), '會員編號');
+
+      XLSX.writeFile(wb, '眼鏡布製作紀錄_' + rangeStamp() + '.xlsx');
+    }).catch(function (err) {
+      alert(err.message || 'Excel 匯出失敗');
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = '匯出 Excel'; }
+    });
+  }
+
   /* ===== 匯出 CSV =====
      ⚠ 開頭一定要有 BOM。少了它,Excel 在中文 Windows 上會用 CP950
        去讀 UTF-8,整份中文變亂碼 —— 而檔案本身是好的,
@@ -891,28 +1054,7 @@
     var rows = Dash.rows.filter(dashInRange);
     if (!rows.length) { alert('這個期間沒有資料'); return; }
 
-    /* ⚠ 刻意【沒有姓名欄】。
-       這一頁是用通行碼進來的,而 cloth-admin 對通行碼呼叫端一律
-       把 member_name 設成 null(製作端要的是「刻什麼、刻在哪」,
-       不是「誰」)。放一個永遠空白的欄位只會被當成壞掉。
-       要對得上人用會員編號就夠了。 */
-    var cols = [
-      ['會員編號', function (r) { return r.erpid || r.mid || ''; }],
-      ['門市代號', function (r) { return r.store_erpid || ''; }],
-      ['門市',     function (r) { return r.store_name || ''; }],
-      ['縣市',     function (r) { return r.store_city || ''; }],
-      ['來源',     function (r) { return SRC_LABEL[r.source] || r.source || ''; }],
-      ['刻圖名稱', function (r) { return r.design_name || ''; }],
-      ['狀態',     function (r) { return ST_LABEL[r.status] || r.status || ''; }],
-      ['送單時間', function (r) { return fmtTime(r.created_at); }],
-      ['完成時間', function (r) { return r.done_at ? fmtTime(r.done_at) : ''; }],
-      ['製作天數', function (r) {
-        var d = dashDays(r.created_at, r.done_at);
-        return d === null ? '' : d.toFixed(2);
-      }],
-      ['編號',     function (r) { return r.id || ''; }]
-    ];
-
+    var cols = detailCols();
     var lines = [cols.map(function (c) { return csvCell(c[0]); }).join(',')];
     rows.forEach(function (r) {
       lines.push(cols.map(function (c) { return csvCell(c[1](r)); }).join(','));
@@ -925,11 +1067,8 @@
                         { type: 'text/csv;charset=utf-8;' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    var d = new Date();
     a.href = url;
-    a.download = '眼鏡布製作紀錄_' + d.getFullYear() +
-      String(d.getMonth() + 1).padStart(2, '0') +
-      String(d.getDate()).padStart(2, '0') + '.csv';
+    a.download = '眼鏡布製作紀錄_' + rangeStamp() + '.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -983,17 +1122,68 @@
       });
     }
 
+    /* 期間 = 快捷鍵 + 起訖日,共用同一組 from/to。
+       按快捷鍵會把日期框一起填好 —— 讓畫面永遠說得出
+       「現在看的是哪一段」,而不是只有按鈕上的一個詞。 */
+    function syncRangeUi() {
+      var f = $('dashFrom'), t = $('dashTo');
+      if (f) f.value = Dash.from;
+      if (t) t.value = Dash.to;
+      var dr2 = $('dashRange');
+      if (dr2) {
+        var all2 = dr2.querySelectorAll('.lab-seg-btn');
+        for (var i = 0; i < all2.length; i++) {
+          // 只有「全部」在沒選日期時亮著;選了日期就沒有任何快捷鍵是亮的
+          var isAll = !all2[i].getAttribute('data-r');
+          all2[i].classList.toggle('on', isAll && !Dash.from && !Dash.to);
+        }
+      }
+      renderDash();   // 期間只是前端篩選,不必重抓
+    }
+
     var dr = $('dashRange');
     if (dr) {
       dr.addEventListener('click', function (e) {
         var b = e.target.closest && e.target.closest('.lab-seg-btn');
         if (!b) return;
-        var all = dr.querySelectorAll('.lab-seg-btn');
-        for (var i = 0; i < all.length; i++) {
-          all[i].classList.toggle('on', all[i] === b);
+        var n = Number(b.getAttribute('data-r') || 0);
+        if (!n) {
+          Dash.from = ''; Dash.to = '';
+        } else {
+          var today = new Date();
+          var start = new Date(today.getTime() - (n - 1) * 86400000);  // 含今天
+          Dash.from = start.toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' });
+          Dash.to   = today.toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' });
         }
-        Dash.range = b.getAttribute('data-r') || '';
-        renderDash();   // 期間只是前端篩選,不必重抓
+        syncRangeUi();
+        // 快捷鍵按下去時,那顆自己要亮(syncRangeUi 只會亮「全部」)
+        if (n) {
+          var all3 = dr.querySelectorAll('.lab-seg-btn');
+          for (var j = 0; j < all3.length; j++) all3[j].classList.toggle('on', all3[j] === b);
+        }
+      });
+    }
+
+    ['dashFrom', 'dashTo'].forEach(function (id) {
+      var inp = $(id);
+      if (!inp) return;
+      inp.addEventListener('change', function () {
+        Dash.from = $('dashFrom').value || '';
+        Dash.to   = $('dashTo').value || '';
+        /* 起訖顛倒就自動換過來 —— 比跳一個錯誤訊息好,
+           使用者要的東西很清楚,沒有理由讓他重按一次。 */
+        if (Dash.from && Dash.to && Dash.from > Dash.to) {
+          var tmp = Dash.from; Dash.from = Dash.to; Dash.to = tmp;
+        }
+        syncRangeUi();
+      });
+    });
+
+    var dclr = $('dashClear');
+    if (dclr) {
+      dclr.addEventListener('click', function () {
+        Dash.from = ''; Dash.to = '';
+        syncRangeUi();
       });
     }
 

@@ -426,3 +426,33 @@
   .lab-dash-actions{ width:100% }
   .lab-dash-actions .lab-btn{ flex:1 }
 }
+
+/* 起訖日。手機上兩個日期框各佔一半,不要擠成一列小方塊 */
+.lab-dates{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  margin:0 0 14px;
+}
+.lab-date{ display:flex; align-items:center; gap:6px }
+.lab-date > span{ font-size:13px; color:var(--text-sub,#6b6259) }
+.lab-date input{
+  font:inherit; font-size:15px; padding:7px 10px;
+  color:var(--text-main,#2b2620); background:#fff;
+  border:1px solid var(--lohas-line,#e6e1d8); border-radius:var(--r-md,10px);
+  /* iOS 在字級 <16px 的輸入框 focus 時會放大整頁而且不縮回去。
+     日期框也是輸入框,同一個坑。 */
+  min-height:40px;
+}
+.lab-date-sep{ color:var(--text-muted,#8a8178) }
+.lab-date-clear{
+  font:inherit; font-size:13px; padding:7px 12px; cursor:pointer;
+  color:var(--text-sub,#6b6259); background:transparent;
+  border:1px solid var(--lohas-line,#e6e1d8); border-radius:var(--r-pill,999px);
+}
+.lab-date-clear:hover{ background:var(--bg-soft,#faf7f2) }
+.lab-date-hint{ font-size:12px; color:var(--text-muted,#8a8178) }
+
+@media (max-width:520px){
+  .lab-date{ flex:1 1 45% }
+  .lab-date input{ width:100%; font-size:16px }
+  .lab-date-hint{ flex:1 1 100% }
+}

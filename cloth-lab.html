@@ -14,7 +14,7 @@
   <!-- LOHAS CSS · 載入順序: tokens → base → page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
-  <link rel="stylesheet" href="css/cloth-lab.css?v=20260911-dash">
+  <link rel="stylesheet" href="css/cloth-lab.css?v=20260911-dash3">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -105,10 +105,15 @@
            所以兩邊各自抓,不共用 State.items —— 共用的話數字會
            隨著上面那兩排篩選跳動,而看的人不會知道自己在看子集。 -->
       <div class="lab-dash" id="labDash" hidden>
+        <!-- 期間:快捷鍵與起訖日是【同一組狀態】。
+             按快捷鍵會把下面兩個日期框一起填好 ——
+             不然會出現「按了近 30 天,但日期框還寫著上個月」,
+             畫面與數字對不起來而沒有人知道哪個才算數。 -->
         <div class="lab-dash-bar">
           <div class="lab-filter">
             <span class="lab-filter-label">期間</span>
             <div class="lab-seg" id="dashRange">
+              <button type="button" class="lab-seg-btn" data-r="7">近 7 天</button>
               <button type="button" class="lab-seg-btn" data-r="30">近 30 天</button>
               <button type="button" class="lab-seg-btn" data-r="90">近 90 天</button>
               <button type="button" class="lab-seg-btn" data-r="365">近一年</button>
@@ -117,8 +122,25 @@
           </div>
           <div class="lab-dash-actions">
             <button type="button" class="lab-btn lab-btn-ghost" id="dashReload">重新整理</button>
-            <button type="button" class="lab-btn" id="dashCsv">匯出 CSV</button>
+            <button type="button" class="lab-btn lab-btn-ghost" id="dashCsv">匯出 CSV</button>
+            <button type="button" class="lab-btn" id="dashXlsx">匯出 Excel</button>
           </div>
+        </div>
+
+        <div class="lab-dates">
+          <label class="lab-date">
+            <span>起</span>
+            <input type="date" id="dashFrom">
+          </label>
+          <span class="lab-date-sep">～</span>
+          <label class="lab-date">
+            <span>迄</span>
+            <input type="date" id="dashTo">
+          </label>
+          <button type="button" class="lab-date-clear" id="dashClear">清除</button>
+          <!-- 起訖都是含當天。使用者說「9/1 到 9/30」時,
+               心裡想的一定是包含 9/30 那一整天。 -->
+          <span class="lab-date-hint">依「送單日」篩選,起訖含當天</span>
         </div>
 
         <div class="lab-dash-note" id="dashNote"></div>
@@ -183,6 +205,6 @@
   <div id="labQrTmp" style="display:none"></div>
 
   <script src="js/dxf.js?v=20260903-rings"></script>
-  <script src="js/cloth-lab.js?v=20260911-dash2"></script>
+  <script src="js/cloth-lab.js?v=20260911-dash3"></script>
 </body>
 </html>
