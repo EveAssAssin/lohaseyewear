@@ -23,7 +23,18 @@
     TIMEOUT_MS: 8000,
   };
 
-  var State = { offset: 0, total: 0, loading: false, done: false };
+  /* seed:這一次瀏覽的亂數種子。
+     -----------------------------------------------------------------
+     分享牆是隨機排序的,但【分頁必須接得起來】——
+     每一頁各自隨機的話,同一張會出現在第 1 頁也出現在第 2 頁,
+     而另一些永遠輪不到。種子固定,伺服器每次都洗出同一個順序,
+     切頁才對得上。
+
+     每次載入頁面換一個新的 → 每個訪客、每次重新整理都看到不同的排法。 */
+  var State = {
+    offset: 0, total: 0, loading: false, done: false,
+    seed: (Math.floor(Math.random() * 2147483647) || 1)
+  };
   var el = {};
 
   function esc(s) {
@@ -67,7 +78,9 @@
     fetch(CONFIG.ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ limit: CONFIG.PAGE, offset: State.offset }),
+      body: JSON.stringify({
+        limit: CONFIG.PAGE, offset: State.offset, seed: State.seed
+      }),
       signal: ctrl.signal,
     })
       .then(function (r) { clearTimeout(to); return r.json(); })

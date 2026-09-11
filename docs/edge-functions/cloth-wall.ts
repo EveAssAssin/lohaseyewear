@@ -31,7 +31,7 @@ const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-05 · 眼鏡布分享牆';
+const CODE_VERSION = '2026-09-11 · 分享牆改隨機排序(依種子)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -80,7 +80,43 @@ function publicItem(r: Record<string, any>) {
    不快取的話眼鏡布主頁每次載入都打一次資料庫。
    Edge Function 重啟就沒了,剛好不必處理失效。 */
 const CACHE_TTL_MS = 3 * 60 * 1000;
-const cache = new Map<string, { at: number; body: string }>();
+
+/* 全部已完成的作品,共用一份快取。
+   隨機排序之後不能再用「limit:offset」當快取鍵 ——
+   同一頁在不同種子下內容不同,那個鍵會把別人的順序餵給你。
+   改成快取【原始資料】,排序每次現算(幾百筆的洗牌是微秒等級)。 */
+const MAX_WALL = 500;
+type Row = Record<string, any>;
+let allCache: { at: number; rows: Row[] } | null = null;
+
+/* 以種子決定順序的洗牌。
+   ⚠ 一定要是【確定性】的:同一個種子每次都要洗出同一個順序,
+     否則客人按「看更多」時第二頁是照另一個順序切的,
+     結果就是有的重複、有的看不到。
+
+   mulberry32 —— 短、夠均勻,這個用途不需要密碼學等級的亂數。 */
+function rng(seed: number) {
+  let a = (seed >>> 0) || 1;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffled<T>(rows: T[], seed: number): T[] {
+  /* 沒給種子(或給 0)就維持原本的「最新完成的在前」——
+     舊版前端還沒更新時不會突然變成亂序,而且爬蟲拿到的順序穩定。 */
+  if (!seed) return rows;
+  const a = rows.slice();
+  const rand = rng(seed);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
@@ -95,42 +131,53 @@ Deno.serve(async (req) => {
 
   const limit  = Math.min(Math.max(Number(body.limit) || 24, 1), 60);
   const offset = Math.max(Number(body.offset) || 0, 0);
-
-  const ck = limit + ':' + offset;
-  const hit = cache.get(ck);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
-    return new Response(hit.body, {
-      headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' },
-    });
-  }
+  /* 亂數種子。前端每次載入頁面產生一個,之後每一頁都帶同一個。
+     ⚠ 沒有種子就【不能】每頁各自隨機 —— 那會讓同一張出現在
+       第 1 頁也出現在第 2 頁,而另一些永遠輪不到。
+       種子固定,順序就固定,分頁才接得起來。 */
+  const seed = Math.floor(Number(body.seed)) || 0;
 
   /* ⚠ 只挑要用的欄位,不要 select('*')。
      select('*') 會把客編、門市、線稿網址一起讀出來 ——
      就算下面的白名單擋住了,那些資料仍然進過這支函式的記憶體與 log。
-     從查詢就不要拿,是比較穩的做法。 */
-  const { data, error, count } = await db
-    .from('cloth_designs')
-    .select('id, member_name, preview_url, done_at', { count: 'exact' })
-    .eq('status', 'done')
-    .not('preview_url', 'is', null)
-    .order('done_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+     從查詢就不要拿,是比較穩的做法。
 
-  if (error) {
-    console.error('[cloth-wall] 讀取失敗:', error.message);
-    return reply('500', { message: '讀取失敗,請稍後再試' }, 500);
+     🚨 2026-09-11 改成隨機排序之後,這裡抓的是【全部】而不是一頁。
+       理由:亂序沒辦法交給資料庫分頁 —— PostgREST 的 order 只能照
+       欄位排,而 `random()` 每次查詢都會重排,兩次查詢之間對不起來。
+       所以整份拿回來、在這裡依種子打亂、再切頁。
+
+       眼鏡布是一年一件,完成的量以百計,整份拿回來很便宜;
+       而且下面有一份共用快取,實際上每 3 分鐘才真的查一次資料庫
+       —— 比原本「每一頁各查一次」還省。 */
+  let all = allCache && Date.now() - allCache.at < CACHE_TTL_MS ? allCache.rows : null;
+  if (!all) {
+    const { data, error } = await db
+      .from('cloth_designs')
+      .select('id, member_name, preview_url, done_at')
+      .eq('status', 'done')
+      .not('preview_url', 'is', null)
+      .order('done_at', { ascending: false })
+      .limit(MAX_WALL);
+
+    if (error) {
+      console.error('[cloth-wall] 讀取失敗:', error.message);
+      return reply('500', { message: '讀取失敗,請稍後再試' }, 500);
+    }
+    all = data || [];
+    allCache = { at: Date.now(), rows: all };
   }
+
+  const ordered = shuffled(all, seed);
+  const page = ordered.slice(offset, offset + limit);
 
   const payload = JSON.stringify({
     code: '200',
     data: {
-      items: (data || []).map(publicItem),
-      total: count || 0,
+      items: page.map(publicItem),
+      total: ordered.length,
     },
   });
-
-  cache.set(ck, { at: Date.now(), body: payload });
-  if (cache.size > 200) cache.clear();
 
   return new Response(payload, {
     headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' },
