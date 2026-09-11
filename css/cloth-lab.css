@@ -327,3 +327,102 @@
   .sim-ctl{ gap:10px }
   .sim-info{ margin-left:0; width:100% }
 }
+
+/* =============================================================
+   儀表板
+   -------------------------------------------------------------
+   使用者跟工作清單不同:看的人多半坐著、在桌機前排產能,
+   所以這一區允許比清單密一點、也允許表格橫向捲動。
+
+   但仍然在同一頁 —— 製作端會需要臨時查「這個月做了幾件」,
+   為此要他登入管理後台是不合理的。
+   ============================================================= */
+
+.lab-views{
+  display:flex; gap:8px; margin:0 0 14px;
+}
+.lab-view-btn{
+  flex:0 0 auto; padding:9px 18px; font-size:15px; font-weight:700;
+  color:var(--text-sub); background:transparent;
+  border:1px solid var(--lohas-line,#e6e1d8); border-radius:var(--r-pill,999px);
+  cursor:pointer;
+}
+.lab-view-btn.on{
+  color:#fff; background:var(--lohas-brand,#8B6F52);
+  border-color:var(--lohas-brand,#8B6F52);
+}
+
+.lab-dash-bar{
+  display:flex; flex-wrap:wrap; gap:14px; align-items:center;
+  justify-content:space-between; margin-bottom:12px;
+}
+.lab-dash-actions{ display:flex; gap:8px; flex-wrap:wrap }
+.lab-btn-ghost{
+  background:transparent; color:var(--lohas-brand,#8B6F52);
+  border:1px solid var(--lohas-brand,#8B6F52);
+}
+.lab-btn-ghost:hover{ background:var(--lohas-light,#F3EDE5) }
+
+.lab-dash-note{
+  font-size:13px; color:var(--text-muted,#8a8178); margin-bottom:12px;
+  min-height:1.4em;   /* 佔位,載入中→有數字時不要整個版面跳一下 */
+}
+
+/* KPI:手機兩欄、桌機自動排。
+   刻意不用固定欄數 —— 六張卡在 1024px 擠成一排會讀不動。 */
+.lab-kpis{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:10px; margin-bottom:22px;
+}
+.lab-kpi{
+  background:#fff; border:1px solid var(--lohas-line,#e6e1d8);
+  border-radius:var(--r-md,10px); padding:14px 16px;
+}
+.lab-kpi-label{ font-size:12px; color:var(--text-muted,#8a8178); letter-spacing:.05em }
+.lab-kpi-value{
+  font-size:28px; font-weight:700; line-height:1.25; color:var(--text-main,#2b2620);
+  /* 數字用等寬,幾張卡並排時位數才對得齊 */
+  font-variant-numeric:tabular-nums;
+}
+.lab-kpi-sub{ font-size:12px; color:var(--text-sub,#6b6259) }
+
+.lab-tables{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+  gap:16px;
+}
+.lab-table-box{
+  background:#fff; border:1px solid var(--lohas-line,#e6e1d8);
+  border-radius:var(--r-md,10px); padding:14px 16px 16px;
+}
+.lab-table-box h3{
+  margin:0 0 4px; font-size:15px; color:var(--text-main,#2b2620);
+}
+.lab-table-note,
+.lab-table-empty{
+  margin:0 0 8px; font-size:12px; line-height:1.7; color:var(--text-muted,#8a8178);
+}
+/* 表格自己捲,不要讓整頁橫向捲動 */
+.lab-table-scroll{ overflow-x:auto }
+.lab-table{
+  width:100%; border-collapse:collapse; font-size:13px;
+}
+.lab-table th,
+.lab-table td{
+  padding:7px 10px; text-align:left; white-space:nowrap;
+  border-bottom:1px solid var(--lohas-line,#e6e1d8);
+}
+.lab-table th{
+  font-size:12px; font-weight:700; color:var(--text-sub,#6b6259);
+  background:var(--bg-soft,#faf7f2);
+  position:sticky; top:0;
+}
+.lab-table td.num,
+.lab-table th.num{ text-align:right; font-variant-numeric:tabular-nums }
+.lab-table tbody tr:last-child td{ border-bottom:0 }
+
+@media (max-width:520px){
+  .lab-kpi-value{ font-size:24px }
+  .lab-dash-bar{ gap:10px }
+  .lab-dash-actions{ width:100% }
+  .lab-dash-actions .lab-btn{ flex:1 }
+}

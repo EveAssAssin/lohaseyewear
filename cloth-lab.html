@@ -14,7 +14,7 @@
   <!-- LOHAS CSS · 載入順序: tokens → base → page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
-  <link rel="stylesheet" href="css/cloth-lab.css?v=20260903-sim">
+  <link rel="stylesheet" href="css/cloth-lab.css?v=20260911-dash">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -47,6 +47,15 @@
 
     <!-- 列表 -->
     <section class="lab-body" id="labBody" hidden>
+      <!-- ===== 檢視切換 =====
+           製作端平常只用「工作清單」,儀表板是主管／排產的人在看的。
+           所以放在最上面一排、預設停在工作清單 ——
+           站在機台旁邊的人不該多按一次才看到今天要做什麼。 -->
+      <div class="lab-views" id="labViews">
+        <button type="button" class="lab-view-btn on" data-v="list">工作清單</button>
+        <button type="button" class="lab-view-btn" data-v="dash">儀表板</button>
+      </div>
+
       <!-- ⚠ 兩組分頁一定要分行、而且各自有名字。
            -----------------------------------------------------------
            先前兩組併在同一排,結果是六顆藥丸連成一條、其中兩顆
@@ -88,6 +97,36 @@
 
       <div class="lab-msg" id="labMsg" hidden></div>
       <div id="labList"></div>
+
+      <!-- ===== 儀表板 =====
+           ⚠ 它跟工作清單看的是【不同範圍】的資料:
+             工作清單只抓當前狀態的前 100 筆(師傅要的是「現在要做什麼」),
+             儀表板要全部(算比例、算耗時都不能只看一部分)。
+           所以兩邊各自抓,不共用 State.items —— 共用的話數字會
+           隨著上面那兩排篩選跳動,而看的人不會知道自己在看子集。 -->
+      <div class="lab-dash" id="labDash" hidden>
+        <div class="lab-dash-bar">
+          <div class="lab-filter">
+            <span class="lab-filter-label">期間</span>
+            <div class="lab-seg" id="dashRange">
+              <button type="button" class="lab-seg-btn" data-r="30">近 30 天</button>
+              <button type="button" class="lab-seg-btn" data-r="90">近 90 天</button>
+              <button type="button" class="lab-seg-btn" data-r="365">近一年</button>
+              <button type="button" class="lab-seg-btn on" data-r="">全部</button>
+            </div>
+          </div>
+          <div class="lab-dash-actions">
+            <button type="button" class="lab-btn lab-btn-ghost" id="dashReload">重新整理</button>
+            <button type="button" class="lab-btn" id="dashCsv">匯出 CSV</button>
+          </div>
+        </div>
+
+        <div class="lab-dash-note" id="dashNote"></div>
+
+        <div class="lab-kpis" id="dashKpis"></div>
+
+        <div class="lab-tables" id="dashTables"></div>
+      </div>
     </section>
 
   </main>
@@ -144,6 +183,6 @@
   <div id="labQrTmp" style="display:none"></div>
 
   <script src="js/dxf.js?v=20260903-rings"></script>
-  <script src="js/cloth-lab.js?v=20260903-print"></script>
+  <script src="js/cloth-lab.js?v=20260911-dash"></script>
 </body>
 </html>

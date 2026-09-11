@@ -678,6 +678,273 @@
 
   /* ---------- 啟動 ---------- */
 
+  /* =============================================================
+     儀表板
+     -------------------------------------------------------------
+     ⚠ 它抓的是【全部】資料,不是上面兩排篩選之後的那 100 筆。
+       算比例、算平均耗時如果只看子集,數字會是錯的而且看不出來。
+
+     資料沿用既有的 cloth-admin `list` —— 它支援 limit/offset 並回傳
+     total,分頁抓完就好。刻意【不新增 Edge Function 動作】:
+     線上那份 cloth-admin 比 repo 新(它認得 rejected,repo 版不認),
+     動它就得先 Download 再合併,而這個功能不需要付那個代價。
+     ============================================================= */
+
+  var DASH_PAGE = 200;          // list 動作的單次上限
+  var DASH_MAX  = 5000;         // 保險絲:再多就不要一直打
+  var Dash = { rows: null, range: '', loading: false };
+
+  function dashDays(a, b) {
+    if (!a || !b) return null;
+    var d = (new Date(b) - new Date(a)) / 86400000;
+    return isFinite(d) && d >= 0 ? d : null;
+  }
+
+  function dashMonth(s) {
+    if (!s) return '(無)';
+    var d = new Date(s);
+    if (isNaN(d)) return '(無)';
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  var SRC_LABEL = { market: '市集刻圖', draw: '手繪' };
+  var ST_LABEL  = { 'new': '待製作', done: '已完成', rejected: '已退件', archived: '已封存' };
+
+  /* 分頁把全部抓回來。
+     ⚠ 不帶 status —— 帶了就只拿得到那一種,而儀表板要算的正是比例。 */
+  function dashFetchAll() {
+    var all = [];
+    function next(offset) {
+      return call({ action: 'list', limit: DASH_PAGE, offset: offset })
+        .then(function (d) {
+          var items = (d && d.items) || [];
+          all = all.concat(items);
+          var total = (d && d.total) || all.length;
+          if (all.length < Math.min(total, DASH_MAX) && items.length === DASH_PAGE) {
+            return next(offset + DASH_PAGE);
+          }
+          return { rows: all, total: total };
+        });
+    }
+    return next(0);
+  }
+
+  function dashInRange(it) {
+    if (!Dash.range) return true;
+    var days = dashDays(it.created_at, new Date().toISOString());
+    return days !== null && days <= Number(Dash.range);
+  }
+
+  function dashGroup(rows, keyFn, labelFn) {
+    var m = {};
+    rows.forEach(function (it) {
+      var k = keyFn(it);
+      if (k === null || k === undefined) return;
+      k = String(k);
+      if (!m[k]) {
+        m[k] = { key: k, label: labelFn ? labelFn(it) : k, n: 0, done: 0, wait: 0, days: [] };
+      }
+      var g = m[k];
+      g.n++;
+      if (it.status === 'done') {
+        g.done++;
+        var d = dashDays(it.created_at, it.done_at);
+        if (d !== null) g.days.push(d);
+      } else if (it.status === 'new') {
+        g.wait++;
+      }
+    });
+    return Object.keys(m).map(function (k) { return m[k]; })
+      .sort(function (a, b) { return b.n - a.n; });
+  }
+
+  function dashAvg(arr) {
+    if (!arr.length) return null;
+    var s = 0;
+    arr.forEach(function (v) { s += v; });
+    return s / arr.length;
+  }
+
+  function fmtDays(v) {
+    if (v === null) return '—';
+    if (v < 1) return (v * 24).toFixed(1) + ' 小時';
+    return v.toFixed(1) + ' 天';
+  }
+
+  function kpiHtml(label, value, sub) {
+    return '<div class="lab-kpi"><div class="lab-kpi-label">' + esc(label) + '</div>' +
+           '<div class="lab-kpi-value">' + esc(String(value)) + '</div>' +
+           (sub ? '<div class="lab-kpi-sub">' + esc(sub) + '</div>' : '') + '</div>';
+  }
+
+  function dashTable(title, cols, rows, note) {
+    if (!rows.length) {
+      return '<div class="lab-table-box"><h3>' + esc(title) + '</h3>' +
+             '<p class="lab-table-empty">沒有資料</p></div>';
+    }
+    var head = cols.map(function (c) {
+      return '<th' + (c.num ? ' class="num"' : '') + '>' + esc(c.t) + '</th>';
+    }).join('');
+    var body = rows.map(function (r) {
+      return '<tr>' + cols.map(function (c) {
+        return '<td' + (c.num ? ' class="num"' : '') + '>' + esc(String(c.v(r))) + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    return '<div class="lab-table-box"><h3>' + esc(title) + '</h3>' +
+           (note ? '<p class="lab-table-note">' + esc(note) + '</p>' : '') +
+           '<div class="lab-table-scroll"><table class="lab-table">' +
+           '<thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table></div></div>';
+  }
+
+  function renderDash() {
+    var kpis = $('dashKpis'), tables = $('dashTables'), note = $('dashNote');
+    if (!kpis || !tables || !note) return;
+
+    if (Dash.loading) {
+      note.textContent = '載入中…';
+      kpis.innerHTML = ''; tables.innerHTML = '';
+      return;
+    }
+    if (!Dash.rows) { note.textContent = ''; return; }
+
+    var rows = Dash.rows.filter(dashInRange);
+    var done = rows.filter(function (it) { return it.status === 'done'; });
+    var waitN = rows.filter(function (it) { return it.status === 'new'; }).length;
+    var rejN  = rows.filter(function (it) { return it.status === 'rejected'; }).length;
+    var lead  = dashAvg(done.map(function (it) { return dashDays(it.created_at, it.done_at); })
+                            .filter(function (v) { return v !== null; }));
+    var members = {};
+    rows.forEach(function (it) { if (it.erpid || it.mid) members[it.erpid || it.mid] = 1; });
+
+    note.textContent = '共 ' + rows.length + ' 件' +
+      (Dash.range ? '(近 ' + Dash.range + ' 天)' : '(全部)') +
+      (Dash.rows.length >= DASH_MAX ? '　⚠ 已達 ' + DASH_MAX + ' 筆上限,較舊的沒有計入' : '');
+
+    kpis.innerHTML =
+      kpiHtml('總件數', rows.length) +
+      kpiHtml('待製作', waitN) +
+      kpiHtml('已完成', done.length,
+              rows.length ? Math.round(done.length / rows.length * 100) + '%' : '') +
+      kpiHtml('已退件', rejN) +
+      kpiHtml('平均製作耗時', fmtDays(lead), '送單到完成') +
+      kpiHtml('會員數', Object.keys(members).length, '有送過件的');
+
+    var byStore = dashGroup(rows,
+      function (it) { return it.store_erpid || it.store_name || '(未選門市)'; },
+      function (it) { return it.store_name || it.store_erpid || '(未選門市)'; });
+    var byCity  = dashGroup(rows, function (it) { return it.store_city || '(未填)'; });
+    var byMonth = dashGroup(rows, function (it) { return dashMonth(it.created_at); })
+      .sort(function (a, b) { return a.key < b.key ? 1 : -1; });
+    var bySrc   = dashGroup(rows, function (it) { return it.source || '(未知)'; },
+      function (it) { return SRC_LABEL[it.source] || it.source || '(未知)'; });
+    var byMember = dashGroup(rows, function (it) { return it.erpid || it.mid || '(無編號)'; })
+      .slice(0, 30);
+
+    tables.innerHTML =
+      dashTable('依門市', [
+        { t: '門市',     v: function (r) { return r.label; } },
+        { t: '件數',     num: 1, v: function (r) { return r.n; } },
+        { t: '已完成',   num: 1, v: function (r) { return r.done; } },
+        { t: '待製作',   num: 1, v: function (r) { return r.wait; } },
+        { t: '平均耗時', num: 1, v: function (r) { return fmtDays(dashAvg(r.days)); } }
+      ], byStore) +
+      dashTable('依縣市', [
+        { t: '縣市',     v: function (r) { return r.key; } },
+        { t: '件數',     num: 1, v: function (r) { return r.n; } },
+        { t: '已完成',   num: 1, v: function (r) { return r.done; } },
+        { t: '平均耗時', num: 1, v: function (r) { return fmtDays(dashAvg(r.days)); } }
+      ], byCity) +
+      dashTable('依月份(送單月)', [
+        { t: '月份',       v: function (r) { return r.key; } },
+        { t: '送單',       num: 1, v: function (r) { return r.n; } },
+        { t: '其中已完成', num: 1, v: function (r) { return r.done; } },
+        { t: '平均耗時',   num: 1, v: function (r) { return fmtDays(dashAvg(r.days)); } }
+      ], byMonth) +
+      dashTable('依來源', [
+        { t: '來源',     v: function (r) { return r.label; } },
+        { t: '件數',     num: 1, v: function (r) { return r.n; } },
+        { t: '已完成',   num: 1, v: function (r) { return r.done; } },
+        { t: '平均耗時', num: 1, v: function (r) { return fmtDays(dashAvg(r.days)); } }
+      ], bySrc) +
+      dashTable('依會員(件數前 30)', [
+        { t: '會員編號', v: function (r) { return r.key; } },
+        { t: '件數',     num: 1, v: function (r) { return r.n; } },
+        { t: '已完成',   num: 1, v: function (r) { return r.done; } }
+      ], byMember,
+        '眼鏡布是一年一件,同一個編號出現多次通常是退件重做或內部測試帳號。');
+  }
+
+  /* ===== 匯出 CSV =====
+     ⚠ 開頭一定要有 BOM。少了它,Excel 在中文 Windows 上會用 CP950
+       去讀 UTF-8,整份中文變亂碼 —— 而檔案本身是好的,
+       所以會被當成「你給的檔壞掉了」。 */
+  function csvCell(v) {
+    var s = (v === null || v === undefined) ? '' : String(v);
+    /* 前導 = + - @ 會被 Excel 當成公式(CSV 注入)。
+       這幾欄是客人填的名字與店名,不能假設安全。 */
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+
+  function dashCsv() {
+    if (!Dash.rows) { alert('資料還沒載入完成,請稍候'); return; }
+    var rows = Dash.rows.filter(dashInRange);
+    if (!rows.length) { alert('這個期間沒有資料'); return; }
+
+    var cols = [
+      ['會員編號', function (r) { return r.erpid || r.mid || ''; }],
+      ['姓名',     function (r) { return r.member_name || ''; }],
+      ['門市代號', function (r) { return r.store_erpid || ''; }],
+      ['門市',     function (r) { return r.store_name || ''; }],
+      ['縣市',     function (r) { return r.store_city || ''; }],
+      ['來源',     function (r) { return SRC_LABEL[r.source] || r.source || ''; }],
+      ['刻圖名稱', function (r) { return r.design_name || ''; }],
+      ['狀態',     function (r) { return ST_LABEL[r.status] || r.status || ''; }],
+      ['送單時間', function (r) { return fmtTime(r.created_at); }],
+      ['完成時間', function (r) { return r.done_at ? fmtTime(r.done_at) : ''; }],
+      ['製作天數', function (r) {
+        var d = dashDays(r.created_at, r.done_at);
+        return d === null ? '' : d.toFixed(2);
+      }],
+      ['編號',     function (r) { return r.id || ''; }]
+    ];
+
+    var lines = [cols.map(function (c) { return csvCell(c[0]); }).join(',')];
+    rows.forEach(function (r) {
+      lines.push(cols.map(function (c) { return csvCell(c[1](r)); }).join(','));
+    });
+
+    /* ﻿ 就是 BOM。寫成跳脫而不是直接打那個字元 ——
+       它是隱形的,編輯器整理空白時很容易把它清掉,
+       而清掉之後唯一的症狀是「Excel 開起來中文變亂碼」。 */
+    var blob = new Blob(['\uFEFF' + lines.join('\r\n')],
+                        { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var d = new Date();
+    a.href = url;
+    a.download = '眼鏡布製作紀錄_' + d.getFullYear() +
+      String(d.getMonth() + 1).padStart(2, '0') +
+      String(d.getDate()).padStart(2, '0') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function loadDash(force) {
+    if (Dash.rows && !force) { renderDash(); return; }
+    Dash.loading = true;
+    renderDash();
+    dashFetchAll()
+      .then(function (r) { Dash.rows = r.rows; Dash.loading = false; renderDash(); })
+      .catch(function (err) {
+        Dash.loading = false;
+        var note = $('dashNote');
+        if (note) note.textContent = '載入失敗:' + (err.message || '');
+      });
+  }
+
   function init() {
     el = {
       gate: $('labGate'), code: $('labCode'), enter: $('labEnter'), gateErr: $('labGateErr'),
@@ -687,6 +954,49 @@
     if (!el.gate) return;
 
     el.enter.addEventListener('click', enter);
+
+    /* 檢視切換。儀表板是【點了才抓】—— 製作端多數時候不會用到它,
+       開頁就抓全部只是讓站在機台旁邊的人多等。 */
+    var views = $('labViews');
+    if (views) {
+      views.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('.lab-view-btn');
+        if (!b) return;
+        var isDash = b.getAttribute('data-v') === 'dash';
+        var all = views.querySelectorAll('.lab-view-btn');
+        for (var i = 0; i < all.length; i++) {
+          all[i].classList.toggle('on', all[i] === b);
+        }
+        /* 工作清單那兩排篩選跟儀表板無關,一起藏起來 ——
+           留著的話會讓人以為儀表板的數字受它們影響。 */
+        var bar = document.querySelector('.lab-bar');
+        if (bar) bar.hidden = isDash;
+        if (el.list) el.list.hidden = isDash;
+        if (el.msg) el.msg.hidden = isDash || !el.msg.textContent;
+        var dash = $('labDash');
+        if (dash) dash.hidden = !isDash;
+        if (isDash) loadDash(false);
+      });
+    }
+
+    var dr = $('dashRange');
+    if (dr) {
+      dr.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('.lab-seg-btn');
+        if (!b) return;
+        var all = dr.querySelectorAll('.lab-seg-btn');
+        for (var i = 0; i < all.length; i++) {
+          all[i].classList.toggle('on', all[i] === b);
+        }
+        Dash.range = b.getAttribute('data-r') || '';
+        renderDash();   // 期間只是前端篩選,不必重抓
+      });
+    }
+
+    var drl = $('dashReload');
+    if (drl) drl.addEventListener('click', function () { loadDash(true); });
+    var dcsv = $('dashCsv');
+    if (dcsv) dcsv.addEventListener('click', dashCsv);
     el.code.addEventListener('keydown', function (e) { if (e.key === 'Enter') enter(); });
     el.out.addEventListener('click', forget);
 
