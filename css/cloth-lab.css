@@ -456,3 +456,34 @@
   .lab-date input{ width:100%; font-size:16px }
   .lab-date-hint{ flex:1 1 100% }
 }
+
+/* 🚨 hidden 要蓋過 display:flex。
+   -----------------------------------------------------------------
+   .lab-bar 是 flex,而 hidden 屬性只是 UA 樣式表的 display:none ——
+   作者寫的 display:flex 優先度較高,所以 el.hidden = true 沒有效果。
+   症狀是「切到儀表板,上面的狀態／產線篩選還在」,
+   而 JS 那一行看起來完全正常。upload-design.css 也踩過同一個坑。 */
+.lab-bar[hidden],
+.lab-dates[hidden],
+.lab-views[hidden]{ display:none !important }
+
+/* 儀表板的按鈕不要沿用通行碼那顆(width:100% + margin-top:14px)——
+   那顆是給單獨一顆、要很好按的情境用的;
+   這裡是一排工具按鈕,撐滿會變成三行大色塊。 */
+.lab-dash-actions .lab-btn{
+  width:auto; margin-top:0; min-height:40px;
+  padding:0 18px; font-size:14px; letter-spacing:.04em;
+}
+
+/* 期間那一排:快捷鍵與起訖日是同一件事,收在同一個框裡,
+   跟右邊的匯出動作分開。 */
+.lab-dash-bar{
+  align-items:flex-start; gap:12px 20px; margin-bottom:10px;
+}
+.lab-dash-bar .lab-filter{ flex:1 1 auto }
+.lab-dates{ margin-top:0 }
+
+@media (max-width:520px){
+  .lab-dash-actions{ width:100% }
+  .lab-dash-actions .lab-btn{ flex:1 1 auto; padding:0 10px }
+}
