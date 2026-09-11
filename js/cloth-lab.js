@@ -1191,6 +1191,8 @@
     if (drl) drl.addEventListener('click', function () { loadDash(true); });
     var dcsv = $('dashCsv');
     if (dcsv) dcsv.addEventListener('click', dashCsv);
+    var dxls = $('dashXlsx');
+    if (dxls) dxls.addEventListener('click', dashXlsx);
     el.code.addEventListener('keydown', function (e) { if (e.key === 'Enter') enter(); });
     el.out.addEventListener('click', forget);
 
