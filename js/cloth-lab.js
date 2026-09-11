@@ -891,9 +891,13 @@
     var rows = Dash.rows.filter(dashInRange);
     if (!rows.length) { alert('這個期間沒有資料'); return; }
 
+    /* ⚠ 刻意【沒有姓名欄】。
+       這一頁是用通行碼進來的,而 cloth-admin 對通行碼呼叫端一律
+       把 member_name 設成 null(製作端要的是「刻什麼、刻在哪」,
+       不是「誰」)。放一個永遠空白的欄位只會被當成壞掉。
+       要對得上人用會員編號就夠了。 */
     var cols = [
       ['會員編號', function (r) { return r.erpid || r.mid || ''; }],
-      ['姓名',     function (r) { return r.member_name || ''; }],
       ['門市代號', function (r) { return r.store_erpid || ''; }],
       ['門市',     function (r) { return r.store_name || ''; }],
       ['縣市',     function (r) { return r.store_city || ''; }],
