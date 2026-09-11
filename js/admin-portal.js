@@ -235,6 +235,7 @@
     'dashboard': '首頁',
     'review-designs': '刻圖審核',
     'review-uploads': '上傳審核',
+    'cs-inbox': '客服收件匣',
     'cm-banner': '首頁與分頁 Banner',
     'cm-news': '最新消息',
     'admin-upload': '樂活官方上傳',
@@ -277,6 +278,7 @@
     if (page === 'users') loadUsers();
     if (page === 'review-designs') { loadDesignReview(); refreshReviewCounts(); }
     if (page === 'review-uploads') { loadReviewUploads(); refreshReviewCounts(); }
+    if (page === 'cs-inbox') loadCsInbox();
     if (page === 'cm-news') loadNews();
     if (page === 'cm-banner') loadBannerModule();
     if (page === 'admin-upload') { initAdminUpload(); }
@@ -295,6 +297,7 @@
       a.addEventListener('click', () => goTo(a.dataset.jump));
     });
     // 麵包屑「樂活管理後台」點擊跳首頁
+    document.getElementById('csInboxReload')?.addEventListener('click', loadCsInbox);
     document.getElementById('adBcHome')?.addEventListener('click', e => {
       e.preventDefault();
       goTo('dashboard');
@@ -1960,49 +1963,96 @@
       const d = await adminRead('cs_messages', [],
         { order_by: 'created_at', ascending: false, limit: 1000 });
       const rows = d.rows || [];
-      const byMember = {};
+
+      /* 🚨 依【對話串】分組,不是依會員。
+         -----------------------------------------------------------
+         原本這裡是依 member_erpid 分組,點下去呼叫
+         openCsChat(erpid, '') —— 而 openCsChat 開頭就擋
+         「沒有刻圖編號無法對話」,所以每一筆點下去都會跳錯。
+
+         資料上一串對話就是綁一件刻圖(cs_messages.design_id),
+         後台也需要知道客人在問哪一件。所以照 design_id 分。
+
+         沒有 design_id 的是系統通知(writeCsSystemMessage 可以不帶),
+         那種點不開,標成唯讀。 */
+      const byConv = {};
       rows.forEach(function (m) {
-        const k = m.member_erpid;
-        if (!byMember[k]) {
-          byMember[k] = { erpid: k, last: m, unread: 0 };
+        const k = (m.design_id || '') + '|' + (m.member_erpid || '');
+        if (!byConv[k]) {
+          byConv[k] = {
+            designId: m.design_id || '',
+            erpid: m.member_erpid || '',
+            last: m,           // rows 是時間新→舊,第一筆就是最後一則
+            unread: 0
+          };
         }
         // 會員發的未讀 = 後台要處理的
-        if (m.sender === 'member' && !m.is_read) byMember[k].unread++;
+        if (m.sender === 'member' && !m.is_read) byConv[k].unread++;
       });
 
-      const members = Object.values(byMember);
+      const convs = Object.keys(byConv).map(function (k) { return byConv[k]; });
       // 未讀的排前面,其次照最後訊息時間
-      members.sort(function (a, b) {
+      convs.sort(function (a, b) {
         if ((b.unread > 0) !== (a.unread > 0)) return (b.unread > 0) ? 1 : -1;
         return new Date(b.last.created_at) - new Date(a.last.created_at);
       });
 
-      const totalUnread = members.reduce((s, m) => s + m.unread, 0);
+      const totalUnread = convs.reduce(function (s, c) { return s + c.unread; }, 0);
       setCsInboxBadge(totalUnread);
 
-      if (!members.length) {
+      if (!convs.length) {
         listEl.innerHTML = '<div class="empty-page"><i class="fa-regular fa-comments"></i><div class="empty-page-title">目前沒有客服訊息</div></div>';
         return;
       }
 
-      listEl.innerHTML = members.map(function (m) {
-        const t = new Date(m.last.created_at);
+      /* 刻圖名稱不在 cs_messages 裡,另外查一次。
+         engraving_designs 是公開可讀的(市集要用),所以直接查即可,
+         不必為了一個名字擴大 admin-read 的白名單。 */
+      const ids = convs.map(function (c) { return c.designId; }).filter(Boolean);
+      const nameOf = {};
+      if (ids.length) {
+        try {
+          const { data: ds } = await sb.from('engraving_designs')
+            .select('id, name').in('id', ids.slice(0, 300));
+          (ds || []).forEach(function (x) { nameOf[x.id] = x.name; });
+        } catch (e) { /* 查不到就只顯示編號,不擋整個清單 */ }
+      }
+
+      listEl.innerHTML = convs.map(function (c) {
+        const t = new Date(c.last.created_at);
         const when = (t.getMonth() + 1) + '/' + t.getDate() + ' ' +
                      String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
-        const preview = (m.last.sender === 'staff' ? '你: ' : '') + (m.last.message || '');
-        return '<button type="button" class="cs-inbox-item' + (m.unread ? ' unread' : '') + '" data-erpid="' + escapeHtml(m.erpid) + '">' +
+        const preview = (c.last.sender === 'staff' ? '你:' : '') + (c.last.message || '');
+        const title = c.designId
+          ? (nameOf[c.designId] || '(未命名刻圖)')
+          : '系統通知';
+        const tag = c.designId ? '' : '<span class="cs-inbox-tag">無法回覆</span>';
+        return '<button type="button" class="cs-inbox-item' +
+                 (c.unread ? ' unread' : '') + (c.designId ? '' : ' is-readonly') + '"' +
+                 ' data-erpid="' + escapeHtml(c.erpid) + '"' +
+                 ' data-design="' + escapeHtml(c.designId) + '"' +
+                 ' data-name="' + escapeHtml(title) + '">' +
                  '<div class="cs-inbox-avatar"><i class="fa-regular fa-user"></i></div>' +
                  '<div class="cs-inbox-main">' +
-                   '<div class="cs-inbox-top"><span class="cs-inbox-id">會員 ' + escapeHtml(m.erpid) + '</span><span class="cs-inbox-time">' + when + '</span></div>' +
-                   '<div class="cs-inbox-preview">' + escapeHtml(preview.slice(0, 40)) + '</div>' +
+                   '<div class="cs-inbox-top">' +
+                     '<span class="cs-inbox-id">' + escapeHtml(title) + tag + '</span>' +
+                     '<span class="cs-inbox-time">' + when + '</span>' +
+                   '</div>' +
+                   '<div class="cs-inbox-sub">會員 ' + escapeHtml(c.erpid) + '</div>' +
+                   '<div class="cs-inbox-preview">' + escapeHtml(preview.slice(0, 46)) + '</div>' +
                  '</div>' +
-                 (m.unread ? '<span class="cs-inbox-dot">' + (m.unread > 99 ? '99+' : m.unread) + '</span>' : '') +
+                 (c.unread ? '<span class="cs-inbox-dot">' + (c.unread > 99 ? '99+' : c.unread) + '</span>' : '') +
                '</button>';
       }).join('');
 
       listEl.querySelectorAll('.cs-inbox-item').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          openCsChat(btn.dataset.erpid, '');
+          const did = btn.dataset.design;
+          if (!did) {
+            alert('這是系統自動發出的通知,沒有對應的刻圖,無法從這裡回覆。');
+            return;
+          }
+          openCsChat(btn.dataset.erpid, did, btn.dataset.name);
         });
       });
     } catch (e) {

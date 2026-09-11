@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
-  <link rel="stylesheet" href="css/admin-portal.css?v=20260827-heartbeat">
+  <link rel="stylesheet" href="css/admin-portal.css?v=20260911-inbox">
   <!-- 禮物中心加工管理與門市查刻圖共用同一組樣式與程式 -->
   <link rel="stylesheet" href="css/store-lookup.css?v=20260820-midclaim">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260601-drag">
@@ -86,6 +86,13 @@
     <button class="nav-link" data-page="review-uploads">
       <i class="fa-regular fa-image"></i><span>上傳照片審核</span>
       <span class="badge" id="badgeUploads">0</span>
+    </button>
+    <!-- 客服收件匣。
+         ⚠ 徽章算的是【會員發的未讀】,不是訊息總數 ——
+           那才是「有人在等回覆」。系統自動發的通知不算。 -->
+    <button class="nav-link" data-page="cs-inbox">
+      <i class="fa-regular fa-comments"></i><span>客服收件匣</span>
+      <span class="badge" id="badgeCsInbox" style="display:none">0</span>
     </button>
   </div>
 
@@ -787,6 +794,23 @@
 
     <!-- ============= 其他頁 placeholder ============= -->
     <!-- ============= 照片審核 (合併: photo + story) ============= -->
+    <!-- ===== 客服收件匣 =====
+         一串對話 = 一件刻圖(cs_messages.design_id)。
+         這裡照對話串列,不是照會員 —— 同一位客人問兩件不同的刻圖
+         是兩件事,合在一起的話點進去也不知道要回哪一件。 -->
+    <div class="content-page" data-page="cs-inbox">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">客服收件匣</h1>
+          <div class="page-sub">客人在自己的刻圖底下留的訊息 · 未讀的排在最前面</div>
+        </div>
+        <button class="btn" id="csInboxReload" type="button">
+          <i class="fa-solid fa-rotate"></i> 重新整理
+        </button>
+      </div>
+      <div class="cs-inbox-list" id="csInboxList"></div>
+    </div>
+
     <div class="content-page" data-page="review-uploads">
       <div class="page-head">
         <div>
@@ -2037,7 +2061,7 @@
 <script src="js/upload-design.js?v=20260909-designfn"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260911-csread"></script>
+<script src="js/admin-portal.js?v=20260911-inbox"></script>
 <script src="js/admin-portal-footer.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-pegavision.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-categories.js?v=20260907-batch3"></script>

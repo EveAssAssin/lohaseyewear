@@ -4274,3 +4274,22 @@
   font-size:13.5px;
 }
 .ad .cloth-hb.is-stale b{ color:#7A2F26 }
+
+/* 客服收件匣:2026-09-11 把畫面補上時新增的三個 class。
+   (列表本體的樣式先前就寫好了,只是沒有頁面在用) */
+
+/* 會員編號那一行。原本的版面只有「標題 + 預覽」,
+   改成依對話串分組之後,標題變成刻圖名稱,
+   會員編號要另外有位置 —— 不然看得到「在問哪一件」卻不知道是誰。 */
+.ad .cs-inbox-sub{ font-size:12px; color:#9a9a9a; margin-bottom:2px }
+
+/* 系統自動發的通知沒有 design_id,點不開。
+   標出來而不是讓人點了才知道。 */
+.ad .cs-inbox-tag{
+  margin-left:6px; padding:1px 6px; border-radius:999px;
+  font-size:11px; font-weight:400; color:#9a8f7a; background:#f2ede3;
+}
+.ad .cs-inbox-item.is-readonly{ cursor:default }
+.ad .cs-inbox-item.is-readonly:hover{
+  border-color:var(--lohas-line, #e6e1d8); box-shadow:none;
+}
