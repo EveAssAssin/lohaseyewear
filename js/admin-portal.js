@@ -1959,10 +1959,38 @@
     if (!sb || !listEl) return;
     listEl.innerHTML = '<div class="empty-page"><div class="empty-page-title">載入中...</div></div>';
     try {
-      // 撈全部訊息(時間新→舊),前端聚合成每個會員一條
-      const d = await adminRead('cs_messages', [],
-        { order_by: 'created_at', ascending: false, limit: 1000 });
-      const rows = d.rows || [];
+      /* 🚨 分兩條查詢,不是「抓最近 N 筆」。
+         -----------------------------------------------------------
+         只抓最近 N 筆的話,訊息累積到數萬則之後,
+         一則三個月前沒回的客人問題會直接從清單上消失 ——
+         而那正是收件匣最不能漏的東西。
+
+         ① 未讀的(客人發的)——【不限時間】全部撈,那是要處理的
+         ② 最近的一批 —— 給「最近在聊什麼」的脈絡
+
+         兩條合併去重。未讀量本來就少,所以這樣既不會漏、
+         payload 也有上限。 */
+      const [unreadRes, recentRes] = await Promise.all([
+        adminRead('cs_messages', [
+          { col: 'sender', op: 'eq', value: 'member' },
+          { col: 'is_read', op: 'eq', value: false }
+        ], { order_by: 'created_at', ascending: false, limit: 500 }),
+        adminRead('cs_messages', [],
+          { order_by: 'created_at', ascending: false, limit: 400 })
+      ]);
+
+      const seen = {};
+      const rows = [];
+      (recentRes.rows || []).concat(unreadRes.rows || []).forEach(function (m) {
+        if (seen[m.id]) return;
+        seen[m.id] = 1;
+        rows.push(m);
+      });
+      /* 合併之後順序亂了,要重新排 ——
+         下面分組是靠「第一筆就是最後一則訊息」。 */
+      rows.sort(function (a, b) {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
 
       /* 🚨 依【對話串】分組,不是依會員。
          -----------------------------------------------------------
@@ -2009,56 +2037,100 @@
          engraving_designs 是公開可讀的(市集要用),所以直接查即可,
          不必為了一個名字擴大 admin-read 的白名單。 */
       const ids = convs.map(function (c) { return c.designId; }).filter(Boolean);
-      const nameOf = {};
+      const nameOf = {}, whoOf = {};
       if (ids.length) {
         try {
+          /* designer_name 就是那位客人的姓名(門市上傳與官網上傳都會填)。
+             多拿一個欄位就有姓名,不必再查一張表。 */
           const { data: ds } = await sb.from('engraving_designs')
-            .select('id, name').in('id', ids.slice(0, 300));
-          (ds || []).forEach(function (x) { nameOf[x.id] = x.name; });
+            .select('id, name, designer_name').in('id', ids.slice(0, 300));
+          (ds || []).forEach(function (x) {
+            nameOf[x.id] = x.name;
+            whoOf[x.id] = x.designer_name;
+          });
         } catch (e) { /* 查不到就只顯示編號,不擋整個清單 */ }
       }
 
-      listEl.innerHTML = convs.map(function (c) {
-        const t = new Date(c.last.created_at);
-        const when = (t.getMonth() + 1) + '/' + t.getDate() + ' ' +
-                     String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
-        const preview = (c.last.sender === 'staff' ? '你:' : '') + (c.last.message || '');
-        const title = c.designId
-          ? (nameOf[c.designId] || '(未命名刻圖)')
-          : '系統通知';
-        const tag = c.designId ? '' : '<span class="cs-inbox-tag">無法回覆</span>';
-        return '<button type="button" class="cs-inbox-item' +
-                 (c.unread ? ' unread' : '') + (c.designId ? '' : ' is-readonly') + '"' +
-                 ' data-erpid="' + escapeHtml(c.erpid) + '"' +
-                 ' data-design="' + escapeHtml(c.designId) + '"' +
-                 ' data-name="' + escapeHtml(title) + '">' +
-                 '<div class="cs-inbox-avatar"><i class="fa-regular fa-user"></i></div>' +
-                 '<div class="cs-inbox-main">' +
-                   '<div class="cs-inbox-top">' +
-                     '<span class="cs-inbox-id">' + escapeHtml(title) + tag + '</span>' +
-                     '<span class="cs-inbox-time">' + when + '</span>' +
-                   '</div>' +
-                   '<div class="cs-inbox-sub">會員 ' + escapeHtml(c.erpid) + '</div>' +
-                   '<div class="cs-inbox-preview">' + escapeHtml(preview.slice(0, 46)) + '</div>' +
-                 '</div>' +
-                 (c.unread ? '<span class="cs-inbox-dot">' + (c.unread > 99 ? '99+' : c.unread) + '</span>' : '') +
-               '</button>';
-      }).join('');
-
-      listEl.querySelectorAll('.cs-inbox-item').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          const did = btn.dataset.design;
-          if (!did) {
-            alert('這是系統自動發出的通知,沒有對應的刻圖,無法從這裡回覆。');
-            return;
-          }
-          openCsChat(btn.dataset.erpid, did, btn.dataset.name);
-        });
-      });
+      /* 分頁:一次畫 PAGE 組,其餘按「看更多」再畫。
+         數萬則訊息會聚成上千組對話,一次全部塞進 DOM 會讓這一頁卡住。 */
+      csInbox.convs = convs;
+      csInbox.nameOf = nameOf;
+      csInbox.whoOf = whoOf;
+      csInbox.shown = 0;
+      renderCsInboxPage(true);
+      return;
     } catch (e) {
       console.warn('[客服收件匣] 載入失敗:', e);
       listEl.innerHTML = '<div class="empty-page"><div class="empty-page-title">載入失敗</div></div>';
     }
+  }
+
+  var csInbox = { convs: [], nameOf: {}, whoOf: {}, shown: 0, PAGE: 20 };
+
+  function renderCsInboxPage(reset) {
+    const listEl = document.getElementById('csInboxList');
+    if (!listEl) return;
+    const convs = csInbox.convs, nameOf = csInbox.nameOf, whoOf = csInbox.whoOf;
+    if (reset) { listEl.innerHTML = ''; csInbox.shown = 0; }
+
+    const slice = convs.slice(csInbox.shown, csInbox.shown + csInbox.PAGE);
+    csInbox.shown += slice.length;
+
+    const html = slice.map(function (c) {
+        const t = new Date(c.last.created_at);
+        const when = (t.getMonth() + 1) + '/' + t.getDate() + ' ' +
+                     String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+      const preview = (c.last.sender === 'staff' ? '你:' : '') + (c.last.message || '');
+      const title = c.designId
+        ? (nameOf[c.designId] || '(未命名刻圖)')
+        : '系統通知';
+      const tag = c.designId ? '' : '<span class="cs-inbox-tag">無法回覆</span>';
+      /* 姓名 + 會員編號。只有編號的話,客服要再查一次才知道在跟誰講話。 */
+      const who = (c.designId && whoOf[c.designId]) ? whoOf[c.designId] : '';
+      const whoLine = (who ? escapeHtml(who) + '　' : '') + '會員 ' + escapeHtml(c.erpid);
+      return '<button type="button" class="cs-inbox-item' +
+               (c.unread ? ' unread' : '') + (c.designId ? '' : ' is-readonly') + '"' +
+               ' data-erpid="' + escapeHtml(c.erpid) + '"' +
+               ' data-design="' + escapeHtml(c.designId) + '"' +
+               ' data-name="' + escapeHtml(title) + '">' +
+               '<div class="cs-inbox-avatar"><i class="fa-regular fa-user"></i></div>' +
+               '<div class="cs-inbox-main">' +
+                 '<div class="cs-inbox-top">' +
+                   '<span class="cs-inbox-id">' + escapeHtml(title) + tag + '</span>' +
+                   '<span class="cs-inbox-time">' + when + '</span>' +
+                 '</div>' +
+                 '<div class="cs-inbox-sub">' + whoLine + '</div>' +
+                 '<div class="cs-inbox-preview">' + escapeHtml(preview.slice(0, 46)) + '</div>' +
+               '</div>' +
+               (c.unread ? '<span class="cs-inbox-dot">' + (c.unread > 99 ? '99+' : c.unread) + '</span>' : '') +
+             '</button>';
+    }).join('');
+
+    /* 舊的「看更多」先拿掉,新卡片接在後面,再把按鈕放回最底下。 */
+    const oldMore = listEl.querySelector('.cs-inbox-more');
+    if (oldMore) oldMore.remove();
+    listEl.insertAdjacentHTML('beforeend', html);
+
+    const left = convs.length - csInbox.shown;
+    if (left > 0) {
+      listEl.insertAdjacentHTML('beforeend',
+        '<button type="button" class="cs-inbox-more">還有 ' + left + ' 組對話 · 看更多</button>');
+      listEl.querySelector('.cs-inbox-more')
+        .addEventListener('click', function () { renderCsInboxPage(false); });
+    }
+
+    /* 只綁這一批新畫出來的,不要每次都重綁全部。 */
+    listEl.querySelectorAll('.cs-inbox-item:not([data-bound])').forEach(function (btn) {
+      btn.setAttribute('data-bound', '1');
+      btn.addEventListener('click', function () {
+        const did = btn.dataset.design;
+        if (!did) {
+          alert('這是系統自動發出的通知,沒有對應的刻圖,無法從這裡回覆。');
+          return;
+        }
+        openCsChat(btn.dataset.erpid, did, btn.dataset.name);
+      });
+    });
   }
 
   function setCsInboxBadge(n) {

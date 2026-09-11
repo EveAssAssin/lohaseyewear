@@ -4293,3 +4293,12 @@
 .ad .cs-inbox-item.is-readonly:hover{
   border-color:var(--lohas-line, #e6e1d8); box-shadow:none;
 }
+
+/* 收件匣的「看更多」。列表是按組分頁畫的 ——
+   數萬則訊息會聚成上千組對話,一次全塞進 DOM 這一頁會卡住。 */
+.ad .cs-inbox-more{
+  margin-top:4px; padding:11px 0; width:100%; max-width:680px;
+  font:inherit; font-size:13.5px; color:#8a7c62; cursor:pointer;
+  background:#fff; border:1px dashed var(--lohas-line, #e6e1d8); border-radius:10px;
+}
+.ad .cs-inbox-more:hover{ background:#fffdf8; border-color:#ecd9b0 }
