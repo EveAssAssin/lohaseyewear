@@ -371,7 +371,7 @@
 /* KPI:手機兩欄、桌機自動排。
    刻意不用固定欄數 —— 六張卡在 1024px 擠成一排會讀不動。 */
 .lab-kpis{
-  display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(128px, 1fr));
   gap:10px; margin-bottom:22px;
 }
 .lab-kpi{
