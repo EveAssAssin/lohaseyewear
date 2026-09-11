@@ -171,7 +171,11 @@
       try {
         const [creatorRes, adminRes] = await Promise.all([
           sb.from('creator_info')
-            .select('member_id, display_name, bio, avatar_url, status, bank_name, bank_code, bank_branch, bank_account, account_holder, tagline, joining_story, joining_photo_url, video_url, video_title, social_links, custom_blocks')
+            /* 2026-09-11 拿掉 bank_name / bank_code / bank_branch /
+               bank_account / account_holder —— 這五欄在 creator_info
+               從來沒被寫過(36 筆全空),真正的匯款資料在 payout_accounts,
+               畫面上顯示的也是那一份。欄位隨後從資料表刪除。 */
+            .select('member_id, display_name, bio, avatar_url, status, tagline, joining_story, joining_photo_url, video_url, video_title, social_links, custom_blocks')
             .eq('member_id', member.erpid)
             .eq('status', 'active')
             .maybeSingle(),
