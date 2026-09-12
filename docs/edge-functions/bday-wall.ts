@@ -23,7 +23,43 @@
      拿錯會回 403,而 403 看不出是金鑰錯還是網址錯。
    ============================================================= */
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const CODE_VERSION = '2026-09-12 · 支援後台隱藏';
+
 const SITE_KEY = Deno.env.get('SITE_API_KEY') || '';
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+
+/* ---------- 隱藏清單 ----------
+   🚨 這些照片在【對方的系統】(主後端),我方刪不掉,也不該刪 ——
+     那是樂活員工上傳的生日相簿,不是我方的資料。
+
+   所以後台能做的是「不要出現在官網這一面牆上」。
+   真的要從源頭移除,得請主後端那一側處理。
+
+   ⚠ 過濾要在【快取之外】做。
+     把過濾後的結果存進快取的話,後台按下隱藏之後最久還要等
+     5 分鐘才生效 —— 而按下去的人會以為沒反應、再按一次。
+     所以快取存的是上游原始資料,隱藏清單每次都重讀(那張表很小)。 */
+const HIDDEN_TTL_MS = 20 * 1000;
+let hiddenCache: { at: number; ids: Set<string> } | null = null;
+
+async function hiddenIds(): Promise<Set<string>> {
+  if (hiddenCache && Date.now() - hiddenCache.at < HIDDEN_TTL_MS) return hiddenCache.ids;
+  const { data, error } = await db.from('bday_wall_hidden').select('item_id');
+  if (error) {
+    /* 讀不到就【不過濾】,不要整面牆掛掉。
+       代價是被隱藏的那幾張可能短暫出現 —— 比整區空白好。 */
+    console.error('[bday-wall] 隱藏清單讀取失敗:', error.message);
+    return hiddenCache ? hiddenCache.ids : new Set<string>();
+  }
+  const ids = new Set<string>((data || []).map((r: any) => String(r.item_id)));
+  hiddenCache = { at: Date.now(), ids };
+  return ids;
+}
 
 const TICKET_BASE = (Deno.env.get('TICKET_BASE_URL') || 'https://lohas.realtime.tw')
   .replace(/\/+$/, '');
@@ -33,7 +69,7 @@ const UPSTREAM_TIMEOUT_MS = 10000;
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 
 function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
@@ -76,8 +112,29 @@ function publicItem(it: Record<string, any>) {
   };
 }
 
+/* 把快取住的上游原始資料套上隱藏清單,組成對外回應。
+   total 扣掉隱藏的總數 —— 前端用它決定還要不要顯示「看更多」,
+   不扣的話會出現「按了看更多但沒有新的東西」。 */
+async function withHidden(raw: string, limit: number, offset: number): Promise<string> {
+  const d = JSON.parse(raw) as { items: Record<string, any>[]; total: number };
+  const hide = await hiddenIds();
+  const items = hide.size ? d.items.filter((it) => !hide.has(String(it.id))) : d.items;
+  const total = Math.max(0, (d.total || 0) - hide.size);
+  return JSON.stringify({
+    code: '200',
+    data: { items, total, limit, offset },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  /* 自檢:順便回報隱藏了幾筆,不必進資料庫看。 */
+  if (req.method === 'GET') {
+    const hide = await hiddenIds();
+    return reply('200', { data: { code_version: CODE_VERSION, hidden: hide.size } });
+  }
+
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
 
   if (!SITE_KEY) {
@@ -94,10 +151,14 @@ Deno.serve(async (req) => {
   const offset = Math.max(Number(body.offset) || 0, 0);
 
   const key = limit + ':' + offset;
+
+  /* 快取命中:仍然要套一次隱藏清單(見上面的說明)。
+     存進快取的是上游原始資料,不是最終回應。 */
   const hit = cacheGet(key);
   if (hit) {
-    return new Response(hit.body, {
-      status: hit.http,
+    const out = await withHidden(hit.body, limit, offset);
+    return new Response(out, {
+      status: 200,
       headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8',
                  'X-Lohas-Cache': 'hit' },
     });
@@ -128,22 +189,16 @@ Deno.serve(async (req) => {
       // 沒有圖的那筆對這一區沒有意義,先濾掉,不要讓前端出現破圖
       .filter((it: Record<string, any>) => !!it.image_url);
 
-    const out = JSON.stringify({
-      code: '200',
-      data: {
-        items: items,
-        total: Number(d.total) || 0,
-        limit: limit,
-        offset: offset,
-      },
-    });
-
-    cache.set(key, { at: Date.now(), body: out, http: 200 });
+    /* 存進快取的是【上游原始資料】,不是最終回應 ——
+       隱藏清單要每次重套,不然後台按下隱藏之後還要等 5 分鐘才生效。 */
+    const raw = JSON.stringify({ items: items, total: Number(d.total) || 0 });
+    cache.set(key, { at: Date.now(), body: raw, http: 200 });
 
     // 快取塞太多就整個清掉。這一區的鍵很少(limit×offset 組合有限),
     // 真的長到這個數字代表有人在亂打,清掉比逐筆淘汰簡單
     if (cache.size > 200) cache.clear();
 
+    const out = await withHidden(raw, limit, offset);
     return new Response(out, {
       status: 200,
       headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8',

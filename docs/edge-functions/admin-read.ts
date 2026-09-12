@@ -46,7 +46,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-11 · cs_messages';
+const CODE_VERSION = '2026-09-12 · cs_messages + bday_wall_hidden';
 
 const MAX_ROWS = 1000;
 
@@ -72,6 +72,12 @@ const ALLOW: Record<string, Rule> = {
   cs_messages: {
     cols: 'id, member_erpid, design_id, sender, message, is_read, created_at',
     filters: ['id', 'member_erpid', 'design_id', 'sender', 'is_read'],
+    order: ['created_at'],
+  },
+  /* 生日分享牆的隱藏清單。後台要列出「已隱藏的有哪些」才取消得掉。 */
+  bday_wall_hidden: {
+    cols: 'item_id, image_url, nickname, item_created_at, reason, hidden_by, created_at',
+    filters: ['item_id'],
     order: ['created_at'],
   },
 };

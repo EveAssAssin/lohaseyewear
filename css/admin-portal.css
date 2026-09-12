@@ -4302,3 +4302,49 @@
   background:#fff; border:1px dashed var(--lohas-line, #e6e1d8); border-radius:10px;
 }
 .ad .cs-inbox-more:hover{ background:#fffdf8; border-color:#ecd9b0 }
+
+/* === 生日分享牆(後台) ===
+   照片牆,一眼要看得出「哪些現在在前台、哪些被藏起來了」。
+   已隱藏那一區刻意降低彩度 —— 不是壞掉,是「現在不在前台」。 */
+.ad .bw-msg{ font-size:13px; color:#8a8178; margin:0 0 14px }
+.ad .bw-grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+  gap:14px;
+}
+.ad .bw-sub-title{
+  margin:28px 0 12px; font-size:15px; color:#6b6259;
+  padding-top:18px; border-top:1px solid var(--lohas-line, #e6e1d8);
+}
+.ad .bw-card{
+  background:#fff; border:1px solid var(--lohas-line, #e6e1d8);
+  border-radius:10px; overflow:hidden; display:flex; flex-direction:column;
+}
+.ad .bw-thumb{
+  aspect-ratio:1/1; background:#f5f1ea;
+  display:flex; align-items:center; justify-content:center;
+}
+.ad .bw-thumb img{ width:100%; height:100%; object-fit:cover; display:block }
+.ad .bw-noimg{ font-size:12px; color:#b3aa9c }
+.ad .bw-meta{
+  padding:8px 10px 6px; display:flex; justify-content:space-between;
+  align-items:baseline; gap:6px; min-width:0;
+}
+.ad .bw-name{
+  font-size:13px; font-weight:600; color:#333;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.ad .bw-date{ font-size:11px; color:#aaa; flex-shrink:0 }
+.ad .bw-btn{
+  margin:0 10px 10px; padding:7px 0; font:inherit; font-size:13px;
+  cursor:pointer; border-radius:8px; border:1px solid var(--lohas-line, #e6e1d8);
+  background:#fff; color:#8a7c62;
+}
+.ad .bw-btn:hover{ background:#fffdf8; border-color:#ecd9b0 }
+.ad .bw-btn:disabled{ opacity:.5; cursor:default }
+
+/* 已隱藏:降彩度,一眼分得出來。
+   不用灰階濾鏡蓋掉整張 —— 還是要看得清楚內容才判斷得了要不要放回去。 */
+.ad .bw-card.is-hidden{ background:#faf8f4 }
+.ad .bw-card.is-hidden .bw-thumb img{ opacity:.55 }
+.ad .bw-card.is-hidden .bw-btn{ color:#6b8f6b; border-color:#cfe0cf }
+.ad .bw-card.is-hidden .bw-btn:hover{ background:#f4faf4 }

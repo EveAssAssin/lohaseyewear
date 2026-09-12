@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
-  <link rel="stylesheet" href="css/admin-portal.css?v=20260911-inbox2">
+  <link rel="stylesheet" href="css/admin-portal.css?v=20260912-bdaywall">
   <!-- 禮物中心加工管理與門市查刻圖共用同一組樣式與程式 -->
   <link rel="stylesheet" href="css/store-lookup.css?v=20260820-midclaim">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260601-drag">
@@ -103,6 +103,9 @@
     </button>
     <button class="nav-link" data-page="cm-news">
       <i class="fa-regular fa-newspaper"></i><span>最新消息</span>
+    </button>
+    <button class="nav-link" data-page="bday-wall">
+      <i class="fa-solid fa-cake-candles"></i><span>生日分享牆</span>
     </button>
     <button class="nav-link" data-page="admin-upload">
       <i class="fa-solid fa-camera-retro"></i><span>樂活官方上傳</span>
@@ -809,6 +812,27 @@
         </button>
       </div>
       <div class="cs-inbox-list" id="csInboxList"></div>
+    </div>
+
+    <!-- ===== 生日分享牆 =====
+         🚨 這些照片在【主後端】,不是我方資料庫 ——
+           是樂活員工上傳的生日相簿。所以這一頁只能「隱藏」,
+           不能刪除。真的要從源頭移除得請主後端那一側處理。
+           介面上把這件事講明,不要讓人以為按了就刪掉了。 -->
+    <div class="content-page" data-page="bday-wall">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">生日分享牆</h1>
+          <div class="page-sub">隱藏後不會出現在生日禮頁面 · 原始照片仍在主後端，需要真正刪除請聯繫後端團隊</div>
+        </div>
+        <button class="btn" id="bwReload" type="button">
+          <i class="fa-solid fa-rotate"></i> 重新整理
+        </button>
+      </div>
+      <div class="bw-msg" id="bwMsg"></div>
+      <div class="bw-grid" id="bwGrid"></div>
+      <h2 class="bw-sub-title" id="bwHiddenTitle" hidden>已隱藏</h2>
+      <div class="bw-grid is-hidden-list" id="bwHiddenGrid"></div>
     </div>
 
     <div class="content-page" data-page="review-uploads">
@@ -2061,7 +2085,7 @@
 <script src="js/upload-design.js?v=20260909-designfn"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20260911-inbox2"></script>
+<script src="js/admin-portal.js?v=20260912-bdaywall"></script>
 <script src="js/admin-portal-footer.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-pegavision.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-categories.js?v=20260907-batch3"></script>

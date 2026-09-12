@@ -236,6 +236,7 @@
     'review-designs': '刻圖審核',
     'review-uploads': '上傳審核',
     'cs-inbox': '客服收件匣',
+    'bday-wall': '生日分享牆',
     'cm-banner': '首頁與分頁 Banner',
     'cm-news': '最新消息',
     'admin-upload': '樂活官方上傳',
@@ -279,6 +280,7 @@
     if (page === 'review-designs') { loadDesignReview(); refreshReviewCounts(); }
     if (page === 'review-uploads') { loadReviewUploads(); refreshReviewCounts(); }
     if (page === 'cs-inbox') loadCsInbox();
+    if (page === 'bday-wall') loadBdayWall();
     if (page === 'cm-news') loadNews();
     if (page === 'cm-banner') loadBannerModule();
     if (page === 'admin-upload') { initAdminUpload(); }
@@ -298,6 +300,7 @@
     });
     // 麵包屑「樂活管理後台」點擊跳首頁
     document.getElementById('csInboxReload')?.addEventListener('click', loadCsInbox);
+    document.getElementById('bwReload')?.addEventListener('click', loadBdayWall);
     document.getElementById('adBcHome')?.addEventListener('click', e => {
       e.preventDefault();
       goTo('dashboard');
@@ -2062,6 +2065,142 @@
     } catch (e) {
       console.warn('[客服收件匣] 載入失敗:', e);
       listEl.innerHTML = '<div class="empty-page"><div class="empty-page-title">載入失敗</div></div>';
+    }
+  }
+
+  /* =============================================================
+     生日分享牆(bday-wall)
+     -------------------------------------------------------------
+     🚨 這些照片在【主後端】,不是我方資料庫。所以這一頁只能隱藏,
+        不能刪除 —— 真的要從源頭移除得請後端團隊處理。
+        介面上要把這件事講明,不然按下去的人會以為刪掉了。
+
+     隱藏的做法:把 item_id 記進 bday_wall_hidden,
+     bday-wall 函式讀那張表來過濾。同時存下圖片與暱稱的快照,
+     否則「已隱藏」那一區只會是一排編號,無從判斷要不要取消。
+     ============================================================= */
+  var BDAY_WALL_FN =
+    'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/bday-wall';
+  var bwState = { items: [], hidden: [], busy: false };
+
+  async function loadBdayWall() {
+    const grid = document.getElementById('bwGrid');
+    const hGrid = document.getElementById('bwHiddenGrid');
+    const hTitle = document.getElementById('bwHiddenTitle');
+    const msg = document.getElementById('bwMsg');
+    if (!grid) return;
+
+    grid.innerHTML = '<div class="empty-page"><div class="empty-page-title">載入中...</div></div>';
+    if (hGrid) hGrid.innerHTML = '';
+    if (hTitle) hTitle.hidden = true;
+
+    try {
+      /* 兩邊一起拿:
+         ① 目前【看得到】的(bday-wall 已經過濾掉隱藏的)
+         ② 已隱藏的清單(我方資料庫) */
+      const [wallRes, hiddenRes] = await Promise.all([
+        fetch(BDAY_WALL_FN, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ limit: 60, offset: 0 })
+        }).then(function (r) { return r.json(); }),
+        adminRead('bday_wall_hidden', [], { order_by: 'created_at', ascending: false, limit: 200 })
+      ]);
+
+      if (String(wallRes.code) !== '200') {
+        throw new Error(wallRes.message || '分享牆載入失敗');
+      }
+      bwState.items = (wallRes.data && wallRes.data.items) || [];
+      bwState.hidden = hiddenRes.rows || [];
+
+      if (msg) {
+        msg.textContent = '目前顯示 ' + bwState.items.length + ' 張 · 已隱藏 ' +
+                          bwState.hidden.length + ' 張';
+      }
+
+      grid.innerHTML = bwState.items.length
+        ? bwState.items.map(function (it) { return bwCard(it, false); }).join('')
+        : '<div class="empty-page"><i class="fa-solid fa-cake-candles"></i><div class="empty-page-title">目前沒有可顯示的照片</div></div>';
+
+      if (hTitle) hTitle.hidden = !bwState.hidden.length;
+      if (hGrid) {
+        hGrid.innerHTML = bwState.hidden.map(function (h) {
+          return bwCard({
+            id: h.item_id, image_url: h.image_url,
+            nickname: h.nickname, created_at: h.item_created_at
+          }, true);
+        }).join('');
+      }
+      bwBind();
+    } catch (e) {
+      console.warn('[生日分享牆] 載入失敗:', e);
+      grid.innerHTML = '<div class="empty-page"><div class="empty-page-title">載入失敗:' +
+                       escapeHtml(e.message || '') + '</div></div>';
+    }
+  }
+
+  function bwCard(it, isHidden) {
+    const when = it.created_at
+      ? new Date(it.created_at).toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })
+      : '';
+    return '<div class="bw-card' + (isHidden ? ' is-hidden' : '') + '">' +
+             '<div class="bw-thumb">' +
+               (it.image_url
+                 ? '<img src="' + escapeHtml(it.image_url) + '" alt="" loading="lazy">'
+                 : '<span class="bw-noimg">無圖</span>') +
+             '</div>' +
+             '<div class="bw-meta">' +
+               '<span class="bw-name">' + escapeHtml(it.nickname || '樂活壽星') + '</span>' +
+               '<span class="bw-date">' + escapeHtml(when) + '</span>' +
+             '</div>' +
+             (isHidden
+               ? '<button type="button" class="bw-btn bw-show" data-id="' + escapeHtml(it.id) + '">取消隱藏</button>'
+               : '<button type="button" class="bw-btn bw-hide" data-id="' + escapeHtml(it.id) + '">隱 藏</button>') +
+           '</div>';
+  }
+
+  function bwBind() {
+    document.querySelectorAll('#bwGrid .bw-hide').forEach(function (b) {
+      b.addEventListener('click', function () { bwHide(b.dataset.id, b); });
+    });
+    document.querySelectorAll('#bwHiddenGrid .bw-show').forEach(function (b) {
+      b.addEventListener('click', function () { bwShow(b.dataset.id, b); });
+    });
+  }
+
+  async function bwHide(id, btn) {
+    const it = bwState.items.find(function (x) { return String(x.id) === String(id); });
+    if (!it) return;
+    if (!confirm('確定隱藏「' + (it.nickname || '這張') + '」?\n\n' +
+                 '隱藏後不會出現在生日禮頁面。\n' +
+                 '⚠ 原始照片仍然在主後端,這裡只是不顯示 —— ' +
+                 '要真正刪除請聯繫後端團隊。')) return;
+    btn.disabled = true;
+    try {
+      /* upsert 而不是 insert:同一張被隱藏兩次(例如兩個分頁各按一次)
+         不該報「已存在」的錯。 */
+      await adminWrite('bday_wall_hidden', 'upsert', {
+        item_id: String(it.id),
+        image_url: it.image_url || null,
+        nickname: it.nickname || null,
+        item_created_at: it.created_at || null
+      });
+      await loadBdayWall();
+    } catch (e) {
+      alert('隱藏失敗:' + e.message);
+      btn.disabled = false;
+    }
+  }
+
+  async function bwShow(id, btn) {
+    if (!confirm('取消隱藏?這張會重新出現在生日禮頁面。')) return;
+    btn.disabled = true;
+    try {
+      await adminWrite('bday_wall_hidden', 'delete', null, String(id));
+      await loadBdayWall();
+    } catch (e) {
+      alert('取消隱藏失敗:' + e.message);
+      btn.disabled = false;
     }
   }
 

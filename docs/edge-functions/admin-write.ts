@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-11 · +cs_messages(sender 由伺服器寫死)';
+const CODE_VERSION = '2026-09-12 · +bday_wall_hidden';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -70,6 +70,7 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
        第四批  engraving_designs、gallery_posts
        第五批  creator_info
        第六批  cs_messages
+       第七批  bday_wall_hidden(生日分享牆的隱藏清單)
      以上全部已搬完並實測,對應資料表的寫入政策也都收乾淨了。 */
 type Rule = { key: string; ops: string[]; cols: string[] };
 const ALLOW: Record<string, Rule> = {
@@ -193,6 +194,22 @@ const ALLOW: Record<string, Rule> = {
            'customer_name', 'member_id', 'image_urls', 'main_image_url',
            'is_public', 'subcategories',
            'status', 'reject_reason', 'reviewed_at'],
+  },
+
+  /* ===== 生日分享牆的隱藏清單(2026-09-12)=====
+     🚨 那些照片在【對方的系統】(主後端),我方刪不掉也不該刪 ——
+        那是樂活員工上傳的生日相簿。這張表只記「哪幾張不要出現在
+        官網這一面牆上」,bday-wall 讀它來過濾。
+        真的要從源頭移除,得請主後端那一側處理。
+
+     image_url / nickname 是【隱藏當下的快照】:留著才有辦法在後台
+     列出「已隱藏的有哪些」。只存 item_id 的話,那一頁會是一排編號。
+
+     hidden_by 不在 cols 裡:由伺服器填。 */
+  bday_wall_hidden: {
+    key: 'item_id',
+    ops: ['upsert', 'delete'],
+    cols: ['item_id', 'image_url', 'nickname', 'item_created_at', 'reason'],
   },
 
   /* ===== 客服對話(2026-09-11)=====
@@ -349,6 +366,10 @@ Deno.serve(async (req) => {
        「前端本來就送 staff」而把它加回 cols。 */
   if (table === 'cs_messages' && op === 'insert') {
     for (const r of rowsIn) r.sender = 'staff';
+  }
+  /* 同理:是誰把這張照片藏起來的。 */
+  if (table === 'bday_wall_hidden' && op === 'upsert') {
+    for (const r of rowsIn) r.hidden_by = caller;
   }
   /* 同理:這件刻圖／投稿是誰審的。
      ⚠ 「重新開放審核」是把狀態退回 pending,那時要把 reviewed_by
