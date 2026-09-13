@@ -26,8 +26,18 @@
     { id: "pickup",   name: "取件",          duration: 20, apiType: "取件" },
     { id: "maintain", name: "眼鏡保養、調整", duration: 20, apiType: "調整" },
     { id: "fitting",  name: "配鏡",          duration: 40, apiType: "配鏡" },
-    { id: "consult",  name: "諮詢",          duration: 30, apiType: "諮詢" }
+    { id: "consult",  name: "諮詢",          duration: 30, apiType: "諮詢" },
+    /* 2026-09-13 補。它一直在對方的可接受清單裡,只是我方從來沒放上來。
+       實測(中壢店 徐家媛 9/14):視力健檢回得出 3 格時段,確實是有效的類型。
+       duration 只用於文字敘述,不影響預約 —— 真正決定的是 roundId。 */
+    { id: "eyecheck", name: "視力健檢",       duration: 30, apiType: "視力健檢" }
   ];
+
+  /* ⚠ 這份清單是【寫死的】,而門市可以在左手後台自訂項目 ——
+     所以它遲早會再對不上。正確的做法是由對方提供一支
+     「依門市回傳項目清單」的介面,我方改成動態讀取。
+     已於 2026-09-13 去信詢問(docs/給左手設計_預約項目清單不同步_0913.md)。
+     在那之前不要再自行往這裡加項目:加上去只是換一份猜的清單。 */
 
   /* state */
   const state = {
@@ -36,7 +46,11 @@
     store: null,
     employees: [],
     selectedEmployee: null,
-    selectedService: null,    // 必選,使用者在 step 3 選
+    /* 🚨 2026-09-13 從 step 3 移到 step 1。
+        理由:左手的 getround 依 reservationTypes 回傳【不同的】可預約時段
+        (未提供時預設查「配鏡」)。服務項目如果在選完時段之後才問,
+        那些時段就是照配鏡算的,跟客人真正要約的服務無關。 */
+    selectedService: null,    // 必選,使用者在 step 1 與顧問一起選
     rounds: [],
     selectedDate: null,
     selectedRoundId: null,
@@ -189,12 +203,12 @@
       /* 已帶入門市（從 store.html 來）→ 只剩選顧問一步 */
       return (
         `<div class="bm-steps">` +
-          `<div class="bm-step active"><span class="bm-step-num">1</span>選擇銷售顧問</div>` +
+          `<div class="bm-step active"><span class="bm-step-num">1</span>選擇顧問與項目</div>` +
         `</div>`
       );
     }
     const steps = [
-      { n: 1, label: "選銷售顧問" },
+      { n: 1, label: "選顧問與項目" },
       { n: 2, label: "選時段" },
       { n: 3, label: "確認資料" }
     ];
@@ -339,7 +353,12 @@
             );
           }).join("") +
         `</div>` +
-      `</div>`
+      `</div>` +
+      /* 服務項目跟顧問放在同一步。
+         ⚠ 它【必須】在選時段之前 —— 下一步要拿它去跟左手要
+           對應類型的可預約時段(不帶的話對方預設回配鏡的)。
+         商城模式的服務別由商城帶,不在這裡選。 */
+      (state.cartPrefill ? "" : renderServiceSection())
     );
   }
 
@@ -427,11 +446,23 @@
     );
   }
 
-  /* === Step 4: 填會員資料 === */
+  /* === Step 3: 填會員資料 === */
   function renderStepForm() {
     const f = state.form;
+    /* 服務項目已經在 step 1 選完(它決定了 step 2 抓哪一種時段),
+       這裡只複述一次讓客人確認 —— 要改就回上一步,
+       因為改了項目時段也要重抓。 */
+    const svc = state.selectedService;
+    const svcLine = (!state.cartPrefill && svc)
+      ? `<div class="bm-sec">` +
+          `<div class="bm-sec-title">預約服務項目</div>` +
+          `<div class="bm-svc-confirm">` +
+            `<b>${svc.name}</b>` +
+          `</div>` +
+        `</div>`
+      : "";
     return (
-      renderServiceSection() +
+      svcLine +
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">會員資料（建立預約所需）</div>` +
         renderInput("姓名", "memberName", f.memberName, "請輸入姓名") +
@@ -551,7 +582,11 @@
     }
     if (parts.length === 0) {
       /* 還沒選任何東西時,依步驟給明確提示,讓使用者知道「下一步」為什麼還不能按 */
-      if (state.step === 1) return `<b>請先選擇一位顧問</b>選好後按「下一步」`;
+      if (state.step === 1) {
+        if (!state.selectedEmployee) return `<b>請先選擇一位顧問</b>`;
+        if (!state.cartPrefill && !state.selectedService) return `<b>請選擇預約服務項目</b>`;
+        return `<b>選好了</b>按「下一步」挑時段`;
+      }
       if (state.step === 2) return `<b>請選擇預約時段</b>選好後按「下一步」`;
       return `<b>步驟 ${state.step} / 3</b>依序完成以建立預約`;
     }
@@ -562,7 +597,11 @@
   }
 
   function canProceed() {
-    if (state.step === 1) return !!state.selectedEmployee;
+    /* step 1 要【兩個都選】才能下一步 —— 服務項目決定下一步要抓哪一種時段。 */
+    if (state.step === 1) {
+      const svcOk = state.cartPrefill ? true : !!state.selectedService;
+      return !!state.selectedEmployee && svcOk;
+    }
     if (state.step === 2) return !!state.selectedRoundId;
     if (state.step === 3) {
       const f = state.form;
@@ -641,7 +680,17 @@
 
     r.querySelectorAll("[data-svc]").forEach(el => {
       el.addEventListener("click", () => {
-        state.selectedService = SERVICES.find(s => s.id === el.dataset.svc);
+        const next = SERVICES.find(s => s.id === el.dataset.svc);
+        const changed = !state.selectedService || state.selectedService.id !== next.id;
+        state.selectedService = next;
+        /* ⚠ 換了服務項目就要把已選的時段作廢。
+           不同類型的可預約時段是不一樣的(左手依 reservationTypes 回不同結果)——
+           留著舊的選擇會變成「照 A 的時段表挑了一格,卻用 B 送出去」。 */
+        if (changed) {
+          state.rounds = [];
+          state.selectedDate = null;
+          state.selectedRoundId = null;
+        }
         renderInPlace();
       });
     });
@@ -745,7 +794,10 @@
     state.error = null;
     renderInPlace();
     try {
-      const data = await bookingApi.getRounds(state.selectedEmployee.erpid, 0);
+      /* ⚠ 一定要帶服務項目 —— 不帶的話左手預設回「配鏡」的時段。
+         商城模式沒有選項目,就讓它走預設(那條路本來就是配鏡)。 */
+      const svcType = state.selectedService && state.selectedService.apiType;
+      const data = await bookingApi.getRounds(state.selectedEmployee.erpid, 0, svcType);
       state.rounds = bookingApi.flattenRounds(data);
     } catch (err) {
       state.error = err.message || "讀取時段失敗";

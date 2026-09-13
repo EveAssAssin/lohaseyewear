@@ -25,7 +25,7 @@
      @param employeeErpId  人員 Erp 編號
      @param postpone       延後天數（>0 整數，預設 0 = 不延後）
      回傳：[{ date, rounds:[{ id, title, remain }] }, ...] */
-  async function getRounds(employeeErpId, postpone) {
+  async function getRounds(employeeErpId, postpone, reservationTypes) {
     if (!employeeErpId) throw new Error("[LohasApi.booking] employeeErpId is required");
     const payload = {
       method: "getround",
@@ -33,6 +33,23 @@
     };
     if (postpone != null && Number(postpone) > 0) {
       payload.postpone = String(postpone);
+    }
+    /* 🚨 2026-09-13 補。左手的文件寫著:
+         「reservationTypes …【未提供時預設查詢「配鏡」】」
+
+       先前我方【沒有帶這個參數】,所以不管客人要約什麼,
+       畫面上顯示的一律是「配鏡」的可預約時段 ——
+       然後 createreservate 帶著「取件」送出去,
+       落在一個依配鏡算出來的時段上。
+
+       這個參數存在,就表示不同類型的可預約時段是不一樣的。
+       所以一定要帶。
+
+       ⚠ 多筆用【半形】逗號分隔(對方文件特別註明)。 */
+    if (reservationTypes) {
+      payload.reservationTypes = Array.isArray(reservationTypes)
+        ? reservationTypes.join(",")
+        : String(reservationTypes);
     }
     return post("rsv", payload);
   }
