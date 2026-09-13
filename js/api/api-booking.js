@@ -146,7 +146,11 @@
           roundId: r.id,
           title: r.title,
           remain: r.remain,
-          available: r.remain > 0
+          available: r.remain > 0,
+          /* 一次查多種類型時,靠這一欄分辨這一格是哪一種的。
+             左手文件:「回傳資料仍維持日期資料陣列格式,
+             並透過每筆資料的 reservationType 區分預約類型」。 */
+          reservationType: day.reservationType || ""
         });
       });
     });

@@ -51,6 +51,8 @@
         (未提供時預設查「配鏡」)。服務項目如果在選完時段之後才問,
         那些時段就是照配鏡算的,跟客人真正要約的服務無關。 */
     selectedService: null,    // 必選,使用者在 step 1 與顧問一起選
+    allRounds: [],            // 一次抓回來的【全部類型】時段
+    availTypes: {},           // 這位顧問實際有時段的類型
     rounds: [],
     selectedDate: null,
     selectedRoundId: null,
@@ -291,7 +293,13 @@
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">預約服務項目 <span class="bm-required">*</span></div>` +
         `<div class="bm-svc-grid">` +
-          SERVICES.map(s => {
+          /* ⚠ 只畫【這位顧問有開放且還有名額】的類型。
+             時段還沒抓回來時(availTypes 是空的)全部先畫出來,
+             不然畫面會空一拍。 */
+          SERVICES.filter(s => {
+            const known = Object.keys(state.availTypes || {}).length > 0;
+            return !known || state.availTypes[s.apiType];
+          }).map(s => {
             const active = state.selectedService && state.selectedService.id === s.id;
             return (
               `<button type="button" class="bm-svc-pick ${active ? "active" : ""}" data-svc="${s.id}">` +
@@ -634,7 +642,15 @@
         state.selectedRoundId = null;
         state.selectedDate = null;
         state.rounds = [];
+        /* 🚨 換顧問就要把「有哪些類型」整組作廢 ——
+           每位顧問開放的類型不一樣,留著上一位的會讓客人
+           選到這一位根本沒開放的項目,然後在送出時才被擋。 */
+        state.allRounds = [];
+        state.availTypes = {};
+        state.selectedService = null;
         renderInPlace();
+        /* 在 step 1 就抓 —— 服務項目的按鈕要靠它決定畫哪幾顆。 */
+        loadRounds();
       });
     });
 
@@ -687,9 +703,11 @@
            不同類型的可預約時段是不一樣的(左手依 reservationTypes 回不同結果)——
            留著舊的選擇會變成「照 A 的時段表挑了一格,卻用 B 送出去」。 */
         if (changed) {
-          state.rounds = [];
+          /* 已選的日期時段要作廢 —— 不同類型的時段不一樣。
+             但【不必重抓】:全部類型早就一起抓回來了,就地過濾即可。 */
           state.selectedDate = null;
           state.selectedRoundId = null;
+          applyServiceFilter();
         }
         renderInPlace();
       });
@@ -767,7 +785,9 @@
     if (next) next.addEventListener("click", () => {
       if (!canProceed()) return;
       state.step++;
-      if (state.step === 2 && state.rounds.length === 0) {
+      /* 時段在 step 1 選完顧問時就抓了。這裡只是保險:
+         萬一那次失敗(斷網之類),進 step 2 再試一次。 */
+      if (state.step === 2 && state.allRounds.length === 0) {
         loadRounds();
       }
       renderInPlace();
@@ -787,6 +807,15 @@
     });
   }
 
+  /* 從一次抓回來的全部時段裡,篩出目前選中那一種。
+     沒選(或商城模式)就全給 —— 商城那條路本來就只有配鏡。 */
+  function applyServiceFilter() {
+    const t = state.selectedService && state.selectedService.apiType;
+    state.rounds = t
+      ? state.allRounds.filter(function (r) { return r.reservationType === t; })
+      : state.allRounds.slice();
+  }
+
   /* === API：取得可預約時段 === */
   async function loadRounds() {
     if (!state.selectedEmployee) return;
@@ -794,11 +823,32 @@
     state.error = null;
     renderInPlace();
     try {
-      /* ⚠ 一定要帶服務項目 —— 不帶的話左手預設回「配鏡」的時段。
+      /* 🚨 一次把【全部類型】抓回來,不是只抓選中的那一種。
+         -----------------------------------------------------------
+         左手的 getround 支援一次查多個類型(半形逗號分隔),
+         回傳用每一筆的 reservationType 區分。這樣做有兩個好處:
+
+           1. 一次網路來回就夠,選項目時不必再等
+           2. 知道【這位顧問開放了哪幾種】—— 沒有時段的類型直接
+              不顯示,客人不會選了才發現約不到
+
+         文件對 createreservate 寫著:
+           「該人員必須已開放對應預約類型,且 roundid 必須對應
+             該類型仍有名額的時段」
+         所以「這位顧問有沒有開放這一種」是會影響成敗的,不能不管。
+
          商城模式沒有選項目,就讓它走預設(那條路本來就是配鏡)。 */
-      const svcType = state.selectedService && state.selectedService.apiType;
-      const data = await bookingApi.getRounds(state.selectedEmployee.erpid, 0, svcType);
-      state.rounds = bookingApi.flattenRounds(data);
+      const allTypes = state.cartPrefill
+        ? null
+        : SERVICES.map(function (s) { return s.apiType; }).join(",");
+      const data = await bookingApi.getRounds(state.selectedEmployee.erpid, 0, allTypes);
+      state.allRounds = bookingApi.flattenRounds(data);
+      /* 這位顧問實際有時段的類型。空的那些等一下不畫出來。 */
+      state.availTypes = {};
+      state.allRounds.forEach(function (r) {
+        if (r.available) state.availTypes[r.reservationType] = true;
+      });
+      applyServiceFilter();
     } catch (err) {
       state.error = err.message || "讀取時段失敗";
       state.rounds = [];
