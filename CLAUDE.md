@@ -95,16 +95,25 @@ env 優先 —— Secret 一旦被設定,`FALLBACK_*` 就再也沒有作用,
 | `store-sso-login` | — | 三把:`app` / `shop` / `shop-test`,由我方發給對方 |
 | `shop-webhook` | — | 一把,由我方發給商城 |
 | `auth-session` | Render 代理 → 即時互動正式站 | `PROXY_KEY` ＋ `SESSION_SECRET` |
-| `cloth` / `cloth-admin` | 官網自己的資料表 | 不需金鑰;`cloth-admin` 另有 `FALLBACK_LAB_KEY`(製作端簡易頁的通行碼) |
+| `cloth` | 官網資料表 ＋ 主後端**正式站**(查生日資格) | `SITE_API_KEY`(**無 FALLBACK**,只讀 Secret) |
+| `cloth-admin` | 官網自己的資料表 | 不需金鑰;另有 `FALLBACK_LAB_KEY`(製作端簡易頁的通行碼) |
 | `cloth-feed` | 供 App 抓眼鏡布紀錄 | `FALLBACK_APP_KEY` ＋ `FALLBACK_APP_KEY_OLD`(輪替用),與製作端那把**分開** |
 | `bday-wall` | 主後端**正式站** | `SITE_API_KEY`(**無 FALLBACK**,只讀 Secret) |
 
-⚠ **吃 `SITE_API_KEY` 的是五支,不是三支。** 2026-08-26 清點才發現
-先前這張表漏了 `coupon-lock` 與 `gift` —— 輪替時漏掉那兩支,
-症狀是「票券鎖定與禮物中心突然壞掉」,而人會去查票券本身。
+⚠ **吃 `SITE_API_KEY` 的是六支:`coupon-list`、`coupon-lock`、
+`member-auth`、`gift`、`bday-wall`、`cloth`。** 這張表漏過兩次 ——
+2026-08-26 漏了 `coupon-lock` 與 `gift`(症狀是票券鎖定與禮物中心
+突然壞掉,而人會去查票券本身);2026-09-14 發現 `cloth` 那一格
+寫著「不需金鑰」,但它 8/28 起就用這把去主後端查生日資格
+(`/siteapi/cloth/eligible`)—— 輪替時漏掉它,症狀是
+**所有人都被告知「不是您的生日月」**,然後去門市理論。
+
+> 這一格會寫錯的原因:`cloth` 大部分的工作確實只碰官網自己的資料表,
+> 「要不要金鑰」是看**有沒有對外呼叫**,不是看這支函式主要在做什麼。
+> 判斷方式是 grep `Deno.env.get(` 與 `fetch(`,不要憑印象。
 
 `SITE_API_KEY` 是 Secret(2026-08-19 由對方在我方 Supabase 設定),
-所以**輪替時對方改 Secret,五支同時生效,我方不必重新部署**。
+所以**輪替時對方改 Secret,六支同時生效,我方不必重新部署**。
 但 `coupon-list` / `coupon-lock` / `member-auth` 的 `FALLBACK_SITE_KEY`
 仍留著舊值 —— 那是已外流的值躺在線上程式碼裡,輪替時應一併清成空字串。
 
@@ -604,6 +613,28 @@ anon  側:用 anon key 打 REST,同樣分組數一次
 - ⚠ **併發還沒杜絕**:沒有以「台北年份」為鍵的唯一索引
   (`created_at` 的時區轉換不是 immutable,要先加產生欄位)。
   速率限制讓窗口很窄但不是零。**不要把現況說成「不可能重複」。**
+
+### 🚨 `cloth_designs` 有一條 CHECK:新資料一定要有 `store_erpid`(2026-09-14 對方加的)
+
+```sql
+check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
+```
+
+**日後若多一條 insert `cloth_designs` 的路徑,那條路也要帶 `store_erpid`,
+否則資料庫直接拒絕。** 目前全庫只有 `cloth.ts` 的 `save` 一條
+(`cloth-admin` 是 update,`cloth-feed` / `cloth-wall` 是 select)。
+
+由來:9/6 有一件沒有取貨門市就進了加工後台,製作端拿到一張
+**做得出來、卻不知道要送去哪裡**的工單,躺了八天。169 件裡只有 1 件 ——
+不是常態失敗,是一條偶爾會通的旁路。`save` 的 `pickStore` 已經擋了
+(回 `006`),但那道守衛從外面實測不了(要有效 session token),
+所以改成讓資料庫保證「守衛失效也進不來」。
+
+看到「儲存失敗」而 log 裡有 `cloth_designs_store_required`,
+那是這條約束擋的 —— 代表門市那一段在某個環節掉了,不是資料庫壞掉。
+
+⚠ 用 CHECK 而不是 `NOT NULL`,是為了留著 9/6 那一筆(現已退件)
+給客人重做時對照;日期分界讓舊的留著、新的擋住。
 
 前端 `cloth.js`:存檔前 `confirm` 提示(放在上傳與存檔**之前** ——
 放後面等於圖已經送出去才問);已存檔時載入他那一張(用 `svg_url`
