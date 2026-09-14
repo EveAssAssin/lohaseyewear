@@ -31,7 +31,7 @@ const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-11 · 分享牆改隨機排序(依種子)';
+const CODE_VERSION = '2026-09-14 · 隨機排序 + 後台隱藏';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -156,6 +156,12 @@ Deno.serve(async (req) => {
       .from('cloth_designs')
       .select('id, member_name, preview_url, done_at')
       .eq('status', 'done')
+      /* ⚠ wall_hidden 與 status 是兩件事:
+           status='done'  做好了沒(沒做好本來就不會出現)
+           wall_hidden    做好了,但我方不想展示
+         用 status 處理「不想展示」會把它變回未完成,製作端的清單
+         就會多出一件已經做完的東西。 */
+      .not('wall_hidden', 'is', true)
       .not('preview_url', 'is', null)
       .order('done_at', { ascending: false })
       .limit(MAX_WALL);

@@ -230,6 +230,20 @@
                   '<button type="button" class="cloth-done" data-done="' + esc(it.id) + '">' +
                   '完 成 製 作</button></span>'
                 : '') +
+              /* 分享牆的隱藏/顯示。
+                 ⚠ 只有【已完成】的才給這顆 —— 未完成的本來就不會
+                   出現在牆上(cloth-wall 篩 status='done'),
+                   給了只會讓人以為按了有用。
+                 ⚠ 這與「完成製作」是兩件事:隱藏不會把它退回未完成,
+                   製作端的清單不受影響。 */
+              (it.status === 'done'
+                ? '<button type="button" class="cloth-btn cloth-hide" ' +
+                    'data-hide="' + esc(it.id) + '" data-to="' + (it.wall_hidden ? '0' : '1') + '">' +
+                    (it.wall_hidden
+                      ? '<i class="fa-solid fa-eye"></i> 顯示於分享牆'
+                      : '<i class="fa-solid fa-eye-slash"></i> 從分享牆隱藏') +
+                  '</button>'
+                : '') +
             '</div>' +
           '</div>' +
         '</div>';
@@ -331,6 +345,24 @@
     r.addEventListener('click', function (e) {
       var dxf = e.target.closest('[data-dxf]');
       if (dxf) { downloadDxf(dxf.dataset.dxf, dxf, dxf.dataset.mode); return; }
+
+      var hide = e.target.closest('[data-hide]');
+      if (hide) {
+        var toHidden = hide.dataset.to === '1';
+        if (!confirm(toHidden
+              ? '從分享牆隱藏這一件?\n\n客人在客製眼鏡布頁面就看不到它了。\n(不影響製作狀態,也不會退回未完成)'
+              : '重新顯示在分享牆?')) return;
+        hide.disabled = true;
+        /* 走 admin-write 而不是 cloth-admin ——
+           cloth-admin 線上那份比 repo 新(它認得 rejected),
+           動它就得先 Download 再合併。這裡只改一個布林欄位,
+           用 admin-write 的白名單(只開 wall_hidden)比較省也比較安全。 */
+        window.LohasAdminWrite('cloth_designs', 'update',
+          { wall_hidden: toHidden }, hide.dataset.hide)
+          .then(load)
+          .catch(function (err) { alert('操作失敗:' + err.message); hide.disabled = false; });
+        return;
+      }
 
       var done = e.target.closest('[data-done]');
       if (done) {

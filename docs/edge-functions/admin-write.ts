@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-12 · +bday_wall_hidden';
+const CODE_VERSION = '2026-09-14 · +cloth_designs(只開 wall_hidden)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -71,6 +71,7 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
        第五批  creator_info
        第六批  cs_messages
        第七批  bday_wall_hidden(生日分享牆的隱藏清單)
+       第八批  cloth_designs(只開 wall_hidden 一欄)
      以上全部已搬完並實測,對應資料表的寫入政策也都收乾淨了。 */
 type Rule = { key: string; ops: string[]; cols: string[] };
 const ALLOW: Record<string, Rule> = {
@@ -194,6 +195,18 @@ const ALLOW: Record<string, Rule> = {
            'customer_name', 'member_id', 'image_urls', 'main_image_url',
            'is_public', 'subcategories',
            'status', 'reject_reason', 'reviewed_at'],
+  },
+
+  /* ===== 客製眼鏡布(2026-09-14)=====
+     🚨 只開 wall_hidden 一個欄位。
+        cloth_designs 裡有客編、姓名、門市、線稿網址,而且製作端
+        照它做出實體 —— 後台沒有改那些的功能,開了只是把攻擊面留著。
+        status 也不開:改狀態要走 cloth-admin(它會一併處理 done_at,
+        那是 App 增量抓取的依據,漏掉會重複推播)。 */
+  cloth_designs: {
+    key: 'id',
+    ops: ['update'],
+    cols: ['wall_hidden'],
   },
 
   /* ===== 生日分享牆的隱藏清單(2026-09-12)=====

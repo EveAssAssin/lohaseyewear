@@ -1100,8 +1100,8 @@
     /* 送出前的確認彈窗。回 Promise —— 所以底下整段要移進 .then。
        ⚠ 彈窗開不起來時會退回原生 confirm(見 askCampaign),
          不會變成「按了沒反應」。 */
-    askCampaign().then(function (ok) {
-      if (ok) doSubmit(token);
+    askCampaign().then(function (res) {
+      if (res && res.ok) doSubmit(token, res.allowReuse);
     });
   }
 
@@ -1118,6 +1118,11 @@
   function askCampaign() {
     var box = document.getElementById('clCampaignModal');
     var agree = document.getElementById('clAgree');
+    /* clLicense 預設勾好但【必勾】;clReuse 預設勾好但【可取消】。
+       兩個都拿不到元素時走下面的 confirm 退路,那條路一律
+       視為同意重用 —— 與畫面的預設值一致。 */
+    var license = document.getElementById('clLicense');
+    var reuse = document.getElementById('clReuse');
     var okBtn = document.getElementById('clCampaignOk');
     var cancel = document.getElementById('clCampaignCancel');
     /* 右上角的叉叉等同「再看看」—— 一樣是取消,一樣要解除監聽。
@@ -1136,24 +1141,38 @@
 
     return new Promise(function (resolve) {
       agree.checked = false;
-      okBtn.disabled = true;
+      /* 每次開啟都回到預設值 —— 上一次取消之後留著舊狀態,
+         客人會以為自己這次也勾過了。 */
+      if (license) license.checked = true;
+      if (reuse) reuse.checked = true;
+      okBtn.disabled = !canOk();
       box.hidden = false;
 
+      /* 送出鍵的條件:兩個【必勾】的都勾了。
+         clReuse 不在條件裡 —— 那是選擇,不是門檻。 */
+      function canOk() {
+        return agree.checked && (!license || license.checked);
+      }
       function cleanup(v) {
         box.hidden = true;
         agree.removeEventListener('change', onChange);
+        if (license) license.removeEventListener('change', onChange);
         okBtn.removeEventListener('click', onOk);
         cancel.removeEventListener('click', onCancel);
         if (xBtn) xBtn.removeEventListener('click', onCancel);
         document.removeEventListener('keydown', onKey);
         resolve(v);
       }
-      function onChange() { okBtn.disabled = !agree.checked; }
-      function onOk() { if (agree.checked) cleanup(true); }
-      function onCancel() { cleanup(false); }
-      function onKey(e) { if (e.key === 'Escape') cleanup(false); }
+      function onChange() { okBtn.disabled = !canOk(); }
+      function onOk() {
+        if (!canOk()) return;
+        cleanup({ ok: true, allowReuse: reuse ? !!reuse.checked : true });
+      }
+      function onCancel() { cleanup({ ok: false, allowReuse: true }); }
+      function onKey(e) { if (e.key === 'Escape') onCancel(); }
 
       agree.addEventListener('change', onChange);
+      if (license) license.addEventListener('change', onChange);
       okBtn.addEventListener('click', onOk);
       cancel.addEventListener('click', onCancel);
       if (xBtn) xBtn.addEventListener('click', onCancel);
@@ -1161,7 +1180,7 @@
     });
   }
 
-  function doSubmit(token) {
+  function doSubmit(token, allowReuse) {
     /* 取貨門市必填。伺服器端才是真正的關卡(cloth 函式會回 006),
        這裡擋只是為了【不要先上傳兩個檔案再被拒絕】——
        被拒的那次會在 Storage 留下兩個沒有人指向的孤兒檔。 */
@@ -1171,6 +1190,7 @@
       refreshSubmit();
       return;
     }
+
 
     State.busy = true;
     el.submit.disabled = true;
@@ -1232,7 +1252,10 @@
               rot: State.rot,                    // 度,順時針
               basis: 'cloth_image'
             },
-            store: pickedStore()
+            store: pickedStore(),
+            /* 客人是否同意別人使用。伺服器沒收到時預設 true,
+               所以這裡要明確送 false —— 不能靠「不送」表示不同意。 */
+            allow_reuse: allowReuse !== false
           })
         }).then(function (r) { return r.json(); });
       })

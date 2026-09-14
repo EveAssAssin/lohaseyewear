@@ -302,6 +302,32 @@
             存檔後<b>不能再調整</b>。年度生日禮一年一件，製作端會照你現在看到的樣子做出來。
           </p>
 
+          <!-- 🚨 授權聲明。預設勾好,但【必勾】才能送出。
+               -----------------------------------------------------------
+               這一條與下面的「分享」不同:它是客人對我方的【聲明】,
+               不是同意我方做什麼。放在這裡是為了讓退件時有依據 ——
+               師傅遇到明顯有版權疑慮的圖會退,退的時候客人至少
+               看過這句話。
+
+               ⚠ 預設勾選是刻意的(依營運要求)。副作用要知道:
+                 預設勾好的必勾框,實際上比較接近「告知」而不是
+                 「同意」—— 多數人不會讀。若日後真的要拿它當
+                 法律上的承諾,應該改成預設不勾。 -->
+          <label class="cl-agree">
+            <input type="checkbox" id="clLicense" checked>
+            <span>我確認擁有這張圖的使用權；若有侵權疑慮，樂活可能退件並請我重新設計</span>
+          </label>
+
+          <!-- 同意他人使用。預設同意,但【可以取消】,不擋送出。
+               ⚠ 這個答案會存進資料庫(cloth_designs.allow_reuse)——
+                 它是客人的選擇,不是我方的推定。目前沒有任何功能
+                 會讀它,但同意必須在當下問,事後補問拿不到
+                 已經送出的那些人。 -->
+          <label class="cl-agree cl-agree-soft">
+            <input type="checkbox" id="clReuse" checked>
+            <span>我願意讓其他客人使用我的圖案（可取消，不影響送出）</span>
+          </label>
+
           <label class="cl-agree">
             <input type="checkbox" id="clAgree">
             <!-- ⚠ 三件事都放在同一個勾選裡是刻意的:分成三個勾選框,
@@ -436,7 +462,7 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260914-store-required"></script>
+<script src="js/cloth.js?v=20260914-store-consent"></script>
 <script src="js/cloth-wall.js?v=20260911-random"></script>
 </body>
 </html>
