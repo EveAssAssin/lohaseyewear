@@ -112,14 +112,19 @@
       }
     } catch (_e) { /* ignore */ }
 
-    /* 預選顧問 → 一般情況直接跳第 2 步（時段）；
-       商城模式(cartPrefill)只選顧問、時段交給商城那頁，故維持在第 1 步 */
+    /* 預選顧問(門市內頁點某位顧問的「預約」進來)→ 把那位選起來,
+       但【留在第 1 步】。
+
+       🚨 2026-09-14 修:先前這裡會直接跳到第 2 步(時段)。
+         服務項目 2026-09-13 從第 3 步搬到第 1 步之後,那個跳躍等於
+         把「選項目」整個跳過 —— 而項目決定第 2 步要看哪一種時段:
+           · selectedService 是 null → applyServiceFilter 不過濾,
+             五種類型的時段全部混在一起(同一個時間會出現好幾次)
+           · 一路填到最後按送出,才會被「請選擇預約服務項目」擋下來
+         兩個症狀都不會報錯,而且從門市內頁進來的人【每一個】都會遇到。 */
     if (opts.preselectEmployeeErpId) {
       const target = state.employees.find(e => String(e.erpid) === String(opts.preselectEmployeeErpId));
-      if (target) {
-        state.selectedEmployee = target;
-        if (!state.cartPrefill) state.step = 2;
-      }
+      if (target) state.selectedEmployee = target;
     }
 
     state.open = true;
