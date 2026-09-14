@@ -190,9 +190,15 @@
            對我方:製作端(cloth-lab.html)靠這一欄把工作分成
                    「台中以北」與「台南以南」兩條線。
 
-           ⚠ 不設必填。選不出來(門市 API 掛了、他還沒想好)不該
-           擋住一件已經畫完的設計 —— 沒選的會落在製作端的「其他」,
-           人工處理一下就好,那比讓他重畫一次划算得多。 -->
+           🚨 2026-09-14 起【必填】。
+           這裡原本寫「不設必填,沒選的落在製作端的『其他』,人工處理
+           一下就好」—— 實際發生的是 9/6 有一件就這樣進了加工後台,
+           製作端拿到一張做得出來、卻不知道要送去哪裡的工單,
+           而「人工處理」實務上沒有人走,它就一直躺在那裡。
+
+           ⚠ 必填之後,門市 API 掛掉不可以等於眼鏡布全站停擺。
+           cloth.js 會先用本機快取的門市清單,真的沒有才停在「請重試」——
+           被卡住的只剩「第一次來、而且當下剛好載不出來」的人。 -->
       <div class="cl-card" id="clStoreCard">
         <!-- ⚠ 標題用 .cl-card-title,與其他三張卡同一個 class。
              先前寫成 .cl-card-h —— 那個 class 不存在,所以整行沒有
@@ -430,7 +436,7 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/cloth.js?v=20260909-birthday-label"></script>
+<script src="js/cloth.js?v=20260914-store-required"></script>
 <script src="js/cloth-wall.js?v=20260911-random"></script>
 </body>
 </html>

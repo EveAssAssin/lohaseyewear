@@ -79,11 +79,23 @@ function normDeg(v: unknown): number {
 
 /* 取貨門市:只留這三個欄位,而且都截短。
    erpid 限定英數,不是為了安全(它不授權任何事),
-   而是為了不讓奇怪的東西進到製作單的畫面上。 */
-function pickStore(v: unknown) {
+   而是為了不讓奇怪的東西進到製作單的畫面上。
+
+   🚨 2026-09-14 起這是【必填】,取不到就回 null 讓 save 拒絕。
+   -----------------------------------------------------------------
+   原本的註解寫著「沒選門市是合法的:落在製作端的『其他』,人工處理」。
+   實際上 9/6 有一件(會員 28357297)就這樣進去了,而製作端拿到的是
+   一張做得出來、卻不知道要送去哪裡的工單 ——「人工處理」的意思是
+   有人要打電話去問客人,那條路實務上沒有人走,它就一直躺在那裡。
+
+   ⚠ 前端(js/cloth.js)也會擋,但那只是介面。直接 POST 這一支就繞過去了,
+     而繞過去的結果正是上面那一張。真正的關卡在這裡。 */
+function pickStore(v: unknown): {
+  store_erpid: string; store_name: string | null; store_city: string | null;
+} | null {
   const o = (v || {}) as Record<string, unknown>;
   const id = String(o.erpid ?? '').trim();
-  if (!id || !/^[0-9A-Za-z_-]{1,32}$/.test(id)) return {};
+  if (!id || !/^[0-9A-Za-z_-]{1,32}$/.test(id)) return null;
   return {
     store_erpid: id,
     store_name: String(o.name ?? '').slice(0, 80) || null,
@@ -191,7 +203,7 @@ const SYS_ERR_MSG = '系統異常,請聯繫客服。';
 /* 線上實際跑的是哪一版。每次改這支就一併更新 ——
    從外面看不出線上是哪一版,是 2026-08-28 那次事故的根本原因
    (程式改好、信上寫「已上線」,但那支函式從頭到尾沒有部署過)。 */
-const CODE_VERSION = '2026-09-04 · 生日閘門判定留紀錄';
+const CODE_VERSION = '2026-09-14 · 取貨門市改必填';
 
 /* 速率限制。記憶體計數,多執行個體下不是嚴格上限,
    目的是擋掉「同一個人狂按」與明顯的腳本,不是防禦機制。 */
@@ -506,6 +518,19 @@ Deno.serve(async (req) => {
   if (!svgUrl) return reply('006', { message: '缺少線稿檔' }, 400);
   if (!previewUrl) return reply('006', { message: '缺少合成圖' }, 400);
 
+  /* 取貨門市必填(2026-09-14 起)。理由見 pickStore 的說明。
+     ⚠ 擋在 insert 之前而不是靠資料庫的 NOT NULL ——
+       既有的那一筆(9/6,現已退件)是 null,加 NOT NULL 會讓它變成
+       一筆不合法的資料,而它還要留著給客人重做時對照。
+     ⚠ 這個檢查對【退件重做】同樣生效:那條路走的就是這一段。
+       9/6 那位客人正是因為沒有門市被退件,重做時當然要選一家。 */
+  const store = pickStore(body.store);
+  if (!store) {
+    console.warn('[cloth] 擋下沒有取貨門市的存檔 erpid=' + (who.erpid || '-') +
+                 ' mid=' + (who.mid || '-'));
+    return reply('006', { message: '請選擇要到哪一家門市拿。' }, 400);
+  }
+
   const source = body.source === 'draw' ? 'draw' : 'market';
   const p = body.placement || {};
 
@@ -544,8 +569,10 @@ Deno.serve(async (req) => {
        快照,製作端不必連線就看得到,也不會因為門市改劃區域
        而讓一件已排入產線的工作隔天跳到另一組人手上。
 
-       沒選門市是合法的:落在製作端的「其他」,人工處理。 */
-    ...pickStore(body.store),
+       ⚠ erpid 必填(上面已擋),但 name / city 仍可能是 null ——
+         前端送了一個清單裡沒有的 erpid 就會這樣。
+         製作端要照舊能顯示「未指定」,不要假設有值。 */
+    ...store,
   };
 
   const { data, error } = await db.from('cloth_designs').insert(row).select('id').single();

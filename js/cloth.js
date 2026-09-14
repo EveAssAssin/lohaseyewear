@@ -891,14 +891,100 @@
      六十幾家店平鋪在一個下拉裡找不到人 —— 客人心裡想的是
      「我家附近那家」,而那是區域問題,不是店名問題。
 
-     ⚠ 這一段整段可以失敗。門市 API 掛掉、網路斷、正規化之後
-     一家都不剩,都只會讓下拉停在「暫時取不到門市清單」——
-     不擋儲存。一件已經畫完的設計不該因為一支查詢掛了而作廢;
-     沒選門市的會落在製作端的「其他」,人工處理一下就好。 */
+     🚨 2026-09-14 起【取貨門市是必填】,這一段的性質因此變了。
+     -----------------------------------------------------------------
+     原本的寫法是「門市清單載不出來就放行,沒選的落在製作端的
+     『其他』,人工處理一下就好」。實際發生的事是:9/6 有一件
+     (會員 28357297「流星」)就這樣進了加工後台,而製作端拿到的是
+     一張【做得出來、卻不知道要送去哪裡】的工單 ——
+     人工處理的意思是「有人要打電話去問客人」,那條路實務上沒有人走。
+
+     ⚠ 但必填不可以直接把逃生口拿掉就算了。門市清單來自
+     左手系統(getstoredatas),那是外部系統,它一掛就等於眼鏡布全站停擺 ——
+     那正是 9/3 加生日閘門時踩過的形狀(撐了 27 小時,因為
+     「尚未開放」看起來像營運設定而不像故障)。
+
+     所以改成:**成功載入過就把清單快取起來**,下次載不出來時用快取。
+     真正卡住的只剩「第一次來、而且當下剛好載不出來」的人,
+     他看到的是明確的「請按重試」,不是一個看起來正常、
+     卻會送出半套資料的畫面。 */
+  /* 與 cloth.html 的 #clStoreHint 預設文字相同。
+     ⚠ 兩邊要一致 —— 改了 HTML 沒改這裡的話,客人按過重試之後
+     那一行會換成另一句話,看起來像出了什麼事。 */
+  var STORE_HINT_DEFAULT =
+    '眼鏡布做好之後會送到這家門市,之後想換的話打個電話跟他們說一聲就好。';
+
+  var STORE_CACHE_KEY = 'lohas_cloth_storelist';
+  var STORE_CACHE_TTL = 14 * 24 * 3600 * 1000;   // 兩週
+
+  /* 快取只存畫下拉需要的四個欄位,不是整包門市資料。
+     整包裡有電話、地址、照片、員工清單 —— 那些這一頁用不到,
+     存進 localStorage 等於在客人的瀏覽器留一份不需要的副本。 */
+  function cacheStores(list) {
+    try {
+      localStorage.setItem(STORE_CACHE_KEY, JSON.stringify({
+        at: Date.now(),
+        list: list.map(function (st) {
+          return {
+            erpid: String(st.erpid || ''), name: st.name || '', city: st.city || '',
+            sort: st.sort || 0,
+            region: { label: (st.region && st.region.label) || '', order: (st.region && st.region.order) || 0 }
+          };
+        })
+      }));
+    } catch (e) { /* 無痕模式或超過配額:快取只是加分,失敗不影響流程 */ }
+  }
+
+  function cachedStores() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(STORE_CACHE_KEY) || 'null');
+      if (!raw || !raw.list || !raw.list.length) return null;
+      /* 過期就不用 —— 停業的門市不該在客人的瀏覽器裡活到天荒地老。
+         兩週是「外部系統壞掉會被修好」與「門市異動會反映出來」的折衷。 */
+      if (!raw.at || (Date.now() - raw.at) > STORE_CACHE_TTL) return null;
+      return raw.list.filter(function (st) { return st && st.erpid; });
+    } catch (e) { return null; }
+  }
+
+  function renderStores(list, fromCache) {
+    State.stores = list;
+
+    var html = '<option value="">請選擇取貨門市</option>';
+    var curr = '';
+    list.forEach(function (st) {
+      if (st.region.label !== curr) {
+        if (curr) html += '</optgroup>';
+        curr = st.region.label;
+        html += '<optgroup label="' + esc(curr) + '">';
+      }
+      html += '<option value="' + esc(st.erpid) + '">' + esc(st.name) + '</option>';
+    });
+    if (curr) html += '</optgroup>';
+    el.store.innerHTML = html;
+
+    /* 上次選過的記起來 —— 同一個人做第二條布,多半還是去同一家。
+       清單裡沒有那家了(已停業)就當作沒存過。 */
+    try {
+      var last = localStorage.getItem('lohas_cloth_store');
+      if (last && /^[0-9A-Za-z_-]{1,32}$/.test(last)) {
+        var opt = el.store.querySelector('option[value="' + last + '"]');
+        if (opt) el.store.value = last;
+      }
+    } catch (e) { /* 無痕模式讀 localStorage 會丟例外 */ }
+
+    if (el.storeHint) {
+      el.storeHint.textContent = fromCache
+        ? '門市清單暫時連不上,先用你上次看到的那一份 —— 選了就能送出,不影響製作。'
+        : STORE_HINT_DEFAULT;
+    }
+    if (el.storeRetry) el.storeRetry.style.display = fromCache ? '' : 'none';
+    refreshSubmit();
+  }
+
   function loadStores() {
     var api = window.LohasApi && window.LohasApi.store;
     var sd  = (window.LohasStore && window.LohasStore.data) || null;
-    if (!api || !sd || !el.store) { storeFallback('暫時取不到門市清單'); return; }
+    if (!api || !sd || !el.store) { storeFallback(); return; }
     if (el.storeRetry) el.storeRetry.style.display = 'none';
     el.store.innerHTML = '<option value="">載入門市中…</option>';
 
@@ -908,52 +994,43 @@
           .sort(function (a, b) {
             return a.region.order - b.region.order || a.sort - b.sort;
           });
-        if (!list.length) { storeFallback('暫時取不到門市清單'); return; }
+        /* 回了一個空清單也算失敗。這通常是上游改了回應格式或
+           正規化把全部濾掉了 —— 那時「沒有門市可選」不是事實。 */
+        if (!list.length) { storeFallback(); return; }
 
-        State.stores = list;
-
-        var html = '<option value="">請選擇取貨門市</option>';
-        var curr = '';
-        list.forEach(function (st) {
-          if (st.region.label !== curr) {
-            if (curr) html += '</optgroup>';
-            curr = st.region.label;
-            html += '<optgroup label="' + esc(curr) + '">';
-          }
-          html += '<option value="' + esc(st.erpid) + '">' + esc(st.name) + '</option>';
-        });
-        if (curr) html += '</optgroup>';
-        el.store.innerHTML = html;
-
-        /* 上次選過的記起來 —— 同一個人做第二條布,多半還是去同一家。
-           清單裡沒有那家了(已停業)就當作沒存過。 */
-        try {
-          var last = localStorage.getItem('lohas_cloth_store');
-          if (last && /^[0-9A-Za-z_-]{1,32}$/.test(last)) {
-            var opt = el.store.querySelector('option[value="' + last + '"]');
-            if (opt) el.store.value = last;
-          }
-        } catch (e) { /* 無痕模式讀 localStorage 會丟例外 */ }
-
-        if (el.storeRetry) el.storeRetry.style.display = 'none';
-        refreshSubmit();
+        cacheStores(list);
+        renderStores(list, false);
       })
       .catch(function (e) {
         console.warn('[cloth] 門市清單載入失敗', e && e.message);
-        storeFallback('暫時取不到門市清單');
+        storeFallback();
       });
   }
 
-  function storeFallback(msg) {
+  /* 載不出來。先找快取,真的沒有才停在「請重試」。
+     -----------------------------------------------------------------
+     ⚠ 這裡【不再】說「沒關係,先存起來」。門市是必填,
+     那句話會讓客人以為自己已經送出去了,而伺服器會擋下來 ——
+     兩個畫面講不同的話,是最難查的一種。 */
+  function storeFallback() {
     if (!el.store) return;
+
+    var cached = cachedStores();
+    if (cached && cached.length) {
+      console.info('[cloth] 門市清單改用本機快取', cached.length, '家');
+      renderStores(cached, true);
+      return;
+    }
+
     State.stores = [];
-    el.store.innerHTML = '<option value="">' + esc(msg) + '</option>';
+    el.store.innerHTML = '<option value="">暫時取不到門市清單</option>';
     if (el.storeHint) {
       el.storeHint.textContent =
-        '沒關係,先存起來 —— 到門市時跟店員說「我有訂做客製眼鏡布」就可以領。';
+        '門市清單暫時連不上。你畫好的東西還在,按下面重新載入就可以繼續 ——' +
+        '我們需要知道做好之後要送到哪一家。';
     }
-    /* 必填 + 清單是空的 = 客人畫完了卻永遠存不了。
-       所以一定要給他一條路:重試,或直接存。 */
+    /* 必填 + 清單是空的 = 客人畫完了卻送不出去。
+       所以一定要給他一條路,而那條路是「重試」,不是「照樣送出」。 */
     if (el.storeRetry) el.storeRetry.style.display = '';
     refreshSubmit();
   }
@@ -1085,6 +1162,16 @@
   }
 
   function doSubmit(token) {
+    /* 取貨門市必填。伺服器端才是真正的關卡(cloth 函式會回 006),
+       這裡擋只是為了【不要先上傳兩個檔案再被拒絕】——
+       被拒的那次會在 Storage 留下兩個沒有人指向的孤兒檔。 */
+    var store = pickedStore();
+    if (!store) {
+      showErr('請先選擇要到哪一家門市拿。');
+      refreshSubmit();
+      return;
+    }
+
     State.busy = true;
     el.submit.disabled = true;
     el.submit.textContent = '產 生 圖 檔...';
@@ -1570,19 +1657,23 @@
 
     var hasPick = !!State.picked;
     var hasStore = !el.store || !!el.store.value;
-    // 清單根本沒載出來 → 不能拿它當作沒填
+    /* 清單根本沒載出來。
+       🚨 2026-09-14 起這【不再】是放行的理由 —— 取貨門市是必填。
+       以前寫成「清單載不出來就當作不必填」,結果是製作端收到
+       一張不知道要送去哪裡的工單(9/6 那件)。
+       載不出來時的出路是 storeFallback():先用快取,再不行就請他重試。 */
     var storeUnavailable = !State.stores.length;
 
-    var ok = hasPick && (hasStore || storeUnavailable);
+    var ok = hasPick && hasStore;
     el.submit.disabled = !ok;
 
     if (!hasPick) {
       el.submitHint.textContent = '請先選一張刻圖,或自己畫一個';
-    } else if (!hasStore && !storeUnavailable) {
-      el.submitHint.textContent = '還差一個:請選擇要到哪一家門市拿';
     } else if (storeUnavailable) {
       el.submitHint.textContent =
-        '門市清單暫時載不出來,先存起來 —— 到門市時跟店員說「我有訂做客製眼鏡布」就可以領';
+        '門市清單暫時載不出來 —— 請按上面的「重新載入門市清單」,你畫好的東西不會不見';
+    } else if (!hasStore) {
+      el.submitHint.textContent = '還差一個:請選擇要到哪一家門市拿';
     } else {
       el.submitHint.textContent = '存起來之後,到門市報會員編號就能製作';
     }
