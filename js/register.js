@@ -158,6 +158,24 @@
     var mobile = el.mobile.value.trim();
 
     if (account.length < 6) return { msg: '帳號至少要 6 碼。', focus: el.account };
+    /* 🚨 2026-09-14 加。帳號只收半形英數字。
+       -----------------------------------------------------------------
+       主後端【沒有】字元限制(只有 required|min:6),真正擋人的是
+       App 前端的四個 FilteringTextInputFormatter([a-zA-Z0-9])。
+       所以官網建得出 App 登不進去的帳號 —— 吳姓客人(0961320777)
+       就是這樣卡住的:他的帳號含底線,App 打不出那個字,
+       畫面只說「密碼錯」,他自己看不出發生什麼事。
+
+       ⚠ 這裡是【驗證並給訊息】,不是像 App 那樣【過濾掉字元】。
+         過濾器會把打進去的字默默吃掉,客人按了鍵卻什麼都沒發生 ——
+         那正是這件事變成客服案件的原因。
+
+       ⚠ 這是最嚴的版本(只有英數字)。對方今晚會統計既有帳號,
+         之後可能放寬(例如允許底線)。先緊後寬不會留下孤兒帳號,
+         先寬後緊會。 */
+    if (!/^[A-Za-z0-9]+$/.test(account)) {
+      return { msg: '帳號只能使用英文字母與數字。', focus: el.account };
+    }
     if (pwd.length < 6 || pwd.length > 20) return { msg: '密碼請用 6–20 碼。', focus: el.pwd };
     if (pwd !== pwd2) return { msg: '兩次輸入的密碼不一樣。', focus: el.pwd2 };
     if (!name) return { msg: '請填寫姓名。', focus: el.name };
@@ -326,6 +344,12 @@
 
     el.account.addEventListener('blur', function () {
       var v = this.value.trim();
+      /* 字元不合先講,不要等他按下一步 ——
+         而且不要先去查重複(那是白打一次 API)。 */
+      if (v && !/^[A-Za-z0-9]+$/.test(v)) {
+        setHint(el.accountHint, '只能使用英文字母與數字', 'is-err');
+        return;
+      }
       if (v.length >= 6) checkDup('account', v, this, el.accountHint);
       else if (v) setHint(el.accountHint, '帳號至少要 6 碼', 'is-err');
       else setHint(el.accountHint, '');
