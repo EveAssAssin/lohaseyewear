@@ -118,6 +118,27 @@
        門市需要姓名才找得到人。 */
   var PRINT_PREFIX = 'CLOTHARV:';
 
+  /* 人看得懂的短碼：cloth_designs.id（UUID）的第一段，8 個 hex，印成 44A3-D287。
+     -----------------------------------------------------------------
+     🚨 2026-09-15 加的，起因是這台印表機印出來的 QR 門市刷不動。
+       在那之前，單子上唯一的替代資訊是下面 .code 那一行
+       ——【9px 的 36 字元 UUID】，店員打不出來，所以那批布就堆在門市，
+       而客人手上最後一則訊息是「到店後會再通知您」，那則通知
+       只在登錄到店之後才發，等於永遠不會來。
+
+     ⚠ 長度 8 是算過的，不是挑好看的：樂活那側用前綴比對找這一筆，
+       4 碼在幾百件的規模下幾乎一定碰撞（生日悖論），8 碼約 0.05%。
+       而且 UUID 第一段剛好就是 8 碼，不必切在奇怪的位置。
+       真正的保險在樂活那側 ——【命中多筆就拒絕，不取第一筆】。
+
+     ⚠ QR 與 .code 那一行都【保留】。短碼是多一條路，不是替代品：
+       印表機修好之後掃碼還是最快的，而且先前印出去的單子只有那兩樣。 */
+  function shortOf(id) {
+    var hex = String(id == null ? '' : id).replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+    if (hex.length < 8) return hex;
+    return hex.slice(0, 4) + '-' + hex.slice(4, 8);
+  }
+
   /* 用 qrcodejs 在本頁畫出 QR，取 dataURL 帶進列印視窗。
      在本頁畫而不是在列印視窗畫：列印視窗要等外部腳本載完才有圖，
      而 print() 可能比它先執行 —— 那會印出一張空白的方框。 */
@@ -166,6 +187,11 @@
           '.qr{text-align:center;margin:8px 0 4px}' +
           '.qr img{width:46mm;height:46mm}' +
           '.code{text-align:center;font-size:9px;word-break:break-all;color:#333}' +
+          /* 短碼要印得比什麼都大 —— 它存在的理由就是「QR 印壞時還讀得出來」，
+             所以字級與粗細都刻意過頭，糊掉一點也還認得出 0/O、8/B。 */
+          '.short{text-align:center;font-size:30px;font-weight:700;letter-spacing:3px;' +
+          'margin:6px 0 2px;font-family:"Courier New",monospace}' +
+          '.short-label{text-align:center;font-size:11px;color:#333}' +
           '.tip{margin-top:6px;text-align:center;font-size:11px;font-weight:700}' +
           '</style></head><body>' +
           '<h1>樂活 客製眼鏡布</h1>' +
@@ -177,8 +203,11 @@
           '<div>完成時間　' + esc2(fmtTime(d.done_at) || fmtTime(new Date().toISOString())) + '</div>' +
           '<div class="hr"></div>' +
           '<div class="qr"><img src="' + qr + '" alt=""></div>' +
+          '<div class="short-label">製作單編號</div>' +
+          '<div class="short">' + esc2(shortOf(d.id)) + '</div>' +
           '<div class="code">' + esc2(PRINT_PREFIX + d.id) + '</div>' +
-          '<div class="tip">門市收到後請掃描此碼登錄到店</div>' +
+          '<div class="tip">門市收到後請掃描此碼登錄到店<br>' +
+          '掃不動時，在門市系統「眼鏡布到店登錄」輸入上面的編號</div>' +
           '</body></html>'
         );
         w.document.close();
