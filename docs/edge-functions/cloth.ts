@@ -203,7 +203,7 @@ const SYS_ERR_MSG = '系統異常,請聯繫客服。';
 /* 線上實際跑的是哪一版。每次改這支就一併更新 ——
    從外面看不出線上是哪一版,是 2026-08-28 那次事故的根本原因
    (程式改好、信上寫「已上線」,但那支函式從頭到尾沒有部署過)。 */
-const CODE_VERSION = '2026-09-14 · 門市必填 + allow_reuse';
+const CODE_VERSION = '2026-09-20 · list 回 product';
 
 /* 速率限制。記憶體計數,多執行個體下不是嚴格上限,
    目的是擋掉「同一個人狂按」與明顯的腳本,不是防禦機制。 */
@@ -372,7 +372,11 @@ Deno.serve(async (req) => {
   if (action === 'list') {
     const q = mineOnly(
       db.from('cloth_designs')
-        .select('id, source, design_name, preview_url, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
+        /* ⚠ product 要回。客製中心(custom.html)的「我的客製作品」
+           靠它標「眼鏡布 / 眼鏡盒」—— 沒有這一欄,前端只能一律
+           當成眼鏡布,於是第一件眼鏡盒會被標成眼鏡布,
+           而畫面上看不出任何異常。 */
+        .select('id, product, source, design_name, preview_url, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
         .order('created_at', { ascending: false })
         .limit(60),
       who,

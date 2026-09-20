@@ -243,3 +243,123 @@
 .in-app .cc-head { margin-bottom: 26px; }
 .in-app .cc-title { font-size: 26px; }
 .in-app .cc-lead { display: none; }
+
+/* =============================================================
+   我的客製作品
+   -------------------------------------------------------------
+   APP 裡這一頁是分頁,客人會一直回來看進度。所以卡片要小、
+   一屏放得下好幾張 —— 他要的是「做好了沒」,不是再看一次那張圖。
+   ============================================================= */
+
+.cc-mine-sec { margin-top: 44px; }
+
+.cc-mine-head { margin-bottom: 18px; }
+
+.cc-mine-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 6px;
+  letter-spacing: 0.04em;
+}
+
+.cc-mine-lead { font-size: 13.5px; color: var(--text-sub); margin: 0; }
+
+.cc-mine { display: grid; gap: 12px; }
+
+/* 兩欄只在桌機。手機一欄 —— 兩欄會把縮圖壓到看不出是什麼圖。 */
+@media (min-width: 761px) {
+  .cc-mine { grid-template-columns: repeat(2, 1fr); }
+}
+
+.cc-mine-card {
+  display: flex;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-lg);
+  padding: 12px;
+  align-items: flex-start;
+}
+
+.cc-mine-thumb {
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--bg-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+}
+
+.cc-mine-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cc-mine-info { min-width: 0; flex: 1; }
+
+.cc-mine-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* ⚠ 名字要能被截斷。客人會取很長的名字,不截的話卡片會被撐開,
+   手機上整排跑版。min-width:0 是給 flex 子元素能縮的前提。 */
+.cc-mine-name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.cc-mine-prod {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--lohas-brand);
+  color: #fff;
+}
+
+.cc-mine-status { font-size: 13px; line-height: 1.6; margin: 0 0 6px; }
+
+.cc-mine-status.is-ok    { color: var(--ok); }
+.cc-mine-status.is-wait  { color: var(--text-sub); }
+.cc-mine-status.is-warn  { color: var(--warn); font-weight: 500; }
+.cc-mine-status.is-muted { color: var(--text-muted); }
+
+.cc-mine-meta { font-size: 12px; color: var(--text-muted); margin: 0; }
+.cc-mine-meta i { margin-right: 3px; }
+
+.cc-mine-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 26px 18px;
+  text-align: center;
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: var(--text-sub);
+  background: var(--bg-soft);
+  border-radius: var(--r-lg);
+}
+
+.cc-mine-login {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 9px 22px;
+  border-radius: var(--r-pill);
+  background: var(--lohas-brand);
+  color: #fff;
+  text-decoration: none;
+  font-size: 13.5px;
+}
+
+.cc-mine-login:hover { background: var(--lohas-hover); }

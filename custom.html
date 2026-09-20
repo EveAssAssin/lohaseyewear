@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/app-mode.css?v=20260920-init">
-  <link rel="stylesheet" href="css/custom.css?v=20260920-init">
+  <link rel="stylesheet" href="css/custom.css?v=20260920-mine">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -86,6 +86,19 @@
 
   </div>
 
+  <!-- ===== 我的客製作品 =====
+       這一頁在 APP 裡是一個【分頁】,客人會一直回來,而他回來多半是
+       想看「我那一件做好了沒」。所以產品介紹下面要有他自己的東西。
+       ⚠ 預設 hidden,由 js/custom.js 決定要不要顯示 ——
+         沒登入時畫一個空清單,他會以為自己做過的那件不見了。 -->
+  <section class="cc-mine-sec" id="ccMineSec" hidden>
+    <div class="cc-mine-head">
+      <h2 class="cc-mine-title">我的客製作品</h2>
+      <p class="cc-mine-lead">做過的每一件都在這裡，包含製作進度與取貨門市。</p>
+    </div>
+    <div class="cc-mine" id="ccMine"></div>
+  </section>
+
   <div class="cc-note">
     <p class="cc-note-title">圖從哪裡來</p>
     <ul class="cc-note-list">
@@ -99,6 +112,11 @@
 
 <div id="site-footer"></div>
 
+<script src="js/utils.js"></script>
 <script src="js/layout.js?v=20260905-navcache"></script>
+<!-- 「我的客製作品」要知道是誰。APP 走 SSO 開這一頁時 token 已經在了,
+     但不要假設 —— SSO 失敗或過期都會落回未登入。 -->
+<script src="js/auth.js?v=20260817-appmember"></script>
+<script src="js/custom.js?v=20260920-mine"></script>
 </body>
 </html>
