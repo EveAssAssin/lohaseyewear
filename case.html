@@ -12,114 +12,187 @@
   <script src="js/app-mode.js?v=20260920-init"></script>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- 上傳刻圖用的裁切工具(與刻圖市集同一組) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <!-- LOHAS CSS · 載入順序: tokens → base → components → page -->
+  <!-- LOHAS CSS · 載入順序: tokens → base → components → page
+
+       🚨 這一頁【直接沿用 cloth.css】,不自己寫一套版面。
+       -----------------------------------------------------------------
+       兩頁做的是同一件事(把圖放到東西上),電腦版與手機版的行為
+       必須一模一樣。各寫一套的下場是:改了眼鏡布的手機版,眼鏡盒
+       沒跟著改,而兩邊看起來只差一點點,沒有人會發現是哪裡不同。
+
+       所以 <body> 同時掛 cl 與 cs —— cloth.css 的手機版規則是
+       body.cl 開頭的,少了它整個手機版會退回桌機的兩欄。
+       case.css 只放【眼鏡盒才有的東西】:可雕刻範圍、盒款、價格。 -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/app-mode.css?v=20260920-init">
-  <link rel="stylesheet" href="css/case.css?v=20260920-layout">
+  <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
+  <link rel="stylesheet" href="css/cloth.css?v=20260907-fallback">
+  <link rel="stylesheet" href="css/case.css?v=20260920-shared">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 </head>
 
-<body class="cs">
+<body class="cl cs">
 <div id="site-header"></div>
 
-<main class="cs-main">
+<main class="cl-main">
 
-  <div class="cs-head">
+  <div class="cl-head">
     <a class="cs-back" href="custom.html"><i class="fa-solid fa-chevron-left"></i> 客製中心</a>
-    <h1 class="cs-title">客製眼鏡盒</h1>
-    <div class="cs-title-line"></div>
+    <h1 class="cl-title">客製眼鏡盒</h1>
+    <div class="cl-title-line"></div>
   </div>
 
-  <!-- ⚠ 上傳、手繪與結帳還沒接上。接完之後這一段整個刪掉。 -->
+  <!-- ⚠ 定價與結帳還沒接上。接完之後這一段整個刪掉。 -->
   <div class="cs-draft">
     <i class="fa-solid fa-triangle-exclamation"></i>
-    施工中：刻圖市集可以選了，上傳、手繪與結帳還沒接上。
+    施工中：圖可以做了，定價與結帳還沒接上。
   </div>
 
   <!-- ===== 來源切換 =====
-       與客製眼鏡布同一組三個入口。放在最上面是因為「先決定圖從哪來」
-       是這一頁的第一個動作 —— 與 cloth.html 保持一致,
-       客人從客製中心兩邊跳的時候不必重新學一次。 -->
-  <div class="cs-sourcebar">
-    <p class="cs-bar-title">圖案從哪裡來</p>
-    <div class="cs-seg" id="csSource">
-      <button type="button" class="cs-seg-btn on" data-src="market">
-        <i class="fa-solid fa-store"></i> 刻圖市集
+       與客製眼鏡布同一組四個入口,順序也一樣。
+       「先決定圖從哪來」是這一頁的第一個動作。 -->
+  <div class="cl-sourcebar" id="csSource">
+    <p class="cl-bar-title">圖案從哪裡來</p>
+    <div class="cl-seg">
+      <button type="button" class="cl-seg-btn on" data-src="market">
+        <i class="fa-solid fa-store"></i><span>刻圖市集</span>
       </button>
-      <button type="button" class="cs-seg-btn" data-src="upload">
-        <i class="fa-solid fa-arrow-up-from-bracket"></i> 上傳圖片
+      <button type="button" class="cl-seg-btn" data-src="draw">
+        <i class="fa-solid fa-pencil"></i><span>自己畫</span>
       </button>
-      <button type="button" class="cs-seg-btn" data-src="draw">
-        <i class="fa-solid fa-pen"></i> 自己畫
+      <button type="button" class="cl-seg-btn" data-src="text">
+        <i class="fa-solid fa-font"></i><span>打字</span>
+      </button>
+      <!-- 這一顆是「動作」不是「模式」(開一個視窗、做完就回來),
+           所以沒有 data-src,按了不會停在某個狀態。 -->
+      <button type="button" class="cl-seg-btn" id="csUpload">
+        <i class="fa-solid fa-arrow-up-from-bracket"></i><span>上傳圖</span>
       </button>
     </div>
   </div>
 
-  <div class="cs-body">
+  <div class="cl-body">
 
-    <!-- ========== 左欄：預覽 ========== -->
-    <section class="cs-preview-col">
+    <!-- ===== 左:預覽 ===== -->
+    <div class="cl-left">
+      <div class="cl-stage" id="csStage">
+        <img class="cl-base" id="csBase" src="images/case-base.jpg?v=20260920"
+             alt="客製眼鏡盒" draggable="false">
 
-      <div class="cs-stage" id="csStage">
-        <img class="cs-stage-base" src="images/case-base.jpg" alt="眼鏡盒" id="csBase">
-
-        <!-- 雷刻範圍。底圖是【正上方拍的】素面盒,所以這個框是正的矩形,
-             沒有任何角度修正,圖貼上去是 1:1。
-             位置寫在 css/case.css 的 .cs-plate,調整請改那裡 ——
-             那幾個數字是量出來的,換底圖一定要重量一次。 -->
+        <!-- 可雕刻範圍。底圖是【正上方拍的】素面盒,所以這個框是正的
+             矩形,沒有任何角度修正,圖貼上去是 1:1。
+             位置寫在 css/case.css 的 .cs-plate —— 那幾個數字是量出
+             來的,換底圖一定要重量一次。 -->
         <div class="cs-plate" id="csPlate">
-          <!-- 還沒選圖時整個藏起來。放一張預設圖的話客人會以為
-               那就是他的圖,然後送出一個他沒挑過的東西。 -->
-          <div class="cs-art" id="csArt" hidden>
-            <img src="" alt="" id="csArtImg">
+          <!-- 外框與四個節點放在 overlay 【裡面】,這樣它們會跟著一起
+               旋轉,節點永遠落在圖案真正的四個角上。 -->
+          <div class="cl-overlay" id="csOverlay" style="display:none">
+            <span class="cl-node cl-node--nw" data-node="nw"></span>
+            <span class="cl-node cl-node--ne" data-node="ne"></span>
+            <span class="cl-node cl-node--sw" data-node="sw"></span>
+            <span class="cl-node cl-node--se" data-node="se"></span>
+            <span class="cl-rot-arm"></span>
+            <span class="cl-node cl-node--rot" data-node="rot"
+                  title="拖曳可旋轉，按住 Shift 每 15 度一格">
+              <i class="fa-solid fa-rotate-right"></i>
+            </span>
           </div>
-          <div class="cs-plate-hint" id="csPlateHint">可雕刻範圍</div>
+          <div class="cs-plate-hint">可雕刻範圍</div>
         </div>
-        <div class="cs-stage-empty" id="csStageEmpty">先從右邊挑一張刻圖</div>
+        <div class="cs-stage-empty" id="csStageEmpty">先從右邊挑一張圖</div>
+      </div>
+      <p class="cl-hint">
+        <i class="fa-solid fa-hand-pointer"></i>
+        拖曳圖案移動 · 拉四個角縮放 · 上面那個把手可旋轉
+      </p>
+    </div>
+
+    <!-- ===== 右:操作 ===== -->
+    <div class="cl-right">
+
+      <!-- 刻圖市集 -->
+      <div class="cl-card cs-pane on" data-pane="market">
+        <p class="cl-card-title">選一張刻圖<span class="cl-card-tip">完成後往下滑動</span></p>
+        <div class="cl-search">
+          <input type="text" id="csSearch" class="cl-input" placeholder="搜尋刻圖名稱、創作者…">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <div class="cl-designs" id="csDesigns"></div>
+        <button type="button" class="cl-more" id="csMore" style="display:none">展開全部</button>
       </div>
 
-      <div class="cs-stage-note">
-        預覽是示意圖。實際雷刻的深淺與質感會因盒子材質而不同。
+      <!-- 自己畫 -->
+      <div class="cl-card cs-pane" data-pane="draw">
+        <p class="cl-card-title">自己畫一個<span class="cl-card-tip">完成後往下滑動</span></p>
+        <canvas class="cl-canvas" id="csCanvas" width="1000" height="1000"></canvas>
+        <div class="cl-draw-tools">
+          <label class="cl-brush">
+            筆畫粗細
+            <input type="range" id="csBrush" min="2" max="40" value="14">
+          </label>
+          <div class="cs-draw-btns">
+            <button type="button" class="cl-more" id="csUndo">
+              <i class="fa-solid fa-rotate-left"></i> 復原
+            </button>
+            <button type="button" class="cl-more" id="csClear">
+              <i class="fa-regular fa-trash-can"></i> 全部清掉
+            </button>
+          </div>
+        </div>
+        <button type="button" class="cl-apply" id="csDrawApply" disabled>放 到 盒 子 上</button>
       </div>
 
-      <!-- 調整。三個一組橫排,手機上會自己換行。 -->
-      <div class="cs-adjust">
-        <label class="cs-adjust-row">
-          <span>大小</span>
-          <input type="range" id="csScale" min="20" max="100" value="55">
-        </label>
-        <label class="cs-adjust-row">
-          <span>旋轉</span>
-          <input type="range" id="csRot" min="-180" max="180" value="0">
-        </label>
-        <button type="button" class="cs-adjust-reset" id="csReset">
-          <i class="fa-solid fa-rotate-left"></i> 回到置中
-        </button>
+      <!-- 打字 -->
+      <div class="cl-card cs-pane" data-pane="text">
+        <p class="cl-card-title">打一段文字<span class="cl-card-tip">完成後往下滑動</span></p>
+
+        <!-- ⚠ 這張畫布【就是】會被描成線稿的那一張,不是另外做的預覽。
+             所見即所得是刻意的:字型在不同裝置上長得不一樣(楷書、
+             圓體多半靠系統字型),而描邊是在客人自己的瀏覽器上做的
+             —— 他看到什麼,刻出來就是什麼。 -->
+        <canvas class="cl-canvas" id="csTextCanvas" width="1000" height="1000"></canvas>
+
+        <div class="cl-text-tools">
+          <label class="cl-text-row">
+            <span>要刻的字</span>
+            <textarea id="csTextInput" class="cl-input cl-textarea" rows="2"
+                      maxlength="24" placeholder="例：生日快樂"></textarea>
+          </label>
+          <label class="cl-text-row">
+            <span>字型</span>
+            <select id="csTextFont" class="cl-input cl-select">
+              <option value="hei">黑體</option>
+              <option value="kai">楷書</option>
+              <option value="ming">明體</option>
+              <option value="round">圓體</option>
+            </select>
+            <i class="fa-solid fa-chevron-down cl-select-ico"></i>
+          </label>
+        </div>
+        <p class="cl-field-hint">字級不用在這裡調，放上去之後拉四個角就好。</p>
+        <button type="button" class="cl-apply" id="csTextApply" disabled>放 到 盒 子 上</button>
       </div>
-      <p class="cs-adjust-tip">圖案可以直接用滑鼠或手指拖曳。</p>
-
-    </section>
-
-    <!-- ========== 右欄：選項 ========== -->
-    <aside class="cs-opt-col">
 
       <!-- 盒款 -->
-      <div class="cs-card">
-        <p class="cs-card-title">選盒款</p>
+      <div class="cl-card">
+        <p class="cl-card-title">選盒款</p>
         <div class="cs-boxes" id="csBoxes">
           <button type="button" class="cs-box on" data-box="beige">
             <span class="cs-box-img"><img src="images/case-base.jpg" alt="米白絨布盒"></span>
             <span class="cs-box-name">米白絨布盒</span>
           </button>
-          <!-- ⚠ 只有一款是【現況】不是版面沒做完。
-               其他盒款的照片還沒拍,有了就往這裡加一顆。
-               只有一款時仍然畫成可選的樣子,之後加款不必改版型。 -->
+          <!-- ⚠ 只有一款是【現況】不是版面沒做完。其他盒款的照片還沒拍,
+               有了就往這裡加一顆。⚠ 加盒款要【連同可雕刻範圍一起換】——
+               範圍是對著某一張照片量的,換照片不換範圍會整個歪掉。 -->
           <div class="cs-box cs-box--soon">
             <span class="cs-box-img cs-box-img--empty"><i class="fa-regular fa-image"></i></span>
             <span class="cs-box-name">其他盒款準備中</span>
@@ -127,42 +200,51 @@
         </div>
       </div>
 
-      <!-- 圖案來源面板（三選一，由上方的來源切換控制） -->
-      <div class="cs-card">
-        <p class="cs-card-title">圖案</p>
+      <!-- 放在哪裡 -->
+      <div class="cl-card" id="csPlaceCard">
+        <p class="cl-card-title">放在哪裡</p>
+        <label class="cl-range">
+          <span>大小 <b id="csScaleVal">55%</b></span>
+          <input type="range" id="csScale" min="10" max="100" value="55" step="1">
+        </label>
+        <label class="cl-range">
+          <span>左右 <b id="csXVal">50</b></span>
+          <input type="range" id="csX" min="0" max="100" value="50" step="1">
+        </label>
+        <label class="cl-range">
+          <span>上下 <b id="csYVal">50</b></span>
+          <input type="range" id="csY" min="0" max="100" value="50" step="1">
+        </label>
+        <button type="button" class="cl-reset" id="csReset">
+          <i class="fa-solid fa-rotate-left"></i> 回到預設位置
+        </button>
+      </div>
 
-        <div class="cs-pane on" data-pane="market">
-          <div class="cs-search">
-            <input type="text" id="csSearch" class="cs-input" placeholder="搜尋刻圖名稱、創作者…">
-            <i class="fa-solid fa-magnifying-glass"></i>
-          </div>
-          <div class="cs-designs" id="csDesigns">
-            <p class="cs-pane-empty">載入中…</p>
-          </div>
-          <button type="button" class="cs-more" id="csMore" style="display:none">展開全部</button>
-          <p class="cs-pick-err" id="csPickErr" hidden></p>
+      <!-- 取貨門市。
+           🚨 必填。與眼鏡布同一個理由:製作端拿到一張做得出來、卻不知道
+           要送去哪裡的工單,實務上沒有人會去「人工處理」,它就一直躺在
+           那裡(眼鏡布 9/6 那件躺了八天)。
+           ⚠ 標題寫明「客製眼鏡盒」—— 客人腦子裡是刻圖,但這一格的答案
+             會變成門市端的取件通知,兩邊要講同一件事。 -->
+      <div class="cl-card" id="csStoreCard">
+        <p class="cl-card-title">客製眼鏡盒要到哪一家門市拿<span class="cl-req">*</span></p>
+        <div class="cl-select-wrap">
+          <select class="cl-input cl-select" id="csStore">
+            <option value="">載入門市中…</option>
+          </select>
+          <i class="fa-solid fa-chevron-down cl-select-ico"></i>
         </div>
-
-        <div class="cs-pane" data-pane="upload">
-          <p class="cs-pane-empty">
-            <i class="fa-solid fa-arrow-up-from-bracket"></i>
-            上傳與描圖還沒接上。<br>
-            會沿用客製眼鏡布那一套（裁切 → 自動描成線稿）。
-          </p>
-        </div>
-
-        <div class="cs-pane" data-pane="draw">
-          <p class="cs-pane-empty">
-            <i class="fa-solid fa-pen"></i>
-            手繪畫布還沒接上。<br>
-            會沿用客製眼鏡布那一套。
-          </p>
-        </div>
+        <p class="cl-field-hint" id="csStoreHint">
+          眼鏡盒做好之後會送到這家門市，之後想換的話打個電話跟他們說一聲就好。
+        </p>
+        <button type="button" class="cl-retry" id="csStoreRetry" style="display:none">
+          <i class="fa-solid fa-rotate-right"></i> 重新載入門市清單
+        </button>
       </div>
 
       <!-- 雕刻須知 -->
-      <div class="cs-card cs-card--soft">
-        <p class="cs-card-title">雕刻前請留意</p>
+      <div class="cl-card cs-card--soft">
+        <p class="cl-card-title">雕刻前請留意</p>
         <ul class="cs-rules">
           <li>太細的線條雕刻後會斷掉，系統會自動把線加粗到刻得出來的寬度。</li>
           <li>雷刻是<b>單色</b>的，彩色圖會轉成線稿，顏色不會出現在盒子上。</li>
@@ -171,33 +253,68 @@
         </ul>
       </div>
 
+      <div class="cl-note">
+        <i class="fa-solid fa-circle-info"></i>
+        此為示意畫面，實際雷刻的位置與深淺可能有些許誤差，屬於正常狀況。
+      </div>
+
+      <div class="cl-err" id="csErr" style="display:none"></div>
+
       <!-- 價格與送出 -->
-      <div class="cs-card cs-buy">
+      <div class="cl-card cs-buy">
         <div class="cs-price">
           <span class="cs-price-label">售價</span>
           <span class="cs-price-num" id="csPrice">—</span>
         </div>
         <p class="cs-price-note">定價與商城品項尚未設定。</p>
-        <button type="button" class="cs-submit" id="csSubmit" disabled>
-          前往結帳
-        </button>
-        <p class="cs-buy-note">
-          付款在樂活商城完成，做圖與雕刻都在這裡。
-        </p>
+        <button type="button" class="cl-submit" id="csSubmit" disabled>前 往 結 帳</button>
+        <p class="cs-buy-note">付款在樂活商城完成，做圖與雕刻都在這裡。</p>
       </div>
 
-    </aside>
-
+    </div>
   </div>
+
+  <!-- ===== 大家做的眼鏡盒 =====
+       ⚠ 只放【已完成、拿到手】的作品。做到一半的放上去,客人會來問
+         「別人的都好了我的怎麼還沒好」—— 那是製作端的排程,不是客服
+         答得出來的。與眼鏡布分享牆同一條規矩。
+       ⚠ 資料來源還沒有(需要 case-wall 之類的函式),所以整區先 hidden。 -->
+  <section class="cw-sec" id="csWallSec" hidden>
+    <div class="cw-head">
+      <h2 class="cw-title">大家做的眼鏡盒</h2>
+      <p class="cw-sub">這些都是已經完成、拿到手的作品。你的也會出現在這裡。</p>
+    </div>
+    <div class="cw-wall" id="csWall"></div>
+    <div class="cw-foot">
+      <button type="button" class="cw-more" id="csWallMore">看 更 多</button>
+      <p class="cw-end" id="csWallEnd" hidden>已經到底了</p>
+    </div>
+  </section>
 
 </main>
 
 <div id="site-footer"></div>
 
+<script src="js/utils.js"></script>
 <script src="js/layout.js?v=20260905-navcache"></script>
+<script src="js/auth.js?v=20260817-appmember"></script>
 <!-- 刻圖市集的圖是從 engraving_designs 讀的(anon 只有 SELECT) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
-<script src="js/case.js?v=20260920-market"></script>
+<!-- 🚨 描圖。「自己畫」與「打字」都要把畫布描成線稿,沒有它 SVG 會是
+     空字串 —— 設計照樣送得出去,但那張圖【刻不了】,而且畫面上完全
+     看不出異常(2026-09-03 market.html 踩過)。 -->
+<script src="js/potrace-loader.js?v=20260903-native"></script>
+<!-- 上傳刻圖模組(與刻圖市集同一支)。它自己注入 modal、
+     完成時發 lohas:design-upload-success 事件。 -->
+<script src="js/cropper-helper.js?v=20260513-2330"></script>
+<script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
+<script src="js/subcategories.js?v=20260513-2330"></script>
+<script src="js/upload-design.js?v=20260909-designfn"></script>
+<!-- 門市清單(取貨門市下拉用)。api-core 要先於 api-store。 -->
+<script src="js/api/api-core.js?v=20260517-1800"></script>
+<script src="js/api/api-store.js?v=20260517-1800"></script>
+<script src="js/store-data.js?v=20260814-kaoying"></script>
+<script src="js/case.js?v=20260920-shared"></script>
 </body>
 </html>

@@ -1,71 +1,40 @@
 /* =============================================================
-   客製眼鏡盒(case.html)· 版型
+   case.css — 客製眼鏡盒 (case.html)
    -------------------------------------------------------------
-   刻意與 css/cloth.css 是【同一個骨架】:上面一條來源切換、
-   左邊預覽、右邊選項。客人從客製中心在兩頁之間跳的時候,
-   不應該覺得進了另一個網站。
+   命名空間 .cs
+   依賴:lohas-tokens → lohas-base → lohas-components → **cloth.css**
 
-   兩頁真正的差別只有一個:眼鏡布是平的,盒子是【斜的棚拍】,
-   所以圖案要貼在一個有角度的平面上(.cs-plate)。
+   🚨 版面【整個沿用 cloth.css】,這裡只放眼鏡盒才有的東西。
+   -----------------------------------------------------------------
+   兩頁做的是同一件事(把圖放到東西上),電腦版與手機版的行為必須
+   一模一樣。各寫一套的下場是:改了眼鏡布的手機版,眼鏡盒沒跟著改,
+   而兩邊看起來只差一點點,沒有人會發現是哪裡不同。
+
+   所以 <body> 同時掛 cl 與 cs —— cloth.css 的手機版規則是
+   body.cl 開頭的,少了它整個手機版會退回桌機的兩欄。
+
+   ⚠ 想調版面時請先問:這是【兩頁共同】的問題嗎?
+     是的話改 cloth.css(兩邊一起好);
+     只有盒子才有的(可雕刻範圍、盒款、價格)才寫在這裡。
    ============================================================= */
 
-.cs {
-  background: var(--bg-warm);
-}
-
-.cs-main {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 40px 20px 80px;
-}
-
-/* ---------- 標題 ---------- */
-
-.cs-head {
-  text-align: center;
-  margin-bottom: 20px;
-  position: relative;
-}
+/* ---------- 回客製中心 ----------
+   ⚠ APP 裡沒有網站的導覽列,這顆是唯一的回頭路,不能跟著隱藏。 */
 
 .cs-back {
-  position: absolute;
-  left: 0;
-  top: 6px;
-  font-size: 13.5px;
-  color: var(--text-sub);
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 13.5px;
+  color: var(--text-sub);
+  text-decoration: none;
+  margin-bottom: 10px;
 }
 
 .cs-back:hover { color: var(--lohas-brand); }
-
 .cs-back i { font-size: 11px; }
 
-.cs-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0 0 12px;
-  letter-spacing: 0.04em;
-}
-
-.cs-title-line {
-  width: 44px;
-  height: 2px;
-  background: var(--lohas-light);
-  margin: 0 auto;
-}
-
-/* 手機上返回鍵不要疊在標題上 */
-@media (max-width: 560px) {
-  .cs-head { text-align: left; }
-  .cs-back { position: static; display: inline-flex; margin-bottom: 10px; }
-  .cs-title-line { margin: 0; }
-}
-
-/* ---------- 草稿提示（接上之後整段刪掉）---------- */
+/* ---------- 施工中提示(接完結帳就整段刪掉)---------- */
 
 .cs-draft {
   background: var(--warn-bg);
@@ -74,118 +43,36 @@
   padding: 12px 16px;
   font-size: 13.5px;
   line-height: 1.7;
-  margin-bottom: 22px;
+  margin: 0 0 16px;
   display: flex;
   gap: 10px;
   align-items: flex-start;
 }
 
-/* ---------- 來源切換 ---------- */
-
-.cs-sourcebar {
-  background: #fff;
-  border: 1px solid var(--lohas-bd);
-  border-radius: var(--r-lg);
-  padding: 16px 18px;
-  margin-bottom: 22px;
-}
-
-.cs-bar-title {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 0 0 10px;
-  letter-spacing: 0.04em;
-}
-
-.cs-seg {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.cs-seg-btn {
-  appearance: none;
-  border: 1px solid var(--lohas-bd);
-  background: var(--bg-warm);
-  color: var(--text-sub);
-  border-radius: var(--r-md);
-  /* ⚠ 16px —— iOS 在 focus 字級 <16px 的控制項時會放大整頁而且不縮回去。
-     不要改用 maximum-scale=1 解,那會讓所有人都不能自己放大。 */
-  font-size: 14px;
-  padding: 11px 8px;
-  cursor: pointer;
-  transition: background .2s, color .2s, border-color .2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-}
-
-.cs-seg-btn i { font-size: 13px; }
-
-.cs-seg-btn:hover { border-color: var(--lohas-light); }
-
-.cs-seg-btn.on {
-  background: var(--lohas-brand);
-  border-color: var(--lohas-brand);
-  color: #fff;
-}
-
-/* ---------- 兩欄 ---------- */
-
-.cs-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-}
-
-@media (max-width: 900px) {
-  .cs-body { grid-template-columns: 1fr; }
-}
-
-/* ---------- 預覽 ---------- */
-
-.cs-stage {
-  position: relative;
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  background: var(--bg-soft);
-  /* 底圖是 1:1 的棚拍,框也用 1:1 —— 不同比例會把盒子裁掉一塊。 */
-  aspect-ratio: 1 / 1;
-  user-select: none;
-  touch-action: none;   /* 拖曳時不要跟著捲動頁面 */
-}
-
-.cs-stage-base {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  pointer-events: none;
-}
-
-/* === 可雕刻範圍 ===
+/* =============================================================
+   可雕刻範圍
+   -------------------------------------------------------------
    ⚠ 這幾個數字不是調到好看為止,是【量出來的】。換底圖要重新量。
 
-   底圖 images/case-base.jpg 是【正上方拍的素面盒】,所以這一段
-   沒有任何 rotate / skew —— 盒面就是一個正的矩形,
-   圖貼上去是 1:1,拖曳的座標換算也是精確的不是近似的。
+   底圖 images/case-base.jpg 是【正上方拍的】素面盒,所以這一段
+   沒有任何 rotate / skew —— 盒面就是一個正的矩形,圖貼上去是 1:1,
+   拖曳的座標換算也是精確的不是近似的。
 
-   (2026-09-20 之前用的是斜 45 度的 carrier-box.jpg,
-    當時要用 rotate(-1.3deg) skewX(-8deg) 去近似那個平面,
-    而且拖到邊緣會有幾個像素的偏差。換成正拍之後那些全部不必要了。)
+   (2026-09-20 之前用的是斜 45 度的 carrier-box.jpg,當時要用
+    rotate(-1.3deg) skewX(-8deg) 去近似那個平面,而且拖到邊緣會有
+    幾個像素的偏差。換成正拍之後那些全部不必要了。)
 
-   量法:掃描亮度找盒面的四個邊。盒面 186~216、背景 >218、
-   投影 <185,用這個區間把【左側的投影】排除掉 ——
-   只用「比背景暗」當條件的話,左邊那片陰影會被算成盒子,
-   框就會整個往左偏。量到的盒面:
+   量法:掃描亮度找盒面的四個邊。盒面 186~216、背景 >218、投影 <185,
+   用這個區間把【左側的投影】排除掉 —— 只用「比背景暗」當條件的話,
+   左邊那片陰影會被算成盒子,框會整個往左偏。量到的盒面:
 
        x  14.1% ~ 86.2%     y  30.5% ~ 63.1%
        中心 50.2% / 46.8%   寬 72.1%   高 32.6%
 
-   雕刻範圍取盒面寬的 64%、高的 55%,置中 —— 四周留邊是因為
-   盒蓋是圓角而且邊緣會向下收,太靠邊的圖雷射打不到。 */
+   雕刻範圍取盒面寬的 64%、高的 55%,置中 —— 四周留邊是因為盒蓋是
+   圓角而且邊緣會向下收,太靠邊的圖雷射打不到。
+   ============================================================= */
+
 .cs-plate {
   position: absolute;
   left: 27.1%;
@@ -194,15 +81,14 @@
   height: 17.9%;
   border: 1px dashed rgba(80, 66, 45, 0.35);
   border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* 拖曳事件掛在這一層(座標基準就是它),所以不能設 pointer-events:none */
+  touch-action: none;
 }
 
 .cs-plate-hint {
   position: absolute;
   left: 50%;
-  bottom: -26px;
+  bottom: -24px;
   transform: translateX(-50%);
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -214,112 +100,23 @@
   pointer-events: none;
 }
 
-/* 圖案本身。定位交給 JS(拖曳/縮放/旋轉),
-   這裡只給它一個起點與過場。 */
-.cs-art {
+.cs-stage-empty {
   position: absolute;
   left: 50%;
-  top: 50%;
-  width: 55%;
-  transform: translate(-50%, -50%);
-  cursor: grab;
-}
-
-.cs-art:active { cursor: grabbing; }
-
-.cs-art img {
-  width: 100%;
-  height: auto;
-  display: block;
-  /* 雷刻是單色的,預覽就不要給彩色的錯覺。
-     opacity 讓它看起來像刻進材質裡,不是貼一張貼紙。 */
-  filter: grayscale(1) contrast(1.15);
-  opacity: 0.72;
+  bottom: 14px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-sub);
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
   pointer-events: none;
 }
 
-.cs-stage-note {
-  font-size: 12.5px;
-  color: var(--text-muted);
-  margin: 12px 2px 0;
-  line-height: 1.7;
-}
-
-/* ---------- 調整 ---------- */
-
-.cs-adjust {
-  margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px 22px;
-  align-items: center;
-}
-
-.cs-adjust-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1 1 200px;
-}
-
-.cs-adjust-row span {
-  font-size: 13px;
-  color: var(--text-sub);
-  white-space: nowrap;
-}
-
-.cs-adjust-row input[type="range"] {
-  flex: 1;
-  accent-color: var(--lohas-brand);
-}
-
-.cs-adjust-reset {
-  appearance: none;
-  border: 1px solid var(--lohas-bd);
-  background: #fff;
-  color: var(--text-sub);
-  border-radius: var(--r-pill);
-  font-size: 13px;
-  padding: 8px 14px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.cs-adjust-reset:hover { border-color: var(--lohas-light); color: var(--lohas-brand); }
-
-.cs-adjust-tip {
-  font-size: 12.5px;
-  color: var(--text-muted);
-  margin: 10px 2px 0;
-}
-
-/* ---------- 右欄卡片 ---------- */
-
-.cs-card {
-  background: #fff;
-  border: 1px solid var(--lohas-bd);
-  border-radius: var(--r-lg);
-  padding: 20px;
-  margin-bottom: 16px;
-}
-
-.cs-card--soft {
-  background: var(--bg-soft);
-  border-color: transparent;
-}
-
-.cs-card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0 0 14px;
-  letter-spacing: 0.04em;
-}
-
-/* ---------- 盒款 ---------- */
+/* =============================================================
+   盒款
+   ============================================================= */
 
 .cs-boxes {
   display: grid;
@@ -339,7 +136,6 @@
 }
 
 .cs-box:hover { border-color: var(--lohas-light); }
-
 .cs-box.on { border-color: var(--lohas-brand); }
 
 .cs-box-img {
@@ -361,155 +157,23 @@
   font-size: 22px;
 }
 
-.cs-box-name {
-  display: block;
-  font-size: 12.5px;
-  color: var(--text-sub);
-}
+.cs-box-name { display: block; font-size: 12.5px; color: var(--text-sub); }
 
 .cs-box--soon { cursor: default; border-style: dashed; }
 .cs-box--soon:hover { border-color: var(--lohas-bd); }
 
-/* ---------- 圖案來源面板 ---------- */
+/* ---------- 自己畫的兩顆工具鈕並排 ---------- */
 
-.cs-pane { display: none; }
-.cs-pane.on { display: block; }
+.cs-draw-btns { display: flex; gap: 8px; }
+.cs-draw-btns .cl-more { margin: 0; }
 
-.cs-pane-empty {
-  margin: 0;
-  padding: 26px 16px;
-  text-align: center;
-  font-size: 13px;
-  line-height: 1.9;
-  color: var(--text-muted);
-  background: var(--bg-soft);
-  border-radius: var(--r-md);
-}
+/* =============================================================
+   雕刻須知
+   ============================================================= */
 
-.cs-pane-empty i {
-  display: block;
-  font-size: 20px;
-  color: var(--text-light);
-  margin-bottom: 10px;
-}
+.cs-card--soft { background: var(--bg-soft); border-color: transparent; }
 
-/* ---------- 刻圖市集 ---------- */
-
-.cs-search {
-  position: relative;
-  margin-bottom: 12px;
-}
-
-.cs-input {
-  width: 100%;
-  border: 1px solid var(--lohas-bd);
-  border-radius: var(--r-md);
-  background: var(--bg-warm);
-  padding: 11px 38px 11px 13px;
-  /* ⚠ 16px —— iOS 在 focus 字級 <16px 的輸入框時會放大整頁而且不縮回去。
-     不要改用 maximum-scale=1 解,那會讓所有人都不能自己放大。 */
-  font-size: 16px;
-  color: var(--text-main);
-}
-
-.cs-input:focus {
-  outline: none;
-  border-color: var(--lohas-light);
-}
-
-.cs-search i {
-  position: absolute;
-  right: 13px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-light);
-  font-size: 13px;
-  pointer-events: none;
-}
-
-.cs-designs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-@media (max-width: 400px) {
-  .cs-designs { grid-template-columns: repeat(3, 1fr); }
-}
-
-/* 空狀態與「載入中」是塞在 grid 裡的一個 <p>,要橫跨整排,
-   不然它會縮成第一欄那麼窄。 */
-.cs-designs .cs-pane-empty { grid-column: 1 / -1; }
-
-.cs-design {
-  appearance: none;
-  border: 2px solid transparent;
-  background: var(--bg-soft);
-  border-radius: var(--r-sm);
-  padding: 0;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
-  cursor: pointer;
-  transition: border-color .15s;
-}
-
-.cs-design:hover { border-color: var(--lohas-light); }
-.cs-design.on { border-color: var(--lohas-brand); }
-
-.cs-design img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-.cs-more {
-  appearance: none;
-  width: 100%;
-  margin-top: 10px;
-  border: 1px solid var(--lohas-bd);
-  background: #fff;
-  color: var(--text-sub);
-  border-radius: var(--r-pill);
-  font-size: 13px;
-  padding: 9px;
-  cursor: pointer;
-}
-
-.cs-more:hover { border-color: var(--lohas-light); color: var(--lohas-brand); }
-
-.cs-pick-err {
-  margin: 10px 0 0;
-  background: var(--err-bg);
-  color: var(--err);
-  border-radius: var(--r-sm);
-  padding: 9px 12px;
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-/* ---------- 還沒選圖時的預覽 ---------- */
-
-.cs-stage-empty {
-  position: absolute;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--text-sub);
-  font-size: 13px;
-  padding: 8px 16px;
-  border-radius: var(--r-pill);
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-/* ---------- 雕刻須知 ---------- */
-
-.cs-rules {
-  margin: 0;
-  padding-left: 18px;
-}
+.cs-rules { margin: 0; padding-left: 18px; }
 
 .cs-rules li {
   font-size: 13px;
@@ -519,16 +183,11 @@
 }
 
 .cs-rules li:last-child { margin-bottom: 0; }
-
 .cs-rules b { color: var(--text-main); font-weight: 500; }
 
-/* ---------- 價格與送出 ---------- */
-
-.cs-buy { position: sticky; top: 92px; }
-
-@media (max-width: 900px) {
-  .cs-buy { position: static; }
-}
+/* =============================================================
+   價格與送出
+   ============================================================= */
 
 .cs-price {
   display: flex;
@@ -545,33 +204,7 @@
   color: var(--text-main);
 }
 
-.cs-price-note {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin: 0 0 16px;
-}
-
-.cs-submit {
-  appearance: none;
-  width: 100%;
-  border: none;
-  border-radius: var(--r-pill);
-  background: var(--lohas-brand);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 14px;
-  cursor: pointer;
-  transition: background .2s;
-}
-
-.cs-submit:hover:not(:disabled) { background: var(--lohas-hover); }
-
-.cs-submit:disabled {
-  background: var(--lohas-bd);
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
+.cs-price-note { font-size: 12px; color: var(--text-muted); margin: 0 0 16px; }
 
 .cs-buy-note {
   font-size: 12px;
@@ -580,12 +213,3 @@
   margin: 12px 0 0;
   text-align: center;
 }
-
-/* =============================================================
-   APP WebView 模式 · 這一頁專屬
-   ============================================================= */
-
-.in-app .cs-main { padding-top: 20px; padding-bottom: 40px; }
-
-/* APP 裡沒有網站的導覽列,「回客製中心」那顆是唯一的回頭路,
-   所以【不能】跟著隱藏。 */
