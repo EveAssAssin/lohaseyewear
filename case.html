@@ -36,10 +36,10 @@
     <div class="cs-title-line"></div>
   </div>
 
-  <!-- ⚠ 版面尚未接上任何資料來源與金流。這一版只驗版型。 -->
+  <!-- ⚠ 上傳、手繪與結帳還沒接上。接完之後這一段整個刪掉。 -->
   <div class="cs-draft">
     <i class="fa-solid fa-triangle-exclamation"></i>
-    版型草稿：圖案來源、雷刻範圍與結帳都還沒接上，按鈕按了不會送出任何東西。
+    施工中：刻圖市集可以選了，上傳、手繪與結帳還沒接上。
   </div>
 
   <!-- ===== 來源切換 =====
@@ -74,11 +74,14 @@
              位置寫在 css/case.css 的 .cs-plate,調整請改那裡 ——
              那幾個數字是量出來的,換底圖一定要重量一次。 -->
         <div class="cs-plate" id="csPlate">
-          <div class="cs-art" id="csArt">
-            <img src="images/lohas-logo.svg" alt="" id="csArtImg">
+          <!-- 還沒選圖時整個藏起來。放一張預設圖的話客人會以為
+               那就是他的圖,然後送出一個他沒挑過的東西。 -->
+          <div class="cs-art" id="csArt" hidden>
+            <img src="" alt="" id="csArtImg">
           </div>
           <div class="cs-plate-hint" id="csPlateHint">可雕刻範圍</div>
         </div>
+        <div class="cs-stage-empty" id="csStageEmpty">先從右邊挑一張刻圖</div>
       </div>
 
       <div class="cs-stage-note">
@@ -129,11 +132,15 @@
         <p class="cs-card-title">圖案</p>
 
         <div class="cs-pane on" data-pane="market">
-          <p class="cs-pane-empty">
-            <i class="fa-solid fa-store"></i>
-            刻圖市集的選圖還沒接上。<br>
-            接上之後這裡會是市集的圖庫與搜尋。
-          </p>
+          <div class="cs-search">
+            <input type="text" id="csSearch" class="cs-input" placeholder="搜尋刻圖名稱、創作者…">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <div class="cs-designs" id="csDesigns">
+            <p class="cs-pane-empty">載入中…</p>
+          </div>
+          <button type="button" class="cs-more" id="csMore" style="display:none">展開全部</button>
+          <p class="cs-pick-err" id="csPickErr" hidden></p>
         </div>
 
         <div class="cs-pane" data-pane="upload">
@@ -188,6 +195,9 @@
 <div id="site-footer"></div>
 
 <script src="js/layout.js?v=20260905-navcache"></script>
-<script src="js/case.js?v=20260920-layout"></script>
+<!-- 刻圖市集的圖是從 engraving_designs 讀的(anon 只有 SELECT) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/case.js?v=20260920-market"></script>
 </body>
 </html>

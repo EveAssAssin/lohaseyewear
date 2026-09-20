@@ -393,6 +393,117 @@
   margin-bottom: 10px;
 }
 
+/* ---------- 刻圖市集 ---------- */
+
+.cs-search {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.cs-input {
+  width: 100%;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-md);
+  background: var(--bg-warm);
+  padding: 11px 38px 11px 13px;
+  /* ⚠ 16px —— iOS 在 focus 字級 <16px 的輸入框時會放大整頁而且不縮回去。
+     不要改用 maximum-scale=1 解,那會讓所有人都不能自己放大。 */
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+.cs-input:focus {
+  outline: none;
+  border-color: var(--lohas-light);
+}
+
+.cs-search i {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.cs-designs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 400px) {
+  .cs-designs { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* 空狀態與「載入中」是塞在 grid 裡的一個 <p>,要橫跨整排,
+   不然它會縮成第一欄那麼窄。 */
+.cs-designs .cs-pane-empty { grid-column: 1 / -1; }
+
+.cs-design {
+  appearance: none;
+  border: 2px solid transparent;
+  background: var(--bg-soft);
+  border-radius: var(--r-sm);
+  padding: 0;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+
+.cs-design:hover { border-color: var(--lohas-light); }
+.cs-design.on { border-color: var(--lohas-brand); }
+
+.cs-design img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.cs-more {
+  appearance: none;
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid var(--lohas-bd);
+  background: #fff;
+  color: var(--text-sub);
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  padding: 9px;
+  cursor: pointer;
+}
+
+.cs-more:hover { border-color: var(--lohas-light); color: var(--lohas-brand); }
+
+.cs-pick-err {
+  margin: 10px 0 0;
+  background: var(--err-bg);
+  color: var(--err);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* ---------- 還沒選圖時的預覽 ---------- */
+
+.cs-stage-empty {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-sub);
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* ---------- 雕刻須知 ---------- */
 
 .cs-rules {
