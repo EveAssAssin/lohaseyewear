@@ -120,7 +120,7 @@
     <div class="cl-right">
 
       <!-- 刻圖市集 -->
-      <div class="cl-card cs-pane on" data-pane="market">
+      <div class="cl-card" id="csMarketCard">
         <p class="cl-card-title">選一張刻圖<span class="cl-card-tip">完成後往下滑動</span></p>
         <div class="cl-search">
           <input type="text" id="csSearch" class="cl-input" placeholder="搜尋刻圖名稱、創作者…">
@@ -131,7 +131,7 @@
       </div>
 
       <!-- 自己畫 -->
-      <div class="cl-card cs-pane" data-pane="draw">
+      <div class="cl-card" id="csDrawCard" style="display:none">
         <p class="cl-card-title">自己畫一個<span class="cl-card-tip">完成後往下滑動</span></p>
         <canvas class="cl-canvas" id="csCanvas" width="1000" height="1000"></canvas>
         <div class="cl-draw-tools">
@@ -152,7 +152,7 @@
       </div>
 
       <!-- 打字 -->
-      <div class="cl-card cs-pane" data-pane="text">
+      <div class="cl-card" id="csTextCard" style="display:none">
         <p class="cl-card-title">打一段文字<span class="cl-card-tip">完成後往下滑動</span></p>
 
         <!-- ⚠ 這張畫布【就是】會被描成線稿的那一張,不是另外做的預覽。
@@ -315,6 +315,6 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/case.js?v=20260920-stores"></script>
+<script src="js/case.js?v=20260920-panes"></script>
 </body>
 </html>

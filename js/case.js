@@ -122,7 +122,7 @@
   }
 
   function applyOverlay() {
-    syncPanes();
+    syncChrome();
 
     /* 滑桿與數字先同步,而且要在下面那個 return 之前 ——
        清空時 State 已經回預設,若跟著 return 掉,畫面上會留著
@@ -733,10 +733,23 @@
      來源切換
      ============================================================= */
 
-  function syncPanes() {
-    document.querySelectorAll('[data-pane]').forEach(function (p) {
-      p.classList.toggle('on', p.dataset.pane === State.src);
-    });
+  /* 一次只顯示一張來源卡片。
+     ⚠ 用 inline 的 display 切換(與 cloth.js 一樣),不要用 class +
+       CSS 的 display:none —— 這一頁的卡片是 .cl-card,而 cloth.css
+       對 .cl-card 沒有 display 規則;靠 class 切的話,哪天有人在
+       cloth.css 給 .cl-card 加一條 display,兩頁會同時壞掉而且
+       只有眼鏡盒看得出來。
+
+     ⚠ 預設隱藏寫在 HTML 的 inline style,不是寫在 CSS ——
+       show() 是把 inline display 清成 '',若預設藏在 CSS 裡,
+       清掉之後又會退回 none,卡片永遠打不開。
+       (cloth.css 的 .cl-overlay 上面就有同一段警語。) */
+  function syncChrome() {
+    hide(el.marketCard); hide(el.drawCard); hide(el.textCard);
+    if (State.src === 'market') show(el.marketCard);
+    else if (State.src === 'draw') show(el.drawCard);
+    else if (State.src === 'text') show(el.textCard);
+
     document.querySelectorAll('[data-src]').forEach(function (b) {
       b.classList.toggle('on', b.dataset.src === State.src);
     });
@@ -752,7 +765,7 @@
     /* 換來源就清掉目前的圖 —— 留著的話畫面上是 A 的圖、
        右邊是 B 的工具,客人按了「放到盒子上」才發現換掉了。 */
     clearPick();
-    syncPanes();
+    syncChrome();
   }
 
   function bindSource() {
@@ -813,6 +826,8 @@
       scale: $('csScale'), x: $('csX'), y: $('csY'),
       scaleVal: $('csScaleVal'), xVal: $('csXVal'), yVal: $('csYVal'),
       reset: $('csReset'),
+      marketCard: $('csMarketCard'), drawCard: $('csDrawCard'),
+      textCard: $('csTextCard'),
       designs: $('csDesigns'), more: $('csMore'), search: $('csSearch'),
       err: $('csErr'),
       canvas: $('csCanvas'), brush: $('csBrush'), undo: $('csUndo'),
