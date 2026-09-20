@@ -1,0 +1,245 @@
+/* =============================================================
+   客製中心(custom.html)
+   -------------------------------------------------------------
+   這一頁同時是【官網的一頁】與【APP 裡的一個分頁】,
+   所以版面要兩邊都成立:
+     · 網頁:上面有導覽列,寬螢幕兩欄
+     · APP :沒有導覽列,整頁就是內容,單欄由上往下讀
+
+   in-app 的差異一律寫在這個檔案最下面那一段,不要散在各處 ——
+   散開之後就沒有人知道 APP 版到底少了什麼。
+   ============================================================= */
+
+.cc {
+  background: var(--bg-warm);
+}
+
+.cc-main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 20px 80px;
+}
+
+/* ---------- 標題 ---------- */
+
+.cc-head {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.cc-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+.cc-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 14px;
+  letter-spacing: 0.04em;
+}
+
+.cc-title-line {
+  width: 48px;
+  height: 2px;
+  background: var(--lohas-light);
+  margin: 0 auto 18px;
+}
+
+.cc-lead {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--text-sub);
+  margin: 0 auto;
+  max-width: 34em;
+}
+
+/* ---------- 卡片 ---------- */
+
+.cc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+@media (max-width: 760px) {
+  .cc-grid { grid-template-columns: 1fr; }
+}
+
+.cc-card {
+  display: block;
+  background: #fff;
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--sh-soft);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.cc-card:hover,
+.cc-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: var(--sh-card);
+}
+
+/* 圖片框用 aspect-ratio 固定比例。
+   ⚠ 不要只給高度 —— 兩張卡的圖比例若不同,標題會對不齊,
+     而那在手機上看不出來(單欄),只有桌機會歪。 */
+.cc-card-img {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.cc-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cc-card-body {
+  padding: 22px 22px 26px;
+}
+
+.cc-card-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cc-card-desc {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--text-sub);
+  margin: 0 0 16px;
+}
+
+.cc-card-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 18px;
+  padding-left: 18px;
+  position: relative;
+}
+
+.cc-card-meta::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lohas-light);
+}
+
+.cc-card-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--lohas-brand);
+}
+
+.cc-card-go i { font-size: 12px; }
+
+/* ---------- 標籤 ---------- */
+
+.cc-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+}
+
+.cc-tag--live { background: var(--ok-bg); color: var(--ok); }
+.cc-tag--soon { background: var(--warn-bg); color: var(--warn); }
+
+/* ---------- 尚未開放的卡 ----------
+   ⚠ 用 <div> 不是 <a> —— 停用的連結按下去沒反應,
+     客人會以為頁面壞了,然後再按好幾次。
+     沒有連結就沒有東西可以按,那是【看得懂的】沒有反應。 */
+.cc-card--soon {
+  cursor: default;
+  box-shadow: none;
+}
+
+.cc-card--soon:hover { transform: none; box-shadow: none; }
+
+.cc-card--soon .cc-card-img img { filter: grayscale(1); opacity: .55; }
+
+/* ---------- 底下的說明 ---------- */
+
+.cc-note {
+  margin-top: 40px;
+  background: var(--bg-soft);
+  border-radius: var(--r-lg);
+  padding: 26px 24px;
+}
+
+.cc-note-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 14px;
+}
+
+.cc-note-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .cc-note-list { grid-template-columns: 1fr; gap: 12px; }
+}
+
+.cc-note-list li {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--text-sub);
+}
+
+.cc-note-list b {
+  display: block;
+  color: var(--text-main);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+/* =============================================================
+   APP WebView 模式(html.in-app)· 這一頁專屬的調整
+   -------------------------------------------------------------
+   收掉導覽列/頁尾那幾條是【全站共用】的,在 css/app-mode.css。
+   這裡只放客製中心自己的差異,不要散到上面去。
+   ============================================================= */
+
+/* APP 有自己的標題列,頁面不必再留那麼多上方空白。 */
+.in-app .cc-main {
+  padding-top: 24px;
+  padding-bottom: 40px;
+}
+
+/* APP 裡這一頁【就是】那個分頁,不需要再自我介紹一次。
+   標題留著但縮小,說明段落拿掉 —— WebView 的可視高度比網頁短,
+   第一屏要讓人看到卡片,不是看到一段文案。 */
+.in-app .cc-head { margin-bottom: 26px; }
+.in-app .cc-title { font-size: 26px; }
+.in-app .cc-lead { display: none; }

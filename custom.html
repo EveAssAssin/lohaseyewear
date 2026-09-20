@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客製中心 · LOHAS 樂活眼鏡</title>
+  <meta name="description" content="把喜歡的圖，帶到每天戴的東西上。客製眼鏡布、客製眼鏡盒，都從一張圖開始。">
+  <link rel="canonical" href="https://www.lohasglasses.com/custom.html">
+
+  <!-- ⚠ app-mode 必須在最前面而且【不要 defer】：
+       class 要在頁面畫出來之前掛上去，否則 APP 裡導覽列會先閃一下才消失。 -->
+  <script src="js/app-mode.js?v=20260920-init"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- LOHAS CSS · 載入順序: tokens → base → components → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/app-mode.css?v=20260920-init">
+  <link rel="stylesheet" href="css/custom.css?v=20260920-init">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+</head>
+
+<body class="cc">
+<div id="site-header"></div>
+
+<main class="cc-main">
+
+  <div class="cc-head">
+    <p class="cc-eyebrow">CUSTOM CENTER</p>
+    <h1 class="cc-title">客製中心</h1>
+    <div class="cc-title-line"></div>
+    <p class="cc-lead">
+      挑一張刻圖、上傳一張圖，或自己畫一個。<br>
+      同一張圖，可以變成每天擦鏡片的那一條布，也可以變成裝眼鏡的那一個盒。
+    </p>
+  </div>
+
+  <div class="cc-grid">
+
+    <!-- ===== 客製眼鏡布(已上線)===== -->
+    <a class="cc-card" href="cloth.html">
+      <div class="cc-card-img">
+        <img src="images/cloth-01.jpg" alt="客製眼鏡布" loading="lazy">
+      </div>
+      <div class="cc-card-body">
+        <h2 class="cc-card-name">
+          客製眼鏡布
+          <span class="cc-tag cc-tag--live">開放中</span>
+        </h2>
+        <p class="cc-card-desc">
+          自己挑圖、自己畫，或上傳喜歡的圖片，印成只有你有的那一條。
+          做好之後送到你選的那一家門市。
+        </p>
+        <p class="cc-card-meta">生日當月壽星免費，每人每年一條</p>
+        <span class="cc-card-go">開始做我的眼鏡布 <i class="fa-solid fa-arrow-right"></i></span>
+      </div>
+    </a>
+
+    <!-- ===== 客製眼鏡盒(尚未開放)=====
+         ⚠ 刻意【不是】<a>。停用的連結按下去沒反應，客人會以為
+           頁面壞了然後再按好幾次；沒有連結就是看得懂的沒有反應。
+         開放時要做的事：換成 <a href="case.html">、拿掉 --soon、
+         把標籤換成 cc-tag--live。 -->
+    <div class="cc-card cc-card--soon">
+      <div class="cc-card-img">
+        <img src="images/box-01.jpg" alt="客製眼鏡盒" loading="lazy">
+      </div>
+      <div class="cc-card-body">
+        <h2 class="cc-card-name">
+          客製眼鏡盒
+          <span class="cc-tag cc-tag--soon">即將推出</span>
+        </h2>
+        <p class="cc-card-desc">
+          把圖雷刻在眼鏡盒上。各種材質都刻得了，送禮或自用，
+          打開的那一刻就知道是為誰準備的。
+        </p>
+        <p class="cc-card-meta">準備中，開放後會在這裡公告</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="cc-note">
+    <p class="cc-note-title">圖從哪裡來</p>
+    <ul class="cc-note-list">
+      <li><b>刻圖市集</b>創作者上架的圖，挑一張直接用。</li>
+      <li><b>上傳自己的圖</b>照片、手繪稿都可以，系統會自動描成線稿。</li>
+      <li><b>直接畫一個</b>在畫布上畫幾筆，也是一張圖。</li>
+    </ul>
+  </div>
+
+</main>
+
+<div id="site-footer"></div>
+
+<script src="js/layout.js?v=20260905-navcache"></script>
+</body>
+</html>

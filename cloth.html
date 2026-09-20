@@ -7,6 +7,11 @@
   <title>客製眼鏡布 · LOHAS 樂活眼鏡</title>
   <meta name="description" content="挑一張刻圖,或自己畫幾筆,做一條只有你有的眼鏡布。">
 
+  <!-- APP WebView 模式。客製中心(custom.html)在 APP 裡會連到這一頁,
+       沒有這兩行的話從 APP 點進來會突然冒出網站的導覽列與頁尾。
+       ⚠ 不要加 defer —— class 要在頁面畫出來之前掛上去。 -->
+  <script src="js/app-mode.js?v=20260920-init"></script>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <!-- 上傳刻圖用的裁切工具(與刻圖市集同一組) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
@@ -17,6 +22,7 @@
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/app-mode.css?v=20260920-init">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
   <link rel="stylesheet" href="css/cloth.css?v=20260907-fallback">
 

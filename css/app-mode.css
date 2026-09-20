@@ -1,0 +1,36 @@
+/* =============================================================
+   APP WebView 模式 · 全站共用的那幾條
+   -------------------------------------------------------------
+   由 js/app-mode.js 在 <html> 掛上 .in-app 之後生效。
+
+   這裡【只放每一頁都一樣的東西】：把網站自己的外框收掉。
+   各頁自己的調整(標題縮小、拿掉某一段文案)寫在該頁的 css，
+   不要往這裡塞 —— 這個檔案一旦開始長頁面專屬的規則，
+   就會變成「改 A 頁害 B 頁跑版」的那種檔案。
+
+   ⚠ 每一頁要用的話，三樣東西都要有：
+       <script src="js/app-mode.js">（head，不要 defer）
+       <link href="css/app-mode.css">
+       頁面本身要有 #site-header / #site-footer 才有東西可以收
+   ============================================================= */
+
+/* 網站的導覽列與頁尾：APP 底下已經有一條原生導覽列，
+   再疊一層會變成兩排導覽，而且「上一頁」會有兩顆按鈕。 */
+.in-app #site-header,
+.in-app #site-footer {
+  display: none !important;
+}
+
+/* Cookie 橫幅：同意與否是 APP 那一側處理的，
+   在 WebView 裡再問一次等於同一件事問兩遍。 */
+.in-app .cookie-banner {
+  display: none !important;
+}
+
+/* iPhone 的 home indicator 與 APP 的原生導覽列都會蓋住頁面底部。
+   ⚠ 用 env() 而不是寫死一個數字 —— 沒有瀏海的機型不需要那段空白，
+     寫死的話那些人會看到一塊莫名其妙的留白。
+     第二個參數 0px 是給不認得 env() 的舊 WebView 的退路。 */
+.in-app body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
