@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="css/app-mode.css?v=20260920-init">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
   <link rel="stylesheet" href="css/cloth.css?v=20260907-fallback">
-  <link rel="stylesheet" href="css/case.css?v=20260920-grid">
+  <link rel="stylesheet" href="css/case.css?v=20260920-pill">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -108,7 +108,9 @@
           </div>
           <div class="cs-plate-hint">可雕刻範圍</div>
         </div>
-        <div class="cs-stage-empty" id="csStageEmpty">先從右邊挑一張圖</div>
+        <!-- ⚠ 不要寫「右邊」「下面」這種方位。桌機是右欄，手機是
+             來源列在左、卡片在下 —— 同一句話一定有一邊是錯的。 -->
+        <div class="cs-stage-empty" id="csStageEmpty">先挑一張圖</div>
       </div>
       <p class="cl-hint">
         <i class="fa-solid fa-hand-pointer"></i>

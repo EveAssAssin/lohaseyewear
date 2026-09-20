@@ -31,7 +31,7 @@ const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-14 · 隨機排序 + 後台隱藏';
+const CODE_VERSION = '2026-09-20 · 分品項(cloth / case)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -81,13 +81,26 @@ function publicItem(r: Record<string, any>) {
    Edge Function 重啟就沒了,剛好不必處理失效。 */
 const CACHE_TTL_MS = 3 * 60 * 1000;
 
-/* 全部已完成的作品,共用一份快取。
+/* 全部已完成的作品。
    隨機排序之後不能再用「limit:offset」當快取鍵 ——
    同一頁在不同種子下內容不同,那個鍵會把別人的順序餵給你。
-   改成快取【原始資料】,排序每次現算(幾百筆的洗牌是微秒等級)。 */
+   改成快取【原始資料】,排序每次現算(幾百筆的洗牌是微秒等級)。
+
+   🚨 2026-09-20 快取改成【每個品項一份】。
+   -----------------------------------------------------------------
+   原本是一個全域變數。多了眼鏡盒之後,只要眼鏡布先把它填滿,
+   下一個要眼鏡盒的請求就會直接拿到【一牆的眼鏡布】——
+   回應是 200、資料格式完全正確、三分鐘後又自己好了,
+   是那種永遠重現不出來的狀況。快取鍵一定要含品項。 */
 const MAX_WALL = 500;
 type Row = Record<string, any>;
-let allCache: { at: number; rows: Row[] } | null = null;
+const allCache = new Map<string, { at: number; rows: Row[] }>();
+
+/* 只認得這兩個。不在名單裡就當眼鏡布 ——
+   ⚠ 不要把前端傳的字串直接丟進查詢:那等於讓任何人用這一支
+     去撈 cloth_designs 裡任意 product 的資料,而這張表裡有客編、
+     姓名、門市、線稿網址。白名單比過濾便宜也可靠。 */
+const PRODUCTS = new Set(['cloth', 'case']);
 
 /* 以種子決定順序的洗牌。
    ⚠ 一定要是【確定性】的:同一個種子每次都要洗出同一個順序,
@@ -137,6 +150,11 @@ Deno.serve(async (req) => {
        種子固定,順序就固定,分頁才接得起來。 */
   const seed = Math.floor(Number(body.seed)) || 0;
 
+  /* 要哪一個品項的牆。沒帶就是眼鏡布 ——
+     舊版前端(cloth.html 的分享牆)不會帶這個參數,而它要的正是眼鏡布,
+     所以預設值必須是 cloth,不可以是「全部」。 */
+  const product = PRODUCTS.has(String(body.product || '')) ? String(body.product) : 'cloth';
+
   /* ⚠ 只挑要用的欄位,不要 select('*')。
      select('*') 會把客編、門市、線稿網址一起讀出來 ——
      就算下面的白名單擋住了,那些資料仍然進過這支函式的記憶體與 log。
@@ -150,11 +168,18 @@ Deno.serve(async (req) => {
        眼鏡布是一年一件,完成的量以百計,整份拿回來很便宜;
        而且下面有一份共用快取,實際上每 3 分鐘才真的查一次資料庫
        —— 比原本「每一頁各查一次」還省。 */
-  let all = allCache && Date.now() - allCache.at < CACHE_TTL_MS ? allCache.rows : null;
+  const hit = allCache.get(product);
+  let all = hit && Date.now() - hit.at < CACHE_TTL_MS ? hit.rows : null;
   if (!all) {
     const { data, error } = await db
       .from('cloth_designs')
       .select('id, member_name, preview_url, done_at')
+      /* 🚨 只給這一個品項。2026-09-20 cloth_designs 多了 product 欄位,
+         眼鏡盒與眼鏡布共用同一張表(共用同一個加工中心)。
+         少了這個條件,眼鏡布分享牆會開始出現盒子 —— 不會報錯,
+         要等有人來問才會發現。
+         眼鏡盒的牆走同一支,前端帶 product: 'case' 就好。 */
+      .eq('product', product)
       .eq('status', 'done')
       /* ⚠ wall_hidden 與 status 是兩件事:
            status='done'  做好了沒(沒做好本來就不會出現)
@@ -171,7 +196,7 @@ Deno.serve(async (req) => {
       return reply('500', { message: '讀取失敗,請稍後再試' }, 500);
     }
     all = data || [];
-    allCache = { at: Date.now(), rows: all };
+    allCache.set(product, { at: Date.now(), rows: all });
   }
 
   const ordered = shuffled(all, seed);

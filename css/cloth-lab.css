@@ -201,6 +201,14 @@
   background:var(--bg-soft, #F4F1EC); color:var(--text-sub);
 }
 .lab-tag.is-done{ background:var(--ok-bg, #E7F4EE); color:var(--ok, #2E7D5B) }
+/* 品項。刻意比其他標籤顯眼(實色、粗一點)——
+   製作端兩種東西混在同一個列表裡,「這是布還是盒」看錯的代價是
+   拿錯材料上機,而發現的時候東西已經刻下去了。
+   其他標籤是參考資訊,這一個是【不能看錯的那一個】。 */
+.lab-tag.is-product{
+  background:var(--lohas-brand, #50422D); color:#fff; font-weight:600;
+  letter-spacing:.04em;
+}
 .lab-meta{ font-size:13px; line-height:1.7; color:var(--text-sub) }
 .lab-meta b{ color:var(--lohas-brand); font-weight:600 }
 

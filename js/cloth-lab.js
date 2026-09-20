@@ -28,7 +28,9 @@
   /* area:'' = 全部,north = 台中以北,south = 台南以南,other = 其他
      ⚠ 記在 localStorage —— 兩個製作端各自固定看自己那一區,
      每次進來都要重選一次是每天都會重複的摩擦。 */
-  var State = { code: '', status: 'new', area: '', items: [], total: 0, busy: false };
+  /* ⚠ product 預設是空字串(全部)不是 'cloth' —— 製作端一天要把兩種
+   都做完,預設只看一種的話,另一種會安靜地堆在看不到的地方。 */
+  var State = { code: '', status: 'new', product: '', area: '', items: [], total: 0, busy: false };
   var el = {};
 
   /* ---------- 工具 ---------- */
@@ -71,6 +73,7 @@
 
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
   var STATUS = { new: '待製作', done: '已完成', archived: '已封存', rejected: '已退件' };
+  var PRODUCT = { cloth: '眼鏡布', case: '眼鏡盒' };
 
   /* 退件原因。代碼與後端 cloth-admin 的 REJECT_CODES 必須一致 ——
      兩邊各寫一份的話，加了新原因卻只改一邊，師傅會選到一個後端不收的值，
@@ -288,6 +291,12 @@
         '<div class="lab-info">' +
           '<div class="lab-row">' +
             '<span class="lab-name">' + esc(it.design_name || '(未命名)') + '</span>' +
+            /* 品項標在最前面。製作端兩種東西混在同一個列表裡,
+               「這是布還是盒」要一眼看得出來 —— 看錯的代價是
+               拿錯材料上機,而那時候東西已經刻下去了。
+               ⚠ 舊資料沒有 product 欄位時當眼鏡布(它們本來就是)。 */
+            '<span class="lab-tag is-product">' +
+              (PRODUCT[it.product || 'cloth'] || esc(it.product)) + '</span>' +
             '<span class="lab-tag">' + (SOURCE[it.source] || esc(it.source)) + '</span>' +
             '<span class="lab-tag' + (it.status === 'done' ? ' is-done' : '') + '">' +
               (STATUS[it.status] || esc(it.status)) + '</span>' +
@@ -423,7 +432,7 @@
   function load() {
     hide(el.msg);
     el.list.innerHTML = '<div class="lab-empty">載入中…</div>';
-    return call({ action: 'list', status: State.status, limit: 100 })
+    return call({ action: 'list', status: State.status, product: State.product, limit: 100 })
       .then(function (d) {
         State.items = d.items || [];
         State.total = Number(d.total || State.items.length);
@@ -1121,6 +1130,7 @@
     el = {
       gate: $('labGate'), code: $('labCode'), enter: $('labEnter'), gateErr: $('labGateErr'),
       body: $('labBody'), status: $('labStatus'), area: $('labArea'),
+      product: $('labProduct'),
       msg: $('labMsg'), list: $('labList'), out: $('labOut')
     };
     if (!el.gate) return;
@@ -1234,6 +1244,23 @@
       State.status = b.dataset.s;
       load();
     });
+
+    /* 換品項要【重新載入】—— 與換區域不同。
+       區域是在同一批資料裡挑,品項是交給資料庫篩的條件:
+       列表一次只抓 100 筆,在前端篩的話「眼鏡盒」那一頁看到的
+       其實是「前 100 筆裡剛好是盒子的那幾件」,而總數還是全部的,
+       數字與清單對不起來,也不會有任何錯誤。 */
+    if (el.product) {
+      el.product.addEventListener('click', function (e) {
+        var b = e.target.closest('.lab-seg-btn');
+        if (!b) return;
+        el.product.querySelectorAll('.lab-seg-btn').forEach(function (x) {
+          x.classList.toggle('on', x === b);
+        });
+        State.product = b.dataset.p || '';
+        load();
+      });
+    }
 
     /* 換區域【不重新載入】—— 資料同一批,只是換一個看法。
        打一次網路只為了篩掉幾張卡,在工廠的網路下是白等。 */

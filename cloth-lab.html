@@ -14,7 +14,7 @@
   <!-- LOHAS CSS · 載入順序: tokens → base → page -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
-  <link rel="stylesheet" href="css/cloth-lab.css?v=20260911-dash6">
+  <link rel="stylesheet" href="css/cloth-lab.css?v=20260920-product">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -76,6 +76,19 @@
                  沒有人知道有幾件卡在等客人。 -->
             <button type="button" class="lab-seg-btn" data-s="rejected">已退件</button>
             <button type="button" class="lab-seg-btn" data-s="">全部</button>
+          </div>
+        </div>
+
+        <!-- 品項。2026-09-20 起眼鏡盒與眼鏡布共用同一張表與同一個
+             加工中心,用 product 區分。
+             ⚠ 預設是【全部】不是眼鏡布 —— 製作端一天要把兩種都做完,
+               預設只看一種的話,另一種會安靜地堆在看不到的地方。 -->
+        <div class="lab-filter">
+          <span class="lab-filter-label">品項</span>
+          <div class="lab-seg" id="labProduct">
+            <button type="button" class="lab-seg-btn on" data-p="">全部</button>
+            <button type="button" class="lab-seg-btn" data-p="cloth">眼鏡布</button>
+            <button type="button" class="lab-seg-btn" data-p="case">眼鏡盒</button>
           </div>
         </div>
 
@@ -205,6 +218,6 @@
   <div id="labQrTmp" style="display:none"></div>
 
   <script src="js/dxf.js?v=20260903-rings"></script>
-  <script src="js/cloth-lab.js?v=20260915-shortcode"></script>
+  <script src="js/cloth-lab.js?v=20260920-product"></script>
 </body>
 </html>

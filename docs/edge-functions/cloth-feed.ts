@@ -75,7 +75,7 @@ const FALLBACK_APP_KEY_OLD = '';
 
    每次改這支【一併更新這個字串】,對方就能自己確認,不必問也不必等回信。
    (shop 函式的 code_version 是同一個做法。) */
-const CODE_VERSION = '2026-09-03 · product 標記';
+const CODE_VERSION = '2026-09-20 · 只回 product=cloth';
 
 const APP_KEY = Deno.env.get('CLOTH_FEED_KEY') || FALLBACK_APP_KEY;
 const APP_KEY_OLD = Deno.env.get('CLOTH_FEED_KEY_OLD') || FALLBACK_APP_KEY_OLD;
@@ -223,6 +223,12 @@ Deno.serve(async (req) => {
   if (wantDone) {
     const r = await db.from('cloth_designs')
       .select('id, erpid, mid, source, design_name, preview_url, done_at, store_erpid, store_name')
+      /* 🚨 只給眼鏡布。2026-09-20 cloth_designs 多了 product 欄位,
+         眼鏡盒與眼鏡布共用同一張表(共用同一個加工中心)。
+         少了這個條件,APP 的「我的眼鏡布」會開始冒出盒子 ——
+         而回應裡的 product 欄位【是寫死的 'cloth'】,所以對方
+         收到的每一筆都自稱眼鏡布,從資料上完全看不出異常。 */
+      .eq('product', 'cloth')
       .eq('status', 'done')
       .gt('done_at', since.toISOString())
       .order('done_at', { ascending: true })    // 由舊到新,對方好記「抓到哪」
@@ -241,6 +247,7 @@ Deno.serve(async (req) => {
   if (wantPending) {
     const r = await db.from('cloth_designs')
       .select('id, erpid, mid, source, design_name, preview_url, created_at, store_erpid, store_name')
+      .eq('product', 'cloth')      // 同上 —— 兩個查詢都要,漏一個就漏一半
       .eq('status', 'new')
       .order('created_at', { ascending: false })
       .limit(1000);
