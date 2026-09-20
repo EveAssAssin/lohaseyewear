@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客製眼鏡盒 · LOHAS 樂活眼鏡</title>
+  <meta name="description" content="把喜歡的圖雷刻在眼鏡盒上，打開的那一刻就知道是為誰準備的。">
+  <link rel="canonical" href="https://www.lohasglasses.com/case.html">
+
+  <!-- ⚠ app-mode 不要 defer：class 要在頁面畫出來之前掛上。 -->
+  <script src="js/app-mode.js?v=20260920-init"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- LOHAS CSS · 載入順序: tokens → base → components → page -->
+  <link rel="stylesheet" href="css/lohas-tokens.css">
+  <link rel="stylesheet" href="css/lohas-base.css">
+  <link rel="stylesheet" href="css/lohas-components.css">
+  <link rel="stylesheet" href="css/app-mode.css?v=20260920-init">
+  <link rel="stylesheet" href="css/case.css?v=20260920-layout">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+</head>
+
+<body class="cs">
+<div id="site-header"></div>
+
+<main class="cs-main">
+
+  <div class="cs-head">
+    <a class="cs-back" href="custom.html"><i class="fa-solid fa-chevron-left"></i> 客製中心</a>
+    <h1 class="cs-title">客製眼鏡盒</h1>
+    <div class="cs-title-line"></div>
+  </div>
+
+  <!-- ⚠ 版面尚未接上任何資料來源與金流。這一版只驗版型。 -->
+  <div class="cs-draft">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    版型草稿：圖案來源、雷刻範圍與結帳都還沒接上，按鈕按了不會送出任何東西。
+  </div>
+
+  <!-- ===== 來源切換 =====
+       與客製眼鏡布同一組三個入口。放在最上面是因為「先決定圖從哪來」
+       是這一頁的第一個動作 —— 與 cloth.html 保持一致,
+       客人從客製中心兩邊跳的時候不必重新學一次。 -->
+  <div class="cs-sourcebar">
+    <p class="cs-bar-title">圖案從哪裡來</p>
+    <div class="cs-seg" id="csSource">
+      <button type="button" class="cs-seg-btn on" data-src="market">
+        <i class="fa-solid fa-store"></i> 刻圖市集
+      </button>
+      <button type="button" class="cs-seg-btn" data-src="upload">
+        <i class="fa-solid fa-arrow-up-from-bracket"></i> 上傳圖片
+      </button>
+      <button type="button" class="cs-seg-btn" data-src="draw">
+        <i class="fa-solid fa-pen"></i> 自己畫
+      </button>
+    </div>
+  </div>
+
+  <div class="cs-body">
+
+    <!-- ========== 左欄：預覽 ========== -->
+    <section class="cs-preview-col">
+
+      <div class="cs-stage" id="csStage">
+        <img class="cs-stage-base" src="images/carrier-box.jpg" alt="眼鏡盒" id="csBase">
+
+        <!-- 雷刻範圍。這個框【貼著盒蓋的平面】,所以要跟著照片的角度斜
+             —— 照片是斜的棚拍,圖平平地貼上去會像浮在盒子上面。
+             角度與位置寫在 css/case.css 的 .cs-plate,調整請改那裡。 -->
+        <div class="cs-plate" id="csPlate">
+          <div class="cs-art" id="csArt">
+            <img src="images/lohas-logo.svg" alt="" id="csArtImg">
+          </div>
+          <div class="cs-plate-hint" id="csPlateHint">可雕刻範圍</div>
+        </div>
+      </div>
+
+      <div class="cs-stage-note">
+        預覽是示意圖。實際雷刻的深淺與質感會因盒子材質而不同。
+      </div>
+
+      <!-- 調整。三個一組橫排,手機上會自己換行。 -->
+      <div class="cs-adjust">
+        <label class="cs-adjust-row">
+          <span>大小</span>
+          <input type="range" id="csScale" min="20" max="100" value="55">
+        </label>
+        <label class="cs-adjust-row">
+          <span>旋轉</span>
+          <input type="range" id="csRot" min="-180" max="180" value="0">
+        </label>
+        <button type="button" class="cs-adjust-reset" id="csReset">
+          <i class="fa-solid fa-rotate-left"></i> 回到置中
+        </button>
+      </div>
+      <p class="cs-adjust-tip">圖案可以直接用滑鼠或手指拖曳。</p>
+
+    </section>
+
+    <!-- ========== 右欄：選項 ========== -->
+    <aside class="cs-opt-col">
+
+      <!-- 盒款 -->
+      <div class="cs-card">
+        <p class="cs-card-title">選盒款</p>
+        <div class="cs-boxes" id="csBoxes">
+          <button type="button" class="cs-box on" data-box="beige">
+            <span class="cs-box-img"><img src="images/carrier-box.jpg" alt="米白絨布盒"></span>
+            <span class="cs-box-name">米白絨布盒</span>
+          </button>
+          <!-- ⚠ 只有一款是【現況】不是版面沒做完。
+               其他盒款的照片還沒拍,有了就往這裡加一顆。
+               只有一款時仍然畫成可選的樣子,之後加款不必改版型。 -->
+          <div class="cs-box cs-box--soon">
+            <span class="cs-box-img cs-box-img--empty"><i class="fa-regular fa-image"></i></span>
+            <span class="cs-box-name">其他盒款準備中</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 圖案來源面板（三選一，由上方的來源切換控制） -->
+      <div class="cs-card">
+        <p class="cs-card-title">圖案</p>
+
+        <div class="cs-pane on" data-pane="market">
+          <p class="cs-pane-empty">
+            <i class="fa-solid fa-store"></i>
+            刻圖市集的選圖還沒接上。<br>
+            接上之後這裡會是市集的圖庫與搜尋。
+          </p>
+        </div>
+
+        <div class="cs-pane" data-pane="upload">
+          <p class="cs-pane-empty">
+            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            上傳與描圖還沒接上。<br>
+            會沿用客製眼鏡布那一套（裁切 → 自動描成線稿）。
+          </p>
+        </div>
+
+        <div class="cs-pane" data-pane="draw">
+          <p class="cs-pane-empty">
+            <i class="fa-solid fa-pen"></i>
+            手繪畫布還沒接上。<br>
+            會沿用客製眼鏡布那一套。
+          </p>
+        </div>
+      </div>
+
+      <!-- 雕刻須知 -->
+      <div class="cs-card cs-card--soft">
+        <p class="cs-card-title">雕刻前請留意</p>
+        <ul class="cs-rules">
+          <li>太細的線條雕刻後會斷掉，系統會自動把線加粗到刻得出來的寬度。</li>
+          <li>雷刻是<b>單色</b>的，彩色圖會轉成線稿，顏色不會出現在盒子上。</li>
+          <li>圖案超出可雕刻範圍的部分會被切掉，送出前請確認都在框線內。</li>
+          <li>送出後不能修改，製作端會照送出當下的樣子雕。</li>
+        </ul>
+      </div>
+
+      <!-- 價格與送出 -->
+      <div class="cs-card cs-buy">
+        <div class="cs-price">
+          <span class="cs-price-label">售價</span>
+          <span class="cs-price-num" id="csPrice">—</span>
+        </div>
+        <p class="cs-price-note">定價與商城品項尚未設定。</p>
+        <button type="button" class="cs-submit" id="csSubmit" disabled>
+          前往結帳
+        </button>
+        <p class="cs-buy-note">
+          付款在樂活商城完成，做圖與雕刻都在這裡。
+        </p>
+      </div>
+
+    </aside>
+
+  </div>
+
+</main>
+
+<div id="site-footer"></div>
+
+<script src="js/layout.js?v=20260905-navcache"></script>
+<script src="js/case.js?v=20260920-layout"></script>
+</body>
+</html>
