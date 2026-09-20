@@ -435,6 +435,21 @@
     return call({ action: 'list', status: State.status, product: State.product, limit: 100 })
       .then(function (d) {
         State.items = d.items || [];
+        /* 🚨 前端再篩一次。這【不是】主要機制,主要機制是上面那個
+           product 參數(cloth-admin 交給資料庫篩)。
+
+           留這一道的理由:函式那三行如果還沒部署,它會把 product
+           整個忽略、回傳全部 —— 而畫面上「品項:眼鏡盒」是深色的、
+           清單裡卻一排眼鏡布。那不是少篩了,是【畫面在說謊】,
+           而製作端會照著做。
+
+           ⚠ 它補不了筆數:總數仍然是伺服器算的。所以看到「眼鏡盒」
+             那一頁是空的、而產線那排還有數字,就表示函式還沒補。 */
+        if (State.product) {
+          State.items = State.items.filter(function (it) {
+            return (it.product || 'cloth') === State.product;
+          });
+        }
         State.total = Number(d.total || State.items.length);
         render();
       })
