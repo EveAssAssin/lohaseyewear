@@ -650,13 +650,14 @@
     } catch (_e) { return null; }
   }
 
+  var Stores = [];
+
   function renderStores(list, fromCache) {
-    if (!el.store) return;
-    if (!list || !list.length) return;
+    if (!el.store || !list || !list.length) return;
+    Stores = list;
     el.store.innerHTML = '<option value="">請選擇門市</option>' +
       list.map(function (s) {
-        return '<option value="' + esc(s.erpid) + '" data-name="' + esc(s.name) + '">' +
-               esc(s.name) + '</option>';
+        return '<option value="' + esc(s.erpid) + '">' + esc(s.name) + '</option>';
       }).join('');
     hide(el.storeRetry);
     if (fromCache && el.storeHint) {
@@ -665,32 +666,68 @@
     }
   }
 
+  /* ⚠ 門市清單是 LohasApi.store.getAllStores() ＋ LohasStore.data.normalizeStore,
+     兩支都要有。先前這裡寫成 window.LohasStoreData.getStores() —— 那個物件
+     【不存在】,所以每一次都直接走進 fallback,下拉永遠是「載入門市中…」。
+     沒有任何錯誤訊息,因為程式自己把它當成「載不到」處理掉了。 */
   function loadStores() {
-    var done = false;
-    function fail() {
-      if (done) return;
-      var c = cachedStores();
-      if (c && c.length) { renderStores(c, true); done = true; return; }
-      el.store.innerHTML = '<option value="">門市清單載入失敗</option>';
-      show(el.storeRetry);
-    }
-    if (!(window.LohasStoreData && window.LohasStoreData.getStores)) { fail(); return; }
-    window.LohasStoreData.getStores()
-      .then(function (list) {
-        var arr = (list || []).filter(function (s) { return s && s.erpid && s.name; });
-        if (!arr.length) { fail(); return; }
-        done = true;
-        renderStores(arr, false);
-        cacheStores(arr);
+    var api = window.LohasApi && window.LohasApi.store;
+    var sd  = (window.LohasStore && window.LohasStore.data) || null;
+    if (!api || !sd || !el.store) { storeFallback(); return; }
+    hide(el.storeRetry);
+    el.store.innerHTML = '<option value="">載入門市中…</option>';
+
+    api.getAllStores()
+      .then(function (raw) {
+        var list = (raw || []).map(sd.normalizeStore).filter(Boolean)
+          .sort(function (a, b) {
+            return a.region.order - b.region.order || a.sort - b.sort;
+          });
+        /* 回了一個空清單也算失敗。這通常是上游改了回應格式,
+           那時「沒有門市可選」不是事實。 */
+        if (!list.length) { storeFallback(); return; }
+        cacheStores(list);
+        renderStores(list, false);
       })
-      .catch(fail);
+      .catch(function (e) {
+        console.warn('[case] 門市清單載入失敗', e && e.message);
+        storeFallback();
+      });
   }
 
+  /* 載不出來。先找快取,真的沒有才停在「請重試」。
+     ⚠ 不要說「沒關係,先存起來」—— 門市是必填,那句話會讓客人以為
+       自己已經送出去了,而伺服器會擋下來。兩個畫面講不同的話,
+       是最難查的一種。 */
+  function storeFallback() {
+    if (!el.store) return;
+    var cached = cachedStores();
+    if (cached && cached.length) {
+      console.info('[case] 門市清單改用本機快取', cached.length, '家');
+      renderStores(cached, true);
+      return;
+    }
+    Stores = [];
+    el.store.innerHTML = '<option value="">暫時取不到門市清單</option>';
+    if (el.storeHint) {
+      el.storeHint.textContent =
+        '門市清單暫時連不上。你做好的圖還在，按下面重新載入就可以繼續 ——' +
+        '我們需要知道做好之後要送到哪一家。';
+    }
+    show(el.storeRetry);
+  }
+
+  /* 送出時把店名與區域一起帶走,不是只帶編號。
+     製作端那一頁不登入,不能為了顯示店名去打門市 API ——
+     那台一掛,整張製作單就變成一排「未知門市」。 */
   function pickedStore() {
     if (!el.store || !el.store.value) return null;
-    var opt = el.store.options[el.store.selectedIndex];
-    return { erpid: el.store.value, name: opt ? opt.dataset.name || opt.textContent : '' };
+    var id = String(el.store.value);
+    var hit = Stores.filter(function (st) { return String(st.erpid) === id; })[0];
+    if (!hit) return null;
+    return { erpid: id, name: hit.name || '', city: hit.city || '' };
   }
+  window.__casePickedStore = pickedStore;   // 接結帳時會用到,先留著介面
 
   /* =============================================================
      來源切換
