@@ -128,6 +128,9 @@
     <button class="nav-link" data-page="cloth">
       <i class="fa-solid fa-vector-square"></i><span>客製眼鏡布加工管理</span>
     </button>
+    <button class="nav-link" data-page="cloth-case">
+      <i class="fa-solid fa-box"></i><span>客製眼鏡盒加工管理</span>
+    </button>
     <button class="nav-link" data-page="gift-work">
       <i class="fa-solid fa-gift"></i><span>禮物中心加工管理</span>
     </button>
@@ -1153,6 +1156,49 @@
       </div>
     </div>
 
+    <!-- ============= 客製眼鏡盒加工管理 =============
+         與上面那一頁【共用 js/admin-portal-cloth.js】,差別只有三件事:
+         看哪一個 product、元素 id 的前綴、標題寫什麼。
+
+         ⚠ 元素 id 一定要跟眼鏡布那一頁分開(clothList / clothCaseList)。
+           重複的 id 在 HTML 上不會報錯,但 getElementById 永遠只回傳
+           第一個 —— 於是這一頁怎麼點都在更新眼鏡布那一頁的清單,
+           而畫面上看起來只是「按了沒反應」。
+
+         ⚠ 這一頁【沒有心跳探針】。那個探針量的是 cloth-feed
+           (APP 來抓眼鏡布紀錄)的排程,與眼鏡盒無關;
+           放一個永遠不會更新的綠燈比不放還糟。 -->
+    <div class="content-page" data-page="cloth-case">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">客製眼鏡盒加工管理</h1>
+          <div class="page-sub" id="clothCaseSub">— 件</div>
+          <div class="page-sub">客人在官網做好的眼鏡盒設計。下載 SVG 或 DXF 交給製作端;DXF 是在瀏覽器由 SVG 即時轉出的,不另外存一份。</div>
+        </div>
+        <a class="editor-btn" href="cloth-lab.html" target="_blank" rel="noopener">
+          <i class="fa-solid fa-up-right-from-square"></i> 開啟製作單
+        </a>
+      </div>
+
+      <div class="filter-row">
+        <input class="editor-input" id="clothCaseSearch" placeholder="搜尋會員編號 / 姓名..." style="max-width:280px"/>
+        <div class="filter-group">
+          <label>狀態</label>
+          <select id="clothCaseStatus">
+            <option value="new">待處理</option>
+            <option value="">全部</option>
+            <option value="done">已完成</option>
+            <option value="archived">已封存</option>
+          </select>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
+      <div id="clothCaseList" class="cloth-list">
+        <div class="cloth-loading">載入中…</div>
+      </div>
+    </div>
+
     <!-- ============= 禮物中心加工管理 =============
          ⚠ 這一頁與 store-lookup.html(門市查刻圖)【共用同一支程式】:
          同樣的 sl- 元素 id、同樣的 js/store-lookup.js、同樣的 css。
@@ -2090,7 +2136,7 @@
 <script src="js/admin-portal-pegavision.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-categories.js?v=20260907-batch3"></script>
 <script src="js/dxf.js?v=20260903-rings"></script>
-<script src="js/admin-portal-cloth.js?v=20260914-hide"></script>
+<script src="js/admin-portal-cloth.js?v=20260920-case"></script>
 <script src="js/store-lookup.js?v=20260827-byphone"></script>
 
 </body>

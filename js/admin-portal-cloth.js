@@ -17,10 +17,31 @@
 
   var FN = 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/cloth-admin';
 
+  /* 兩個分頁共用這一支:客製眼鏡布加工管理 / 客製眼鏡盒加工管理。
+     -----------------------------------------------------------------
+     不複製一份的理由與「禮物中心加工管理」那一頁一樣:兩份查詢邏輯
+     遲早會走鐘,而走鐘的那天兩邊看到的不一樣,沒有人知道哪邊是對的。
+
+     差別只有三件事:看哪一個 product、元素 id 的前綴、標題寫什麼。
+     ⚠ 元素 id 一定要分開(clothList / clothCaseList),不能兩頁共用
+       同一組 id —— 重複的 id 在 HTML 上不會報錯,但
+       document.getElementById 永遠只回傳第一個,於是第二頁
+       怎麼點都在更新第一頁的清單。 */
+  var PAGES = {
+    'cloth':      { product: 'cloth', pre: 'cloth',     name: '眼鏡布' },
+    'cloth-case': { product: 'case',  pre: 'clothCase', name: '眼鏡盒' }
+  };
+  var page = 'cloth';
+
+  function cfg() { return PAGES[page]; }
+
+  /* 目前這一頁的元素。name 是 id 去掉前綴的部分('List'、'Sub'…) */
+  function $p(name) { return document.getElementById(cfg().pre + name); }
+
   var state = { items: [], total: 0, loading: false, status: 'new', q: '' };
 
   function root() {
-    return document.querySelector('.content-page[data-page="cloth"]');
+    return document.querySelector('.content-page[data-page="' + page + '"]');
   }
 
   function esc(s) {
@@ -102,7 +123,7 @@
   var STALE_HOURS = 36;   // 每日一次,留一天半的餘裕
 
   function renderHeartbeat() {
-    var box = document.getElementById('clothHeartbeat');
+    var box = $p('Heartbeat');
     if (!box) return;
     var hb = state.heartbeat;
     if (!hb || !hb.last_fetch_at) { box.style.display = 'none'; return; }
@@ -165,12 +186,12 @@
   function render() {
     var r = root(); if (!r) return;
 
-    var sub = document.getElementById('clothSub');
+    var sub = $p('Sub');
     if (sub) sub.textContent = state.total + ' 件';
 
     renderHeartbeat();
 
-    var list = document.getElementById('clothList');
+    var list = $p('List');
     if (!list) return;
 
     if (state.loading && !state.items.length) {
@@ -262,14 +283,15 @@
 
   function load() {
     state.loading = true; render();
-    return call({ action: 'list', status: state.status, q: state.q, limit: 100 })
+    return call({ action: 'list', status: state.status, q: state.q,
+                  product: cfg().product, limit: 100 })
       .then(function (d) {
         state.items = d.items || [];
         state.total = d.total || 0;
         state.heartbeat = d.heartbeat || null;
       })
       .catch(function (e) {
-        var list = document.getElementById('clothList');
+        var list = $p('List');
         if (list) list.innerHTML = '<div class="cloth-empty">載入失敗:' + esc(e.message) + '</div>';
       })
       .finally(function () { state.loading = false; render(); });
@@ -374,14 +396,14 @@
       }
     });
 
-    var sel = document.getElementById('clothStatus');
+    var sel = $p('Status');
     if (sel) sel.addEventListener('change', function () {
       state.status = this.value; state.items = []; load();
     });
 
     /* 搜尋不要每打一個字就打一次 API ——
        打「28095839」會送出八次請求,而只有最後一次的結果有意義。 */
-    var search = document.getElementById('clothSearch');
+    var search = $p('Search');
     if (search) {
       var timer = 0;
       search.addEventListener('input', function () {
@@ -394,16 +416,24 @@
     }
   }
 
-  function init() {
+  function init(which) {
+    page = PAGES[which] ? which : 'cloth';
+    /* ⚠ 換分頁一定要把 state 清掉。留著的話,從眼鏡布切到眼鏡盒的
+       那一瞬間畫面上還是上一頁的清單,而標題已經寫著「眼鏡盒」——
+       看的人會以為那些布是盒子。 */
+    state.items = []; state.total = 0; state.heartbeat = null;
     if (!root()) return;
     bind();
     load();
   }
 
   document.addEventListener('click', function (e) {
-    var btn = e.target.closest('.nav-link[data-page="cloth"], .drawer-item[data-page="cloth"]');
+    var btn = e.target.closest(
+      '.nav-link[data-page="cloth"], .drawer-item[data-page="cloth"],' +
+      '.nav-link[data-page="cloth-case"], .drawer-item[data-page="cloth-case"]');
     if (!btn) return;
-    setTimeout(init, 50);
+    var which = btn.dataset.page;
+    setTimeout(function () { init(which); }, 50);
   });
 
   window.LohasAdminCloth = { init: init, load: load };
