@@ -3,35 +3,14 @@
    -------------------------------------------------------------
    後台的「客製眼鏡布」列表。
 
-   為什麼與 cloth 分開:
-     cloth 那支是【給客人用的】—— 只做「存自己的作品」這一件事。
-     這一支是【給後台用的】,查的是所有人的作品。
-     混在同一支的話,日後任何一次改動都可能不小心把特權查詢
-     暴露成客人也能呼叫的動作。分開就不會有這種事。
-     (與 gift / store-lookup 的分法一致)
-
-   進得來的方式有兩種(見 Deno.serve 內的說明):
+   進得來的方式有兩種:
      A. 管理後台 —— session token + admins 表
      B. 製作端簡易頁 —— 共用通行碼(填在 FALLBACK_LAB_KEY)
 
-   A 的兩道關卡,缺一不可:
-     1. 有效的 session token          確認「是誰」
-     2. 該會員在 admins 表且狀態正常   確認「有沒有權限」
-     只驗第一道的話,任何登入中的會員都能看到全部客人的作品。
-
-   部署:Supabase Dashboard → Edge Functions → cloth-admin → 貼上本檔
-        Verify JWT 要【關閉】
-
    === ⚠ 通行碼要填在下面的 FALLBACK_LAB_KEY ===
-   使用者沒有 Secrets 權限,所以走與 shop / coupon-list 相同的做法:
-   值只填在【Dashboard 的編輯器裡】,repo 這一份永遠是空字串
-   (公開 repo,填了就等於公開)。
-
-   因此【每次取代這支函式之前,先按右上角 Download】——
-   下載的是含通行碼的線上版,貼上新版後把值填回去再 Deploy。
+   值只填在【Dashboard 的編輯器裡】,repo 這一份永遠是空字串。
+   【每次取代這支函式之前,先按右上角 Download】——
    漏掉這一步,製作端那一頁會立刻進不去。
-
-   其餘用的是 Supabase 自動注入的環境變數,不需要另外設定。
    ============================================================= */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -43,9 +22,14 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
 /* 製作端簡易頁(cloth-lab.html)的通行碼。
-   ⚠ 只在 Dashboard 填,不要提交回 GitHub。
-   留空 = 簡易頁停用(管理後台那條路不受影響)。 */
+   ⚠ 只在 Dashboard 填,不要提交回 GitHub。 */
 const FALLBACK_LAB_KEY = '';
+
+/* === 退件原因代碼 ===
+   選單代碼 + 補充文字。這段文字客人會直接看到,
+   純自由輸入容易寫成內部用語,客人不知道要改什麼。
+   文案寫在顯示端,改文案不必動這支函式。 */
+const REJECT_CODES = ['line_too_thin', 'out_of_bounds', 'low_quality', 'content', 'other'];
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -84,16 +68,6 @@ Deno.serve(async (req) => {
   try { body = await req.json(); }
   catch { return reply('006', { message: '請求格式錯誤' }, 400); }
 
-  /* ---------- 兩種進得來的方式 ----------
-     A. 管理後台:session token + admins 表(與其他後台頁一致)
-     B. 製作端的簡易頁:一組共用通行碼(FALLBACK_LAB_KEY)
-
-     為什麼要有 B:製作的人沒有管理員帳號,也不該為了下載一個檔案
-     去開一個。但也不能完全不設防 —— 這一頁列的是客人的作品與檔案,
-     網址一旦被轉貼或被搜尋引擎收錄,就擋不住任何人。
-
-     通行碼比對用逐字元累積,不要用 !== 直接比 ——
-     字串比較會在第一個不同的字元就返回,回應時間會洩漏「對了幾個字」。 */
   let caller = '';
 
   const labKey = Deno.env.get('CLOTH_LAB_KEY') || FALLBACK_LAB_KEY;
@@ -108,7 +82,7 @@ Deno.serve(async (req) => {
 
   if (givenCode) {
     if (!labKey) {
-      console.error('[cloth-admin] 通行碼未設定(FALLBACK_LAB_KEY 或 CLOTH_LAB_KEY),簡易頁停用');
+      console.error('[cloth-admin] 通行碼未設定,簡易頁停用');
       return reply('403', { message: '簡易後台尚未啟用' }, 403);
     }
     if (!sameSecret(givenCode, labKey)) {
@@ -117,16 +91,13 @@ Deno.serve(async (req) => {
     }
     caller = 'lab';
   } else {
-    /* ---------- 關卡 1:身分 ---------- */
     caller = await erpidFromToken(String(body.token || ''));
     if (!caller) return reply('401', { message: '登入狀態已失效,請重新登入' }, 401);
 
-    /* ---------- 關卡 2:權限 ---------- */
     const { data: admin, error: adminErr } = await db.from('admins')
       .select('member_id, status').eq('member_id', caller).maybeSingle();
     if (adminErr) return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
     if (!admin || (admin.status && admin.status !== 'active')) {
-      // 刻意不說「你不是管理員」—— 回應內容不該幫人確認自己踩到了什麼
       console.warn('[cloth-admin] 非管理員嘗試查詢', caller);
       return reply('403', { message: '沒有查詢權限' }, 403);
     }
@@ -134,27 +105,100 @@ Deno.serve(async (req) => {
 
   const action = String(body.action || 'list');
 
+  /* ---------- 列印製作單(2026-09-03 新增) ----------
+     用途:雕刻師按下「完成製作」後列印 80mm 熱感應製作單,
+     隨布一起寄到門市;門市收到時掃單上的 QR 登錄到店。
+
+     🚨 為什麼單獨一支而不是把姓名加回列表:
+       列表對製作端是【不給姓名】的(下面那段) ——
+       他要的是「刻什麼、刻在哪」,不是「誰」。
+       但製作單會跟著布到門市,門市需要姓名才找得到人。
+
+       所以姓名【只在列印那一張時】給,一次一筆。
+       製作端因此不能瀏覽所有客人的姓名,只在真的要印那張時
+       看到那一位 —— 需求滿足了,而原本的顧慮也還在。
+
+     ⚠ QR 裡放的是【這一筆的 id】,不是樂活那邊的 token ——
+       token 要等對方每日同步才存在,而製作單是按下完成的當下就要列印。
+       (對方的 ClothArrival 已改成以 cloth_id 查詢) */
+  if (action === 'print') {
+    const id = String(body.id || '').trim();
+    if (!id) return reply('006', { message: '缺少識別碼' }, 400);
+
+    const { data, error } = await db.from('cloth_designs')
+      .select('id, erpid, member_name, design_name, source, status, created_at, done_at, store_erpid, store_name')
+      .eq('id', id).maybeSingle();
+
+    if (error) {
+      console.error('[cloth-admin] 製作單查詢失敗:', error.message);
+      return reply('500', { message: '讀取失敗' }, 500);
+    }
+    if (!data) return reply('006', { message: '查無這一筆' }, 400);
+
+    console.log('[cloth-admin] ' + caller + ' 列印製作單 ' + id);
+    return reply('200', { data });
+  }
+
   /* ---------- 改狀態 ---------- */
   if (action === 'set_status') {
     const id = String(body.id || '').trim();
     const status = String(body.status || '');
     if (!id) return reply('006', { message: '缺少識別碼' }, 400);
-    if (['new', 'done', 'archived'].indexOf(status) < 0) {
+    if (['new', 'done', 'archived', 'rejected'].indexOf(status) < 0) {
       return reply('006', { message: '狀態值不正確' }, 400);
     }
-    /* 記下完成的時間。App 會以它做增量抓取(只拿上次之後新完成的)——
-       沒有時間就只能整包重抓再自行比對,而比對一出錯就是重複推播,
-       客人會收到好幾次「你的眼鏡布做好了」。
-
-       改回 new / archived 時把時間清掉,不然那筆會一直被當成
-       「某天完成過」而重複出現在 App 的抓取結果裡。 */
+    /* 記下完成的時間。對方以它做增量抓取 ——
+       改回 new / archived / rejected 時把時間清掉,
+       不然那筆會一直被當成「某天完成過」而重複推播。 */
     const patch: Record<string, unknown> = { status };
     patch.done_at = status === 'done' ? new Date().toISOString() : null;
 
+    /* ---------- 退件 ----------
+       🚨 退件【不佔用一年一件的額度】,且客人重做時【不再檢查生日月】。
+         那兩件事做在 cloth 那支(客人存檔的入口),不是這裡 ——
+         但兩邊是同一套規則的兩半,改任一邊之前要先看另一邊。
+
+       🚨 status 的 CHECK 約束必須包含 'rejected'。
+         2026-09-02 新增退件時我方【假設】沒有這個約束、沒有查證,
+         結果雕刻師按下退件只看到一句「更新失敗」。
+         約束已於 2026-09-03 修正。 */
+    if (status === 'rejected') {
+      const rcode = String(body.reject_code || '').trim();
+      const rtext = String(body.reject_reason || '').trim().slice(0, 300);
+
+      if (REJECT_CODES.indexOf(rcode) < 0) {
+        return reply('006', { message: '請選擇退件原因' }, 400);
+      }
+      if (rcode === 'other' && rtext === '') {
+        return reply('006', { message: '選擇「其他」時請填寫說明' }, 400);
+      }
+
+      const cur = await db.from('cloth_designs')
+        .select('reject_count').eq('id', id).maybeSingle();
+      if (cur.error) {
+        console.error('[cloth-admin] 讀取退件次數失敗:', cur.error.message);
+        return reply('500', { message: '更新失敗' }, 500);
+      }
+
+      patch.reject_code   = rcode;
+      patch.reject_reason = rtext || null;
+      patch.rejected_at   = new Date().toISOString();
+      patch.reject_count  = (Number(cur.data?.reject_count) || 0) + 1;
+    }
+
     const { error } = await db.from('cloth_designs')
       .update(patch).eq('id', id);
-    if (error) return reply('500', { message: '更新失敗' }, 500);
-    console.log('[cloth-admin] ' + caller + ' 將 ' + id + ' 改為 ' + status);
+    if (error) {
+      /* 🚨 這一行是 2026-09-03 補的。原本只回「更新失敗」、不寫 log ——
+         資料庫講的 violates check constraint 完全沒被記下來,
+         日誌裡只有「列出 N 筆」,看起來像什麼事都沒發生。
+         通則:回給使用者的訊息可以籠統,但機器端一定要留下原因。 */
+      console.error('[cloth-admin] 更新失敗 id=' + id + ' status=' + status
+        + ' → ' + error.message);
+      return reply('500', { message: '更新失敗' }, 500);
+    }
+    console.log('[cloth-admin] ' + caller + ' 將 ' + id + ' 改為 ' + status
+      + (status === 'rejected' ? ' (' + String(body.reject_code) + ')' : ''));
     return reply('200', {});
   }
 
@@ -169,9 +213,16 @@ Deno.serve(async (req) => {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  // 後台預設只想看還沒處理的。要看全部就不帶這個參數。
   const status = String(body.status || '');
-  if (['new', 'done', 'archived'].indexOf(status) >= 0) q = q.eq('status', status);
+  if (['new', 'done', 'archived', 'rejected'].indexOf(status) >= 0) q = q.eq('status', status);
+
+  /* 品項。2026-09-20 起眼鏡盒與眼鏡布共用這張表(共用同一個加工中心),
+     用 product 欄位區分。
+     ⚠ 沒帶就是【全部】—— 製作端一天要把兩種都做完,預設只給一種的話,
+       另一種會安靜地堆在看不到的地方。
+     ⚠ 用白名單比對,不要把前端字串直接丟進查詢。 */
+  const product = String(body.product || '');
+  if (['cloth', 'case'].indexOf(product) >= 0) q = q.eq('product', product);
 
   const keyword = String(body.q || '').trim();
   if (keyword) q = q.or(`erpid.eq.${keyword},member_name.ilike.%${keyword}%`);
@@ -185,20 +236,12 @@ Deno.serve(async (req) => {
   console.log('[cloth-admin] ' + caller + ' 列出 ' + (data || []).length + ' 筆');
 
   /* 通行碼進來的(製作端)不給姓名。
-     他要的是「刻什麼、刻在哪、哪一件」,不是「誰」——
-     會員編號足以對得上人,姓名多給了只是多一份可外流的個資。 */
+     他要的是「刻什麼、刻在哪、哪一件」,不是「誰」。
+     ⚠ 列印製作單是例外(見上面的 print 動作):那張單會跟著布到門市,
+       門市需要姓名才找得到人 —— 但一次只給一筆。 */
   const items = (data || []).map((r: Record<string, any>) =>
     caller === 'lab' ? { ...r, member_name: null, mid: null } : r);
 
-  /* 對方的排程有沒有停掉。
-     -----------------------------------------------------------
-     那 29 支排程共用同一個 Jenkins 觸發器(對方 2026-08-27 說明),
-     停掉的話全部一起安靜地死 —— 而三邊各自看都正常:
-     製作端按了完成、官網資料也對、App 只是沒有人來抓。
-
-     所以順便回一個「上次被抓是什麼時候」,由後台畫面判斷要不要示警。
-     ⚠ 讀失敗不影響列表:那是附帶資訊,不是這一支的職責。
-     製作端(通行碼)不給 —— 他不需要知道對方的排程狀況。 */
   let heartbeat: Record<string, unknown> | null = null;
   if (caller !== 'lab') {
     const hb = await db.from('cloth_feed_heartbeat')
