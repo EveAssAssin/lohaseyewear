@@ -67,11 +67,12 @@
     <section class="cs-preview-col">
 
       <div class="cs-stage" id="csStage">
-        <img class="cs-stage-base" src="images/carrier-box.jpg" alt="眼鏡盒" id="csBase">
+        <img class="cs-stage-base" src="images/case-base.jpg" alt="眼鏡盒" id="csBase">
 
-        <!-- 雷刻範圍。這個框【貼著盒蓋的平面】,所以要跟著照片的角度斜
-             —— 照片是斜的棚拍,圖平平地貼上去會像浮在盒子上面。
-             角度與位置寫在 css/case.css 的 .cs-plate,調整請改那裡。 -->
+        <!-- 雷刻範圍。底圖是【正上方拍的】素面盒,所以這個框是正的矩形,
+             沒有任何角度修正,圖貼上去是 1:1。
+             位置寫在 css/case.css 的 .cs-plate,調整請改那裡 ——
+             那幾個數字是量出來的,換底圖一定要重量一次。 -->
         <div class="cs-plate" id="csPlate">
           <div class="cs-art" id="csArt">
             <img src="images/lohas-logo.svg" alt="" id="csArtImg">
@@ -110,7 +111,7 @@
         <p class="cs-card-title">選盒款</p>
         <div class="cs-boxes" id="csBoxes">
           <button type="button" class="cs-box on" data-box="beige">
-            <span class="cs-box-img"><img src="images/carrier-box.jpg" alt="米白絨布盒"></span>
+            <span class="cs-box-img"><img src="images/case-base.jpg" alt="米白絨布盒"></span>
             <span class="cs-box-name">米白絨布盒</span>
           </button>
           <!-- ⚠ 只有一款是【現況】不是版面沒做完。

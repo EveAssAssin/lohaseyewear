@@ -60,9 +60,10 @@
     el.art.addEventListener('pointermove', function (e) {
       if (!dragging || !rect || !rect.width || !rect.height) return;
       /* ⚠ 位移要除以【範圍框】的寬高換算成比例,不是除以整張預覽。
-         範圍框是斜的(CSS 有 skew),所以這個換算是近似值 ——
-         在這個角度下誤差看不出來,但真的要精準定位時
-         要改成把游標座標反投影回平面。 */
+         底圖是正上方拍的,範圍框沒有旋轉也沒有斜切,
+         所以這個換算是【精確的】,不是近似。
+         哪天換成有角度的棚拍當底圖,這裡就要改成把游標座標
+         反投影回那個平面 —— 不改的話圖會愈拖愈偏,而且不報錯。 */
       state.x = clamp01(baseX + (e.clientX - startX) / rect.width);
       state.y = clamp01(baseY + (e.clientY - startY) / rect.height);
       apply();
