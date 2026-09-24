@@ -1299,6 +1299,8 @@
 
      @提及會產生通知,不依賴標籤有沒有生效。兩條路都留著。 */
   var SHARE_AT = '@lohas_eyewears';
+  /* 「開啟 THREADS」要開的連結(營運指定,2026-09-24)。要換連結改這一行。 */
+  var SHARE_THREADS_URL = 'https://www.threads.com/share/GGKeSEe76/';
   var SHARE_TEXT =
     '在樂活眼鏡做了一條專屬的客製眼鏡布 ✨\n' +
     '自己挑的圖，刻上去就是獨一無二的。\n' + SHARE_AT + ' ' + SHARE_TAG;
@@ -1353,10 +1355,16 @@
     if (img && objUrl) img.src = objUrl;
     if (downB && objUrl) downB.href = objUrl;
 
-    /* THREADS 的 web intent:文字可以預填,圖不行。 */
+    /* 「開啟 THREADS」→ 營運指定的 Threads 連結(2026-09-24 營運指定)。
+       原本是 web intent(threads.net/intent/post?text=…,可預填文案);
+       改成指定連結之後就預填不了文案了,所以按下去時【先複製文案】,
+       客人到 Threads 發文時直接貼上即可(與手機系統分享同一個作法)。 */
     if (thB) {
-      thB.href = 'https://www.threads.net/intent/post?text=' +
-                 encodeURIComponent(SHARE_TEXT);
+      thB.href = SHARE_THREADS_URL;
+      thB.addEventListener('click', function () {
+        copyText().then(function () { say('文案已複製,到 THREADS 發文時貼上就可以了。'); })
+                  .catch(function () {});
+      });
     }
 
     function say(msg) { if (hint) hint.textContent = msg; }
