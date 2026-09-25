@@ -203,7 +203,7 @@ const SYS_ERR_MSG = '系統異常,請聯繫客服。';
 /* 線上實際跑的是哪一版。每次改這支就一併更新 ——
    從外面看不出線上是哪一版,是 2026-08-28 那次事故的根本原因
    (程式改好、信上寫「已上線」,但那支函式從頭到尾沒有部署過)。 */
-const CODE_VERSION = '2026-09-20 · list 回 product';
+const CODE_VERSION = '2026-09-25 · 一年一件只算眼鏡布';
 
 /* 速率限制。記憶體計數,多執行個體下不是嚴格上限,
    目的是擋掉「同一個人狂按」與明顯的腳本,不是防禦機制。 */
@@ -274,11 +274,24 @@ function isUnlimited(who: { erpid: string; mid: string }): boolean {
 }
 
 /* 本年度已經存過的那一件(沒有就 null)。
-   年度生日禮一年一張,所以最多只會有一筆;取最新的一筆以防萬一。 */
+   年度生日禮一年一張,所以最多只會有一筆;取最新的一筆以防萬一。
+
+   🚨 2026-09-25 加 product = 'cloth'。
+   -----------------------------------------------------------------
+   眼鏡盒(付費)與眼鏡布(生日禮)共用 cloth_designs 這張表。
+   這裡不分品項的話,第一個眼鏡盒一出現就會發生兩件事,兩件都不報錯:
+
+     · 買過眼鏡盒的人,生日月來做免費眼鏡布 → 被擋在「本年度已完成」,
+       而且鎖定畫面會把他的【盒子】當成眼鏡布載回來
+     · 眼鏡盒被退件 → isRedoPending 把它當成「眼鏡布待重做」→
+       那個人【不是生日月也能做一條免費眼鏡布】
+
+   一年一件是【眼鏡布】的規則,不是「cloth_designs 這張表」的規則。 */
 async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
   const q = mineOnly(
     db.from('cloth_designs')
       .select('id, source, design_id, design_name, preview_url, svg_url, placement, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
+      .eq('product', 'cloth')
       .gte('created_at', taipeiYearStartIso())
       .order('created_at', { ascending: false })
       .limit(1),
