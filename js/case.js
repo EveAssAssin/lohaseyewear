@@ -365,6 +365,7 @@
     State.x = DEFAULT.x; State.y = DEFAULT.y;
     State.scale = DEFAULT.scale; State.rot = DEFAULT.rot;
     applyOverlay();
+    refreshSubmit();
   }
 
   function clearPick() {
@@ -373,6 +374,7 @@
     State.scale = DEFAULT.scale; State.rot = DEFAULT.rot;
     applyOverlay();
     renderDesigns();
+    refreshSubmit();
   }
 
   /* =============================================================
@@ -727,7 +729,249 @@
     if (!hit) return null;
     return { erpid: id, name: hit.name || '', city: hit.city || '' };
   }
-  window.__casePickedStore = pickedStore;   // 接結帳時會用到,先留著介面
+
+  /* =============================================================
+     結帳:做圖 → 上傳 → 推進商城購物車 → 跳轉商城結帳
+     -------------------------------------------------------------
+     照 js/design.js(客製刻圖太陽眼鏡)那條已經跑通的路走,
+     不另外發明一套 —— 那條路 8/27 端到端走通過 6 次。
+
+     🚨 目前【只有網址帶 ?test=1 才打開】。
+       新功能先上線但關著,自己跑過一遍再開(CLAUDE.md「環境的現實」)。
+       沒帶參數的人看到的是「即將開放」,按鈕按不下去。
+
+     🚨 目前【只開放刻圖市集的圖】。
+       shop 函式只在「有刻圖編號」時才把圖案附進訂單
+       (docs/edge-functions/shop.ts 的 if (d.design_id))。
+       自己畫/打字/上傳的圖沒有刻圖編號 → 送出去的訂單【不含任何圖案】,
+       商城也不會回通知 —— 客人付了錢,我方永遠不知道。
+       在 shop 函式改好之前,那三條路一律擋在這裡。
+     ============================================================= */
+
+  var CHECKOUT = {
+    /* 測試商品:雷刻小物|木紋眼鏡盒。正式商品建好之後換掉這一行。
+       ⚠ 預覽底圖(images/case-base.jpg)是米白絨布盒,與這個測試商品
+         長得不一樣 —— 測試沒關係,正式上線前要換成同一款的照片,
+         而且【換照片就要重量一次可雕刻範圍】(見 css/case.css)。 */
+    NID: 2881,
+    SHOP_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop',
+    /* 合成圖的邊長。與底圖同為正方形。 */
+    PREVIEW_SIZE: 1000
+  };
+
+  var testMode = /[?&]test=1(?:&|$)/.test(String(window.location.search || ''));
+  var product = null;      // 從商城讀回來的商品(價格以商城為準)
+  var submitting = false;
+
+  function shopCall(payload) {
+    return fetch(CHECKOUT.SHOP_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (String(j.code) !== '200') {
+          var err = new Error(j.message || '商城暫時連不上,請稍後再試');
+          err.code = String(j.code || '');
+          throw err;
+        }
+        return j.data || {};
+      });
+  }
+
+  /* 價格【以商城為準】,不在這裡寫死。
+     兩邊各存一份價格,遲早會出現「官網寫 800、結帳變 900」,
+     而客人看到的是我們亂標價。 */
+  function loadProduct() {
+    return shopCall({ action: 'product', nid: CHECKOUT.NID })
+      .then(function (d) {
+        product = d.product || null;
+        if (!product) throw new Error('查無商品');
+        var price = product.offer_price || product.price;
+        if (el.price) el.price.textContent = 'NT$ ' + Number(price).toLocaleString('zh-TW');
+        if (el.priceNote) {
+          el.priceNote.textContent = product.can_design
+            ? '刻圖市集的圖另加刻圖費(分潤給創作者),金額以商城結帳頁為準。'
+            : '⚠ 這個商品在商城沒有開啟「可客製」,推不進購物車。';
+        }
+      })
+      .catch(function (e) {
+        product = null;
+        if (el.priceNote) el.priceNote.textContent = '商品資訊暫時讀不到(' + e.message + ')';
+      })
+      .then(refreshSubmit);
+  }
+
+  /* 按鈕能不能按,以及【為什麼不能】。
+     只寫「請完成必填」等於要客人自己去猜還差哪一個。 */
+  function blockReason() {
+    if (!testMode) return '即將開放';
+    if (!product) return '商品資訊讀取中';
+    if (!product.can_design) return '商品未開放客製';
+    if (!State.picked) return '請先挑一張圖';
+    if (State.picked.source !== 'market') return '測試階段只開放刻圖市集的圖';
+    if (!pickedStore()) return '請選擇取貨門市';
+    return '';
+  }
+
+  function refreshSubmit() {
+    if (!el.submit || submitting) return;
+    var why = blockReason();
+    el.submit.disabled = !!why;
+    el.submit.textContent = why ? why : '前 往 結 帳';
+  }
+
+  /* ---------- 合成圖 ---------- */
+
+  /* ⚠ 要設 crossOrigin,而且要在設 src 之前。
+     少了它,canvas 會被「污染」,toBlob 直接丟 SecurityError ——
+     畫面上看起來一切正常,按下結帳才失敗,而錯誤訊息完全看不出原因。
+     data: 網址不需要(也不能設,某些瀏覽器會因此載入失敗)。 */
+  function loadForCanvas(src) {
+    return new Promise(function (res, rej) {
+      var img = new Image();
+      if (!/^data:/.test(src)) img.crossOrigin = 'anonymous';
+      img.onload = function () { res(img); };
+      img.onerror = function () { rej(new Error('圖載不到:' + String(src).slice(0, 60))); };
+      img.src = src;
+    });
+  }
+
+  /* 可雕刻範圍在底圖上的位置,與 css/case.css 的 .cs-plate 【必須是同一組數字】。
+     ⚠ 兩邊不一致的話,客人在畫面上擺好的位置,合成圖上會偏掉 ——
+       而師傅與商城後台看到的都是合成圖。
+     改 CSS 那四個數字時,這裡要一起改。 */
+  var PLATE = { left: 0.271, top: 0.378, width: 0.462, height: 0.179 };
+
+  function buildPreviewBlob() {
+    var S = CHECKOUT.PREVIEW_SIZE;
+    return Promise.all([
+      loadForCanvas(el.base.currentSrc || el.base.src),
+      loadForCanvas(State.picked.imageUrl)
+    ]).then(function (imgs) {
+      var base = imgs[0], art = imgs[1];
+      var cv = document.createElement('canvas');
+      cv.width = S; cv.height = S;
+      var ctx = cv.getContext('2d');
+      ctx.drawImage(base, 0, 0, S, S);
+
+      var pw = S * PLATE.width, ph = S * PLATE.height;
+      var px = S * PLATE.left,  py = S * PLATE.top;
+      var w = pw * State.scale;
+      var h = w * (State.ratio || 1);
+      var cx = px + pw * State.x;
+      var cy = py + ph * State.y;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate((State.rot || 0) * Math.PI / 180);
+      /* multiply:讓圖像是刻進材質裡,不是一張貼紙浮在上面。
+         只影響合成圖的觀感,不影響雕刻檔。 */
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.globalAlpha = 0.9;
+      ctx.drawImage(art, -w / 2, -h / 2, w, h);
+      ctx.restore();
+
+      return new Promise(function (res, rej) {
+        cv.toBlob(function (b) { b ? res(b) : rej(new Error('合成圖產生失敗')); }, 'image/png');
+      });
+    });
+  }
+
+  function uploadPreview(blob) {
+    var sb = window.LohasSupabase && window.LohasSupabase.getClient();
+    if (!sb) return Promise.reject(new Error('上傳工具未初始化'));
+    var bucket = (window.LohasSupabase.CONFIG || {}).STORAGE_BUCKET || 'gallery-uploads';
+    /* 與太陽眼鏡同一個資料夾(design-previews/),只加 case- 前綴。
+       另開資料夾的話要另外確認儲存桶的上傳權限,而那是看不到錯誤、
+       只會上傳失敗的那種設定。 */
+    var path = 'design-previews/case-' + Date.now() + '-' +
+               Math.random().toString(36).slice(2, 8) + '-preview.png';
+    return sb.storage.from(bucket)
+      .upload(path, blob, { contentType: 'image/png', upsert: false })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      });
+  }
+
+  /* ---------- 送出 ---------- */
+
+  function submit() {
+    if (submitting || blockReason()) return;
+
+    var token = (Auth && Auth.getToken) ? Auth.getToken() : '';
+    if (!token) {
+      if (Auth && Auth.setRedirect) Auth.setRedirect('case.html' + window.location.search);
+      window.location.href = 'login.html';
+      return;
+    }
+    /* 需要門市客編。後端對「token 有效但沒有客編」一律回 401,前端會
+       顯示成「登入失效」—— 那不是真的原因,而且是在產圖上傳之後才發生。
+       所以擋在最前面,講真正的原因。 */
+    if (Auth.isErpBound && !Auth.isErpBound()) {
+      showErr('購買客製商品需要門市會員身分。' +
+              (Auth.erpRequiredNote ? Auth.erpRequiredNote() : ''));
+      return;
+    }
+
+    submitting = true;
+    showErr('');
+    el.submit.disabled = true;
+    el.submit.textContent = '產 生 預 覽 圖 …';
+
+    var p = State.picked;
+    buildPreviewBlob()
+      .then(function (blob) {
+        el.submit.textContent = '上 傳 中 …';
+        return uploadPreview(blob);
+      })
+      .then(function (previewUrl) {
+        el.submit.textContent = '送 進 購 物 車 …';
+        return shopCall({
+          action: 'cart_push',
+          /* 不送 client_id —— 商城規格明訂會員編號必須由官網後端從
+             session 取得,不可接受前端傳入。shop 函式拿 token 去換。 */
+          token: token,
+          main: {
+            nid: CHECKOUT.NID,
+            amount: 1,
+            design: {
+              design_id: p.design_id,
+              design_name: p.name,
+              engraving_url: p.svgUrl,
+              preview_url: previewUrl,
+              /* ⚠ 現在的 shop 函式會把這一包重新組成太陽眼鏡的格式
+                 ({lens, scale, x, y, basis:'product_image'}),
+                 rot 會被丟掉、basis 會被蓋掉。
+                 這次測試只驗「推得進購物車」,所以不影響;
+                 但在 shop 改好之前【不能讓真的訂單走這條路】——
+                 師傅拿到的位置會沒有旋轉。 */
+              placement: {
+                scale: State.scale, x: State.x, y: State.y, rot: State.rot,
+                basis: 'case_plate'
+              }
+            }
+          }
+        });
+      })
+      .then(function (data) {
+        /* cart_url 的一次性 token 只有 60 秒,而且必須【整頁導轉】——
+           放進 iframe 的話兩站不同網域,第三方 cookie 限制會讓商城
+           建立不了登入,客人會看到一個沒登入的購物車。 */
+        if (!data || !data.cart_url) throw new Error('商城沒有回傳購物車網址');
+        el.submit.textContent = '前 往 商 城 …';
+        window.location.href = data.cart_url;
+      })
+      .catch(function (e) {
+        submitting = false;
+        showErr(e.code === '401'
+          ? '登入狀態已失效,請重新登入後再試一次。'
+          : '送不出去:' + e.message);
+        refreshSubmit();
+      });
+  }
 
   /* =============================================================
      來源切換
@@ -835,7 +1079,9 @@
       textCanvas: $('csTextCanvas'), textInput: $('csTextInput'),
       textFont: $('csTextFont'), textApply: $('csTextApply'),
       uploadBtn: $('csUpload'),
-      store: $('csStore'), storeHint: $('csStoreHint'), storeRetry: $('csStoreRetry')
+      store: $('csStore'), storeHint: $('csStoreHint'), storeRetry: $('csStoreRetry'),
+      base: $('csBase'), submit: $('csSubmit'), price: $('csPrice'),
+      priceNote: $('csPriceNote')
     };
     if (!el.stage || !el.plate || !el.overlay) return;
 
@@ -849,6 +1095,13 @@
     bindText();
 
     if (el.storeRetry) el.storeRetry.addEventListener('click', loadStores);
+    if (el.store) el.store.addEventListener('change', refreshSubmit);
+    if (el.submit) el.submit.addEventListener('click', submit);
+
+    /* 只有測試模式才去讀商品與價格。
+       ⚠ 正式商品還沒建,現在讀到的是【測試商品】的價格 ——
+         沒帶 ?test=1 的人看到 NT$800 會以為那就是眼鏡盒的定價。 */
+    if (testMode) loadProduct(); else refreshSubmit();
     loadStores();
 
     /* 視窗改變大小時疊圖要重算 —— overlay 的寬高是 px,
