@@ -62,6 +62,15 @@ async function erpidFromToken(token: string): Promise<string> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  /* 自檢:只回這支線上是哪一版,不回任何設定或資料。
+     2026-09-20 部署這支之後,我方沒辦法從外面確認它有沒有真的上線 ——
+     其他幾支都有 code_version,只有這支沒有。
+     每改一次就更新這個字串。 */
+  if (req.method === 'GET') {
+    return reply('200', { data: { code_version: '2026-09-29 · 眼鏡盒待確認' } });
+  }
+
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
 
   let body: Record<string, any>;
@@ -147,6 +156,25 @@ Deno.serve(async (req) => {
     if (['new', 'done', 'archived', 'rejected'].indexOf(status) < 0) {
       return reply('006', { message: '狀態值不正確' }, 400);
     }
+
+    /* 🚨 「待確認」(hold)的眼鏡盒,【只有後台】能放行。
+       -----------------------------------------------------------
+       hold 代表「訂單成立了,但還沒確認付款、門市、數量」。
+       放行 = 確認客人付了錢 —— 那是看得到商城後台的人才能做的判斷,
+       製作端(通行碼)看不到商城,也不該替這件事背書。
+       製作端的清單本來就看不到 hold 的單(下方列表),這裡擋的是
+       「直接打 API 用 id 改狀態」那條路。
+       ⚠ 也不能把任何單改回 hold:hold 只能由 shop-webhook 產生。 */
+    if (caller === 'lab') {
+      const cur = await db.from('cloth_designs').select('status').eq('id', id).maybeSingle();
+      if (cur.error) {
+        console.error('[cloth-admin] 讀取狀態失敗:', cur.error.message);
+        return reply('500', { message: '更新失敗' }, 500);
+      }
+      if (cur.data?.status === 'hold') {
+        return reply('403', { message: '這一件還在等後台確認訂單' }, 403);
+      }
+    }
     /* 記下完成的時間。對方以它做增量抓取 ——
        改回 new / archived / rejected 時把時間清掉,
        不然那筆會一直被當成「某天完成過」而重複推播。 */
@@ -215,6 +243,17 @@ Deno.serve(async (req) => {
 
   const status = String(body.status || '');
   if (['new', 'done', 'archived', 'rejected'].indexOf(status) >= 0) q = q.eq('status', status);
+
+  /* 「待確認」的眼鏡盒:後台看得到,製作端【永遠看不到】。
+     -----------------------------------------------------------
+     ⚠ 製作端的「全部」分頁不帶 status —— 不在這裡排除的話,
+       還沒確認付款的盒子會出現在師傅的清單上,而他會照做。
+       所以這個排除要寫在伺服器,不能只靠前端不顯示。 */
+  if (caller === 'lab') {
+    q = q.neq('status', 'hold');
+  } else if (status === 'hold') {
+    q = q.eq('status', 'hold');
+  }
 
   /* 品項。2026-09-20 起眼鏡盒與眼鏡布共用這張表(共用同一個加工中心),
      用 product 欄位區分。

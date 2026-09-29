@@ -4217,6 +4217,21 @@
 .cloth-done:hover{ background:var(--lohas-hover, #765F4A) }
 .cloth-done:disabled{ opacity:.5; cursor:default }
 
+/* 眼鏡盒「待確認訂單」。
+   用暖色底框起來,與一般卡片分得出來 —— 這一格要人【去別的系統查過】
+   才能按,不是看完這張卡就能決定的事。 */
+.cloth-hold{
+  margin-top:10px; padding:12px 14px;
+  background:var(--warn-bg, #F8F1E1); border-radius:12px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px;
+}
+.cloth-hold p{
+  flex:1 1 100%; margin:0 0 4px;
+  font-size:13px; line-height:1.7; color:var(--warn, #B58A42);
+}
+.cloth-hold b{ color:var(--text-main, #2F2A24) }
+.cloth-tag.is-hold{ background:var(--warn-bg, #F8F1E1); color:var(--warn, #B58A42) }
+
 @media (max-width:768px){
   .cloth-card{ flex-direction:column }
   .cloth-thumb{ width:100%; height:180px }

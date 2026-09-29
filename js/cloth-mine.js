@@ -181,7 +181,14 @@
       .then(function (j) {
         if (String(j.code) !== '200') throw new Error(j.message || '讀取失敗');
         loaded = true;
-        var items = (j.data && j.data.items) || [];
+        /* 只放眼鏡布。cloth 函式的 list 會把這個人的眼鏡盒一起回來
+           (客製中心的「我的客製作品」要兩種都顯示),但這一頁的標題是
+           「我的客製眼鏡布」—— 盒子出現在這裡,客人會以為系統把他的
+           盒子當成了眼鏡布。
+           ⚠ 舊資料沒有 product 欄位時當眼鏡布(它們本來就是)。 */
+        var items = ((j.data && j.data.items) || []).filter(function (x) {
+          return (x.product || 'cloth') === 'cloth';
+        });
         byId = {};
         items.forEach(function (x) { byId[String(x.id)] = x; });
         render(items);

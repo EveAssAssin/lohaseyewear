@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="css/app-mode.css?v=20260920-init">
   <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
   <link rel="stylesheet" href="css/cloth.css?v=20260929-scrollgutter">
-  <link rel="stylesheet" href="css/case.css?v=20260920-pill">
+  <link rel="stylesheet" href="css/case.css?v=20260929-payhint">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -269,6 +269,10 @@
           <span class="cs-price-num" id="csPrice">—</span>
         </div>
         <p class="cs-price-note" id="csPriceNote">定價與商城品項尚未設定。</p>
+        <!-- 結帳前的提醒(付款方式與取貨門市)。由 case.js 依選的門市填入。
+             ⚠ 不用 confirm() 對話框:APP 的 WebView 沒實作時它會直接回傳
+               「取消」且不顯示 —— 客人在 APP 裡會永遠按不過去。 -->
+        <div class="cs-payhint" id="csPayHint" hidden></div>
         <button type="button" class="cl-submit" id="csSubmit" disabled>即 將 開 放</button>
         <p class="cs-buy-note" id="csBuyNote">付款在樂活商城完成，做圖與雕刻都在這裡。</p>
       </div>
@@ -317,6 +321,6 @@
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<script src="js/case.js?v=20260928-checkout"></script>
+<script src="js/case.js?v=20260929-hold"></script>
 </body>
 </html>

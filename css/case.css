@@ -242,3 +242,28 @@
 @media (max-width: 960px) {
   body.cs .cs-draft { grid-column: 1 / -1; }
 }
+
+/* =============================================================
+   結帳前的提醒
+   -------------------------------------------------------------
+   商城無法針對單一商品關閉付款方式,也無法由我方指定取貨門市,
+   客人到商城還要再選一次。所以按下去之前把「該選什麼」寫清楚,
+   而且寫出他剛剛選的店名。
+   ============================================================= */
+
+.cs-payhint {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  background: var(--warn-bg);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-sub);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cs-payhint b { color: var(--warn); margin-bottom: 4px; }
+.cs-payhint em { font-style: normal; font-weight: 700; color: var(--text-main); }
+.cs-payhint small { margin-top: 6px; font-size: 12px; color: var(--text-muted); }

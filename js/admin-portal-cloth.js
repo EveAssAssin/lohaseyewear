@@ -28,8 +28,10 @@
        document.getElementById 永遠只回傳第一個,於是第二頁
        怎麼點都在更新第一頁的清單。 */
   var PAGES = {
-    'cloth':      { product: 'cloth', pre: 'cloth',     name: '眼鏡布' },
-    'cloth-case': { product: 'case',  pre: 'clothCase', name: '眼鏡盒' }
+    'cloth':      { product: 'cloth', pre: 'cloth',     name: '眼鏡布', status: 'new' },
+    /* 眼鏡盒預設停在「待確認」—— 那是後台人員每天要處理的第一件事:
+       有人付了錢,盒子卻在等確認,師傅那邊看不到。 */
+    'cloth-case': { product: 'case',  pre: 'clothCase', name: '眼鏡盒', status: 'hold' }
   };
   var page = 'cloth';
 
@@ -95,7 +97,8 @@
   }
 
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
-  var STATUS = { new: '待處理', done: '已完成', archived: '已封存' };
+  var STATUS = { hold: '待確認訂單', new: '待處理', done: '已完成', archived: '已封存',
+                 rejected: '已退件' };
 
   /* 座標翻成人看得懂的話。
      後台的人不需要知道 x=0.65,他需要知道「偏右下、約布寬的 22%」。 */
@@ -235,6 +238,24 @@
             '</div>' +
             '<div class="cloth-meta">' + who + '　·　' + fmtTime(it.created_at) + '</div>' +
             '<div class="cloth-meta">位置:' + esc(placeText(it.placement)) + '</div>' +
+            /* 眼鏡盒:訂單編號與取貨門市。
+               後台人員要拿訂單編號去商城後台查:付款了沒、門市、數量。
+               門市寫出來是為了對照 —— 商城那邊客人可能選了另一家。 */
+            (it.order_no
+              ? '<div class="cloth-meta">商城訂單 <b>' + esc(it.order_no) + '</b>' +
+                  (it.store_name ? '　·　官網選的門市 <b>' + esc(it.store_name) + '</b>' : '') +
+                '</div>'
+              : '') +
+            (it.status === 'hold'
+              ? '<div class="cloth-hold">' +
+                  '<p>請到商城後台查這張訂單:<b>已付款</b>、<b>取貨門市</b>與上面相同、' +
+                  '<b>數量是 1</b>。三項都對才放行 —— 放行之後師傅就會開始刻。</p>' +
+                  '<button type="button" class="cloth-done" data-release="' + esc(it.id) + '">' +
+                    '確認,開始製作</button>' +
+                  '<button type="button" class="cloth-btn" data-cancel="' + esc(it.id) + '">' +
+                    '取消這一件</button>' +
+                '</div>'
+              : '') +
             '<div class="cloth-btns">' +
               '<a class="cloth-btn" href="' + esc(it.svg_url) + '" download>' +
                 '<i class="fa-solid fa-file-arrow-down"></i> SVG</a>' +
@@ -386,6 +407,29 @@
         return;
       }
 
+      /* 待確認的眼鏡盒:放行或取消。
+         ⚠ 放行前再問一次 —— 放行的意思是「我確認客人付了錢」,
+           按下去之後師傅就會開始刻,刻了就沒辦法退。 */
+      var rel = e.target.closest('[data-release]');
+      if (rel) {
+        if (!confirm('確定這一張訂單已付款、門市正確、數量是 1?\n\n放行之後師傅就會開始製作。')) return;
+        rel.disabled = true;
+        call({ action: 'set_status', id: rel.dataset.release, status: 'new' })
+          .then(load)
+          .catch(function (err) { alert(err.message); rel.disabled = false; });
+        return;
+      }
+      var can = e.target.closest('[data-cancel]');
+      if (can) {
+        if (!confirm('取消這一件?\n\n它會移到「已封存」,師傅不會看到。' +
+                     '(商城那邊的訂單要另外處理退款)')) return;
+        can.disabled = true;
+        call({ action: 'set_status', id: can.dataset.cancel, status: 'archived' })
+          .then(load)
+          .catch(function (err) { alert(err.message); can.disabled = false; });
+        return;
+      }
+
       var done = e.target.closest('[data-done]');
       if (done) {
         done.disabled = true;
@@ -422,6 +466,11 @@
        那一瞬間畫面上還是上一頁的清單,而標題已經寫著「眼鏡盒」——
        看的人會以為那些布是盒子。 */
     state.items = []; state.total = 0; state.heartbeat = null;
+    /* 每一頁有自己的預設狀態(眼鏡盒停在「待確認」)。
+       ⚠ 下拉選單也要跟著改,不然畫面寫「待處理」、清單卻是待確認的。 */
+    state.status = cfg().status;
+    var sel = $p('Status');
+    if (sel) sel.value = state.status;
     if (!root()) return;
     bind();
     load();

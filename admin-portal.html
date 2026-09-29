@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
-  <link rel="stylesheet" href="css/admin-portal.css?v=20260912-bdaywall">
+  <link rel="stylesheet" href="css/admin-portal.css?v=20260929-hold">
   <!-- 禮物中心加工管理與門市查刻圖共用同一組樣式與程式 -->
   <link rel="stylesheet" href="css/store-lookup.css?v=20260820-midclaim">
   <link rel="stylesheet" href="css/admin-portal-footer.css?v=20260601-drag">
@@ -1185,6 +1185,9 @@
         <div class="filter-group">
           <label>狀態</label>
           <select id="clothCaseStatus">
+            <!-- 待確認:付款通知進來了,但還沒確認付款/門市/數量。
+                 師傅看不到這些單,要在這裡放行。 -->
+            <option value="hold">待確認訂單</option>
             <option value="new">待處理</option>
             <option value="">全部</option>
             <option value="done">已完成</option>
@@ -2136,7 +2139,7 @@
 <script src="js/admin-portal-pegavision.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-categories.js?v=20260907-batch3"></script>
 <script src="js/dxf.js?v=20260903-rings"></script>
-<script src="js/admin-portal-cloth.js?v=20260920-case"></script>
+<script src="js/admin-portal-cloth.js?v=20260929-hold"></script>
 <script src="js/store-lookup.js?v=20260827-byphone"></script>
 
 </body>

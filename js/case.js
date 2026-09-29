@@ -810,16 +810,40 @@
     if (!product) return '商品資訊讀取中';
     if (!product.can_design) return '商品未開放客製';
     if (!State.picked) return '請先挑一張圖';
-    if (State.picked.source !== 'market') return '測試階段只開放刻圖市集的圖';
     if (!pickedStore()) return '請選擇取貨門市';
     return '';
   }
 
   function refreshSubmit() {
+    renderPayHint();
     if (!el.submit || submitting) return;
     var why = blockReason();
     el.submit.disabled = !!why;
     el.submit.textContent = why ? why : '前 往 結 帳';
+  }
+
+  /* 結帳前的提醒:付款方式與取貨門市。
+     -----------------------------------------------------------------
+     商城無法針對單一商品關閉付款方式,也無法由我方指定取貨門市,
+     客人到了商城還要再選一次。選錯的話:
+       · 取貨付款 → 還沒付錢,我方會先暫停製作
+       · 門市不同 → 盒子會送錯店
+     所以在【按下去之前】講清楚,而且把他剛選的店名寫出來。
+
+     ⚠ 刻意不用 confirm() 對話框。APP 的 WebView 若沒有實作對應的
+       處理,confirm() 會直接回傳「取消」而且不顯示任何東西 ——
+       客人在 APP 裡會永遠按不過去,而我們看不到任何錯誤。
+       一段一直看得到的字不會有這個問題。 */
+  function renderPayHint() {
+    if (!el.payHint) return;
+    var st = pickedStore();
+    if (!testMode || !st) { el.payHint.hidden = true; return; }
+    el.payHint.hidden = false;
+    el.payHint.innerHTML =
+      '<b>到商城結帳時請這樣選:</b>' +
+      '<span>付款方式　<em>樂活門市－線上信用卡付款</em></span>' +
+      '<span>取貨門市　<em>' + esc(st.name || '你剛剛選的那一家') + '</em></span>' +
+      '<small>選其他付款方式或其他門市的訂單,我們會先暫停製作並與你聯繫。</small>';
   }
 
   /* ---------- 合成圖 ---------- */
@@ -896,6 +920,24 @@
       });
   }
 
+  /* 自己畫/打字的雕刻檔只存在瀏覽器裡(SVG 字串),要先上傳成網址。
+     ⚠ 商城與加工中心只收我方 Storage 的網址(shop 函式會擋),
+       而且那個網址會出現在商城後台,被人點開下載去雕刻。 */
+  function uploadSvg(svgString) {
+    var sb = window.LohasSupabase && window.LohasSupabase.getClient();
+    if (!sb) return Promise.reject(new Error('上傳工具未初始化'));
+    var bucket = (window.LohasSupabase.CONFIG || {}).STORAGE_BUCKET || 'gallery-uploads';
+    var path = 'design-previews/case-' + Date.now() + '-' +
+               Math.random().toString(36).slice(2, 8) + '.svg';
+    var blob = new Blob([svgString], { type: 'image/svg+xml' });
+    return sb.storage.from(bucket)
+      .upload(path, blob, { contentType: 'image/svg+xml', upsert: false })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      });
+  }
+
   /* ---------- 送出 ---------- */
 
   function submit() {
@@ -922,32 +964,44 @@
     el.submit.textContent = '產 生 預 覽 圖 …';
 
     var p = State.picked;
+    var store = pickedStore();
+    var svgUrl = p.svgUrl || '';
     buildPreviewBlob()
       .then(function (blob) {
         el.submit.textContent = '上 傳 中 …';
-        return uploadPreview(blob);
+        return Promise.all([
+          uploadPreview(blob),
+          svgUrl ? svgUrl : (p.svgString ? uploadSvg(p.svgString) : '')
+        ]);
       })
-      .then(function (previewUrl) {
+      .then(function (urls) {
+        var previewUrl = urls[0];
+        svgUrl = urls[1];
+        /* 沒有雕刻檔就刻不了。擋在這裡,不要送一張付了錢卻做不出來的單。 */
+        if (!svgUrl) throw new Error('這張圖沒有線稿,不能拿來雕刻。換一張試試。');
         el.submit.textContent = '送 進 購 物 車 …';
         return shopCall({
           action: 'cart_push',
           /* 不送 client_id —— 商城規格明訂會員編號必須由官網後端從
              session 取得,不可接受前端傳入。shop 函式拿 token 去換。 */
           token: token,
+          /* 取貨門市。商城的 cart/push 沒有這個欄位,而它的付款通知也不會
+             告訴我們客人在商城選了哪一家 —— 所以要在這裡記下來,
+             付款後把盒子搬進加工中心時才知道要送去哪裡。 */
+          store: store,
           main: {
             nid: CHECKOUT.NID,
             amount: 1,
             design: {
-              design_id: p.design_id,
+              /* 只有刻圖市集的圖才有編號(創作者分潤靠它對作品)。
+                 自己畫/打字/上傳一律不帶,由 shop 函式判定為 draw。 */
+              design_id: p.source === 'market' ? p.design_id : '',
               design_name: p.name,
-              engraving_url: p.svgUrl,
+              engraving_url: svgUrl,
               preview_url: previewUrl,
-              /* ⚠ 現在的 shop 函式會把這一包重新組成太陽眼鏡的格式
-                 ({lens, scale, x, y, basis:'product_image'}),
-                 rot 會被丟掉、basis 會被蓋掉。
-                 這次測試只驗「推得進購物車」,所以不影響;
-                 但在 shop 改好之前【不能讓真的訂單走這條路】——
-                 師傅拿到的位置會沒有旋轉。 */
+              /* 相對「盒蓋上的可雕刻範圍」,含旋轉。
+                 ⚠ 需要 shop 函式 2026-09-29 以後的版本 —— 更早的版本
+                   會把它改成太陽眼鏡的格式,旋轉會被丟掉。 */
               placement: {
                 scale: State.scale, x: State.x, y: State.y, rot: State.rot,
                 basis: 'case_plate'
@@ -1081,7 +1135,7 @@
       uploadBtn: $('csUpload'),
       store: $('csStore'), storeHint: $('csStoreHint'), storeRetry: $('csStoreRetry'),
       base: $('csBase'), submit: $('csSubmit'), price: $('csPrice'),
-      priceNote: $('csPriceNote')
+      priceNote: $('csPriceNote'), payHint: $('csPayHint')
     };
     if (!el.stage || !el.plate || !el.overlay) return;
 

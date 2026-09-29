@@ -49,6 +49,10 @@
      ⚠ 同一件事在兩個地方講不同的話,客人會以為那是兩件事,
        或是以為其中一邊出錯了。 */
   function statusText(s) {
+    /* 眼鏡盒付款通知進來、後台還沒確認付款與門市的那一段。
+       ⚠ 不要寫「製作中」—— 還沒開始做。客人如果選了取貨付款,
+         這一段會停到他付款為止,寫「製作中」他會以為快好了。 */
+    if (s === 'hold')     return { cls: 'wait', text: '訂單確認中 · 確認後開始製作' };
     if (s === 'rejected') return { cls: 'warn', text: '需要重做 · 請回製作頁修改' };
     if (s === 'done')     return { cls: 'ok',   text: '已完成，前往領取前請務必先聯絡門市' };
     if (s === 'archived') return { cls: 'muted', text: '已結案' };
