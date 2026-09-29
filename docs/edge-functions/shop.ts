@@ -58,7 +58,20 @@
    然後用瀏覽器開這支的網址就知道線上是不是那一份。
 
    ⚠ 這是給人看的字串,不參與任何邏輯。不要拿它來做版本判斷分支。 */
-const CODE_VERSION = '2026-09-02 · gift.claim_url';
+const CODE_VERSION = '2026-09-29 · 客製眼鏡盒';
+
+/* ===== 客製眼鏡盒 =====
+   -----------------------------------------------------------------
+   哪些商品編號是眼鏡盒。【由伺服器決定】,不看前端說它是什麼 ——
+   前端說「我是眼鏡盒」就走眼鏡盒流程的話,任何人都能把一張
+   太陽眼鏡的單塞進加工中心的待確認清單。
+
+   ⚠ 2881 是【測試商品】(雷刻小物|木紋眼鏡盒)。
+     正式商品建好之後把它換掉,並同步改 js/case.js 的 CHECKOUT.NID。
+     兩邊不一致的話:前端推的是新商品,這裡卻不認得它是盒子 ——
+     那一單會照太陽眼鏡的規則送出去,旋轉被丟掉、門市沒存,
+     付款後也不會進加工中心。而且完全不會報錯。 */
+const CASE_NIDS = new Set<number>([2881]);
 
 // ⚠ 只在 Dashboard 填,不要提交回 GitHub
 const FALLBACK_SITE_KEY = '';
@@ -140,8 +153,8 @@ function reply(code: string, body: Record<string, unknown> = {}, http = 200) {
    理由是商城無從驗證那個 ID 是否真的屬於當下登入者 —— 若接受前端指定,
    任何人都能把商品推進別人的購物車、用掉別人的票券。
    所以 client_id 只有這一個來源,前端送什麼都不看。 */
-async function whoFromToken(token: string): Promise<{ erpid: string; mid: string }> {
-  const none = { erpid: '', mid: '' };
+async function whoFromToken(token: string): Promise<{ erpid: string; mid: string; name: string }> {
+  const none = { erpid: '', mid: '', name: '' };
   if (!token) return none;
   try {
     const r = await fetch(AUTH_FN, {
@@ -152,14 +165,42 @@ async function whoFromToken(token: string): Promise<{ erpid: string; mid: string
     const j = await r.json();
     if (String(j?.code) !== '200') return none;
     /* auth-session 一直都有回 mid,是這支先前自己丟掉的。
-       未綁定門市的人 erpid 是空字串、mid 有值。 */
+       未綁定門市的人 erpid 是空字串、mid 有值。
+
+       name(2026-09-29):眼鏡盒進加工中心時要有客人姓名,
+       製作單會跟著盒子寄到門市,門市靠姓名找人。
+       ⚠ 姓名【只能】來自這裡(簽進 token 的那一份),不從前端讀 ——
+         前端說了算的話,製作單上寫的就是任何人想寫的名字。 */
     return {
       erpid: String(j?.erpid || '').trim(),
       mid: String(j?.mid || '').trim(),
+      name: String(j?.name || '').trim().slice(0, 60),
     };
   } catch {
     return none;
   }
+}
+
+/* 取貨門市(眼鏡盒用)。與 cloth 函式的 pickStore 同一個規則:
+   只留三個欄位、截短、erpid 限英數。取不到就回 null 讓呼叫端拒絕。 */
+function pickStore(v: unknown): { store_erpid: string; store_name: string | null; store_city: string | null } | null {
+  const o = (v || {}) as Record<string, unknown>;
+  const id = String(o.erpid ?? '').trim();
+  if (!id || !/^[0-9A-Za-z_-]{1,32}$/.test(id)) return null;
+  return {
+    store_erpid: id,
+    store_name: String(o.name ?? '').slice(0, 80) || null,
+    store_city: String(o.city ?? '').slice(0, 40) || null,
+  };
+}
+
+/* 角度正規化成 0–359。非數字一律當 0。
+   ⚠ 這個值會進 DXF —— 負數或 400 度在畫面上看不出問題,
+     到了雕刻機那一端才會變成轉錯方向。 */
+function normDeg(v: unknown): number {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return ((n % 360) + 360) % 360;
 }
 
 /** 只放行我方 Storage 上的網址,其餘一律丟掉(理由見 ASSET_HOST) */
@@ -182,7 +223,8 @@ function clamp01(v: unknown): number {
 /* 組出要送給商城的 cart/push body。
    前端送來的東西一律當成不可信,逐欄挑出來重建 ——
    直接把 body 轉發等於把金鑰的權限開放給任何呼叫者。 */
-function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<string, any>, submissionId: string) {
+function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<string, any>,
+                       submissionId: string, isCase = false) {
   const m = body.main || {};
   const d = m.design || {};
   const p = d.placement || {};
@@ -203,13 +245,29 @@ function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<str
 
     design_id:   String(d.design_id || '').slice(0, 100),
     design_name: String(d.design_name || '').slice(0, 200),
-    placement: {
-      lens:  p.lens === 'left' ? 'left' : 'right',
-      scale: clamp01(p.scale),
-      x:     clamp01(p.x),
-      y:     clamp01(p.y),
-      basis: 'product_image',
-    },
+    /* 🚨 眼鏡盒與太陽眼鏡的座標是【兩套不同的東西】,不能共用一個格式。
+       -----------------------------------------------------------
+         太陽眼鏡  相對「商品圖」,要分左右鏡片,沒有旋轉
+         眼鏡盒    相對「盒蓋上的可雕刻範圍」,沒有左右,【有旋轉】
+
+       2026-09-28 的測試就是用太陽眼鏡的格式送的:rot 被丟掉、
+       basis 被蓋成 product_image —— 師傅拿到的位置沒有旋轉,
+       而且不會有任何錯誤。 */
+    placement: isCase
+      ? {
+          scale: clamp01(p.scale),
+          x:     clamp01(p.x),
+          y:     clamp01(p.y),
+          rot:   normDeg(p.rot),
+          basis: 'case_plate',
+        }
+      : {
+          lens:  p.lens === 'left' ? 'left' : 'right',
+          scale: clamp01(p.scale),
+          x:     clamp01(p.x),
+          y:     clamp01(p.y),
+          basis: 'product_image',
+        },
   };
   // 三個網址各自檢查,缺哪個就不帶哪個(商城端對缺欄位的處理比對錯誤網址安全)
   const eng   = safeAssetUrl(d.engraving_url);
@@ -230,7 +288,15 @@ function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<str
      還沒有任何刻圖 —— 硬塞一個空的 design 進去,商城會收到一筆
      design_id 為空字串、placement 全是 0 的資料,那比沒有更糟:
      後台會顯示「有客製」但點開什麼都沒有。 */
-  if (d.design_id) main.design = design;
+  /* 🚨 眼鏡盒【一律】帶 design,就算沒有刻圖編號(自己畫/打字/上傳)。
+     -----------------------------------------------------------
+     商城只對「含 main.design」的訂單發 design_order 通知
+     (docs/串接現況.md 第 171 行)。自己畫的盒子不帶的話:
+     客人付了錢 → 商城不通知 → 那個盒子永遠進不了加工中心,
+     而且我方完全不知道有這一單。
+     它不像禮物 B 路線那樣「點開什麼都沒有」—— 盒子一定有
+     雕刻檔與合成圖(下方 cart_push 會擋掉缺圖的)。 */
+  if (d.design_id || isCase) main.design = design;
   /* sid 只在「真的有規格」時才帶。商城端說明:無規格商品帶了 sid 會被擋,
      省略 / null / 0 都會被當成 0 通過。所以寧可不帶。 */
   const sid = Number(m.sid);
@@ -348,10 +414,16 @@ function submissionRow(
   mid: string,
   out: Record<string, any>,
   shop: { code: string; message: string; cartUrl: string },
+  caseInfo: Record<string, unknown> | null = null,
 ): Record<string, unknown> {
   const main = out.main || {};
   const design = main.design || {};
   return {
+    /* 眼鏡盒才有的:品項、來源、姓名、取貨門市。
+       付款通知進來時 shop-webhook 靠這幾欄把盒子搬進加工中心 ——
+       商城的通知裡沒有門市也沒有姓名,這裡沒存就再也拿不到。
+       太陽眼鏡這幾欄是 null。 */
+    ...(caseInfo || {}),
     /* 主鍵用我方送給商城的那一組,不讓資料庫自己產 ——
        兩邊必須是同一個值,商城回拋時才對得上。 */
     id: design.submission_id,
@@ -425,6 +497,7 @@ Deno.serve(async (req) => {
   let out: Record<string, unknown>;
   let erpid = '';
   let mid = '';
+  let caseInfo: Record<string, unknown> | null = null;
 
   if (action === 'cart_push') {
     const who = await whoFromToken(String(body.token || ''));
@@ -448,9 +521,36 @@ Deno.serve(async (req) => {
 
     if (!Number(body?.main?.nid)) return reply('006', { message: '缺少商品編號' }, 400);
 
+    /* ===== 眼鏡盒:送進購物車之前先把關 =====
+       擋在這裡,不是等付款後才發現。付款後才發現少東西的話,
+       那是一筆已經收了錢、卻做不出來的訂單。 */
+    const isCase = CASE_NIDS.has(Number(body.main.nid));
+    if (isCase) {
+      const dz = (body.main.design || {}) as Record<string, unknown>;
+      /* 沒有雕刻檔就刻不了。合成圖是給師傅與客人對照位置的,也要有。
+         ⚠ 兩者都必須是我方 Storage 的網址(safeAssetUrl)——
+           這兩個網址會出現在商城後台與加工中心,會被人點開。 */
+      if (!safeAssetUrl(dz.engraving_url) || !safeAssetUrl(dz.preview_url)) {
+        return reply('006', { message: '圖案檔案不完整,請重新產生後再送出' }, 400);
+      }
+      const store = pickStore(body.store);
+      if (!store) {
+        return reply('006', { message: '請選擇要到哪一家門市拿' }, 400);
+      }
+      caseInfo = {
+        product: 'case',
+        /* 有刻圖市集編號才算 market;自己畫/打字/上傳一律 draw。
+           ⚠ cloth_designs 的 source 只收 market / draw(資料表約束),
+             送別的值進去,付款後搬進加工中心那一步會被擋下。 */
+        source: dz.design_id ? 'market' : 'draw',
+        member_name: who.name || null,
+        ...store,
+      };
+    }
+
     /* 送出前先決定這一筆的識別碼,而不是等寫紀錄時才由資料庫產生 ——
        商城要收到的和我方要存的必須是同一個值。 */
-    out = buildCartBody(clientId, erpid ? 'erp' : 'mid', body, crypto.randomUUID());
+    out = buildCartBody(clientId, erpid ? 'erp' : 'mid', body, crypto.randomUUID(), isCase);
     console.log('[shop] cart_push client=' + clientId + '(' + (erpid ? 'erp' : 'mid') + ')' +
                 ' nid=' + (out as any).main.nid +
                 ' submission=' + ((out as any).main.design?.submission_id || '-'));
@@ -484,7 +584,7 @@ Deno.serve(async (req) => {
         code:    String(j?.code ?? r.status),
         message: String(j?.message ?? ''),
         cartUrl: String(j?.data?.cart_url ?? ''),
-      }));
+      }, caseInfo));
     }
 
     return new Response(JSON.stringify(j), {
@@ -499,7 +599,7 @@ Deno.serve(async (req) => {
         code:    'FETCH_FAILED',
         message: e instanceof Error ? e.message : String(e),
         cartUrl: '',
-      }));
+      }, caseInfo));
     }
     return reply('500', { message: '無法連線到商城,請稍後再試' }, 502);
   }
