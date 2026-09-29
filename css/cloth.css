@@ -214,6 +214,23 @@
   cursor:crosshair;
   display:block;
 }
+
+/* 打字那一張只是【預覽】,不能在上面畫 ——
+   它沿用 .cl-canvas 的樣子,卻也跟著繼承了 touch-action:none,
+   於是手指剛好落在它上面時整頁捲不動,而上面根本沒有東西可以操作。 */
+.cl-canvas--preview{ touch-action:auto; cursor:default }
+
+/* 🚨 手機:畫布右邊留一條給手指捲頁(2026-09-29)。
+   -----------------------------------------------------------------
+   畫布佔滿整個寬度、又是 touch-action:none 的時候,手機上想往下
+   滑一定會碰到它 —— 結果不是捲頁,是在畫布上畫出一條線,
+   客人得先按「上一步」把那條線刪掉,再想辦法從別的地方滑。
+
+   ⚠ 留在【右邊】:多數人用右手拇指滑,拇指自然落在螢幕右側。
+   ⚠ 48px 約是一個拇指寬;再窄就又會壓到畫布邊緣。 */
+@media (max-width:960px){
+  .cl-canvas:not(.cl-canvas--preview){ width:calc(100% - 48px) }
+}
 .cl-draw-tools{ margin-top:12px; display:flex; flex-direction:column; gap:10px }
 .cl-brush{ display:flex; align-items:center; gap:10px;
   font-size:13px; color:var(--text-sub) }
