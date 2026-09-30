@@ -97,9 +97,19 @@
 
   function applyCrop() {
     if (!cropper) return closeModal(null);
+    /* ⚠ JPG 一定要鋪白底(2026-09-30 潭子那件眼鏡布查到)。
+       -----------------------------------------------------------------
+       getCroppedCanvas 算輸出尺寸時會四捨五入,圖常常蓋不滿最右一欄、
+       最下一列,那一兩個像素是透明的。存成 PNG 沒事;存成 JPG 沒有
+       透明這回事,透明會變成【黑色】—— 右邊跟下緣多出一條細黑線。
+       刻圖那條路接著把黑色當成墨,描出一條 L 形外框,師傅照刻。
+       客人上傳的照片九成是 JPG,而那條線細到在預覽上像是故意的邊框。
+       PNG 不鋪:後台與會員頭像有去背的圖,鋪了就不透明了。 */
+    const isJpeg = /jpe?g/i.test(originalFileType);
     const canvas = cropper.getCroppedCanvas({
       maxWidth: 1600,
       maxHeight: 1600,
+      fillColor: isJpeg ? '#fff' : 'transparent',
       imageSmoothingEnabled: true,
       imageSmoothingQuality: 'high'
     });
