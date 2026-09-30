@@ -990,6 +990,18 @@
           window.dataLayer.push(dl);
         }
 
+        /* OpenAI(ChatGPT 廣告)的預約轉換。2026-09-30 加。
+           像素本體裝在每一頁的 <head>(oaiq),這裡只送「預約完成」這一個事件。
+           ⚠ 與轉換 API(docs/edge-functions/oai-conv.ts)【二選一】——
+             兩個都開的話同一次預約會被算兩次,而這個呼叫沒有欄位可以
+             讓兩邊對上是同一件事。目前用的是這一個,轉換 API 沒有部署。
+           ⚠ 包在 typeof 檢查裡:廣告攔截器會擋掉像素,那時 oaiq 不存在,
+             直接呼叫會丟錯 —— 雖然外層有 try,但不該讓廣告碼的問題
+             有機會碰到預約流程。 */
+        if (typeof window.oaiq === 'function') {
+          window.oaiq('measure', 'appointment_scheduled', { type: 'customer_action' });
+        }
+
         // 用完即清，避免下一次預約沿用舊來源
         try { sessionStorage.removeItem('lohas_booking_source'); } catch (e) {}
       } catch (e) {
