@@ -687,3 +687,18 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - `docs/串接現況.md` — 與商城共用的介面契約與現況,**公開**,雙方的工程與 AI 工具都會讀。
 - `docs/給*.md`、`docs/回覆*.md`、`docs/廠商來文/` — 雙方往來信件,**已 gitignore**,
   不進 repo。裡面有雙方的檢討與內部推論,不該公開。
+
+---
+
+## 特約店家 LOGO → 我的刻圖設計（2026-09-30，App／芽芽工程方新增）
+
+- 新 Edge Function **`partner-logo`**（`docs/edge-functions/partner-logo.ts`，verify_jwt OFF，**不需任何金鑰／Secret**）：
+  特約負責人在樂活 App 芽芽「特約小幫手」做好店家 LOGO → 寵物服務給一張一次性票券 → 這支回頭去
+  `https://lohas-pet.onrender.com/site/logo-ticket/<票券>` 拉（網址寫死）→ 存 `engraving-uploads/designs/<erpid>/partner-<單位>-<ms>.svg|.png`
+  → `engraving_designs` 一列（description 帶 `[partner-unit:<nid>]`，同人同單位重做只更新圖）。GET 這支回 `code_version` 自檢。
+- 🔒 **狀態是 `status='private'`、`is_show='私人'`，不是 approved**：所有公開挑選器都只撈 approved，所以別人看不到、
+  也不佔名稱唯一索引。**新寫挑選器請繼續用 `.eq('status','approved')`，私人 LOGO 就不會漏出去。**
+- 看得到的只有兩處：`member-portal.js`「我的刻圖設計」（標「私人」、不給編輯，編輯會送審變公開）、
+  `design.js` 下單頁（`loadMyPrivate()` 只補【本人】的私人 LOGO 在最前面，讓他能拿去雕刻）。
+- 雕刻格式：黑色、透明底；SVG 只含 `<path fill="#000000">`（寵物服務組的，函式用固定格式驗）、PNG 1024×1024。
+- 副作用：插入時 `auto_upgrade_to_creator_on_insert` 會替這位負責人建一列 `creators`（既有觸發器，未改）。

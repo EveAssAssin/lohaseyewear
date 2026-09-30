@@ -274,11 +274,36 @@
       .limit(300)
       .then(function (res) {
         State.designs = res.data || [];
+        return loadMyPrivate(sb);
+      })
+      .then(function () {
         renderDesigns();
       })
       .catch(function () {
         el.designGrid.innerHTML = '<p class="dz-empty">刻圖載入失敗</p>';
       });
+  }
+
+  /* 自己的私人刻圖(2026-09-30,App 工程方加):特約店家負責人在樂活 App 做的店家 LOGO,
+     官網 Edge Function partner-logo 存成 status='private'、is_show='私人' ——
+     公開挑選器都只撈 approved,所以別人看不到;這裡只把【本人的】補在最前面,讓他能拿去雕刻。
+     沒登入 / 沒客編 / 查不到都安靜略過(不影響一般刻圖)。 */
+  function loadMyPrivate(sb) {
+    var m = Auth && Auth.getStoredMember ? Auth.getStoredMember() : null;
+    var erpid = m && m.erpid ? String(m.erpid) : '';
+    if (!erpid) return Promise.resolve();
+    return sb.from('engraving_designs')
+      .select('id, name, designer_name, category, image_url, image_url_png, image_url_svg')
+      .eq('creator_id', erpid)
+      .eq('status', 'private')
+      .neq('is_show', '垃圾桶')
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(function (r) {
+        var mine = (r && r.data) || [];
+        mine.forEach(function (d) { d.designer_name = (d.designer_name ? d.designer_name + '・' : '') + '只有你看得到'; });
+        State.designs = mine.concat(State.designs);
+      }, function () { /* 略過 */ });
   }
 
   function designUrl(d) {

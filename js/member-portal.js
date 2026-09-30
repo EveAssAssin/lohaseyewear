@@ -1220,6 +1220,8 @@
       const isApproved = d.status === 'approved';
       const isPending = d.status === 'pending';
       const isOff = isApproved && (d.is_show || '上架') === '下架';  // 已通過但被下架
+      // 私人(2026-09-30,App 工程方加):特約店家在樂活 App 做的店家 LOGO,只有本人看得到、可拿去雕刻,不上市集
+      const isPrivate = d.status === 'private';
       // 優先 PNG (透明) → image_url(原始) → SVG
       var coverImg = '';
       var candidates = [d.image_url_png, d.image_url, d.image_url_svg];
@@ -1230,9 +1232,9 @@
           break;
         }
       }
-      const statusLabel = isOff ? '已 下 架' : isApproved ? '已 上 架' : isPending ? '審 核 中' : '未 通 過';
-      const statusIcon  = isOff ? 'eye-slash' : isApproved ? 'check' : isPending ? 'clock' : 'xmark';
-      const badgeClass  = isOff ? 'archived' : d.status;
+      const statusLabel = isPrivate ? '私 人' : isOff ? '已 下 架' : isApproved ? '已 上 架' : isPending ? '審 核 中' : '未 通 過';
+      const statusIcon  = isPrivate ? 'lock' : isOff ? 'eye-slash' : isApproved ? 'check' : isPending ? 'clock' : 'xmark';
+      const badgeClass  = isPrivate ? 'approved' : isOff ? 'archived' : d.status;
       const wishCount   = wishCounts[d.id] || 0;
       return `
         <div class="photo-card" data-design-id="${d.id}">
@@ -1257,7 +1259,7 @@
           </div>
           <div class="photo-info">
             <div class="photo-name">${escapeHtml(d.name || '')}</div>
-            <div class="photo-date">${isOff ? '已被管理員下架' : isApproved ? `<i class="fa-solid fa-pencil"></i>被加入我的最愛刻圖 ${wishCount} 次` : (isPending ? '審核通過後開放收藏' : '未通過審核')}</div>
+            <div class="photo-date">${isPrivate ? '<i class="fa-solid fa-lock"></i>店家 LOGO・只有你看得到，可以拿去雕刻' : isOff ? '已被管理員下架' : isApproved ? `<i class="fa-solid fa-pencil"></i>被加入我的最愛刻圖 ${wishCount} 次` : (isPending ? '審核通過後開放收藏' : '未通過審核')}</div>
           </div>
           ${(isPending || isApproved) ? `<button class="design-chat-btn" data-design-id="${escapeHtml(d.id)}" data-design-name="${escapeHtml(d.name || '')}"><i class="fa-regular fa-message"></i>客服對話</button>` : ''}
         </div>`;
@@ -1319,8 +1321,8 @@
     }
 
     // 狀態 pill
-    const statusLabel = isOff ? '已 下 架' : ({ approved:'已 上 架', pending:'審 核 中', rejected:'未 通 過' }[status] || status);
-    const statusIcon  = isOff ? 'eye-slash' : ({ approved:'check',   pending:'clock',     rejected:'xmark'    }[status] || 'circle-info');
+    const statusLabel = isOff ? '已 下 架' : ({ approved:'已 上 架', pending:'審 核 中', rejected:'未 通 過', private:'私 人' }[status] || status);
+    const statusIcon  = isOff ? 'eye-slash' : ({ approved:'check',   pending:'clock',     rejected:'xmark',    private:'lock' }[status] || 'circle-info');
     if (modalStatus) {
       modalStatus.className = 'modal-status ' + (isOff ? 'archived' : status);
       modalStatus.innerHTML = `<i class="fa-solid fa-${statusIcon}"></i>${statusLabel}`;
@@ -1351,8 +1353,8 @@
     if (status === 'rejected') {
       html += '<button class="btn warn" data-action="re-upload-design"><i class="fa-solid fa-rotate"></i> 重新上傳</button>';
     }
-    // 編輯 (所有狀態都可)
-    html += '<button class="btn" data-action="edit-design"><i class="fa-solid fa-pen"></i> 編輯</button>';
+    // 編輯 (所有狀態都可;私人 LOGO 除外 —— 它由 App 的特約小幫手管理,在這裡編輯會送去審核、變成公開作品)
+    if (status !== 'private') html += '<button class="btn" data-action="edit-design"><i class="fa-solid fa-pen"></i> 編輯</button>';
     // 上下架切換 (只有已通過可切)
     if (status === 'approved') {
       html += isOff
