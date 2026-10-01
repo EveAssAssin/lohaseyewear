@@ -1133,7 +1133,7 @@
     if (!box || !agree || !okBtn || !cancel) {
       return Promise.resolve(window.confirm(
         '送出前請確認:\n\n' +
-        '1. 取貨時需出示帶 #樂活眼鏡 的貼文才能領取。\n' +
+        '1. 取貨時需出示你在樂活 THREADS 活動貼文下的留言(帶 #樂活眼鏡)才能領取。\n' +
         '2. 存檔後不能再調整,製作端會照現在的樣子做出來。\n\n' +
         '確定要送出製作嗎?'
       ));
@@ -1301,9 +1301,11 @@
   var SHARE_AT = '@lohas_eyewears';
   /* 「開啟 THREADS」要開的連結(營運指定,2026-09-24)。要換連結改這一行。 */
   var SHARE_THREADS_URL = 'https://www.threads.com/share/GGKeSEe76/';
+  /* 2026-10-01 起是【留言】的文案(到 SHARE_THREADS_URL 那篇活動貼文底下留言),
+     不是發新貼文 —— 在樂活自己的貼文底下 @樂活 沒有意義,所以不帶 SHARE_AT。 */
   var SHARE_TEXT =
-    '在樂活眼鏡做了一條專屬的客製眼鏡布 ✨\n' +
-    '自己挑的圖，刻上去就是獨一無二的。\n' + SHARE_AT + ' ' + SHARE_TAG;
+    '我也做了一條專屬的客製眼鏡布 ✨\n' +
+    '自己挑的圖，刻上去就是獨一無二的。\n' + SHARE_TAG;
 
   function done() {
     /* ⚠ el.left(眼鏡布預覽)也要收起來。
@@ -1362,7 +1364,7 @@
     if (thB) {
       thB.href = SHARE_THREADS_URL;
       thB.addEventListener('click', function () {
-        copyText().then(function () { say('文案已複製,到 THREADS 發文時貼上就可以了。'); })
+        copyText().then(function () { say('文案已複製。到貼文下面留言:貼上文案、再附上剛剛存的作品圖。'); })
                   .catch(function () {});
       });
     }
@@ -1390,7 +1392,7 @@
 
     if (copyB) {
       copyB.addEventListener('click', function () {
-        copyText().then(function () { say('文案已複製,貼到貼文裡就可以了。'); })
+        copyText().then(function () { say('文案已複製,貼到留言裡就可以了。'); })
                   .catch(function () { say('複製失敗,請手動選取上面的文字。'); });
       });
     }
@@ -1406,19 +1408,25 @@
     var canShareFile = !!(file && navigator.canShare &&
                           navigator.canShare({ files: [file] }) && navigator.share);
 
+    /* 2026-10-01 改成【到活動貼文留言】之後,系統分享選單只用來「存圖」:
+       手機上 <a download> 存到的是「檔案」不是相簿,而 Threads 留言附圖
+       是從相簿選 —— 分享選單裡的「儲存影像」才會進相簿。
+       ⚠ 不再帶 text、也不要引導選 THREADS:那會開一篇【新貼文】,
+         正是 2026-09-24～10-01 沒人去活動貼文留言的原因之一。 */
     if (canShareFile && shareB) {
       shareB.hidden = false;
+      if (downB) downB.hidden = true;           // 手機用分享選單存相簿就好,兩顆會搞混
       shareB.addEventListener('click', function () {
-        copyText().catch(function () {});     // 先複製,理由見上面
-        navigator.share({ files: [file], text: SHARE_TEXT })
-          .then(function () { say('分享出去之後,取貨時記得出示那則貼文。'); })
+        navigator.share({ files: [file] })
+          .then(function () { say('存好之後,按「去活動貼文留言」。'); })
           .catch(function (e) {
             if (e && e.name === 'AbortError') return;   // 客人自己取消,不是錯誤
-            say('系統分享沒成功,可以改用下面的「下載圖片」再自己發。');
+            say('沒存成功的話,可以長按上面的作品圖選「儲存影像」。');
           });
       });
+      say('選單裡選「儲存影像」就會存進相簿。');
     } else {
-      say('在手機上開這一頁,可以一鍵把圖和文案一起分享到 THREADS。');
+      say('先下載作品圖,再按「去活動貼文留言」。');
     }
   }
 

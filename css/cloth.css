@@ -669,6 +669,11 @@
 .cl-share-title { margin: 0 0 6px; font-size: 1rem; font-weight: 700; color: #4a3f28; }
 .cl-share-title i { color: #c9584f; margin-right: 6px; }
 .cl-share-note  { margin: 0 0 12px; font-size: .86rem; line-height: 1.6; color: #5c5240; }
+/* 2026-10-01 改成三步驟的 <ol>:整區置中,但步驟要靠左才讀得順 */
+ol.cl-share-note { display: inline-block; text-align: left; padding-left: 1.4em; }
+ol.cl-share-note li { margin-bottom: 3px; }
+/* ⚠ .cl-done-btn 有自己的 display,hidden 屬性會被蓋掉 —— 手機要藏「下載作品圖」 */
+.cl-done-btn[hidden] { display: none !important; }
 .cl-share-img {
     max-width: 260px;
     width: 100%;
