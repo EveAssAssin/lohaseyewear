@@ -1299,8 +1299,13 @@
 
      @提及會產生通知,不依賴標籤有沒有生效。兩條路都留著。 */
   var SHARE_AT = '@lohas_eyewears';
-  /* 「開啟 THREADS」要開的連結(營運指定,2026-09-24)。要換連結改這一行。 */
-  var SHARE_THREADS_URL = 'https://www.threads.com/share/GGKeSEe76/';
+  /* 「去活動貼文留言」要開的貼文(營運指定;要換貼文改這一行)。
+     🚨 一定要用貼文的【完整網址】(threads.com/@帳號/post/貼文代碼),不要用 threads.com/share/xxx 短連結 ——
+       手機裝了 Threads App 時,share 短連結常常只把 App 打開到首頁、不會跳到那篇貼文
+       (2026-10-01 門市回報「只跳到 Threads 自己的頁面」)。短連結要先用電腦瀏覽器打開,
+       網址列會變成完整網址,把那個貼進來(問號後面的 ?xmt=… 不用)。
+       目前＝EP.03(share/GGKeSEe76、share/HQYJrXPBw 兩個短連結都指向這一篇)。 */
+  var SHARE_THREADS_URL = 'https://www.threads.com/@lohas_eyewears/post/DdBIfbijX0l';
   /* 2026-10-01 起是【留言】的文案(到 SHARE_THREADS_URL 那篇活動貼文底下留言),
      不是發新貼文 —— 在樂活自己的貼文底下 @樂活 沒有意義,所以不帶 SHARE_AT。 */
   var SHARE_TEXT =
