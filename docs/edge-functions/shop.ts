@@ -58,7 +58,7 @@
    然後用瀏覽器開這支的網址就知道線上是不是那一份。
 
    ⚠ 這是給人看的字串,不參與任何邏輯。不要拿它來做版本判斷分支。 */
-const CODE_VERSION = '2026-09-29 · 客製眼鏡盒';
+const CODE_VERSION = '2026-10-01 · 眼鏡盒結帳限制';
 
 /* ===== 客製眼鏡盒 =====
    -----------------------------------------------------------------
@@ -551,6 +551,26 @@ Deno.serve(async (req) => {
     /* 送出前先決定這一筆的識別碼,而不是等寫紀錄時才由資料庫產生 ——
        商城要收到的和我方要存的必須是同一個值。 */
     out = buildCartBody(clientId, erpid ? 'erp' : 'mid', body, crypto.randomUUID(), isCase);
+
+    /* 眼鏡盒的結帳限制,由商城在伺服器端執行(2026-10-01,商城 PR site-case-checkout)。
+       -----------------------------------------------------------
+       ・payment online_card:只能「樂活門市-線上信用卡付款」。
+         商城是在【付款完成】才發 design_order,我方收到才開始刻;
+         到門市才付款的話通知要等取貨才來,盒子卻要先刻好才能取貨 ——
+         那一單永遠做不出來。
+       ・pickup_store_erpid:客人在我方頁面選的門市,商城轉成它自己的門市代碼
+         並鎖住結帳頁的門市選單。對不到門市時商城回 027,客人當下就看得到。
+       ・max_quantity 1:一份設計對應一件雷刻,數量 2 等於同一張圖刻兩次。
+       ⚠ 商城還沒部署這一版之前,未知的 main.checkout 會被忽略(不會出錯),
+         所以這一段可以先上線。商城有沒有收到,看回應裡的 data.checkout。 */
+    if (isCase && caseInfo) {
+      (out.main as Record<string, unknown>).checkout = {
+        payment: 'online_card',
+        pickup_store_erpid: String(caseInfo.store_erpid),
+        max_quantity: 1,
+      };
+    }
+
     console.log('[shop] cart_push client=' + clientId + '(' + (erpid ? 'erp' : 'mid') + ')' +
                 ' nid=' + (out as any).main.nid +
                 ' submission=' + ((out as any).main.design?.submission_id || '-'));
@@ -580,6 +600,12 @@ Deno.serve(async (req) => {
     if (j && typeof j === 'object' && 'debug' in j) delete (j as any).debug;
 
     if (action === 'cart_push') {
+      /* 送了限制,商城卻沒有回報收到 —— 代表商城還沒部署那一版,或欄位被白名單吃掉。
+         這時客人仍選得到其他付款方式。不擋(擋了就完全買不了),但一定要留紀錄,
+         否則要等到一單永遠刻不出來才會發現。 */
+      if (caseInfo && String(j?.code) === '200' && !j?.data?.checkout) {
+        console.warn('[shop] 眼鏡盒送了 checkout,商城回應沒有 data.checkout(商城未部署限制?)');
+      }
       await logSubmission(submissionRow(erpid, mid, out, {
         code:    String(j?.code ?? r.status),
         message: String(j?.message ?? ''),
