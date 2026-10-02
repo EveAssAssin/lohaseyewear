@@ -357,12 +357,11 @@
     Utils.setText('#profile-name', m.name || '-');
     Utils.setText('#profile-mobile', m.mobile || '-');
     Utils.setText('#profile-email', m.email || '-');
-    /* 生日不開放在官網填(2026-10-02 客人反映「生日不能輸入」):
-       生日禮的資格以門市會員資料(ERP)為準,官網能改的話等於自己決定哪個月領生日禮。
-       沒有資料時講清楚要去哪裡登記,不要只顯示一個「-」讓人以為壞了。 */
-    Utils.setText('#profile-birthday', m.birthday || (Auth.isErpBound()
-      ? '尚未登記,請到樂活門市由店員協助登記'
-      : '完成門市會員綁定後會自動帶入(第一次到門市時店員會協助)'));
+    Utils.setText('#profile-birthday', m.birthday || '-');
+    /* 2026-10-02 客人反映「生日不能輸入」：生日禮資格以門市會員資料(ERP)為準，官網不開放填。
+       電話／信箱／生日任一空白就在下方顯示紅字，請客人到門市完成會員認證。 */
+    const erpNote = document.getElementById('profile-erp-note');
+    if (erpNote) erpNote.hidden = !!(m.mobile && m.email && m.birthday);
 
     // 創作者個人頁(如果是 Creator,把 creators table 資料填進去)
     if (State.isCreator && State.creatorInfo) {
