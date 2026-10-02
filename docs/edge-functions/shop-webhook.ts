@@ -248,7 +248,7 @@ async function handleDesignOrder(body: Record<string, any>) {
   });
   if (!r.ok) throw new Error('回填 order_no 失敗 ' + r.status);
 
-  /* 眼鏡盒:搬進加工中心(待確認)。太陽眼鏡不走這裡。 */
+  /* 眼鏡盒:搬進加工中心(待製作)。太陽眼鏡不走這裡。 */
   const moved = await moveCaseToLab(target, orderNo);
 
   return { result: 'ok', note: `submission ${target} → ${orderNo}（${how}）` + moved };
@@ -256,15 +256,20 @@ async function handleDesignOrder(body: Record<string, any>) {
 
 /* ---------- 眼鏡盒:付款通知進來 → 搬進加工中心 ----------
 
-   🚨 搬進去的狀態是 'hold'(待確認),【不是】'new'(待製作)。
+   直接進 'new'(待製作),師傅馬上看得到。(2026-10 上線時由 'hold' 改過來)
    -----------------------------------------------------------------
-   商城無法針對單一商品關閉付款方式,而這個通知【只代表訂單成立】,
-   裡面沒有付款狀態、取貨門市、數量。所以:
-     · 選取貨付款的客人還沒付錢
-     · 客人可能在商城選了另一家門市
-     · 客人可能把數量改成 2
-   三件都要人去商城後台用 order_no 查一次,確認後才放行給師傅。
-   hold 的單師傅【看不到】(cloth-admin 對通行碼那條路擋掉)。
+   原本進 'hold'(待確認)要人去商城後台查過才放行,因為當時商城
+   擋不住:客人可能選取貨付款(還沒付錢)、選別家門市、把數量改成 2。
+
+   商城 2026-10-01 起在伺服器端擋掉這三件事(PR #1 / #2,
+   app/Library/SiteCheckout.php):眼鏡盒只能「樂活門市-線上信用卡付款」、
+   取貨門市鎖定為官網選的那一家、數量上限 1。
+   而 design_order 是在【付款完成】才發的 —— 收到它就代表錢已經付了。
+   所以不需要再人工確認。
+
+   ⚠ 'hold' 這個狀態與後台「眼鏡盒待確認」那一頁都保留:
+     日後若要人工攔單(例如發現商城限制失效),把下面的 status 改回 'hold'
+     就好,其餘不用動。hold 的單師傅看不到(cloth-admin 對通行碼那條路擋掉)。
 
    ⚠ 失敗要 throw,不要吞掉。
      這裡失敗代表「客人付了錢、盒子卻沒進加工中心」。throw 之後
@@ -289,7 +294,7 @@ async function moveCaseToLab(submissionId: string, orderNo: string): Promise<str
 
   const row = {
     product:       'case',
-    status:        'hold',
+    status:        'new',      // 要恢復人工確認就改回 'hold'(理由見上)
     submission_id: submissionId,
     order_no:      orderNo,
     erpid:         s.erpid || null,
@@ -317,8 +322,8 @@ async function moveCaseToLab(submissionId: string, orderNo: string): Promise<str
     const txt = await ins.text();
     throw new Error('眼鏡盒搬進加工中心失敗 ' + ins.status + ' ' + txt.slice(0, 200));
   }
-  console.log('[shop-webhook] 眼鏡盒進加工中心(待確認) submission=' + submissionId + ' order=' + orderNo);
-  return ' · 眼鏡盒已進待確認';
+  console.log('[shop-webhook] 眼鏡盒進加工中心(' + row.status + ') submission=' + submissionId + ' order=' + orderNo);
+  return ' · 眼鏡盒已進加工中心(' + row.status + ')';
 }
 
 /* ---------- 入口 ---------- */
@@ -332,7 +337,7 @@ Deno.serve(async (req) => {
       function: 'shop-webhook',
       /* 線上實際跑的是哪一版。2026-08-28 那次事故的根本原因就是
          「從外面看不出線上是哪一版」。每改一次就更新這個字串。 */
-      code_version: '2026-09-29 · 眼鏡盒進待確認',
+      code_version: '2026-10 · 眼鏡盒直接進待製作',
       設定完整: WEBHOOK_KEY !== '' && SB_URL !== '' && SB_KEY !== '',
       SHOP_WEBHOOK_KEY: WEBHOOK_KEY === '' ? '✗ 未設定' : '✓ 已設定（長度 ' + WEBHOOK_KEY.length + '）',
       SUPABASE_URL: SB_URL === '' ? '✗ 未注入' : '✓',
