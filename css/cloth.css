@@ -695,7 +695,26 @@ ol.cl-share-note li { margin-bottom: 3px; }
    ⚠ 只顯示已完成的作品,姓名遮罩在伺服器端做。
    ⚠ 沒資料或載入失敗時整區由 JS 收起來 —— 空的分享牆比沒有難看。
    ============================================================= */
-.cw-sec { max-width: 1080px; margin: 40px auto 8px; padding: 0 16px; }
+.cw-sec { max-width: 1080px; margin: 0 auto 8px; padding: 40px 16px 0; }
+/* 分享牆要疊在「置頂的來源列」(z 6)與手機上釘住的預覽(z 5)上面。
+   -------------------------------------------------------------
+   來源列是 sticky,而它的範圍是整個 .cl-main —— 分享牆也在裡面,
+   所以捲到牆的時候它還釘在頂端,把牆的上緣蓋掉(2026-10-03 改)。
+   不改它黏住的行為(捲下去挑圖時要按得到),改成讓牆蓋過它:
+   捲到這裡時,來源列自然滑到牆底下。
+   · 背景用頁面同一個底色,看起來跟沒疊一樣
+   · 原本的上方間距 40px 改成 padding,底色從標題上方 40px 就開始蓋
+   · 來源列比牆寬,box-shadow + clip-path 把底色往左右延伸到整個畫面寬,
+     上下不延伸(不會蓋到上面的內容或下面的頁尾)
+   ⚠ z-index 7 只要高於 6 就好,不要拉高 —— 全站 header 是 9999、
+     燈箱 10000,牆不能蓋過它們。 */
+.cw-sec {
+  position: relative;
+  z-index: 7;
+  background: var(--bg-warm);
+  box-shadow: 0 0 0 100vmax var(--bg-warm);
+  clip-path: inset(0 -100vmax);
+}
 .cw-sec[hidden] { display: none; }
 .cw-head { text-align: center; margin-bottom: 18px; }
 .cw-title { margin: 0 0 6px; font-size: 1.25rem; font-weight: 700; color: #3b3222; }
