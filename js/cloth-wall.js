@@ -1,7 +1,15 @@
 /* =============================================================
-   客製眼鏡布分享牆(cloth.html 最下方那一區)
+   客製分享牆(cloth.html / case.html 最下方那一區)
    -------------------------------------------------------------
    資料來自 cloth-wall Edge Function。
+
+   兩頁共用(2026-10-02 起):品項由區塊上的 data-wall-product 決定
+   (cloth / case,沒寫就是 cloth),送給伺服器的 product 就是它 ——
+   伺服器只回那一個品項,眼鏡盒的牆不會混進眼鏡布。
+   元素一律在區塊【裡面】找,不靠固定 ID,兩頁的 ID 不同也能用。
+
+   ⚠ 區塊預設可以是 hidden(眼鏡盒頁就是):有作品才打開。
+     眼鏡盒初期一件都沒有,這時整區維持隱藏,不會出現空的牆。
 
    ⚠ 姓名遮罩是在【伺服器端】做的,不在這裡。
      前端遮罩等於把完整姓名送到每一個訪客的瀏覽器再請它別顯示 ——
@@ -32,6 +40,7 @@
 
      每次載入頁面換一個新的 → 每個訪客、每次重新整理都看到不同的排法。 */
   var State = {
+    product: 'cloth',
     offset: 0, total: 0, loading: false, done: false,
     seed: (Math.floor(Math.random() * 2147483647) || 1)
   };
@@ -79,7 +88,8 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        limit: CONFIG.PAGE, offset: State.offset, seed: State.seed
+        limit: CONFIG.PAGE, offset: State.offset, seed: State.seed,
+        product: State.product
       }),
       signal: ctrl.signal,
     })
@@ -100,6 +110,7 @@
 
         var html = items.map(cardHtml).join('');
         if (el.wall) el.wall.insertAdjacentHTML('beforeend', html);
+        if (el.sec) el.sec.hidden = false;     // 預設 hidden 的區塊(眼鏡盒)有作品才打開
         State.offset += items.length;
 
         if (State.offset >= State.total || !items.length) {
@@ -120,11 +131,16 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    el.sec  = document.getElementById('clWallSec');
-    el.wall = document.getElementById('clWall');
-    el.more = document.getElementById('clWallMore');
-    el.end  = document.getElementById('clWallEnd');
-    if (!el.sec || !el.wall) return;
+    el.sec  = document.querySelector('.cw-sec[data-wall-product]') ||
+              document.getElementById('clWallSec');
+    if (!el.sec) return;
+    el.wall = el.sec.querySelector('.cw-wall');
+    el.more = el.sec.querySelector('.cw-more');
+    el.end  = el.sec.querySelector('.cw-end');
+    if (!el.wall) return;
+
+    var p = el.sec.getAttribute('data-wall-product');
+    State.product = (p === 'case') ? 'case' : 'cloth';
 
     if (el.more) el.more.addEventListener('click', load);
     load();

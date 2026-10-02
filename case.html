@@ -297,8 +297,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
        ⚠ 只放【已完成、拿到手】的作品。做到一半的放上去,客人會來問
          「別人的都好了我的怎麼還沒好」—— 那是製作端的排程,不是客服
          答得出來的。與眼鏡布分享牆同一條規矩。
-       ⚠ 資料來源還沒有(需要 case-wall 之類的函式),所以整區先 hidden。 -->
-  <section class="cw-sec" id="csWallSec" hidden>
+       資料來自 cloth-wall(product: 'case'),js/cloth-wall.js 與眼鏡布共用。
+       ⚠ 預設 hidden:一件完成的都沒有時整區不出現,有了才由 js 打開。 -->
+  <section class="cw-sec" id="csWallSec" data-wall-product="case" hidden>
     <div class="cw-head">
       <h2 class="cw-title">大家做的眼鏡盒</h2>
       <p class="cw-sub">這些都是已經完成、拿到手的作品。你的也會出現在這裡。</p>
@@ -335,5 +336,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
 <script src="js/case.js?v=20260929-hold"></script>
+<script src="js/cloth-wall.js?v=20261002-casewall"></script>
 </body>
 </html>
