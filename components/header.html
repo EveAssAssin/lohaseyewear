@@ -25,7 +25,7 @@
                             <img src="images/hero-banner-engraving.jpg" alt="獨家雷刻服務">
                         </div>
 
-                        <div class="mega-content">
+                        <div class="mega-content mega-content--4">
                             <div class="mega-column">
                                 <h4>雷刻服務介紹</h4>
                                 <ul>
@@ -55,7 +55,29 @@
                                     <li><a href="gallery.html">分享我的刻圖</a></li>
                                 </ul>
                             </div>
+
+                            <div class="mega-column">
+                                <h4>DIY 客製中心</h4>
+                                <ul>
+                                    <li><a href="cloth.html">客製眼鏡布</a></li>
+                                    <li><a href="case.html">客製眼鏡盒</a></li>
+                                </ul>
+                            </div>
                         </div>
+                        <!-- 這個選單是四欄(2026-10-03 加「DIY 客製中心」)。
+                             ⚠ .mega-content 在 css/lohas-base.css 寫死 repeat(3, 1fr),
+                               全站其他下拉選單共用那條,不能直接改成 4;
+                               而那支 CSS 每頁都帶 ?v=,改它要動每一頁。
+                               所以只對這一個選單、只在桌機加這一條 ——
+                               這個檔案沒有 ?v=(layout.js 以 no-cache 讀),改了就生效。
+                               只在 1200px 以上排四欄:1024 的筆電上四欄每欄只剩 86px,
+                               原本三欄的字全部被擠成兩行;那個寬度維持三欄,
+                               第四欄自然排到第二排。手機版的下拉是直排,不受影響。 -->
+                        <style>
+                            @media (min-width: 1200px) {
+                                .mega-content.mega-content--4 { grid-template-columns: repeat(4, 1fr); }
+                            }
+                        </style>
                     </div>
                 </div>
             </li>
