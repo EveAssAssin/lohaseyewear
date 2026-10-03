@@ -865,7 +865,7 @@
      ⚠ 兩邊不一致的話,客人在畫面上擺好的位置,合成圖上會偏掉 ——
        而師傅與商城後台看到的都是合成圖。
      改 CSS 那四個數字時,這裡要一起改。 */
-  var PLATE = { left: 0.199, top: 0.398, width: 0.612, height: 0.186 };
+  var PLATE = { left: 0.197, top: 0.389, width: 0.607, height: 0.176 };
 
   function buildPreviewBlob() {
     var S = CHECKOUT.PREVIEW_SIZE;
