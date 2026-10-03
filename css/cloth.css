@@ -21,6 +21,12 @@
   color:var(--lohas-brand); margin:0;
 }
 .cl-title-line{ width:40px; height:2px; background:var(--lohas-brand); margin:15px auto }
+/* 回客製中心(2026-10-03 眼鏡布、眼鏡盒共用;原本只有眼鏡盒有,寫在 case.css)。
+   ⚠ APP 裡沒有網站的導覽列,這顆是唯一的回頭路,不能跟著 in-app 隱藏。 */
+.cl-back{ display:inline-flex; align-items:center; gap:6px; font-size:13.5px;
+  color:var(--text-sub); text-decoration:none; margin-bottom:10px }
+.cl-back:hover{ color:var(--lohas-brand) }
+.cl-back i{ font-size:11px }
 .cl-sub{ margin:0; font-size:15px; line-height:1.85; color:var(--text-sub) }
 
 .cl-body{

@@ -18,21 +18,7 @@
      只有盒子才有的(可雕刻範圍、盒款、價格)才寫在這裡。
    ============================================================= */
 
-/* ---------- 回客製中心 ----------
-   ⚠ APP 裡沒有網站的導覽列,這顆是唯一的回頭路,不能跟著隱藏。 */
-
-.cs-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
-  color: var(--text-sub);
-  text-decoration: none;
-  margin-bottom: 10px;
-}
-
-.cs-back:hover { color: var(--lohas-brand); }
-.cs-back i { font-size: 11px; }
+/* 回客製中心的連結(.cl-back)與眼鏡布共用,在 css/cloth.css。 */
 
 /* =============================================================
    可雕刻範圍
