@@ -75,6 +75,21 @@
   var STATUS = { new: '待製作', done: '已完成', archived: '已封存', rejected: '已退件' };
   var PRODUCT = { cloth: '眼鏡布', case: '眼鏡盒' };
 
+  /* 眼鏡盒的可雕刻範圍(mm)。2026-10-03 依盒蓋約 16 × 6.5 cm 抓:
+     長邊兩端各留 2 cm、短邊上下各留約 1.25 cm(圓角與往下收的邊雷射打不到)。
+     ⚠ 客人頁面(case.html)的虛線框就是這個範圍;placement.scale 是
+       「圖寬佔範圍寬度的比例」,所以刻圖實際寬度 = scale × 120 mm。
+     換盒款時這兩個數字要跟著換,css/case.css 的 .cs-plate 也要重量。 */
+  var CASE_AREA_MM = { w: 120, h: 40 };
+
+  /* 眼鏡盒這一件的刻圖寬度(mm),由客人拉的大小算出來。
+     眼鏡布沒有這個換算(布上的位置不是對著固定範圍量的),維持師傅手填、預設 90。 */
+  function caseWidthMm(it) {
+    var s = Number(it && it.placement && it.placement.scale);
+    if (!Number.isFinite(s) || s <= 0) return 60;
+    return Math.max(10, Math.min(CASE_AREA_MM.w, Math.round(s * CASE_AREA_MM.w)));
+  }
+
   /* 退件原因。代碼與後端 cloth-admin 的 REJECT_CODES 必須一致 ——
      兩邊各寫一份的話，加了新原因卻只改一邊，師傅會選到一個後端不收的值，
      而錯誤訊息只會說「請選擇退件原因」，看不出是版本沒對上。
@@ -254,11 +269,15 @@
 
   /* 座標翻成人看得懂的話。
      製作的人不需要知道 x=0.65,他需要知道「偏右下、約布寬的 22%」。 */
-  function placeText(p) {
+  function placeText(p, product) {
     if (!p) return '—';
     var h = Number(p.x) < 0.4 ? '偏左' : Number(p.x) > 0.6 ? '偏右' : '置中';
     var v = Number(p.y) < 0.4 ? '偏上' : Number(p.y) > 0.6 ? '偏下' : '置中';
-    var t = h + v + ',寬約布的 ' + Math.round(Number(p.scale || 0) * 100) + '%';
+    var pct = Math.round(Number(p.scale || 0) * 100);
+    // 眼鏡盒的位置是對著盒蓋上的雕刻範圍(120 × 40 mm)量的,不是布
+    var t = product === 'case'
+      ? h + v + ',寬約雕刻範圍的 ' + pct + '%'
+      : h + v + ',寬約布的 ' + pct + '%';
 
     /* 有轉過就要寫出來,而且要顯眼。
        DXF 已經幫他轉好了,但製作的人手上還有合成圖與實體布 ——
@@ -312,14 +331,22 @@
 
                預設改成 90:客人端的上限就是 9 公分(見 cloth.js 的
                MAX_ART_MM),兩邊用同一個數字。 */
-            '<label class="lab-size" title="DXF 會把刻圖縮放到這個寬度(不是布的寬度)">' +
-              '<span>刻圖寬度</span>' +
-              '<input type="number" data-w="' + esc(it.id) + '" value="90" ' +
-                'min="10" max="150" step="1">' +
-              '<em>mm(布寬 150)</em>' +
-            '</label>' +
+            /* 眼鏡盒:預設值由客人拉的大小換算(caseWidthMm),上限是雕刻範圍寬 120。 */
+            (it.product === 'case'
+              ? '<label class="lab-size" title="DXF 會把刻圖縮放到這個寬度。已依客人在盒蓋上拉的大小算好">' +
+                  '<span>刻圖寬度</span>' +
+                  '<input type="number" data-w="' + esc(it.id) + '" value="' + caseWidthMm(it) + '" ' +
+                    'min="10" max="' + CASE_AREA_MM.w + '" step="1">' +
+                  '<em>mm(雕刻範圍 ' + CASE_AREA_MM.w + '×' + CASE_AREA_MM.h + ')</em>' +
+                '</label>'
+              : '<label class="lab-size" title="DXF 會把刻圖縮放到這個寬度(不是布的寬度)">' +
+                  '<span>刻圖寬度</span>' +
+                  '<input type="number" data-w="' + esc(it.id) + '" value="90" ' +
+                    'min="10" max="150" step="1">' +
+                  '<em>mm(布寬 150)</em>' +
+                '</label>') +
           '</div>' +
-          '<div class="lab-meta">位置:<b>' + esc(placeText(it.placement)) + '</b></div>' +
+          '<div class="lab-meta">位置:<b>' + esc(placeText(it.placement, it.product)) + '</b></div>' +
           '<div class="lab-meta">' + who + '　·　' + esc(fmtTime(it.created_at)) + '</div>' +
           '<div>' + storeHtml(it) + '</div>' +
           '<div class="lab-btns">' +
