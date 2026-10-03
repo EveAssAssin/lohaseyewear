@@ -736,19 +736,21 @@
      照 js/design.js(客製刻圖太陽眼鏡)那條已經跑通的路走,
      不另外發明一套 —— 那條路 8/27 端到端走通過 6 次。
 
-     🚨 目前【只有網址帶 ?test=1 才打開】。
-       新功能先上線但關著,自己跑過一遍再開(CLAUDE.md「環境的現實」)。
-       沒帶參數的人看到的是「即將開放」,按鈕按不下去。
+     開關是下面的 CHECKOUT.OPEN。
+       true  → 所有人都能結帳
+       false → 只有網址帶 ?test=1 才打開,其他人看到「即將開放」
+     要暫停販售就把它改成 false(與 register.js 的 NOT_READY 同一個做法),
+     並換 case.html 裡 case.js 的 ?v=,否則回訪者拿到的是快取裡的舊版。
 
-     🚨 目前【只開放刻圖市集的圖】。
-       shop 函式只在「有刻圖編號」時才把圖案附進訂單
-       (docs/edge-functions/shop.ts 的 if (d.design_id))。
-       自己畫/打字/上傳的圖沒有刻圖編號 → 送出去的訂單【不含任何圖案】,
-       商城也不會回通知 —— 客人付了錢,我方永遠不知道。
-       在 shop 函式改好之前,那三條路一律擋在這裡。
+     四條做圖的路(刻圖市集/自己畫/打字/上傳)都能結帳:
+     shop 函式對眼鏡盒【一律】附上圖案(docs/edge-functions/shop.ts 的 isCase),
+     商城才會在付款完成時回通知。
      ============================================================= */
 
   var CHECKOUT = {
+    /* 對外販售的開關(2026-10 上線)。理由與關閉方式見上。 */
+    OPEN: true,
+
     /* 商城商品:雷刻小物|木紋眼鏡盒(2026-10-03 確定為正式販售的商品)。
        預覽底圖 images/case-base.jpg 就是這一款的正拍照。
        ⚠ 換商品就要換照片,【換照片就要重量一次可雕刻範圍】(見 css/case.css)。 */
@@ -758,7 +760,8 @@
     PREVIEW_SIZE: 1000
   };
 
-  var testMode = /[?&]test=1(?:&|$)/.test(String(window.location.search || ''));
+  /* 能不能結帳。名稱沿用 testMode(關著的時候 ?test=1 仍可內部測試)。 */
+  var testMode = CHECKOUT.OPEN || /[?&]test=1(?:&|$)/.test(String(window.location.search || ''));
   var product = null;      // 從商城讀回來的商品(價格以商城為準)
   var submitting = false;
 
@@ -791,7 +794,9 @@
         if (el.price) el.price.textContent = 'NT$ ' + Number(price).toLocaleString('zh-TW');
         if (el.priceNote) {
           el.priceNote.textContent = product.can_design
-            ? '刻圖市集的圖另加刻圖費(分潤給創作者),金額以商城結帳頁為準。'
+            /* 刻圖費已含在售價內,商城不另外收(串接現況「已達成的約定」)。
+               原本寫「刻圖市集的圖另加刻圖費」,與實際結帳金額對不上。 */
+            ? '含雷刻費用,金額以商城結帳頁為準。'
             : '⚠ 這個商品在商城沒有開啟「可客製」,推不進購物車。';
         }
       })
@@ -821,28 +826,26 @@
     el.submit.textContent = why ? why : '前 往 結 帳';
   }
 
-  /* 結帳前的提醒:付款方式與取貨門市。
+  /* 結帳前先告訴他:到商城會看到什麼。
      -----------------------------------------------------------------
-     商城無法針對單一商品關閉付款方式,也無法由我方指定取貨門市,
-     客人到了商城還要再選一次。選錯的話:
-       · 取貨付款 → 還沒付錢,我方會先暫停製作
-       · 門市不同 → 盒子會送錯店
-     所以在【按下去之前】講清楚,而且把他剛選的店名寫出來。
+     2026-10 起商城在伺服器端鎖住眼鏡盒的結帳(shop.ts 送的 main.checkout):
+     付款方式只有「樂活門市－線上信用卡付款」、取貨門市就是這裡選的那一家、
+     數量 1。客人【不需要再選】,所以這裡從「請這樣選」改成「會是這樣」——
+     他到了商城看到只有一個選項時才不會以為壞掉了。
 
      ⚠ 刻意不用 confirm() 對話框。APP 的 WebView 若沒有實作對應的
        處理,confirm() 會直接回傳「取消」而且不顯示任何東西 ——
-       客人在 APP 裡會永遠按不過去,而我們看不到任何錯誤。
-       一段一直看得到的字不會有這個問題。 */
+       客人在 APP 裡會永遠按不過去,而我們看不到任何錯誤。 */
   function renderPayHint() {
     if (!el.payHint) return;
     var st = pickedStore();
     if (!testMode || !st) { el.payHint.hidden = true; return; }
     el.payHint.hidden = false;
     el.payHint.innerHTML =
-      '<b>到商城結帳時請這樣選:</b>' +
-      '<span>付款方式　<em>樂活門市－線上信用卡付款</em></span>' +
+      '<b>到商城結帳時:</b>' +
+      '<span>付款方式　<em>線上信用卡付款</em></span>' +
       '<span>取貨門市　<em>' + esc(st.name || '你剛剛選的那一家') + '</em></span>' +
-      '<small>選其他付款方式或其他門市的訂單,我們會先暫停製作並與你聯繫。</small>';
+      '<small>付款完成後開始雷刻,做好會送到這家門市。一筆訂單一個眼鏡盒。</small>';
   }
 
   /* ---------- 合成圖 ---------- */
@@ -1151,9 +1154,7 @@
     if (el.store) el.store.addEventListener('change', refreshSubmit);
     if (el.submit) el.submit.addEventListener('click', submit);
 
-    /* 只有測試模式才去讀商品與價格。
-       ⚠ 正式商品還沒建,現在讀到的是【測試商品】的價格 ——
-         沒帶 ?test=1 的人看到 NT$800 會以為那就是眼鏡盒的定價。 */
+    /* 關著的時候不讀商品與價格 —— 還沒定價的商品,價格寫出來會被當成定價。 */
     if (testMode) loadProduct(); else refreshSubmit();
     loadStores();
 
