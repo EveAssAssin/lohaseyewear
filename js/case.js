@@ -751,10 +751,9 @@
     /* 對外販售的開關(2026-10 上線)。理由與關閉方式見上。 */
     OPEN: true,
 
-    /* 測試商品:雷刻小物|木紋眼鏡盒。正式商品建好之後換掉這一行。
-       ⚠ 預覽底圖(images/case-base.jpg)是米白絨布盒,與這個測試商品
-         長得不一樣 —— 測試沒關係,正式上線前要換成同一款的照片,
-         而且【換照片就要重量一次可雕刻範圍】(見 css/case.css)。 */
+        /* 商城商品:雷刻小物|木紋眼鏡盒(2026-10-03 確定為正式販售的商品)。
+       預覽底圖 images/case-base.jpg 就是這一款的正拍照。
+       ⚠ 換商品就要換照片,【換照片就要重量一次可雕刻範圍】(見 css/case.css)。 */
     NID: 2881,
     SHOP_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop',
     /* 合成圖的邊長。與底圖同為正方形。 */
@@ -869,7 +868,7 @@
      ⚠ 兩邊不一致的話,客人在畫面上擺好的位置,合成圖上會偏掉 ——
        而師傅與商城後台看到的都是合成圖。
      改 CSS 那四個數字時,這裡要一起改。 */
-  var PLATE = { left: 0.271, top: 0.378, width: 0.462, height: 0.179 };
+  var PLATE = { left: 0.199, top: 0.398, width: 0.612, height: 0.186 };
 
   function buildPreviewBlob() {
     var S = CHECKOUT.PREVIEW_SIZE;
