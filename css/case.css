@@ -230,3 +230,9 @@
 .cs-payhint b { color: var(--warn); margin-bottom: 4px; }
 .cs-payhint em { font-style: normal; font-weight: 700; color: var(--text-main); }
 .cs-payhint small { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+
+/* 沒在調整時(點預覽以外的地方),可雕刻範圍的虛線框與標籤也收起來,
+   畫面只剩刻在盒上的樣子(2026-10-03)。.is-idle 由 case.js 的 setIdle 掛上;
+   還沒挑圖時不會掛,框照常顯示範圍。 */
+.cs-plate.is-idle { border-color: transparent; }
+.cs-plate.is-idle .cs-plate-hint { display: none; }

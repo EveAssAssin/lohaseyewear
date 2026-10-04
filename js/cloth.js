@@ -336,6 +336,7 @@
     el.y.value = Math.round(State.y * 100);
 
     if (!State.picked) { hide(el.overlay); return; }
+    focusOnNewPick();
 
     /* 換了一張圖就重量一次比例。掛在這裡而不是三個選圖的地方 ——
        市集、上傳、手繪三條路最後都會經過這一支,只掛一處就不會漏。
@@ -410,6 +411,37 @@
      ⚠ 節點的 pointerdown 會【冒泡到 stage】—— stage 那一支若不先
      讓開,拉節點會同時觸發「把圖移到手指下面」,圖案會瞬間跳走。
      所以進入點先看 e.target 是不是節點。 */
+  /* ---------- 外框與節點:只在調整時出現(2026-10-03)----------
+     縮放角點、旋轉圓鈕、虛線外框在【點到預覽以外的地方】就收起來,
+     畫面只剩刻圖的模擬樣子;再按預覽(點圖案、拖曳)就回來。
+     ⚠ 用 capture 階段聽整頁的 pointerdown:頁面上有些按鈕會 stopPropagation,
+       bubble 階段聽不到,收不起來。
+     ⚠ 換一張新圖時一定要先顯示(見 applyOverlay 的 lastFocusUrl)——
+       挑圖那一下也是「點在預覽外面」,不先打開的話客人看不到可以調整。 */
+  var lastFocusUrl = null;
+  var focusZone = null;
+  /* zone 也一起掛 .is-idle:眼鏡盒的「可雕刻範圍」虛線框與標籤一併收起來
+     (css/case.css)。還沒挑圖時不收 —— 那時候框是在告訴客人範圍在哪。 */
+  function setIdle(on) {
+    el.overlay.classList.toggle('is-idle', on);
+    if (focusZone) focusZone.classList.toggle('is-idle', on);
+  }
+  function bindHandleFocus(zone) {
+    if (!zone || !el.overlay) return;
+    focusZone = zone;
+    zone.addEventListener('pointerdown', function () { setIdle(false); });
+    document.addEventListener('pointerdown', function (e) {
+      if (State.picked && !zone.contains(e.target)) setIdle(true);
+    }, true);
+  }
+  function focusOnNewPick() {
+    var url = State.picked && State.picked.imageUrl;
+    if (url && url !== lastFocusUrl) {
+      lastFocusUrl = url;
+      setIdle(false);
+    }
+  }
+
   function bindDrag() {
     var mode = null;        // null | 'move' | 'scale' | 'rot'
     var start = null;
@@ -1831,6 +1863,7 @@
 
     redraw();
     bindDrag();
+    bindHandleFocus(el.stage);
     bindDraw();
 
     /* 按過左邊任何一顆之後,把頁面大標題收起來(只在手機)。

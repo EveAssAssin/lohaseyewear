@@ -495,6 +495,14 @@
   pointer-events:none;
 }
 
+/* 沒在調整時收起外框與節點(2026-10-03)。
+   點預覽以外的地方 → 加 .is-idle,畫面只剩刻圖的模擬樣子;
+   再點圖案(預覽區)就拿掉,節點回來。由 cloth.js / case.js 的 bindHandleFocus 控制。
+   ⚠ 只藏外框與節點,不藏圖案本身 —— .cl-overlay 自己的顯示由 show()/hide() 管。 */
+.cl-overlay.is-idle::before,
+.cl-overlay.is-idle .cl-node,
+.cl-overlay.is-idle .cl-rot-arm{ display:none }
+
 /* 手機上手指比游標粗,節點要大一點才按得到 */
 @media (max-width:768px){
   .cl-node{ width:18px; height:18px; margin:-9px 0 0 -9px }
