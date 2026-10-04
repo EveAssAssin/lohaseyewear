@@ -768,3 +768,7 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
   `design.js` 下單頁（`loadMyPrivate()` 只補【本人】的私人 LOGO 在最前面，讓他能拿去雕刻）。
 - 雕刻格式：黑色、透明底；SVG 只含 `<path fill="#000000">`（寵物服務組的，函式用固定格式驗）、PNG 1024×1024。
 - 副作用：插入時 `auto_upgrade_to_creator_on_insert` 會替這位負責人建一列 `creators`（既有觸發器，未改）。
+
+### 芽芽教學（樂活 App 內，2026-10-04）
+- `js/yaya-cloth-guide.js`（眼鏡布）、`js/yaya-case-guide.js`（眼鏡盒）、`js/yaya-custom-guide.js`（客製中心）：只在 `html.in-app` 出現，只框元素＋講話，不改頁面原本的 JS。
+- **改到 case.html／cloth.html／custom.html 的元素 id 或 class 時**，請同步改這三支裡的 `sel`（找不到的站會自動跳過，不會壞，但那一步就不見了）。
