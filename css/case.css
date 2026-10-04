@@ -77,7 +77,11 @@
 .cs-plate-hint {
   position: absolute;
   left: 50%;
-  bottom: -60%;
+  /* 放在盒子【下緣再往下】,不壓到盒蓋上的圖(2026-10-04 手機上踩到)。
+     單位是 .cs-plate 的高度:範圍框在底圖 38.9% 起、高 17.6%,
+     盒子(含盒身)下緣約在底圖 66.8% → (69 - 38.9) / 17.6 ≈ 171%。
+     ⚠ 換底圖或重量範圍時,這個數字要跟著重算。 */
+  top: 171%;
   transform: translateX(-50%);
   font-size: 11px;
   letter-spacing: 0.08em;
