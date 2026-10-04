@@ -621,7 +621,8 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 ```
 
 **日後若多一條 insert `cloth_designs` 的路徑,那條路也要帶 `store_erpid`,
-否則資料庫直接拒絕。** 目前全庫只有 `cloth.ts` 的 `save` 一條
+否則資料庫直接拒絕。** 目前有兩條:`cloth.ts` 的 `save`(眼鏡布),
+以及 `shop-webhook` 的 `moveCaseToLab`(眼鏡盒付款完成後搬進加工中心,2026-10 起)
 (`cloth-admin` 是 update,`cloth-feed` / `cloth-wall` 是 select)。
 
 由來:9/6 有一件沒有取貨門市就進了加工後台,製作端拿到一張
@@ -644,6 +645,71 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 
 > 導入當下(2026-08-28)本年度只有 2 個人共 3 件,其中 1 人做了 2 件。
 > 影響面接近零,但那也表示**這個鎖幾乎沒有被真實流量試過**。
+
+## 🚨 客製眼鏡盒(2026-10-03 上線,付費商品,走商城金流)
+
+和眼鏡布共用版面(`case.html` 的 body 是 `cl cs`,載 `cloth.css` + `case.css`)、
+共用加工中心與 `cloth_designs`(`product = 'case'`),但**流程完全不同**:
+眼鏡布是官網自己存檔的免費生日禮;眼鏡盒是推進商城購物車、客人刷卡付款。
+
+### 一、改了要一起改的地方
+
+| 東西 | 位置 | 一起改的 |
+|---|---|---|
+| 商城商品(2881「雷刻小物｜木紋眼鏡盒」NT$800) | `js/case.js` 的 `CHECKOUT.NID` | `shop.ts` 的 `CASE_NIDS` —— 只有在這裡的 nid 才走眼鏡盒的那套檢查與 `checkout` |
+| 販售開關 | `js/case.js` 的 `CHECKOUT.OPEN`(false → 只有 `?test=1` 能結帳) | `custom.html` 的卡片改回「即將推出」(`<div class="cc-card cc-card--soon">`,刻意不是 `<a>`);換 `case.js` 的 `?v=` |
+| 預覽底圖 | `images/case-base.jpg`(胡桃木盒正拍,1254²) | 換照片就要**重量**可雕刻範圍,量法寫在 `css/case.css` |
+| 可雕刻範圍在底圖上的位置 | `css/case.css` 的 `.cs-plate`(19.7% / 38.9% / 60.7% / 17.6%) | `js/case.js` 的 `PLATE` —— **必須同一組數字**,否則合成圖(師傅與商城看的那張)位置會偏 |
+| 「可雕刻範圍」標籤 | `.cs-plate-hint` 的 `top: 171%` | 也是對著底圖算的;手機版不顯示 |
+| 實際尺寸 | 盒蓋 16 × 7 cm,雕刻範圍 **120 × 45 mm** | `js/cloth-lab.js` 的 `CASE_AREA_MM` / `CASE_LID_MM` |
+
+`placement.scale` 是「圖寬佔雕刻範圍寬的比例」,所以加工中心的刻圖寬度 = `scale × 120 mm`
+(自動帶入,師傅可改)。EZCAD 模擬器畫在 160 × 70 的盒蓋上、照客人擺的位置放。
+
+### 二、與太陽眼鏡不同的兩件事(都不會報錯)
+
+- **`placement` 是另一套格式**:`{scale, x, y, rot, basis: 'case_plate'}`,相對盒蓋上的雕刻範圍,
+  有旋轉、沒有左右。太陽眼鏡是 `{lens, scale, x, y, basis: 'product_image'}`。混用的話旋轉會被丟掉。
+- **眼鏡盒一律帶 `main.design`**,即使沒有刻圖編號(自己畫/打字/上傳)。
+  商城只對含 `main.design` 的訂單發 `design_order`,不帶的話付了錢也進不了加工中心。
+
+### 三、結帳限制在【商城伺服器端】
+
+`shop.ts` 對眼鏡盒多送 `main.checkout`:
+
+```
+{ payment: 'online_card', pickup_store_erpid: '<ERP 門市編號>', max_quantity: 1 }
+```
+
+商城(`lohasshopsite_php` 的 `app/Library/SiteCheckout.php`,PR #1/#2)據此:
+付款方式只剩「樂活門市-線上信用卡付款」、結帳頁門市鎖定、數量上限 1,
+購物車畫面 / 選付款方式 / 送出訂單三處都擋。
+`cart/push` 回應有 `data.checkout` 才代表商城收到;`027` = checkout 不合法或門市對不到
+(門市以 `store.store_id` 對 ERP 編號)。
+
+**為什麼一定要線上刷卡**:官網在**付款完成**收到 `design_order` 才開始雷刻。
+到門市才付款的話,通知要等取貨才來,盒子卻要先刻好才能取貨 —— 那一單永遠做不出來。
+
+🚨 **2026-10-01 晚間～10-03 00:19,商城正式站所有購物車都沒有付款方式**(一般訂單也是)。
+原因是 PR #1 把付款方式清單當陣列處理,但它是 Collection(`RTPaymentMethod::loadPaymentMethod()`
+回 `->get()->keyBy('pmid')`),「不是陣列就當空的」把每一台購物車都清空了。
+當時的邏輯測試用一般陣列,所以 25/25 通過。教訓:
+**送給商城的 PHP 要用跟商城相同的資料型別測**,部署後**一定要在正式站看一台一般商品的購物車**
+(只加入購物車、不付款)—— 只測眼鏡盒那一台會漏掉「改壞了別人」這種事。
+
+### 四、付款完成之後
+
+`shop-webhook` 收到 `design_order` → `moveCaseToLab` 寫一列 `cloth_designs`(`product='case'`)。
+**狀態是 `new`(待製作),師傅馬上看得到**。要恢復人工確認就把那裡改回 `'hold'`
+(後台「眼鏡盒待確認」頁與 `hold` 狀態都保留著)。`submission_id` 有 unique 約束,
+商城重試不會變成兩個盒子;這條寫入路徑也受上面那條 `store_erpid` CHECK 約束。
+
+### 五、其他
+
+- 一年一件的限制**只算眼鏡布**(`cloth.ts` 的 `thisYearOne` 帶 `.eq('product','cloth')`)。
+- 分享牆:`cloth-wall` 帶 `product: 'case'`;`js/cloth-wall.js` 兩頁共用,
+  依區塊的 `data-wall-product` 決定。沒有已完成的作品時整區隱藏。
+- 刻圖費已含在售價內,頁面不要寫「另加刻圖費」。
 
 ## 2026-08-25 這一天加的東西(容易漏看)
 

@@ -75,12 +75,13 @@
   var STATUS = { new: '待製作', done: '已完成', archived: '已封存', rejected: '已退件' };
   var PRODUCT = { cloth: '眼鏡布', case: '眼鏡盒' };
 
-  /* 眼鏡盒的可雕刻範圍(mm)。2026-10-03 依盒蓋約 16 × 6.5 cm 抓:
+  /* 眼鏡盒的可雕刻範圍(mm)。盒蓋 16 × 7 cm(2026-10-04 營運更正,原以 16 × 6.5 抓):
      長邊兩端各留 2 cm、短邊上下各留約 1.25 cm(圓角與往下收的邊雷射打不到)。
      ⚠ 客人頁面(case.html)的虛線框就是這個範圍;placement.scale 是
        「圖寬佔範圍寬度的比例」,所以刻圖實際寬度 = scale × 120 mm。
      換盒款時這兩個數字要跟著換,css/case.css 的 .cs-plate 也要重量。 */
-  var CASE_AREA_MM = { w: 120, h: 40 };
+  var CASE_AREA_MM = { w: 120, h: 45 };
+  var CASE_LID_MM = { w: 160, h: 70 };     // 盒蓋本身,EZCAD模擬器的畫布
 
   /* 眼鏡盒這一件的刻圖寬度(mm),由客人拉的大小算出來。
      眼鏡布沒有這個換算(布上的位置不是對著固定範圍量的),維持師傅手填、預設 90。 */
@@ -520,7 +521,10 @@
      但要改請改這裡,不要在 CSS 裡另外寫一個好看的值蓋掉。 */
   var SPOT_MM = 0.05;
 
-  var Sim = { rings: null, w: 0, h: 0, name: '' };
+  /* board:模擬的底材。眼鏡布是 150 × 150 的布;眼鏡盒是 160 × 70 的盒蓋,
+     而且要照客人擺的位置放、畫出 120 × 45 的雕刻範圍(2026-10-04)——
+     一律畫在布的正中間的話,師傅看不出盒子上的圖會不會太靠邊。 */
+  var Sim = { rings: null, w: 0, h: 0, name: '', board: null, place: null };
 
   /* 為什麼用 canvas 而不是 SVG:
      -----------------------------------------------------------------
@@ -533,6 +537,13 @@
      線距 0.05 時線與線相接(實心),線距 0.4 時中間露出布色。 */
   var PX_PER_MM = 20;
   var CLOTH_MM = 150;
+
+  function boardFor(it) {
+    if (it && it.product === 'case') {
+      return { w: CASE_LID_MM.w, h: CASE_LID_MM.h, color: '#a8794f', name: '盒蓋', area: CASE_AREA_MM };
+    }
+    return { w: CLOTH_MM, h: CLOTH_MM, color: '#ece5d7', name: '布', area: null };
+  }
 
   function ringsPath() {
     var p = new Path2D();
@@ -554,25 +565,45 @@
     var ang = Number(document.getElementById('simAng').value) || 0;
     var edge = document.getElementById('simEdge').checked;
 
-    var N = CLOTH_MM * PX_PER_MM;                  // 3000 px
+    var B = Sim.board || boardFor(null);
+    var NW = B.w * PX_PER_MM, NH = B.h * PX_PER_MM;   // 布 3000×3000、盒蓋 3200×1400
     var cv = stage.querySelector('canvas');
     if (!cv) {
       cv = document.createElement('canvas');
       cv.className = 'sim-canvas';
-      cv.width = cv.height = N;
       stage.innerHTML = '';
       stage.appendChild(cv);
     }
+    // ⚠ 每次都要設:布和盒蓋的比例不同,沿用上一件的畫布尺寸會把圖壓扁
+    if (cv.width !== NW) cv.width = NW;
+    if (cv.height !== NH) cv.height = NH;
     var cx = cv.getContext('2d');
 
     cx.setTransform(1, 0, 0, 1, 0, 0);
-    cx.fillStyle = '#ece5d7';                      // 布色
-    cx.fillRect(0, 0, N, N);
+    cx.fillStyle = B.color;                        // 布色 / 木色
+    cx.fillRect(0, 0, NW, NH);
 
-    // 進入公釐座標系,圖案置中在布上
     cx.save();
     cx.scale(PX_PER_MM, PX_PER_MM);
-    cx.translate((CLOTH_MM - Sim.w) / 2, (CLOTH_MM - Sim.h) / 2);
+
+    /* 眼鏡盒:畫出雕刻範圍,圖照客人擺的位置放(x、y 是相對範圍的 0~1)。
+       眼鏡布:維持置中(布上的位置不是對著固定範圍量的)。 */
+    var ox = (B.w - Sim.w) / 2, oy = (B.h - Sim.h) / 2;
+    if (B.area) {
+      var ax = (B.w - B.area.w) / 2, ay = (B.h - B.area.h) / 2;
+      cx.save();
+      cx.setLineDash([1.2, 0.8]);
+      cx.strokeStyle = 'rgba(255,255,255,.75)';
+      cx.lineWidth = 0.25;
+      cx.strokeRect(ax, ay, B.area.w, B.area.h);
+      cx.restore();
+      var px = Number(Sim.place && Sim.place.x), py = Number(Sim.place && Sim.place.y);
+      if (!Number.isFinite(px)) px = 0.5;
+      if (!Number.isFinite(py)) py = 0.5;
+      ox = ax + B.area.w * px - Sim.w / 2;
+      oy = ay + B.area.h * py - Sim.h / 2;
+    }
+    cx.translate(ox, oy);
 
     var path = ringsPath();
 
@@ -607,7 +638,9 @@
     var cover = Math.min(1, SPOT_MM / gap) * 100;
     document.getElementById('simInfo').textContent =
       Sim.rings.length + ' 條輪廓 · ' + n.toLocaleString() + ' 條掃描線 · 覆蓋 ' +
-      cover.toFixed(0) + '% · ' + Sim.w.toFixed(1) + '×' + Sim.h.toFixed(1) + ' mm';
+      cover.toFixed(0) + '% · ' + Sim.w.toFixed(1) + '×' + Sim.h.toFixed(1) + ' mm' +
+      ' · ' + B.name + ' ' + B.w + '×' + B.h + ' mm' +
+      (B.area ? '(雕刻範圍 ' + B.area.w + '×' + B.area.h + ')' : '');
   }
 
   function openSim(id, btn) {
@@ -627,6 +660,8 @@
         });
         Sim.rings = out.rings; Sim.w = out.widthMm; Sim.h = out.heightMm;
         Sim.name = it.design_name || '';
+        Sim.board = boardFor(it);
+        Sim.place = it.placement || null;
         document.getElementById('simTitle').textContent =
           'EZCAD模擬器　' + Sim.name;
         document.getElementById('simBack').hidden = false;
