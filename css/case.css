@@ -240,3 +240,10 @@
    還沒挑圖時不會掛,框照常顯示範圍。 */
 .cs-plate.is-idle { border-color: transparent; }
 .cs-plate.is-idle .cs-plate-hint { display: none; }
+
+/* 手機版不顯示「可雕刻範圍」標籤(2026-10-04 營運決定)。
+   預覽只有兩百多 px,標籤放哪裡都會壓到東西 —— 盒蓋上的圖、或還沒挑圖時的「先挑一張圖」。
+   範圍靠虛線框就看得出來。斷點 960 與 cloth.css 的手機版版面一致。 */
+@media (max-width: 960px) {
+  .cs-plate-hint { display: none; }
+}
