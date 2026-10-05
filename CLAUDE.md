@@ -659,12 +659,13 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 | 商城商品(2881「雷刻小物｜木紋眼鏡盒」NT$800) | `js/case.js` 的 `CHECKOUT.NID` | `shop.ts` 的 `CASE_NIDS` —— 只有在這裡的 nid 才走眼鏡盒的那套檢查與 `checkout` |
 | 販售開關 | `js/case.js` 的 `CHECKOUT.OPEN`(false → 只有 `?test=1` 能結帳) | `custom.html` 的卡片改回「即將推出」(`<div class="cc-card cc-card--soon">`,刻意不是 `<a>`);換 `case.js` 的 `?v=` |
 | 預覽底圖 | `images/case-base.jpg`(胡桃木盒正拍,1254²) | 換照片就要**重量**可雕刻範圍,量法寫在 `css/case.css` |
-| 可雕刻範圍在底圖上的位置 | `css/case.css` 的 `.cs-plate`(19.7% / 38.9% / 60.7% / 17.6%) | `js/case.js` 的 `PLATE` —— **必須同一組數字**,否則合成圖(師傅與商城看的那張)位置會偏 |
-| 「可雕刻範圍」標籤 | `.cs-plate-hint` 的 `top: 171%` | 也是對著底圖算的;手機版不顯示 |
+| 可雕刻範圍在底圖上的位置 | `css/case.css` 的 `.cs-plate`(19.7% / 36.3% / 60.7% / 22.8%,比例 = 實際 120 : 45) | `js/case.js` 的 `PLATE` —— **必須同一組數字**,否則合成圖(師傅與商城看的那張)位置會偏 |
+| 「可雕刻範圍」標籤 | `.cs-plate-hint` 的 `top: 143%` | 也是對著底圖算的;手機版不顯示 |
 | 實際尺寸 | 盒蓋 16 × 7 cm,雕刻範圍 **120 × 45 mm** | `js/cloth-lab.js` 的 `CASE_AREA_MM` / `CASE_LID_MM` |
 
 `placement.scale` 是「圖寬佔雕刻範圍寬的比例」,所以加工中心的刻圖寬度 = `scale × 120 mm`
-(自動帶入,師傅可改)。EZCAD 模擬器畫在 160 × 70 的盒蓋上、照客人擺的位置放。
+(自動帶入,師傅可改)。`case.js` 的 `maxScale()` 寬高都擋(高 ≤ 45 mm),
+範圍框也是真實比例 —— 圖沒超出框就等於刻得下。上傳裁切 2026-10-05 起是自由比例。EZCAD 模擬器畫在 160 × 70 的盒蓋上、照客人擺的位置放。
 
 ### 二、與太陽眼鏡不同的兩件事(都不會報錯)
 

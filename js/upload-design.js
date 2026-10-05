@@ -32,7 +32,10 @@
     DESIGN_FN:        'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/design',
     MAX_SIZE_MB:      5,
     ACCEPT:           'image/png,image/jpeg,image/jpg,image/svg+xml',
-    CROP_ASPECT:      1,                   // 1:1
+    /* 裁切比例。2026-10-05 起自由比例(NaN = Cropper.js 的不限比例)。
+       原本固定 1:1;眼鏡盒的雕刻範圍是扁長的 120 × 45 mm,一排字裁成正方形會縮得很小。
+       後面的描圖、DXF、刻圖市集縮圖(object-fit:contain)都照圖的實際比例處理。 */
+    CROP_ASPECT:      NaN,
     // 透明轉換設定
     WHITE_THRESHOLD:  220,                 // 亮度 > 此值 → alpha=0
     INK_COLOR:        '#2F2A24',           // 雷雕用深棕黑色
@@ -332,7 +335,7 @@
             '<div class="dum-uploader-empty">',
               '<div class="dum-uploader-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>',
               '<div class="dum-uploader-h">點擊或拖曳上傳</div>',
-              '<div class="dum-uploader-p">PNG (透明底) / JPG / SVG<br>建議 1:1 比例 · 最大 ' + CONFIG.MAX_SIZE_MB + 'MB</div>',
+              '<div class="dum-uploader-p">PNG (透明底) / JPG / SVG<br>可自由裁切比例 · 最大 ' + CONFIG.MAX_SIZE_MB + 'MB</div>',
             '</div>',
             '<div class="dum-uploader-preview" id="dumPreview" hidden>',
               '<img alt="預覽" id="dumPreviewImg">',
@@ -1145,7 +1148,7 @@
     try {
       var cropped = await window.LohasCropper.crop(file, {
         aspectRatio: CONFIG.CROP_ASPECT,
-        title: '裁切刻圖設計 (1:1)',
+        title: '裁切刻圖設計',
       });
       // 使用者按取消 → 不收檔
       if(!cropped) return;
@@ -2034,7 +2037,7 @@
     try {
       var blob = await window.LohasCropper.crop(state.file, {
         aspectRatio: CONFIG.CROP_ASPECT,
-        title: '重新裁切 (1:1)',
+        title: '重新裁切',
       });
       if(blob) setFile(blob);
     } catch(e){ /* 取消即略 */ }

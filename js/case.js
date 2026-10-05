@@ -83,14 +83,19 @@
      疊圖
      ============================================================= */
 
+  /* 雕刻範圍的高/寬(120 × 45 mm)。與 css/case.css 的 .cs-plate 比例一致。 */
+  var AREA_ASPECT = 45 / 120;
+
   /* 這一張圖能放到多大。
      ⚠ scale 是【寬度】佔範圍框的比例,而高度是 寬 × 高寬比。
-       只擋 scale 只擋到寬 —— 一張 1:2 的直圖在 1.0 時高度是範圍框
-       的兩倍,整個溢出盒蓋,而畫面上看起來「只是大了點」。
-       所以拿長邊去算。(與 cloth.js 的 maxScale 同一個理由。) */
+       寬和高【兩邊都要擋】:範圍是扁長的 120 × 45 mm ——
+       2026-10-05 之前只拿長邊算(沿用眼鏡布的正方形邏輯),
+       一張正方形的圖可以拉到 120 mm 寬、高度也是 120 mm,
+       而盒蓋只有 70 mm 高;加工中心也會照那個尺寸出檔。
+       高度上限:scale × 寬 × ratio ≤ 高 → scale ≤ AREA_ASPECT / ratio。 */
   function maxScale() {
-    var longSide = Math.max(1, Number(State.ratio) || 1);
-    return CONFIG.MAX_SCALE / longSide;
+    var r = Number(State.ratio) || 1;
+    return Math.min(CONFIG.MAX_SCALE, AREA_ASPECT / Math.max(r, 0.001));
   }
 
   function loadImage(src) {
@@ -900,7 +905,7 @@
      ⚠ 兩邊不一致的話,客人在畫面上擺好的位置,合成圖上會偏掉 ——
        而師傅與商城後台看到的都是合成圖。
      改 CSS 那四個數字時,這裡要一起改。 */
-  var PLATE = { left: 0.197, top: 0.389, width: 0.607, height: 0.176 };
+  var PLATE = { left: 0.197, top: 0.363, width: 0.607, height: 0.228 };
 
   function buildPreviewBlob() {
     var S = CHECKOUT.PREVIEW_SIZE;
