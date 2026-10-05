@@ -75,7 +75,7 @@ const FALLBACK_APP_KEY_OLD = '';
 
    每次改這支【一併更新這個字串】,對方就能自己確認,不必問也不必等回信。
    (shop 函式的 code_version 是同一個做法。) */
-const CODE_VERSION = '2026-09-20 · 只回 product=cloth';
+const CODE_VERSION = '2026-10-05b · status=all＋with_rejected 回 rejected 快照（同一人最新一筆仍是退件）';
 
 const APP_KEY = Deno.env.get('CLOTH_FEED_KEY') || FALLBACK_APP_KEY;
 const APP_KEY_OLD = Deno.env.get('CLOTH_FEED_KEY_OLD') || FALLBACK_APP_KEY_OLD;
@@ -268,6 +268,78 @@ Deno.serve(async (req) => {
   }
 
 
+  /* 退件快照（2026-10-05 樂活 Louis 端補上）。
+     -----------------------------------------------------------------
+     🚨 主後端 ClothFeedSync 從 2026-09-02 起就在讀 rejected＋rejected_is_snapshot、
+       收到就發「眼鏡布需要重新設計」推播，但這支【從來沒有回過這兩個欄位】——
+       所以退件推播一次都沒發過：12 位被退件的客人有 8 位一直沒重做（2026-10-05 查）。
+
+     ⚠ 只回「同一人（erpid 或 mid）最新一筆仍是退件」的：客人重做後，
+       舊的那一筆在表裡永遠是 rejected（歷史紀錄），再給出去就會一直被提醒重做。
+     ⚠ 只在 status=pending／all 時給（跟 pending 一樣是整份快照）。
+       查詢失敗時【不給這個欄位】，不要給空陣列＋快照 —— 對方會以為沒有人被退件。 */
+  const REJECT_LABEL: Record<string, string> = { // 與 js/cloth.js rejectText() 同一份（改代碼三處一起改）
+    line_too_thin: '線條太細，雕刻後會斷掉',
+    out_of_bounds: '圖案超出可雕刻範圍',
+    low_quality: '圖片解析度不足，刻出來會模糊',
+    content: '圖案內容不適合雕刻',
+    other: '',
+  };
+  const rejectTextOf = (x: Record<string, any>) => {
+    const label = REJECT_LABEL[String(x.reject_code || '')] || '';
+    const extra = String(x.reject_reason || '').trim();
+    if (label && extra) return label + '（' + extra + '）';
+    return label || extra || '圖案需要調整才能雕刻';
+  };
+  let rejected: Array<Record<string, unknown>> | null = null;
+  /* 要對方明確帶 with_rejected 才給：主後端舊版 ClothFeedSync 收到就推播、文案寫「至生日中心重新設計」
+     （生日月過了生日中心就關了）→ 等主後端 v3.2.109（改文案＋帶這個參數）上線才開始推。 */
+  const wantRejected = wantPending && !!(body.with_rejected || url.searchParams.get('with_rejected'));
+  if (wantRejected) {
+    const r = await db.from('cloth_designs')
+      .select('id, erpid, mid, source, design_name, preview_url, reject_code, reject_reason, rejected_at, created_at, store_erpid, store_name')
+      .eq('product', 'cloth')
+      .eq('status', 'rejected')
+      .order('rejected_at', { ascending: false })
+      .limit(500);
+    if (r.error) {
+      console.error('[cloth-feed] 退件查詢失敗:', r.error.message);
+    } else {
+      const rows = r.data || [];
+      const erpids = [...new Set(rows.map((x) => x.erpid).filter(Boolean))];
+      const mids = [...new Set(rows.map((x) => x.mid).filter(Boolean))];
+      let later: Array<Record<string, any>> = [];
+      let ok = true;
+      if (erpids.length) {
+        const q = await db.from('cloth_designs').select('erpid, mid, created_at').eq('product', 'cloth').in('erpid', erpids);
+        if (q.error) { ok = false; console.error('[cloth-feed] 退件比對失敗(erpid):', q.error.message); } else later = later.concat(q.data || []);
+      }
+      if (ok && mids.length) {
+        const q = await db.from('cloth_designs').select('erpid, mid, created_at').eq('product', 'cloth').in('mid', mids);
+        if (q.error) { ok = false; console.error('[cloth-feed] 退件比對失敗(mid):', q.error.message); } else later = later.concat(q.data || []);
+      }
+      if (ok) {
+        rejected = rows
+          .filter((x) => !later.some((n) =>
+            ((x.erpid && n.erpid === x.erpid) || (x.mid && n.mid === x.mid)) &&
+            new Date(n.created_at).getTime() > new Date(x.created_at).getTime()))
+          .map((x) => ({
+            id: x.id,
+            client_id: x.erpid || null,
+            mid: x.mid || null,
+            design_name: x.design_name,
+            source: x.source,
+            preview_url: x.preview_url,
+            reject_code: x.reject_code,
+            reject_reason: x.reject_reason,
+            reject_text: rejectTextOf(x),
+            rejected_at: x.rejected_at,
+            ...storeOf(x),
+          }));
+      }
+    }
+  }
+
   const items = (data || []).map((r) => ({
     id: r.id,
     /* 兩種身分擇一有值。門市綁定過的有 client_id,
@@ -329,6 +401,11 @@ Deno.serve(async (req) => {
     /* 明講語意,寫在回應裡而不是只寫在文件裡 ——
        接手的人多半是看回應長什麼樣就開始寫,不會回頭翻信。 */
     out.pending_is_snapshot = true;
+    if (rejected !== null) {
+      out.rejected = rejected;
+      out.rejected_count = rejected.length;
+      out.rejected_is_snapshot = true; // 同一人最新一筆仍是退件的完整清單；客人重做後就不在裡面
+    }
   }
 
   return reply('200', { data: out });
