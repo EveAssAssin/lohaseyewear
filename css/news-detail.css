@@ -266,3 +266,9 @@
     padding: 12px 14px;
   }
 }
+
+/* 自訂按鈕:緊接在內文下面(2026-10-06)。按鈕本身沿用 lohas-components.css 的 .lohas-cta-btn */
+.nd-custom-cta{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:12px;
+  margin:32px 0 8px;
+}

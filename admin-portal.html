@@ -495,7 +495,7 @@
           <!-- CTA 按鈕管理 (顯示在文章底部) -->
           <div class="editor-panel">
             <h3 class="editor-panel-title">文章底部 CTA 按鈕</h3>
-            <p class="editor-hint" style="margin:-4px 0 12px">顯示在文章內文下方。可勾選固定按鈕,也可以新增自訂按鈕(文字＋連結)。</p>
+            <p class="editor-hint" style="margin:-4px 0 12px">顯示在分享按鈕下方的「想親自看看刻圖效果?」區塊,可選 0~2 個。自訂按鈕在下面「內文」之後設定。</p>
             <div class="editor-row">
               <label class="editor-label">
                 <input type="checkbox" id="news_cta_store" checked style="margin-right:6px;vertical-align:middle"/>
@@ -510,14 +510,6 @@
               </label>
               <p class="editor-hint" style="margin-left:24px">連結:https://student.lohasglasses.com/</p>
             </div>
-            <!-- 自訂按鈕(2026-10-06):存在同一個 cta_buttons 陣列,每顆一段 JSON 文字。
-                 讀寫邏輯在 admin-portal.js 的 newsCta*,文章頁在 news-detail.js 的 renderCta。 -->
-            <div class="editor-row">
-              <label class="editor-label">自訂按鈕</label>
-              <div id="news_cta_custom_list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
-              <button type="button" class="btn" id="news_cta_custom_add" style="align-self:flex-start">＋ 新增自訂按鈕</button>
-              <p class="editor-hint">最多 3 顆。按鈕文字最多 20 字;連結填站內頁面(例:cloth.html)或完整網址(https://…),也可用 tel: / mailto:。</p>
-            </div>
           </div>
 
           <!-- 內文 -->
@@ -527,6 +519,20 @@
               <label class="editor-label">文章內容</label>
               <textarea class="editor-input editor-textarea" id="news_content" rows="14" placeholder="請輸入文章內容,支援純文字段落、HTML、或簡易 Markdown(## 大標、> 引用)"></textarea>
               <p class="editor-hint">純文字會自動按空行分段。可使用 ## 大標、> 引用、HTML</p>
+            </div>
+          </div>
+
+          <!-- 內文下方的自訂按鈕(文章頁緊接在內文下面,所以編輯器也放在內文之後) -->
+          <div class="editor-panel">
+            <h3 class="editor-panel-title">內文下方的自訂按鈕</h3>
+            <p class="editor-hint" style="margin:-4px 0 12px">按鈕會緊接在文章內文下面。自己填按鈕文字和連結。</p>
+            <!-- 自訂按鈕(2026-10-06):存在同一個 cta_buttons 陣列,每顆一段 JSON 文字。
+                 讀寫邏輯在 admin-portal.js 的 newsCta*,文章頁在 news-detail.js 的 renderCta。 -->
+            <div class="editor-row">
+              <label class="editor-label">自訂按鈕</label>
+              <div id="news_cta_custom_list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
+              <button type="button" class="btn" id="news_cta_custom_add" style="align-self:flex-start">＋ 新增自訂按鈕</button>
+              <p class="editor-hint">最多 3 顆。按鈕文字最多 20 字;連結填站內頁面(例:cloth.html)或完整網址(https://…),也可用 tel: / mailto:。</p>
             </div>
           </div>
 
@@ -2142,7 +2148,7 @@
 <script src="js/upload-design.js?v=20261005-freecrop"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20261006-newscta"></script>
+<script src="js/admin-portal.js?v=20261006-cta-under"></script>
 <script src="js/admin-portal-footer.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-pegavision.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-categories.js?v=20260907-batch3"></script>

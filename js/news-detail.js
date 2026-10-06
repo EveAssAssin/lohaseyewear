@@ -65,8 +65,35 @@
     }).join('');
   }
 
+  /* 後台「預覽」(2026-10-06 修)。
+     -----------------------------------------------------------------
+     後台把編輯中的內容存進 sessionStorage('lohas_news_preview'),再開
+     news-detail.html?preview=1。在這之前這一頁【從來不讀】那份資料 ——
+     只認 ?id=,於是預覽一律顯示「沒有指定文章」,預覽按鈕等於壞的。
+     ⚠ window.open 開的分頁會帶著一份 sessionStorage 的複本,所以讀得到;
+       直接複製網址到別的分頁就讀不到(那是對的,預覽不該能分享)。
+     ⚠ 預覽不累加瀏覽數、不碰資料庫。 */
+  function loadPreview() {
+    let data = null;
+    try { data = JSON.parse(sessionStorage.getItem('lohas_news_preview') || 'null'); } catch (e) { data = null; }
+    if (!data || !data.title) {
+      showError('預覽資料不見了,請回後台再按一次「預覽」');
+      return;
+    }
+    const bar = document.createElement('div');
+    bar.textContent = '預覽模式 · 這是後台編輯中的內容,尚未存檔前只有你看得到';
+    bar.style.cssText = 'position:sticky;top:70px;z-index:50;margin:0 0 16px;padding:10px 14px;' +
+      'background:#fff4e5;color:#8a5a00;border:1px solid #f0d9a8;border-radius:10px;' +
+      'font-size:13.5px;text-align:center';
+    const art = $('ndArticle');
+    if (art && art.parentNode) art.parentNode.insertBefore(bar, art);
+    render(data);
+    document.title = '[預覽] ' + document.title;
+  }
+
   async function loadArticle() {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('preview') === '1') { loadPreview(); return; }
     const id = params.get('id');
 
     if (!id) {
@@ -148,21 +175,14 @@
     bindShare(n);
   }
 
-  function renderCta(ctaList) {
-    const section = document.getElementById('ndCtaSection');
-    const btnWrap = document.getElementById('ndCtaBtns');
-    if (!section || !btnWrap) return;
-
-    // 舊資料(null/undefined)相容: fallback 為門市
-    const list = Array.isArray(ctaList) ? ctaList : ['store'];
-    const showStore = list.includes('store');
-    const showStudent = list.includes('student');
-
-    /* 自訂按鈕(2026-10-06,後台「文章底部 CTA 按鈕 → 自訂按鈕」)。
-       每顆是一段 JSON 文字 {"t":"custom","label":…,"url":…}(物件也認)。
-       ⚠ 網址規則與後台 newsCtaUrlOk 相同,這裡再擋一次:
-         後台檢查只是介面,資料庫裡的值才是實際會被印成 <a href> 的東西。 */
-    const customs = list.map(function (el) {
+  /* 文章底部的按鈕,分兩區(2026-10-06):
+     · 自訂按鈕(後台「自訂按鈕」)—— 緊接在【內文正下方】(#ndCustomCta)
+     · 固定按鈕 門市預約 / 學生預約 —— 在分享列下面的 CTA 區塊(#ndCtaSection),
+       那一區的標題寫死「想親自看看刻圖效果?」,自訂按鈕放進去文不對題。
+     cta_buttons 陣列裡兩種混在一起:'store' / 'student' 是固定按鈕,
+     自訂按鈕每顆是一段 JSON 文字 {"t":"custom","label":…,"url":…}(物件也認)。 */
+  function parseCustomCta(list) {
+    return list.map(function (el) {
       let o = el;
       if (typeof el === 'string') {
         if (el.charAt(0) !== '{') return null;
@@ -171,64 +191,17 @@
       if (!o || typeof o !== 'object' || o.t !== 'custom') return null;
       const label = String(o.label || '').trim().slice(0, 20);
       const url = String(o.url || '').trim();
+      /* ⚠ 網址規則與後台 newsCtaUrlOk 相同,這裡再擋一次:
+           後台檢查只是介面,資料庫裡的值才是實際會被印成 <a href> 的東西。 */
       const okUrl = /^(https?:\/\/|tel:|mailto:)/i.test(url) ||
                     (url && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^\/\//.test(url));
       return (label && okUrl) ? { label: label, url: url } : null;
     }).filter(Boolean);
+  }
 
-    // 沒勾任何按鈕就整個 section 隱藏
-    if (!showStore && !showStudent && !customs.length) {
-      section.style.display = 'none';
-      return;
-    }
-
-    // 當前文章來源資訊（給轉換歸因用）
-    const article = window.__ndArticle || {};
-    const sourceId = article.id || '';
-    const sourceTitle = article.title || document.title || '';
-
-    // 第一顆 solid, 第二顆 ghost
-    const buttons = [];
-    if (showStore) {
-      buttons.push(`<a href="allstore.html"
-        class="lohas-cta-btn"
-        data-news-cta="store"
-        data-news-id="${escAttr(sourceId)}"
-        data-news-title="${escAttr(sourceTitle)}">
-        <i class="fa-solid fa-location-dot"></i>門市預約
-      </a>`);
-    }
-    if (showStudent) {
-      buttons.push(`<a href="https://student.lohasglasses.com/"
-        class="lohas-cta-btn"
-        target="_blank" rel="noopener"
-        data-news-cta="student"
-        data-news-id="${escAttr(sourceId)}"
-        data-news-title="${escAttr(sourceTitle)}">
-        <i class="fa-solid fa-graduation-cap"></i>學生預約
-      </a>`);
-    }
-    customs.forEach(function (c) {
-      // 外站開新分頁;本站與 tel: / mailto: 在原分頁
-      const external = /^https?:\/\//i.test(c.url) && !/^https?:\/\/(www\.)?lohasglasses\.com(\/|$)/i.test(c.url);
-      buttons.push(`<a href="${escAttr(c.url)}"
-        class="lohas-cta-btn"${external ? ' target="_blank" rel="noopener"' : ''}
-        data-news-cta="custom:${escAttr(c.label)}"
-        data-news-id="${escAttr(sourceId)}"
-        data-news-title="${escAttr(sourceTitle)}">
-        ${escAttr(c.label)}
-      </a>`);
-    });
-
-    // 第一顆 solid、第二顆 ghost
-    btnWrap.innerHTML = buttons.map((btn, i) => {
-      const cls = i === 0 ? 'lohas-cta-btn--solid' : 'lohas-cta-btn--ghost';
-      return btn.replace('class="lohas-cta-btn"', `class="lohas-cta-btn ${cls}"`);
-    }).join('');
-    section.style.display = '';
-
-    // 綁定點擊：把文章來源寫進 sessionStorage（跨頁帶到 allstore → 預約完成）
-    btnWrap.querySelectorAll('[data-news-cta]').forEach(a => {
+  /* 點擊:把文章來源寫進 sessionStorage(跨頁帶到 allstore → 預約完成),並推追蹤事件 */
+  function bindCtaClicks(wrap) {
+    wrap.querySelectorAll('[data-news-cta]').forEach(a => {
       a.addEventListener('click', function () {
         const src = {
           news_id: this.getAttribute('data-news-id') || '',
@@ -250,6 +223,85 @@
         }
       });
     });
+  }
+
+  // 第一顆 solid、其餘 ghost
+  function styleButtons(buttons) {
+    return buttons.map((btn, i) => {
+      const cls = i === 0 ? 'lohas-cta-btn--solid' : 'lohas-cta-btn--ghost';
+      return btn.replace('class="lohas-cta-btn"', `class="lohas-cta-btn ${cls}"`);
+    }).join('');
+  }
+
+  function renderCta(ctaList) {
+    // 舊資料(null/undefined)相容: fallback 為門市
+    const list = Array.isArray(ctaList) ? ctaList : ['store'];
+    const showStore = list.includes('store');
+    const showStudent = list.includes('student');
+    const customs = parseCustomCta(list);
+
+    // 當前文章來源資訊（給轉換歸因用）
+    const article = window.__ndArticle || {};
+    const sourceId = article.id || '';
+    const sourceTitle = article.title || document.title || '';
+
+    // ---- 自訂按鈕:內文正下方 ----
+    const customWrap = document.getElementById('ndCustomCta');
+    if (customWrap) {
+      if (!customs.length) {
+        customWrap.innerHTML = '';
+        customWrap.style.display = 'none';
+      } else {
+        customWrap.innerHTML = styleButtons(customs.map(function (c) {
+          // 外站開新分頁;本站與 tel: / mailto: 在原分頁
+          const external = /^https?:\/\//i.test(c.url) && !/^https?:\/\/(www\.)?lohasglasses\.com(\/|$)/i.test(c.url);
+          return `<a href="${escAttr(c.url)}"
+            class="lohas-cta-btn"${external ? ' target="_blank" rel="noopener"' : ''}
+            data-news-cta="custom:${escAttr(c.label)}"
+            data-news-id="${escAttr(sourceId)}"
+            data-news-title="${escAttr(sourceTitle)}">${escAttr(c.label)}</a>`;
+        }));
+        customWrap.style.display = '';
+        bindCtaClicks(customWrap);
+      }
+    }
+
+    // ---- 固定按鈕:分享列下面的 CTA 區塊 ----
+    const section = document.getElementById('ndCtaSection');
+    const btnWrap = document.getElementById('ndCtaBtns');
+    if (!section || !btnWrap) return;
+
+    // 沒勾任何固定按鈕就整個 section 隱藏
+    if (!showStore && !showStudent) {
+      btnWrap.innerHTML = '';
+      section.style.display = 'none';
+      return;
+    }
+
+    const buttons = [];
+    if (showStore) {
+      buttons.push(`<a href="allstore.html"
+        class="lohas-cta-btn"
+        data-news-cta="store"
+        data-news-id="${escAttr(sourceId)}"
+        data-news-title="${escAttr(sourceTitle)}">
+        <i class="fa-solid fa-location-dot"></i>門市預約
+      </a>`);
+    }
+    if (showStudent) {
+      buttons.push(`<a href="https://student.lohasglasses.com/"
+        class="lohas-cta-btn"
+        target="_blank" rel="noopener"
+        data-news-cta="student"
+        data-news-id="${escAttr(sourceId)}"
+        data-news-title="${escAttr(sourceTitle)}">
+        <i class="fa-solid fa-graduation-cap"></i>學生預約
+      </a>`);
+    }
+
+    btnWrap.innerHTML = styleButtons(buttons);
+    section.style.display = '';
+    bindCtaClicks(btnWrap);
   }
 
   // HTML attribute 轉義

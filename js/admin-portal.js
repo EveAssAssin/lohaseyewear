@@ -8581,8 +8581,13 @@
         category: val('news_category') || 'story',
         title: val('news_title') || '(未命名標題)',
         excerpt: val('news_excerpt'),
-        cover_image_url: currentNews?.cover_image_url || null,
-        homepage_image_url: currentNews?.homepage_image_url || null,
+        /* 剛選、還沒存檔上傳的圖用 blob 網址帶過去 ——
+           只帶 currentNews 的話,預覽看到的是舊圖(或沒有圖)。
+           blob 網址在後台這個分頁開著時,同網域的其他分頁讀得到。 */
+        cover_image_url: pendingFiles.cover_image_url
+          ? URL.createObjectURL(pendingFiles.cover_image_url) : (currentNews?.cover_image_url || null),
+        homepage_image_url: pendingFiles.homepage_image_url
+          ? URL.createObjectURL(pendingFiles.homepage_image_url) : (currentNews?.homepage_image_url || null),
         content: val('news_content'),
         show_in_homepage: val('news_show_in_homepage'),
         homepage_tag: val('news_homepage_tag'),

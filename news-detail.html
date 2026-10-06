@@ -22,7 +22,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/news-detail.css?v=20260517">
+  <link rel="stylesheet" href="css/news-detail.css?v=20261006-customcta">
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -84,6 +84,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- 內文 -->
     <div class="nd-content" id="ndContent"></div>
 
+    <!-- 自訂按鈕(後台「文章底部 CTA 按鈕 → 自訂按鈕」),緊接在內文下面。由 news-detail.js 的 renderCta 填入 -->
+    <div class="nd-custom-cta" id="ndCustomCta" style="display:none"></div>
+
     <!-- 分享 -->
     <div class="nd-share">
       <p class="nd-share-label">分享這篇文章</p>
@@ -134,7 +137,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/layout.js?v=20260905-navcache"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
-<script src="js/news-detail.js?v=20261006-customcta"></script>
+<script src="js/news-detail.js?v=20261006-cta-under"></script>
 
 </body>
 </html>
