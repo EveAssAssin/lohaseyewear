@@ -8221,6 +8221,87 @@
       }
     }
 
+    /* ---------- 文章底部 CTA:自訂按鈕(2026-10-06)----------
+       存在同一個 cta_buttons 陣列裡:固定按鈕是 'store' / 'student',
+       自訂按鈕每顆是一段 JSON 文字 {"t":"custom","label":…,"url":…}。
+       ⚠ 存成【文字】不是物件:這個欄位的型別(jsonb 或 text[])repo 裡查不到,
+         文字在兩種型別都存得進去;物件在 text[] 會直接存檔失敗。
+         讀的時候兩種都認(news-detail.js 的 renderCta 同一套規則)。
+       ⚠ 連結只收站內路徑、http(s)、tel:、mailto: —— 這個網址會被印成
+         文章頁上的 <a href>,放行 javascript: 等於讓後台能在前台埋程式。 */
+    const NEWS_CTA_CUSTOM_MAX = 3;
+
+    function newsCtaParseCustom(el) {
+      let o = el;
+      if (typeof el === 'string') {
+        if (el.charAt(0) !== '{') return null;
+        try { o = JSON.parse(el); } catch (e) { return null; }
+      }
+      if (!o || typeof o !== 'object' || o.t !== 'custom') return null;
+      return { label: String(o.label || ''), url: String(o.url || '') };
+    }
+
+    function newsCtaUrlOk(u) {
+      u = String(u || '').trim();
+      if (!u) return false;
+      if (/^(https?:\/\/|tel:|mailto:)/i.test(u)) return true;
+      return !/^[a-z][a-z0-9+.-]*:/i.test(u) && !/^\/\//.test(u);   // 站內路徑:不能有其他協定、不能是 //別站
+    }
+
+    function newsCtaAddRow(label, url) {
+      const list = document.getElementById('news_cta_custom_list');
+      if (!list) return;
+      if (list.children.length >= NEWS_CTA_CUSTOM_MAX) { toast('自訂按鈕最多 ' + NEWS_CTA_CUSTOM_MAX + ' 顆'); return; }
+      const row = document.createElement('div');
+      row.className = 'news-cta-custom-row';
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+      const t = document.createElement('input');
+      t.className = 'editor-input'; t.placeholder = '按鈕文字'; t.maxLength = 20;
+      t.style.cssText = 'flex:1 1 140px;min-width:120px'; t.value = label || ''; t.dataset.ctaLabel = '1';
+      const u = document.createElement('input');
+      u.className = 'editor-input'; u.placeholder = '連結,例:cloth.html 或 https://…';
+      u.style.cssText = 'flex:3 1 240px;min-width:180px'; u.value = url || ''; u.dataset.ctaUrl = '1';
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'btn'; del.textContent = '刪除';
+      del.addEventListener('click', () => row.remove());
+      row.appendChild(t); row.appendChild(u); row.appendChild(del);
+      list.appendChild(row);
+    }
+
+    function newsCtaRenderCustom(ctaList) {
+      const list = document.getElementById('news_cta_custom_list');
+      if (!list) return;
+      list.innerHTML = '';
+      (Array.isArray(ctaList) ? ctaList : []).forEach(el => {
+        const c = newsCtaParseCustom(el);
+        if (c) newsCtaAddRow(c.label, c.url);
+      });
+    }
+
+    /* 收集全部 CTA。回傳 { list, error };error 有值就不要存。 */
+    function newsCtaCollect() {
+      const out = [];
+      if (document.getElementById('news_cta_store')?.checked) out.push('store');
+      if (document.getElementById('news_cta_student')?.checked) out.push('student');
+      const rows = document.querySelectorAll('#news_cta_custom_list .news-cta-custom-row');
+      for (const row of rows) {
+        const label = row.querySelector('[data-cta-label]').value.trim();
+        const url = row.querySelector('[data-cta-url]').value.trim();
+        if (!label && !url) continue;                       // 整列空白就當沒填
+        if (!label) return { list: out, error: '自訂按鈕有一顆沒填按鈕文字' };
+        if (!newsCtaUrlOk(url)) {
+          return { list: out, error: '自訂按鈕「' + label + '」的連結格式不對(站內頁面如 cloth.html,或 https:// 開頭的網址)' };
+        }
+        out.push(JSON.stringify({ t: 'custom', label: label.slice(0, 20), url: url.slice(0, 500) }));
+      }
+      return { list: out, error: '' };
+    }
+
+    (function bindNewsCtaCustom() {
+      const add = document.getElementById('news_cta_custom_add');
+      if (add) add.addEventListener('click', () => newsCtaAddRow('', ''));
+    })();
+
     function openNew(){
       currentNews = null;
       pendingFiles.cover_image_url = null;
@@ -8241,6 +8322,7 @@
       const ctaStudent = document.getElementById('news_cta_student');
       if (ctaStore) ctaStore.checked = true;
       if (ctaStudent) ctaStudent.checked = false;
+      newsCtaRenderCustom([]);
       // 隱藏首頁文字勾選重置
       const textHidden = document.getElementById('news_homepage_text_hidden');
       if (textHidden) textHidden.checked = false;
@@ -8292,6 +8374,7 @@
       const ctaStudent = document.getElementById('news_cta_student');
       if (ctaStore) ctaStore.checked = ctaList.includes('store');
       if (ctaStudent) ctaStudent.checked = ctaList.includes('student');
+      newsCtaRenderCustom(ctaList);
       // 載入「隱藏首頁文字」設定
       const textHidden = document.getElementById('news_homepage_text_hidden');
       if (textHidden) textHidden.checked = !!n.homepage_text_hidden;
@@ -8387,6 +8470,10 @@
       }
       if(!/^[a-z0-9_-]+$/i.test(slug)){ toast('Slug 格式錯誤'); return; }
 
+      // 自訂 CTA 有錯要在「儲存中」與上傳圖片之前就擋,不然圖白傳一次
+      const ctaResult = newsCtaCollect();
+      if (ctaResult.error) { toast(ctaResult.error); return; }
+
       let coverUrl = currentNews?.cover_image_url || null;
       let homepageImgUrl = currentNews?.homepage_image_url || null;
 
@@ -8412,10 +8499,8 @@
           console.log('[news save] homepage 上傳成功:', homepageImgUrl);
         }
 
-        // 收集 CTA 按鈕
-        const ctaButtons = [];
-        if (document.getElementById('news_cta_store')?.checked) ctaButtons.push('store');
-        if (document.getElementById('news_cta_student')?.checked) ctaButtons.push('student');
+        // CTA 按鈕(固定 + 自訂)已在上面檢查過
+        const ctaButtons = ctaResult.list;
 
         const payload = {
           slug,
@@ -8505,12 +8590,7 @@
         homepage_link_type: val('news_homepage_link_type') || 'news_detail',
         homepage_link_url: val('news_homepage_link_url'),
         homepage_text_hidden: !!document.getElementById('news_homepage_text_hidden')?.checked,
-        cta_buttons: (() => {
-          const arr = [];
-          if (document.getElementById('news_cta_store')?.checked) arr.push('store');
-          if (document.getElementById('news_cta_student')?.checked) arr.push('student');
-          return arr;
-        })(),
+        cta_buttons: newsCtaCollect().list,
         published_at: val('news_published_at') || new Date().toISOString(),
         author: val('news_author'),
         view_count: currentNews?.view_count || 0,

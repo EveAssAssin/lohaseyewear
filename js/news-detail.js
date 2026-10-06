@@ -158,8 +158,26 @@
     const showStore = list.includes('store');
     const showStudent = list.includes('student');
 
+    /* 自訂按鈕(2026-10-06,後台「文章底部 CTA 按鈕 → 自訂按鈕」)。
+       每顆是一段 JSON 文字 {"t":"custom","label":…,"url":…}(物件也認)。
+       ⚠ 網址規則與後台 newsCtaUrlOk 相同,這裡再擋一次:
+         後台檢查只是介面,資料庫裡的值才是實際會被印成 <a href> 的東西。 */
+    const customs = list.map(function (el) {
+      let o = el;
+      if (typeof el === 'string') {
+        if (el.charAt(0) !== '{') return null;
+        try { o = JSON.parse(el); } catch (e) { return null; }
+      }
+      if (!o || typeof o !== 'object' || o.t !== 'custom') return null;
+      const label = String(o.label || '').trim().slice(0, 20);
+      const url = String(o.url || '').trim();
+      const okUrl = /^(https?:\/\/|tel:|mailto:)/i.test(url) ||
+                    (url && !/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^\/\//.test(url));
+      return (label && okUrl) ? { label: label, url: url } : null;
+    }).filter(Boolean);
+
     // 沒勾任何按鈕就整個 section 隱藏
-    if (!showStore && !showStudent) {
+    if (!showStore && !showStudent && !customs.length) {
       section.style.display = 'none';
       return;
     }
@@ -190,6 +208,17 @@
         <i class="fa-solid fa-graduation-cap"></i>學生預約
       </a>`);
     }
+    customs.forEach(function (c) {
+      // 外站開新分頁;本站與 tel: / mailto: 在原分頁
+      const external = /^https?:\/\//i.test(c.url) && !/^https?:\/\/(www\.)?lohasglasses\.com(\/|$)/i.test(c.url);
+      buttons.push(`<a href="${escAttr(c.url)}"
+        class="lohas-cta-btn"${external ? ' target="_blank" rel="noopener"' : ''}
+        data-news-cta="custom:${escAttr(c.label)}"
+        data-news-id="${escAttr(sourceId)}"
+        data-news-title="${escAttr(sourceTitle)}">
+        ${escAttr(c.label)}
+      </a>`);
+    });
 
     // 第一顆 solid、第二顆 ghost
     btnWrap.innerHTML = buttons.map((btn, i) => {
