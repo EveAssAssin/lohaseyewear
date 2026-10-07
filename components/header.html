@@ -77,6 +77,13 @@
                             @media (min-width: 1200px) {
                                 .mega-content.mega-content--4 { grid-template-columns: repeat(4, 1fr); }
                             }
+                            /* 導覽列 7 項(2026-10-07 加「大學生專區」)之後,1024 的筆電上每項少約 3px,
+                               全部文字被擠成兩行。只在這段寬度把間距 30 → 20 並禁止換行;
+                               1200 以上與手機版(≤768,漢堡選單)都不受影響。 */
+                            @media (min-width: 769px) and (max-width: 1199px) {
+                                .nav-links { gap: 20px; }
+                                .nav-links > li > a { white-space: nowrap; }
+                            }
                         </style>
                     </div>
                 </div>
@@ -136,6 +143,8 @@
 
             <li><a href="allstore.html">門市據點</a></li>
             <li><a href="vipstore.html">樂活商店街</a></li>
+            <!-- 大學生專區(2026-10-07):學生預約網站是另一個站,與文章頁「學生預約」一樣開新分頁 -->
+            <li><a href="https://student.lohasglasses.com/" target="_blank" rel="noopener">大學生專區</a></li>
             <li class="mobile-cta">
   <a href="#" class="btn-primary" data-member-link>會員專區</a>
 </li>
