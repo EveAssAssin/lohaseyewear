@@ -707,10 +707,48 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 
 ### 五、其他
 
-- 一年一件的限制**只算眼鏡布**(`cloth.ts` 的 `thisYearOne` 帶 `.eq('product','cloth')`)。
+- 一年一件的限制**只算生日眼鏡布**(`cloth.ts` 的 `thisYearOne` 帶 `.eq('product','cloth')`
+  與 `.is('order_no', null)`)。
 - 分享牆:`cloth-wall` 帶 `product: 'case'`;`js/cloth-wall.js` 兩頁共用,
   依區塊的 `data-wall-product` 決定。沒有已完成的作品時整區隱藏。
 - 刻圖費已含在售價內,頁面不要寫「另加刻圖費」。
+
+## 🚨 付費客製眼鏡布(2026-10-09 建置,商城 2884「雷刻小物｜創作眼鏡布」)
+
+不限生日、要付錢的眼鏡布。**頁面與流程整套沿用眼鏡盒**,不是沿用生日眼鏡布:
+
+| | 生日眼鏡布 `cloth.html` | 付費眼鏡布 `cloth-shop.html` |
+|---|---|---|
+| 程式 | `js/cloth.js` → `cloth` 的 save | `js/case.js`(與眼鏡盒共用)→ 商城 cart/push |
+| 誰寫 `cloth_designs` | `cloth` 函式 | `shop-webhook` 的 `moveCaseToLab` |
+| `product` / `order_no` | `'cloth'` / null | `'cloth'` / **商城訂單編號** |
+| 位置格式 | 相對布 | `basis: 'cloth_plate'`,相對布中間 **90 × 90 mm** 的刻圖範圍 |
+| 一年一件 | 是 | 否(一筆訂單一條,`max_quantity: 1`) |
+
+**「付費」的判斷是 `order_no` 有值**,不是另開 product。這樣製作、製作單、
+門市掃碼到店、App 取件都不用改 —— 那些地方本來就把它當眼鏡布。
+
+改了要一起改的地方:
+
+- `case.js` 讀頁面上的 `window.LOHAS_DESIGN_PAGE`(沒有就是眼鏡盒)。
+  `cloth-shop.html` 那份設定的 `nid` 要同時在 `shop.ts` 的 **`PAID_PRODUCTS`**(2884 → `'cloth'`),
+  否則送出去會被當成太陽眼鏡,付了錢也進不了加工中心。
+- `cloth-shop.html` 的 HTML 是從 `case.html` 複製的 —— **改 `case.html` 的結構時這一頁要一起看**
+  (芽芽教學的 `sel` 同理,不過這一頁沒掛教學)。
+- 顏色(卡其/粉紅/灰色/咖啡)從商城規格讀,送 `main.sid` + `main.variant`;
+  `variant` 存進 `design_submissions` 與 `cloth_designs`(`docs/cloth-paid.sql` 加的欄位),
+  加工中心、後台與製作單都印出來 —— **師傅靠它拿布**。
+- 預覽底圖 `images/cloth-shop-base.jpg` 是白底卷軸照,四色暫時共用;
+  刻圖範圍框的位置寫在 `LOHAS_DESIGN_PAGE.plate`,**換照片要重量**。
+- 加工中心:`basis === 'cloth_plate'` 的刻圖寬度預設 `scale × 90`;
+  EZCAD 模擬器畫 150 布、中間 90 × 90 範圍、布色照 `variant`。
+
+⚠ **部署順序**:`docs/cloth-paid.sql` 先跑(加 `variant` 欄位、放寬 product 值域),
+再部署 `cloth-admin` / `shop-webhook` / `shop` / `cloth`。反過來的話這幾支一 select `variant` 就 500。
+
+⚠ **開賣前**:商城 2884 要勾「可進行客製文創」並補四色庫存(建置當天是 0、`can_design` false,
+頁面會顯示「商品未開放客製」)。開賣時把 `custom.html` 第三張卡從「即將推出」換成連結,
+header 與頁尾(含後台「頁尾設定」的 DB 頁尾)的「客製眼鏡布」改名「生日眼鏡布」並加上這一頁。
 
 ## 2026-08-25 這一天加的東西(容易漏看)
 

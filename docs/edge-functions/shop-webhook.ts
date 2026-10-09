@@ -279,11 +279,19 @@ async function handleDesignOrder(body: Record<string, any>) {
 async function moveCaseToLab(submissionId: string, orderNo: string): Promise<string> {
   const r = await sb('design_submissions?id=eq.' + encodeURIComponent(submissionId) +
     '&select=product,source,erpid,mid,member_name,design_id,design_name,' +
-    'engraving_url,preview_url,placement,store_erpid,store_name,store_city');
+    'engraving_url,preview_url,placement,store_erpid,store_name,store_city,variant');
   if (!r.ok) throw new Error('讀取送單紀錄失敗 ' + r.status);
   const rows = await r.json();
   const s = Array.isArray(rows) ? rows[0] : null;
-  if (!s || s.product !== 'case') return '';        // 不是眼鏡盒
+  /* 付費客製品才搬:眼鏡盒('case')與付費眼鏡布('cloth',2026-10-09)。
+     太陽眼鏡的送單 product 是 null,不會進來。
+     ⚠ 付費眼鏡布進的是同一張 cloth_designs、product = 'cloth' ——
+       之後的製作單、門市掃碼登錄到店、App 取件按鈕都跟生日眼鏡布一樣。
+       分辨付費與生日靠 order_no(這裡一定有值;生日的是 null),
+       cloth 函式的「一年一件」只算 order_no 是 null 的。
+     ⚠ select 裡有 variant(docs/cloth-paid.sql 加的欄位):那段 SQL 沒跑的話
+       這裡會讀取失敗 → 回 500 → 商城重試。部署順序一定是先跑 SQL。 */
+  if (!s || (s.product !== 'case' && s.product !== 'cloth')) return '';
 
   /* cloth_designs.design_id 是 uuid 欄位,design_submissions 的是 text。
      刻圖市集的編號是 uuid;自己畫的是空字串 → 存 null。
@@ -293,7 +301,8 @@ async function moveCaseToLab(submissionId: string, orderNo: string): Promise<str
   const designId = UUID.test(String(s.design_id || '')) ? s.design_id : null;
 
   const row = {
-    product:       'case',
+    product:       s.product,
+    variant:       s.variant || null,   // 付費眼鏡布的顏色;眼鏡盒是 null
     status:        'new',      // 要恢復人工確認就改回 'hold'(理由見上)
     submission_id: submissionId,
     order_no:      orderNo,
@@ -322,8 +331,8 @@ async function moveCaseToLab(submissionId: string, orderNo: string): Promise<str
     const txt = await ins.text();
     throw new Error('眼鏡盒搬進加工中心失敗 ' + ins.status + ' ' + txt.slice(0, 200));
   }
-  console.log('[shop-webhook] 眼鏡盒進加工中心(' + row.status + ') submission=' + submissionId + ' order=' + orderNo);
-  return ' · 眼鏡盒已進加工中心(' + row.status + ')';
+  console.log('[shop-webhook] ' + row.product + ' 進加工中心(' + row.status + ') submission=' + submissionId + ' order=' + orderNo);
+  return ' · ' + (row.product === 'cloth' ? '付費眼鏡布' : '眼鏡盒') + '已進加工中心(' + row.status + ')';
 }
 
 /* ---------- 入口 ---------- */
@@ -337,7 +346,7 @@ Deno.serve(async (req) => {
       function: 'shop-webhook',
       /* 線上實際跑的是哪一版。2026-08-28 那次事故的根本原因就是
          「從外面看不出線上是哪一版」。每改一次就更新這個字串。 */
-      code_version: '2026-10 · 眼鏡盒直接進待製作',
+      code_version: '2026-10-09 · 付費眼鏡布進加工中心',
       設定完整: WEBHOOK_KEY !== '' && SB_URL !== '' && SB_KEY !== '',
       SHOP_WEBHOOK_KEY: WEBHOOK_KEY === '' ? '✗ 未設定' : '✓ 已設定（長度 ' + WEBHOOK_KEY.length + '）',
       SUPABASE_URL: SB_URL === '' ? '✗ 未注入' : '✓',

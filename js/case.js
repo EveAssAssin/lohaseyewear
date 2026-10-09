@@ -22,6 +22,29 @@
 
   var Auth = window.LohasAuth;
 
+  /* =============================================================
+     頁面設定(2026-10-09:付費客製眼鏡布 cloth-shop.html 共用這支)
+     -------------------------------------------------------------
+     眼鏡盒(case.html)不設定 window.LOHAS_DESIGN_PAGE,全部用下面的預設值,
+     行為與原本完全相同。付費眼鏡布在 HTML 裡先設定再載入這支。
+     ⚠ 新增一頁時,商品 nid 也要加進 shop.ts 的 PAID_PRODUCTS,
+       否則那一單會照太陽眼鏡的規則送出,付款後也不會進加工中心。 */
+  var PAGE = (function () {
+    var c = window.LOHAS_DESIGN_PAGE || {};
+    return {
+      product: c.product || 'case',          // 進加工中心時的 product
+      noun: c.noun || '眼鏡盒',               // 給客人看的品名
+      page: c.page || 'case.html',            // 登入後回來的頁面
+      nid: c.nid || 2881,                     // 商城商品
+      areaAspect: c.areaAspect || (45 / 120), // 雕刻範圍的 高/寬(眼鏡盒 120 × 45 mm)
+      plate: c.plate || null,                 // 有設定就用它定位範圍框(沒有就照 css/case.css)
+      basis: c.basis || 'case_plate',         // placement 的基準,shop.ts 會依品項覆寫
+      storeCacheKey: c.storeCacheKey || 'lohas_case_storelist',
+      filePrefix: c.filePrefix || 'case-',    // 合成圖與雕刻檔的檔名前綴
+      variants: !!c.variants                  // 要不要選規格(付費眼鏡布的顏色)
+    };
+  })();
+
   var CONFIG = {
     /* 描圖用的畫布邊長。與 cloth.js 一致。 */
     TRACE_SIZE: 1000,
@@ -84,7 +107,7 @@
      ============================================================= */
 
   /* 雕刻範圍的高/寬(120 × 45 mm)。與 css/case.css 的 .cs-plate 比例一致。 */
-  var AREA_ASPECT = 45 / 120;
+  var AREA_ASPECT = PAGE.areaAspect;
 
   /* 這一張圖能放到多大。
      ⚠ scale 是【寬度】佔範圍框的比例,而高度是 寬 × 高寬比。
@@ -613,14 +636,14 @@
   function openUpload() {
     var token = Auth && Auth.getToken ? Auth.getToken() : '';
     if (!token) {
-      if (Auth && Auth.setRedirect) Auth.setRedirect('case.html');
+      if (Auth && Auth.setRedirect) Auth.setRedirect(PAGE.page);
       window.location.href = 'login.html';
       return;
     }
     if (Auth.isErpBound && !Auth.isErpBound()) {
       showErr('上傳刻圖需要門市會員身分。' +
               (Auth.erpRequiredNote ? Auth.erpRequiredNote() : '') +
-              '在那之前可以用「自己畫」或「打字」，一樣做得出眼鏡盒。');
+              '在那之前可以用「自己畫」或「打字」，一樣做得出' + PAGE.noun + '。');
       return;
     }
     if (!(window.LohasUploadDesign && window.LohasUploadDesign.openModal)) {
@@ -669,7 +692,7 @@
        而且當下剛好載不出來」的人。(做法與 cloth.js 一致。)
      ============================================================= */
 
-  var STORE_CACHE_KEY = 'lohas_case_storelist';
+  var STORE_CACHE_KEY = PAGE.storeCacheKey;
   var STORE_CACHE_TTL = 14 * 24 * 3600 * 1000;   // 兩週
 
   function cacheStores(list) {
@@ -791,7 +814,7 @@
     /* 商城商品:雷刻小物|木紋眼鏡盒(2026-10-03 確定為正式販售的商品)。
        預覽底圖 images/case-base.jpg 就是這一款的正拍照。
        ⚠ 換商品就要換照片,【換照片就要重量一次可雕刻範圍】(見 css/case.css)。 */
-    NID: 2881,
+    NID: PAGE.nid,
     SHOP_FN: 'https://hqdmyxxrskvllkcedybl.supabase.co/functions/v1/shop',
     /* 合成圖的邊長。與底圖同為正方形。 */
     PREVIEW_SIZE: 1000
@@ -829,6 +852,7 @@
         if (!product) throw new Error('查無商品');
         var price = product.offer_price || product.price;
         if (el.price) el.price.textContent = 'NT$ ' + Number(price).toLocaleString('zh-TW');
+        renderVariants();
         if (el.priceNote) {
           el.priceNote.textContent = product.can_design
             /* 刻圖費已含在售價內,商城不另外收(串接現況「已達成的約定」)。
@@ -851,6 +875,7 @@
     if (!product) return '商品資訊讀取中';
     if (!product.can_design) return '商品未開放客製';
     if (!State.picked) return '請先挑一張圖';
+    if (PAGE.variants && !State.variant) return '請選擇顏色';
     if (!pickedStore()) return '請選擇取貨門市';
     return '';
   }
@@ -882,7 +907,51 @@
       '<b>到商城結帳時:</b>' +
       '<span>付款方式　<em>線上信用卡付款</em></span>' +
       '<span>取貨門市　<em>' + esc(st.name || '你剛剛選的那一家') + '</em></span>' +
-      '<small>付款完成後開始雷刻,做好會送到這家門市。一筆訂單一個眼鏡盒。</small>';
+      '<small>付款完成後開始雷刻,做好會送到這家門市。一筆訂單一個' + PAGE.noun + '。</small>';
+  }
+
+  /* ---------- 規格(付費眼鏡布的顏色)----------
+     從商城的商品資料讀,不寫死 —— 顏色、庫存都以商城為準。
+     最底層的規格才是能下單的那一個(sid),它的 title 就是顏色名稱。
+     沒庫存的照樣列出來但不能選,讓客人知道有這個顏色、只是現在沒有。 */
+  function variantLeaves(specs) {
+    var out = [];
+    (function walk(list) {
+      (list || []).forEach(function (n) {
+        if (n && n.children && n.children.length) walk(n.children);
+        else if (n && n.sid) out.push(n);
+      });
+    })(specs);
+    return out;
+  }
+
+  function renderVariants() {
+    if (!PAGE.variants || !el.variants) return;
+    var leaves = variantLeaves(product && product.specifications);
+    if (!leaves.length) {
+      el.variants.innerHTML = '<p class="cl-field-hint">顏色讀取不到,請稍後再試。</p>';
+      return;
+    }
+    el.variants.innerHTML = leaves.map(function (n) {
+      var stock = Number(n.stock);
+      var out = n.stock !== null && n.stock !== undefined && !(stock > 0);
+      var on = State.variant && State.variant.sid === n.sid;
+      return '<button type="button" class="cs-variant' + (on ? ' on' : '') + '"' +
+             ' data-sid="' + n.sid + '" data-name="' + esc(n.title) + '"' +
+             (out ? ' disabled' : '') + '>' + esc(n.title) +
+             (out ? '<small>缺貨</small>' : '') + '</button>';
+    }).join('');
+  }
+
+  function bindVariants() {
+    if (!PAGE.variants || !el.variants) return;
+    el.variants.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-sid]');
+      if (!b || b.disabled) return;
+      State.variant = { sid: Number(b.dataset.sid), name: b.dataset.name || '' };
+      renderVariants();
+      refreshSubmit();
+    });
   }
 
   /* ---------- 合成圖 ---------- */
@@ -905,7 +974,7 @@
      ⚠ 兩邊不一致的話,客人在畫面上擺好的位置,合成圖上會偏掉 ——
        而師傅與商城後台看到的都是合成圖。
      改 CSS 那四個數字時,這裡要一起改。 */
-  var PLATE = { left: 0.197, top: 0.363, width: 0.607, height: 0.228 };
+  var PLATE = PAGE.plate || { left: 0.197, top: 0.363, width: 0.607, height: 0.228 };
 
   function buildPreviewBlob() {
     var S = CHECKOUT.PREVIEW_SIZE;
@@ -949,7 +1018,7 @@
     /* 與太陽眼鏡同一個資料夾(design-previews/),只加 case- 前綴。
        另開資料夾的話要另外確認儲存桶的上傳權限,而那是看不到錯誤、
        只會上傳失敗的那種設定。 */
-    var path = 'design-previews/case-' + Date.now() + '-' +
+    var path = 'design-previews/' + PAGE.filePrefix + Date.now() + '-' +
                Math.random().toString(36).slice(2, 8) + '-preview.png';
     return sb.storage.from(bucket)
       .upload(path, blob, { contentType: 'image/png', upsert: false })
@@ -966,7 +1035,7 @@
     var sb = window.LohasSupabase && window.LohasSupabase.getClient();
     if (!sb) return Promise.reject(new Error('上傳工具未初始化'));
     var bucket = (window.LohasSupabase.CONFIG || {}).STORAGE_BUCKET || 'gallery-uploads';
-    var path = 'design-previews/case-' + Date.now() + '-' +
+    var path = 'design-previews/' + PAGE.filePrefix + Date.now() + '-' +
                Math.random().toString(36).slice(2, 8) + '.svg';
     var blob = new Blob([svgString], { type: 'image/svg+xml' });
     return sb.storage.from(bucket)
@@ -984,7 +1053,7 @@
 
     var token = (Auth && Auth.getToken) ? Auth.getToken() : '';
     if (!token) {
-      if (Auth && Auth.setRedirect) Auth.setRedirect('case.html' + window.location.search);
+      if (Auth && Auth.setRedirect) Auth.setRedirect(PAGE.page + window.location.search);
       window.location.href = 'login.html';
       return;
     }
@@ -1031,6 +1100,10 @@
           main: {
             nid: CHECKOUT.NID,
             amount: 1,
+            /* 有規格的商品(付費眼鏡布)要帶 sid,商城據此扣庫存;
+               variant 是顏色名稱,存進送單與加工中心給師傅看。 */
+            sid: State.variant ? State.variant.sid : undefined,
+            variant: State.variant ? State.variant.name : undefined,
             design: {
               /* 只有刻圖市集的圖才有編號(創作者分潤靠它對作品)。
                  自己畫/打字/上傳一律不帶,由 shop 函式判定為 draw。 */
@@ -1043,7 +1116,7 @@
                    會把它改成太陽眼鏡的格式,旋轉會被丟掉。 */
               placement: {
                 scale: State.scale, x: State.x, y: State.y, rot: State.rot,
-                basis: 'case_plate'
+                basis: PAGE.basis
               }
             }
           }
@@ -1174,9 +1247,19 @@
       uploadBtn: $('csUpload'),
       store: $('csStore'), storeHint: $('csStoreHint'), storeRetry: $('csStoreRetry'),
       base: $('csBase'), submit: $('csSubmit'), price: $('csPrice'),
-      priceNote: $('csPriceNote'), payHint: $('csPayHint')
+      priceNote: $('csPriceNote'), payHint: $('csPayHint'),
+      variants: $('csVariants')
     };
     if (!el.stage || !el.plate || !el.overlay) return;
+
+    /* 頁面有給範圍框位置就用它(付費眼鏡布);眼鏡盒照 css/case.css。
+       合成圖用的 PLATE 也是同一組,兩邊不會對不上。 */
+    if (PAGE.plate) {
+      el.plate.style.left = (PAGE.plate.left * 100) + '%';
+      el.plate.style.top = (PAGE.plate.top * 100) + '%';
+      el.plate.style.width = (PAGE.plate.width * 100) + '%';
+      el.plate.style.height = (PAGE.plate.height * 100) + '%';
+    }
 
     applyOverlay();
     bindDrag();
@@ -1184,6 +1267,7 @@
     bindSliders();
     bindSource();
     bindBoxes();
+    bindVariants();
     bindMarket();
     bindDraw();
     bindText();

@@ -72,7 +72,10 @@
   function cardHtml(it) {
     var st = statusText(it.status);
     var name = it.design_name || '(未命名)';
-    var prod = PRODUCT[it.product || 'cloth'] || esc(it.product);
+    var prod = PRODUCT[it.product || 'cloth'] || it.product;
+    /* 付費眼鏡布(2026-10-09):有商城訂單的眼鏡布,標上顏色,
+       與當年那條生日的分得出來。cloth 函式的 list 有回 order_no / variant。 */
+    if ((it.product || 'cloth') === 'cloth' && it.order_no) prod += '・' + (it.variant || '付費');
     return '' +
       '<div class="cc-mine-card">' +
         '<div class="cc-mine-thumb">' +

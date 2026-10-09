@@ -244,6 +244,8 @@
             (it.order_no
               ? '<div class="cloth-meta">商城訂單 <b>' + esc(it.order_no) + '</b>' +
                   (it.store_name ? '　·　官網選的門市 <b>' + esc(it.store_name) + '</b>' : '') +
+                  /* 付費眼鏡布(2026-10-09)客人選的顏色,師傅據此拿布 */
+                  (it.variant ? '　·　顏色 <b>' + esc(it.variant) + '</b>' : '') +
                 '</div>'
               : '') +
             (it.status === 'hold'

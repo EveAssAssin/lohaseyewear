@@ -58,7 +58,7 @@
    然後用瀏覽器開這支的網址就知道線上是不是那一份。
 
    ⚠ 這是給人看的字串,不參與任何邏輯。不要拿它來做版本判斷分支。 */
-const CODE_VERSION = '2026-10-01 · 眼鏡盒結帳限制';
+const CODE_VERSION = '2026-10-09 · 付費眼鏡布';
 
 /* ===== 客製眼鏡盒 =====
    -----------------------------------------------------------------
@@ -66,12 +66,12 @@ const CODE_VERSION = '2026-10-01 · 眼鏡盒結帳限制';
    前端說「我是眼鏡盒」就走眼鏡盒流程的話,任何人都能把一張
    太陽眼鏡的單塞進加工中心的待確認清單。
 
-   ⚠ 2881 是【測試商品】(雷刻小物|木紋眼鏡盒)。
-     正式商品建好之後把它換掉,並同步改 js/case.js 的 CHECKOUT.NID。
-     兩邊不一致的話:前端推的是新商品,這裡卻不認得它是盒子 ——
-     那一單會照太陽眼鏡的規則送出去,旋轉被丟掉、門市沒存,
-     付款後也不會進加工中心。而且完全不會報錯。 */
-const CASE_NIDS = new Set<number>([2881]);
+   2026-10-09 起不只眼鏡盒:付費客製品是一張對照表,nid → 進加工中心時的 product。
+     2881 雷刻小物|木紋眼鏡盒 → 'case'(js/case.js 的 CHECKOUT.NID)
+     2884 雷刻小物|創作眼鏡布 → 'cloth'(付費眼鏡布,cloth-shop.html 的頁面設定)
+   ⚠ 前端的 nid 與這張表不一致的話:那一單會照太陽眼鏡的規則送出去,
+     旋轉被丟掉、門市沒存,付款後也不會進加工中心。而且完全不會報錯。 */
+const PAID_PRODUCTS: Record<number, 'case' | 'cloth'> = { 2881: 'case', 2884: 'cloth' };
 
 // ⚠ 只在 Dashboard 填,不要提交回 GitHub
 const FALLBACK_SITE_KEY = '';
@@ -224,7 +224,7 @@ function clamp01(v: unknown): number {
    前端送來的東西一律當成不可信,逐欄挑出來重建 ——
    直接把 body 轉發等於把金鑰的權限開放給任何呼叫者。 */
 function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<string, any>,
-                       submissionId: string, isCase = false) {
+                       submissionId: string, paidProduct: 'case' | 'cloth' | null = null) {
   const m = body.main || {};
   const d = m.design || {};
   const p = d.placement || {};
@@ -253,13 +253,14 @@ function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<str
        2026-09-28 的測試就是用太陽眼鏡的格式送的:rot 被丟掉、
        basis 被蓋成 product_image —— 師傅拿到的位置沒有旋轉,
        而且不會有任何錯誤。 */
-    placement: isCase
+    /* 付費眼鏡布(2026-10-09)與眼鏡盒同一套格式,只是基準換成布上的雕刻範圍。 */
+    placement: paidProduct
       ? {
           scale: clamp01(p.scale),
           x:     clamp01(p.x),
           y:     clamp01(p.y),
           rot:   normDeg(p.rot),
-          basis: 'case_plate',
+          basis: paidProduct === 'cloth' ? 'cloth_plate' : 'case_plate',
         }
       : {
           lens:  p.lens === 'left' ? 'left' : 'right',
@@ -296,7 +297,7 @@ function buildCartBody(clientId: string, idType: 'erp' | 'mid', body: Record<str
      而且我方完全不知道有這一單。
      它不像禮物 B 路線那樣「點開什麼都沒有」—— 盒子一定有
      雕刻檔與合成圖(下方 cart_push 會擋掉缺圖的)。 */
-  if (d.design_id || isCase) main.design = design;
+  if (d.design_id || paidProduct) main.design = design;
   /* sid 只在「真的有規格」時才帶。商城端說明:無規格商品帶了 sid 會被擋,
      省略 / null / 0 都會被當成 0 通過。所以寧可不帶。 */
   const sid = Number(m.sid);
@@ -524,7 +525,8 @@ Deno.serve(async (req) => {
     /* ===== 眼鏡盒:送進購物車之前先把關 =====
        擋在這裡,不是等付款後才發現。付款後才發現少東西的話,
        那是一筆已經收了錢、卻做不出來的訂單。 */
-    const isCase = CASE_NIDS.has(Number(body.main.nid));
+    const paidProduct = PAID_PRODUCTS[Number(body.main.nid)] || null;
+    const isCase = !!paidProduct;      // 名稱沿用:這一段對所有付費客製品都一樣
     if (isCase) {
       const dz = (body.main.design || {}) as Record<string, unknown>;
       /* 沒有雕刻檔就刻不了。合成圖是給師傅與客人對照位置的,也要有。
@@ -537,8 +539,17 @@ Deno.serve(async (req) => {
       if (!store) {
         return reply('006', { message: '請選擇要到哪一家門市拿' }, 400);
       }
+      /* 付費眼鏡布有顏色規格,一定要帶 sid(商城也會擋,但在這裡擋客人看得懂)。
+         variant 是顏色名稱,存進送單與加工中心,師傅據此拿布。
+         ⚠ 只在有值時才放進去 —— 眼鏡盒沒有這一欄的值,
+           variant 欄位(docs/cloth-paid.sql)還沒建的話也不會讓眼鏡盒壞掉。 */
+      if (paidProduct === 'cloth' && !(Number(body.main.sid) > 0)) {
+        return reply('006', { message: '請選擇眼鏡布的顏色' }, 400);
+      }
+      const variant = String(body.main.variant ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 40);
       caseInfo = {
-        product: 'case',
+        product: paidProduct,
+        ...(variant ? { variant } : {}),
         /* 有刻圖市集編號才算 market;自己畫/打字/上傳一律 draw。
            ⚠ cloth_designs 的 source 只收 market / draw(資料表約束),
              送別的值進去,付款後搬進加工中心那一步會被擋下。 */
@@ -550,7 +561,7 @@ Deno.serve(async (req) => {
 
     /* 送出前先決定這一筆的識別碼,而不是等寫紀錄時才由資料庫產生 ——
        商城要收到的和我方要存的必須是同一個值。 */
-    out = buildCartBody(clientId, erpid ? 'erp' : 'mid', body, crypto.randomUUID(), isCase);
+    out = buildCartBody(clientId, erpid ? 'erp' : 'mid', body, crypto.randomUUID(), paidProduct);
 
     /* 眼鏡盒的結帳限制,由商城在伺服器端執行(2026-10-01,商城 PR site-case-checkout)。
        -----------------------------------------------------------

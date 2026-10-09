@@ -203,7 +203,7 @@ const SYS_ERR_MSG = '系統異常,請聯繫客服。';
 /* 線上實際跑的是哪一版。每次改這支就一併更新 ——
    從外面看不出線上是哪一版,是 2026-08-28 那次事故的根本原因
    (程式改好、信上寫「已上線」,但那支函式從頭到尾沒有部署過)。 */
-const CODE_VERSION = '2026-09-25 · 一年一件只算眼鏡布';
+const CODE_VERSION = '2026-10-09 · 一年一件不算付費眼鏡布';
 
 /* 速率限制。記憶體計數,多執行個體下不是嚴格上限,
    目的是擋掉「同一個人狂按」與明顯的腳本,不是防禦機制。 */
@@ -286,12 +286,18 @@ function isUnlimited(who: { erpid: string; mid: string }): boolean {
      · 眼鏡盒被退件 → isRedoPending 把它當成「眼鏡布待重做」→
        那個人【不是生日月也能做一條免費眼鏡布】
 
-   一年一件是【眼鏡布】的規則,不是「cloth_designs 這張表」的規則。 */
+   一年一件是【眼鏡布】的規則,不是「cloth_designs 這張表」的規則。
+
+   🚨 2026-10-09 再加 order_no is null:付費眼鏡布(商城 2884)也是 product = 'cloth',
+     由 shop-webhook 在付款完成後寫入,一定帶商城訂單編號。
+     不排除的話,花錢買過一條的人,生日月來做免費那條會被擋在「本年度已完成」。
+     一年一件只管【生日的免費眼鏡布】,付費的不限。 */
 async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
   const q = mineOnly(
     db.from('cloth_designs')
       .select('id, source, design_id, design_name, preview_url, svg_url, placement, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
       .eq('product', 'cloth')
+      .is('order_no', null)
       .gte('created_at', taipeiYearStartIso())
       .order('created_at', { ascending: false })
       .limit(1),
@@ -389,7 +395,7 @@ Deno.serve(async (req) => {
            靠它標「眼鏡布 / 眼鏡盒」—— 沒有這一欄,前端只能一律
            當成眼鏡布,於是第一件眼鏡盒會被標成眼鏡布,
            而畫面上看不出任何異常。 */
-        .select('id, product, source, design_name, preview_url, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
+        .select('id, product, source, design_name, preview_url, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name, order_no, variant')
         .order('created_at', { ascending: false })
         .limit(60),
       who,

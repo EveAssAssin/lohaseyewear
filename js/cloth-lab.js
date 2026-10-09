@@ -91,6 +91,28 @@
     return Math.max(10, Math.min(CASE_AREA_MM.w, Math.round(s * CASE_AREA_MM.w)));
   }
 
+  /* 付費客製眼鏡布(商城 2884,2026-10-09)。
+     與生日眼鏡布同一張表、同一個 product = 'cloth',差別是【有商城訂單編號】。
+     它的頁面(cloth-shop.html)跟眼鏡盒是同一套,所以位置是對著固定的
+     刻圖範圍量的(placement.basis = 'cloth_plate'):90 × 90 mm,
+     與生日眼鏡布的「圖最大 9 cm」一致。刻圖寬度 = scale × 90。 */
+  var CLOTH_AREA_MM = { w: 90, h: 90 };
+  function isPaidCloth(it) {
+    return !!(it && it.order_no && (it.product || 'cloth') === 'cloth');
+  }
+  function isClothPlate(it) {
+    return !!(it && it.placement && it.placement.basis === 'cloth_plate');
+  }
+  function clothPlateWidthMm(it) {
+    var s = Number(it && it.placement && it.placement.scale);
+    if (!Number.isFinite(s) || s <= 0) return 90;
+    return Math.max(10, Math.min(CLOTH_AREA_MM.w, Math.round(s * CLOTH_AREA_MM.w)));
+  }
+
+  /* 模擬器的布色。對照商城 2884 的四個顏色,只求師傅看得出深淺對比,
+     不是色票 —— 實際顏色以手上那條布為準。對不到的名稱用生日眼鏡布的米色。 */
+  var CLOTH_COLORS = { '卡其': '#cdb88f', '粉紅': '#e9c3c6', '灰色': '#a3a3a3', '咖啡': '#6e4f3a' };
+
   /* 退件原因。代碼與後端 cloth-admin 的 REJECT_CODES 必須一致 ——
      兩邊各寫一份的話，加了新原因卻只改一邊，師傅會選到一個後端不收的值，
      而錯誤訊息只會說「請選擇退件原因」，看不出是版本沒對上。
@@ -213,8 +235,13 @@
           '.short-label{text-align:center;font-size:11px;color:#333}' +
           '.tip{margin-top:6px;text-align:center;font-size:11px;font-weight:700}' +
           '</style></head><body>' +
-          '<h1>樂活 客製眼鏡布</h1>' +
+          /* 品項與顏色(2026-10-09)。眼鏡盒、付費眼鏡布也走這張單;
+             顏色印大字 —— 門市拿到一包布,要能對著單子確認是不是客人選的那條。
+             ⚠ 欄位要 cloth-admin 的 print 有 select 出來,舊版函式沒有時退回「眼鏡布」。 */
+          '<h1>樂活 客製' + esc2(PRODUCT[d.product || 'cloth'] || '眼鏡布') + '</h1>' +
           '<div class="hr"></div>' +
+          (d.variant ? '<div>顏　　色　<span class="big">' + esc2(d.variant) + '</span></div>' : '') +
+          (d.order_no ? '<div>商城訂單　' + esc2(d.order_no) + '</div>' : '') +
           '<div>取貨門市　<span class="big">' + esc2(d.store_name || '未指定') + '</span></div>' +
           '<div>客　　人　<span class="big">' + esc2(d.member_name || '（未提供）') + '</span></div>' +
           '<div>會員編號　' + esc2(d.erpid || '—') + '</div>' +
@@ -278,7 +305,10 @@
     // 眼鏡盒的位置是對著盒蓋上的雕刻範圍(120 × 40 mm)量的,不是布
     var t = product === 'case'
       ? h + v + ',寬約雕刻範圍的 ' + pct + '%'
-      : h + v + ',寬約布的 ' + pct + '%';
+      : p.basis === 'cloth_plate'
+        // 付費眼鏡布:對著布中間 90 × 90 的刻圖範圍量的
+        ? h + v + ',寬約刻圖範圍(9 cm)的 ' + pct + '%'
+        : h + v + ',寬約布的 ' + pct + '%';
 
     /* 有轉過就要寫出來,而且要顯眼。
        DXF 已經幫他轉好了,但製作的人手上還有合成圖與實體布 ——
@@ -317,6 +347,12 @@
                ⚠ 舊資料沒有 product 欄位時當眼鏡布(它們本來就是)。 */
             '<span class="lab-tag is-product">' +
               (PRODUCT[it.product || 'cloth'] || esc(it.product)) + '</span>' +
+            /* 付費眼鏡布:標「付費」與顏色。顏色決定師傅拿哪一條布,
+               跟生日眼鏡布(只有一種)不同 —— 拿錯就是客人付了錢拿到別的顏色。 */
+            (isPaidCloth(it)
+              ? '<span class="lab-tag is-product">付費</span>' +
+                (it.variant ? '<span class="lab-tag is-product">' + esc(it.variant) + '</span>' : '')
+              : '') +
             '<span class="lab-tag">' + (SOURCE[it.source] || esc(it.source)) + '</span>' +
             '<span class="lab-tag' + (it.status === 'done' ? ' is-done' : '') + '">' +
               (STATUS[it.status] || esc(it.status)) + '</span>' +
@@ -339,6 +375,13 @@
                   '<input type="number" data-w="' + esc(it.id) + '" value="' + caseWidthMm(it) + '" ' +
                     'min="10" max="' + CASE_AREA_MM.w + '" step="1">' +
                   '<em>mm(雕刻範圍 ' + CASE_AREA_MM.w + '×' + CASE_AREA_MM.h + ')</em>' +
+                '</label>'
+              : isClothPlate(it)
+              ? '<label class="lab-size" title="DXF 會把刻圖縮放到這個寬度。已依客人在布上拉的大小算好">' +
+                  '<span>刻圖寬度</span>' +
+                  '<input type="number" data-w="' + esc(it.id) + '" value="' + clothPlateWidthMm(it) + '" ' +
+                    'min="10" max="' + CLOTH_AREA_MM.w + '" step="1">' +
+                  '<em>mm(布寬 150,刻圖最大 ' + CLOTH_AREA_MM.w + ')</em>' +
                 '</label>'
               : '<label class="lab-size" title="DXF 會把刻圖縮放到這個寬度(不是布的寬度)">' +
                   '<span>刻圖寬度</span>' +
@@ -541,6 +584,11 @@
   function boardFor(it) {
     if (it && it.product === 'case') {
       return { w: CASE_LID_MM.w, h: CASE_LID_MM.h, color: '#a8794f', name: '盒蓋', area: CASE_AREA_MM };
+    }
+    /* 付費眼鏡布:布的正中間畫 90 × 90 的刻圖範圍,圖照客人擺的位置放;布色照他選的顏色。 */
+    if (isClothPlate(it)) {
+      return { w: CLOTH_MM, h: CLOTH_MM, color: CLOTH_COLORS[it.variant] || '#ece5d7',
+               name: (it.variant || '') + '布', area: CLOTH_AREA_MM };
     }
     return { w: CLOTH_MM, h: CLOTH_MM, color: '#ece5d7', name: '布', area: null };
   }

@@ -56,14 +56,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <div class="cc-grid">
 
-    <!-- ===== 客製眼鏡布(已上線)===== -->
+    <!-- ===== 生日眼鏡布(已上線,壽星免費)=====
+         2026-10-09 多了付費的客製眼鏡布(下面第三張),這張改叫「生日眼鏡布」分清楚。 -->
     <a class="cc-card" href="cloth.html">
       <div class="cc-card-img">
-        <img src="images/cloth-01.jpg" alt="客製眼鏡布" loading="lazy">
+        <img src="images/cloth-01.jpg" alt="生日眼鏡布" loading="lazy">
       </div>
       <div class="cc-card-body">
         <h2 class="cc-card-name">
-          客製眼鏡布
+          生日眼鏡布
           <span class="cc-tag cc-tag--live">開放中</span>
         </h2>
         <p class="cc-card-desc">
@@ -96,6 +97,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <span class="cc-card-go">開始做我的眼鏡盒 <i class="fa-solid fa-arrow-right"></i></span>
       </div>
     </a>
+
+    <!-- ===== 客製眼鏡布(付費,商城 2884,2026-10-09)=====
+         頁面 cloth-shop.html 已在線上,但商城那邊還沒開客製、也沒庫存,
+         所以這張先放「即將推出」(刻意用 <div> 不是 <a>,理由同上)。
+         開賣時:<div class="cc-card cc-card--soon"> 換成 <a class="cc-card" href="cloth-shop.html">、
+         標籤換成 cc-tag--live「開放中」、底下補一行 cc-card-go。 -->
+    <div class="cc-card cc-card--soon">
+      <div class="cc-card-img">
+        <img src="images/cloth-shop-base.jpg?v=20261009" alt="客製眼鏡布" loading="lazy">
+      </div>
+      <div class="cc-card-body">
+        <h2 class="cc-card-name">
+          客製眼鏡布
+          <span class="cc-tag cc-tag--soon">即將推出</span>
+        </h2>
+        <p class="cc-card-desc">
+          不限生日，想做就做。四種顏色，自己挑圖、自己畫或上傳，
+          印成只有你有的那一條。
+        </p>
+        <p class="cc-card-meta">線上刷卡付款，做好送到你選的門市</p>
+      </div>
+    </div>
 
   </div>
 
@@ -130,7 +153,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- 「我的客製作品」要知道是誰。APP 走 SSO 開這一頁時 token 已經在了,
      但不要假設 —— SSO 失敗或過期都會落回未登入。 -->
 <script src="js/auth.js?v=20260817-appmember"></script>
-<script src="js/custom.js?v=20260929-hold"></script>
+<script src="js/custom.js?v=20261009-paidcloth"></script>
 <!-- 芽芽教學（只在樂活 App 裡出現，2026-10-04） -->
 <script src="js/yaya-custom-guide.js?v=20261004-yaya"></script>
 </body>

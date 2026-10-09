@@ -250,3 +250,15 @@
 @media (max-width: 960px) {
   .cs-plate-hint { display: none; }
 }
+
+/* 選顏色(付費客製眼鏡布 cloth-shop.html,2026-10-09)。
+   按鈕由 case.js 的 renderVariants 依商城規格產生;沒庫存的 disabled 並標「缺貨」。 */
+.cs-variants { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.cs-variant {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border: 1px solid var(--lohas-bd, #E8DED1); border-radius: 999px;
+  background: #fff; color: var(--text-main, #3b3222); font: inherit; font-size: 14px; cursor: pointer;
+}
+.cs-variant.on { border-color: var(--lohas-brand, #50422D); background: var(--lohas-brand, #50422D); color: #fff; }
+.cs-variant:disabled { opacity: .45; cursor: not-allowed; }
+.cs-variant small { font-size: 11px; }

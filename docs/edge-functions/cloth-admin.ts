@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
      其他幾支都有 code_version,只有這支沒有。
      每改一次就更新這個字串。 */
   if (req.method === 'GET') {
-    return reply('200', { data: { code_version: '2026-09-29 · 眼鏡盒待確認' } });
+    return reply('200', { data: { code_version: '2026-10-09 · 製作單印品項與顏色' } });
   }
 
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
@@ -135,7 +135,9 @@ Deno.serve(async (req) => {
     if (!id) return reply('006', { message: '缺少識別碼' }, 400);
 
     const { data, error } = await db.from('cloth_designs')
-      .select('id, erpid, member_name, design_name, source, status, created_at, done_at, store_erpid, store_name')
+      // product / order_no / variant(2026-10-09):製作單印品項與顏色。
+      // ⚠ variant 欄位由 docs/cloth-paid.sql 新增 —— 那段 SQL 沒跑之前部署這一版,列印會 500。
+      .select('id, erpid, member_name, design_name, source, status, created_at, done_at, store_erpid, store_name, product, order_no, variant')
       .eq('id', id).maybeSingle();
 
     if (error) {

@@ -13,9 +13,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- OpenAI Pixel(ChatGPT 廣告)。每頁只能一份 —— 安裝前會檢查 oaiq 是否已存在。 -->
 <script>!function(w,d,s,u){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");oaiq("init",{pixelId:"NjscxQ8XG8RS61Uqj5n6JA",debug:true});</script>
-  <title>客製眼鏡盒 · LOHAS 樂活眼鏡</title>
-  <meta name="description" content="把喜歡的圖雷刻在眼鏡盒上，打開的那一刻就知道是為誰準備的。">
-  <link rel="canonical" href="https://www.lohasglasses.com/case.html">
+  <title>客製眼鏡布 · LOHAS 樂活眼鏡</title>
+  <meta name="description" content="把喜歡的圖印在自己的眼鏡布上。不限生日，四種顏色，自己挑圖、自己設計。">
+  <link rel="canonical" href="https://www.lohasglasses.com/cloth-shop.html">
 
   <!-- ⚠ app-mode 不要 defer：class 要在頁面畫出來之前掛上。 -->
   <script src="js/app-mode.js?v=20260920-init"></script>
@@ -36,7 +36,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
        所以 <body> 同時掛 cl 與 cs —— cloth.css 的手機版規則是
        body.cl 開頭的,少了它整個手機版會退回桌機的兩欄。
-       case.css 只放【眼鏡盒才有的東西】:可雕刻範圍、盒款、價格。 -->
+       case.css 只放【眼鏡盒才有的東西】:可雕刻範圍、盒款、價格。
+
+       ⚠ 這一頁(付費客製眼鏡布,2026-10-09)與 case.html 是同一套:
+         HTML 從 case.html 複製、js/case.js 共用,差別全在下面的
+         window.LOHAS_DESIGN_PAGE 設定。改 case.html 的結構時這一頁要一起看。 -->
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
@@ -60,8 +64,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <div class="cl-head">
     <a class="cl-back" href="custom.html"><i class="fa-solid fa-chevron-left"></i> 客製中心</a>
-    <h1 class="cl-title">客製眼鏡盒</h1>
+    <h1 class="cl-title">客製眼鏡布</h1>
     <div class="cl-title-line"></div>
+    <!-- 與生日免費眼鏡布(cloth.html)分清楚:兩頁長得很像,客人容易走錯。 -->
+    <p class="cl-field-hint" style="text-align:center;margin:10px 0 0">
+      不限生日，四種顏色，一次一條。壽星每年一條的免費眼鏡布在
+      <a href="cloth.html">生日眼鏡布</a>。
+    </p>
   </div>
 
   <!-- ===== 來源切換 =====
@@ -92,13 +101,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- ===== 左:預覽 ===== -->
     <div class="cl-left">
       <div class="cl-stage" id="csStage">
-        <img class="cl-base" id="csBase" src="images/case-base.jpg?v=20261003-walnut2"
-             alt="客製眼鏡盒" draggable="false">
+        <!-- 卷軸款的白底商品照(商城 2884)。四個顏色暫時共用這一張,
+             之後有各顏色的平拍照再依選的顏色換。 -->
+        <img class="cl-base" id="csBase" src="images/cloth-shop-base.jpg?v=20261009"
+             alt="客製眼鏡布" draggable="false">
 
-        <!-- 可雕刻範圍。底圖是【正上方拍的】素面盒,所以這個框是正的
-             矩形,沒有任何角度修正,圖貼上去是 1:1。
-             位置寫在 css/case.css 的 .cs-plate —— 那幾個數字是量出
-             來的,換底圖一定要重量一次。 -->
+        <!-- 可雕刻範圍(90 × 90 mm,與生日眼鏡布的圖最大 9 cm 一致)。
+             位置由下方 LOHAS_DESIGN_PAGE.plate 決定(case.js 套用),
+             是對著卷軸照片量的:卷軸寬 150 mm、框放在上方卷筒與 LOHAS 標誌之間。
+             換底圖一定要重量一次。 -->
         <div class="cs-plate" id="csPlate">
           <!-- 外框與四個節點放在 overlay 【裡面】,這樣它們會跟著一起
                旋轉,節點永遠落在圖案真正的四個角上。 -->
@@ -157,7 +168,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </button>
           </div>
         </div>
-        <button type="button" class="cl-apply" id="csDrawApply" disabled>放 到 盒 子 上</button>
+        <button type="button" class="cl-apply" id="csDrawApply" disabled>放 到 布 上</button>
       </div>
 
       <!-- 打字 -->
@@ -188,25 +199,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </label>
         </div>
         <p class="cl-field-hint">字級不用在這裡調，放上去之後拉四個角就好。</p>
-        <button type="button" class="cl-apply" id="csTextApply" disabled>放 到 盒 子 上</button>
+        <button type="button" class="cl-apply" id="csTextApply" disabled>放 到 布 上</button>
       </div>
 
-      <!-- 盒款 -->
+      <!-- 顏色。選項從商城讀(case.js 的 renderVariants),庫存也以商城為準。
+           ⚠ 四個顏色暫時共用同一張預覽圖,實際以這裡選的顏色製作。 -->
       <div class="cl-card">
-        <p class="cl-card-title">選盒款</p>
-        <div class="cs-boxes" id="csBoxes">
-          <button type="button" class="cs-box on" data-box="walnut">
-            <span class="cs-box-img"><img src="images/case-base.jpg?v=20261003-walnut2" alt="胡桃木紋盒"></span>
-            <span class="cs-box-name">胡桃木紋盒</span>
-          </button>
-          <!-- ⚠ 只有一款是【現況】不是版面沒做完。其他盒款的照片還沒拍,
-               有了就往這裡加一顆。⚠ 加盒款要【連同可雕刻範圍一起換】——
-               範圍是對著某一張照片量的,換照片不換範圍會整個歪掉。 -->
-          <div class="cs-box cs-box--soon">
-            <span class="cs-box-img cs-box-img--empty"><i class="fa-regular fa-image"></i></span>
-            <span class="cs-box-name">其他盒款準備中</span>
-          </div>
-        </div>
+        <p class="cl-card-title">選顏色<span class="cl-req">*</span></p>
+        <div class="cs-variants" id="csVariants"><p class="cl-field-hint">顏色載入中…</p></div>
+        <p class="cl-field-hint">預覽圖是同一張，實際會用你選的顏色製作。</p>
       </div>
 
       <!-- 放在哪裡 -->
@@ -233,10 +234,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
            🚨 必填。與眼鏡布同一個理由:製作端拿到一張做得出來、卻不知道
            要送去哪裡的工單,實務上沒有人會去「人工處理」,它就一直躺在
            那裡(眼鏡布 9/6 那件躺了八天)。
-           ⚠ 標題寫明「客製眼鏡盒」—— 客人腦子裡是刻圖,但這一格的答案
+           ⚠ 標題寫明「客製眼鏡布」—— 客人腦子裡是刻圖,但這一格的答案
              會變成門市端的取件通知,兩邊要講同一件事。 -->
       <div class="cl-card" id="csStoreCard">
-        <p class="cl-card-title">客製眼鏡盒要到哪一家門市拿<span class="cl-req">*</span></p>
+        <p class="cl-card-title">客製眼鏡布要到哪一家門市拿<span class="cl-req">*</span></p>
         <div class="cl-select-wrap">
           <select class="cl-input cl-select" id="csStore">
             <option value="">載入門市中…</option>
@@ -244,7 +245,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <i class="fa-solid fa-chevron-down cl-select-ico"></i>
         </div>
         <p class="cl-field-hint" id="csStoreHint">
-          眼鏡盒做好之後會送到這家門市，之後想換的話打個電話跟他們說一聲就好。
+          眼鏡布做好之後會送到這家門市，之後想換的話打個電話跟他們說一聲就好。
         </p>
         <button type="button" class="cl-retry" id="csStoreRetry" style="display:none">
           <i class="fa-solid fa-rotate-right"></i> 重新載入門市清單
@@ -256,7 +257,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p class="cl-card-title">雕刻前請留意</p>
         <ul class="cs-rules">
           <li>太細的線條雕刻後會斷掉，系統會自動把線加粗到刻得出來的寬度。</li>
-          <li>雷刻是<b>單色</b>的，彩色圖會轉成線稿，顏色不會出現在盒子上。</li>
+          <li>雷刻是<b>單色</b>的，彩色圖會轉成線稿，顏色不會出現在布上。</li>
           <li>圖案超出可雕刻範圍的部分會被切掉，送出前請確認都在框線內。</li>
           <li>送出後不能修改，製作端會照送出當下的樣子雕。</li>
         </ul>
@@ -287,15 +288,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 
-  <!-- ===== 大家做的眼鏡盒 =====
-       ⚠ 只放【已完成、拿到手】的作品。做到一半的放上去,客人會來問
-         「別人的都好了我的怎麼還沒好」—— 那是製作端的排程,不是客服
-         答得出來的。與眼鏡布分享牆同一條規矩。
-       資料來自 cloth-wall(product: 'case'),js/cloth-wall.js 與眼鏡布共用。
-       ⚠ 預設 hidden:一件完成的都沒有時整區不出現,有了才由 js 打開。 -->
-  <section class="cw-sec" id="csWallSec" data-wall-product="case" hidden>
+  <!-- ===== 大家做的眼鏡布 =====
+       與生日眼鏡布同一面牆(cloth-wall,product: cloth),只放已完成的作品。 -->
+  <section class="cw-sec" id="csWallSec" data-wall-product="cloth" hidden>
     <div class="cw-head">
-      <h2 class="cw-title">大家做的眼鏡盒</h2>
+      <h2 class="cw-title">大家做的眼鏡布</h2>
       <p class="cw-sub">這些都是已經完成、拿到手的作品。你的也會出現在這裡。</p>
     </div>
     <div class="cw-wall" id="csWall"></div>
@@ -329,9 +326,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
+<!-- 頁面設定:付費客製眼鏡布(商城 2884)。js/case.js 讀這一份,沒有它就是眼鏡盒。
+     ⚠ nid 也要在 shop.ts 的 PAID_PRODUCTS 裡(2884 → cloth),否則付款後不會進加工中心。 -->
+<script>
+  window.LOHAS_DESIGN_PAGE = {
+    product: 'cloth', noun: '眼鏡布', page: 'cloth-shop.html', nid: 2884,
+    areaAspect: 1,                                                    // 90 × 90 mm
+    plate: { left: 0.3167, top: 0.265, width: 0.3767, height: 0.3767 },
+    basis: 'cloth_plate', filePrefix: 'clothshop-', variants: true
+  };
+</script>
 <script src="js/case.js?v=20261009-paidcloth"></script>
-<!-- 芽芽教學（只在樂活 App 裡出現，2026-10-04） -->
-<script src="js/yaya-case-guide.js?v=20261004-yaya"></script>
 <script src="js/cloth-wall.js?v=20261002-casewall"></script>
 </body>
 </html>
