@@ -45,7 +45,14 @@
       /* 對外販售開關(CHECKOUT.OPEN 讀這個)。沒寫 = 開(眼鏡盒);
          false = 只有 ?test=1 能結帳。各頁自己決定,不要回頭改 CHECKOUT.OPEN ——
          那會同時關掉兩頁。 */
-      open: c.open !== false
+      open: c.open !== false,
+      /* 款式(2026-10-12):同一頁賣好幾個【不同的商城商品】,例如付費眼鏡布的
+         科技布(2943)與卷軸鏡布(2944)。每一款各自有 nid、預覽底圖、刻圖範圍:
+           [{ key, name, nid, base, plate }]
+         選哪一款就推哪一個 nid,款式名稱放在 main.variant(加工中心靠它分辨拿哪一種布)。
+         ⚠ 每一款的 nid 都要在 shop.ts 的 PAID_PRODUCTS 裡。
+         沒有設定(眼鏡盒)就照舊:nid / plate 用上面那兩個。 */
+      styles: (c.styles && c.styles.length) ? c.styles : null
     };
   })();
 
@@ -70,7 +77,8 @@
     ratio: 1,            // 圖的高/寬
     ratioFor: '',
     strokes: [],
-    busy: false
+    busy: false,
+    style: null          // 選的款式(PAGE.styles 其中一個);沒有款式的頁面是 null
   };
 
   /* 一次先畫幾張,按「展開全部」才畫其餘的。
@@ -1108,7 +1116,8 @@
             /* 有規格的商品(付費眼鏡布)要帶 sid,商城據此扣庫存;
                variant 是顏色名稱,存進送單與加工中心給師傅看。 */
             sid: State.variant ? State.variant.sid : undefined,
-            variant: State.variant ? State.variant.name : undefined,
+            variant: State.variant ? State.variant.name
+                   : State.style ? State.style.name : undefined,
             design: {
               /* 只有刻圖市集的圖才有編號(創作者分潤靠它對作品)。
                  自己畫/打字/上傳一律不帶,由 shop 函式判定為 draw。 */
@@ -1195,12 +1204,51 @@
     document.addEventListener('lohas:design-upload-success', onUploaded);
   }
 
+  /* 範圍框的位置:畫面上的 .cs-plate 與合成圖用的 PLATE 一起設,兩邊永遠同一組數字。 */
+  function setPlate(p) {
+    if (!p) return;
+    PLATE = p;
+    el.plate.style.left = (p.left * 100) + '%';
+    el.plate.style.top = (p.top * 100) + '%';
+    el.plate.style.width = (p.width * 100) + '%';
+    el.plate.style.height = (p.height * 100) + '%';
+  }
+
+  /* 款式按鈕由 PAGE.styles 畫出來(只有一份資料,HTML 不另外寫一份)。 */
+  function renderStyles() {
+    var wrap = $('csBoxes');
+    if (!wrap || !PAGE.styles) return;
+    wrap.innerHTML = PAGE.styles.map(function (s) {
+      var on = State.style && State.style.key === s.key;
+      return '<button type="button" class="cs-box' + (on ? ' on' : '') + '" data-box="' + esc(s.key) + '">' +
+               '<span class="cs-box-img"><img src="' + esc(s.base) + '" alt="' + esc(s.name) + '"></span>' +
+               '<span class="cs-box-name">' + esc(s.name) + '</span>' +
+             '</button>';
+    }).join('');
+  }
+
+  /* 換款式 = 換商城商品:nid、底圖、刻圖範圍一起換,價格與能不能客製重讀。
+     ⚠ 範圍是對著那一款的照片量的,換照片不換範圍會整個歪掉。 */
+  function applyStyle(key) {
+    var s = (PAGE.styles || []).filter(function (x) { return x.key === key; })[0];
+    if (!s) return;
+    State.style = s;
+    CHECKOUT.NID = s.nid;
+    if (el.base) el.base.src = s.base;
+    setPlate(s.plate);
+    renderStyles();
+    if (State.picked) applyOverlay();
+    product = null;
+    if (testMode) loadProduct(); else refreshSubmit();
+  }
+
   function bindBoxes() {
     var wrap = $('csBoxes');
     if (!wrap) return;
     wrap.addEventListener('click', function (e) {
       var btn = e.target.closest('button[data-box]');
       if (!btn) return;
+      if (PAGE.styles) { applyStyle(btn.dataset.box); return; }
       wrap.querySelectorAll('.cs-box').forEach(function (b) {
         b.classList.toggle('on', b === btn);
       });
@@ -1259,11 +1307,15 @@
 
     /* 頁面有給範圍框位置就用它(付費眼鏡布);眼鏡盒照 css/case.css。
        合成圖用的 PLATE 也是同一組,兩邊不會對不上。 */
-    if (PAGE.plate) {
-      el.plate.style.left = (PAGE.plate.left * 100) + '%';
-      el.plate.style.top = (PAGE.plate.top * 100) + '%';
-      el.plate.style.width = (PAGE.plate.width * 100) + '%';
-      el.plate.style.height = (PAGE.plate.height * 100) + '%';
+    if (PAGE.plate) setPlate(PAGE.plate);
+    /* 有款式的頁面:先套第一款(nid、底圖、範圍),之後 loadProduct 讀的就是這一款 */
+    if (PAGE.styles) {
+      var s0 = PAGE.styles[0];
+      State.style = s0;
+      CHECKOUT.NID = s0.nid;
+      if (el.base) el.base.src = s0.base;
+      setPlate(s0.plate);
+      renderStyles();
     }
 
     applyOverlay();

@@ -713,7 +713,7 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
   依區塊的 `data-wall-product` 決定。沒有已完成的作品時整區隱藏。
 - 刻圖費已含在售價內,頁面不要寫「另加刻圖費」。
 
-## 🚨 付費客製眼鏡布(2026-10-09 建置,商城 **2943**「雷刻小物｜創作科技布」NT$200)
+## 🚨 付費客製眼鏡布(2026-10-09 建置,商城 **2943 科技布 / 2944 卷軸鏡布**,各 NT$200)
 
 不限生日、要付錢的眼鏡布。**頁面與流程整套沿用眼鏡盒**,不是沿用生日眼鏡布:
 
@@ -735,7 +735,7 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 `SiteCartApi`(`checkSpecification` / `hasStock`)只認第二層 sid,
 送顏色就回「規格不屬於此商品」;送 525 則庫存是 0、也分不出顏色。
 商城原生購物車用 `third_sid` / `third_sid_amount` 處理第三層,官網這條路沒有。
-→ 改用沒有規格的 2943。日後要賣多色款,**商品規格要設成兩層**(顏色直接掛在第一層底下),
+→ 改用沒有規格的 2943 / 2944(兩個獨立商品,頁面上選「款式」)。日後要賣多色款,**商品規格要設成兩層**(顏色直接掛在第一層底下),
 或請商城讓 `SiteCartApi` 支援第三層。
 
 改了要一起改的地方:
@@ -743,6 +743,9 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - `case.js` 讀頁面上的 `window.LOHAS_DESIGN_PAGE`(沒有就是眼鏡盒)。
   `cloth-shop.html` 那份設定的 `nid` 要同時在 `shop.ts` 的 **`PAID_PRODUCTS`**(2943 → `'cloth'`),
   否則送出去會被當成太陽眼鏡,付了錢也進不了加工中心。**改 nid 一定要重新部署 `shop`。**
+- **款式**:`LOHAS_DESIGN_PAGE.styles = [{ key, name, nid, base, plate }]`,選哪款就推哪個 nid、
+  換那一款的底圖與刻圖範圍(`case.js` 的 `applyStyle`)。款式名稱存成 `variant`,
+  **加工中心 `boardFor` 用名稱分辨布**(`'卷軸鏡布'` → 卷軸,其他 → 科技布)——改名要兩邊一起改。
 - 販售開關是各頁自己的 `LOHAS_DESIGN_PAGE.open`(`false` = 只有 `?test=1` 能結帳),
   不要回頭改 `case.js` 的 `CHECKOUT.OPEN` —— 那會同時關掉眼鏡盒。
 - `cloth-shop.html` 的 HTML 是從 `case.html` 複製的 —— **改 `case.html` 的結構時這一頁要一起看**
@@ -750,13 +753,14 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - 規格(顏色)的機制保留著:`variants: true` 時從商城規格讀、送 `main.sid` + `main.variant`,
   `variant` 存進 `design_submissions` 與 `cloth_designs`(`docs/cloth-paid.sql` 已跑),
   加工中心、後台與製作單都會印 —— 師傅靠它拿布。2943 沒有規格,所以是 `false`、`variant` 為 null。
-- 預覽底圖 `images/cloth-shop-base.jpg` 是 2943 的灰布商品照(600²,布佔 318 × 381 px ≈ 150 × 180 mm);
-  刻圖範圍框寫在 `LOHAS_DESIGN_PAGE.plate`(布的正中間),**換照片要重量**。
+- 預覽底圖:科技布 `images/cloth-shop-base.jpg`(600²,布佔 318 × 381 px ≈ 150 × 180 mm,範圍在正中間)、
+  卷軸鏡布 `images/cloth-shop-scroll.jpg`(卷軸含卷筒 378 × 382 px ≈ 150 × 152 mm,範圍在 LOHAS 標誌上方)。
+  刻圖範圍寫在各款的 `plate`,**換照片要重量**。
 - 加工中心:`basis === 'cloth_plate'` 的刻圖寬度預設 `scale × 90`;
-  EZCAD 模擬器畫 150 × 180 的灰布、正中間 90 × 90 範圍(`cloth-lab.js` 的 `boardFor`)。
-  布的實際尺寸若不是 150 × 180,`boardFor` 與頁面的 `plate` 要一起改。
+  EZCAD 模擬器:科技布畫 150 × 180 灰布、範圍在正中間;卷軸鏡布畫 150 × 152、範圍離上緣 21 mm
+  (`cloth-lab.js` 的 `boardFor`)。兩款的實際尺寸都是由商品照比例推的,實測不同時 `boardFor` 與 `plate` 一起改。
 
-⚠ **開賣前**:`shop` 部署 2943 那一版並自檢 → `?test=1` 推一次購物車(不付款)確認
+⚠ **開賣前**:`shop` 已部署 2943/2944(2026-10-12)→ `?test=1` 兩款各推一次購物車(不付款)確認
 付款方式只剩線上刷卡、門市鎖定、數量上限 1,並看一台一般商品的購物車 →
 `cloth-shop.html` 的 `open` 改 `true`、`custom.html` 第三張卡從「即將推出」換成連結、
 header 與頁尾(含後台「頁尾設定」的 DB 頁尾)的「客製眼鏡布」改名「生日眼鏡布」並加上這一頁。

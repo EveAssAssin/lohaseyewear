@@ -101,14 +101,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- ===== 左:預覽 ===== -->
     <div class="cl-left">
       <div class="cl-stage" id="csStage">
-        <!-- 商城 2943「雷刻小物｜創作科技布」的白底商品照(灰色,單一款式)。 -->
+        <!-- 底圖由選的款式決定(LOHAS_DESIGN_PAGE.styles,case.js 換)。
+             這裡先放第一款(科技布),JS 沒跑起來時畫面也不是空的。 -->
         <img class="cl-base" id="csBase" src="images/cloth-shop-base.jpg?v=20261012-2943"
              alt="客製眼鏡布" draggable="false">
 
         <!-- 可雕刻範圍(90 × 90 mm,與生日眼鏡布的圖最大 9 cm 一致)。
              位置由下方 LOHAS_DESIGN_PAGE.plate 決定(case.js 套用),
-             是對著商品照量的:布在 600² 照片上佔 318 × 381 px(= 150 × 180 mm,
-             一 mm 約 2.12 px),框放在布的正中間,下緣在右下角 LOHAS 標誌之上。
+             每一款各自量(見下方 styles 的註解)。
              換底圖一定要重量一次。 -->
         <div class="cs-plate" id="csPlate">
           <!-- 外框與四個節點放在 overlay 【裡面】,這樣它們會跟著一起
@@ -200,6 +200,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <p class="cl-field-hint">字級不用在這裡調，放上去之後拉四個角就好。</p>
         <button type="button" class="cl-apply" id="csTextApply" disabled>放 到 布 上</button>
+      </div>
+
+      <!-- 款式。按鈕由 case.js 依 LOHAS_DESIGN_PAGE.styles 畫出來。
+           每一款是商城裡【不同的商品】,選哪款就推哪一個 nid。 -->
+      <div class="cl-card">
+        <p class="cl-card-title">選款式</p>
+        <div class="cs-boxes" id="csBoxes"></div>
       </div>
 
       <!-- 放在哪裡 -->
@@ -318,24 +325,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<!-- 頁面設定:付費客製眼鏡布(商城 2943「雷刻小物｜創作科技布」,2026-10-12 由 2884 改過來)。
-     js/case.js 讀這一份,沒有它就是眼鏡盒。
-     ⚠ nid 也要在 shop.ts 的 PAID_PRODUCTS 裡(2943 → cloth),否則付款後不會進加工中心。
-     2943 沒有規格,所以 variants: false;2884 的三層規格(顏色在第三層)商城的
-     官網購物車介面收不了,改用這一件。 -->
+<!-- 頁面設定:付費客製眼鏡布(2026-10-12)。js/case.js 讀這一份,沒有它就是眼鏡盒。
+     兩款都是商城裡獨立的商品、都沒有規格:
+       2943 雷刻小物｜創作科技布   2944 雷刻小物｜創作卷軸鏡布
+     ⚠ 每一款的 nid 都要在 shop.ts 的 PAID_PRODUCTS 裡,否則付款後不會進加工中心。
+     ⚠ 款式名稱(name)會存成 cloth_designs.variant,加工中心的 boardFor 靠它分辨布 ——
+       改名字的話 js/cloth-lab.js 要一起改。
+     (原本用 2884「創作眼鏡布」四色,但顏色在規格第三層,商城的官網購物車只收第二層。) -->
 <script>
   window.LOHAS_DESIGN_PAGE = {
     product: 'cloth', noun: '眼鏡布', page: 'cloth-shop.html', nid: 2943,
     areaAspect: 1,                                                    // 90 × 90 mm
-    plate: { left: 0.3425, top: 0.335, width: 0.3183, height: 0.3183 },   // 布中間 90 × 90 mm
     basis: 'cloth_plate', filePrefix: 'clothshop-', variants: false,
-    /* 2026-10-12 商城已開客製、灰色有庫存,但 shop / shop-webhook 還沒部署付費眼鏡布那一版 ——
-       這時讓人結帳,付了錢也進不了加工中心。四支函式部署並自檢完才改成 true。
-       2026-10-12 改成 2943 之後,shop 要再部署一次(PAID_PRODUCTS)才能開。 */
+    styles: [
+      /* 科技布:600² 商品照上布佔 318 × 381 px(≈ 150 × 180 mm,一 mm 約 2.12 px),
+         範圍在布的正中間,下緣在右下角 LOHAS 標誌之上。 */
+      { key: 'tech', name: '科技布', nid: 2943, base: 'images/cloth-shop-base.jpg?v=20261012-2943',
+        plate: { left: 0.3425, top: 0.335, width: 0.3183, height: 0.3183 } },
+      /* 卷軸鏡布:卷軸含兩端卷筒寬 378 px = 150 mm(一 mm 約 2.52 px),
+         範圍左右置中、下緣在中間 LOHAS 標誌之上(標誌從 y 388 開始)。 */
+      { key: 'scroll', name: '卷軸鏡布', nid: 2944, base: 'images/cloth-shop-scroll.jpg?v=20261012-2944',
+        plate: { left: 0.3167, top: 0.265, width: 0.3767, height: 0.3767 } }
+    ],
+    /* 2026-10-12 shop 已部署 2943/2944;用 ?test=1 推過購物車(不付款)沒問題才改成 true。 */
     open: false
   };
 </script>
-<script src="js/case.js?v=20261012-pageopen"></script>
+<script src="js/case.js?v=20261012-styles"></script>
 <script src="js/cloth-wall.js?v=20261002-casewall"></script>
 </body>
 </html>

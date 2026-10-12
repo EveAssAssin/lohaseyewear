@@ -588,10 +588,17 @@
     }
     /* 付費眼鏡布:布的正中間畫 90 × 90 的刻圖範圍,圖照客人擺的位置放;布色照他選的顏色。 */
     if (isClothPlate(it)) {
-      /* 2943 的布是 150 × 180(由商品照比例 318:381 推得),刻圖範圍在正中間 ——
+      /* 款式名稱(variant)來自 cloth-shop.html 的 styles[].name,兩邊要同一個字。
+         卷軸鏡布(2944):卷軸含卷筒 150 × 152(商品照 378 × 382 px),
+         刻圖範圍左右置中、離上緣約 21 mm(頁面上的框就在那裡,下方是 LOHAS 標誌)。 */
+      if (it.variant === '卷軸鏡布') {
+        return { w: CLOTH_MM, h: 152, color: '#ead9b5', name: '卷軸鏡布',
+                 area: CLOTH_AREA_MM, areaY: 21 };
+      }
+      /* 科技布(2943)是 150 × 180(由商品照比例 318:381 推得),刻圖範圍在正中間 ——
          與 cloth-shop.html 的 plate 一致。實際尺寸若不同,兩邊要一起改。 */
       return { w: CLOTH_MM, h: 180, color: CLOTH_COLORS[it.variant] || CLOTH_COLORS['灰色'],
-               name: (it.variant || '') + '布', area: CLOTH_AREA_MM };
+               name: it.variant || '布', area: CLOTH_AREA_MM };
     }
     return { w: CLOTH_MM, h: CLOTH_MM, color: '#ece5d7', name: '布', area: null };
   }
@@ -641,7 +648,8 @@
        眼鏡布:維持置中(布上的位置不是對著固定範圍量的)。 */
     var ox = (B.w - Sim.w) / 2, oy = (B.h - Sim.h) / 2;
     if (B.area) {
-      var ax = (B.w - B.area.w) / 2, ay = (B.h - B.area.h) / 2;
+      var ax = (B.w - B.area.w) / 2;
+      var ay = B.areaY != null ? B.areaY : (B.h - B.area.h) / 2;   // 卷軸的範圍不在正中間
       cx.save();
       cx.setLineDash([1.2, 0.8]);
       cx.strokeStyle = 'rgba(255,255,255,.75)';
