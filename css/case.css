@@ -262,3 +262,12 @@
 .cs-variant.on { border-color: var(--lohas-brand, #50422D); background: var(--lohas-brand, #50422D); color: #fff; }
 .cs-variant:disabled { opacity: .45; cursor: not-allowed; }
 .cs-variant small { font-size: 11px; }
+
+/* 付費客製眼鏡布(cloth-shop.html,2026-10-12)。
+   ・「可雕刻範圍」標籤的 top: 143% 是對著眼鏡盒照片算的,換成布的照片會壓在布的下緣
+     (卷軸款則壓在卷筒上)—— 布的頁面一律不顯示,範圍靠虛線框就看得出來。
+   ・手機版不顯示「先挑一張圖」(營運決定):預覽小,那顆 pill 會蓋到布的下方。 */
+.cs-stage--cloth .cs-plate-hint { display: none; }
+@media (max-width: 960px) {
+  .cs-stage--cloth .cs-stage-empty { display: none; }
+}
