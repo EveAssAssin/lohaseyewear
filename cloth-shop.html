@@ -347,8 +347,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       { key: 'scroll', name: '卷軸鏡布', nid: 2944, base: 'images/cloth-shop-scroll.jpg?v=20261012-2944',
         plate: { left: 0.3167, top: 0.265, width: 0.3767, height: 0.3767 } }
     ],
-    /* 2026-10-12 shop 已部署 2943/2944;用 ?test=1 推過購物車(不付款)沒問題才改成 true。 */
-    open: false
+    /* 2026-10-12 開賣(兩款都用 ?test=1 推過購物車:只剩線上刷卡、門市鎖定、數量 1)。
+       要暫停販售改成 false —— 只有 ?test=1 能結帳,其他人看到「即將開放」。 */
+    open: true
   };
 </script>
 <script src="js/case.js?v=20261012-styles"></script>

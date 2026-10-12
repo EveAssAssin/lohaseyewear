@@ -99,26 +99,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </a>
 
     <!-- ===== 客製眼鏡布(付費,商城 2943 科技布 / 2944 卷軸鏡布,2026-10-12)=====
-         頁面 cloth-shop.html 已在線上,但商城那邊還沒開客製、也沒庫存,
-         所以這張先放「即將推出」(刻意用 <div> 不是 <a>,理由同上)。
-         開賣時:<div class="cc-card cc-card--soon"> 換成 <a class="cc-card" href="cloth-shop.html">、
-         標籤換成 cc-tag--live「開放中」、底下補一行 cc-card-go。 -->
-    <div class="cc-card cc-card--soon">
+         2026-10-12 開賣。要暫停時:換回 <div class="cc-card cc-card--soon">
+         (刻意不是 <a>,理由同上)、標籤換回 cc-tag--soon、拿掉 cc-card-go,
+         並把 cloth-shop.html 的 LOHAS_DESIGN_PAGE.open 設成 false。 -->
+    <a class="cc-card" href="cloth-shop.html">
       <div class="cc-card-img">
         <img src="images/cloth-shop-base.jpg?v=20261012-2943" alt="客製眼鏡布" loading="lazy">
       </div>
       <div class="cc-card-body">
         <h2 class="cc-card-name">
           客製眼鏡布
-          <span class="cc-tag cc-tag--soon">即將推出</span>
+          <span class="cc-tag cc-tag--live">開放中</span>
         </h2>
         <p class="cc-card-desc">
           不限生日，想做就做。科技布、卷軸鏡布兩款，自己挑圖、自己畫或上傳，
           印成只有你有的那一條。
         </p>
         <p class="cc-card-meta">線上刷卡付款，做好送到你選的門市</p>
+        <span class="cc-card-go">開始做我的眼鏡布 <i class="fa-solid fa-arrow-right"></i></span>
       </div>
-    </div>
+    </a>
 
   </div>
 
@@ -155,6 +155,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/auth.js?v=20260817-appmember"></script>
 <script src="js/custom.js?v=20261009-paidcloth"></script>
 <!-- 芽芽教學（只在樂活 App 裡出現，2026-10-04） -->
-<script src="js/yaya-custom-guide.js?v=20261004-yaya"></script>
+<script src="js/yaya-custom-guide.js?v=20261012-paidcloth"></script>
 </body>
 </html>
