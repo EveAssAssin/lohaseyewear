@@ -438,6 +438,9 @@ function initCookieBanner() {
 
   if (!cookieBanner || !acceptBtn) return;
 
+  // App 內建瀏覽器不顯示 Cookie 提示（2026-10-12，Apple 5.1.2(i)；App 內也不載追蹤碼，見各頁 <head> 的 __LOHAS_IN_APP）
+  if (window.__LOHAS_IN_APP) { cookieBanner.remove(); return; }
+
   // 防止重複 init (例如某些頁面 layout 重 render)
   if (cookieBanner.dataset.bound) return;
   cookieBanner.dataset.bound = "1";

@@ -2,8 +2,10 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+<!-- App 內不追蹤（2026-10-12，Apple 審核 5.1.2(i)）：樂活 App 內建瀏覽器打開時不載 GTM／OpenAI 像素、不顯示 Cookie 提示。判斷＝UA 有 LohasApp（新版 App）或 ?app=1／本分頁已是 App 模式（同 js/app-mode.js）；?app=0 退出 -->
+<script>window.__LOHAS_IN_APP=(function(){try{var q=location.search||"";if(/[?&]app=0(&|$)/.test(q))return false;if(/LohasApp/.test(navigator.userAgent||"")||/[?&]app=1(&|$)/.test(q))return true;return sessionStorage.getItem("lohas_app_mode")==="1"}catch(e){return /LohasApp/.test(navigator.userAgent||"")}})();</script>
 <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+<script>window.__LOHAS_IN_APP||(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
@@ -12,7 +14,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- OpenAI Pixel(ChatGPT 廣告)。每頁只能一份 —— 安裝前會檢查 oaiq 是否已存在。 -->
-<script>!function(w,d,s,u){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");oaiq("init",{pixelId:"NjscxQ8XG8RS61Uqj5n6JA",debug:true});</script>
+<script>!function(w,d,s,u){if(w.oaiq)return;if(w.__LOHAS_IN_APP){w.oaiq=function(){};return}var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");oaiq("init",{pixelId:"NjscxQ8XG8RS61Uqj5n6JA",debug:true});</script>
   <title>樂活商店街 · LOHAS 樂活眼鏡</title>
   <meta name="description" content="樂活會員專屬商店街。全台特約店家會員優惠，憑會員身份立享專屬折扣。">
 
@@ -228,7 +230,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         crossorigin=""></script>
 
 <!-- 全站 layout -->
-<script src="js/layout.js?v=20260905-navcache"></script>
+<script src="js/layout.js?v=20261012-noapptrack"></script>
 
 <!-- API 模組（依賴關係：core → store / vipstore） -->
 <script src="js/api/api-core.js?v=20260520-1500"></script>
