@@ -333,10 +333,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     product: 'cloth', noun: '眼鏡布', page: 'cloth-shop.html', nid: 2884,
     areaAspect: 1,                                                    // 90 × 90 mm
     plate: { left: 0.3167, top: 0.265, width: 0.3767, height: 0.3767 },
-    basis: 'cloth_plate', filePrefix: 'clothshop-', variants: true
+    basis: 'cloth_plate', filePrefix: 'clothshop-', variants: true,
+    /* 2026-10-12 商城已開客製、灰色有庫存,但 shop / shop-webhook 還沒部署付費眼鏡布那一版 ——
+       這時讓人結帳,付了錢也進不了加工中心。四支函式部署並自檢完才改成 true。 */
+    open: false
   };
 </script>
-<script src="js/case.js?v=20261009-paidcloth"></script>
+<script src="js/case.js?v=20261012-pageopen"></script>
 <script src="js/cloth-wall.js?v=20261002-casewall"></script>
 </body>
 </html>

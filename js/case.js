@@ -41,7 +41,11 @@
       basis: c.basis || 'case_plate',         // placement 的基準,shop.ts 會依品項覆寫
       storeCacheKey: c.storeCacheKey || 'lohas_case_storelist',
       filePrefix: c.filePrefix || 'case-',    // 合成圖與雕刻檔的檔名前綴
-      variants: !!c.variants                  // 要不要選規格(付費眼鏡布的顏色)
+      variants: !!c.variants,                 // 要不要選規格(付費眼鏡布的顏色)
+      /* 對外販售開關(CHECKOUT.OPEN 讀這個)。沒寫 = 開(眼鏡盒);
+         false = 只有 ?test=1 能結帳。各頁自己決定,不要回頭改 CHECKOUT.OPEN ——
+         那會同時關掉兩頁。 */
+      open: c.open !== false
     };
   })();
 
@@ -796,11 +800,12 @@
      照 js/design.js(客製刻圖太陽眼鏡)那條已經跑通的路走,
      不另外發明一套 —— 那條路 8/27 端到端走通過 6 次。
 
-     開關是下面的 CHECKOUT.OPEN。
+     開關是下面的 CHECKOUT.OPEN,值來自各頁的 LOHAS_DESIGN_PAGE.open(2026-10-12 起)。
        true  → 所有人都能結帳
        false → 只有網址帶 ?test=1 才打開,其他人看到「即將開放」
-     要暫停販售就把它改成 false(與 register.js 的 NOT_READY 同一個做法),
-     並換 case.html 裡 case.js 的 ?v=,否則回訪者拿到的是快取裡的舊版。
+     要暫停眼鏡盒就在 case.html 加一份 LOHAS_DESIGN_PAGE = { open: false }
+     (與 register.js 的 NOT_READY 同一個做法);付費眼鏡布改 cloth-shop.html 那一份。
+     改完換該頁 case.js 的 ?v=,否則回訪者拿到的是快取裡的舊版。
 
      四條做圖的路(刻圖市集/自己畫/打字/上傳)都能結帳:
      shop 函式對眼鏡盒【一律】附上圖案(docs/edge-functions/shop.ts 的 isCase),
@@ -809,7 +814,7 @@
 
   var CHECKOUT = {
     /* 對外販售的開關(2026-10 上線)。理由與關閉方式見上。 */
-    OPEN: true,
+    OPEN: PAGE.open,
 
     /* 商城商品:雷刻小物|木紋眼鏡盒(2026-10-03 確定為正式販售的商品)。
        預覽底圖 images/case-base.jpg 就是這一款的正拍照。
@@ -1277,7 +1282,14 @@
     if (el.submit) el.submit.addEventListener('click', submit);
 
     /* 關著的時候不讀商品與價格 —— 還沒定價的商品,價格寫出來會被當成定價。 */
-    if (testMode) loadProduct(); else refreshSubmit();
+    if (testMode) loadProduct();
+    else {
+      /* 沒開賣時不讀商品,顏色欄不要停在「載入中…」 */
+      if (PAGE.variants && el.variants) {
+        el.variants.innerHTML = '<p class="cl-field-hint">開放購買後就能選顏色。</p>';
+      }
+      refreshSubmit();
+    }
     loadStores();
 
     /* 視窗改變大小時疊圖要重算 —— overlay 的寬高是 px,
