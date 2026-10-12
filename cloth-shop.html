@@ -14,7 +14,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- OpenAI Pixel(ChatGPT 廣告)。每頁只能一份 —— 安裝前會檢查 oaiq 是否已存在。 -->
 <script>!function(w,d,s,u){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");oaiq("init",{pixelId:"NjscxQ8XG8RS61Uqj5n6JA",debug:true});</script>
   <title>客製眼鏡布 · LOHAS 樂活眼鏡</title>
-  <meta name="description" content="把喜歡的圖印在自己的眼鏡布上。不限生日，四種顏色，自己挑圖、自己設計。">
+  <meta name="description" content="把喜歡的圖印在自己的眼鏡布上。不限生日，自己挑圖、自己設計。">
   <link rel="canonical" href="https://www.lohasglasses.com/cloth-shop.html">
 
   <!-- ⚠ app-mode 不要 defer：class 要在頁面畫出來之前掛上。 -->
@@ -68,7 +68,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="cl-title-line"></div>
     <!-- 與生日免費眼鏡布(cloth.html)分清楚:兩頁長得很像,客人容易走錯。 -->
     <p class="cl-field-hint" style="text-align:center;margin:10px 0 0">
-      不限生日，四種顏色，一次一條。壽星每年一條的免費眼鏡布在
+      不限生日，一次一條。壽星每年一條的免費眼鏡布在
       <a href="cloth.html">生日眼鏡布</a>。
     </p>
   </div>
@@ -101,14 +101,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- ===== 左:預覽 ===== -->
     <div class="cl-left">
       <div class="cl-stage" id="csStage">
-        <!-- 卷軸款的白底商品照(商城 2884)。四個顏色暫時共用這一張,
-             之後有各顏色的平拍照再依選的顏色換。 -->
-        <img class="cl-base" id="csBase" src="images/cloth-shop-base.jpg?v=20261009"
+        <!-- 商城 2943「雷刻小物｜創作科技布」的白底商品照(灰色,單一款式)。 -->
+        <img class="cl-base" id="csBase" src="images/cloth-shop-base.jpg?v=20261012-2943"
              alt="客製眼鏡布" draggable="false">
 
         <!-- 可雕刻範圍(90 × 90 mm,與生日眼鏡布的圖最大 9 cm 一致)。
              位置由下方 LOHAS_DESIGN_PAGE.plate 決定(case.js 套用),
-             是對著卷軸照片量的:卷軸寬 150 mm、框放在上方卷筒與 LOHAS 標誌之間。
+             是對著商品照量的:布在 600² 照片上佔 318 × 381 px(= 150 × 180 mm,
+             一 mm 約 2.12 px),框放在布的正中間,下緣在右下角 LOHAS 標誌之上。
              換底圖一定要重量一次。 -->
         <div class="cs-plate" id="csPlate">
           <!-- 外框與四個節點放在 overlay 【裡面】,這樣它們會跟著一起
@@ -200,14 +200,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <p class="cl-field-hint">字級不用在這裡調，放上去之後拉四個角就好。</p>
         <button type="button" class="cl-apply" id="csTextApply" disabled>放 到 布 上</button>
-      </div>
-
-      <!-- 顏色。選項從商城讀(case.js 的 renderVariants),庫存也以商城為準。
-           ⚠ 四個顏色暫時共用同一張預覽圖,實際以這裡選的顏色製作。 -->
-      <div class="cl-card">
-        <p class="cl-card-title">選顏色<span class="cl-req">*</span></p>
-        <div class="cs-variants" id="csVariants"><p class="cl-field-hint">顏色載入中…</p></div>
-        <p class="cl-field-hint">預覽圖是同一張，實際會用你選的顏色製作。</p>
       </div>
 
       <!-- 放在哪裡 -->
@@ -326,16 +318,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-core.js?v=20260517-1800"></script>
 <script src="js/api/api-store.js?v=20260517-1800"></script>
 <script src="js/store-data.js?v=20260814-kaoying"></script>
-<!-- 頁面設定:付費客製眼鏡布(商城 2884)。js/case.js 讀這一份,沒有它就是眼鏡盒。
-     ⚠ nid 也要在 shop.ts 的 PAID_PRODUCTS 裡(2884 → cloth),否則付款後不會進加工中心。 -->
+<!-- 頁面設定:付費客製眼鏡布(商城 2943「雷刻小物｜創作科技布」,2026-10-12 由 2884 改過來)。
+     js/case.js 讀這一份,沒有它就是眼鏡盒。
+     ⚠ nid 也要在 shop.ts 的 PAID_PRODUCTS 裡(2943 → cloth),否則付款後不會進加工中心。
+     2943 沒有規格,所以 variants: false;2884 的三層規格(顏色在第三層)商城的
+     官網購物車介面收不了,改用這一件。 -->
 <script>
   window.LOHAS_DESIGN_PAGE = {
-    product: 'cloth', noun: '眼鏡布', page: 'cloth-shop.html', nid: 2884,
+    product: 'cloth', noun: '眼鏡布', page: 'cloth-shop.html', nid: 2943,
     areaAspect: 1,                                                    // 90 × 90 mm
-    plate: { left: 0.3167, top: 0.265, width: 0.3767, height: 0.3767 },
-    basis: 'cloth_plate', filePrefix: 'clothshop-', variants: true,
+    plate: { left: 0.3425, top: 0.335, width: 0.3183, height: 0.3183 },   // 布中間 90 × 90 mm
+    basis: 'cloth_plate', filePrefix: 'clothshop-', variants: false,
     /* 2026-10-12 商城已開客製、灰色有庫存,但 shop / shop-webhook 還沒部署付費眼鏡布那一版 ——
-       這時讓人結帳,付了錢也進不了加工中心。四支函式部署並自檢完才改成 true。 */
+       這時讓人結帳,付了錢也進不了加工中心。四支函式部署並自檢完才改成 true。
+       2026-10-12 改成 2943 之後,shop 要再部署一次(PAID_PRODUCTS)才能開。 */
     open: false
   };
 </script>

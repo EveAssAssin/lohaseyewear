@@ -91,7 +91,7 @@
     return Math.max(10, Math.min(CASE_AREA_MM.w, Math.round(s * CASE_AREA_MM.w)));
   }
 
-  /* 付費客製眼鏡布(商城 2884,2026-10-09)。
+  /* 付費客製眼鏡布(商城 2943,2026-10-09 建置,10-12 由 2884 改)。
      與生日眼鏡布同一張表、同一個 product = 'cloth',差別是【有商城訂單編號】。
      它的頁面(cloth-shop.html)跟眼鏡盒是同一套,所以位置是對著固定的
      刻圖範圍量的(placement.basis = 'cloth_plate'):90 × 90 mm,
@@ -109,8 +109,9 @@
     return Math.max(10, Math.min(CLOTH_AREA_MM.w, Math.round(s * CLOTH_AREA_MM.w)));
   }
 
-  /* 模擬器的布色。對照商城 2884 的四個顏色,只求師傅看得出深淺對比,
-     不是色票 —— 實際顏色以手上那條布為準。對不到的名稱用生日眼鏡布的米色。 */
+  /* 模擬器的布色。只求師傅看得出深淺對比,不是色票 —— 實際顏色以手上那條布為準。
+     2943 只有灰色、沒有規格(variant 是 null),所以付費眼鏡布預設畫灰色;
+     名稱表留著給日後有顏色規格的商品用。 */
   var CLOTH_COLORS = { '卡其': '#cdb88f', '粉紅': '#e9c3c6', '灰色': '#a3a3a3', '咖啡': '#6e4f3a' };
 
   /* 退件原因。代碼與後端 cloth-admin 的 REJECT_CODES 必須一致 ——
@@ -587,7 +588,9 @@
     }
     /* 付費眼鏡布:布的正中間畫 90 × 90 的刻圖範圍,圖照客人擺的位置放;布色照他選的顏色。 */
     if (isClothPlate(it)) {
-      return { w: CLOTH_MM, h: CLOTH_MM, color: CLOTH_COLORS[it.variant] || '#ece5d7',
+      /* 2943 的布是 150 × 180(由商品照比例 318:381 推得),刻圖範圍在正中間 ——
+         與 cloth-shop.html 的 plate 一致。實際尺寸若不同,兩邊要一起改。 */
+      return { w: CLOTH_MM, h: 180, color: CLOTH_COLORS[it.variant] || CLOTH_COLORS['灰色'],
                name: (it.variant || '') + '布', area: CLOTH_AREA_MM };
     }
     return { w: CLOTH_MM, h: CLOTH_MM, color: '#ece5d7', name: '布', area: null };

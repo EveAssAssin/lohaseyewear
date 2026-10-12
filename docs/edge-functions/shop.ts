@@ -58,7 +58,7 @@
    然後用瀏覽器開這支的網址就知道線上是不是那一份。
 
    ⚠ 這是給人看的字串,不參與任何邏輯。不要拿它來做版本判斷分支。 */
-const CODE_VERSION = '2026-10-09 · 付費眼鏡布';
+const CODE_VERSION = '2026-10-12 · 付費眼鏡布改 2943';
 
 /* ===== 客製眼鏡盒 =====
    -----------------------------------------------------------------
@@ -68,10 +68,12 @@ const CODE_VERSION = '2026-10-09 · 付費眼鏡布';
 
    2026-10-09 起不只眼鏡盒:付費客製品是一張對照表,nid → 進加工中心時的 product。
      2881 雷刻小物|木紋眼鏡盒 → 'case'(js/case.js 的 CHECKOUT.NID)
-     2884 雷刻小物|創作眼鏡布 → 'cloth'(付費眼鏡布,cloth-shop.html 的頁面設定)
+     2943 雷刻小物|創作科技布 → 'cloth'(付費眼鏡布,cloth-shop.html 的頁面設定)
+   2026-10-12 由 2884 改成 2943:2884 的顏色在規格第三層,商城的官網購物車介面
+     (SiteCartApi)只收第二層的 sid,回「規格不屬於此商品」。2943 沒有規格。
    ⚠ 前端的 nid 與這張表不一致的話:那一單會照太陽眼鏡的規則送出去,
      旋轉被丟掉、門市沒存,付款後也不會進加工中心。而且完全不會報錯。 */
-const PAID_PRODUCTS: Record<number, 'case' | 'cloth'> = { 2881: 'case', 2884: 'cloth' };
+const PAID_PRODUCTS: Record<number, 'case' | 'cloth'> = { 2881: 'case', 2943: 'cloth' };
 
 // ⚠ 只在 Dashboard 填,不要提交回 GitHub
 const FALLBACK_SITE_KEY = '';
@@ -539,13 +541,10 @@ Deno.serve(async (req) => {
       if (!store) {
         return reply('006', { message: '請選擇要到哪一家門市拿' }, 400);
       }
-      /* 付費眼鏡布有顏色規格,一定要帶 sid(商城也會擋,但在這裡擋客人看得懂)。
-         variant 是顏色名稱,存進送單與加工中心,師傅據此拿布。
-         ⚠ 只在有值時才放進去 —— 眼鏡盒沒有這一欄的值,
-           variant 欄位(docs/cloth-paid.sql)還沒建的話也不會讓眼鏡盒壞掉。 */
-      if (paidProduct === 'cloth' && !(Number(body.main.sid) > 0)) {
-        return reply('006', { message: '請選擇眼鏡布的顏色' }, 400);
-      }
+      /* variant 是規格名稱(例如顏色),存進送單與加工中心,師傅據此拿布。
+         有沒有規格、要不要帶 sid 由商城判斷(有規格沒帶 sid 它會擋)——
+         2943 沒有規格,這裡不再要求 sid(2884 那時有「一定要選顏色」的檢查,已拿掉)。
+         ⚠ 只在有值時才放進去 —— 沒有規格的商品這一欄就是 null。 */
       const variant = String(body.main.variant ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 40);
       caseInfo = {
         product: paidProduct,
