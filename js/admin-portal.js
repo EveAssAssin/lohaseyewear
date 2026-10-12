@@ -105,6 +105,7 @@
     const payload = { token: token, table: table, where: where || [] };
     if (o.order_by) payload.order_by = o.order_by;
     if (o.ascending !== undefined) payload.ascending = o.ascending;
+    if (o.orders) payload.orders = o.orders;   // 多欄排序 [{ col, ascending, nulls_first }]
     if (o.limit) payload.limit = o.limit;
     if (o.head) payload.head = true;
 
@@ -122,6 +123,21 @@
     return j.data || { rows: [], count: null };
   }
   window.LohasAdminRead = adminRead;
+
+  /* 回傳 supabase-js 那種 { data, error } 的形狀,讓原本寫成
+     `const { data, error } = await client.from(表).select(...)` 的地方換過來時
+     後面的程式不用改。最新消息與聯名(2026-10-12)在用 ——
+     那兩張表的 anon 讀取只剩前台條件(已發布/上架中),後台讀草稿要走這裡。 */
+  window.LohasAdminReadRows = async function (table, where, opt) {
+    try {
+      const d = await adminRead(table, where, Object.assign({ limit: 1000 }, opt || {}));
+      return { data: d.rows || [], error: null };
+    } catch (e) { return { data: null, error: e }; }
+  };
+  window.LohasAdminReadOne = async function (table, col, value) {
+    const r = await window.LohasAdminReadRows(table, [{ col: col, op: 'eq', value: value }], { limit: 1 });
+    return { data: r.data ? (r.data[0] || null) : null, error: r.error };
+  };
 
   /* 開給同一頁的其他後台模組用(admin-portal-footer / -pegavision)。
      它們是各自獨立的 IIFE,但都在這一支之後載入。
@@ -3617,10 +3633,9 @@
     if (!sb) return;
 
     try {
-      const { data, error } = await sb
-        .from('news')
-        .select('id, title, category, status, published_at, scheduled_at, created_at')
-        .order('created_at', { ascending: false });
+      // 走 admin-read:anon 讀不到草稿(2026-10-12 收掉 news 的全開讀取)
+      const { data, error } = await window.LohasAdminReadRows('news', [],
+        { orders: [{ col: 'created_at', ascending: false }] });
 
       if (error) {
         tbody.innerHTML = `<tr><td colspan="5">載入失敗: ${escapeHtml(error.message)}</td></tr>`;
@@ -6665,11 +6680,10 @@
       if(!client){ list.innerHTML = '<div class="empty-state">Supabase 未配置</div>'; return; }
 
       list.innerHTML = '<div class="empty-state">載入中...</div>';
-      const { data, error } = await client
-        .from('collabs')
-        .select('*')
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: false });
+      // 走 admin-read:anon 讀不到草稿(2026-10-12 收掉 collabs 的全開讀取)
+      const { data, error } = await window.LohasAdminReadRows('collabs', [], {
+        orders: [{ col: 'sort_order', ascending: true }, { col: 'created_at', ascending: false }]
+      });
 
       if(error){
         list.innerHTML = '<div class="empty-state">載入失敗: ' + esc(error.message) + '</div>';
@@ -6802,7 +6816,7 @@
       const client = sb();
       if(!client) return;
 
-      const { data: c, error } = await client.from('collabs').select('*').eq('id', id).maybeSingle();
+      const { data: c, error } = await window.LohasAdminReadOne('collabs', 'id', id);
       if(error || !c){ toast('載入失敗'); return; }
 
       currentCollab = c;
@@ -7440,7 +7454,7 @@
         // 不關 modal,留在編輯頁繼續編
         if(collabId){
           // 重抓主資料 + 子表
-          const { data: refreshed } = await client.from('collabs').select('*').eq('id', collabId).maybeSingle();
+          const { data: refreshed } = await window.LohasAdminReadOne('collabs', 'id', collabId);
           if(refreshed){
             currentCollab = refreshed;
             $('collabModalTitle').textContent = '編輯:' + (refreshed.brand_name || refreshed.slug) + (refreshed.is_locked ? ' 🔒 範例' : '');
@@ -7545,7 +7559,7 @@
       if(!client) return;
 
       // 抓 DINU 範例
-      const { data: tpl, error } = await client.from('collabs').select('*').eq('slug', 'dinu').maybeSingle();
+      const { data: tpl, error } = await window.LohasAdminReadOne('collabs', 'slug', 'dinu');
       if(error || !tpl) { toast('範例載入失敗,請先跑 DINU SQL'); return; }
 
       // 抓子表
@@ -7946,12 +7960,14 @@
       if(!client){ list.innerHTML = '<div class="empty-state">Supabase 未配置</div>'; return; }
 
       list.innerHTML = '<div class="empty-state">載入中...</div>';
-      const { data, error } = await client
-        .from('news')
-        .select('*')
-        .order('sort_order', { ascending: true, nullsFirst: false })
-        .order('published_at', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: false });
+      // 走 admin-read:anon 讀不到草稿(2026-10-12 收掉 news 的全開讀取)
+      const { data, error } = await window.LohasAdminReadRows('news', [], {
+        orders: [
+          { col: 'sort_order', ascending: true, nulls_first: false },
+          { col: 'published_at', ascending: false, nulls_first: false },
+          { col: 'created_at', ascending: false }
+        ]
+      });
 
       if(error){
         list.innerHTML = '<div class="empty-state">載入失敗: ' + esc(error.message) + '</div>';
@@ -8341,7 +8357,7 @@
       const client = sb();
       if(!client) return;
 
-      const { data: n, error } = await client.from('news').select('*').eq('id', id).maybeSingle();
+      const { data: n, error } = await window.LohasAdminReadOne('news', 'id', id);
       if(error || !n){ toast('載入失敗'); return; }
 
       currentNews = n;

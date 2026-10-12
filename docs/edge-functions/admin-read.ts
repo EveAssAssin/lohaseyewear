@@ -46,7 +46,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-12 · cs_messages + bday_wall_hidden';
+const CODE_VERSION = '2026-10-12 · 加 news / collabs(後台讀草稿)';
 
 const MAX_ROWS = 1000;
 
@@ -79,6 +79,34 @@ const ALLOW: Record<string, Rule> = {
     cols: 'item_id, image_url, nickname, item_created_at, reason, hidden_by, created_at',
     filters: ['item_id'],
     order: ['created_at'],
+  },
+
+  /* ===== 最新消息與聯名(2026-10-12)=====
+     這兩張表本身不是個資,但後台原本用 anon 直接讀,為了讓後台看得到草稿,
+     各開了一條 `for select using(true)` —— 結果【未發布的草稿任何人都讀得到】。
+     後台的讀取搬到這裡之後,那兩條就能拿掉,anon 只剩前台用的條件式政策
+     (消息:已發布/排程已到;聯名:active / upcoming / ended)。
+
+     欄位照資料表實際欄位抄(2026-10-12 用 select=*&limit=1 取得)。
+     ⚠ 資料表加欄位時這裡要跟著加 —— 否則後台編輯頁讀不到那一欄,
+       存檔時會把它當成空的寫回去。 */
+  news: {
+    cols: 'id, title, category, cover_image_url, content, status, published_at, scheduled_at, author_id, ' +
+          'created_at, updated_at, slug, excerpt, show_in_homepage, homepage_tag, homepage_subtitle, ' +
+          'homepage_image_url, sort_order, author, view_count, homepage_link_type, homepage_link_url, ' +
+          'is_featured, cta_buttons, homepage_text_hidden',
+    filters: ['id'],
+    order: ['sort_order', 'published_at', 'created_at'],
+  },
+  collabs: {
+    cols: 'id, slug, status, sort_order, brand_name, hero_title, hero_subtitle, hero_eyebrow, hero_image_url, ' +
+          'show_countdown, show_limit, start_date, end_date, date_range_text, limit_total, preorder_count, ' +
+          'launch_date_text, available_stores, story_image_url, story_paragraphs, creator_name, creator_subtitle, ' +
+          'creator_avatar_url, interview_title, interview_quote, interview_full_link, theme_primary, theme_accent, ' +
+          'theme_bg, preorder_link, store_link, created_at, updated_at, category, lifecycle_status, is_locked, ' +
+          'packages_group_photo_url',
+    filters: ['id', 'slug'],
+    order: ['sort_order', 'created_at'],
   },
 };
 
@@ -167,12 +195,28 @@ Deno.serve(async (req) => {
     }
   }
 
-  const orderBy = String(body.order_by || '');
-  if (orderBy) {
-    if (rule.order.indexOf(orderBy) < 0) {
-      return reply('006', { message: '不允許用這個欄位排序:' + orderBy }, 400);
+  /* 排序:單一欄位用 order_by / ascending(舊寫法,照舊支援);
+     多欄位用 orders: [{ col, ascending, nulls_first }],最多 3 個(2026-10-12,
+     最新消息列表要「排序值 → 發布時間 → 建立時間」三層)。 */
+  const orders: { col: string; ascending: boolean; nullsFirst?: boolean }[] = [];
+  if (Array.isArray(body.orders)) {
+    if (body.orders.length > 3) return reply('006', { message: '排序條件太多' }, 400);
+    for (const o of body.orders) {
+      const nf = o?.nulls_first;
+      orders.push({
+        col: String(o?.col || ''),
+        ascending: o?.ascending !== false,
+        ...(typeof nf === 'boolean' ? { nullsFirst: nf } : {}),
+      });
     }
-    q = q.order(orderBy, { ascending: body.ascending !== false });
+  } else if (body.order_by) {
+    orders.push({ col: String(body.order_by), ascending: body.ascending !== false });
+  }
+  for (const o of orders) {
+    if (rule.order.indexOf(o.col) < 0) {
+      return reply('006', { message: '不允許用這個欄位排序:' + o.col }, 400);
+    }
+    q = q.order(o.col, { ascending: o.ascending, ...(o.nullsFirst !== undefined ? { nullsFirst: o.nullsFirst } : {}) });
   }
 
   /* head:true 只要筆數不要內容(徽章的未讀數在用)。
