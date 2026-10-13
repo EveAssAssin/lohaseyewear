@@ -141,8 +141,11 @@
         detail_url, type, status, is_show, created_at, creator_id
       `)
       .eq('status', 'approved')
+      /* 下架 / 垃圾桶在伺服器端就排除(2026-10-13),下面的前端過濾留著當第二道。
+         上限 500 → 1000:已核准的超過 540 件,500 會讓最舊的幾十件不出現在市集。 */
+      .or('is_show.is.null,is_show.eq.上架')
       .order('created_at', { ascending: false })
-      .limit(500);
+      .limit(1000);
 
     if(error) throw error;
 

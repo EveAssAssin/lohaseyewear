@@ -354,8 +354,12 @@
     sb.from('engraving_designs')
       .select('id, name, designer_name, image_url, image_url_png, image_url_svg')
       .eq('status', 'approved')
+      /* 只列【上架中】的作品(2026-10-13):已核准但被創作者下架、或丟進垃圾桶的
+         不能再被挑去刻(is_show 是 null 的舊資料視為上架,與 market.js 一致)。
+         上限 1000:上架中的已經超過 500 件,原本的 300 會讓最舊的那些挑不到。 */
+      .or('is_show.is.null,is_show.eq.上架')
       .order('created_at', { ascending: false })
-      .limit(300)
+      .limit(1000)
       .then(function (res) { Market.designs = res.data || []; renderDesigns(); })
       .catch(function () {
         el.designs.innerHTML = '<p class="cl-empty">刻圖載入失敗</p>';
