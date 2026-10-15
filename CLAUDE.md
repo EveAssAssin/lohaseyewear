@@ -524,9 +524,13 @@ anon  側:用 anon key 打 REST,同樣分組數一次
 兩邊對不上的那些列,就是後台會看不到的東西
 ```
 
-⚠ 目前 `news` 與 `collabs` 各補了一條 `for select using(true)` 讓後台能讀,
-**代價是未發布的草稿等於公開可讀**。真正的解法是把後台的「讀取」
-也搬到伺服器端(像寫入那樣),那還沒做。
+**2026-10-16 已收好**:後台讀 `news` / `collabs` 改走 `admin-read`
+(`window.LohasAdminReadRows` / `LohasAdminReadOne`,白名單欄位照實際資料表抄),
+原本補的兩條 `for select using(true)` 已刪除,anon 只剩前台用的條件式政策 ——
+草稿只有後台看得到。⚠ 兩張表加欄位時,`admin-read` 的 `cols` 要跟著加,
+否則後台編輯頁讀不到那一欄、存檔時會當成空的寫回去。
+聯名的三張子表(`collab_packages` / `collab_designs` / `collab_customer_photos`)
+讀取仍全開,後台照舊直接讀 —— 草稿聯名的方案與設計圖因此仍讀得到,影響小、尚未處理。
 
 ### 🚨 生日分享牆只能「隱藏」,不能刪除(2026-09-12)
 
