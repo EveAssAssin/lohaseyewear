@@ -369,10 +369,14 @@
           alert('⚠ 這張圖有轉不完整的地方:\n\n' + out.warnings.join('\n') +
                 '\n\n檔案還是會下載,但刻之前請先跟原圖比對一下。');
         }
-        var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
-        /* 檔名帶上模式 —— 兩個檔案放在同一個下載資料夾裡,
+        /* 🚨 檔名只用英數字(2026-10-15):作品名稱有 Big5 沒有的字(例:「莅」)時,
+           EZCAD 會回「檔案無法開啟」。理由見 cloth-lab.js 同一段。
+           短碼與製作單、加工中心卡片上印的一致(XXXX-XXXX)。
+           檔名帶上模式 —— 兩個檔案放在同一個下載資料夾裡,
            少了這個就分不出哪個是哪個,而它們長得完全一樣。 */
-        saveText(out.dxf, name + '-' + String(it.id).slice(0, 8) +
+        var hex = String(it.id).replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+        var short = hex.length >= 8 ? hex.slice(0, 4) + '-' + hex.slice(4, 8) : hex;
+        saveText(out.dxf, (it.product === 'case' ? 'case' : 'cloth') + '-' + short +
                  (out.mode === 'fill' ? '-fill' : '-outline') + '.dxf');
         console.log('[cloth] DXF ' + out.paths + ' 條路徑,' +
           out.widthMm.toFixed(1) + ' × ' + out.heightMm.toFixed(1) + ' mm');

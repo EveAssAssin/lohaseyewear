@@ -392,7 +392,10 @@
                 '</label>') +
           '</div>' +
           '<div class="lab-meta">位置:<b>' + esc(placeText(it.placement, it.product)) + '</b></div>' +
-          '<div class="lab-meta">' + who + '　·　' + esc(fmtTime(it.created_at)) + '</div>' +
+          '<div class="lab-meta">' + who + '　·　' + esc(fmtTime(it.created_at)) +
+            /* 短碼(2026-10-15):DXF 檔名就是用它,也和製作單上印的一樣 ——
+               下載資料夾裡的檔案要靠它對回這張卡。 */
+            '　·　編號 <b>' + esc(shortOf(it.id)) + '</b></div>' +
           '<div>' + storeHtml(it) + '</div>' +
           '<div class="lab-btns">' +
             '<a class="lab-file" href="' + esc(it.svg_url) + '" download>' +
@@ -785,14 +788,19 @@
           alert('⚠ 這張圖有轉不完整的地方:\n\n' + out.warnings.join('\n') +
                 '\n\n檔案還是會下載,但刻之前請先跟原圖比對一下。');
         }
-        var name = (it.design_name || 'cloth').replace(/[^\w一-龥-]/g, '_');
         var blob = new Blob([out.dxf], { type: 'application/dxf' });
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
-        /* 檔名帶上模式 —— 兩個檔案放在同一個下載資料夾裡,
+        /* 🚨 檔名【只用英數字】(2026-10-15)。
+           原本是「作品名稱-id」,作品名稱留中文。新竹 1756238207 打字「莅宸」——
+           「莅」不在 Big5 裡,而 EZCAD 是用系統 Big5 處理路徑的舊軟體,
+           檔名有 Big5 沒有的字就回「檔案無法開啟」;檔案內容本身完全正常。
+           瀏覽器沒辦法判斷一個字在不在 Big5,所以乾脆不放中文:
+           用卡片與製作單上印的短碼(shortOf),師傅一樣對得起來。
+           檔名帶上模式 —— 兩個檔案放在同一個下載資料夾裡,
            少了這個就分不出哪個是哪個,而它們長得完全一樣。 */
         a.href = url;
-        a.download = name + '-' + String(it.id).slice(0, 8) +
+        a.download = (it.product === 'case' ? 'case' : 'cloth') + '-' + shortOf(it.id) +
                      (out.mode === 'fill' ? '-fill' : '-outline') + '.dxf';
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
