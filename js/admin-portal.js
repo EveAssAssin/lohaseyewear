@@ -106,6 +106,7 @@
     if (o.order_by) payload.order_by = o.order_by;
     if (o.ascending !== undefined) payload.ascending = o.ascending;
     if (o.orders) payload.orders = o.orders;   // 多欄排序 [{ col, ascending, nulls_first }]
+    if (o.cols) payload.cols = o.cols;         // 只讀部分欄位(必須在白名單內)
     if (o.limit) payload.limit = o.limit;
     if (o.head) payload.head = true;
 
@@ -1739,6 +1740,9 @@
           </div>`;
       }).join('');
 
+      // 著作權聲明的簽署紀錄(2026-10-16)—— 不擋畫面,讀到再補上去
+      annotateAgreements(grid, designs);
+
       // 綁定 開始審核 / 駁回
       grid.querySelectorAll('[data-act="approve"]').forEach(b => {
         b.addEventListener('click', () => openApproveModal({
@@ -1787,6 +1791,84 @@
     } catch (err) {
       console.error('[刻圖審核載入失敗]', err);
     }
+  }
+
+  /* 審核卡片上標出「這件有沒有簽著作權聲明」(2026-10-16)。
+     -----------------------------------------------------------------
+     紀錄在 design_agreements(RLS 無政策,只能走 admin-read)。
+     清單只讀簽署人與時間;簽名圖約 7 KB 一張,點「看簽名」才讀。
+     重新送審會多一筆,這裡只顯示最新的那一筆。
+     門市 / 聯名上傳不走客人送審,本來就沒有簽署,不顯示。 */
+  async function annotateAgreements(grid, designs) {
+    const ids = designs.map(d => d.id);
+    if (!ids.length) return;
+    let rows = [];
+    try {
+      for (let i = 0; i < ids.length; i += 400) {
+        const d = await adminRead('design_agreements',
+          [{ col: 'design_id', op: 'in', value: ids.slice(i, i + 400) }],
+          { cols: ['id', 'design_id', 'signer_name', 'version', 'created_at'],
+            order_by: 'created_at', ascending: false, limit: 1000 });
+        rows = rows.concat(d.rows || []);
+      }
+    } catch (e) {
+      console.warn('[刻圖審核] 簽署紀錄讀取失敗', e.message);
+      return;
+    }
+    const latest = {};
+    rows.forEach(r => { if (!latest[r.design_id]) latest[r.design_id] = r; });
+
+    designs.forEach(d => {
+      const meta = grid.querySelector(`.rcard[data-id="${d.id}"] .rcard-meta`);
+      if (!meta) return;
+      const a = latest[d.id];
+      if (!a && d.type && d.type !== 'member') return;
+      const el = document.createElement('div');
+      el.className = 'rcard-meta';
+      if (a) {
+        el.innerHTML = '<i class="fa-solid fa-file-signature" style="color:#3c7a3c"></i>' +
+          '已簽著作權聲明 · ' + escapeHtml(a.signer_name || '') + ' · ' + formatTime(a.created_at) +
+          ' <a href="#" data-sign="' + escapeHtml(a.id) + '" style="margin-left:4px">看簽名</a>';
+      } else {
+        el.innerHTML = '<i class="fa-regular fa-file"></i>無簽署紀錄(聲明上線前送審)';
+        el.style.color = 'var(--lohas-mute)';
+      }
+      meta.after(el);
+    });
+
+    grid.querySelectorAll('[data-sign]').forEach(link => {
+      link.addEventListener('click', async e => {
+        e.preventDefault();
+        // 先開視窗再讀資料 —— await 之後才 window.open 會被瀏覽器當成彈出廣告擋掉
+        const w = window.open('', '_blank', 'width=560,height=720');
+        if (!w) { alert('瀏覽器擋掉了視窗,請允許彈出視窗後再試'); return; }
+        w.document.write('<p style="font-family:sans-serif;padding:20px">讀取中…</p>');
+        try {
+          const d = await adminRead('design_agreements',
+            [{ col: 'id', op: 'eq', value: link.dataset.sign }],
+            { cols: ['signer_name', 'erpid', 'version', 'agreement_text', 'action', 'signature_png', 'created_at'], limit: 1 });
+          const r = (d.rows || [])[0];
+          if (!r) { w.document.body.innerHTML = '<p style="padding:20px">找不到這筆紀錄</p>'; return; }
+          const sig = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(r.signature_png || '') ? r.signature_png : '';
+          w.document.open();
+          w.document.write(
+            '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="utf-8"><title>著作權聲明簽署紀錄</title>' +
+            '<style>body{font-family:"Noto Sans TC",sans-serif;padding:20px;color:#3b3222;line-height:1.7}' +
+            'pre{white-space:pre-wrap;font:inherit;background:#faf6f0;border:1px solid #e8ded1;border-radius:8px;padding:12px}' +
+            'img{max-width:100%;border:1px solid #ccc;border-radius:8px}</style></head><body>' +
+            '<h3>著作權聲明簽署紀錄</h3>' +
+            '<p>簽署人:<b>' + escapeHtml(r.signer_name || '') + '</b>(會員 ' + escapeHtml(r.erpid || '') + ')<br>' +
+            '時間:' + escapeHtml(new Date(r.created_at).toLocaleString('zh-TW')) + '<br>' +
+            '動作:' + (r.action === 'update_own' ? '修改後重新送審' : '新作品送審') + '　版本:' + escapeHtml(r.version || '') + '</p>' +
+            '<pre>' + escapeHtml(r.agreement_text || '') + '</pre>' +
+            '<p>簽名:</p>' + (sig ? '<img src="' + sig + '" alt="簽名">' : '<p>(簽名圖格式不正確)</p>') +
+            '</body></html>');
+          w.document.close();
+        } catch (err) {
+          w.document.body.innerHTML = '<p style="padding:20px">讀取失敗:' + escapeHtml(err.message) + '</p>';
+        }
+      });
+    });
   }
 
   /* =============================================================

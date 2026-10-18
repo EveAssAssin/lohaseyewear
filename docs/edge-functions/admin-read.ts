@@ -46,7 +46,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-10-12 · 加 news / collabs(後台讀草稿)';
+const CODE_VERSION = '2026-10-16 · 加 design_agreements + cols';
 
 const MAX_ROWS = 1000;
 
@@ -107,6 +107,17 @@ const ALLOW: Record<string, Rule> = {
           'packages_group_photo_url',
     filters: ['id', 'slug'],
     order: ['sort_order', 'created_at'],
+  },
+
+  /* 刻圖送審的著作權聲明簽署紀錄(2026-10-16,docs/design-agreements.sql)。
+     那張表 RLS 開著、沒有政策,後台只能從這裡讀。
+     清單只讀簽署人與時間(用 body.cols 挑欄位),點「看簽名」才讀 signature_png ——
+     一張簽名約 7 KB,已通過的清單有幾百件,整包讀會很慢。 */
+  design_agreements: {
+    cols: 'id, design_id, erpid, signer_name, version, agreement_text, action, signature_png, ' +
+          'user_agent, ip, created_at',
+    filters: ['id', 'design_id', 'erpid'],
+    order: ['created_at'],
   },
 };
 
@@ -175,7 +186,18 @@ Deno.serve(async (req) => {
   const where = Array.isArray(body.where) ? body.where : [];
   if (where.length > 5) return reply('006', { message: '條件太多' }, 400);
 
-  let q = db.from(table).select(rule.cols, { count: 'exact' });
+  /* 只讀部分欄位(2026-10-16):body.cols 是陣列,每一欄都必須在白名單裡。
+     不給就是白名單全部。用途是「清單不要帶大欄位」,不是放寬白名單。 */
+  let selectCols = rule.cols;
+  if (Array.isArray(body.cols) && body.cols.length) {
+    const allowed = rule.cols.split(',').map((c) => c.trim());
+    const want = body.cols.map((c: unknown) => String(c).trim());
+    const bad = want.filter((c: string) => allowed.indexOf(c) < 0);
+    if (bad.length) return reply('006', { message: '不允許讀這個欄位:' + bad.join(', ') }, 400);
+    selectCols = want.join(', ');
+  }
+
+  let q = db.from(table).select(selectCols, { count: 'exact' });
 
   for (const w of where) {
     const col = String(w?.col || '');

@@ -41,6 +41,22 @@
     INK_COLOR:        '#2F2A24',           // 雷雕用深棕黑色
   };
 
+  /* ===== 著作權聲明(2026-10-16)=====
+     送審 / 重新送審之前一定要讀完、勾選同意並手寫簽名(客製頁的「上傳圖」不送審,不用簽)。
+     ⚠ version 與條文要和 docs/edge-functions/design.ts 的 AGREEMENT_VERSION /
+       AGREEMENT_TEXT 一致 —— 伺服器只收它認得的 version,存的是它自己那一份全文。
+       改條文 = 兩邊一起改、換 version。 */
+  var AGREEMENT = {
+    version: '2026-10-16-v1',
+    title: '刻圖作品著作權聲明',
+    items: [
+      '本人保證送審之作品為本人原創,或已取得著作權人之合法授權,未侵害任何第三人之著作權、商標權、肖像權或其他權利。',
+      '如本作品發生任何侵權爭議、索賠或訴訟,概由本人自行負擔全部法律責任及相關費用,與樂活眼鏡無涉;如致樂活眼鏡受有損害,本人願負賠償責任。',
+      '樂活眼鏡於接獲侵權通知,或認為作品有侵權疑慮時,得不經通知逕行下架或刪除該作品,本人無異議。',
+      '本人已詳閱並同意以上內容,並以下方簽名確認。'
+    ]
+  };
+
   // ===== 設計師模式:提示詞對照表 =====
   // 主題改用 categories 表(動態,跟快速模式/後台同一份)
   // 提示詞用「分類名稱」對應;沒對應到的分類 → 用 _default 通用提示詞
@@ -2068,6 +2084,180 @@
     });
   }
 
+  /* ===== 著作權聲明簽署視窗(2026-10-16)=====
+     -----------------------------------------------------------------
+     送審前跳出:聲明全文 → 勾選同意 → 手寫簽名 → 「簽名並送出審核」。
+     回傳 Promise:簽好給 { version, accepted, signature },取消給 null。
+
+     放在【檢查都過了之後、開始上傳之前】—— 先簽完名才發現名稱沒填,
+     客人會以為簽名白簽了;上傳完才問,圖已經送出去了。
+
+     樣式由這裡注入(不靠 upload-design.css),因為有些頁面沒載那支 CSS。
+     ⚠ 簽名用 canvas 的 pointer 事件,手機手指、滑鼠、觸控筆都吃;
+       canvas 要 touch-action:none,否則手機上一畫就變成捲動頁面。 */
+  function injectAgreementStyle(){
+    if(document.getElementById('dumAgreeStyle')) return;
+    var st = document.createElement('style');
+    st.id = 'dumAgreeStyle';
+    st.textContent = [
+      '.dum-agree{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit}',
+      '.dum-agree-bg{position:absolute;inset:0;background:rgba(45,37,32,.6)}',
+      '.dum-agree-box{position:relative;background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:calc(100vh - 32px);overflow:auto;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.25);color:#3b3222}',
+      '.dum-agree-title{font-size:18px;font-weight:700;margin:0 0 4px;color:#50422D}',
+      '.dum-agree-sub{font-size:13px;color:#8a7d6b;margin:0 0 12px}',
+      '.dum-agree-text{background:#faf6f0;border:1px solid #e8ded1;border-radius:10px;padding:12px 14px 12px 32px;margin:0 0 12px;font-size:13.5px;line-height:1.75}',
+      '.dum-agree-text li{margin:0 0 6px}',
+      '.dum-agree-text li b{color:#b23b2e}',
+      '.dum-agree-check{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:0 0 12px;cursor:pointer}',
+      '.dum-agree-check input{margin-top:3px;width:18px;height:18px;flex:none}',
+      '.dum-agree-signhead{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:#8a7d6b;margin:0 0 6px}',
+      '.dum-agree-signhead b{color:#3b3222}',
+      '.dum-agree-clear{border:0;background:none;color:#8a7d6b;text-decoration:underline;font:inherit;font-size:13px;cursor:pointer;padding:0}',
+      '.dum-agree-pad{display:block;width:100%;height:160px;border:1.5px dashed #c9bba6;border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}',
+      '.dum-agree-pad.is-signed{border-style:solid;border-color:#50422D}',
+      '.dum-agree-hint{font-size:12px;color:#a2968a;margin:6px 0 14px;text-align:center}',
+      '.dum-agree-err{font-size:13px;color:#b23b2e;margin:0 0 10px}',
+      '.dum-agree-actions{display:flex;gap:10px}',
+      '.dum-agree-actions button{flex:1;border-radius:999px;padding:12px 10px;font:inherit;font-size:15px;cursor:pointer}',
+      '.dum-agree-cancel{border:1px solid #d9cdbd;background:#fff;color:#50422D}',
+      '.dum-agree-ok{border:0;background:#50422D;color:#fff}',
+      '.dum-agree-ok:disabled{opacity:.4;cursor:not-allowed}'
+    ].join('\n');
+    document.head.appendChild(st);
+  }
+
+  function openAgreement(member){
+    injectAgreementStyle();
+    return new Promise(function(resolve){
+      var wrap = document.createElement('div');
+      wrap.className = 'dum-agree';
+      wrap.setAttribute('role', 'dialog');
+      wrap.setAttribute('aria-modal', 'true');
+      wrap.innerHTML =
+        '<div class="dum-agree-bg"></div>' +
+        '<div class="dum-agree-box">' +
+          '<h3 class="dum-agree-title"></h3>' +
+          '<p class="dum-agree-sub">送出審核前,請詳閱以下聲明並親筆簽名</p>' +
+          '<ol class="dum-agree-text"></ol>' +
+          '<label class="dum-agree-check"><input type="checkbox" id="dumAgreeChk">' +
+            '<span>我已詳閱並同意上述聲明,<b>如有侵權願自行負擔全部法律責任</b>。</span></label>' +
+          '<div class="dum-agree-signhead"><span>簽名(簽署人:<b class="dum-agree-who"></b>)</span>' +
+            '<button type="button" class="dum-agree-clear">清除重簽</button></div>' +
+          '<canvas class="dum-agree-pad" aria-label="簽名區"></canvas>' +
+          '<p class="dum-agree-hint">請用手指或滑鼠在框內簽名</p>' +
+          '<p class="dum-agree-err" hidden></p>' +
+          '<div class="dum-agree-actions">' +
+            '<button type="button" class="dum-agree-cancel">取消</button>' +
+            '<button type="button" class="dum-agree-ok" disabled>簽名並送出審核</button>' +
+          '</div>' +
+        '</div>';
+      wrap.querySelector('.dum-agree-title').textContent = AGREEMENT.title;
+      var ol = wrap.querySelector('.dum-agree-text');
+      AGREEMENT.items.forEach(function(t){
+        var li = document.createElement('li');
+        // 第二條是整份聲明的重點,強調出來
+        if(t.indexOf('自行負擔全部法律責任') >= 0){
+          var i = t.indexOf('概由本人');
+          var j = t.indexOf(';');
+          if(i >= 0 && j > i){
+            li.appendChild(document.createTextNode(t.slice(0, i)));
+            var b = document.createElement('b'); b.textContent = t.slice(i, j);
+            li.appendChild(b);
+            li.appendChild(document.createTextNode(t.slice(j)));
+          } else li.textContent = t;
+        } else li.textContent = t;
+        ol.appendChild(li);
+      });
+      wrap.querySelector('.dum-agree-who').textContent =
+        (member && (member.name || member.erpname)) || '會員';
+      document.body.appendChild(wrap);
+
+      var chk = wrap.querySelector('#dumAgreeChk');
+      var ok = wrap.querySelector('.dum-agree-ok');
+      var pad = wrap.querySelector('.dum-agree-pad');
+      var err = wrap.querySelector('.dum-agree-err');
+      var ctx = pad.getContext('2d');
+      var inkLen = 0, drawing = false, last = null;
+
+      // 畫布實際解析度跟著顯示大小與螢幕密度,簽名才不會糊
+      var lastW = 0;
+      function sizePad(){
+        var r = pad.getBoundingClientRect();
+        /* ⚠ 只在【寬度】變了才重設(會清掉簽名)。手機捲動時網址列收合也會觸發 resize,
+           那時寬度沒變 —— 不擋的話簽到一半就被清空。 */
+        if(Math.round(r.width) === lastW) return;
+        lastW = Math.round(r.width);
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        pad.width = Math.round(r.width * dpr);
+        pad.height = Math.round(r.height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#1f1a14';
+        inkLen = 0; pad.classList.remove('is-signed'); refresh();
+      }
+      function refresh(){
+        // 筆畫總長太短(只點一下)不算簽名
+        ok.disabled = !(chk.checked && inkLen > 60);
+      }
+      function pos(e){
+        var r = pad.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      }
+      pad.addEventListener('pointerdown', function(e){
+        e.preventDefault();
+        drawing = true; last = pos(e);
+        try { pad.setPointerCapture(e.pointerId); } catch(_){}
+      });
+      pad.addEventListener('pointermove', function(e){
+        if(!drawing) return;
+        e.preventDefault();
+        var p = pos(e);
+        ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+        inkLen += Math.hypot(p.x - last.x, p.y - last.y);
+        last = p;
+        if(inkLen > 60) pad.classList.add('is-signed');
+        refresh();
+      });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function(t){
+        pad.addEventListener(t, function(){ drawing = false; });
+      });
+      chk.addEventListener('change', refresh);
+      wrap.querySelector('.dum-agree-clear').addEventListener('click', function(){
+        ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, pad.width, pad.height); ctx.restore();
+        inkLen = 0; pad.classList.remove('is-signed'); refresh();
+      });
+
+      function done(result){
+        window.removeEventListener('resize', sizePad);
+        wrap.remove();
+        resolve(result);
+      }
+      wrap.querySelector('.dum-agree-cancel').addEventListener('click', function(){ done(null); });
+      wrap.querySelector('.dum-agree-bg').addEventListener('click', function(){ done(null); });
+      ok.addEventListener('click', function(){
+        if(ok.disabled) return;
+        /* 存成白底 PNG:透明底在後台的深色背景上會看不到簽名 */
+        var out = document.createElement('canvas');
+        out.width = pad.width; out.height = pad.height;
+        var o = out.getContext('2d');
+        o.fillStyle = '#fff'; o.fillRect(0, 0, out.width, out.height);
+        o.drawImage(pad, 0, 0);
+        var sig = out.toDataURL('image/png');
+        if(sig.length > 380000){
+          err.hidden = false;
+          err.textContent = '簽名圖太大,請按「清除重簽」後簽小一點';
+          return;
+        }
+        done({ version: AGREEMENT.version, accepted: true, signature: sig });
+      });
+
+      // 旋轉手機(寬度改變)會清掉畫布,簽名要重簽 —— 寬度沒變的 resize 不理
+      sizePad();
+      window.addEventListener('resize', sizePad);
+    });
+  }
+
   async function submit(){
     if(state.submitting) return;
     clearError();
@@ -2116,6 +2306,14 @@
         console.warn('[upload-design] 每日上限檢查失敗,放行:', limitErr);
         // 檢查失敗不阻擋上傳(避免誤殺),僅記錄
       }
+    }
+
+    /* 著作權聲明與簽名(2026-10-16):送審 / 重新送審才要。
+       客製頁的「上傳圖」(noReview)不進市集、不送審,不用簽。 */
+    var agreement = null;
+    if(!state.noReview){
+      agreement = await openAgreement(member);
+      if(!agreement) return;   // 取消 = 什麼都不送
     }
 
     setSubmitting(true);
@@ -2206,6 +2404,8 @@
         slogan:   slogan,
         category: state.selectedCategory,
         keywords: state.selectedTags.join(','),
+        /* 著作權聲明的簽署(版本、同意、簽名圖)。伺服器沒收到或版本不對會拒收。 */
+        agreement: agreement,
       };
       if(state.editId) payload.id = state.editId;
       if(pngUrl){

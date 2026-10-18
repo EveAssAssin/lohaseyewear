@@ -38,7 +38,37 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-09b · +auto_creator +submit/update_own';
+const CODE_VERSION = '2026-10-16 · 送審要簽著作權聲明';
+
+/* ===== 刻圖送審的著作權聲明(2026-10-16)=====
+   -----------------------------------------------------------------
+   送審(submit)與重新送審(update_own)一律要附上簽名,而且簽的必須是
+   【這一版】。簽名、聲明全文、簽署人(從 token 取)與時間寫進
+   design_agreements(RLS 開著、沒有政策,只有這支寫得進去)。
+
+   ⚠ 前端 js/upload-design.js 的 AGREEMENT 顯示給客人看的是同一段文字,
+     兩邊的 version 與內容要一起改。只改一邊的話 version 對不上,
+     這裡會拒收(大聲壞掉,不會讓客人簽了一版、存成另一版)。
+   ⚠ 改條文就要換 version —— 已簽的人簽的是舊的那一版,
+     存在 agreement_text 裡的也是舊的,這樣才對得起來。 */
+const AGREEMENT_VERSION = '2026-10-16-v1';
+const AGREEMENT_TEXT = [
+  '【刻圖作品著作權聲明】',
+  '一、本人保證送審之作品為本人原創,或已取得著作權人之合法授權,未侵害任何第三人之著作權、商標權、肖像權或其他權利。',
+  '二、如本作品發生任何侵權爭議、索賠或訴訟,概由本人自行負擔全部法律責任及相關費用,與樂活眼鏡無涉;如致樂活眼鏡受有損害,本人願負賠償責任。',
+  '三、樂活眼鏡於接獲侵權通知,或認為作品有侵權疑慮時,得不經通知逕行下架或刪除該作品,本人無異議。',
+  '四、本人已詳閱並同意以上內容,並以下方簽名確認。',
+].join('\n');
+
+/* 簽名圖:canvas.toDataURL('image/png')。設上下限 ——
+   太短代表空白或假造,太長則是有人塞大檔(資料表另有 400,000 字的 CHECK)。 */
+function checkSignature(sig: unknown): string {
+  const s = String(sig || '');
+  if (!s.startsWith('data:image/png;base64,')) return '';
+  if (s.length < 800 || s.length > 400000) return '';
+  if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(s)) return '';
+  return s;
+}
 
 /* 舊站留下來的作品清單。伺服器自己抓 —— 前端送進來的話,
    等於「匯入什麼由客人決定」。 */
@@ -274,6 +304,30 @@ Deno.serve(async (req) => {
     const name = String(body.name || '').trim();
     if (!name) return reply('006', { message: '作品名稱不可空白' }, 400);
 
+    /* 著作權聲明與簽名(2026-10-16)。放在最前面擋 ——
+       沒簽的不寫任何東西。前端的「確認送出」鈕只是介面,擋不住直接打 API 的人。 */
+    const ag = (body.agreement || {}) as Record<string, unknown>;
+    if (String(ag.version || '') !== AGREEMENT_VERSION) {
+      return reply('006', {
+        message: '著作權聲明已更新,請重新整理頁面後再簽署送出',
+      }, 400);
+    }
+    const signature = checkSignature(ag.signature);
+    if (ag.accepted !== true || !signature) {
+      return reply('006', { message: '請先閱讀著作權聲明、勾選同意並簽名' }, 400);
+    }
+    const agreementRow = (designId: string) => ({
+      design_id:      designId,
+      erpid,
+      signer_name:    who.name || null,     // 只認 token 裡的姓名
+      version:        AGREEMENT_VERSION,
+      agreement_text: AGREEMENT_TEXT,       // 存伺服器這份,不存前端顯示的
+      action,
+      signature_png:  signature,
+      user_agent:     (req.headers.get('user-agent') || '').slice(0, 300) || null,
+      ip:             (req.headers.get('x-forwarded-for') || '').split(',')[0].trim().slice(0, 64) || null,
+    });
+
     /* 圖檔網址只收自家 Storage 的公開網址。
        不驗的話,前端可以把 image_url 指到任意網站 ——
        那些圖會出現在市集,而且我方無法控管內容。 */
@@ -310,6 +364,15 @@ Deno.serve(async (req) => {
         const { data, error } = await db.from('engraving_designs')
           .insert(row).select().single();
         if (error) throw error;
+
+        /* 簽署紀錄要和作品同生共死:紀錄寫不進去,就把剛建的作品刪掉 ——
+           不能留下一件「在審核佇列裡、卻沒有簽名」的作品。 */
+        const { error: agErr } = await db.from('design_agreements').insert(agreementRow(data.id));
+        if (agErr) {
+          console.error('[design] 簽署紀錄寫入失敗,撤回作品', erpid, data.id, agErr.message);
+          await db.from('engraving_designs').delete().eq('id', data.id);
+          return reply('500', { message: '簽署紀錄儲存失敗,請再試一次' }, 500);
+        }
         return reply('200', { data: { row: data } });
       }
 
@@ -328,6 +391,14 @@ Deno.serve(async (req) => {
       if (String(own.creator_id || '') !== erpid) {
         console.warn('[design] 拒絕修改他人作品 erpid=' + erpid + ' id=' + target);
         return reply('403', { message: '這不是你的作品' }, 403);
+      }
+
+      /* 重新送審:先寫簽署紀錄,寫不進去就不改作品(順序與 submit 相反,
+         因為這裡作品已經存在,先改再撤回會把舊內容弄丟)。 */
+      const { error: agErr } = await db.from('design_agreements').insert(agreementRow(target));
+      if (agErr) {
+        console.error('[design] 簽署紀錄寫入失敗', erpid, target, agErr.message);
+        return reply('500', { message: '簽署紀錄儲存失敗,請再試一次' }, 500);
       }
 
       const { data, error } = await db.from('engraving_designs')
