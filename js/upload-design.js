@@ -167,7 +167,7 @@
             '<button type="button" class="dum-intro-card" data-entry="upload">',
               '<div class="dum-intro-ico"><i class="fa-solid fa-cloud-arrow-up"></i></div>',
               '<div class="dum-intro-h">我已經設計好刻圖檔了</div>',
-              '<div class="dum-intro-d">可以直接上傳,快速送審</div>',
+              '<div class="dum-intro-d">可以直接上傳,快速上架</div>',
             '</button>',
             '<button type="button" class="dum-intro-card" data-entry="have-photo">',
               '<div class="dum-intro-ico"><i class="fa-solid fa-images"></i></div>',
@@ -295,7 +295,7 @@
                   '</div>',
                 '</div>',
                 '<div class="dum-tip">',
-                  '<b>小提示:</b> 上傳後可裁切,通過審核後會自動轉換成雷雕用透明底版本',
+                  '<b>小提示:</b> 上傳後可裁切,上架時會自動轉換成雷雕用透明底版本',
                   '<br><a href="market-about.html#not-suitable" target="_blank" rel="noopener" class="dum-tip-link"><i class="fa-solid fa-circle-question"></i> 不確定圖適不適合雷刻?看設計建議</a>',
                 '</div>',
               '</div>',
@@ -326,13 +326,13 @@
             '</div>',
             // 審核流程 (含分潤說明)
             '<div class="dum-flow-info">',
-              '<div class="dum-flow-label">審 核 流 程</div>',
-              '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
+              '<div class="dum-flow-label">上 架 流 程</div>',
+              '<div class="dum-flow-desc">送出時簽署著作權聲明,簽完<b>立即上架</b>創作者市集。</div>',
             '</div>',
             '<div class="dum-error" id="dumError2" hidden><i class="fa-solid fa-circle-exclamation"></i> <span class="dum-error-text"></span></div>',
             '<div class="dum-step-nav">',
               '<button type="button" class="dum-btn-back" data-back="2"><i class="fa-solid fa-arrow-left"></i> 上一步</button>',
-              '<button type="button" class="dum-btn-submit" id="dumSubmit2"><span>送 出 審 核</span></button>',
+              '<button type="button" class="dum-btn-submit" id="dumSubmit2"><span>送 出 上 架</span></button>',
             '</div>',
           '</div>',
         '</div>',
@@ -364,7 +364,7 @@
           '</div>',
 
           '<div class="dum-tip">',
-            '<b>小提示:</b> 上傳後可裁切,通過審核後會自動轉換成雷雕用透明底版本',
+            '<b>小提示:</b> 上傳後可裁切,上架時會自動轉換成雷雕用透明底版本',
             '<br><a href="market-about.html#not-suitable" target="_blank" rel="noopener" class="dum-tip-link"><i class="fa-solid fa-circle-question"></i> 不確定圖適不適合雷刻?看設計建議</a>',
           '</div>',
         '</div>',
@@ -373,7 +373,7 @@
         '<div class="dum-right">',
           '<div class="dum-header">',
             '<h2 class="dum-title" id="dumTitle">新增刻圖設計</h2>',
-            '<p class="dum-subtitle">填寫作品資訊,審核通過後將出現在創作者市集' + (memberName ? ' · <span class="dum-by">by ' + escAttr(memberName) + '</span>' : '') + '</p>',
+            '<p class="dum-subtitle">填寫作品資訊,簽署著作權聲明後即上架創作者市集' + (memberName ? ' · <span class="dum-by">by ' + escAttr(memberName) + '</span>' : '') + '</p>',
           '</div>',
 
           // 錯誤訊息 (放最上面,顯眼)
@@ -434,13 +434,13 @@
           '</div>',
 
           '<div class="dum-flow-info">',
-            '<div class="dum-flow-label">審 核 流 程</div>',
-            '<div class="dum-flow-desc">上傳後預設為 <b class="pending">待審核</b> 狀態,通過後自動上架創作者市集。</div>',
+            '<div class="dum-flow-label">上 架 流 程</div>',
+            '<div class="dum-flow-desc">送出時簽署著作權聲明,簽完<b>立即上架</b>創作者市集。</div>',
           '</div>',
 
           '<div class="dum-actions">',
             '<button type="button" class="dum-btn-cancel" id="dumCancel">取 消</button>',
-            '<button type="button" class="dum-btn-submit" id="dumSubmit"><span>送 出 審 核</span></button>',
+            '<button type="button" class="dum-btn-submit" id="dumSubmit"><span>送 出 上 架</span></button>',
           '</div>',
         '</div>',
 
@@ -2086,7 +2086,8 @@
 
   /* ===== 著作權聲明簽署視窗(2026-10-16)=====
      -----------------------------------------------------------------
-     送審前跳出:聲明全文 → 勾選同意 → 手寫簽名 → 「簽名並送出審核」。
+     送出前跳出:聲明全文 → 勾選同意 → 手寫簽名 → 「簽名並上架」。
+     (2026-10-19 起不再人工審核,簽完名伺服器就直接上架,見 design.ts 的 autoList)
      回傳 Promise:簽好給 { version, accepted, signature },取消給 null。
 
      放在【檢查都過了之後、開始上傳之前】—— 先簽完名才發現名稱沒填,
@@ -2137,7 +2138,7 @@
         '<div class="dum-agree-bg"></div>' +
         '<div class="dum-agree-box">' +
           '<h3 class="dum-agree-title"></h3>' +
-          '<p class="dum-agree-sub">送出審核前,請詳閱以下聲明並親筆簽名</p>' +
+          '<p class="dum-agree-sub">上架前,請詳閱以下聲明並親筆簽名</p>' +
           '<ol class="dum-agree-text"></ol>' +
           '<label class="dum-agree-check"><input type="checkbox" id="dumAgreeChk">' +
             '<span>我已詳閱並同意上述聲明,<b>如有侵權願自行負擔全部法律責任</b>。</span></label>' +
@@ -2148,7 +2149,7 @@
           '<p class="dum-agree-err" hidden></p>' +
           '<div class="dum-agree-actions">' +
             '<button type="button" class="dum-agree-cancel">取消</button>' +
-            '<button type="button" class="dum-agree-ok" disabled>簽名並送出審核</button>' +
+            '<button type="button" class="dum-agree-ok" disabled>簽名並上架</button>' +
           '</div>' +
         '</div>';
       wrap.querySelector('.dum-agree-title').textContent = AGREEMENT.title;
@@ -2434,7 +2435,11 @@
       setSubmitting(false);
       closeModal();
       resetForm();
-      toast(state.editId ? '已重新送審' : '已送出審核,我們會盡快通知你');
+      /* 伺服器回 listed:true = 已上架;false = 留在待審核
+         (ERP 建檔失敗,或這件之前被駁回過 —— 那兩種要人工看過)。 */
+      var listed = !!(fnJson.data && fnJson.data.listed);
+      toast(listed ? (state.editId ? '已更新並上架創作者市集' : '已上架創作者市集!')
+                   : '已送出,將由專人確認後上架');
       // 通知 member-portal 重整列表
       window.dispatchEvent(new CustomEvent('lohas:design-upload-success', { detail: resp.data }));
 
@@ -2450,7 +2455,7 @@
   function setSubmitting(s){
     state.submitting = s;
     var idle = state.noReview ? '確 定 上 傳'
-             : (state.editId ? '重 新 送 審' : '送 出 審 核');
+             : (state.editId ? '更 新 並 上 架' : '送 出 上 架');
     // 兩個模式各一顆送出鈕,失敗退回時兩顆都要退回正確的字
     ['#dumSubmit', '#dumSubmit2'].forEach(function(sel){
       var b = modal && modal.querySelector(sel);
@@ -2490,7 +2495,7 @@
     els.title.textContent = '新增刻圖設計';
     /* 兩個模式各有一顆送出鈕(#dumSubmit 設計師、#dumSubmit2 快速),
        只改一顆的話,走另一條路的人看到的還是「送出審核」。 */
-    var submitLabel = state.noReview ? '確 定 上 傳' : '送 出 審 核';
+    var submitLabel = state.noReview ? '確 定 上 傳' : '送 出 上 架';
     ['#dumSubmit', '#dumSubmit2'].forEach(function (sel) {
       var sp = modal.querySelector(sel + ' span');
       if (sp) sp.textContent = submitLabel;
@@ -2524,7 +2529,7 @@
 
     state.editId = design.id;
     els.title.textContent = '重新編輯設計';
-    els.submit.querySelector('span').textContent = '重 新 送 審';
+    els.submit.querySelector('span').textContent = '更 新 並 上 架';
 
     els.name.value   = design.name || '';
     els.slogan.value = design.slogan || '';

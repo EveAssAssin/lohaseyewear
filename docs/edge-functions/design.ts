@@ -38,7 +38,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-10-16 · 送審要簽著作權聲明';
+const CODE_VERSION = '2026-10-19 · 簽完名直接上架';
 
 /* ===== 刻圖送審的著作權聲明(2026-10-16)=====
    -----------------------------------------------------------------
@@ -68,6 +68,116 @@ function checkSignature(sig: unknown): string {
   if (s.length < 800 || s.length > 400000) return '';
   if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(s)) return '';
   return s;
+}
+
+/* ===== 簽完名直接上架(2026-10-19 營運決定:不再人工審核)=====
+   -----------------------------------------------------------------
+   原本「審核通過」由後台的人做,會做四件事(admin-portal.js 的 submitApproval):
+     ① 到 ERP 建檔取號(create-erp-product,同一件重複叫只建一次)
+     ② 售價(審核的人選 500 / 800 / 1000,預設 1000)
+     ③ status='approved'、is_show='上架'、reviewed_at
+     ④ 推播「已上架」+ 站內訊息
+   現在改由這裡在送審當下做完。
+
+   營運決定(2026-10-19):
+     · 售價一律 1000(作品原本有售價的沿用,例如下架再上架的)
+     · ERP 建檔失敗 → 留在 pending,後台「刻圖審核」照舊可以人工按通過(會重新建檔)
+       —— 沒有 ERP 編號就上架的話,有人下單時對不到 ERP 商品
+     · 照舊發上架通知
+
+   ⚠ 例外,仍然走人工(留 pending):
+     · 被駁回(rejected)的作品修改後重送 —— 駁回多半是因為侵權或內容,
+       讓他改個名字就自動回到市集,等於駁回沒有作用
+     · 沒有簽署紀錄的舊作品重新上架(set_show) */
+const ANON_KEY      = Deno.env.get('SUPABASE_ANON_KEY') || '';
+const ERP_CREATE_FN = `${SUPABASE_URL}/functions/v1/create-erp-product`;
+const NOTIFY_FN     = `${SUPABASE_URL}/functions/v1/lohas-api-proxy`;
+const AUTO_PRICE    = 1000;
+/* 每人每天最多送審幾件(台北時間的一天,管理員不限)。
+   原本只有前端在擋;沒有人工審核之後,這道一定要在伺服器。 */
+const DAILY_LIMIT   = 3;
+
+async function createErp(designId: string, name: string): Promise<string> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 20000);
+  try {
+    const r = await fetch(ERP_CREATE_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ANON_KEY, 'apikey': ANON_KEY },
+      body: JSON.stringify({ designId, name }),
+      signal: ctl.signal,
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.returnCode !== 'SUCCESS' || j.bindingId == null) {
+      throw new Error(j.returnMsg || ('HTTP ' + r.status));
+    }
+    return String(j.bindingId);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* 上架:ERP 取號 → 寫回作品。失敗就維持 pending,回 { listed:false }。 */
+async function autoList(
+  designId: string, name: string, existingPrice: unknown,
+): Promise<{ listed: boolean; reason?: string }> {
+  let erp = '';
+  try {
+    erp = await createErp(designId, name);
+  } catch (e) {
+    console.error('[design] ERP 建檔失敗,留在待審核', designId, (e as Error).message);
+    return { listed: false, reason: 'erp' };
+  }
+  const price = Number(existingPrice) > 0 ? Number(existingPrice) : AUTO_PRICE;
+  const { error } = await db.from('engraving_designs').update({
+    status: 'approved', is_show: '上架', price, erp_number: erp,
+    reviewed_at: new Date().toISOString(),
+  }).eq('id', designId);
+  if (error) {
+    console.error('[design] 上架寫入失敗,留在待審核', designId, error.message);
+    return { listed: false, reason: 'db' };
+  }
+  return { listed: true };
+}
+
+/* 上架通知:App 推播(進「樂活訊息」)+ 站內客服訊息。
+   與後台 sendApprovalNotice 同兩條路;失敗只記 log,不影響上架。 */
+async function notifyListed(erpid: string, name: string, designId: string) {
+  const link = 'https://www.lohasglasses.com/market.html?design=' + encodeURIComponent(designId);
+  const message = '恭喜!您的刻圖「' + name + '」已上架創作者市集,可至市集查看。';
+  const results = await Promise.allSettled([
+    fetch(NOTIFY_FN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': 'Bearer ' + ANON_KEY, 'apikey': ANON_KEY,
+        'x-lohas-mode': 'prod', 'x-lohas-host': 'realtime',
+      },
+      body: JSON.stringify({
+        method: 'CSLeftMessagePush', client_id: erpid,
+        title: '刻圖上架通知', message, view_status: 2, link,
+      }),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json().catch(() => ({}));
+      if (j && j.statecode != null && String(j.statecode) !== '0') throw new Error('statecode=' + j.statecode);
+    }),
+    db.from('cs_messages').insert({
+      member_erpid: erpid, design_id: designId, message, is_read: false, sender: 'staff',
+    }).then(({ error }) => { if (error) throw error; }),
+  ]);
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      console.warn('[design] 上架通知失敗(' + (i === 0 ? 'App 推播' : '站內訊息') + ')', erpid, String(r.reason));
+    }
+  });
+}
+
+/* 台北時間今天 00:00 的 ISO 字串(函式跑在 UTC,不能用 setHours) */
+function taipeiDayStart(): string {
+  const t = new Date(Date.now() + 8 * 3600 * 1000);
+  const ymd = t.toISOString().slice(0, 10);
+  return new Date(ymd + 'T00:00:00+08:00').toISOString();
 }
 
 /* 舊站留下來的作品清單。伺服器自己抓 —— 前端送進來的話,
@@ -354,13 +464,29 @@ Deno.serve(async (req) => {
          designer_name 是顯示用的作者名,跟認領用的是同一個來源。 */
       creator_id:    erpid,
       designer_name: who.name,
-      status:        'pending',   // 送審與改後重新送審都是 pending
+      /* 先以 pending 寫入;簽署紀錄寫好、ERP 建檔成功之後,autoList 才改成上架。
+         中間任何一步失敗,作品都停在 pending —— 後台可以人工補,不會半套上架。 */
+      status:        'pending',
       type:          'member',
     };
     for (const k of Object.keys(imgs)) if (imgs[k]) row[k] = imgs[k];
 
     try {
       if (action === 'submit') {
+        /* 每日上限(台北時間),管理員不限。原本只有前端擋,
+           沒有人工審核之後一定要在伺服器擋。查詢失敗時放行(與前端原本一致)。 */
+        const { data: adm } = await db.from('admins')
+          .select('member_id, status').eq('member_id', erpid).maybeSingle();
+        const isAdmin = !!adm && (!adm.status || adm.status === 'active');
+        if (!isAdmin) {
+          const { count, error: cntErr } = await db.from('engraving_designs')
+            .select('id', { count: 'exact', head: true })
+            .eq('creator_id', erpid).gte('created_at', taipeiDayStart());
+          if (!cntErr && (count || 0) >= DAILY_LIMIT) {
+            return reply('429', { message: '每天最多上傳 ' + DAILY_LIMIT + ' 件刻圖作品,今天已達上限,請明天再來' }, 429);
+          }
+        }
+
         const { data, error } = await db.from('engraving_designs')
           .insert(row).select().single();
         if (error) throw error;
@@ -373,7 +499,12 @@ Deno.serve(async (req) => {
           await db.from('engraving_designs').delete().eq('id', data.id);
           return reply('500', { message: '簽署紀錄儲存失敗,請再試一次' }, 500);
         }
-        return reply('200', { data: { row: data } });
+
+        // 簽完名直接上架(ERP 建檔失敗就留在 pending,人工補)
+        const res = await autoList(data.id, name, null);
+        if (res.listed) await notifyListed(erpid, name, data.id);
+        console.log('[design] ' + erpid + ' 送出 ' + data.id + (res.listed ? ' 已上架' : ' 留待審核(' + res.reason + ')'));
+        return reply('200', { data: { row: { ...data, status: res.listed ? 'approved' : 'pending' }, listed: res.listed } });
       }
 
       /* update_own —— 先確認這件作品是他的。
@@ -385,7 +516,7 @@ Deno.serve(async (req) => {
         return reply('006', { message: '缺少作品編號' }, 400);
       }
       const { data: own, error: readErr } = await db.from('engraving_designs')
-        .select('id, creator_id').eq('id', target).maybeSingle();
+        .select('id, creator_id, status, price').eq('id', target).maybeSingle();
       if (readErr) throw readErr;
       if (!own) return reply('007', { message: '找不到這件作品' }, 404);
       if (String(own.creator_id || '') !== erpid) {
@@ -404,7 +535,16 @@ Deno.serve(async (req) => {
       const { data, error } = await db.from('engraving_designs')
         .update(row).eq('id', target).select().single();
       if (error) throw error;
-      return reply('200', { data: { row: data } });
+
+      /* 被駁回過的作品修改後重送 → 留在 pending,給人看過再說(理由見 autoList 上方)。
+         其他情況簽完名直接上架。 */
+      if (String(own.status || '') === 'rejected') {
+        console.log('[design] ' + erpid + ' 重送被駁回的作品 ' + target + ',留待人工審核');
+        return reply('200', { data: { row: data, listed: false, reason: 'was_rejected' } });
+      }
+      const res = await autoList(target, name, own.price);
+      if (res.listed) await notifyListed(erpid, name, target);
+      return reply('200', { data: { row: { ...data, status: res.listed ? 'approved' : 'pending' }, listed: res.listed } });
 
     } catch (e) {
       const err = e as { code?: string; message?: string };
@@ -485,7 +625,7 @@ Deno.serve(async (req) => {
      會讓人可以拿這支去枚舉哪些 id 存在。 */
   const { data: row, error: readErr } = await db
     .from('engraving_designs')
-    .select('id, creator_id, is_show')
+    .select('id, creator_id, is_show, status, erp_number')
     .eq('id', id)
     .maybeSingle();
 
@@ -504,14 +644,24 @@ Deno.serve(async (req) => {
     return reply('409', { message: '這件作品已經刪除,無法再變更' }, 409);
   }
 
+  /* 重新上架(2026-10-19 起不再人工審核):
+     有簽過著作權聲明、沒被駁回、而且已經有 ERP 編號的 → 直接回到 approved;
+     否則照舊回 pending 等人工(沒簽過的舊作品、被駁回的、沒建過 ERP 的)。 */
+  let finalPatch: Record<string, string> = patch;
+  if (String(body.show) === '上架' && String(row.status || '') !== 'rejected' && row.erp_number) {
+    const { count } = await db.from('design_agreements')
+      .select('id', { count: 'exact', head: true }).eq('design_id', id);
+    if ((count || 0) > 0) finalPatch = { is_show: '上架', status: 'approved' };
+  }
+
   const { error: updErr } = await db
-    .from('engraving_designs').update(patch).eq('id', id);
+    .from('engraving_designs').update(finalPatch).eq('id', id);
 
   if (updErr) {
     console.error('[design] 更新失敗:', updErr.message);
     return reply('500', { message: '操作失敗,請再試一次' }, 500);
   }
 
-  console.log('[design] ' + erpid + ' 把 ' + id + ' 設為 ' + body.show);
-  return reply('200', {});
+  console.log('[design] ' + erpid + ' 把 ' + id + ' 設為 ' + body.show + (finalPatch.status ? ' (' + finalPatch.status + ')' : ''));
+  return reply('200', { data: { status: finalPatch.status || null } });
 });

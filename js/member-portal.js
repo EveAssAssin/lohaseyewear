@@ -1439,22 +1439,25 @@
         const sb = getSupabase();
         if (!sb) return;
 
-        // 下架 → 上架:要重走審核流程
-        // 上架 → 下架:直接下架
+        /* 2026-10-19 起不再人工審核:簽過著作權聲明的作品重新上架會直接回到市集;
+           沒簽過的舊作品、被駁回過的,伺服器會留在待審核(回應的 status 說了算)。 */
         let updates;
         if (isOff) {
-          // 重新上架 → 重走審核
-          if (!confirm(`確定要重新上架「${name}」?\n\n· 重新上架需要重新走刻圖審核流程\n· 通過後才會再次出現在市集`)) return;
+          if (!confirm(`確定要重新上架「${name}」?`)) return;
           updates = '上架';
         } else {
-          // 下架
-          if (!confirm(`確定下架「${name}」?\n\n· 會從市集隱藏\n· 重新上架需重新走審核流程`)) return;
+          if (!confirm(`確定下架「${name}」?\n\n· 會從市集隱藏,之後可以再重新上架`)) return;
           updates = '下架';
         }
 
         toggleBtn.disabled = true;
         try {
-          await designCall('set_show', { id: id, show: updates });
+          const res = await designCall('set_show', { id: id, show: updates });
+          if (updates === '上架') {
+            alert(res && res.status === 'approved'
+              ? '已重新上架創作者市集'
+              : '已送出,這件作品需要專人確認後才會上架(聲明上線前的作品或曾被駁回)');
+          }
           modalBg.classList.remove('on');
           loadMyDesigns();
           if (typeof loadAnalytics === 'function') loadAnalytics();
