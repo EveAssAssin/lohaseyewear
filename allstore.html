@@ -15,7 +15,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- OpenAI Pixel(ChatGPT 廣告)。每頁只能一份 —— 安裝前會檢查 oaiq 是否已存在。 -->
 <script>!function(w,d,s,u){if(w.oaiq)return;if(w.__LOHAS_IN_APP){w.oaiq=function(){};return}var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");oaiq("init",{pixelId:"NjscxQ8XG8RS61Uqj5n6JA",debug:true});</script>
   <title>選擇預約門市 - LOHAS 樂活眼鏡</title>
-  <meta name="description" content="選擇您要預約的樂活眼鏡門市，全台 24 間實體門市，海外 1 間旗艦店。線上預約專屬銷售顧問，享 NT$200 預約折抵。">
+  <meta name="description" content="選擇您要預約的樂活眼鏡門市，全台實體門市與海外旗艦店。線上預約專屬銷售顧問，享 NT$200 預約折抵。">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -54,7 +54,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="as-subheader-title">
           <i class="fa-regular fa-calendar-check"></i>
           <span class="accent">選擇預約門市</span>
-          <span>· 全台 <b>24</b> 間 + 海外 <b>1</b> 間</span>
+          <!-- 數字由 js/allstore.js 依實際門市清單填(2026-10-21,原本寫死 24,關店/隱藏後就不準)。
+               這裡的值只是載入前的預設,與當天實際數一致即可。 -->
+          <span id="asTotals">· 全台 <b id="asTotalTw">20</b> 間 + 海外 <b id="asTotalOverseas">1</b> 間</span>
         </div>
         <div class="as-search">
           <i class="fa-solid fa-magnifying-glass"></i>
@@ -112,7 +114,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/store-data.js?v=20261021-dadun"></script>
 
 <!-- 頁面邏輯 -->
-<script src="js/allstore.js?v=20260517-1800"></script>
+<script src="js/allstore.js?v=20261021-totals"></script>
 
 </body>
 </html>

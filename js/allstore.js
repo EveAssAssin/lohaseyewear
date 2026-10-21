@@ -215,6 +215,15 @@
       const em = pill.querySelector("em[data-count]");
       if (em) em.textContent = n;
     });
+
+    /* 標題的「全台 N 間 + 海外 M 間」(2026-10-21):原本寫死在 HTML,
+       門市關閉或從官網隱藏後就對不上。改成跟上面的分區數用同一份清單算
+       (已經過 store-data.js 的隱藏清單過濾)。海外 = MALAYSIA 區。 */
+    const overseas = counts.malaysia || 0;
+    const tw = document.getElementById("asTotalTw");
+    const os = document.getElementById("asTotalOverseas");
+    if (tw) tw.textContent = state.allStores.length - overseas;
+    if (os) os.textContent = overseas;
   }
 
   /* === Leaflet 地圖初始化 === */
