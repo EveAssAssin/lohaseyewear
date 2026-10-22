@@ -1638,6 +1638,7 @@
     }
 
     grid.innerHTML = '<p class="empty-text" style="grid-column:1/-1;text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>';
+    bindDesignBulk(null, false);   // 重新載入時先收起批次工具列,清單出來再決定要不要顯示
 
     const sb = getSb();
     if (!sb) return;
@@ -1694,9 +1695,10 @@
           : 'Member';
 
         const reviewImgUrl = d.image_url_png || d.image_url || d.image_url_svg || '';
+        // position:relative 給右上角的批次勾選框定位用(同一個 style 屬性裡,不能另寫一個)
         const imgStyle = reviewImgUrl
-          ? `style="background-image:url('${escapeHtml(reviewImgUrl)}');background-size:cover;background-position:center"`
-          : '';
+          ? `style="position:relative;background-image:url('${escapeHtml(reviewImgUrl)}');background-size:cover;background-position:center"`
+          : 'style="position:relative"';
 
         // 根據狀態切換按鈕
         const actions = isRejectedView
@@ -1724,10 +1726,19 @@
              </div>`
           : '';
 
+        /* 批次通過的勾選框(2026-10-22):只在待審核清單 */
+        const pick = isRejectedView ? '' :
+          `<label style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border-radius:6px;padding:4px 6px;display:flex;cursor:pointer;z-index:2" title="勾選以批次通過">
+             <input type="checkbox" data-pick="${d.id}"
+                    data-name="${escapeHtml(d.name)}" data-category="${escapeHtml(d.category || '')}"
+                    style="width:18px;height:18px;margin:0;cursor:pointer">
+           </label>`;
+
         return `
           <div class="rcard" data-id="${d.id}">
             <div class="rcard-img ${grad}" ${imgStyle}>
               <span class="rcard-pill">${typeLabel}</span>
+              ${pick}
             </div>
             <div class="rcard-info">
               <div class="rcard-title">${escapeHtml(d.name)}</div>
@@ -1742,6 +1753,9 @@
 
       // 著作權聲明的簽署紀錄(2026-10-16)—— 不擋畫面,讀到再補上去
       annotateAgreements(grid, designs);
+
+      // 批次通過(2026-10-22):只在待審核
+      bindDesignBulk(grid, !isRejectedView);
 
       // 綁定 開始審核 / 駁回
       grid.querySelectorAll('[data-act="approve"]').forEach(b => {
@@ -1791,6 +1805,100 @@
     } catch (err) {
       console.error('[刻圖審核載入失敗]', err);
     }
+  }
+
+  /* ===== 刻圖審核:批次通過(2026-10-22)=====
+     -----------------------------------------------------------------
+     每一件做的事與單件「完成審核」(submitApproval)相同:
+       ERP 建檔取號(autoCreateErp,同一件重複叫只建一次)→ 上架 → 通知客人。
+     差別只在不開視窗:名稱、分類照客人填的,售價沿用原價、沒有就 1000
+     (與 design 函式的自動上架同一個規則)。
+     一件一件依序做,不並發 —— ERP 建檔是外部服務,一次丟一堆容易被擋或超額度。
+     某一件失敗不中斷,最後列出來;失敗的留在待審核。 */
+  const BULK_DEFAULT_PRICE = 1000;
+
+  function bindDesignBulk(grid, enabled) {
+    const bar = document.getElementById('reviewDesignsBulk');
+    if (!bar) return;
+    const all = document.getElementById('rdSelectAll');
+    const cnt = document.getElementById('rdSelCount');
+    const btn = document.getElementById('rdBulkApprove');
+    const boxes = () => grid ? [...grid.querySelectorAll('input[data-pick]')] : [];
+
+    bar.style.display = (enabled && boxes().length) ? 'flex' : 'none';
+    if (!enabled || !grid) return;
+
+    function refresh() {
+      const list = boxes();
+      const n = list.filter(b => b.checked).length;
+      cnt.textContent = '已選 ' + n + ' 件';
+      btn.disabled = n === 0;
+      btn.querySelector('span').textContent = n ? '一次通過(' + n + ')' : '一次通過';
+      all.checked = n > 0 && n === list.length;
+      all.indeterminate = n > 0 && n < list.length;
+    }
+    grid.querySelectorAll('input[data-pick]').forEach(b => b.addEventListener('change', refresh));
+    all.checked = false;
+    all.onchange = () => { boxes().forEach(b => { b.checked = all.checked; }); refresh(); };
+    btn.onclick = () => bulkApproveDesigns(boxes().filter(b => b.checked));
+    refresh();
+  }
+
+  async function bulkApproveDesigns(picked) {
+    if (!picked.length) return;
+    if (!confirm('確定一次通過 ' + picked.length + ' 件刻圖?\n\n' +
+                 '· 每一件都會到 ERP 建檔、上架創作者市集、通知創作者\n' +
+                 '· 售價沿用原價,沒有則 $' + BULK_DEFAULT_PRICE)) return;
+
+    const btn = document.getElementById('rdBulkApprove');
+    const label = btn.querySelector('span');
+    btn.disabled = true;
+    document.getElementById('rdSelectAll').disabled = true;
+
+    // 原本有售價的沿用(下架再上架、重送的作品)
+    const ids = picked.map(b => b.dataset.pick);
+    const prices = {};
+    try {
+      const sb = getSb();
+      const { data } = await sb.from('engraving_designs').select('id, price, creator_id').in('id', ids);
+      (data || []).forEach(r => { prices[r.id] = r; });
+    } catch (_) { /* 讀不到就全部用預設價 */ }
+
+    const ok = [], fail = [];
+    for (let i = 0; i < picked.length; i++) {
+      const b = picked[i];
+      const id = b.dataset.pick, name = b.dataset.name || '';
+      label.textContent = '通過中 ' + (i + 1) + ' / ' + picked.length + '…';
+      try {
+        const r = await autoCreateErp({ designId: id, name });
+        const row = prices[id] || {};
+        const update = {
+          name,
+          category: b.dataset.category || null,
+          price: Number(row.price) > 0 ? Number(row.price) : BULK_DEFAULT_PRICE,
+          is_show: '上架',
+          status: 'approved',
+          reviewed_at: new Date().toISOString(),
+        };
+        if (r.bindingId) update.erp_number = r.bindingId;
+        await adminWrite('engraving_designs', 'update', update, id);
+        ok.push(name);
+        // 通知失敗不影響通過(與單件相同)
+        if (row.creator_id) {
+          try { await sendApprovalNotice(row.creator_id, name, id); }
+          catch (e) { console.warn('[批次通過] 通知失敗', id, e); }
+        }
+      } catch (e) {
+        fail.push('「' + name + '」:' + (e.message || e));
+      }
+    }
+
+    alert('批次通過完成:成功 ' + ok.length + ' 件' +
+          (fail.length ? '、失敗 ' + fail.length + ' 件(留在待審核)\n\n' + fail.join('\n') : ''));
+    document.getElementById('rdSelectAll').disabled = false;
+    loadDesignReview();
+    loadDashboard && loadDashboard();
+    refreshReviewCounts && refreshReviewCounts();
   }
 
   /* 審核卡片上標出「這件有沒有簽著作權聲明」(2026-10-16)。
