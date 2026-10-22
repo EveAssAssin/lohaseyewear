@@ -3297,8 +3297,11 @@
         <i class="fa-solid fa-plus"></i>新增 Banner
       </button>`;
 
-    // 單張位置:已有 1 張時不再顯示「新增」
-    const showAdd = cfg.multi || list.length === 0;
+    // 單張位置:已有 1 張時不再顯示「新增」——
+    // 例外(2026-10-22):現有的都設了排程,就可以再加一張,用來預排下一檔
+    // (前台單張位置取「時間內、排序最前」的那一張)
+    const showAdd = cfg.multi || list.length === 0 ||
+      list.every(b => b.start_at || b.end_at);
 
     if (list.length === 0) {
       wrap.innerHTML = `
@@ -3313,8 +3316,16 @@
         const img = b.image_url
           ? `<div style="aspect-ratio:${cfg.aspect.replace(':','/')};background:url('${escapeHtml(b.image_url)}') center/cover;border-radius:8px"></div>`
           : `<div style="aspect-ratio:${cfg.aspect.replace(':','/')};background:#F4F1EC;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9D7E3F"><i class="fa-regular fa-image" style="font-size:32px"></i></div>`;
-        const status = b.is_active
-          ? '<span class="creator-card-tag featured" style="background:#E8F5E0;color:#3D6B1E"><i class="fa-solid fa-eye"></i> 啟用中</span>'
+        /* 狀態跟前台的實際顯示一致(含排程,2026-10-22) */
+        const live = bannerLiveState(b);
+        const status = live === 'live'
+          ? '<span class="creator-card-tag featured" style="background:#E8F5E0;color:#3D6B1E"><i class="fa-solid fa-eye"></i> 啟用中' +
+              (b.end_at ? '(至 ' + fmtSched(b.end_at) + ')' : '') + '</span>'
+          : live === 'scheduled'
+          ? '<span class="creator-card-tag" style="background:#FFF4DC;color:#8A6200"><i class="fa-regular fa-clock"></i> 排程中 · ' +
+              fmtSched(b.start_at) + ' 上架' + (b.end_at ? '、' + fmtSched(b.end_at) + ' 下架' : '') + '</span>'
+          : live === 'ended'
+          ? '<span class="creator-card-tag" style="background:#EEE;color:#888"><i class="fa-regular fa-clock"></i> 已結束(' + fmtSched(b.end_at) + ')</span>'
           : '<span class="creator-card-tag" style="background:#EEE;color:#888"><i class="fa-regular fa-eye-slash"></i> 已停用</span>';
         const mobileTag = b.image_url_mobile
           ? '<span class="creator-card-tag" style="background:#E8F0F8;color:#2A5A8C"><i class="fa-solid fa-mobile-screen"></i> 含手機圖</span>'
@@ -3420,6 +3431,44 @@
   window.openBannerNew = () => openBannerEdit(null);
   window.openBannerEdit = (id) => openBannerEdit(id);
 
+  /* ===== Banner 排程的小工具(2026-10-22)=====
+     datetime-local 吃的是「本地時間、沒有時區」的字串(YYYY-MM-DDTHH:mm),
+     資料庫存 timestamptz。後台都在台灣,本地時間就是台灣時間。 */
+  function isoToLocalInput(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+           'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function localInputToIso(v) {
+    if (!v) return null;
+    const d = new Date(v);              // 沒有時區的字串 → 當成本地時間
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  function syncBannerSched() {
+    const on = document.getElementById('bmSchedOn')?.checked;
+    const f = document.getElementById('bmSchedFields');
+    const h = document.getElementById('bmSchedHint');
+    if (f) f.hidden = !on;
+    if (h) h.hidden = !on;
+  }
+  function fmtSched(iso) {
+    const d = new Date(iso);
+    const p = n => String(n).padStart(2, '0');
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  /* 這張 Banner 現在在前台看不看得到,與前台的條件一致:
+     is_active 而且 start_at <= 現在 < end_at(空的那一端不限)。 */
+  function bannerLiveState(b) {
+    const now = Date.now();
+    if (!b.is_active) return 'off';
+    if (b.start_at && new Date(b.start_at).getTime() > now) return 'scheduled';
+    if (b.end_at && new Date(b.end_at).getTime() <= now) return 'ended';
+    return 'live';
+  }
+
   function openBannerEdit(id) {
     const modal = document.getElementById('bannerEditModal');
     if (!modal) return;
@@ -3459,6 +3508,19 @@
     document.getElementById('bmLinkUrl').value = b.link_url || '';
     document.getElementById('bmIsActive').checked = b.is_active !== false;
     document.getElementById('bmSortOrder').value = b.sort_order != null ? b.sort_order : 0;
+
+    // 排程(2026-10-22):有任一個時間就把開關打開
+    const schedOn = document.getElementById('bmSchedOn');
+    if (schedOn) {
+      schedOn.checked = !!(b.start_at || b.end_at);
+      document.getElementById('bmStartAt').value = isoToLocalInput(b.start_at);
+      document.getElementById('bmEndAt').value = isoToLocalInput(b.end_at);
+      syncBannerSched();
+      if (!schedOn.dataset.bound) {
+        schedOn.dataset.bound = '1';
+        schedOn.addEventListener('change', syncBannerSched);
+      }
+    }
 
     // ====== 桌機版圖片上傳 ======
     const wrapEl = document.getElementById('bmImageWrap');
@@ -3664,6 +3726,21 @@
       is_active: document.getElementById('bmIsActive').checked,
       sort_order: Number(document.getElementById('bmSortOrder').value) || 0
     };
+
+    /* 排程(2026-10-22):開關關著 = 兩個時間都清掉(回到「勾了就顯示」)。 */
+    const schedOn = document.getElementById('bmSchedOn')?.checked;
+    payload.start_at = schedOn ? localInputToIso(document.getElementById('bmStartAt').value) : null;
+    payload.end_at   = schedOn ? localInputToIso(document.getElementById('bmEndAt').value) : null;
+    if (schedOn && !payload.start_at && !payload.end_at) {
+      hint.style.color = 'var(--status-rejected)';
+      hint.textContent = '已打開排程,請至少填開始或結束時間';
+      return;
+    }
+    if (payload.start_at && payload.end_at && payload.end_at <= payload.start_at) {
+      hint.style.color = 'var(--status-rejected)';
+      hint.textContent = '結束時間要晚於開始時間';
+      return;
+    }
 
     hint.textContent = '寫入資料庫...';
     let error;

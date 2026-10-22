@@ -41,7 +41,7 @@ const AUTH_FN = `${SUPABASE_URL}/functions/v1/auth-session`;
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const CODE_VERSION = '2026-09-14 · +cloth_designs(只開 wall_hidden)';
+const CODE_VERSION = '2026-10-22 · banners 加 start_at / end_at(排程)';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -90,7 +90,9 @@ const ALLOW: Record<string, Rule> = {
     key: 'id',
     ops: ['insert', 'update', 'delete'],
     cols: ['position', 'image_url', 'image_url_mobile', 'title', 'subtitle',
-           'cta_text', 'link_url', 'is_active', 'sort_order', 'updated_at'],
+           'cta_text', 'link_url', 'is_active', 'sort_order', 'updated_at',
+           // 排程上架(2026-10-22,docs/banners-schedule.sql 加的欄位)
+           'start_at', 'end_at'],
   },
   featured_creators: {
     key: 'featured_month',

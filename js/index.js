@@ -159,10 +159,16 @@
     const sb = window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
     if (!sb) return;
 
+    /* 排程(2026-10-22):只拿「現在落在 start_at ~ end_at 之間」的,空的那一端不限。
+       用伺服器端條件而不是前端過濾 —— 客人裝置的時鐘可能不準。
+       ⚠ 這兩欄由 docs/banners-schedule.sql 新增;欄位不存在時查詢會出錯、Banner 整區隱藏。 */
+    const nowIso = new Date().toISOString();
     const { data, error } = await sb.from('banners')
       .select('*')
       .eq('position', 'home_main')
       .eq('is_active', true)
+      .or('start_at.is.null,start_at.lte.' + nowIso)
+      .or('end_at.is.null,end_at.gt.' + nowIso)
       .order('sort_order', { ascending: true });
 
     if (error || !data || !data.length) {

@@ -19,10 +19,16 @@
     const sb = window.LohasSupabase && window.LohasSupabase.getClient && window.LohasSupabase.getClient();
     if (!sb) return;
 
+    /* 排程(2026-10-22):只拿現在落在 start_at ~ end_at 之間的(空的那一端不限),
+       單張位置取其中排序最前的一張 —— 後台可以預先排好下一檔。
+       ⚠ 欄位由 docs/banners-schedule.sql 新增。 */
+    const nowIso = new Date().toISOString();
     const { data, error } = await sb.from('banners')
       .select('*')
       .eq('position', pos)
       .eq('is_active', true)
+      .or('start_at.is.null,start_at.lte.' + nowIso)
+      .or('end_at.is.null,end_at.gt.' + nowIso)
       .order('sort_order', { ascending: true })
       .limit(1);
 

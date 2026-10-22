@@ -966,6 +966,30 @@
                 </label>
               </div>
 
+              <!-- 排程上架(2026-10-22)。時間存在 banners.start_at / end_at,
+                   前台只顯示「啟用 + 現在落在時間內」的 Banner(js/index.js、js/page-banner.js)。 -->
+              <div class="editor-row">
+                <label class="editor-label">排程</label>
+                <label class="editor-check">
+                  <input type="checkbox" id="bmSchedOn">
+                  設定上架時間(到時間自動顯示、自動下架)
+                </label>
+                <div id="bmSchedFields" hidden style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--lohas-mute)">
+                    開始時間
+                    <input type="datetime-local" class="editor-input" id="bmStartAt" style="max-width:240px">
+                  </label>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--lohas-mute)">
+                    結束時間
+                    <input type="datetime-local" class="editor-input" id="bmEndAt" style="max-width:240px">
+                  </label>
+                </div>
+                <p class="editor-hint" id="bmSchedHint" hidden>
+                  台灣時間。只填開始 = 到時間上架、不自動下架;只填結束 = 現在上架、到時間下架。
+                  仍要勾選上面的「前台顯示此 Banner」才會生效。
+                </p>
+              </div>
+
               <div class="editor-row" id="bmSortRow" style="display:none">
                 <label class="editor-label">輪播順序</label>
                 <input type="number" class="editor-input" id="bmSortOrder" placeholder="0" style="max-width:160px"/>
@@ -2148,7 +2172,7 @@
 <script src="js/upload-design.js?v=20261019-autolist"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20261016-agree"></script>
+<script src="js/admin-portal.js?v=20261022-sched"></script>
 <script src="js/admin-portal-footer.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-pegavision.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-categories.js?v=20260907-batch3"></script>
