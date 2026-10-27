@@ -37,7 +37,24 @@
      所以它遲早會再對不上。正確的做法是由對方提供一支
      「依門市回傳項目清單」的介面,我方改成動態讀取。
      已於 2026-09-13 去信詢問(docs/給左手設計_預約項目清單不同步_0913.md)。
-     在那之前不要再自行往這裡加項目:加上去只是換一份猜的清單。 */
+     在那之前不要再自行往這裡加項目:加上去只是換一份猜的清單。
+
+     2026-10-27:左手第 31 階段給了 getreservationrounds / addreservation。
+     NEW_FLOW 開著時,服務項目改由 getreservationrounds 動態取得(含門市自訂),
+     上面這份 SERVICES 只剩舊流程與商城模式在用。
+     先藏在 ?newbook=1(或 localStorage lohas_newbook=1)後面,正式站實測過再改成預設。 */
+  const NEW_FLOW = (function () {
+    try {
+      if (/[?&]newbook=1(?:&|$)/.test(location.search)) { localStorage.setItem("lohas_newbook", "1"); return true; }
+      if (/[?&]newbook=0(?:&|$)/.test(location.search)) { localStorage.removeItem("lohas_newbook"); return false; }
+      return localStorage.getItem("lohas_newbook") === "1";
+    } catch (_e) { return false; }
+  })();
+  /* 新功能還沒上正式站時(左手回「未提供有效Method」),這一頁自動退回舊流程。
+     2026-10-27 實測:正式站還沒有 getreservationrounds,測試站有。 */
+  let newFlowUnavailable = false;
+  /* 商城模式不走新流程(那條路只選顧問、不建單) */
+  function useNewFlow() { return NEW_FLOW && !newFlowUnavailable && !state.cartPrefill; }
 
   /* state */
   const state = {
@@ -53,6 +70,7 @@
     selectedService: null,    // 必選,使用者在 step 1 與顧問一起選
     allRounds: [],            // 一次抓回來的【全部類型】時段
     availTypes: {},           // 這位顧問實際有時段的類型
+    configs: [],              // 新流程:這位顧問的預約項目(api-booking normalizeConfigs)
     rounds: [],
     selectedDate: null,
     selectedRoundId: null,
@@ -294,6 +312,32 @@
 
   /* === 服務項目選擇（取件 / 眼鏡保養、調整 / 配鏡 / 諮詢）必選 === */
   function renderServiceSection() {
+    /* 新流程:項目由左手動態回傳(含門市自訂),只列有可約時段的 */
+    if (useNewFlow()) {
+      const list = state.configs || [];
+      let inner;
+      if (state.loadingRounds) {
+        inner = `<div class="bm-state-msg">讀取這位顧問的預約項目中…</div>`;
+      } else if (!state.selectedEmployee) {
+        inner = `<div class="bm-state-msg">先選一位顧問,就會列出他開放的項目</div>`;
+      } else if (state.error) {
+        inner = `<div class="bm-state-msg" style="color:var(--err)">${escapeHtml(state.error)}</div>`;
+      } else if (!list.length) {
+        inner = `<div class="bm-state-msg">這位顧問近期沒有可預約的項目,請選擇其他顧問或致電門市</div>`;
+      } else {
+        inner = list.map(c => {
+          const active = state.selectedService && state.selectedService.id === c.id;
+          return `<button type="button" class="bm-svc-pick ${active ? "active" : ""}" data-svc="${escapeHtml(c.id)}">` +
+                   escapeHtml(c.name) + `</button>`;
+        }).join("");
+      }
+      return (
+        `<div class="bm-sec">` +
+          `<div class="bm-sec-title">預約服務項目 <span class="bm-required">*</span></div>` +
+          `<div class="bm-svc-grid">` + inner + `</div>` +
+        `</div>`
+      );
+    }
     return (
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">預約服務項目 <span class="bm-required">*</span></div>` +
@@ -481,7 +525,8 @@
         renderInput("姓名", "memberName", f.memberName, "請輸入姓名") +
         renderInput("會員編號", "memberNumber", f.memberNumber, "若無請填手機末四碼") +
         renderInput("手機號碼", "memberPhone", f.memberPhone, "09xxxxxxxx") +
-        renderInput("生日", "memberBirthday", f.memberBirthday, "yyyy-mm-dd", "date") +
+        /* 新流程的 addreservation 沒有生日欄位 → 改成選填,有填就寫進留言 */
+        renderInput(useNewFlow() ? "生日(選填)" : "生日", "memberBirthday", f.memberBirthday, "yyyy-mm-dd", "date") +
       `</div>` +
       `<div class="bm-sec">` +
         `<div class="bm-sec-title">給門市的留言（選填）</div>` +
@@ -618,7 +663,8 @@
     if (state.step === 2) return !!state.selectedRoundId;
     if (state.step === 3) {
       const f = state.form;
-      const formOk = !!(f.memberName && f.memberNumber && f.memberPhone && f.memberBirthday);
+      const formOk = !!(f.memberName && f.memberNumber && f.memberPhone &&
+                        (useNewFlow() || f.memberBirthday));
       /* 一般模式服務必選;商城模式服務由商城帶,不檢查 */
       const svcOk = state.cartPrefill ? true : !!state.selectedService;
       return formOk && svcOk;
@@ -652,6 +698,7 @@
            選到這一位根本沒開放的項目,然後在送出時才被擋。 */
         state.allRounds = [];
         state.availTypes = {};
+        state.configs = [];
         state.selectedService = null;
         renderInPlace();
         /* 在 step 1 就抓 —— 服務項目的按鈕要靠它決定畫哪幾顆。 */
@@ -701,7 +748,8 @@
 
     r.querySelectorAll("[data-svc]").forEach(el => {
       el.addEventListener("click", () => {
-        const next = SERVICES.find(s => s.id === el.dataset.svc);
+        const next = (useNewFlow() ? state.configs : SERVICES).find(s => s.id === el.dataset.svc);
+        if (!next) return;
         const changed = !state.selectedService || state.selectedService.id !== next.id;
         state.selectedService = next;
         /* ⚠ 換了服務項目就要把已選的時段作廢。
@@ -815,6 +863,11 @@
   /* 從一次抓回來的全部時段裡,篩出目前選中那一種。
      沒選(或商城模式)就全給 —— 商城那條路本來就只有配鏡。 */
   function applyServiceFilter() {
+    /* 新流程:時段就掛在選中的項目底下(每個項目各自的名額) */
+    if (useNewFlow()) {
+      state.rounds = state.selectedService ? (state.selectedService.rounds || []).slice() : [];
+      return;
+    }
     const t = state.selectedService && state.selectedService.apiType;
     state.rounds = t
       ? state.allRounds.filter(function (r) { return r.reservationType === t; })
@@ -827,6 +880,42 @@
     state.loadingRounds = true;
     state.error = null;
     renderInPlace();
+
+    /* 新流程:一次拿回這位顧問的全部項目(含自訂)與各自的時段 */
+    if (useNewFlow()) {
+      const erpid = String(state.selectedEmployee.erpid);
+      try {
+        const data = await bookingApi.getReservationRounds([erpid]);
+        // 換顧問的速度比網路快時,丟掉過期的回應
+        if (!state.selectedEmployee || String(state.selectedEmployee.erpid) !== erpid) return;
+        const me = (data || []).find(p => String(p.employeeErpId) === erpid) || (data || [])[0] || {};
+        state.configs = bookingApi.normalizeConfigs(me.reservationConfigs);
+        // 已選的項目若還在,換成新抓回來的那一份(名額是新的)
+        if (state.selectedService) {
+          state.selectedService = state.configs.find(c => c.id === state.selectedService.id) || null;
+        }
+        applyServiceFilter();
+      } catch (err) {
+        /* 正式站還沒有這支 → 退回舊流程重抓,客人不會卡住 */
+        if (/有效\s*Method/i.test(err.message || "")) {
+          console.warn("[booking] 新版預約 API 尚未上線,改用舊流程");
+          newFlowUnavailable = true;
+          state.loadingRounds = false;
+          state.selectedService = null;
+          return loadRounds();
+        }
+        state.error = err.message || "讀取預約項目失敗";
+        state.configs = [];
+        state.rounds = [];
+      } finally {
+        if (!newFlowUnavailable) {
+          state.loadingRounds = false;
+          renderInPlace();
+        }
+      }
+      return;
+    }
+
     try {
       /* 🚨 一次把【全部類型】抓回來,不是只抓選中的那一種。
          -----------------------------------------------------------
@@ -896,7 +985,7 @@
     if (!f.memberName) missing.push({ field: "memberName", label: "姓名" });
     if (!f.memberNumber) missing.push({ field: "memberNumber", label: "會員編號(若無請填手機末四碼)" });
     if (!f.memberPhone) missing.push({ field: "memberPhone", label: "手機號碼" });
-    if (!f.memberBirthday) missing.push({ field: "memberBirthday", label: "生日" });
+    if (!f.memberBirthday && !useNewFlow()) missing.push({ field: "memberBirthday", label: "生日" });
 
     if (missing.length > 0) {
       const labels = missing.map(m => m.label).join("、");
@@ -909,6 +998,41 @@
     state.submitting = true;
     updateFooter();
     try {
+      let reservationId = "";
+
+      if (useNewFlow()) {
+        /* === 新流程:addreservation 一步建立正式預約(不用 finish)===
+           ⚠ 這支沒有冪等鍵 —— 逾時或回應遺失【不能】自動重送,會變成兩筆預約。
+             失敗時只提示,讓客人先確認有沒有收到簡訊。 */
+        const round = (state.rounds || []).find(r => String(r.roundId) === String(state.selectedRoundId));
+        if (!round || !state.selectedService) throw new Error("請重新選擇預約時段");
+        let res;
+        try {
+          res = await bookingApi.addReservation({
+            employeeErpId: state.selectedEmployee.erpid,
+            reservationConfigId: state.selectedService.configId,
+            reservationDate: round.date,
+            roundId: round.apiRoundId,
+            masterRoundId: round.apiMasterRoundId,
+            memberName: state.form.memberName,
+            memberPhone: state.form.memberPhone,
+            memberNumber: state.form.memberNumber,
+            content: buildContentText()
+          });
+        } catch (e) {
+          /* 有回應的業務錯誤(名額滿了、時段關了…)照常顯示;
+             連線類錯誤則可能其實已經建好了,要講清楚不要重按 */
+          const netFail = !e.statecode || /網路|連線|HTTP 5/.test(e.message || "");
+          if (netFail) {
+            throw new Error("連線中斷,無法確認預約是否已建立。\n請先不要重複送出,稍後查看是否收到預約簡訊,或致電門市確認。");
+          }
+          throw e;
+        }
+        reservationId = (res && res.reservationId) || "";
+        state.successData = { reservationId };
+        state.step = 4;
+      } else {
+
       /* === Step 1:建立暫時預約單 === */
       const data = await bookingApi.createReservation({
         groupErpId: state.store.erpid,
@@ -927,7 +1051,6 @@
       });
 
       /* data.reservationid 文件說「請用 AES 解密」 */
-      let reservationId = "";
       if (data && data.reservationid) {
         reservationId = bookingApi.decryptReservationId(data.reservationid);
       }
@@ -949,6 +1072,7 @@
 
       state.successData = { reservationId };
       state.step = 4;
+      }   // ← 舊流程(createreservate + finishreservate)結束
       /* GA4 / Meta Pixel 主要轉換:預約完成事件(經 dataLayer 由 GTM 轉發)
          ⚠ 一定要在 postBackToMall() 整頁跳轉「之前」觸發,否則 Pixel 來不及送 */
       try {
@@ -1105,7 +1229,9 @@
   function buildContentText() {
     const svc = state.selectedService;
     const lines = [];
-    if (svc) lines.push(`預約服務：${svc.name}（約 ${svc.duration} 分鐘）`);
+    if (svc) lines.push(svc.duration ? `預約服務：${svc.name}（約 ${svc.duration} 分鐘）` : `預約服務：${svc.name}`);
+    /* 新流程的 addreservation 沒有生日欄位,有填就放進留言給門市 */
+    if (useNewFlow() && state.form.memberBirthday) lines.push(`生日：${state.form.memberBirthday}`);
 
     /* 商城帶入的訂單資訊(若有)*/
     if (state.cartPrefill) {

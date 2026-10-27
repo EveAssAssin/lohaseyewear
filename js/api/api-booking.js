@@ -129,6 +129,86 @@
     });
   }
 
+  /* ===== 新版預約 API(左手第 31 階段,2026-10-27 接)=====
+     -----------------------------------------------------------------
+     舊的 getround 只認五種固定類型,門市在左手後台自訂的項目(生日配鏡、
+     生日DIY眼鏡布…)官網看不到。新的兩支以「項目 ID」為主:
+
+       getreservationrounds  員工 → 項目(含自訂、人員新增)→ 日期 → 時段
+       addreservation        用查到的 項目 ID + 時段 ID 建立預約(一步完成,不用 finish)
+
+     ⚠ ERP 編號由 lohas-api-proxy 加密(employeeErpIds / employeeErpId),
+       回傳的 reservationId 也由它解密 —— 前端只送明文。
+     ⚠ addreservation 只收 10 個欄位,多送任何欄位都會被拒(對方文件)。
+     ⚠ addreservation 沒有冪等鍵:逾時或回應遺失【不能】直接重送,會變兩筆。 */
+
+  /* @param employeeErpIds  陣列或逗號字串,一次最多 10 位
+     回傳:[{ employeeErpId, employeeName, reservationConfigs:[{ reservationConfigId,
+             reservationConfigTitle, reservationType, dates:[{ date, rounds:[{ roundId,
+             masterRoundId, title, remain }] }] }] }] */
+  async function getReservationRounds(employeeErpIds) {
+    const ids = Array.isArray(employeeErpIds) ? employeeErpIds.join(",") : String(employeeErpIds || "");
+    if (!ids) throw new Error("[LohasApi.booking] employeeErpIds is required");
+    return post("rsv", { method: "getreservationrounds", employeeErpIds: ids });
+  }
+
+  /* @param d { employeeErpId, reservationConfigId, reservationDate, roundId, masterRoundId,
+                memberName, memberPhone, memberNumber?, content? }
+     roundId / masterRoundId 恰好一個是 -1(個人時段 vs 公司時段)。
+     回傳:{ reservationId(proxy 已解密), status:"新預約" } */
+  async function addReservation(d) {
+    const required = ["employeeErpId", "reservationConfigId", "reservationDate",
+                      "roundId", "masterRoundId", "memberName", "memberPhone"];
+    for (const k of required) {
+      if (d[k] == null || String(d[k]).trim() === "") {
+        throw new Error("[LohasApi.booking] addReservation missing: " + k);
+      }
+    }
+    /* 全部用字串送(對方文件:各參數以字串傳送),欄位只有這 10 個 */
+    return post("rsv", {
+      method: "addreservation",
+      employeeErpId: String(d.employeeErpId),
+      reservationConfigId: String(d.reservationConfigId),
+      reservationDate: String(d.reservationDate),
+      roundId: String(d.roundId),
+      masterRoundId: String(d.masterRoundId),
+      memberName: String(d.memberName).trim(),
+      memberPhone: String(d.memberPhone).trim(),
+      memberNumber: String(d.memberNumber || ""),
+      content: String(d.content || "")
+    });
+  }
+
+  /* 把一位員工的 reservationConfigs 整理成「項目清單」,每個項目帶自己的時段。
+     沒有任何可約時段的項目不列(客人選了也約不到)。
+     時段的 key 用 r<個人ID> / m<公司ID>,兩種來源不會撞號。 */
+  function normalizeConfigs(configs) {
+    return (configs || []).map(c => {
+      const rounds = [];
+      (c.dates || []).forEach(day => {
+        (day.rounds || []).forEach(r => {
+          const personal = Number(r.roundId) >= 0;
+          rounds.push({
+            date: day.date,
+            roundId: personal ? "r" + r.roundId : "m" + r.masterRoundId,   // 畫面用的 key
+            apiRoundId: personal ? String(r.roundId) : "-1",
+            apiMasterRoundId: personal ? "-1" : String(r.masterRoundId),
+            title: r.title,
+            remain: Number(r.remain) || 0,
+            available: Number(r.remain) > 0
+          });
+        });
+      });
+      return {
+        id: "c" + c.reservationConfigId,
+        configId: c.reservationConfigId,
+        name: c.reservationConfigTitle || c.reservationType || "預約",
+        apiType: c.reservationType || "",
+        rounds
+      };
+    }).filter(c => c.rounds.some(r => r.available));
+  }
+
   /* ===== 衍生工具：把回傳的暫時預約 reservationid 解密 =====
      文件第 3 支「data.reservationid」說「請用 AES 解密」 */
   function decryptReservationId(encryptedId) {
@@ -166,6 +246,10 @@
     finishReservation,
     cancelReservation,
     getUnprocessByEmployee,
+    /* 新版(第 31 階段) */
+    getReservationRounds,
+    addReservation,
+    normalizeConfigs,
     /* 衍生工具 */
     decryptReservationId,
     flattenRounds
