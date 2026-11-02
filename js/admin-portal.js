@@ -8742,10 +8742,24 @@
 
       let slug = val('news_slug');
       if(!val('news_title')){ toast('標題必填'); return; }
-      const status = val('news_status') || 'draft';
+      let status = val('news_status') || 'draft';
       if(status === 'scheduled' && !val('news_published_at')){
         toast('已排程狀態必須填發佈時間');
         return;
+      }
+      /* 2026-11-02 小編反映「排了時間卻沒上架」:狀態留在草稿,只填了發布時間。
+         草稿不論時間到了沒都不會上架 —— 填了時間的草稿,問一次要不要改成已排程。 */
+      if(status === 'draft' && val('news_published_at')){
+        const when = new Date(val('news_published_at'));
+        const future = when.getTime() > Date.now();
+        const msg = future
+          ? '狀態是「草稿」,時間到了也【不會】自動上架。\n\n要改成「已排程」,在 ' + when.toLocaleString('zh-TW') + ' 自動發布嗎?\n(按「取消」= 維持草稿)'
+          : '狀態是「草稿」,前台看不到。\n\n發布時間已經過了,要直接改成「已發佈」嗎?\n(按「取消」= 維持草稿)';
+        if(confirm(msg)){
+          status = future ? 'scheduled' : 'published';
+          const sel = $('news_status');
+          if(sel) sel.value = status;
+        }
       }
       // 沒 slug 就自動生成 (timestamp + 隨機)
       if(!slug){

@@ -141,10 +141,14 @@
       return;
     }
 
+    /* 已發佈 + 「已排程且時間已到」(2026-11-02 修)。
+       原本只看 published,排程的消息時間到了只會出現在首頁輪播(index.js 有這個條件),
+       列表頁與內頁永遠看不到 —— 小編以為排程沒生效。三處條件要一致。 */
+    const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
       .select('*')
-      .eq('status', 'published')
+      .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
       .order('published_at', { ascending: false });
 
     if (error) {

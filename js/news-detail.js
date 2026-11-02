@@ -107,11 +107,13 @@
       return;
     }
 
+    /* 已發佈 + 「已排程且時間已到」—— 與 news.js、index.js 同一個條件(2026-11-02 修) */
+    const nowIso = new Date().toISOString();
     const { data, error } = await sb
       .from('news')
       .select('*')
       .eq('slug', id)
-      .eq('status', 'published')
+      .or('status.eq.published,and(status.eq.scheduled,published_at.lte.' + nowIso + ')')
       .maybeSingle();
 
     if (error) {
