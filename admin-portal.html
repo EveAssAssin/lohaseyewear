@@ -394,12 +394,15 @@
             <div class="editor-row-2col">
               <div class="editor-row">
                 <label class="editor-label">狀態</label>
+                <!-- 2026-11-02 防呆:不再讓人手選「已排程」。選「發布」後由發布時間決定 ——
+                     時間還沒到就自動存成已排程,到了或沒填就立即發布(js/admin-portal.js 的 save)。
+                     原本有人填了時間卻把狀態留在草稿,以為會自動上架。 -->
                 <select class="editor-input" id="news_status">
-                  <option value="draft">草稿 (前台看不到)</option>
-                  <option value="scheduled">已排程 (時間到自動發布)</option>
-                  <option value="published">已發佈</option>
+                  <option value="draft">草稿(前台看不到,時間到也不會發布)</option>
+                  <option value="published">發布(依下方發布時間)</option>
                   <option value="archived">已下架</option>
                 </select>
+                <p class="editor-hint" id="news_status_result" style="font-weight:600"></p>
               </div>
               <div class="editor-row">
                 <label class="editor-label">分類<span class="req">*</span></label>
@@ -428,7 +431,7 @@
               <div class="editor-row">
                 <label class="editor-label">發佈時間</label>
                 <input type="datetime-local" class="editor-input" id="news_published_at" />
-                <p class="editor-hint">選「已排程」狀態時必填,時間到了會自動發佈</p>
+                <p class="editor-hint">狀態選「發布」時:填未來的時間 = 排程,時間到自動上架;留空或填過去的時間 = 立即發布</p>
               </div>
               <div class="editor-row">
                 <label class="editor-label">作者</label>
@@ -2187,7 +2190,7 @@
 <script src="js/upload-design.js?v=20261019-autolist"></script>
 
 <!-- 後台主邏輯 -->
-<script src="js/admin-portal.js?v=20261102-newssched"></script>
+<script src="js/admin-portal.js?v=20261102-newsguard"></script>
 <script src="js/admin-portal-footer.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-pegavision.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-categories.js?v=20260907-batch3"></script>

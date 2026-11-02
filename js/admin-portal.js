@@ -8283,23 +8283,29 @@
               '<span class="creator-card-name">' + esc(n.title || '未命名') + '</span>' +
               '<span class="creator-card-tag">' + esc(CAT_LABEL[n.category] || n.category) + '</span>' +
               (function(){
-                let cls = '', label = STATUS_LABEL[n.status] || n.status;
+                let cls = '', label = STATUS_LABEL[n.status] || n.status, style = '';
+                const t = n.published_at ? new Date(n.published_at) : null;
+                const hm = d => (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+                  String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
                 if(n.status === 'published') cls = 'featured';
-                else if(n.status === 'draft') cls = 'suspended';
-                else if(n.status === 'scheduled'){
-                  cls = 'scheduled';
-                  if(n.published_at){
-                    const t = new Date(n.published_at);
-                    const now = new Date();
-                    if(t > now){
-                      label = '已排程 ' + (t.getMonth()+1) + '/' + t.getDate();
-                    } else {
-                      label = '已發佈 (排程到時)';
-                      cls = 'featured';
-                    }
+                else if(n.status === 'draft'){
+                  cls = 'suspended';
+                  /* 防呆(2026-11-02):草稿卻填了發布時間 = 很可能以為會自動上架 */
+                  if(t){
+                    label = '⚠ 草稿,不會自動上架';
+                    style = ' style="background:#FBEEEE;color:#B23B2E;border-color:#E8C4C0"';
                   }
                 }
-                return '<span class="creator-card-tag ' + cls + '">' + esc(label) + '</span>';
+                else if(n.status === 'scheduled'){
+                  cls = 'scheduled';
+                  if(t && t > new Date()){
+                    label = '⏰ ' + hm(t) + ' 自動上架';
+                  } else {
+                    label = '已發佈(排程到時)';
+                    cls = 'featured';
+                  }
+                }
+                return '<span class="creator-card-tag ' + cls + '"' + style + '>' + esc(label) + '</span>';
               })() +
               featuredTag +
             '</div>' +
@@ -8614,6 +8620,7 @@
       resetImagePreview('news_cover_preview');
       resetImagePreview('news_homepage_image_preview');
       updateSlugPreview();
+      updateNewsStatusResult();
 
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
@@ -8637,7 +8644,8 @@
       if (_pbtnEdit) _pbtnEdit.style.display = '';
 
       setVal('news_slug', n.slug);
-      setVal('news_status', n.status);
+      // 選單裡已經沒有「已排程」(2026-11-02 防呆):排程的消息顯示成「發布」+ 未來時間
+      setVal('news_status', n.status === 'scheduled' ? 'published' : n.status);
       setVal('news_category', n.category);
       setVal('news_title', n.title);
       setVal('news_excerpt', n.excerpt);
@@ -8665,11 +8673,52 @@
       setImagePreview('news_cover_preview', n.cover_image_url);
       setImagePreview('news_homepage_image_preview', n.homepage_image_url);
       updateSlugPreview();
+      updateNewsStatusResult();
 
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
       bindImageUploads();
     }
+
+    /* ===== 發布狀態防呆(2026-11-02)=====
+       選單只剩 草稿 / 發布 / 已下架。「發布」實際存成什麼,由發布時間決定:
+         時間在未來 → scheduled(時間到自動上架)
+         沒填 / 已過 → published(立即;沒填就補成現在,排序才正確)
+       同一個函式給三個地方用:選單下方的即時說明、存檔、存檔後的提示 ——
+       三處講的話必須一致,不然「畫面說會上架、實際存成草稿」又會再發生。 */
+    function newsPublishOutcome(){
+      const picked = val('news_status') || 'draft';
+      const iso = val('news_published_at');
+      const t = iso ? new Date(iso) : null;
+      const fmt = d => (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+        String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      if(picked === 'published'){
+        if(t && t.getTime() > Date.now()){
+          return { status: 'scheduled', publishedAt: iso, tone: 'sched',
+                   text: '⏰ 將於 ' + fmt(t) + ' 自動上架(在那之前前台看不到)' };
+        }
+        return { status: 'published', publishedAt: iso || new Date().toISOString(), tone: 'live',
+                 text: '✅ 存檔後立即上架,前台馬上看得到' };
+      }
+      if(picked === 'archived'){
+        return { status: 'archived', publishedAt: iso, tone: 'off', text: '已下架:前台看不到' };
+      }
+      return { status: 'draft', publishedAt: iso, tone: t ? 'warn' : 'off',
+               text: t ? '⚠ 草稿:就算時間到了也【不會】上架。要排程請把狀態改成「發布」'
+                       : '草稿:前台看不到' };
+    }
+    function updateNewsStatusResult(){
+      const el = $('news_status_result');
+      if(!el) return;
+      const o = newsPublishOutcome();
+      el.textContent = o.text;
+      el.style.color = o.tone === 'warn' ? '#b23b2e' : o.tone === 'sched' ? '#8a6200'
+                     : o.tone === 'live' ? '#3d6b1e' : 'var(--lohas-mute)';
+    }
+    ['news_status', 'news_published_at'].forEach(id => {
+      const el = $(id);
+      if(el){ el.addEventListener('change', updateNewsStatusResult); el.addEventListener('input', updateNewsStatusResult); }
+    });
 
     function closeModal(){
       modal.style.display = 'none';
@@ -8742,25 +8791,23 @@
 
       let slug = val('news_slug');
       if(!val('news_title')){ toast('標題必填'); return; }
-      let status = val('news_status') || 'draft';
-      if(status === 'scheduled' && !val('news_published_at')){
-        toast('已排程狀態必須填發佈時間');
-        return;
-      }
       /* 2026-11-02 小編反映「排了時間卻沒上架」:狀態留在草稿,只填了發布時間。
-         草稿不論時間到了沒都不會上架 —— 填了時間的草稿,問一次要不要改成已排程。 */
-      if(status === 'draft' && val('news_published_at')){
+         草稿不論時間到了沒都不會上架 —— 填了時間的草稿,存檔前問一次要不要改成發布。 */
+      if((val('news_status') || 'draft') === 'draft' && val('news_published_at')){
         const when = new Date(val('news_published_at'));
         const future = when.getTime() > Date.now();
         const msg = future
-          ? '狀態是「草稿」,時間到了也【不會】自動上架。\n\n要改成「已排程」,在 ' + when.toLocaleString('zh-TW') + ' 自動發布嗎?\n(按「取消」= 維持草稿)'
-          : '狀態是「草稿」,前台看不到。\n\n發布時間已經過了,要直接改成「已發佈」嗎?\n(按「取消」= 維持草稿)';
+          ? '狀態是「草稿」,時間到了也【不會】自動上架。\n\n要改成「發布」,在 ' + when.toLocaleString('zh-TW') + ' 自動上架嗎?\n(按「取消」= 維持草稿)'
+          : '狀態是「草稿」,前台看不到。\n\n發布時間已經過了,要改成「發布」立即上架嗎?\n(按「取消」= 維持草稿)';
         if(confirm(msg)){
-          status = future ? 'scheduled' : 'published';
           const sel = $('news_status');
-          if(sel) sel.value = status;
+          if(sel) sel.value = 'published';
+          updateNewsStatusResult();
         }
       }
+      // 實際要存的狀態與時間(「發布」+ 未來時間 → scheduled)
+      const outcome = newsPublishOutcome();
+      const status = outcome.status;
       // 沒 slug 就自動生成 (timestamp + 隨機)
       if(!slug){
         slug = 'news-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
@@ -8815,7 +8862,8 @@
           homepage_link_url: val('news_homepage_link_url'),
           homepage_text_hidden: !!document.getElementById('news_homepage_text_hidden')?.checked,
           cta_buttons: ctaButtons,
-          published_at: val('news_published_at'),
+          // 立即發布但沒填時間 → 補成現在(列表依發布時間排序,空值會掉到最後)
+          published_at: outcome.publishedAt,
           author: val('news_author'),
           updated_at: new Date().toISOString()
         };
@@ -8834,7 +8882,12 @@
           if(error) throw error;
         }
 
-        toast('已儲存');
+        /* 講清楚存成了什麼(2026-11-02 防呆)—— 只說「已儲存」的話,
+           小編不會發現自己存成了草稿 */
+        toast(status === 'scheduled' ? '已儲存 · ' + outcome.text.replace(/^⏰\s*/, '')
+            : status === 'published' ? '已儲存 · 已發布,前台已可看到'
+            : status === 'archived'  ? '已儲存 · 已下架,前台看不到'
+            : '已儲存成草稿 · 前台看不到');
         closeModal();
         loadList();
       } catch(err){
