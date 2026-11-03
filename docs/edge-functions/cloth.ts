@@ -643,6 +643,61 @@ Deno.serve(async (req) => {
 
      ③ 排在最後,是因為它是唯一要跨網路的一道;
      前兩道在本地就答得出來,先擋掉能少打我方一次。 */
+  /* ===== 修改已送出的那一件(body.edit === true) =====
+     不另開一支:驗身分、檢查網址、取貨門市都跟存檔同一套,分兩份遲早不一致。
+     這條路【不問生日月】、【不新增一筆】—— 改的是今年那一件本身,
+     所以不會多佔一年一件的額度,也不會讓製作端看到兩張工單。 */
+  if (body.edit === true) {
+    const cur0 = await thisYearOne(db, who);
+    if (cur0 === undefined) return reply('500', { message: '無法確認本年度狀態,請稍後再試' }, 500);
+    if (!editableNow(cur0)) {
+      return reply('409', { message: whyNotEditable(cur0), data: { current: cur0 || null } }, 409);
+    }
+    const svgUrl0 = ourAssetUrl(body.svg_url);
+    const previewUrl0 = ourAssetUrl(body.preview_url);
+    if (!svgUrl0) return reply('006', { message: '缺少線稿檔' }, 400);
+    if (!previewUrl0) return reply('006', { message: '缺少合成圖' }, 400);
+    const store0 = pickStore(body.store);
+    if (!store0) return reply('006', { message: '請選擇要到哪一家門市拿。' }, 400);
+    const source0 = body.source === 'draw' ? 'draw' : 'market';
+    const p0 = body.placement || {};
+    const patch = {
+      source: source0,
+      design_id: source0 === 'market' && body.design_id ? String(body.design_id) : null,
+      design_name: String(body.design_name || '').slice(0, 120) || null,
+      svg_url: svgUrl0,
+      preview_url: previewUrl0,
+      placement: { scale: clamp01(p0.scale), x: clamp01(p0.x), y: clamp01(p0.y), rot: normDeg(p0.rot), basis: 'cloth_image' },
+      allow_reuse: body.allow_reuse === false ? false : true,
+      ...store0,
+      edit_count: (Number(cur0.edit_count) || 0) + 1,
+      edited_at: new Date().toISOString(),
+      /* 改之前的樣子留一份:製作端或客服被問「我原本那張呢」時對得起來。 */
+      edit_prev: {
+        source: cur0.source, design_id: cur0.design_id, design_name: cur0.design_name,
+        svg_url: cur0.svg_url, preview_url: cur0.preview_url, placement: cur0.placement,
+        store_erpid: cur0.store_erpid, store_name: cur0.store_name, at: cur0.created_at,
+      },
+    };
+    /* 🚨 條件跟 editableNow 一樣寫在 where 裡:師傅剛好在這一刻按下載,
+       兩邊只有一邊會成功(start 也是帶 lab_started_at is null 的條件更新)。 */
+    const { data: upd, error: updErr } = await db.from('cloth_designs')
+      .update(patch)
+      .eq('id', cur0.id).eq('status', 'new').is('lab_started_at', null)
+      .eq('edit_count', Number(cur0.edit_count) || 0)
+      .select('id');
+    if (updErr) {
+      console.error('[cloth] 修改失敗 id=' + cur0.id + ':', updErr.message);
+      return reply('500', { message: '儲存失敗,請再試一次' }, 500);
+    }
+    if (!upd || !upd.length) {
+      const again = await thisYearOne(db, who);
+      return reply('409', { message: whyNotEditable(again || cur0), data: { current: again || cur0 } }, 409);
+    }
+    console.log('[cloth] 客人修改 ' + cur0.id + ' 第 ' + patch.edit_count + ' 次 erpid=' + (who.erpid || '-'));
+    return reply('200', { data: { id: cur0.id, edited: true } });
+  }
+
   const cur = isUnlimited(who) ? null : await thisYearOne(db, who);
   if (cur === undefined) {
     // 查不到 = 無法判斷。此時放行等於在資料庫抖一下的時候讓所有人都能再存一張。

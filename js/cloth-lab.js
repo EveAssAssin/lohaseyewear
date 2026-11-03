@@ -357,6 +357,13 @@
             '<span class="lab-tag">' + (SOURCE[it.source] || esc(it.source)) + '</span>' +
             '<span class="lab-tag' + (it.status === 'done' ? ' is-done' : '') + '">' +
               (STATUS[it.status] || esc(it.status)) + '</span>' +
+            /* 2026-11-03:客人送出後在開始製作前可以改一次。
+               改過的標出來(什麼時候改的);已經下載過＝開始製作,客人就不能再改了。 */
+            ((Number(it.edit_count) || 0) > 0
+              ? '<span class="lab-tag" style="background:#fff3e0;color:#b45309;border-color:#f3c98b">客人修改過 ' +
+                esc(fmtTime(it.edited_at)) + '</span>' : '') +
+            (it.status === 'new' && it.lab_started_at
+              ? '<span class="lab-tag">已開始製作 ' + esc(fmtTime(it.lab_started_at)) + '</span>' : '') +
             /* 尺寸每張卡各自一個,不是全域設定 ——
                製作的人一次處理一件,全域的話得每下載一次改一次。
 
@@ -398,7 +405,7 @@
             '　·　編號 <b>' + esc(shortOf(it.id)) + '</b></div>' +
           '<div>' + storeHtml(it) + '</div>' +
           '<div class="lab-btns">' +
-            '<a class="lab-file" href="' + esc(it.svg_url) + '" download>' +
+            '<a class="lab-file" data-svgdl="' + esc(it.id) + '" href="' + esc(it.svg_url) + '" download>' +
               '<i class="fa-solid fa-file-arrow-down"></i>SVG</a>' +
             /* 兩顆而不是一個切換:這兩個是【不同用途】,不是新舊版本。
                走線給切割/描邊,填滿給雕刻。做成切換的話,
@@ -759,6 +766,31 @@
     });
   }
 
+  /* 開始製作(2026-11-03)。第一次下載 SVG／DXF 時告訴伺服器 ——
+     從這一刻起客人就不能再修改。伺服器回【目前】的圖檔:
+     這張卡若是客人改之前載入的,換成新的再下載,不然會刻到舊的那張。
+     ⚠ 伺服器沒回應時照樣讓他下載(不能因為這一步卡住產線),但會提醒一句。 */
+  function ensureStart(it) {
+    if (!it || it.status !== 'new') return Promise.resolve(it);
+    return call({ action: 'start', id: it.id })
+      .then(function (d) {
+        if (d && d.svg_url && d.svg_url !== it.svg_url) {
+          alert('⚠ 客人剛剛修改了這一件的設計,已換成最新的圖檔。\n請以這次下載的檔案為準。');
+          it.svg_url = d.svg_url;
+          if (d.preview_url) it.preview_url = d.preview_url;
+          if (d.placement) it.placement = d.placement;
+          if (d.design_name) it.design_name = d.design_name;
+        }
+        if (d) { it.lab_started_at = d.lab_started_at || it.lab_started_at; it.edit_count = d.edit_count; it.edited_at = d.edited_at; }
+        return it;
+      })
+      .catch(function (e) {
+        console.warn('[cloth-lab] 開始製作標記失敗', e);
+        alert('提醒:沒辦法通知系統「已開始製作」,客人可能還能修改。\n刻之前請重新整理確認圖檔沒變。');
+        return it;
+      });
+  }
+
   function downloadDxf(id, btn, mode) {
     var it = State.items.filter(function (x) { return String(x.id) === String(id); })[0];
     if (!it || !window.LohasDxf) return;
@@ -767,7 +799,8 @@
     btn.disabled = true;
     btn.textContent = '轉換中…';
 
-    fetch(it.svg_url)
+    ensureStart(it)
+      .then(function () { return fetch(it.svg_url); })
       .then(function (r) {
         if (!r.ok) throw new Error('線稿檔取不到(' + r.status + ')');
         return r.text();
@@ -1427,6 +1460,22 @@
     el.list.addEventListener('click', function (e) {
       var dxf = e.target.closest('[data-dxf]');
       if (dxf) { downloadDxf(dxf.dataset.dxf, dxf, dxf.dataset.mode); return; }
+
+      /* SVG 下載也算開始製作:先標記、拿到最新的網址再下載。 */
+      var svgdl = e.target.closest('[data-svgdl]');
+      if (svgdl) {
+        var sit = State.items.filter(function (x) { return String(x.id) === String(svgdl.dataset.svgdl); })[0];
+        if (sit && sit.status === 'new') {
+          e.preventDefault();
+          ensureStart(sit).then(function () {
+            var a = document.createElement('a');
+            a.href = sit.svg_url; a.download = ''; a.target = '_blank'; a.rel = 'noopener';
+            document.body.appendChild(a); a.click(); a.remove();
+            load();
+          });
+          return;
+        }
+      }
 
       var sim = e.target.closest('[data-sim]');
       if (sim) { bindSim(); openSim(sim.dataset.sim, sim); return; }

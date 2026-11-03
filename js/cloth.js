@@ -92,6 +92,10 @@
        誤鎖的代價(客人以為自己已經做過了)比誤放大得多,
        而誤放那一邊還有伺服器端接著。 */
     locked: false,
+    /* 送出後還能改一次(2026-11-03):伺服器 list 回 editable=true 才給「修改設計」。
+       editing=true 時存檔帶 edit:true,伺服器改原本那一筆、不新增。 */
+    editable: false,
+    editing: false,
     current: null,       // 本年度那一件(含取貨門市),鎖住時用來還原畫面
     rejected: null,      // 被師傅退件、等重做的那一件(2026-09-02 新增)
     /* 還能撤回的那一件 { id, until }(2026-11-03 新增)。
@@ -1174,7 +1178,7 @@
       return Promise.resolve(window.confirm(
         '送出前請確認:\n\n' +
         '1. 取貨時需出示你在樂活 THREADS 活動貼文下的留言(帶 #樂活眼鏡)才能領取。\n' +
-        '2. 存檔後不能再調整,製作端會照現在的樣子做出來。\n\n' +
+        '2. 送出後只能在加工中心開始製作前修改一次,製作端會照最後送出的樣子做出來。\n\n' +
         '確定要送出製作嗎?'
       ));
     }
@@ -1281,6 +1285,7 @@
           body: JSON.stringify({
             action: 'save',
             token: token,
+            edit: State.editing === true,
             member_name: (m && m.name) || '',
             source: State.picked.source,
             design_id: State.picked.design_id,
@@ -1306,6 +1311,8 @@
 
            會走到這裡的情況:另一個分頁剛存過、或狀態查詢當時失敗。 */
         if (String(j.code) === '409') {
+          State.editing = false;
+          State.editable = false;
           State.locked = true;
           State.current = (j.data && j.data.current) || null;
           applyLock();
@@ -1315,6 +1322,8 @@
         State.locked = true;
         State.withdraw = (j.data && j.data.id && j.data.withdraw_until)
           ? { id: j.data.id, until: j.data.withdraw_until } : null;
+        State.editing = false;
+        State.editable = false;
         done();
       })
       .catch(function (e) {
@@ -1324,7 +1333,7 @@
       .finally(function () {
         State.busy = false;
         el.submit.disabled = false;
-        el.submit.textContent = '確 認 製 作 並 儲 存';
+        el.submit.textContent = State.editing ? '確 認 修 改 並 儲 存' : '確 認 製 作 並 儲 存';
       });
   }
 
@@ -1535,6 +1544,7 @@
         State.current = j.data.current || null;
         State.withdraw = (j.data.current && j.data.withdraw_until)
           ? { id: j.data.current.id, until: j.data.withdraw_until } : null;
+        State.editable = !!j.data.editable;
         /* 🚨 j.data.rejected 這個欄位【伺服器從來沒有回過】——
            這一行從 2026-09-02 寫下就一直是 null,applyRejected()
            一次都沒作用過:被退件的客人看到的是一個完全正常、
@@ -1576,6 +1586,39 @@
 
   /* 鎖定時:還原他存的那一件,標明已完成與取貨門市,停用存檔。
      編輯區【不停用】—— 他可以繼續拖著玩,只是存不了。 */
+  /* 「修改設計(限一次)」鈕。放在鎖定說明框裡,不動 cloth.html ——
+     那個檔案帶版本號快取,少改一個檔就少一個會忘的地方。 */
+  function editButton(on) {
+    var b = document.getElementById('clEditOnce');
+    if (!on) { if (b) b.remove(); return; }
+    if (b || !el.lock) return;
+    b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'clEditOnce';
+    b.textContent = '✏️ 修改設計(限一次)';
+    b.style.cssText = 'margin-top:10px;padding:10px 18px;border-radius:999px;border:0;' +
+      'background:#50422d;color:#fff;font-weight:700;font-size:15px;cursor:pointer';
+    b.addEventListener('click', startEditOnce);
+    el.lock.appendChild(b);
+  }
+
+  /* 進入修改:解開鎖、保留他原本那張的樣子讓他從那裡改起。
+     ⚠ 這裡只是解開介面;伺服器在存檔時會再檢查一次「加工中心還沒開始、還沒改過」,
+       兩邊不一致時以伺服器為準(回 409,畫面切回鎖定)。 */
+  function startEditOnce() {
+    if (!State.editable) return;
+    var ok = window.confirm('只能修改一次,改完送出後就不能再改了。\n' +
+      '加工中心一開始製作也會停止開放修改。\n\n要開始修改嗎?');
+    if (!ok) return;
+    State.editing = true;
+    State.locked = false;
+    editButton(false);
+    if (el.lockText) el.lockText.textContent =
+      '✏️ 修改中:調整好之後按下方「確認修改並儲存」。只能改這一次。';
+    refreshSubmit();
+    el.submit.textContent = '確 認 修 改 並 儲 存';
+  }
+
   function applyLock() {
     if (!State.locked) return;
 
@@ -1605,6 +1648,18 @@
       var where = c && c.store_name
         ? '完成後可到「' + c.store_name + '」領取。'
         : '完成後可到門市領取。';   // 門市可能是空的(舊資料、或當時清單載不出來)
+      if (State.editable) {
+        el.lockText.textContent =
+          '你今年的眼鏡布已經送出,' + where +
+          ' 加工中心還沒開始製作,現在還可以修改【一次】—— 改完送出後就不能再改了。';
+        show(el.lock);
+        editButton(true);
+        el.submit.disabled = true;
+        el.submit.textContent = '本 年 度 已 送 出';
+        if (el.submitHint) el.submitHint.textContent = '';
+        return;
+      }
+      editButton(false);
       el.lockText.textContent =
         '本年度的客製眼鏡布已經完成,' + where +
         ' 一年一件,明年可以再做一件。你仍然可以在這裡試著調整,但不會存檔。';
@@ -1768,7 +1823,8 @@
   /* 現在是不是被生日月擋住。refreshSubmit 要用 ——
      少了這個判斷,他挑一張新圖就會把按鈕重新打開(同 State.locked)。 */
   function blockedByBirthday() {
-    return !State.locked && !State.rejected && eligibleBlocks();
+    // 修改已送出的那一件不看生日月(伺服器 edit 那條路也不問)
+    return !State.locked && !State.rejected && !State.editing && eligibleBlocks();
   }
 
   /* 退件原因:代碼轉成客人看得懂的文字。
@@ -1831,6 +1887,7 @@
 
     var ok = hasPick && hasStore;
     el.submit.disabled = !ok;
+    if (State.editing) el.submit.textContent = '確 認 修 改 並 儲 存';
 
     if (!hasPick) {
       el.submitHint.textContent = '請先選一張刻圖,或自己畫一個';

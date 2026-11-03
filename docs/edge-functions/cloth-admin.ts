@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
      其他幾支都有 code_version,只有這支沒有。
      每改一次就更新這個字串。 */
   if (req.method === 'GET') {
-    return reply('200', { data: { code_version: '2026-10-09 · 製作單印品項與顏色' } });
+    return reply('200', { data: { code_version: '2026-11-03 · 開始製作鎖(客人送出後可改一次)' } });
   }
 
   if (req.method !== 'POST') return reply('405', { message: '只接受 POST' }, 405);
@@ -148,6 +148,34 @@ Deno.serve(async (req) => {
 
     console.log('[cloth-admin] ' + caller + ' 列印製作單 ' + id);
     return reply('200', { data });
+  }
+
+  /* ---------- 開始製作(2026-11-03) ----------
+     製作端第一次下載這一件的 SVG／DXF 時呼叫 —— 從這一刻起客人不能再修改
+     (cloth 那支的 editableNow 看 lab_started_at)。
+     🚨 用「lab_started_at is null」當條件更新,和客人修改那邊的條件互斥:
+       兩邊同時發生只有一邊會成功。
+     回傳【目前】的 svg_url／placement:製作端畫面若是客人改之前載入的,
+     拿這兩個值換掉,不然會刻到舊的那張。
+     ⚠ 後台(token)也可以呼叫,但只有 new 的才寫時間;做好的、退件的不動。 */
+  if (action === 'start') {
+    const id = String(body.id || '').trim();
+    if (!id) return reply('006', { message: '缺少識別碼' }, 400);
+    const now = new Date().toISOString();
+    const upd = await db.from('cloth_designs')
+      .update({ lab_started_at: now })
+      .eq('id', id).eq('status', 'new').is('lab_started_at', null)
+      .select('id');
+    if (upd.error) {
+      console.error('[cloth-admin] 開始製作寫入失敗 id=' + id + ' → ' + upd.error.message);
+      return reply('500', { message: '更新失敗' }, 500);
+    }
+    const cur = await db.from('cloth_designs')
+      .select('id, status, svg_url, preview_url, placement, design_name, edit_count, edited_at, lab_started_at')
+      .eq('id', id).maybeSingle();
+    if (cur.error || !cur.data) return reply('006', { message: '查無這一筆' }, 400);
+    if (upd.data && upd.data.length) console.log('[cloth-admin] ' + caller + ' 開始製作 ' + id);
+    return reply('200', { data: cur.data });
   }
 
   /* ---------- 改狀態 ---------- */
