@@ -670,6 +670,20 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 顯示取貨門市,停用存檔鈕,但**編輯區照樣可以玩**。
 `refreshSubmit()` 開頭要尊重 `locked`,少了它挑一張新圖就會把按鈕重新打開。
 
+### 送出後:修改一次(對方做的)與撤回(我方做的)(2026-11-03)
+
+- **修改一次**:對方(App 工程方)當天**直接部署**到線上 `cloth`,repo 原本沒有,
+  是我方部署撤回前 Download 才發現的(已照線上補回 repo)。`save` 帶 `edit: true`,
+  條件是 `new` + `lab_started_at` 空 + `edit_count < 1`,原內容存進 `edit_prev`。
+  **官網前台目前沒有修改的入口**。`lab_started_at` 由誰、在什麼時候寫入,
+  我方的 `cloth-lab.js` 裡**找不到**,要問對方。
+- **撤回**:`withdraw` 動作 → 狀態 `withdrawn`(`docs/cloth-withdraw.sql` 加進狀態約束,
+  並有 `withdrawn_at`)。條件是 `new` + `lab_started_at` 空 + **送出後 30 分鐘內**
+  (`WITHDRAW_MINUTES`),只限生日眼鏡布。`thisYearOne` 排除 `withdrawn`,
+  所以**不佔一年一件**(重做仍要過生日月)。
+  不用「封存」:它會佔額度;不用「退件」:App 會推播叫客人重新設計。
+  前端只在伺服器回 `withdraw_until` 時才顯示撤回鈕,不要自己算時間。
+
 > 導入當下(2026-08-28)本年度只有 2 個人共 3 件,其中 1 人做了 2 件。
 > 影響面接近零,但那也表示**這個鎖幾乎沒有被真實流量試過**。
 

@@ -203,24 +203,24 @@ const SYS_ERR_MSG = '系統異常,請聯繫客服。';
 /* 線上實際跑的是哪一版。每次改這支就一併更新 ——
    從外面看不出線上是哪一版,是 2026-08-28 那次事故的根本原因
    (程式改好、信上寫「已上線」,但那支函式從頭到尾沒有部署過)。 */
-const CODE_VERSION = '2026-11-03 · 客人可撤回(送出後 30 分鐘內)';
+const CODE_VERSION = '2026-11-03b · 可修改一次 ＋ 30 分鐘內可撤回';
 
 /* 客人可以撤回的時間(2026-11-03 新增)。
    -----------------------------------------------------------------
    起因:11/02 有客人不小心送出,原本只有後台能處理,而後台手上的
    「封存」會吃掉一年一件的額度、「退件」會讓 App 推播叫他重新設計。
 
-   ⚠ 為什麼要有時間限制,而不是「師傅還沒按完成就能撤」:
-     師傅是刻完才按完成。只看狀態的話,客人可能在【刻到一半】時撤回,
-     那塊布就白刻了 —— 而我方沒有「師傅開始刻了」這個訊號。
-     30 分鐘內師傅幾乎不可能已經接手(晚上送的單更不可能)。
+   條件:還是 new、加工中心還沒開始(lab_started_at 空,同 editableNow),
+   而且送出後 WITHDRAW_MINUTES 分鐘內。
+   ⚠ 時間限制是第二道保險:師傅是刻完才按完成,lab_started_at 萬一沒被寫上,
+     只看狀態的話客人可能在【刻到一半】時撤回,那塊布就白刻了。
    ⚠ 只限【生日眼鏡布】:付費的眼鏡布 / 眼鏡盒有商城訂單與退款,不能在這裡撤。
    ⚠ 撤回後狀態是 withdrawn(docs/cloth-withdraw.sql 加的),
      thisYearOne 排除它 —— 所以撤回【不佔】一年一件的額度,但重做仍要過生日月那一關。 */
 const WITHDRAW_MINUTES = 30;
 
 function withdrawUntil(row: any): string | null {
-  if (!row || String(row.status) !== 'new') return null;
+  if (!row || String(row.status) !== 'new' || row.lab_started_at) return null;
   const until = new Date(row.created_at).getTime() + WITHDRAW_MINUTES * 60 * 1000;
   return until > Date.now() ? new Date(until).toISOString() : null;
 }
@@ -315,7 +315,7 @@ function isUnlimited(who: { erpid: string; mid: string }): boolean {
 async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
   const q = mineOnly(
     db.from('cloth_designs')
-      .select('id, source, design_id, design_name, preview_url, svg_url, placement, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
+      .select('id, source, design_id, design_name, preview_url, svg_url, placement, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name, store_city, allow_reuse, lab_started_at, edit_count, edited_at')
       .eq('product', 'cloth')
       .is('order_no', null)
       // 客人自己撤回的不算(2026-11-03)—— 見 WITHDRAW_MINUTES 的說明
@@ -350,6 +350,28 @@ async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
     「本年度已完成」的 409。退件功能上線但重做是斷的。) */
 function isRedoPending(cur: any): boolean {
   return !!cur && String(cur.status) === 'rejected';
+}
+
+/* 送出後還能不能改(2026-11-03 營運:加工中心還沒雕刻之前,讓客人改一次)。
+   -----------------------------------------------------------------
+   ⚠ 這一段是【對方(App 工程方)直接部署到線上】的,repo 原本沒有;
+     2026-11-03 官網方部署撤回功能前 Download 時發現,照線上那份補回來。
+   · 還是 new · 加工中心還沒開始(lab_started_at 空,製作端第一次下載就寫上)
+   · 還沒改過(edit_count < EDIT_LIMIT)
+   真正防止和師傅同時動作的是 save 那段 update 的條件。 */
+const EDIT_LIMIT = 1;
+function editableNow(cur: any): boolean {
+  return !!cur && String(cur.status) === 'new' && !cur.lab_started_at &&
+    (Number(cur.edit_count) || 0) < EDIT_LIMIT;
+}
+function whyNotEditable(cur: any): string {
+  if (!cur) return '找不到你今年的眼鏡布。';
+  if (String(cur.status) === 'done') return '這條眼鏡布已經做好了,不能再修改。';
+  if (String(cur.status) === 'rejected') return '這條眼鏡布被退件了,請直接重新設計後送出。';
+  if (String(cur.status) !== 'new') return '這條眼鏡布目前不能修改。';
+  if (cur.lab_started_at) return '加工中心已經開始製作,不能再修改了。真的需要調整請聯絡取貨門市。';
+  if ((Number(cur.edit_count) || 0) >= EDIT_LIMIT) return '送出後只能修改一次,你已經改過了。';
+  return '目前不能修改。';
 }
 
 Deno.serve(async (req) => {
@@ -417,7 +439,7 @@ Deno.serve(async (req) => {
            靠它標「眼鏡布 / 眼鏡盒」—— 沒有這一欄,前端只能一律
            當成眼鏡布,於是第一件眼鏡盒會被標成眼鏡布,
            而畫面上看不出任何異常。 */
-        .select('id, product, source, design_name, preview_url, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name, order_no, variant')
+        .select('id, product, source, design_name, preview_url, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name, order_no, variant, lab_started_at, edit_count, edited_at')
         .order('created_at', { ascending: false })
         .limit(60),
       who,
@@ -478,6 +500,8 @@ Deno.serve(async (req) => {
         /* 還能撤回到幾點(ISO);null = 不能撤回。前端看到有值才顯示撤回鈕,
            不自己算時間 —— 規則只放在這一支。 */
         withdraw_until: withdrawUntil(cur),
+        editable: !isUnlimited(who) && editableNow(cur),
+        edit_limit: EDIT_LIMIT,
         /* null = 問不到(前端就別顯示資格提示,不要自己編一句話)。
            前端只負責顯示 message,不要用 birth_month 自己算月份 ——
            那就是把規則複製到第三個地方。 */
@@ -503,7 +527,7 @@ Deno.serve(async (req) => {
     if (!id) return reply('006', { message: '缺少識別碼' }, 400);
 
     const { data: row, error: rErr } = await db.from('cloth_designs')
-      .select('id, erpid, mid, product, order_no, status, created_at')
+      .select('id, erpid, mid, product, order_no, status, created_at, lab_started_at')
       .eq('id', id).maybeSingle();
     if (rErr) {
       console.error('[cloth] 撤回讀取失敗:', rErr.message);
@@ -515,25 +539,25 @@ Deno.serve(async (req) => {
     if (row.product !== 'cloth' || row.order_no) {
       return reply('409', { message: '付費商品請聯繫客服處理' }, 409);
     }
-    if (row.status !== 'new') {
-      return reply('409', { message: '這一件已經不能撤回了(師傅已處理)' }, 409);
+    if (String(row.status) !== 'new' || row.lab_started_at) {
+      return reply('409', { message: '加工中心已經開始處理,不能撤回了。如需更改請聯繫取貨門市。' }, 409);
     }
     if (!withdrawUntil(row)) {
       return reply('409', {
-        message: '已超過撤回時間(送出後 ' + WITHDRAW_MINUTES + ' 分鐘內),師傅可能已經開始製作。如需更改請聯繫門市或客服。',
+        message: '已超過撤回時間(送出後 ' + WITHDRAW_MINUTES + ' 分鐘內)。如需更改請聯繫取貨門市。',
       }, 409);
     }
 
     const { data: upd, error: uErr } = await db.from('cloth_designs')
       .update({ status: 'withdrawn', withdrawn_at: new Date().toISOString(), done_at: null })
-      .eq('id', id).eq('status', 'new')
+      .eq('id', id).eq('status', 'new').is('lab_started_at', null)
       .select('id');
     if (uErr) {
       console.error('[cloth] 撤回失敗 id=' + id + ' → ' + uErr.message);
       return reply('500', { message: '撤回失敗,請稍後再試' }, 500);
     }
     if (!upd || !upd.length) {
-      return reply('409', { message: '這一件已經不能撤回了(師傅已處理)' }, 409);
+      return reply('409', { message: '加工中心已經開始處理,不能撤回了。如需更改請聯繫取貨門市。' }, 409);
     }
     console.log('[cloth] 客人撤回 ' + id + ' erpid=' + (who.erpid || '-') + ' mid=' + (who.mid || '-'));
     return reply('200', { data: { id } });
@@ -559,6 +583,57 @@ Deno.serve(async (req) => {
      與一般客人的完全一樣,所以要在紀錄裡看得到是誰、什麼時候繞的。 */
   if (isUnlimited(who)) {
     console.log('[cloth] 略過一年一件與生日月的限制 erpid=' + who.erpid);
+  }
+
+  /* ===== 修改已送出的那一件(body.edit === true) =====
+     不問生日月、不新增一筆 —— 改的是今年那一件本身。
+     (對方 2026-11-03 直接部署的,照線上那份補回 repo) */
+  if (body.edit === true) {
+    const cur0 = await thisYearOne(db, who);
+    if (cur0 === undefined) return reply('500', { message: '無法確認本年度狀態,請稍後再試' }, 500);
+    if (!editableNow(cur0)) {
+      return reply('409', { message: whyNotEditable(cur0), data: { current: cur0 || null } }, 409);
+    }
+    const svgUrl0 = ourAssetUrl(body.svg_url);
+    const previewUrl0 = ourAssetUrl(body.preview_url);
+    if (!svgUrl0) return reply('006', { message: '缺少線稿檔' }, 400);
+    if (!previewUrl0) return reply('006', { message: '缺少合成圖' }, 400);
+    const store0 = pickStore(body.store);
+    if (!store0) return reply('006', { message: '請選擇要到哪一家門市拿。' }, 400);
+    const source0 = body.source === 'draw' ? 'draw' : 'market';
+    const p0 = body.placement || {};
+    const patch = {
+      source: source0,
+      design_id: source0 === 'market' && body.design_id ? String(body.design_id) : null,
+      design_name: String(body.design_name || '').slice(0, 120) || null,
+      svg_url: svgUrl0,
+      preview_url: previewUrl0,
+      placement: { scale: clamp01(p0.scale), x: clamp01(p0.x), y: clamp01(p0.y), rot: normDeg(p0.rot), basis: 'cloth_image' },
+      allow_reuse: body.allow_reuse === false ? false : true,
+      ...store0,
+      edit_count: (Number(cur0.edit_count) || 0) + 1,
+      edited_at: new Date().toISOString(),
+      edit_prev: {
+        source: cur0.source, design_id: cur0.design_id, design_name: cur0.design_name,
+        svg_url: cur0.svg_url, preview_url: cur0.preview_url, placement: cur0.placement,
+        store_erpid: cur0.store_erpid, store_name: cur0.store_name, at: cur0.created_at,
+      },
+    };
+    const { data: upd, error: updErr } = await db.from('cloth_designs')
+      .update(patch)
+      .eq('id', cur0.id).eq('status', 'new').is('lab_started_at', null)
+      .eq('edit_count', Number(cur0.edit_count) || 0)
+      .select('id');
+    if (updErr) {
+      console.error('[cloth] 修改失敗 id=' + cur0.id + ':', updErr.message);
+      return reply('500', { message: '儲存失敗,請再試一次' }, 500);
+    }
+    if (!upd || !upd.length) {
+      const again = await thisYearOne(db, who);
+      return reply('409', { message: whyNotEditable(again || cur0), data: { current: again || cur0 } }, 409);
+    }
+    console.log('[cloth] 客人修改 ' + cur0.id + ' 第 ' + patch.edit_count + ' 次 erpid=' + (who.erpid || '-'));
+    return reply('200', { data: { id: cur0.id, edited: true } });
   }
 
   /* ===== 三道關卡,順序不可調換 =====
@@ -683,7 +758,7 @@ Deno.serve(async (req) => {
     ...store,
   };
 
-  const { data, error } = await db.from('cloth_designs').insert(row).select('id, status, created_at').single();
+  const { data, error } = await db.from('cloth_designs').insert(row).select('id, status, created_at, lab_started_at').single();
   if (error) {
     console.error('[cloth] 存檔失敗:', error.message);
     return reply('500', { message: '儲存失敗,請再試一次' }, 500);
