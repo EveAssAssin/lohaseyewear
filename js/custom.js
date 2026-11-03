@@ -56,6 +56,7 @@
     if (s === 'rejected') return { cls: 'warn', text: '需要重做 · 請回製作頁修改' };
     if (s === 'done')     return { cls: 'ok',   text: '已完成，前往領取前請務必先聯絡門市' };
     if (s === 'archived') return { cls: 'muted', text: '已結案' };
+    if (s === 'withdrawn') return { cls: 'muted', text: '已撤回' };
     return { cls: 'wait', text: '製作中 · 約 3~5 個工作天' };
   }
 

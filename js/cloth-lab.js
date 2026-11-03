@@ -72,7 +72,7 @@
   }
 
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
-  var STATUS = { new: '待製作', done: '已完成', archived: '已封存', rejected: '已退件' };
+  var STATUS = { new: '待製作', done: '已完成', archived: '已封存', rejected: '已退件', withdrawn: '客人已撤回' };
   var PRODUCT = { cloth: '眼鏡布', case: '眼鏡盒' };
 
   /* 眼鏡盒的可雕刻範圍(mm)。盒蓋 16 × 7 cm(2026-10-04 營運更正,原以 16 × 6.5 抓):
@@ -894,7 +894,7 @@
   }
 
   var SRC_LABEL = { market: '市集刻圖', draw: '手繪' };
-  var ST_LABEL  = { 'new': '待製作', done: '已完成', rejected: '已退件', archived: '已封存' };
+  var ST_LABEL  = { 'new': '待製作', done: '已完成', rejected: '已退件', archived: '已封存', withdrawn: '客人已撤回' };
 
   /* 分頁把全部抓回來。
      ⚠ 不帶 status —— 帶了就只拿得到那一種,而儀表板要算的正是比例。 */
@@ -1026,7 +1026,9 @@
     }
     if (!Dash.rows) { note.textContent = ''; return; }
 
-    var rows = Dash.rows.filter(dashInRange);
+    // 客人撤回的不算工作量(2026-11-03),不然總件數與完成率會被拉低
+    var rows = Dash.rows.filter(dashInRange)
+      .filter(function (it) { return it.status !== 'withdrawn'; });
     var done = rows.filter(function (it) { return it.status === 'done'; });
     var waitN = rows.filter(function (it) { return it.status === 'new'; }).length;
     var rejN  = rows.filter(function (it) { return it.status === 'rejected'; }).length;

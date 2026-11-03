@@ -98,7 +98,7 @@
 
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
   var STATUS = { hold: '待確認訂單', new: '待處理', done: '已完成', archived: '已封存',
-                 rejected: '已退件' };
+                 rejected: '已退件', withdrawn: '客人已撤回' };
 
   /* 座標翻成人看得懂的話。
      後台的人不需要知道 x=0.65,他需要知道「偏右下、約布寬的 22%」。 */

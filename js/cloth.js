@@ -94,6 +94,10 @@
     locked: false,
     current: null,       // 本年度那一件(含取貨門市),鎖住時用來還原畫面
     rejected: null,      // 被師傅退件、等重做的那一件(2026-09-02 新增)
+    /* 還能撤回的那一件 { id, until }(2026-11-03 新增)。
+       能不能撤回、撤回到幾點,都由伺服器說了算(cloth 的 withdraw_until),
+       這裡不自己算時間 —— 規則只放在一個地方。 */
+    withdraw: null,
 
     /* 生日資格(2026-09-03 新增)。客製眼鏡布是【年度生日禮】,
        只有生日當月能做 —— 這件事在此之前官網完全沒有判斷,
@@ -1309,6 +1313,8 @@
         }
         if (String(j.code) !== '200') throw new Error(j.message || '儲存失敗');
         State.locked = true;
+        State.withdraw = (j.data && j.data.id && j.data.withdraw_until)
+          ? { id: j.data.id, until: j.data.withdraw_until } : null;
         done();
       })
       .catch(function (e) {
@@ -1388,6 +1394,7 @@
     if (note) hide(note);
     el.doneText.textContent =
       '您已經成功送件,製作時間約 3~5 個工作天,完成後即可前往門市領取。';
+    renderWithdraw(el.doneText);
     setupShare();
     show(el.done);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1526,6 +1533,8 @@
         if (String(j.code) !== '200' || !j.data) return;
         State.locked = !!j.data.locked;
         State.current = j.data.current || null;
+        State.withdraw = (j.data.current && j.data.withdraw_until)
+          ? { id: j.data.current.id, until: j.data.withdraw_until } : null;
         /* 🚨 j.data.rejected 這個欄位【伺服器從來沒有回過】——
            這一行從 2026-09-02 寫下就一直是 null,applyRejected()
            一次都沒作用過:被退件的客人看到的是一個完全正常、
@@ -1600,11 +1609,67 @@
         '本年度的客製眼鏡布已經完成,' + where +
         ' 一年一件,明年可以再做一件。你仍然可以在這裡試著調整,但不會存檔。';
       show(el.lock);
+      renderWithdraw(el.lock);
     }
 
     el.submit.disabled = true;
     el.submit.textContent = '本 年 度 已 完 成';
     if (el.submitHint) el.submitHint.textContent = '';
+  }
+
+  /* 撤回(2026-11-03 新增):客人不小心送出時,在師傅開始做之前收回來。
+     -----------------------------------------------------------------
+     起因:11/02 有客人誤送,只能請後台處理 —— 而後台手上的「封存」會吃掉
+     她一年一件的額度、「退件」會讓 App 推播叫她重新設計,兩個都不對。
+
+     ⚠ 只在伺服器回了 withdraw_until 時才出現:生日眼鏡布、還在待製作、
+       送出後一段時間內。過了時間按下去,伺服器也會擋(師傅可能已經在刻了)。
+     ⚠ 撤回後【不佔】一年一件的額度,可以重做一件,但仍然只限生日當月。 */
+  function renderWithdraw(after) {
+    if (!after || !after.parentNode) return;
+    var old = document.getElementById('clWithdraw');
+    if (old) old.parentNode.removeChild(old);
+
+    var w = State.withdraw;
+    if (!w || !w.id || !w.until) return;
+    var until = new Date(w.until);
+    if (!(until.getTime() > Date.now())) return;
+
+    var hhmm = String(until.getHours()).padStart(2, '0') + ':' +
+               String(until.getMinutes()).padStart(2, '0');
+    var box = document.createElement('div');
+    box.id = 'clWithdraw';
+    box.style.cssText = 'margin:12px 0;padding:12px 14px;border:1px dashed #d8c9b8;' +
+      'border-radius:10px;font-size:14px;line-height:1.6;color:#6b5a4a;text-align:left';
+    box.innerHTML =
+      '<div>送錯了嗎?<b>' + hhmm + ' 前</b>可以撤回這一件,師傅就不會製作。' +
+      '撤回後可以重新設計一件(仍限生日當月)。</div>' +
+      '<button type="button" class="cl-done-btn" style="margin-top:8px">' +
+        '<i class="fa-solid fa-rotate-left"></i> 撤回這一件</button>';
+    after.parentNode.insertBefore(box, after.nextSibling);
+
+    var btn = box.querySelector('button');
+    btn.addEventListener('click', function () {
+      if (!confirm('確定要撤回這一件眼鏡布嗎?\n\n撤回後師傅就不會製作它,這個動作不能復原。')) return;
+      var token = Auth && Auth.getToken ? Auth.getToken() : '';
+      if (!token) { alert('登入狀態已失效,請重新登入'); return; }
+      btn.disabled = true;
+      fetch(CONFIG.SAVE_FN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'withdraw', token: token, id: w.id })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (String(j.code) !== '200') throw new Error(j.message || '撤回失敗');
+          alert('已撤回。師傅不會製作這一件,你可以重新設計。');
+          location.reload();
+        })
+        .catch(function (e) {
+          alert((e && e.message) || '撤回失敗,請稍後再試');
+          btn.disabled = false;
+        });
+    });
   }
 
   /* 被加工師傅退件時,告訴客人原因並請他重做。

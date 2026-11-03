@@ -203,7 +203,27 @@ const SYS_ERR_MSG = '系統異常,請聯繫客服。';
 /* 線上實際跑的是哪一版。每次改這支就一併更新 ——
    從外面看不出線上是哪一版,是 2026-08-28 那次事故的根本原因
    (程式改好、信上寫「已上線」,但那支函式從頭到尾沒有部署過)。 */
-const CODE_VERSION = '2026-10-09 · 一年一件不算付費眼鏡布';
+const CODE_VERSION = '2026-11-03 · 客人可撤回(送出後 30 分鐘內)';
+
+/* 客人可以撤回的時間(2026-11-03 新增)。
+   -----------------------------------------------------------------
+   起因:11/02 有客人不小心送出,原本只有後台能處理,而後台手上的
+   「封存」會吃掉一年一件的額度、「退件」會讓 App 推播叫他重新設計。
+
+   ⚠ 為什麼要有時間限制,而不是「師傅還沒按完成就能撤」:
+     師傅是刻完才按完成。只看狀態的話,客人可能在【刻到一半】時撤回,
+     那塊布就白刻了 —— 而我方沒有「師傅開始刻了」這個訊號。
+     30 分鐘內師傅幾乎不可能已經接手(晚上送的單更不可能)。
+   ⚠ 只限【生日眼鏡布】:付費的眼鏡布 / 眼鏡盒有商城訂單與退款,不能在這裡撤。
+   ⚠ 撤回後狀態是 withdrawn(docs/cloth-withdraw.sql 加的),
+     thisYearOne 排除它 —— 所以撤回【不佔】一年一件的額度,但重做仍要過生日月那一關。 */
+const WITHDRAW_MINUTES = 30;
+
+function withdrawUntil(row: any): string | null {
+  if (!row || String(row.status) !== 'new') return null;
+  const until = new Date(row.created_at).getTime() + WITHDRAW_MINUTES * 60 * 1000;
+  return until > Date.now() ? new Date(until).toISOString() : null;
+}
 
 /* 速率限制。記憶體計數,多執行個體下不是嚴格上限,
    目的是擋掉「同一個人狂按」與明顯的腳本,不是防禦機制。 */
@@ -298,6 +318,8 @@ async function thisYearOne(db: any, who: { erpid: string; mid: string }) {
       .select('id, source, design_id, design_name, preview_url, svg_url, placement, status, reject_code, reject_reason, rejected_at, reject_count, created_at, done_at, store_erpid, store_name')
       .eq('product', 'cloth')
       .is('order_no', null)
+      // 客人自己撤回的不算(2026-11-03)—— 見 WITHDRAW_MINUTES 的說明
+      .neq('status', 'withdrawn')
       .gte('created_at', taipeiYearStartIso())
       .order('created_at', { ascending: false })
       .limit(1),
@@ -374,7 +396,7 @@ Deno.serve(async (req) => {
   catch { return reply('006', { message: '請求格式錯誤' }, 400); }
 
   const action = String(body.action || '');
-  if (action !== 'save' && action !== 'list') {
+  if (action !== 'save' && action !== 'list' && action !== 'withdraw') {
     return reply('006', { message: '不支援的動作' }, 400);
   }
 
@@ -453,6 +475,9 @@ Deno.serve(async (req) => {
              已經足夠讓前端自己組出來,而官網沒有測試環境,
              能少部署一次就少一次風險。前端已改為從這兩個欄位取值。 */
         redo_pending: redo,
+        /* 還能撤回到幾點(ISO);null = 不能撤回。前端看到有值才顯示撤回鈕,
+           不自己算時間 —— 規則只放在這一支。 */
+        withdraw_until: withdrawUntil(cur),
         /* null = 問不到(前端就別顯示資格提示,不要自己編一句話)。
            前端只負責顯示 message,不要用 birth_month 自己算月份 ——
            那就是把規則複製到第三個地方。 */
@@ -463,6 +488,55 @@ Deno.serve(async (req) => {
 
   if (rateLimited(who.erpid || who.mid)) {
     return reply('429', { message: '操作太頻繁,請稍候再試' }, 429);
+  }
+
+  /* ===== withdraw:客人撤回自己剛送出的生日眼鏡布(2026-11-03) =====
+     ---------------------------------------------------------------
+     先讀出原列比對擁有者,再決定要不要寫(同 design / gallery 的 update_own)——
+     把條件塞進 update 的 where 的話,影響 0 列且不報錯,
+     分不出「不是你的」、「師傅已經做完」與「這件不存在」。
+
+     ⚠ update 仍然帶 .eq('status','new'):讀與寫之間師傅剛好按下完成的話,
+       這一筆不能被改成撤回。用回傳的列數判斷有沒有真的寫進去。 */
+  if (action === 'withdraw') {
+    const id = String(body.id || '').trim();
+    if (!id) return reply('006', { message: '缺少識別碼' }, 400);
+
+    const { data: row, error: rErr } = await db.from('cloth_designs')
+      .select('id, erpid, mid, product, order_no, status, created_at')
+      .eq('id', id).maybeSingle();
+    if (rErr) {
+      console.error('[cloth] 撤回讀取失敗:', rErr.message);
+      return reply('500', { message: '系統忙碌,請稍後再試' }, 500);
+    }
+    const mine = !!row && ((!!who.erpid && row.erpid === who.erpid) ||
+                           (!!who.mid && row.mid === who.mid));
+    if (!mine) return reply('403', { message: '找不到這一件' }, 403);
+    if (row.product !== 'cloth' || row.order_no) {
+      return reply('409', { message: '付費商品請聯繫客服處理' }, 409);
+    }
+    if (row.status !== 'new') {
+      return reply('409', { message: '這一件已經不能撤回了(師傅已處理)' }, 409);
+    }
+    if (!withdrawUntil(row)) {
+      return reply('409', {
+        message: '已超過撤回時間(送出後 ' + WITHDRAW_MINUTES + ' 分鐘內),師傅可能已經開始製作。如需更改請聯繫門市或客服。',
+      }, 409);
+    }
+
+    const { data: upd, error: uErr } = await db.from('cloth_designs')
+      .update({ status: 'withdrawn', withdrawn_at: new Date().toISOString(), done_at: null })
+      .eq('id', id).eq('status', 'new')
+      .select('id');
+    if (uErr) {
+      console.error('[cloth] 撤回失敗 id=' + id + ' → ' + uErr.message);
+      return reply('500', { message: '撤回失敗,請稍後再試' }, 500);
+    }
+    if (!upd || !upd.length) {
+      return reply('409', { message: '這一件已經不能撤回了(師傅已處理)' }, 409);
+    }
+    console.log('[cloth] 客人撤回 ' + id + ' erpid=' + (who.erpid || '-') + ' mid=' + (who.mid || '-'));
+    return reply('200', { data: { id } });
   }
 
   /* 🚨 年度生日禮一年一張 —— 這裡是【唯一】真正的關卡。
@@ -609,12 +683,13 @@ Deno.serve(async (req) => {
     ...store,
   };
 
-  const { data, error } = await db.from('cloth_designs').insert(row).select('id').single();
+  const { data, error } = await db.from('cloth_designs').insert(row).select('id, status, created_at').single();
   if (error) {
     console.error('[cloth] 存檔失敗:', error.message);
     return reply('500', { message: '儲存失敗,請再試一次' }, 500);
   }
 
   console.log('[cloth] 存檔 ' + data.id + ' source=' + source + (redo ? ' (退件重做)' : ''));
-  return reply('200', { data: { id: data.id } });
+  // withdraw_until:完成畫面的撤回鈕(2026-11-03)
+  return reply('200', { data: { id: data.id, withdraw_until: withdrawUntil(data) } });
 });

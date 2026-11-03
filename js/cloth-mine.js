@@ -57,6 +57,9 @@
        句子裡再塞一次會把重點(先聯絡)擠掉。 */
     if (s === 'done') return { cls: 'ok', text: '已完成，前往領取前請務必先聯絡門市' };
     if (s === 'archived') return { cls: 'muted', text: '已結案' };
+    /* 2026-11-03 補:退件原本會掉到最後一行,被講成「製作中」(與 custom.js 對齊)。 */
+    if (s === 'rejected') return { cls: 'wait', text: '需要重做 · 請回製作頁修改' };
+    if (s === 'withdrawn') return { cls: 'muted', text: '已撤回' };
     return { cls: 'wait', text: '製作中 · 約 3~5 個工作天' };
   }
 
