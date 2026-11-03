@@ -1340,8 +1340,28 @@
        手機裝了 Threads App 時,share 短連結常常只把 App 打開到首頁、不會跳到那篇貼文
        (2026-10-01 門市回報「只跳到 Threads 自己的頁面」)。短連結要先用電腦瀏覽器打開,
        網址列會變成完整網址,把那個貼進來(問號後面的 ?xmt=… 不用)。
-       目前＝EP.03(share/GGKeSEe76、share/HQYJrXPBw 兩個短連結都指向這一篇)。 */
-  var SHARE_THREADS_URL = 'https://www.threads.com/@lohas_eyewears/post/DdBIfbijX0l';
+       2026-11-03 起小編可以在後台「生日眼鏡布活動連結」自己換(site_settings key='cloth_share'),
+       這一行只是後台沒設定、或讀取失敗時的備用值。
+       目前＝11 月 EP.03(短連結 share/FLdq5K2mj)。 */
+  var SHARE_THREADS_URL = 'https://www.threads.com/@lohas_eyewears/post/DfRHh0FjSAl';
+  var SHARE_URL_OK = /^https:\/\/www\.threads\.(com|net)\/@[A-Za-z0-9_.]+\/post\/[A-Za-z0-9_-]+$/;
+
+  /* 讀後台設定的活動貼文。頁面一打開就讀 —— 客人做完要好幾分鐘,
+     那時早就讀回來了;萬一還沒,讀回來時也會把按鈕的連結換掉。
+     格式不對(例如被貼成 share 短連結)就不採用,維持備用值。 */
+  function loadShareUrl() {
+    var sb = window.LohasSupabase && window.LohasSupabase.getClient
+      ? window.LohasSupabase.getClient() : null;
+    if (!sb) return;
+    sb.from('site_settings').select('value').eq('key', 'cloth_share').maybeSingle()
+      .then(function (res) {
+        var url = res && res.data && res.data.value && res.data.value.threads_url;
+        if (!url || !SHARE_URL_OK.test(url)) return;
+        SHARE_THREADS_URL = url;
+        var thB = document.getElementById('clThreadsBtn');
+        if (thB && thB.getAttribute('href')) thB.href = url;
+      }, function () {});
+  }
   /* 2026-10-01 起是【留言】的文案(到 SHARE_THREADS_URL 那篇活動貼文底下留言),
      不是發新貼文 —— 在樂活自己的貼文底下 @樂活 沒有意義,所以不帶 SHARE_AT。 */
   var SHARE_TEXT =
@@ -1865,6 +1885,7 @@
     };
     if (!el.stage) return;
 
+    loadShareUrl();
     redraw();
     bindDrag();
     bindHandleFocus(el.stage);

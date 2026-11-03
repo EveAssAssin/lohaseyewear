@@ -122,6 +122,9 @@
     <button class="nav-link" data-page="cm-pegavision">
       <i class="fa-solid fa-eye"></i><span>晶碩專頁</span>
     </button>
+    <button class="nav-link" data-page="cm-cloth-share">
+      <i class="fa-brands fa-threads"></i><span>生日眼鏡布活動連結</span>
+    </button>
     <button class="nav-link" data-page="cm-categories">
       <i class="fa-solid fa-tags"></i><span>分類管理</span>
     </button>
@@ -1151,6 +1154,45 @@
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 生日眼鏡布活動連結 =============
+         客人做完生日眼鏡布,完成畫面「去活動貼文留言」開的 Threads 貼文。
+         存 site_settings key='cloth_share',由 js/admin-portal-cloth-share.js 處理。 -->
+    <div class="content-page" data-page="cm-cloth-share">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">生日眼鏡布活動連結</h1>
+          <div class="page-sub">客人做完生日眼鏡布後,按「去活動貼文留言」會打開這一篇 Threads 貼文。每個月換活動貼文時來這裡改。</div>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="cloth.html" target="_blank" rel="noopener">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>開啟生日眼鏡布頁
+          </a>
+          <button class="action-btn-solid" id="clothShareSave">
+            <i class="fa-solid fa-floppy-disk"></i><span>儲存</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="max-width:720px;display:flex;flex-direction:column;gap:12px">
+        <div id="clothShareCurrent" class="page-sub"></div>
+        <label class="pega-admin-label" for="clothShareInput">Threads 活動貼文網址</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input class="editor-input" id="clothShareInput" style="flex:1;min-width:260px"
+                 placeholder="https://www.threads.com/@lohas_eyewears/post/貼文代碼">
+          <a class="btn" id="clothShareTest" target="_blank" rel="noopener">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> 打開看看
+          </a>
+        </div>
+        <p id="clothShareMsg" style="margin:0;font-size:13px;line-height:1.6"></p>
+        <div class="pega-admin-hint" style="line-height:1.7">
+          ⚠ 要貼貼文的<b>完整網址</b>,不要貼「分享」按出來的短連結(threads.com/share/…)——
+          客人手機有裝 Threads 時,短連結常常只會打開 App 首頁,找不到那篇貼文。<br>
+          取得完整網址:用<b>電腦瀏覽器</b>打開短連結,等網址列變成
+          「threads.com/@lohas_eyewears/post/…」,整串複製貼上即可(後面的 ?xmt=… 會自動去掉)。
         </div>
       </div>
     </div>
@@ -2193,6 +2235,7 @@
 <script src="js/admin-portal.js?v=20261102-newsguard"></script>
 <script src="js/admin-portal-footer.js?v=20260905-adminwrite"></script>
 <script src="js/admin-portal-pegavision.js?v=20260905-adminwrite"></script>
+<script src="js/admin-portal-cloth-share.js?v=20261103"></script>
 <script src="js/admin-portal-categories.js?v=20260907-batch3"></script>
 <script src="js/dxf.js?v=20260903-rings"></script>
 <script src="js/admin-portal-cloth.js?v=20261015-asciiname"></script>
