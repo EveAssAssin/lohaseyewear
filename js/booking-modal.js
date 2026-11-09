@@ -88,9 +88,32 @@
   };
 
   let rootEl = null;
+  /* 樂活自建預約客人頁(市場部系統) */
+  const BOOK_URL = "https://market-frontend-qz17.onrender.com/book";
+  function hasCartPrefill() { try { return !!sessionStorage.getItem("lohas_cart_prefill"); } catch (_e) { return false; } }
+  function useOldBooking() {
+    try {
+      if (/[?&]oldbook=1(?:&|$)/.test(location.search)) { localStorage.setItem("lohas_oldbook", "1"); return true; }
+      if (/[?&]oldbook=0(?:&|$)/.test(location.search)) { localStorage.removeItem("lohas_oldbook"); return false; }
+      return localStorage.getItem("lohas_oldbook") === "1";
+    } catch (_e) { return false; }
+  }
 
   function open(opts) {
     opts = opts || {};
+    /* 2026-11-09 改用樂活自建預約(左手預約停用):門市頁的「預約」直接開 /book。
+       商城取貨流程(reserve.html,傳 stores 或有商城 prefill)只選門市/顧問、不建單 → 照舊走下面。
+       要暫時退回左手舊彈窗:網址加 ?oldbook=1(會記在 localStorage;?oldbook=0 取消)。 */
+    if (!opts.stores && !hasCartPrefill() && !useOldBooking()) {
+      const store = opts.store || {};
+      const q = ["src=web"];
+      if (store.erpid) q.push("store=" + encodeURIComponent(String(store.erpid)));
+      if (opts.preselectEmployeeErpId) q.push("erp=" + encodeURIComponent(String(opts.preselectEmployeeErpId)));
+      const url = BOOK_URL + "?" + q.join("&");
+      try { if (window.lohasTrack) window.lohasTrack("booking_open_new", { store: store.erpid || "", erp: opts.preselectEmployeeErpId || "" }); } catch (_e) {}
+      window.location.href = url;
+      return;
+    }
     /* 商城取貨流程：傳入 stores（全部門市，含 employees）→ 先選門市、再選顧問 */
     state.stores = opts.stores || [];
     state.cartStorePick = !!(opts.stores && !opts.store);
