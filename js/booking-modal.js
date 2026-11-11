@@ -99,8 +99,22 @@
     } catch (_e) { return false; }
   }
 
+  /* 2026-11-11 起預設:舊版介面 × 自建預約系統(js/booking-v2.js),使用者指示直接開。
+     ?bk2=0 → 改回直接開 /book 預約頁(記在 localStorage;?bk2=1 取消)。
+     booking-v2.js 沒載到時也退回 /book,客人不會卡住。 */
+  function useBookingV2() {
+    try {
+      if (/[?&]bk2=0(?:&|$)/.test(location.search)) { localStorage.setItem("lohas_bk2_off", "1"); return false; }
+      if (/[?&]bk2=1(?:&|$)/.test(location.search)) { localStorage.removeItem("lohas_bk2_off"); return true; }
+      return localStorage.getItem("lohas_bk2_off") !== "1";
+    } catch (_e) { return true; }
+  }
+
   function open(opts) {
     opts = opts || {};
+    if (!opts.stores && !hasCartPrefill() && !useOldBooking() && useBookingV2() && root.LohasBookingV2) {
+      return root.LohasBookingV2.open(opts);
+    }
     /* 2026-11-09 改用樂活自建預約(左手預約停用):門市頁的「預約」直接開 /book。
        商城取貨流程(reserve.html,傳 stores 或有商城 prefill)只選門市/顧問、不建單 → 照舊走下面。
        要暫時退回左手舊彈窗:網址加 ?oldbook=1(會記在 localStorage;?oldbook=0 取消)。 */

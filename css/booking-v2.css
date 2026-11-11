@@ -1,0 +1,165 @@
+/* =============================================
+   LOHAS · 門市預約(舊版介面 × 自建預約系統)
+   疊在 booking-modal.css 之上,只放新元素。
+   ============================================= */
+
+.bk2 .bm-sec-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.bk2-sec-sub { font-size: 11px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-sub); }
+.bk2-hint {
+  padding: 16px;
+  background: var(--bg-warm);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* 顧問卡:可預約幾項 */
+.bk2-staff-count { font-size: 11px; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.5px; }
+.bk2-any .bm-staff-pick-photo { background: linear-gradient(135deg, #d9cfbd 0%, #b9aa8f 100%); }
+
+/* 項目:名稱 + 分鐘數 */
+.bk2-svc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 10px;
+}
+.bk2-svc-name { font-size: 14px; }
+.bk2-svc-min { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.3px; }
+.bk2-svc.active .bk2-svc-min { color: rgba(255, 255, 255, 0.8); }
+.bk2-svc-group {
+  margin: 16px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #B5743A;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bk2-bday .bm-svc-pick { border-color: #ecd9c3; background: #fffaf4; }
+.bk2-bday .bm-svc-pick:hover { border-color: #B5743A; }
+.bk2-bday .bm-svc-pick.active { background: #B5743A; border-color: #B5743A; color: #fff; }
+
+/* 第 2 步上方:已選的人與項目 */
+.bk2-picked {
+  font-size: 13px;
+  color: var(--text-sub);
+  background: var(--bg-warm);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+.bk2-picked b { color: var(--lohas-brand); }
+
+/* 週切換 */
+.bk2-week {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.bk2-week-range { font-size: 14px; font-weight: 700; color: var(--lohas-brand); letter-spacing: 1px; }
+.bk2-week-btn {
+  border: 1px solid var(--lohas-bd);
+  background: #fff;
+  color: var(--lohas-brand);
+  border-radius: var(--r-pill);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.bk2-week-btn:hover:not(:disabled) { border-color: var(--lohas-brand); background: var(--bg-warm); }
+.bk2-week-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* 一週七天:兩行(4 + 3),七格一行太擠(2026-11-11 使用者回饋) */
+.bk2-days {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.bk2-day { width: auto; padding: 10px 4px; }
+.bk2-day .dw { font-size: 11px; }
+.bk2-day .dn { font-size: 17px; }
+.bk2-day .da { font-size: 11px; font-weight: 600; color: var(--lohas-brand); margin-top: 2px; }
+.bk2-day.active .da { color: #fff; }
+.bk2-day.full .da { color: var(--text-muted); font-weight: 500; }
+
+/* 時段:選中要明顯 */
+.bk2 .bm-time-pick.active {
+  background: var(--lohas-brand);
+  color: #fff;
+  border-color: var(--lohas-brand);
+  box-shadow: none;
+}
+
+/* 第 3 步:預約內容 */
+.bk2-summary {
+  background: var(--bg-warm);
+  border-radius: var(--r-md);
+  padding: 6px 16px;
+}
+.bk2-sum-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px dashed var(--lohas-bd);
+}
+.bk2-sum-row:last-child { border-bottom: 0; }
+.bk2-sum-row > span:first-child { color: var(--text-muted); flex-shrink: 0; }
+.bk2-sum-row > span:last-child { color: var(--text-main); text-align: right; }
+.bk2-sum-row b { color: var(--lohas-brand); }
+.bk2-muted { color: var(--text-muted); font-size: 12px; }
+
+.bk2-member {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.bk2 .bm-form-row input.bk2-ro { background: #fff; border-color: var(--lohas-bd); color: var(--text-sub); }
+.bk2-otp { display: flex; gap: 8px; }
+.bk2-otp input { flex: 1; min-width: 0; }
+.bk2-otp .bm-btn { flex-shrink: 0; white-space: nowrap; }
+.bk2-otp-hint { font-size: 12px; color: #B5743A; margin-top: 6px; }
+.bk2-verified {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--ok-bg);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  color: var(--ok);
+}
+.bk2-login { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
+.bk2-login a { color: var(--lohas-brand); font-weight: 700; text-decoration: underline; margin: 0 2px; }
+
+/* 手機 */
+@media (max-width: 600px) {
+  .bk2-days { gap: 6px; }
+  .bk2-day { padding: 8px 2px; }
+  .bk2-day .dn { font-size: 16px; }
+  .bk2-week-btn { padding: 6px 10px; }
+  .bk2-week-range { font-size: 13px; }
+  /* iOS:輸入框 <16px 會放大整頁且不縮回 */
+  .bk2 .bm-form-row input, .bk2 .bm-form-row textarea { font-size: 16px; }
+}

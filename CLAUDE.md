@@ -847,6 +847,26 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 分享牆的 `?wall=preview`),自己跑過一遍再開 ——
 沒有測試站的情況下,那是唯一能避免「第一個踩到 bug 的是真客人」的辦法。
 
+## 🚨 門市預約:舊版介面 × 樂活自建預約系統(2026-11-11 上線,預設開)
+
+門市頁「立即預約 / 跟我預約」開 `js/booking-v2.js` 的三步彈窗(顧問與項目 → 一週時段 → 資料),
+資料全部直接讀自建預約系統的公開 API(`market-backend-0544.onrender.com/api/booking/public`,
+規格是 Louis 給的「預約系統_官網串接API_20261110.md」,不進 repo)。
+
+- **顧問名單以預約系統為準**(使用者指定)。官網主後端的顧問資料只拿來補照片/職稱,
+  用【同門市姓名】對 —— 兩邊唯一共同欄位。對不到的人沒照片但照樣可約;主後端有、預約系統沒有的人不顯示。
+- 項目只列該人員的(`/staff` 每人各有 id 與分鐘數);「不指定店員(最快有空)」用 `/stores` 的門市項目。
+- 從某位顧問的「跟我預約」進來用 `staff-by-erp` 換成預約系統的人員。
+- 身分**只認手機驗證碼**(token 存 `bk_phone_token`,30 天)。已登入會員自動帶入姓名/會員編號/手機;
+  **免驗證要等 Louis 開「用官網登入換 token」的介面**,開了之後把 `MEMBER_EXCHANGE` 對好名稱、
+  `MEMBER_EXCHANGE_READY` 改 true。在那之前會員也要驗證一次 —— 不要在前端直接跳過,送出會 401。
+- 會員編號沒有欄位可送,寫進 `note`。轉換事件(GA `booking_complete`、OpenAI)照舊送。
+- 開關:`?bk2=0` 退回直接開 `/book` 預約頁(記在 localStorage,`?bk2=1` 取消);`?oldbook=1` 是左手舊彈窗。
+  商城取貨流程(`reserve.html`、商城 prefill)不走這裡。
+- CORS 只開 `www.lohasglasses.com` 等三個網域,**本機會被擋**。本機預覽要經轉接
+  (`window.LOHAS_BK_API` 指到轉接、`window.LOHAS_BK_PREVIEW=true` 讓驗證碼與送出都是假的)。
+- 測試請用 Louis 給的測試手機(不發簡訊、標測試單、不通知門市),**不要用真人手機反覆測**。
+
 ## 對外文件
 
 - `docs/串接現況.md` — 與商城共用的介面契約與現況,**公開**,雙方的工程與 AI 工具都會讀。
