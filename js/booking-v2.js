@@ -99,12 +99,14 @@
   const fmtDay = d => md(d) + "(週" + W[dow(d)] + ")";
 
   /* ---------- 會員 ---------- */
+  /* 「有沒有登入」必須跟頁首(layout.js)用同一個判斷,否則頁首顯示已登入、預約卻說沒登入。
+     2026-11-11 踩到:這裡原本自己加了 7 天過期,而 store.html 沒載 auth.js,
+     頁首只看 lohasMember 在不在 —— 登入超過 7 天的會員就兩邊說法不一。 */
   function readMember() {
     try {
-      const m = JSON.parse(localStorage.getItem("lohasMember") || "null");
-      if (!m) return null;
-      if (m.loginAt && Date.now() - Number(m.loginAt) > 7 * 864e5) return null;   // 與 auth.js 同一條規則
-      return m;
+      const A = root.LohasAuth;
+      if (A && A.isLogin && !A.isLogin()) return null;
+      return JSON.parse(localStorage.getItem("lohasMember") || "null");
     } catch (_e) { return null; }
   }
   const memberPhone = m => String((m && (m.phone || m.mobile || m.memberPhone)) || "").replace(/\D/g, "");
