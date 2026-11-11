@@ -185,6 +185,15 @@
   /* 官網顧問(照片)× 預約系統人員(項目)— 用姓名對 */
   function mergeStaff(bkStaff) {
     const byName = new Map(state.employees.map(e => [norm(e.name), e]));
+    /* 顯示的分鐘數一律用【門市】的(使用者 2026-11-11 指定)。
+       人員各自的分鐘數在預約系統裡設得很亂(同一店配鏡 15 / 60、取件 105),
+       客人看到會困惑。⚠ 這只改顯示:預約系統排時段與實際保留的長度
+       仍是人員自己的設定(ownMinutes),要真的一致得在預約系統後台改。 */
+    const storeMin = new Map(((state.bkStore && state.bkStore.services) || []).map(x => [x.name, x.minutes]));
+    const withStoreMin = arr => arr.map(x => Object.assign({}, x, {
+      ownMinutes: x.minutes,
+      minutes: storeMin.has(x.name) ? storeMin.get(x.name) : x.minutes
+    }));
     const list = bkStaff.map(s => {
       const e = byName.get(norm(s.name));
       const photo = e && e.photos && e.photos[0] && String(e.photos[0]).trim();
@@ -195,7 +204,7 @@
         photo: photo || "",
         role: e ? (e.role || e.jobtitle || "").trim() : "",
         honor: e ? (e.honor || "").trim() : "",
-        services: sortSvc(s.services || [])
+        services: sortSvc(withStoreMin(s.services || []))
       };
     });
     /* 不指定:用門市層級的項目,由門市安排人 */
