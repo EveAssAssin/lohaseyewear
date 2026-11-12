@@ -162,7 +162,8 @@
       staff: [], loading: true, staffLoading: false, loadErr: "", selStaff: null, selSvc: null,
       weekFrom: null, days: null, selDay: null, selSlot: null, submitting: false, done: null,
       otp: { sent: false, busy: false, hint: "" },
-      mine: { loading: false, list: null, err: "" }
+      mine: { loading: false, list: null, err: "" },
+      storePickOpen: false, regionKey: null, pendingErp: null
     });
     state.member = readMember();
     const m = state.member;
@@ -470,14 +471,31 @@
       groups.get(k).push(s);
     });
     const sel = state.store ? String(state.store.erpid) : "";
-    const opts = [...groups.entries()].sort((a, b) => parseFloat(a[0]) - parseFloat(b[0])).map(([k, arr]) =>
-      `<optgroup label="${esc(k.split("|")[1])}">` +
-        arr.sort((a, b) => a.name.localeCompare(b.name, "zh-Hant")).map(s =>
-          `<option value="${esc(s.erp)}"${s.erp === sel ? " selected" : ""}>${esc(s.name)}</option>`).join("") +
-      `</optgroup>`).join("");
-    return `<div class="bm-sec"><div class="bm-sec-title">選擇門市 <span class="bm-required">*</span></div>` +
-      `<div class="bk2-store"><i class="fa-solid fa-store"></i><select data-store aria-label="選擇門市">` +
-        `<option value="">請選擇要去的門市</option>${opts}</select><i class="fa-solid fa-chevron-down bk2-store-caret"></i></div></div>`;
+    const title = `<div class="bm-sec-title">選擇門市 <span class="bm-required">*</span></div>`;
+
+    /* 選好了 → 收成一條,可以換。
+       ⚠ 不用原生 <select>:各家瀏覽器的下拉清單是系統樣式(藍色反白),跟官網風格不搭(使用者 2026-11-12 回饋)。 */
+    if (state.store && !state.storePickOpen) {
+      const s = state.store;
+      return `<div class="bm-sec">${title}<div class="bk2-store-picked">` +
+          `<span><i class="fa-solid fa-store"></i> <b>${esc(s.name)}</b>${s.address ? `<small>${esc(s.address)}</small>` : ""}</span>` +
+          `<button type="button" class="bm-link" data-store-change>換門市</button>` +
+        `</div></div>`;
+    }
+
+    const regions = [...groups.entries()].sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]))
+      .map(([k, arr]) => ({ key: k, label: k.split("|")[1], stores: arr.sort((a, b) => a.name.localeCompare(b.name, "zh-Hant")) }));
+    if (!regions.length) return `<div class="bm-sec">${title}<div class="bk2-hint">目前沒有開放學生配鏡線上預約的門市</div></div>`;
+    const cur = regions.find(r => r.key === state.regionKey)
+      || regions.find(r => r.stores.some(s => s.erp === sel)) || regions[0];
+    state.regionKey = cur.key;
+    return `<div class="bm-sec">${title}` +
+      `<div class="bk2-region-row">` + regions.map(r =>
+        `<button type="button" class="bk2-region ${r.key === cur.key ? "active" : ""}" data-region="${esc(r.key)}">${esc(r.label)}</button>`).join("") +
+      `</div>` +
+      `<div class="bk2-store-grid">` + cur.stores.map(s =>
+        `<button type="button" class="bk2-store-btn ${s.erp === sel ? "active" : ""}" data-store-pick="${esc(s.erp)}"><i class="fa-solid fa-store"></i>${esc(s.name)}</button>`).join("") +
+      `</div></div>`;
   }
 
   /* 第 1 步:(學生模式先選門市)顧問(大頭像)+ 這位顧問的項目 */
@@ -732,19 +750,24 @@
     on("[data-overlay]", (el, e) => { if (e.target === el && (state.done || state.mode === "mine")) close(); });
     on(".bm-head [data-close]", () => close());
 
-    on("[data-store]", async el => {
-      const erp = el.value;
+    on("[data-region]", el => { state.regionKey = el.dataset.region; renderBody(); });
+    on("[data-store-change]", () => { state.storePickOpen = true; renderBody(); });
+    on("[data-store-pick]", async el => {
+      const erp = el.dataset.storePick;
+      state.storePickOpen = false;
+      if (state.store && String(state.store.erpid) === erp) return renderBody();
       state.selStaff = null; state.selSvc = null; state.days = null; state.selSlot = null; state.staff = [];
       state.pendingErp = erp;
-      state.store = null;          // 讓 loadStore 重新帶店名、地址與顧問照片
-      if (!erp) { state.staffLoading = false; return renderBody(); }
       state.staffLoading = true;
+      state.store = { erpid: erp, name: el.textContent.trim() };   // 讀取中先顯示店名
+      state.employees = [];
       renderBody();
+      state.store = null;          // 讓 loadStore 換成完整資料(店名、地址、顧問照片)
       try { await loadStore(erp); } catch (e) { state.staff = []; }
       if (state.pendingErp !== erp) return;   // 客人換店的速度比網路快:丟掉舊的結果
       state.staffLoading = false;
       renderBody();
-    }, "change");
+    });
     on("[data-staff]", el => {
       const s = state.staff.find(x => x.key === el.dataset.staff);
       if (!s) return;
