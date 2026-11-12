@@ -42,12 +42,15 @@
   const PREVIEW = !!root.LOHAS_BK_PREVIEW;
 
   const TOKEN_KEY = "bk_phone_token";   // 與預約系統自己的頁面同名,驗證一次兩邊通用
-  /* 已登入會員換 token 的介面 —— ⚠ 名稱待 Louis 確定,上線前要對過 */
+  /* 已登入會員換 token(Louis 2026-11-12 上線,串接文件 3.4 節):
+     POST /member-session { token: 官網 lohasSessionToken } → 預約系統在伺服器端打我方 auth-session 驗證,
+     手機以官網回的為準;成功回 { token, phone, name }(與 /otp/verify 同一種,30 天)。
+     token 無效 / 會員沒手機 / 逾時 → 401,這裡就退回簡訊驗證。同一 IP 每分鐘 20 次。 */
   const MEMBER_EXCHANGE = "/member-session";
-  /* 那支介面上線了才改 true。false 時已登入會員照樣自動帶入,但手機要驗證一次
-     (避免畫面寫「免驗證」、按送出才被要求驗證)。預覽模式一律當作已上線。 */
-  const MEMBER_EXCHANGE_READY = false;
-  const memberSkip = () => (MEMBER_EXCHANGE_READY || PREVIEW) && !!(state.member && memberPhone(state.member));
+  /* false 時已登入會員照樣自動帶入,但手機要驗證一次。預覽模式一律當作已上線。 */
+  const MEMBER_EXCHANGE_READY = true;
+  /* 換 token 失敗過(401:舊登入沒有手機、登入過期)→ 這次改走簡訊驗證,畫面不再說「免驗證」 */
+  const memberSkip = () => (MEMBER_EXCHANGE_READY || PREVIEW) && !state.memberExchangeFailed && !!(state.member && memberPhone(state.member));
   const BIRTHDAY_RE = /^生日/;
   const ANY_LABEL = "不指定店員(最快有空)";
   /* 大學生專案用哪一個項目:目前是各店的「配鏡」(預約系統沒有學生專用項目) */
@@ -141,8 +144,29 @@
   const memberPhone = m => String((m && (m.phone || m.mobile || m.memberPhone)) || "").replace(/\D/g, "");
   const memberNo = m => String((m && (m.erpid || m.memberNumber || m.mid)) || "");
 
-  /* 之前在這台裝置驗證過手機 → 不必再驗一次 */
+  /* 已登入會員:用官網登入換一把預約 token。換不到(401)就留給簡訊驗證,不報錯 */
+  async function exchangeMemberToken() {
+    if (PREVIEW || readToken() || !memberSkip()) return false;
+    try {
+      const sess = (root.LohasAuth && root.LohasAuth.getToken && root.LohasAuth.getToken()) ||
+                   localStorage.getItem("lohasSessionToken") || "";
+      if (!sess) return false;
+      const d = await api("POST", MEMBER_EXCHANGE, { token: sess });
+      if (d && d.token) {
+        saveToken(d.token);
+        state.verifiedPhone = String(d.phone || "").replace(/\D/g, "");
+        if (state.verifiedPhone) state.form.phone = state.verifiedPhone;
+        if (!state.form.name && d.name) state.form.name = d.name;
+        return true;
+      }
+    } catch (_e) { /* 401:沒手機或登入過期 → 簡訊驗證 */ }
+    state.memberExchangeFailed = true;
+    return false;
+  }
+
+  /* 之前在這台裝置驗證過手機 → 不必再驗一次;已登入會員 → 先換 token */
   async function restoreToken() {
+    if (!readToken()) await exchangeMemberToken();
     if (!readToken()) return;
     if (PREVIEW) return;
     try {
@@ -167,7 +191,7 @@
       weekFrom: null, days: null, selDay: null, selSlot: null, submitting: false, done: null,
       otp: { sent: false, busy: false, hint: "" },
       mine: { loading: false, list: null, err: "" },
-      storePickOpen: false, regionKey: null, pendingErp: null
+      storePickOpen: false, regionKey: null, pendingErp: null, memberExchangeFailed: false
     });
     state.member = readMember();
     const m = state.member;
@@ -242,8 +266,8 @@
     /* 從某位顧問的「預約」進來 → 先選起來(項目仍要客人自己選)。
        用 staff-by-erp 換成預約系統的人員;換不到再退回姓名比對。 */
     if (preselectErp) {
-      let hit = null;
-      try {
+      let hit = state.staff.find(s => s.erp && s.erp === String(preselectErp)) || null;
+      if (!hit) try {
         const p = await api("GET", "/staff-by-erp?" + q({ erp: preselectErp }));
         if (p && p.unspecified) hit = state.staff.find(s => s.any);
         else if (p && p.app_number) hit = state.staff.find(s => s.app === String(p.app_number));
@@ -260,6 +284,8 @@
 
   /* 官網顧問(照片)× 預約系統人員(項目)— 用姓名對 */
   function mergeStaff(bkStaff) {
+    /* /staff 多回了人員 ERP 碼(Louis 2026-11-12)→ 先用 erp 對,沒有才退回同門市姓名 */
+    const byErp = new Map(state.employees.map(e => [String(e.erpid), e]));
     const byName = new Map(state.employees.map(e => [norm(e.name), e]));
     /* 顯示的分鐘數一律用【門市】的(使用者 2026-11-11 指定)。
        人員各自的分鐘數在預約系統裡設得很亂(同一店配鏡 15 / 60、取件 105),
@@ -274,11 +300,12 @@
       ? [pickStudentSvc(arr)].filter(Boolean).map(x => Object.assign({}, x, { label: STUDENT_LABEL }))
       : sortSvc(arr);
     let list = bkStaff.map(s => {
-      const e = byName.get(norm(s.name));
+      const e = (s.erp && byErp.get(String(s.erp))) || byName.get(norm(s.name));
       const photo = e && e.photos && e.photos[0] && String(e.photos[0]).trim();
       return {
         key: "app:" + s.app_number,
         app: String(s.app_number),
+        erp: String(s.erp || ""),
         name: norm(s.name),
         photo: photo || "",
         role: e ? (e.role || e.jobtitle || "").trim() : "",
@@ -620,7 +647,7 @@
         `<div class="bk2-member"><i class="fa-solid fa-circle-check"></i> 已登入會員,資料已自動帶入,免手機驗證</div>` +
         input("姓名", "name", f.name, "怎麼稱呼你") +
         (f.memberNo ? input("會員編號", "memberNo", f.memberNo, "", "text", true) : "") +
-        input("手機號碼", "phone", memberPhone(m), "", "tel", true);
+        input("手機號碼", "phone", state.verifiedPhone || memberPhone(m), "", "tel", true);
     } else if (m) {
       /* 已登入但不能免驗證:官網沒有他的手機(還沒綁定門市),或換 token 的介面還沒上線 */
       who =
@@ -874,17 +901,10 @@
     if (state.submitting || !canNext()) return;
     const s = state.selStaff, svc = state.selSvc;
     /* 已登入會員:用官網登入換一把預約 token(伺服器端驗身分與取手機) */
-    if (!PREVIEW && !readToken() && memberSkip()) {
-      try {
-        const sess = (root.LohasAuth && root.LohasAuth.getToken && root.LohasAuth.getToken()) ||
-                     localStorage.getItem("lohasSessionToken") || "";
-        const d = await api("POST", MEMBER_EXCHANGE, { token: sess });
-        if (d && d.token) saveToken(d.token);
-      } catch (_e) { /* 介面還沒上線或登入過期 → 下面退回手機驗證 */ }
-    }
+    if (!PREVIEW && !readToken()) await exchangeMemberToken();
     if (!PREVIEW && !readToken()) {
       state.verifiedPhone = "";
-      state.member = null;   // 退回手機驗證畫面,不假裝成功
+      state.memberExchangeFailed = true;   // 退回手機驗證畫面,不假裝成功
       alert("請先完成手機驗證");
       return renderBody();
     }
@@ -892,9 +912,10 @@
     try {
       const noteLines = [];
       if (state.student) noteLines.push(STUDENT_NOTE);
-      if (state.form.memberNo) noteLines.push("會員編號:" + state.form.memberNo);
       if (state.form.note.trim()) noteLines.push(state.form.note.trim());
       const body = { service_id: svc.id, start_at: state.selSlot.start, name: state.form.name.trim(), note: noteLines.join("\n").slice(0, 300), source: "web" };
+      /* 會員編號有專用欄位了(Louis 2026-11-12):1~20 位數字,門市在預約詳情看得到。不再寫進 note */
+      if (/^\d{1,20}$/.test(state.form.memberNo || "")) body.member_no = state.form.memberNo;
       if (s.any) body.store = state.bkStore.store_erpid; else body.app = s.app;
       let res;
       if (PREVIEW) {
