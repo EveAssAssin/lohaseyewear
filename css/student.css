@@ -70,8 +70,6 @@
   background: var(--shadow); color: #fff; font-size: 14px; letter-spacing: 0;
 }
 .st-btn--pink { --shadow: var(--st-pink); }
-.st-btn--ghost { box-shadow: none; border-color: #ccc; color: var(--st-sub); font-weight: 600; }
-.st-btn--ghost:hover { transform: none; box-shadow: none; border-color: var(--st-ink); color: var(--st-ink); }
 
 /* ---------- 區段標題 \ 標題 / ---------- */
 .st-head { text-align: center; margin-bottom: 36px; }
@@ -221,7 +219,7 @@
   display: flex; align-items: center; justify-content: center;
 }
 .st-step i { font-size: 40px; color: var(--st-pink-deep); margin-bottom: 12px; }
-.st-step h3 { margin: 0 0 10px; font-size: 22px; letter-spacing: 2px; }
+.st-step h3 { margin: 0 0 10px; font-size: 22px; letter-spacing: 2px; text-wrap: balance; }
 .st-step p { margin: 0; font-size: 17px; color: var(--st-sub); line-height: 1.7; text-wrap: balance; }
 .st-step:not(:last-child)::after {
   content: "\f054"; font-family: "Font Awesome 6 Free"; font-weight: 900;
@@ -279,7 +277,7 @@
   .st-warranty p { font-size: 18px; }
   .st-steps { grid-template-columns: 1fr 1fr; }
   .st-step:not(:last-child)::after { display: none; }
-  .st-step h3 { font-size: 19px; }
+  .st-step h3 { font-size: 18px; letter-spacing: 1px; }
   .st-step p { font-size: 15px; }
   .st-btn { font-size: 15px; letter-spacing: 2px; padding: 12px 22px; }
 }
