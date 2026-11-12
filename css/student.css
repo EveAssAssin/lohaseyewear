@@ -199,9 +199,9 @@
 }
 .st-point-no small { font-size: 11px; letter-spacing: 1px; }
 .st-point-no b { font-size: 26px; }
-.st-point h3 { font-size: 26px; font-weight: 900; letter-spacing: 4px; margin: 0 0 14px; }
-.st-point p { margin: 0; font-size: 17px; letter-spacing: 2px; line-height: 1.9; color: var(--st-ink); }
-.st-point p small { display: block; font-size: 13px; color: var(--st-sub); letter-spacing: 1px; }
+.st-point h3 { font-size: 30px; font-weight: 900; letter-spacing: 4px; margin: 0 0 16px; }
+.st-point p { margin: 0; font-size: 20px; letter-spacing: 2px; line-height: 1.9; color: var(--st-ink); }
+.st-point p small { display: block; font-size: 15px; color: var(--st-sub); letter-spacing: 1px; }
 .st-point-ico { margin-top: auto; padding-top: 22px; height: 170px; display: flex; align-items: flex-end; justify-content: center; }
 .st-point-ico img { max-height: 100%; max-width: 75%; width: auto; height: auto; }
 .st-point-photo { margin: 18px -18px -26px; border-radius: 0 0 14px 14px; overflow: hidden; }
@@ -210,10 +210,10 @@
 .st-points--pink h3 { color: var(--st-pink); }
 
 /* ---------- 保固 ---------- */
-.st-warranty { border: 2px solid var(--st-blue-line); border-radius: 16px; padding: 30px 32px; background: #fff; }
-.st-warranty h3 { margin: 0 0 14px; font-size: 26px; font-weight: 900; letter-spacing: 4px; }
+.st-warranty { border: 2px solid var(--st-blue-line); border-radius: 16px; padding: 32px 32px; background: #fff; text-align: center; }
+.st-warranty h3 { margin: 0 0 16px; font-size: 32px; font-weight: 900; letter-spacing: 4px; }
 .st-warranty h3 em { font-style: normal; color: var(--st-blue); font-size: 1.7em; margin-right: 6px; }
-.st-warranty p { margin: 0; font-size: 17px; letter-spacing: 2px; line-height: 1.9; }
+.st-warranty p { margin: 0; font-size: 21px; letter-spacing: 2px; line-height: 1.9; }
 .st-warranty p b { color: var(--st-blue); }
 .st-free { margin-top: 22px; display: flex; justify-content: center; height: 150px; }
 .st-free img { max-height: 100%; width: auto; height: auto; }
@@ -281,8 +281,12 @@
   .st-decide-grid { grid-template-columns: 1fr; }
   .st-decide-col + .st-decide-col { border-left: 0; border-top: 1px dashed var(--st-blue-line); padding-top: 22px; margin-top: 10px; }
   .st-decide-tag { font-size: 18px; padding: 8px 20px; }
-  .st-point h3 { font-size: 22px; }
+  .st-point h3 { font-size: 24px; }
+  .st-point p { font-size: 17px; }
+  .st-point p small { font-size: 13px; }
   .st-warranty { padding: 24px 20px; }
+  .st-warranty h3 { font-size: 26px; }
+  .st-warranty p { font-size: 18px; }
   .st-steps { grid-template-columns: 1fr 1fr; }
   .st-step:not(:last-child)::after { display: none; }
   .st-btn { font-size: 15px; letter-spacing: 2px; padding: 12px 22px; }
