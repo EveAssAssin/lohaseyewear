@@ -172,7 +172,9 @@
   font-size: 22px; font-weight: 900; letter-spacing: 3px; white-space: nowrap;
 }
 .st-decide-grid { display: grid; grid-template-columns: 1fr 1fr; }
-.st-decide-col { padding: 8px 20px; text-align: center; }
+.st-decide-col { padding: 8px 20px; text-align: center; display: flex; flex-direction: column; }
+/* 兩欄的說明文字對齊在底部同一條線(左欄圖比右欄高) */
+.st-decide-col .st-decide-cap { margin-top: auto; }
 .st-decide-col + .st-decide-col { border-left: 1px dashed var(--st-blue-line); }
 .st-nose { display: flex; justify-content: center; margin: 0 0 14px; }
 .st-nose img { width: 200px; max-width: 100%; height: auto; }
