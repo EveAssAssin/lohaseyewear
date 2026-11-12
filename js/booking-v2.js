@@ -16,7 +16,7 @@
    - 大學生專案(student.html):open({ student: true })
        多一個「選門市」;項目固定為該店的「配鏡」,畫面顯示「學生配鏡」,
        留言第一行自動加【大學生專案】讓門市知道。預約系統沒有「學生配鏡」項目,
-       Louis 加了之後改 STUDENT_SVC 的比對就好。
+       2026-11-12 已請 Louis 加「學生配鏡」;加了的店/人員自動改用它(pickStudentSvc),不必改程式。
        不收身分證字號(使用者 2026-11-12 決定):資格與一人一次由門市看學生證確認。
    - 我的預約:open({ mine: true })
 
@@ -51,7 +51,11 @@
   const BIRTHDAY_RE = /^生日/;
   const ANY_LABEL = "不指定店員(最快有空)";
   /* 大學生專案用哪一個項目:目前是各店的「配鏡」(預約系統沒有學生專用項目) */
-  const STUDENT_SVC = name => /^配鏡/.test(String(name || ""));
+  /* 2026-11-12 起請 Louis 在每間店、每位人員加「學生配鏡」(60 分)。
+     有「學生配鏡」就用它;那間店/那位人員還沒加的,退回用「配鏡」—— 不必等全部加完、也不必再改程式。 */
+  const STUDENT_SVC = name => /^(學生配鏡|配鏡)/.test(String(name || ""));
+  const pickStudentSvc = arr =>
+    arr.find(x => /^學生配鏡/.test(String(x.name || ""))) || arr.find(x => /^配鏡/.test(String(x.name || ""))) || null;
   const STUDENT_LABEL = "學生配鏡";
   const STUDENT_NOTE = "【大學生專案】學生配鏡(到店出示學生證或在學證明)";
 
@@ -267,7 +271,7 @@
       minutes: storeMin.has(x.name) ? storeMin.get(x.name) : x.minutes
     }));
     const pick = arr => state.student
-      ? arr.filter(x => STUDENT_SVC(x.name)).slice(0, 1).map(x => Object.assign({}, x, { label: STUDENT_LABEL }))
+      ? [pickStudentSvc(arr)].filter(Boolean).map(x => Object.assign({}, x, { label: STUDENT_LABEL }))
       : sortSvc(arr);
     let list = bkStaff.map(s => {
       const e = byName.get(norm(s.name));
