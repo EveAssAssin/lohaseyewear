@@ -113,15 +113,6 @@
 /* ---------- 學生方案 ---------- */
 .st-banner { border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(18, 181, 234, .15); }
 .st-banner img { display: block; width: 100%; height: auto; }
-.st-rules {
-  margin: 0; padding: 14px 20px; list-style: none;
-  background: var(--st-blue); color: #fff;
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 24px;
-  font-size: 14px; letter-spacing: .5px;
-}
-.st-rules li { display: flex; gap: 8px; }
-.st-rules li::before { content: attr(data-n); font-weight: 700; flex-shrink: 0; }
-.st-rules-title { grid-column: 1 / -1; font-weight: 700; letter-spacing: 2px; }
 
 /* ---------- 三格卡片 ---------- */
 .st-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -270,7 +261,6 @@
   .st-title::before, .st-title::after { height: 36px; width: 3px; }
   .st-tag { font-size: 14px; }
   .st-grid3, .st-grid2 { grid-template-columns: 1fr; }
-  .st-rules { grid-template-columns: 1fr; font-size: 13px; }
   .st-feature { flex-direction: row; }
   .st-feature-ico { flex: 0 0 45%; }
   .st-feature-txt { flex: 1; min-height: 0; font-size: 16px; }
