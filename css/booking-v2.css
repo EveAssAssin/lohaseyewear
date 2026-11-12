@@ -153,6 +153,58 @@
 .bk2-login { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
 .bk2-login a { color: var(--lohas-brand); font-weight: 700; text-decoration: underline; margin: 0 2px; }
 
+/* 大學生專案:選門市 */
+.bk2-store {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  border: 2px solid var(--lohas-bd);
+  border-radius: var(--r-md);
+  background: #fff;
+  padding: 0 14px;
+  transition: border-color 0.15s;
+}
+.bk2-store:focus-within { border-color: var(--lohas-brand); }
+.bk2-store > i { color: var(--lohas-brand); }
+.bk2-store select {
+  flex: 1; min-width: 0;
+  appearance: none; -webkit-appearance: none;
+  border: 0; background: transparent; outline: 0;
+  padding: 13px 24px 13px 0;
+  font-family: inherit; font-size: 15px; font-weight: 600; color: var(--text-main);
+  cursor: pointer;
+}
+.bk2-store .bk2-store-caret { position: absolute; right: 14px; pointer-events: none; font-size: 12px; color: var(--text-muted); }
+.bk2-student-note {
+  margin-top: 12px;
+  display: flex; align-items: flex-start; gap: 8px;
+  background: #fff8e1; color: #8a5a00;
+  border-radius: var(--r-sm);
+  padding: 10px 12px; font-size: 13px; line-height: 1.6;
+}
+.bk2-student-note i { margin-top: 3px; }
+
+/* 我的預約 */
+.bk2-mine {
+  border: 1px solid var(--lohas-bd);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+.bk2-mine--past { background: var(--bg-warm); }
+.bk2-mine-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.bk2-mine-top b { color: var(--lohas-brand); font-size: 15px; }
+.bk2-mine-st { font-size: 12px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.bk2-mine-st.bk2-st-booked { color: var(--ok); }
+.bk2-mine-info { margin-top: 6px; font-size: 13px; color: var(--text-sub); line-height: 1.6; }
+.bk2-mine-cancel {
+  margin-top: 10px;
+  border: 1px solid #d9a3a3; color: #b3422f; background: #fff;
+  border-radius: var(--r-pill); padding: 6px 14px;
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.bk2-mine-cancel:hover { background: #fff3f1; }
+
 /* 手機 */
 @media (max-width: 600px) {
   .bk2-days { gap: 6px; }

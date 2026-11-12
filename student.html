@@ -30,7 +30,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
-  <link rel="stylesheet" href="css/student.css?v=20261112-icons2">
+  <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
+  <link rel="stylesheet" href="css/booking-v2.css?v=20261112-student">
+  <link rel="stylesheet" href="css/student.css?v=20261112-book">
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
@@ -48,8 +50,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!--
   大學生專案(2026-11-12)。內容照 student.lohasglasses.com 首頁「活動說明」。
-  ⚠ 報名與預約查詢仍在 student 站(學生資格、身分證字號、預約都在那邊),
-    這一頁只負責介紹 —— 方案或價格改了,兩邊要一起改。
+  報名與預約查詢(2026-11-12 起)走官網的預約彈窗 js/booking-v2.js 的學生模式,
+  資料在樂活自建預約系統;項目用各店的「配鏡」,留言自動標【大學生專案】。
+  不收身分證字號:學生資格與一人一次由門市看學生證確認。
+  JS 沒載到時「立即報名」退回門市據點頁(allstore.html)。
 -->
 <main class="st">
 
@@ -63,8 +67,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
   <div class="st-cta-bar">
     <div class="st-cta-row">
-      <a class="st-btn st-btn--pink" href="https://student.lohasglasses.com/Reservation/_Visitor/StudentReservationPage.aspx" target="_blank" rel="noopener">立即報名 <i class="fa-solid fa-arrow-right"></i></a>
-      <a class="st-btn st-btn--ghost" href="https://student.lohasglasses.com/Reservation/_Visitor/StudentReservationSearchPage.aspx" target="_blank" rel="noopener">預約查詢／取消</a>
+      <a class="st-btn st-btn--pink" href="allstore.html" data-student-book>立即報名 <i class="fa-solid fa-arrow-right"></i></a>
+      <a class="st-btn st-btn--ghost" href="#mine" data-student-mine>預約查詢／取消</a>
     </div>
     <div class="st-count">已有超過<b>25 萬</b>位同學參加這個活動</div>
   </div>
@@ -78,8 +82,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <li class="st-rules-title">配鏡資格</li>
           <li data-n="1.">一人一生限本人使用一次</li>
           <li data-n="2.">不限年齡,憑學生證、在學證明佐證為在學生</li>
-          <li data-n="3.">報名須登記身分證字號(僅使用於身分認證)</li>
-          <li data-n="4.">此方案不得與其他優惠併用</li>
+          <li data-n="3.">此方案不得與其他優惠併用</li>
         </ul>
       </div>
     </div>
@@ -112,7 +115,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         隔年再享<u>年年換新方案</u><b class="st-c-blue">半價</b>優惠
       </div>
       <div class="st-steps-cta">
-        <a class="st-btn st-btn--pink" href="https://student.lohasglasses.com/Reservation/_Visitor/StudentReservationPage.aspx" target="_blank" rel="noopener">預約學生配鏡享優惠 <i class="fa-solid fa-arrow-right"></i></a>
+        <a class="st-btn st-btn--pink" href="allstore.html" data-student-book>預約學生配鏡享優惠 <i class="fa-solid fa-arrow-right"></i></a>
       </div>
     </div>
   </section>
@@ -263,32 +266,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="st-steps">
         <div class="st-step">
           <div class="st-step-no">1</div>
-          <i class="fa-solid fa-pen-to-square"></i>
-          <h3>線上報名</h3>
-          <p>填寫姓名、身分證字號(或居留證號)與手機</p>
+          <i class="fa-solid fa-store"></i>
+          <h3>選門市與顧問</h3>
+          <p>挑離你最近的門市,指定顧問或不指定</p>
         </div>
         <div class="st-step">
           <div class="st-step-no">2</div>
-          <i class="fa-solid fa-store"></i>
-          <h3>選門市與時間</h3>
-          <p>選擇分店、顧問與預約日期</p>
+          <i class="fa-regular fa-calendar-check"></i>
+          <h3>選時段</h3>
+          <p>一次看一週,挑方便的時間</p>
         </div>
         <div class="st-step">
           <div class="st-step-no">3</div>
-          <i class="fa-solid fa-id-card"></i>
-          <h3>帶學生證到店</h3>
-          <p>出示學生證或在學證明</p>
+          <i class="fa-solid fa-mobile-screen-button"></i>
+          <h3>手機驗證送出</h3>
+          <p>填姓名、收簡訊驗證碼,預約完成</p>
         </div>
         <div class="st-step">
           <div class="st-step-no">4</div>
-          <i class="fa-solid fa-glasses"></i>
-          <h3>選框配鏡</h3>
-          <p>1700 元樂活配或 2700 元任你配</p>
+          <i class="fa-solid fa-id-card"></i>
+          <h3>帶學生證到店</h3>
+          <p>出示學生證或在學證明,選框配鏡</p>
         </div>
       </div>
       <div class="st-steps-cta">
-        <a class="st-btn st-btn--pink" href="https://student.lohasglasses.com/Reservation/_Visitor/StudentReservationPage.aspx" target="_blank" rel="noopener">立即報名 <i class="fa-solid fa-arrow-right"></i></a>
-        <a class="st-btn st-btn--ghost" href="https://student.lohasglasses.com/Reservation/_Visitor/StudentReservationSearchPage.aspx" target="_blank" rel="noopener">預約查詢／取消</a>
+        <a class="st-btn st-btn--pink" href="allstore.html" data-student-book>立即報名 <i class="fa-solid fa-arrow-right"></i></a>
+        <a class="st-btn st-btn--ghost" href="#mine" data-student-mine>預約查詢／取消</a>
       </div>
     </div>
   </section>
@@ -310,7 +313,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </details>
         <details>
           <summary>報名需要填哪些資料?</summary>
-          <div>姓名、身分證字號(或居留證號)與手機號碼。身分證字號僅使用於身分認證。</div>
+          <div>選好門市、顧問與時間後,填姓名與手機號碼(會收到簡訊驗證碼)即可完成預約。到店時請出示學生證或在學證明。</div>
         </details>
         <details>
           <summary>有哪些方案可以選?</summary>
@@ -330,7 +333,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </details>
         <details>
           <summary>預約之後要更改或取消?</summary>
-          <div>請到 <a href="https://student.lohasglasses.com/Reservation/_Visitor/StudentReservationSearchPage.aspx" target="_blank" rel="noopener">預約查詢／取消</a> 頁面,用報名時的資料查詢。</div>
+          <div>按 <a href="#mine" data-student-mine>預約查詢／取消</a>,用預約時的手機驗證後就能看到你的預約並取消。要改時間請先取消,再重新預約。</div>
         </details>
       </div>
     </div>
@@ -339,13 +342,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- 底部 CTA -->
   <section class="st-final">
     <p>新學期,看清楚再出發</p>
-    <a class="st-btn" href="https://student.lohasglasses.com/Reservation/_Visitor/StudentReservationPage.aspx" target="_blank" rel="noopener">點我享學生優惠 <i class="fa-solid fa-arrow-right"></i></a>
+    <a class="st-btn" href="allstore.html" data-student-book>點我享學生優惠 <i class="fa-solid fa-arrow-right"></i></a>
   </section>
 
 </main>
 
 <div id="site-footer"></div>
 
+<!-- 預約彈窗(與門市頁同一套) -->
+<div id="lohas-booking-modal"></div>
+
 <script src="js/layout.js?v=20261012-noapptrack"></script>
+<!-- 官網門市資料:選門市的地區分組、地址與顧問照片(讀不到也能預約) -->
+<script src="js/api/api-core.js?v=20260525-1000"></script>
+<script src="js/api/api-store.js?v=20260525-1000"></script>
+<script src="js/store-data.js?v=20261021-dadun"></script>
+<script src="js/booking-v2.js?v=20261112-student"></script>
+<script>
+  /* 「立即報名」→ 預約彈窗(學生模式);「預約查詢／取消」→ 我的預約。
+     booking-v2.js 沒載到時照 href 走(報名退回門市據點頁)。 */
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-student-book],[data-student-mine]");
+    if (!b || !window.LohasBookingV2) return;
+    e.preventDefault();
+    if (b.hasAttribute("data-student-mine")) window.LohasBookingV2.open({ mine: true });
+    else window.LohasBookingV2.open({ student: true });
+  });
+</script>
 </body>
 </html>

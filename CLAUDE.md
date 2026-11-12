@@ -869,6 +869,13 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - CORS 只開 `www.lohasglasses.com` 等三個網域,**本機會被擋**。本機預覽要經轉接
   (`window.LOHAS_BK_API` 指到轉接、`window.LOHAS_BK_PREVIEW=true` 讓驗證碼與送出都是假的)。
 - 測試請用 Louis 給的測試手機(不發簡訊、標測試單、不通知門市),**不要用真人手機反覆測**。
+- **大學生專案(`student.html`,2026-11-12)用同一個彈窗的學生模式** `open({ student: true })`:
+  多一步選門市(依官網地區分組,**只列官網門市據點有的店** —— 高應大店已歇業但預約系統還開著);
+  項目固定用各店的「配鏡」、畫面顯示「學生配鏡」(`STUDENT_SVC`),留言第一行自動加【大學生專案】。
+  預約系統**沒有學生專用項目**,Louis 加了之後改 `STUDENT_SVC` 的比對。**不收身分證字號**(使用者決定),
+  資格與一人一次由門市看學生證。舊的 student.lohasglasses.com 報名站不再從官網連過去。
+- 「我的預約」`open({ mine: true })`:手機驗證後列出預約、可取消(`/mine`、`/bookings/{id}/cancel`)。
+  學生頁的「預約查詢／取消」與預約完成畫面的「我的預約」都開這個。
 
 ## 對外文件
 
