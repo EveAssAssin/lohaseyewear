@@ -1,0 +1,287 @@
+/* =============================================
+   LOHAS · 大學生專案(student.html)
+   2026-11-12 建立。內容照 student.lohasglasses.com 首頁「活動說明」,
+   原站整段是圖片,這裡改成文字;配色沿用原站(藍 / 粉 / 黃 / 綠)。
+   報名與預約查詢仍在 student 站(那邊有學生資格驗證與預約系統)。
+   ============================================= */
+
+.st {
+  --st-blue: #12b5ea;
+  --st-blue-soft: #e3f6fd;
+  --st-blue-line: #9fe0f7;
+  --st-pink: #f39ac7;
+  --st-pink-deep: #e4589f;
+  --st-pink-soft: #fdeef6;
+  --st-yellow: #ffe14a;
+  --st-yellow-deep: #f2b705;
+  --st-green: #7cd36a;
+  --st-ink: #1f1f1f;
+  --st-sub: #555;
+  --st-mute: #8a8a8a;
+  color: var(--st-ink);
+  background: #fff;
+  overflow-x: hidden;
+  padding-top: 70px;   /* 頁首是 fixed 70px(lohas-base.css .main-header),不讓它蓋住主視覺 */
+}
+
+.st-wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.st-sec { padding: 64px 0; }
+.st-sec--tint { background: var(--st-blue-soft); }
+.st-sec--grad { background: linear-gradient(180deg, #fff 0%, var(--st-blue-soft) 100%); }
+
+/* ---------- 主視覺 ---------- */
+.st-hero { position: relative; background: #cfe9fb; }
+.st-hero picture, .st-hero img { display: block; width: 100%; height: auto; }
+.st-hero h1 {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+}
+.st-cta-bar {
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  padding: 22px 20px;
+  text-align: center;
+}
+.st-cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.st-count { margin-top: 18px; font-size: 20px; font-weight: 700; color: var(--st-ink); letter-spacing: 2px; }
+.st-count b { color: var(--st-blue); font-size: 34px; font-weight: 900; margin: 0 6px; vertical-align: -3px; }
+@media (max-width: 760px) {
+  .st-count { font-size: 16px; letter-spacing: 1px; }
+  .st-count b { font-size: 28px; }
+}
+
+/* 按鈕:原站的膠囊外框 + 下方色塊陰影 */
+.st-btn {
+  --shadow: var(--st-blue);
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 14px 28px;
+  border: 2px solid var(--st-ink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--st-ink);
+  font-size: 17px; font-weight: 700; letter-spacing: 3px;
+  text-decoration: none;
+  box-shadow: 0 6px 0 var(--shadow);
+  transition: transform .15s, box-shadow .15s;
+}
+.st-btn:hover { transform: translateY(2px); box-shadow: 0 4px 0 var(--shadow); }
+.st-btn i {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--shadow); color: #fff; font-size: 14px; letter-spacing: 0;
+}
+.st-btn--pink { --shadow: var(--st-pink); }
+.st-btn--ghost { box-shadow: none; border-color: #ccc; color: var(--st-sub); font-weight: 600; }
+.st-btn--ghost:hover { transform: none; box-shadow: none; border-color: var(--st-ink); color: var(--st-ink); }
+
+/* ---------- 區段標題 \ 標題 / ---------- */
+.st-head { text-align: center; margin-bottom: 36px; }
+.st-tag {
+  display: inline-block; position: relative;
+  padding: 8px 24px; border-radius: 999px;
+  background: var(--st-yellow); color: var(--st-ink);
+  font-size: 16px; font-weight: 700; letter-spacing: 3px;
+  margin-bottom: 18px;
+}
+.st-tag::after {
+  content: ""; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
+  border: 8px solid transparent; border-bottom: 0; border-top-color: var(--st-yellow);
+}
+.st-tag--blue { background: var(--st-blue-line); color: #fff; }
+.st-tag--blue::after { border-top-color: var(--st-blue-line); }
+.st-tag--line { background: none; padding: 0; color: var(--st-blue); font-weight: 500; letter-spacing: 4px; }
+.st-tag--line::after { display: none; }
+.st-tag--mute { background: none; padding: 0; color: var(--st-mute); font-weight: 500; letter-spacing: 6px; }
+.st-tag--mute::after { display: none; }
+
+.st-title {
+  display: inline-flex; align-items: center; gap: 18px;
+  font-size: 34px; font-weight: 900; letter-spacing: 2px; line-height: 1.25;
+  margin: 0;
+}
+.st-title::before, .st-title::after {
+  content: ""; width: 4px; height: 52px; background: var(--st-blue); border-radius: 2px;
+  flex-shrink: 0;
+}
+.st-title::before { transform: rotate(-35deg); }
+.st-title::after { transform: rotate(35deg); }
+.st-big { font-size: 1.6em; line-height: 1; margin: 0 4px; font-weight: 900; }
+.st-c-pink { color: var(--st-pink); }
+.st-c-blue { color: var(--st-blue); }
+.st-c-yellow { color: var(--st-yellow-deep); }
+.st-c-green { color: var(--st-green); }
+
+/* ---------- 學生方案 ---------- */
+.st-banner { border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(18, 181, 234, .15); }
+.st-banner img { display: block; width: 100%; height: auto; }
+.st-rules {
+  margin: 0; padding: 14px 20px; list-style: none;
+  background: var(--st-blue); color: #fff;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 24px;
+  font-size: 14px; letter-spacing: .5px;
+}
+.st-rules li { display: flex; gap: 8px; }
+.st-rules li::before { content: attr(data-n); font-weight: 700; flex-shrink: 0; }
+.st-rules-title { grid-column: 1 / -1; font-weight: 700; letter-spacing: 2px; }
+
+/* ---------- 三格卡片 ---------- */
+.st-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.st-grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+
+.st-feature { border: 3px solid var(--st-blue-line); background: #fff; display: flex; flex-direction: column; }
+.st-feature-ico { flex: 1; background: #fff; display: flex; align-items: center; }
+.st-feature-ico img { display: block; width: 100%; height: auto; }
+/* 藍底固定同高(兩行的字也放得下),文字上下置中 —— 不然三格的藍底會一高一低 */
+.st-feature-txt {
+  background: var(--st-blue-line); text-align: center;
+  min-height: 116px; padding: 16px 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; letter-spacing: 3px; line-height: 1.7;
+}
+
+.st-plans {
+  margin-top: 28px;
+  border: 2px solid var(--st-blue-line); border-radius: 16px;
+  padding: 30px 20px; text-align: center;
+  font-size: 18px; letter-spacing: 2px; line-height: 2.2;
+}
+.st-plan-chip {
+  display: inline-block; background: var(--st-blue); color: #fff;
+  font-weight: 900; padding: 0 10px; margin: 0 4px; letter-spacing: 2px;
+  font-size: 1.25em; line-height: 1.5;
+}
+.st-plans u { text-decoration: none; border-bottom: 3px solid var(--st-blue); }
+
+/* ---------- 放鬆 3 感 ---------- */
+.st-relax { text-align: center; }
+.st-relax-ico { height: 150px; display: flex; align-items: flex-end; justify-content: center; }
+.st-relax-ico img { max-height: 100%; max-width: 70%; width: auto; height: auto; }
+.st-relax-txt { margin-top: 12px; font-size: 20px; letter-spacing: 4px; font-weight: 600; }
+
+/* ---------- 創作你的眼鏡 ---------- */
+.st-photos { max-width: 720px; margin: 0 auto 28px; }
+.st-photos img { display: block; width: 100%; height: auto; }
+.st-decide {
+  position: relative;
+  background: #fff; border: 2px solid var(--st-blue-line); border-radius: 18px;
+  padding: 48px 24px 28px; max-width: 760px; margin: 30px auto 0;
+}
+.st-decide-tag {
+  position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%);
+  background: var(--st-pink-deep); color: #fff; border: 6px solid #fff;
+  padding: 10px 28px; border-radius: 999px;
+  font-size: 22px; font-weight: 900; letter-spacing: 3px; white-space: nowrap;
+}
+.st-decide-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.st-decide-col { padding: 8px 20px; text-align: center; }
+.st-decide-col + .st-decide-col { border-left: 1px dashed var(--st-blue-line); }
+.st-nose { display: flex; justify-content: center; margin: 0 0 14px; }
+.st-nose img { width: 200px; max-width: 100%; height: auto; }
+.st-decide-item { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 10px 0 20px; font-size: 18px; letter-spacing: 3px; color: var(--st-sub); }
+.st-decide-item img { width: 62px; height: auto; }
+.st-decide-cap { font-size: 17px; letter-spacing: 3px; line-height: 1.8; }
+.st-decide-cap b { color: var(--st-pink-deep); }
+
+/* ---------- 編號卡(3 大服務 / 優惠 3 部曲) ---------- */
+.st-point {
+  position: relative; text-align: center;
+  border: 2px solid var(--st-blue-line); border-radius: 16px; background: #fff;
+  padding: 60px 18px 26px; margin-top: 36px;
+  display: flex; flex-direction: column;
+}
+.st-point-no {
+  position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%);
+  width: 76px; height: 76px; border-radius: 50%;
+  background: var(--st-blue-line); color: #fff; border: 5px solid #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-weight: 900; line-height: 1;
+}
+.st-point-no small { font-size: 11px; letter-spacing: 1px; }
+.st-point-no b { font-size: 26px; }
+.st-point h3 { font-size: 26px; font-weight: 900; letter-spacing: 4px; margin: 0 0 14px; }
+.st-point p { margin: 0; font-size: 17px; letter-spacing: 2px; line-height: 1.9; color: var(--st-ink); }
+.st-point p small { display: block; font-size: 13px; color: var(--st-sub); letter-spacing: 1px; }
+.st-point-ico { margin-top: auto; padding-top: 22px; height: 170px; display: flex; align-items: flex-end; justify-content: center; }
+.st-point-ico img { max-height: 100%; max-width: 75%; width: auto; height: auto; }
+.st-point-photo { margin: 18px -18px -26px; border-radius: 0 0 14px 14px; overflow: hidden; }
+.st-point-photo img { display: block; width: 100%; height: auto; }
+.st-points--yellow h3 { color: var(--st-yellow-deep); }
+.st-points--pink h3 { color: var(--st-pink); }
+
+/* ---------- 保固 ---------- */
+.st-warranty { border: 2px solid var(--st-blue-line); border-radius: 16px; padding: 30px 32px; background: #fff; }
+.st-warranty h3 { margin: 0 0 14px; font-size: 26px; font-weight: 900; letter-spacing: 4px; }
+.st-warranty h3 em { font-style: normal; color: var(--st-blue); font-size: 1.7em; margin-right: 6px; }
+.st-warranty p { margin: 0; font-size: 17px; letter-spacing: 2px; line-height: 1.9; }
+.st-warranty p b { color: var(--st-blue); }
+.st-free { margin-top: 22px; display: flex; justify-content: center; height: 150px; }
+.st-free img { max-height: 100%; width: auto; height: auto; }
+
+/* ---------- 流程 ---------- */
+.st-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; counter-reset: st; }
+.st-step {
+  background: #fff; border-radius: 16px; padding: 26px 18px; text-align: center;
+  border: 2px solid var(--st-blue-line); position: relative;
+}
+.st-step-no {
+  width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 12px;
+  background: var(--st-blue); color: #fff; font-weight: 900; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.st-step i { font-size: 34px; color: var(--st-pink-deep); margin-bottom: 10px; }
+.st-step h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: 2px; }
+.st-step p { margin: 0; font-size: 14px; color: var(--st-sub); line-height: 1.7; }
+.st-step:not(:last-child)::after {
+  content: "\f054"; font-family: "Font Awesome 6 Free"; font-weight: 900;
+  position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+  color: var(--st-blue-line); font-size: 14px;
+}
+.st-steps-cta { margin-top: 32px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ---------- FAQ ---------- */
+.st-faq { max-width: 820px; margin: 0 auto; }
+.st-faq details {
+  background: #fff; border: 2px solid var(--st-blue-line); border-radius: 14px;
+  margin-bottom: 12px; overflow: hidden;
+}
+.st-faq summary {
+  list-style: none; cursor: pointer;
+  padding: 18px 54px 18px 22px; position: relative;
+  font-size: 17px; font-weight: 700; letter-spacing: 1px;
+}
+.st-faq summary::-webkit-details-marker { display: none; }
+.st-faq summary::before { content: "Q"; color: var(--st-blue); font-weight: 900; margin-right: 10px; }
+.st-faq summary::after {
+  content: "+"; position: absolute; right: 22px; top: 50%; transform: translateY(-50%);
+  font-size: 24px; color: var(--st-blue); font-weight: 400;
+}
+.st-faq details[open] summary::after { content: "−"; }
+.st-faq details > div { padding: 0 22px 20px 48px; color: var(--st-sub); line-height: 1.9; font-size: 15px; }
+
+/* ---------- 底部 CTA ---------- */
+.st-final { text-align: center; padding: 56px 20px 72px; }
+.st-final p { margin: 0 0 22px; color: var(--st-sub); letter-spacing: 2px; }
+
+/* ---------- 手機 ---------- */
+@media (max-width: 760px) {
+  .st-sec { padding: 48px 0; }
+  .st-title { font-size: 24px; gap: 10px; }
+  .st-title::before, .st-title::after { height: 36px; width: 3px; }
+  .st-tag { font-size: 14px; }
+  .st-grid3, .st-grid2 { grid-template-columns: 1fr; }
+  .st-rules { grid-template-columns: 1fr; font-size: 13px; }
+  .st-feature { flex-direction: row; }
+  .st-feature-ico { flex: 0 0 45%; }
+  .st-feature-txt { flex: 1; min-height: 0; font-size: 16px; }
+  .st-plans { font-size: 15px; line-height: 2.4; padding: 22px 14px; }
+  .st-relax-ico { height: 120px; }
+  .st-point-ico { height: 140px; }
+  .st-free { height: 120px; }
+  .st-decide-grid { grid-template-columns: 1fr; }
+  .st-decide-col + .st-decide-col { border-left: 0; border-top: 1px dashed var(--st-blue-line); padding-top: 22px; margin-top: 10px; }
+  .st-decide-tag { font-size: 18px; padding: 8px 20px; }
+  .st-point h3 { font-size: 22px; }
+  .st-warranty { padding: 24px 20px; }
+  .st-steps { grid-template-columns: 1fr 1fr; }
+  .st-step:not(:last-child)::after { display: none; }
+  .st-btn { font-size: 15px; letter-spacing: 2px; padding: 12px 22px; }
+}
