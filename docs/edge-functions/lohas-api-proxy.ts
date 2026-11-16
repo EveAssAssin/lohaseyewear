@@ -291,6 +291,54 @@ async function handleRealtime(
 }
 
 // =============================================
+// 人員照片／自我介紹以人資系統為準（2026-11-17 Louis，樂活市場部）
+// ---------------------------------------------
+// 人員在市場工具「個人資料修改」換照片、改介紹 → 存在人資系統（lohas-payroll）。左手沒有寫照片／介紹的 API，
+// 所以這裡把左手回來的人員資料「蓋上」人資的版本：只蓋本人或人資改過的人，其餘照左手原樣。
+//   來源：GET https://lohas-payroll.onrender.com/api/pub/staff-overrides（公開唯讀，不含個資）
+//   讀不到人資（逾時 2.5 秒、掛掉）→ 用上一次的，再沒有就原樣回左手，不影響官網。快取 3 分鐘。
+//   App 走主後端 /lefthandapi/service，同一份規則（主後端 App\Tool\StaffOverride）。
+// =============================================
+const HR_OVERRIDE_URL = "https://lohas-payroll.onrender.com/api/pub/staff-overrides";
+const STAFF_METHODS = new Set(["getemployeebygroup", "getemployeebyerps", "getemployeeinfobyerpid", "getstoredatas"]);
+let staffOv: { at: number; map: Record<string, { photo?: string; intro?: string }> } = { at: 0, map: {} };
+async function staffOverrides(): Promise<Record<string, { photo?: string; intro?: string }>> {
+  if (Date.now() - staffOv.at < 180000) return staffOv.map;
+  try {
+    const r = await fetch(HR_OVERRIDE_URL, { signal: AbortSignal.timeout(2500) });
+    const j = await r.json();
+    if (r.ok && j && j.success && Array.isArray(j.data)) {
+      const map: Record<string, { photo?: string; intro?: string }> = {};
+      for (const x of j.data) {
+        if (!x || !x.erpid) continue;
+        const o: { photo?: string; intro?: string } = {};
+        if (typeof x.photo === "string" && /^https:\/\//.test(x.photo)) o.photo = x.photo;
+        if (typeof x.intro === "string") o.intro = x.intro;
+        if (o.photo || o.intro !== undefined) map[String(x.erpid)] = o;
+      }
+      staffOv = { at: Date.now(), map };
+    } else staffOv.at = Date.now() - 120000;   // 失敗：1 分鐘後再試，先用上一次的
+  } catch (_e) { staffOv.at = Date.now() - 120000; }
+  return staffOv.map;
+}
+// 遞迴找人員物件：列表有 erpid＋introduction／photos；詳細有 employeeerpid
+function applyStaff(node: unknown, map: Record<string, { photo?: string; intro?: string }>): number {
+  let n = 0;
+  if (Array.isArray(node)) { for (const v of node) n += applyStaff(v, map); return n; }
+  if (!node || typeof node !== "object") return 0;
+  const o = node as Record<string, unknown>;
+  const erp = o.employeeerpid != null ? String(o.employeeerpid) : (o.erpid != null && ("introduction" in o || "photos" in o) ? String(o.erpid) : null);
+  if (erp && map[erp]) {
+    const m = map[erp];
+    if (m.intro !== undefined) o.introduction = m.intro;
+    if (m.photo) { if ("employeephotos" in o) o.employeephotos = [m.photo]; else o.photos = [m.photo]; }
+    n++;
+  }
+  for (const v of Object.values(o)) if (v && typeof v === "object") n += applyStaff(v, map);
+  return n;
+}
+
+// =============================================
 // 主函式
 // =============================================
 Deno.serve(async (req: Request) => {
@@ -446,6 +494,18 @@ Deno.serve(async (req: Request) => {
       } catch (e) {
         console.warn("[proxy] addreservation reservationId 解密失敗:", e);
       }
+    }
+
+    // 人員照片／介紹以人資為準（2026-11-17；失敗就原樣回左手）
+    if (STAFF_METHODS.has(method) && json && json.data != null) {
+      try {
+        const map = await staffOverrides();
+        if (Object.keys(map).length) {
+          const isStr = typeof json.data === "string";
+          const data = isStr ? JSON.parse(json.data) : json.data;
+          if (applyStaff(data, map) > 0) json.data = isStr ? JSON.stringify(data) : data;
+        }
+      } catch (e) { console.warn("[proxy] staff override 失敗:", e); }
     }
 
     return new Response(JSON.stringify(json), {
