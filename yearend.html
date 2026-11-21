@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261121-noig">
+  <link rel="stylesheet" href="css/yearend.css?v=20261121-party">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -67,6 +67,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
        圖上的字給讀不到圖的人與搜尋引擎:h1 + 下方的優惠說明 -->
   <section class="ye-hero" id="top">
     <h1 class="ye-sr">2026 年終感謝祭:配鏡第二副 0 元,原價配鏡指定全方案贈 2,680 元配鏡折價券</h1>
+    <!-- 慶典動態(2026-11-21):banner 上撒彩帶(canvas,js/yearend.js 的 heroParty)+ 每隔幾秒一道閃光 -->
+    <canvas class="ye-party" data-ye-party aria-hidden="true"></canvas>
     <picture class="ye-hero-kv">
       <source media="(max-width: 760px)" srcset="images/yearend/kv-mobile.jpg" width="800" height="1000">
       <img src="images/yearend/kv-1920.jpg" srcset="images/yearend/kv-1200.jpg 1200w, images/yearend/kv-1920.jpg 1920w" sizes="100vw"
@@ -295,6 +297,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-store.js?v=20260525-1000"></script>
 <script src="js/store-data.js?v=20261021-dadun"></script>
 <script src="js/booking-v2.js?v=20261121-preset"></script>
-<script src="js/yearend.js?v=20261121-kvstyle"></script>
+<script src="js/yearend.js?v=20261121-party"></script>
 </body>
 </html>

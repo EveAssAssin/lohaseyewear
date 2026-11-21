@@ -194,7 +194,77 @@
     return a;
   }
 
+  /* ---------- 主視覺慶典彩帶(2026-11-21 使用者:hero 要動起來、要有慶典感) ----------
+     進場先噴一波,之後保持少量飄落。只在主視覺看得到時才畫(IntersectionObserver),
+     分頁切走也停;系統設定「減少動態」的人完全不畫。顏色取主視覺的彩帶色。 */
+  function heroParty() {
+    const cv = $("[data-ye-party]");
+    if (!cv || !cv.getContext) return;
+    /* ⚠ 不因「減少動態」整個關掉:Windows 的「動畫效果」關閉就會觸發這個設定,
+       使用者自己的電腦就是這樣(2026-11-21 實測),關掉等於大多數 Windows 訪客看不到。
+       這些人改成量少、飄得慢 */
+    const calm = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const hero = cv.parentNode, ctx = cv.getContext("2d");
+    const COLORS = ["#ffd23f", "#4fc1d6", "#f6a6b8", "#f08a24", "#ffffff", "#90d18f"];
+    const dpr = Math.min(root.devicePixelRatio || 1, 2);
+    let W = 0, H = 0, bits = [], visible = true, raf = 0, last = 0, drip = 0;
+
+    function size() {
+      W = hero.clientWidth; H = hero.clientHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function bit(burst) {
+      const s = W < 600 ? 0.8 : 1;
+      return {
+        x: burst ? W * (0.15 + Math.random() * 0.7) : Math.random() * W,
+        y: burst ? -10 - Math.random() * H * 0.4 : -20,
+        vx: (Math.random() - 0.5) * (burst ? 2.4 : 0.8),
+        vy: (burst ? 1.6 : 0.9) + Math.random() * 1.6,
+        w: (6 + Math.random() * 6) * s, h: (10 + Math.random() * 10) * s,
+        r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.2,
+        sway: Math.random() * Math.PI * 2,
+        round: Math.random() < 0.3,
+        c: COLORS[(Math.random() * COLORS.length) | 0]
+      };
+    }
+    function tick(t) {
+      raf = 0;
+      if (!visible || document.hidden) return;
+      const dt = Math.min(48, t - (last || t)) / 16.7; last = t;
+      /* 平時每秒補約 4 片,手機少一點 */
+      drip += dt;
+      if (drip > (W < 600 ? 22 : 14) * (calm ? 2 : 1) && bits.length < 80) { bits.push(bit(false)); drip = 0; }
+      ctx.clearRect(0, 0, W, H);
+      bits = bits.filter(b => b.y < H + 30);
+      for (const b of bits) {
+        b.sway += 0.05 * dt;
+        b.x += (b.vx + Math.sin(b.sway) * 0.6) * dt;
+        b.y += b.vy * dt;
+        b.r += b.vr * dt;
+        ctx.save();
+        ctx.translate(b.x, b.y); ctx.rotate(b.r);
+        ctx.fillStyle = b.c;
+        if (b.round) { ctx.beginPath(); ctx.arc(0, 0, b.w / 2, 0, Math.PI * 2); ctx.fill(); }
+        else { ctx.scale(1, Math.cos(b.sway * 2)); ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); }
+        ctx.restore();
+      }
+      raf = requestAnimationFrame(tick);
+    }
+    function go() { if (!raf && visible && !document.hidden) { last = 0; raf = requestAnimationFrame(tick); } }
+
+    size();
+    for (let i = 0; i < (W < 600 ? 70 : 140) * (calm ? 0.5 : 1); i++) bits.push(bit(true));   // 進場一波
+    root.addEventListener("resize", size);
+    document.addEventListener("visibilitychange", go);
+    if ("IntersectionObserver" in root) {
+      new IntersectionObserver(es => { visible = es[0].isIntersecting; go(); }).observe(hero);
+    }
+    go();
+  }
+
   /* ---------- 啟動 ---------- */
+  heroParty();
   initApp();
   initStatic();
   track("yearend_view", {});

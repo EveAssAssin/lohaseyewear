@@ -107,7 +107,26 @@
    banner 上已經有大字的 0 元 / $2,680 / 12/1 起 → 這裡不再重複放大字,
    只留一行小字說明 + 兩顆按鈕,置中;底色用深紅素色、不撒彩帶,和 banner 的紅分開 */
 .ye-hero { position: relative; background: var(--ye-red-deep); color: #fff; }
-.ye-hero-kv { display: block; }
+.ye-hero-kv { display: block; position: relative; overflow: hidden; }
+/* 慶典動態:banner 進場彈一下、每 5 秒掃過一道光;彩帶畫在 canvas 上 */
+.ye-hero-kv img { animation: yePop .9s cubic-bezier(.2, 1.4, .4, 1) both; }
+.ye-hero-kv::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,.45) 50%, transparent 100%);
+  transform: skewX(-18deg);
+  animation: yeShine 5s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+.ye-party { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+.ye-hero-cta .ye-btn--red { animation: yeBeat 2.4s ease-in-out 1.5s infinite; }
+@keyframes yePop { 0% { transform: scale(1.06); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes yeShine { 0% { left: -40%; } 35%, 100% { left: 120%; } }
+@keyframes yeBeat { 0%, 100% { transform: scale(1); } 8% { transform: scale(1.06); } 16% { transform: scale(1); } 24% { transform: scale(1.04); } 32% { transform: scale(1); } }
+/* 「減少動態」的人只留閃光(慢、不位移),拿掉彈跳。
+   不全關:Windows 關掉「動畫效果」就會觸發,使用者自己的電腦就是(2026-11-21) */
+@media (prefers-reduced-motion: reduce) {
+  .ye-hero-kv img, .ye-hero-cta .ye-btn--red { animation: none; }
+}
 /* 不裁切:banner 上有字,裁掉會少資訊 */
 .ye-hero-kv img { display: block; width: 100%; height: auto; }
 .ye-hero-bar {
