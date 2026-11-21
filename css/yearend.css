@@ -104,25 +104,26 @@
 .ye-sec--red .ye-tag { background: var(--ye-yellow); color: var(--ye-red-deep); }
 
 /* ---------- ① 主視覺 ---------- */
-.ye-hero { position: relative; background: var(--ye-red) var(--ye-confetti); color: #fff; }
+/* banner 下方的行動列(2026-11-21 使用者:原本的紅條「很怪」)
+   banner 上已經有大字的 0 元 / $2,680 / 12/1 起 → 這裡不再重複放大字,
+   只留一行小字說明 + 兩顆按鈕,置中;底色用深紅素色、不撒彩帶,和 banner 的紅分開 */
+.ye-hero { position: relative; background: var(--ye-red-deep); color: #fff; }
 .ye-hero-kv { display: block; }
 /* 不裁切:banner 上有字,裁掉會少資訊 */
 .ye-hero-kv img { display: block; width: 100%; height: auto; }
 .ye-hero-bar {
   max-width: 1080px; margin: 0 auto;
-  padding: 24px 20px 28px;
-  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px 28px;
+  padding: 22px 20px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  text-align: center;
 }
-.ye-hero-gift { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: 1px; line-height: 1.5; }
-.ye-hero-gift b { font-size: 34px; margin: 0 4px; }
-.ye-hero-gift .ye-hero-date {
-  display: inline-block; margin-top: 8px; padding: 3px 16px;
-  border: 2px solid #fff; border-radius: 999px;
-  font-size: 15px; font-weight: 700; letter-spacing: 1px;
-}
-.ye-hero-cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.ye-hero-gift { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 1px; line-height: 1.6; }
+.ye-hero-gift i { font-style: normal; margin: 0 10px; opacity: .5; }
+.ye-hero-cta { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.ye-hero-cta .ye-btn { min-width: 220px; border-color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.25); }
+.ye-hero-cta .ye-btn:hover { box-shadow: 0 2px 0 rgba(0,0,0,.25); }
 .ye-hero-cta .ye-btn--red { background: var(--ye-yellow); color: var(--ye-red-deep); }
-.ye-fine { grid-column: 1 / -1; margin: 0; font-size: 12px; line-height: 1.6; opacity: .85; }
+.ye-fine { margin: 0; font-size: 12px; line-height: 1.6; opacity: .75; }
 .ye-fine a { color: #fff; text-decoration: underline; }
 
 /* ---------- 主標 ---------- */
@@ -148,16 +149,24 @@
 /* ② 生活痛點 */
 .ye-pains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .ye-pain { padding: 22px 22px 28px; }
+/* 插圖底:淺黃 + 放射(使用者 2026-11-21:紅底撒彩帶的示意圖「很怪」) */
 .ye-pain-art {
+  position: relative; overflow: hidden;
   height: 130px; margin-bottom: 18px; border-radius: 14px;
-  background: var(--ye-red) var(--ye-confetti); background-size: 200px;
-  display: flex; align-items: center; justify-content: center; gap: 22px;
-  font-size: 50px; color: var(--ye-yellow);
+  background: var(--ye-yellow-soft);
+  display: flex; align-items: center; justify-content: center; gap: 24px;
+  font-size: 52px; color: var(--ye-red);
 }
-.ye-pain-art i { filter: drop-shadow(0 3px 0 var(--ye-red-deep)); }
+.ye-pain-art::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 600px; height: 600px;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, #ffe58a 0deg 8deg, transparent 8deg 16deg);
+  opacity: .7;
+}
+.ye-pain-art > * { position: relative; }
+.ye-pain-art i { filter: drop-shadow(0 3px 0 rgba(142,27,27,.3)); }
 .ye-pain-art--style { gap: 4px; flex-wrap: wrap; padding: 10px; }
 .ye-pain-art--style .ye-g { width: 82px; height: 35px; }
-.ye-pain-art--style .ye-g--red { color: var(--ye-yellow); }
 .ye-pain h3 { margin: 0 0 12px; font-size: 24px; font-weight: 900; line-height: 1.4; letter-spacing: 1px; color: var(--ye-red); }
 .ye-pain p { margin: 0; font-size: 17px; line-height: 1.8; color: var(--ye-sub); }
 .ye-pain .ye-note { margin-top: 10px; font-size: 13px; line-height: 1.6; color: #a08680; }
@@ -359,12 +368,11 @@
   .ye { padding-bottom: 76px; }          /* 讓出固定按鈕 */
   .ye-sp { display: inline; }
   .ye-sec { padding: 56px 0; }
-  .ye-hero-bar { grid-template-columns: 1fr; text-align: center; padding: 20px 16px 24px; }
-  .ye-hero-gift { font-size: 18px; }
-  .ye-hero-gift b { font-size: 28px; }
-  .ye-hero-gift .ye-hero-date { font-size: 13px; }
-  .ye-hero-cta { justify-content: center; }
-  .ye-hero-cta .ye-btn { width: 100%; }
+  .ye-hero-bar { padding: 18px 16px 22px; }
+  .ye-hero-gift { font-size: 15px; }
+  .ye-hero-gift i { display: none; }
+  .ye-hero-cta { width: 100%; }
+  .ye-hero-cta .ye-btn { width: 100%; min-width: 0; }
   .ye-lead { margin-bottom: 48px; }
   .ye-lead-title { font-size: 34px; }
   .ye-lead-sub { font-size: 16px; }
