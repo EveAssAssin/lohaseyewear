@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261121-v2">
+  <link rel="stylesheet" href="css/yearend.css?v=20261121-v3">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -137,6 +137,47 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <section class="ye-sec ye-sec--red" id="together">
     <div class="ye-wrap">
       <div class="ye-head ye-head--light"><span class="ye-tag ye-tag--yellow">折價券不限本人使用</span><h2>一副給自己,另一副給重要的人</h2></div>
+
+      <!-- 兩人示意:一個 2,680,另一個 2,680 劃掉變 0 元 -->
+      <div class="ye-duo">
+        <div class="ye-duo-row" role="img" aria-label="你原價配第一副 2,680 元,拿到 2,680 元折價券送給重要的人,第二副 2,680 元折抵後 0 元">
+          <div class="ye-duo-p">
+            <div class="ye-duo-tag"><small>第一副 原價配鏡</small><span class="ye-duo-price"><b>$2,680</b></span></div>
+            <svg class="ye-duo-man" viewBox="0 0 160 170" aria-hidden="true">
+              <rect x="70" y="96" width="20" height="22" fill="#ffd9b8"/>
+              <path d="M20 170 Q20 118 80 112 Q140 118 140 170 Z" fill="#4fc1d6" stroke="#8e1b1b" stroke-width="4" stroke-linejoin="round"/>
+              <circle cx="80" cy="66" r="40" fill="#ffd9b8" stroke="#8e1b1b" stroke-width="4"/>
+              <path d="M40 64 Q38 22 80 22 Q122 22 120 64 Q110 42 82 42 Q58 42 40 64 Z" fill="#3a1512"/>
+              <circle cx="52" cy="88" r="6" fill="#f6a6b8" opacity=".7"/><circle cx="108" cy="88" r="6" fill="#f6a6b8" opacity=".7"/>
+              <g fill="rgba(255,255,255,.35)" stroke="#c8202a" stroke-width="5"><rect x="49" y="60" width="27" height="20" rx="6"/><rect x="84" y="60" width="27" height="20" rx="6"/></g>
+              <path d="M76 66 L84 66" stroke="#c8202a" stroke-width="5"/>
+              <path d="M68 92 Q80 102 92 92" stroke="#8e1b1b" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </svg>
+            <p class="ye-duo-who">你</p>
+          </div>
+          <div class="ye-duo-pass" aria-hidden="true">
+            <span class="ye-duo-ticket">2,680 元<br>折價券</span>
+            <i class="fa-solid fa-arrow-right-long"></i>
+          </div>
+          <div class="ye-duo-p">
+            <div class="ye-duo-tag ye-duo-tag--free"><small>第二副 憑券折抵</small><span class="ye-duo-price"><s>$2,680</s><b class="ye-pop">0元</b></span></div>
+            <svg class="ye-duo-man" viewBox="0 0 160 170" aria-hidden="true">
+              <path d="M34 72 Q30 20 80 20 Q130 20 126 72 L130 120 Q112 114 112 98 L48 98 Q48 114 30 120 Z" fill="#3a1512"/>
+              <rect x="70" y="96" width="20" height="22" fill="#ffd9b8"/>
+              <path d="M20 170 Q20 118 80 112 Q140 118 140 170 Z" fill="#f08a24" stroke="#8e1b1b" stroke-width="4" stroke-linejoin="round"/>
+              <circle cx="80" cy="66" r="40" fill="#ffd9b8" stroke="#8e1b1b" stroke-width="4"/>
+              <path d="M40 62 Q44 26 80 26 Q116 26 120 62 Q104 40 74 46 Q54 50 40 62 Z" fill="#3a1512"/>
+              <circle cx="52" cy="88" r="6" fill="#f6a6b8" opacity=".7"/><circle cx="108" cy="88" r="6" fill="#f6a6b8" opacity=".7"/>
+              <g fill="rgba(255,255,255,.35)" stroke="#4fc1d6" stroke-width="5"><circle cx="63" cy="70" r="13"/><circle cx="97" cy="70" r="13"/></g>
+              <path d="M76 68 Q80 64 84 68" stroke="#4fc1d6" stroke-width="5" fill="none"/>
+              <path d="M68 92 Q80 102 92 92" stroke="#8e1b1b" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </svg>
+            <p class="ye-duo-who">重要的人</p>
+          </div>
+        </div>
+        <p class="ye-duo-note">你先完成第一副原價配鏡、拿到折價券,再送給重要的人使用。第二副需符合方案條件;升級鏡框、鏡片或方案可補差額。</p>
+      </div>
+
       <div class="ye-slider" data-ye-slider>
         <div class="ye-track">
           <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-heart"></i></div><h3>帶上另一半</h3><p>兩個人一起換上新風格</p></article>
@@ -354,6 +395,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-store.js?v=20260525-1000"></script>
 <script src="js/store-data.js?v=20261021-dadun"></script>
 <script src="js/booking-v2.js?v=20261121-preset"></script>
-<script src="js/yearend.js?v=20261121-v2"></script>
+<script src="js/yearend.js?v=20261121-v4"></script>
 </body>
 </html>

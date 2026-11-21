@@ -137,10 +137,17 @@
       list.push({ num: Math.floor(r.five / r.total * 100) + "%", label: "給了 5 星好評" });
     }
     if (stores.length) list.push({ num: String(stores.length), label: "間門市全台服務" });
+    /* 第四個數字(使用者 2026-11-21:「感覺少一個指數」):在職顧問人數,從官網門市資料即時數,
+       條件與 loadReviews 挑評價的人相同(排除離職/凍結/「不指定」),同一人跨店只算一次 */
+    const staff = new Set();
+    stores.forEach(s => (s.employees || []).forEach(e => {
+      if (e && e.erpid && !e.isLeave && !e.isFreeze && !e.isUnspecify) staff.add(String(e.erpid));
+    }));
+    if (staff.size) list.push({ num: String(staff.size), label: "位專業配鏡顧問" });
     if (!list.length) return;
     const el = $("[data-ye-stats]");
-    el.innerHTML = list.map(s => `<div class="ye-stat"><b class="ye-pop">${esc(s.num)}</b><span>${esc(s.label)}</span></div>`).join("") +
-      (r && r.total ? `<p class="ye-stat-note">評價數為門市評價系統統計(在職顧問),截至 ${esc(r.asOf)}</p>` : "");
+    /* 出處小字已拿掉(使用者 2026-11-21:「不用寫」);asOf 仍留在 CONFIG 供日後更新時對照 */
+    el.innerHTML = list.map(s => `<div class="ye-stat"><b class="ye-pop">${esc(s.num)}</b><span>${esc(s.label)}</span></div>`).join("");
     el.hidden = false;
     $("#voice").hidden = false;
   }

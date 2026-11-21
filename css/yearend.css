@@ -527,6 +527,53 @@ body.ye-chat-open { overflow: hidden; }
   --bg-warm: #fff8e6;
 }
 
+/* ---------- 兩人示意:一個 2,680,另一個 2,680 劃掉變 0 元 ---------- */
+.ye-duo {
+  max-width: 760px; margin: 0 auto 40px; padding: 26px 22px 20px;
+  background: var(--ye-cream); color: var(--ye-ink);
+  border: 3px solid var(--ye-red-deep); border-radius: 22px;
+  box-shadow: 0 7px 0 var(--ye-red-deep);
+}
+.ye-duo-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 12px; }
+.ye-duo-p { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.ye-duo-man { display: block; width: 100%; max-width: 160px; height: auto; }
+.ye-duo-who { margin: 8px 0 0; font-size: 18px; font-weight: 900; color: var(--ye-red-deep); letter-spacing: 2px; }
+.ye-duo-tag {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  min-width: 160px; margin-bottom: 18px; padding: 8px 18px 10px;
+  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 16px;
+  box-shadow: 0 4px 0 var(--ye-red-deep);
+}
+.ye-duo-tag::after {          /* 對話框的尾巴,指向下面那個人 */
+  content: ""; position: absolute; left: 50%; bottom: -10px; width: 16px; height: 16px; margin-left: -8px;
+  background: inherit; border-right: 3px solid var(--ye-red-deep); border-bottom: 3px solid var(--ye-red-deep);
+  transform: rotate(45deg);
+}
+.ye-duo-tag small { font-size: 14px; font-weight: 700; color: var(--ye-sub); letter-spacing: 1px; white-space: nowrap; }
+.ye-duo-price { display: flex; align-items: center; gap: 10px; line-height: 1.1; white-space: nowrap; }
+.ye-duo-price b { font-family: var(--ye-num); font-size: 36px; font-weight: 900; color: var(--ye-red); }
+.ye-duo-tag--free { background: var(--ye-red); }
+.ye-duo-tag--free small { color: #fff; }
+.ye-duo-price s {
+  font-family: var(--ye-num); font-size: 22px; font-weight: 700; color: rgba(255,255,255,.85);
+  text-decoration: line-through; text-decoration-color: var(--ye-yellow); text-decoration-thickness: 4px;
+}
+.ye-duo-price b.ye-pop { font-size: 46px; color: var(--ye-yellow); }
+.ye-duo-pass { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-bottom: 70px; color: var(--ye-red-deep); }
+.ye-duo-ticket {
+  padding: 6px 12px; border: 2px dashed var(--ye-red-deep); border-radius: 8px;
+  background: var(--ye-yellow); font-size: 15px; font-weight: 900; line-height: 1.3; text-align: center;
+  transform: rotate(-6deg); white-space: nowrap;
+}
+.ye-duo-pass i { font-size: 30px; }
+.ye-duo-note { margin: 18px 0 0; font-size: 14px; line-height: 1.7; color: var(--ye-sub); text-align: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .ye-duo-price b.ye-pop { display: inline-block; animation: yeZero 2.6s ease-in-out infinite; }
+  .ye-duo-pass i { animation: yeNudge 1.6s ease-in-out infinite; }
+}
+@keyframes yeZero { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(1.18) rotate(-4deg); } 90% { transform: scale(.96); } }
+@keyframes yeNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+
 /* ---------- 手機固定按鈕 ---------- */
 .ye-dock { display: none; }
 
@@ -576,6 +623,20 @@ body.ye-chat-open { overflow: hidden; }
   .ye-book-stores { grid-template-columns: 1fr 1fr; }
   .ye-book-actions .ye-btn { width: 100%; font-size: 16px; letter-spacing: 1px; padding: 12px 16px; }
   .ye-rules ul { padding: 18px 18px 18px 38px; }
+  .ye-duo { padding: 20px 10px 16px; margin-bottom: 32px; }
+  .ye-duo-row { gap: 4px; }
+  .ye-duo-man { max-width: 110px; }
+  .ye-duo-who { font-size: 15px; letter-spacing: 1px; }
+  .ye-duo-tag { min-width: 0; padding: 6px 8px 8px; border-radius: 12px; }
+  .ye-duo-tag small { font-size: 11px; letter-spacing: 0; }
+  .ye-duo-price { flex-direction: column; gap: 0; }
+  .ye-duo-price b { font-size: 26px; }
+  .ye-duo-price s { font-size: 16px; text-decoration-thickness: 3px; }
+  .ye-duo-price b.ye-pop { font-size: 32px; }
+  .ye-duo-pass { padding-bottom: 56px; }
+  .ye-duo-ticket { font-size: 12px; padding: 4px 6px; }
+  .ye-duo-pass i { font-size: 22px; }
+  .ye-duo-note { font-size: 13px; text-align: left; padding: 0 6px; }
 
   .ye-dock {
     display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px;
