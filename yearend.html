@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261121-v3">
+  <link rel="stylesheet" href="css/yearend.css?v=20261122-v34">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -88,43 +88,54 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <section class="ye-sec ye-sec--rays" id="why">
     <div class="ye-wrap">
       <div class="ye-lead">
-        <svg class="ye-g ye-g--orange ye-lead-g1" aria-hidden="true"><use href="#ye-glasses"/></svg>
-        <svg class="ye-g ye-g--teal ye-lead-g2" aria-hidden="true"><use href="#ye-glasses"/></svg>
-        <p class="ye-lead-kicker">你的生活不只一種風格</p>
+        <span class="ye-tag">生活不只一種風格</span>
         <h2 class="ye-lead-title">你的眼鏡,<br class="ye-sp">何必只有一副?</h2>
         <p class="ye-lead-sub">這副也好看、那副也捨不得放下?<br class="ye-sp">這次不用二選一!</p>
       </div>
-      <!-- 情境輪播(2026-11-21 使用者:字太多 → 情境卡左右滑、沒滑就自己輪播)。
-           先用插畫;有真人情境照時把 .ye-scene-art 換成 <img> 即可 -->
+      <!-- 情境輪播(2026-11-21 重做):每張卡是「A 情境 ＋ B 情境」斜切兩半,
+           一眼看出「兩種場合、兩副眼鏡」。左右滑、沒滑就自己輪播。
+           有真人情境照時,把 .ye-vs-side 的背景換成照片即可 -->
       <div class="ye-slider" data-ye-slider>
         <div class="ye-track">
-          <article class="ye-scene">
-            <div class="ye-scene-art ye-scene-art--style" aria-hidden="true">
-              <svg class="ye-g ye-g--red"><use href="#ye-glasses"/></svg>
-              <svg class="ye-g ye-g--teal"><use href="#ye-glasses-round"/></svg>
-              <svg class="ye-g ye-g--orange"><use href="#ye-glasses"/></svg>
+          <article class="ye-scene ye-vs ye-vs--photo" style="--a:#c8202a;--b:#f08a24">
+            <div class="ye-vs-art" aria-hidden="true">
+              <div class="ye-vs-side ye-vs-a"><img class="ye-vs-photo" src="images/yearend/scene1-formal.jpg" alt="" width="640" height="960" loading="lazy"><span>正式</span></div>
+              <div class="ye-vs-side ye-vs-b"><img class="ye-vs-photo" src="images/yearend/scene1-casual.jpg" alt="" width="640" height="960" loading="lazy"><span>休閒</span></div>
+              <b class="ye-vs-mid">+</b>
             </div>
-            <h3>衣服天天換,<br>眼鏡也跟著換</h3><p>眼鏡也是你的穿搭配件</p>
+            <div class="ye-vs-body"><small>情境 01</small><h3>衣服天天換,<br>眼鏡也跟著換</h3><p>眼鏡也是你的穿搭配件</p></div>
           </article>
-          <article class="ye-scene">
-            <div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-laptop"></i><i class="fa-solid fa-mug-hot"></i></div>
-            <h3>上班一副,<br>下班一副</h3><p>辦公專注,生活放鬆</p>
-          </article>
-          <article class="ye-scene">
-            <div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-plane-departure"></i><i class="fa-solid fa-camera"></i></div>
-            <h3>出遊一副,<br>日常一副</h3><p>不同場合,換一副更適合的</p>
-          </article>
-          <article class="ye-scene">
-            <div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-shield-heart"></i></div>
-            <h3>多一副備用,<br>生活更安心</h3><p>忘了帶、壓壞了也不狼狽</p>
-          </article>
-          <article class="ye-scene">
-            <div class="ye-scene-art ye-scene-art--style" aria-hidden="true">
-              <svg class="ye-g ye-g--orange"><use href="#ye-glasses"/></svg>
-              <i class="fa-solid fa-heart"></i>
-              <svg class="ye-g ye-g--teal"><use href="#ye-glasses"/></svg>
+          <article class="ye-scene ye-vs ye-vs--photo" style="--a:#4fc1d6;--b:#c8202a">
+            <div class="ye-vs-art" aria-hidden="true">
+              <div class="ye-vs-side ye-vs-a"><img class="ye-vs-photo ye-vs-photo--left" src="images/yearend/scene2-work.jpg" alt="" width="640" height="858" loading="lazy"><span>上班</span></div>
+              <div class="ye-vs-side ye-vs-b"><img class="ye-vs-photo ye-vs-photo--zoom" src="images/yearend/scene2-offwork.jpg" alt="" width="640" height="859" loading="lazy"><span>下班</span></div>
+              <b class="ye-vs-mid">+</b>
             </div>
-            <h3>這副也愛,<br>那副也愛</h3><p>這次不用二選一</p>
+            <div class="ye-vs-body"><small>情境 02</small><h3>上班一副,<br>下班一副</h3><p>辦公專注,生活放鬆</p></div>
+          </article>
+          <article class="ye-scene ye-vs ye-vs--photo" style="--a:#f08a24;--b:#4fc1d6">
+            <div class="ye-vs-art" aria-hidden="true">
+              <div class="ye-vs-side ye-vs-a"><img class="ye-vs-photo" src="images/yearend/scene3-travel.jpg" alt="" width="640" height="860" loading="lazy"><span>出遊</span></div>
+              <div class="ye-vs-side ye-vs-b"><img class="ye-vs-photo" src="images/yearend/scene3-daily.jpg?v=2" alt="" width="640" height="853" loading="lazy"><span>日常</span></div>
+              <b class="ye-vs-mid">+</b>
+            </div>
+            <div class="ye-vs-body"><small>情境 03</small><h3>出遊一副,<br>日常一副</h3><p>不同場合,換一副更適合的</p></div>
+          </article>
+          <article class="ye-scene ye-vs" style="--a:#c8202a;--b:#f6a6b8">
+            <div class="ye-vs-art" aria-hidden="true">
+              <div class="ye-vs-side ye-vs-a"><i class="fa-solid fa-glasses"></i><span>常戴</span></div>
+              <div class="ye-vs-side ye-vs-b"><i class="fa-solid fa-shield-heart"></i><span>備用</span></div>
+              <b class="ye-vs-mid">+</b>
+            </div>
+            <div class="ye-vs-body"><small>情境 04</small><h3>多一副備用,<br>生活更安心</h3><p>忘了帶、壓壞了也不狼狽</p></div>
+          </article>
+          <article class="ye-scene ye-vs" style="--a:#f6a6b8;--b:#4fc1d6">
+            <div class="ye-vs-art" aria-hidden="true">
+              <div class="ye-vs-side ye-vs-a"><i class="fa-solid fa-heart"></i><span>這副</span></div>
+              <div class="ye-vs-side ye-vs-b"><i class="fa-solid fa-heart"></i><span>那副</span></div>
+              <b class="ye-vs-mid">+</b>
+            </div>
+            <div class="ye-vs-body"><small>情境 05</small><h3>這副也愛,<br>那副也愛</h3><p>這次不用二選一</p></div>
           </article>
         </div>
         <div class="ye-dots" data-ye-dots></div>
@@ -136,57 +147,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- ③ 家人好友一起配 -->
   <section class="ye-sec ye-sec--red" id="together">
     <div class="ye-wrap">
-      <div class="ye-head ye-head--light"><span class="ye-tag ye-tag--yellow">折價券不限本人使用</span><h2>一副給自己,另一副給重要的人</h2></div>
+      <div class="ye-head ye-head--light"><span class="ye-tag ye-tag--yellow">折價券不限本人使用</span><h2>一副給自己,<br class="ye-sp">另一副給重要的人</h2></div>
 
-      <!-- 兩人示意:一個 2,680,另一個 2,680 劃掉變 0 元 -->
-      <div class="ye-duo">
-        <div class="ye-duo-row" role="img" aria-label="你原價配第一副 2,680 元,拿到 2,680 元折價券送給重要的人,第二副 2,680 元折抵後 0 元">
-          <div class="ye-duo-p">
-            <div class="ye-duo-tag"><small>第一副 原價配鏡</small><span class="ye-duo-price"><b>$2,680</b></span></div>
-            <svg class="ye-duo-man" viewBox="0 0 160 170" aria-hidden="true">
-              <rect x="70" y="96" width="20" height="22" fill="#ffd9b8"/>
-              <path d="M20 170 Q20 118 80 112 Q140 118 140 170 Z" fill="#4fc1d6" stroke="#8e1b1b" stroke-width="4" stroke-linejoin="round"/>
-              <circle cx="80" cy="66" r="40" fill="#ffd9b8" stroke="#8e1b1b" stroke-width="4"/>
-              <path d="M40 64 Q38 22 80 22 Q122 22 120 64 Q110 42 82 42 Q58 42 40 64 Z" fill="#3a1512"/>
-              <circle cx="52" cy="88" r="6" fill="#f6a6b8" opacity=".7"/><circle cx="108" cy="88" r="6" fill="#f6a6b8" opacity=".7"/>
-              <g fill="rgba(255,255,255,.35)" stroke="#c8202a" stroke-width="5"><rect x="49" y="60" width="27" height="20" rx="6"/><rect x="84" y="60" width="27" height="20" rx="6"/></g>
-              <path d="M76 66 L84 66" stroke="#c8202a" stroke-width="5"/>
-              <path d="M68 92 Q80 102 92 92" stroke="#8e1b1b" stroke-width="4" fill="none" stroke-linecap="round"/>
-            </svg>
-            <p class="ye-duo-who">你</p>
-          </div>
-          <div class="ye-duo-pass" aria-hidden="true">
-            <span class="ye-duo-ticket">2,680 元<br>折價券</span>
-            <i class="fa-solid fa-arrow-right-long"></i>
-          </div>
-          <div class="ye-duo-p">
-            <div class="ye-duo-tag ye-duo-tag--free"><small>第二副 憑券折抵</small><span class="ye-duo-price"><s>$2,680</s><b class="ye-pop">0元</b></span></div>
-            <svg class="ye-duo-man" viewBox="0 0 160 170" aria-hidden="true">
-              <path d="M34 72 Q30 20 80 20 Q130 20 126 72 L130 120 Q112 114 112 98 L48 98 Q48 114 30 120 Z" fill="#3a1512"/>
-              <rect x="70" y="96" width="20" height="22" fill="#ffd9b8"/>
-              <path d="M20 170 Q20 118 80 112 Q140 118 140 170 Z" fill="#f08a24" stroke="#8e1b1b" stroke-width="4" stroke-linejoin="round"/>
-              <circle cx="80" cy="66" r="40" fill="#ffd9b8" stroke="#8e1b1b" stroke-width="4"/>
-              <path d="M40 62 Q44 26 80 26 Q116 26 120 62 Q104 40 74 46 Q54 50 40 62 Z" fill="#3a1512"/>
-              <circle cx="52" cy="88" r="6" fill="#f6a6b8" opacity=".7"/><circle cx="108" cy="88" r="6" fill="#f6a6b8" opacity=".7"/>
-              <g fill="rgba(255,255,255,.35)" stroke="#4fc1d6" stroke-width="5"><circle cx="63" cy="70" r="13"/><circle cx="97" cy="70" r="13"/></g>
-              <path d="M76 68 Q80 64 84 68" stroke="#4fc1d6" stroke-width="5" fill="none"/>
-              <path d="M68 92 Q80 102 92 92" stroke="#8e1b1b" stroke-width="4" fill="none" stroke-linecap="round"/>
-            </svg>
-            <p class="ye-duo-who">重要的人</p>
-          </div>
-        </div>
-        <p class="ye-duo-note">你先完成第一副原價配鏡、拿到折價券,再送給重要的人使用。第二副需符合方案條件;升級鏡框、鏡片或方案可補差額。</p>
+      <!-- 2026-11-22 整區重設計(使用者):兩張真人照取代插畫人物。
+           左「你」第一副原價 → 中間折價券 → 右「重要的人」第二副 $2,680 劃掉變 0 元 -->
+      <div class="ye-pair" role="img" aria-label="你原價配第一副 2,680 元,拿到 2,680 元折價券送給重要的人,第二副 2,680 元折抵後 0 元">
+        <figure class="ye-pair-card ye-pair-card--a">
+          <span class="ye-pair-tag">第一副<em>你</em></span>
+          <img src="images/yearend/duo-you.jpg" alt="" width="640" height="853" loading="lazy">
+          <figcaption class="ye-pair-price"><small>原價配鏡</small><b>$2,680<em>起</em></b></figcaption>
+        </figure>
+        <div class="ye-pair-coupon" aria-hidden="true"><small>配鏡折價券</small><b>$2,680</b><span>送給重要的人 <i class="fa-solid fa-arrow-right"></i></span></div>
+        <figure class="ye-pair-card ye-pair-card--b">
+          <span class="ye-pair-tag">第二副<em>重要的人</em></span>
+          <img src="images/yearend/duo-other.jpg" alt="" width="640" height="853" loading="lazy">
+          <figcaption class="ye-pair-price"><small>憑券折抵</small><s>$2,680</s><b><span class="ye-zero">0</span>元</b></figcaption>
+        </figure>
       </div>
 
-      <div class="ye-slider" data-ye-slider>
-        <div class="ye-track">
-          <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-heart"></i></div><h3>帶上另一半</h3><p>兩個人一起換上新風格</p></article>
-          <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-user-group"></i></div><h3>好友一起挑</h3><p>互相給意見,挑到最對的那副</p></article>
-          <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-house-chimney-user"></i></div><h3>別忘了家人</h3><p>年終好優惠,分享給在乎的人</p></article>
-          <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></div><h3>全台門市都能用</h3><p>折價券不限本人,哪間店都通</p></article>
-        </div>
-        <div class="ye-dots" data-ye-dots></div>
-      </div>
+      <!-- 四個理由:一條白色資訊列,不輪播 -->
+      <ul class="ye-why2">
+        <li><i class="fa-solid fa-heart" aria-hidden="true"></i><b>帶上另一半</b><span>兩個人一起換上新風格</span></li>
+        <li><i class="fa-solid fa-user-group" aria-hidden="true"></i><b>好友一起挑</b><span>互相給意見,挑到最對的那副</span></li>
+        <li><i class="fa-solid fa-house-chimney-user" aria-hidden="true"></i><b>別忘了家人</b><span>年終好優惠,分享給在乎的人</span></li>
+        <li><i class="fa-solid fa-location-dot" aria-hidden="true"></i><b>全台門市都能用</b><span>折價券不限本人,哪間店都通</span></li>
+      </ul>
     </div>
   </section>
 

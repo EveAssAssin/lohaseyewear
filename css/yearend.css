@@ -69,7 +69,10 @@
 .ye-link { color: #fff; font-weight: 700; text-decoration: underline; letter-spacing: 1px; }
 
 /* ---------- 區段底色:黃色放射 / 紅底彩帶 / 奶油 ---------- */
-.ye-sec { position: relative; padding: 80px 0; overflow: hidden; }
+/* overflow 用 clip 不用 hidden:hidden 的區塊仍可被「程式捲動」(scrollIntoView、鍵盤焦點),
+   2026-11-21 #why 就被捲了 115px,上面的主標整段被裁掉(使用者:「上面的文字消失了」)。
+   clip 只裁切、不能捲;舊瀏覽器不認得 clip 時退回 hidden */
+.ye-sec { position: relative; padding: 80px 0; overflow: hidden; overflow: clip; }
 .ye-sec--rays, .ye-sec--yellow { background-color: var(--ye-yellow); }
 .ye-sec--rays::before {
   content: ""; position: absolute; left: 50%; top: 50%;
@@ -146,15 +149,12 @@
 
 /* ---------- 主標 ---------- */
 .ye-lead { position: relative; text-align: center; margin: -8px auto 64px; max-width: 760px; }
-.ye-lead-kicker { display: inline-block; margin: 0; padding: 6px 22px; border-radius: 999px; background: var(--ye-red); color: #fff; font-size: 18px; font-weight: 900; letter-spacing: 4px; }
-.ye-lead-title {
-  margin: 18px 0 12px; font-size: 52px; font-weight: 900; letter-spacing: 3px; line-height: 1.25;
-  color: var(--ye-red); text-shadow: 0 4px 0 rgba(142,27,27,.25); text-wrap: balance;
+.ye-lead-title {          /* 紅字,不加框(使用者 2026-11-22 拿掉白底框) */
+  margin: 18px 0 14px;
+  font-size: 52px; font-weight: 900; letter-spacing: 3px; line-height: 1.25;
+  color: var(--ye-red); text-wrap: balance;   /* 不加落影(使用者 2026-11-22) */
 }
 .ye-lead-sub { margin: 0; font-size: 19px; font-weight: 700; color: var(--ye-red-deep); letter-spacing: 1px; text-wrap: balance; }
-.ye-lead-g1, .ye-lead-g2 { position: absolute; width: 150px; height: 63px; }
-.ye-lead-g1 { left: -120px; top: 6px; transform: rotate(-14deg); }
-.ye-lead-g2 { right: -120px; bottom: -4px; transform: rotate(12deg); }
 
 /* ---------- 卡片共用:白底 + 深紅框 + 深紅落影 ---------- */
 .ye-scene, .ye-steps li, .ye-review, .ye-stat, .ye-story, .ye-book, .ye-shop {
@@ -208,17 +208,65 @@
 .ye-scene-photo { display: block; width: 100%; height: 170px; object-fit: cover; border-radius: 14px; margin-bottom: 16px; }
 .ye-scene h3 { margin: 0 0 8px; font-size: 26px; font-weight: 900; line-height: 1.35; letter-spacing: 1px; color: var(--ye-red); }
 .ye-scene p { margin: 0; font-size: 16px; font-weight: 700; color: var(--ye-sub); }
-.ye-scene-note { margin: 14px 0 0; text-align: center; font-size: 13px; color: var(--ye-red-deep); opacity: .75; }
-/* 家人好友:黃卡 + 紅色圓形圖示 */
-.ye-scene--duo { background: var(--ye-yellow); }
-.ye-scene--duo .ye-scene-art { height: auto; background: none; margin: 8px 0 12px; }
-.ye-scene--duo .ye-scene-art::before { display: none; }
-.ye-scene--duo .ye-scene-art i {
-  width: 84px; height: 84px; border-radius: 50%; font-size: 36px; filter: none;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--ye-red); color: #fff; border: 3px solid var(--ye-red-deep);
+/* ② 情境卡 2026-11-21 重做:「A 情境 ＋ B 情境」斜切兩半(顏色由各卡的 --a / --b 決定) */
+.ye-vs { padding: 0; overflow: hidden; }
+/* 加高(使用者 2026-11-22:「卡片要加高才能看到衣服」)—— 同一排卡要一樣高,所以五張一起加 */
+.ye-vs-art { position: relative; height: 300px; border-bottom: 3px solid var(--ye-red-deep); }
+.ye-vs-side {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center; gap: 10px;
+  color: #fff;
 }
-.ye-scene--duo p { color: var(--ye-red-deep); }
+.ye-vs-side::before {          /* 淡淡的放射光,讓色塊不單調 */
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.12) 0deg 8deg, transparent 8deg 16deg);
+}
+.ye-vs-side > * { position: relative; z-index: 1; }
+.ye-vs-a { background: var(--a); clip-path: polygon(0 0, 58% 0, 42% 100%, 0 100%); align-items: flex-start; padding-left: 9%; }
+.ye-vs-b { background: var(--b); clip-path: polygon(58% 0, 100% 0, 100% 100%, 42% 100%); align-items: flex-end; padding-right: 9%; }
+.ye-vs-side i { font-size: 54px; filter: drop-shadow(0 4px 0 rgba(58,21,18,.35)); }
+.ye-vs-side span {
+  padding: 3px 14px; border-radius: 999px; background: #fff; color: var(--ye-red-deep);
+  border: 2px solid var(--ye-red-deep); font-size: 15px; font-weight: 900; letter-spacing: 2px;
+}
+.ye-vs-a i, .ye-vs-a span { margin-left: 4px; }
+.ye-vs-b i, .ye-vs-b span { margin-right: 4px; }
+.ye-vs-mid {
+  position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%);
+  display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
+  background: var(--ye-yellow); color: var(--ye-red); border: 3px solid var(--ye-red-deep);
+  box-shadow: 0 4px 0 var(--ye-red-deep);
+  font-family: var(--ye-num); font-size: 38px; font-weight: 900; line-height: 1;
+}
+/* 真人照版本(情境 01 起,2026-11-22):照片各佔一半、照樣斜切,標籤移到下緣 */
+.ye-vs-photo {
+  position: absolute; top: 0; height: 100%; width: 60%; z-index: 0;
+  object-fit: cover; object-position: 50% 30%;
+}
+.ye-vs-a .ye-vs-photo { left: 0; }
+.ye-vs-b .ye-vs-photo { right: 0; }
+/* 個別照片往左挪(情境 02「上班」,使用者 2026-11-22):加寬再往左推,右緣仍蓋到斜切線,不會露底色 */
+.ye-vs-a .ye-vs-photo--left { left: -12%; width: 72%; }
+/* 稍微放大(情境 02「下班」,配合左邊那張的大小) */
+.ye-vs-b .ye-vs-photo--zoom { right: -6%; width: 70%; }
+.ye-vs--photo .ye-vs-side { justify-content: flex-end; padding-bottom: 12px; }
+.ye-vs--photo .ye-vs-side::before { display: none; }
+.ye-vs--photo .ye-vs-art::after {   /* 兩張照片底色相近,中間補一道白色斜線分開 */
+  content: ""; position: absolute; inset: 0; z-index: 1; background: #fff;
+  clip-path: polygon(57% 0, 59% 0, 43% 100%, 41% 100%);
+}
+.ye-vs-body { padding: 16px 18px 22px; text-align: center; }
+.ye-vs-body small {
+  display: inline-block; margin-bottom: 8px; padding: 2px 12px; border-radius: 6px;
+  background: var(--ye-yellow-soft); color: var(--ye-red-deep);
+  font-family: var(--ye-num); font-size: 13px; font-weight: 800; letter-spacing: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ye-vs .ye-vs-side i { transition: transform .25s; }
+  .ye-vs:hover .ye-vs-a i { transform: rotate(-10deg) scale(1.08); }
+  .ye-vs:hover .ye-vs-b i { transform: rotate(10deg) scale(1.08); }
+}
+.ye-scene-note { margin: 14px 0 0; text-align: center; font-size: 13px; color: var(--ye-red-deep); opacity: .75; }
 
 /* ④ 優惠內容 */
 .ye-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
@@ -527,52 +575,123 @@ body.ye-chat-open { overflow: hidden; }
   --bg-warm: #fff8e6;
 }
 
-/* ---------- 兩人示意:一個 2,680,另一個 2,680 劃掉變 0 元 ---------- */
-.ye-duo {
-  max-width: 760px; margin: 0 auto 40px; padding: 26px 22px 20px;
-  background: var(--ye-cream); color: var(--ye-ink);
-  border: 3px solid var(--ye-red-deep); border-radius: 22px;
-  box-shadow: 0 7px 0 var(--ye-red-deep);
+/* ---------- 家人好友(2026-11-22 整區重設計):兩張真人照 + 中間折價券 + 四個理由資訊列 ---------- */
+.ye-pair { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 96px; max-width: 780px; margin: 0 auto 52px; }
+/* 滿版(使用者 2026-11-22:「沒滿版」):拿掉白色相框,照片與價格帶貼齊卡片邊緣 */
+.ye-pair-card {
+  position: relative; margin: 0; overflow: visible;   /* 不裁切:標籤要壓在卡片上緣外面(使用者:pill 擋到頭) */
+  display: flex; flex-direction: column;   /* 價格帶 flex:1 填到底:兩張卡被撐成等高時,較矮那張下面不會露出黃底 */
+  background: var(--ye-yellow); border: 3px solid var(--ye-red-deep); border-radius: 22px;
+  box-shadow: 0 10px 0 var(--ye-red-deep);
 }
-.ye-duo-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 12px; }
-.ye-duo-p { display: flex; flex-direction: column; align-items: center; min-width: 0; }
-.ye-duo-man { display: block; width: 100%; max-width: 160px; height: auto; }
-.ye-duo-who { margin: 8px 0 0; font-size: 18px; font-weight: 900; color: var(--ye-red-deep); letter-spacing: 2px; }
-.ye-duo-tag {
-  position: relative; display: flex; flex-direction: column; align-items: center;
-  min-width: 160px; margin-bottom: 18px; padding: 8px 18px 10px;
-  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 16px;
-  box-shadow: 0 4px 0 var(--ye-red-deep);
+.ye-pair-card--a { transform: rotate(-2.5deg); }
+.ye-pair-card--b { transform: rotate(2.5deg); }
+.ye-pair-card img { display: block; width: 100%; aspect-ratio: 3 / 4; height: auto; object-fit: cover; object-position: 50% 18%; border-radius: 19px 19px 0 0; }
+/* 第一副 / 第二副標籤:加大、貼紙樣式(使用者:pill 很不明顯);
+   壓在卡片上緣、一半在外面,才不會擋到照片裡的臉(使用者:pill 擋到頭) */
+.ye-pair { margin-top: 30px; }
+.ye-pair-tag {
+  position: absolute; top: -22px; left: 50%; z-index: 2;
+  display: flex; align-items: baseline; gap: 8px; padding: 6px 18px 7px; border-radius: 12px; white-space: nowrap;
+  background: #fff; color: var(--ye-red); border: 3px solid var(--ye-red-deep);
+  box-shadow: 0 5px 0 var(--ye-red-deep); transform: translateX(-50%) rotate(-3deg);
+  font-size: 26px; font-weight: 900; line-height: 1.1; letter-spacing: 2px;
 }
-.ye-duo-tag::after {          /* 對話框的尾巴,指向下面那個人 */
-  content: ""; position: absolute; left: 50%; bottom: -10px; width: 16px; height: 16px; margin-left: -8px;
-  background: inherit; border-right: 3px solid var(--ye-red-deep); border-bottom: 3px solid var(--ye-red-deep);
-  transform: rotate(45deg);
+.ye-pair-tag em { font-style: normal; font-size: 15px; font-weight: 900; letter-spacing: 1px; color: var(--ye-red-deep); }
+.ye-pair-card--b .ye-pair-tag { background: var(--ye-red); color: #fff; }
+.ye-pair-card--b .ye-pair-tag em { color: var(--ye-yellow); }
+.ye-pair-price {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px 12px;
+  flex: 1; min-height: 74px; padding: 10px 10px 12px; line-height: 1.1; white-space: nowrap;
+  /* 底色用亮紅,和深紅外框分開 —— 原本同色,價格帶和外框、落影糊成一塊,看起來不是滿版(使用者 2026-11-22) */
+  background: var(--ye-red); color: #fff; border-top: 3px solid var(--ye-red-deep); border-radius: 0 0 19px 19px;
 }
-.ye-duo-tag small { font-size: 14px; font-weight: 700; color: var(--ye-sub); letter-spacing: 1px; white-space: nowrap; }
-.ye-duo-price { display: flex; align-items: center; gap: 10px; line-height: 1.1; white-space: nowrap; }
-.ye-duo-price b { font-family: var(--ye-num); font-size: 36px; font-weight: 900; color: var(--ye-red); }
-.ye-duo-tag--free { background: var(--ye-red); }
-.ye-duo-tag--free small { color: #fff; }
-.ye-duo-price s {
-  font-family: var(--ye-num); font-size: 22px; font-weight: 700; color: rgba(255,255,255,.85);
-  text-decoration: line-through; text-decoration-color: var(--ye-yellow); text-decoration-thickness: 4px;
+.ye-pair-price small { font-size: 14px; font-weight: 700; letter-spacing: 1px; opacity: .9; }
+.ye-pair-price b { font-family: var(--ye-num); font-size: 38px; font-weight: 900; }
+/* 「起」:指定方案 2,680 起(使用者 2026-11-22 確認),第一副不一定剛好 2,680 */
+.ye-pair-price b em { font-style: normal; font-family: "Noto Sans TC", sans-serif; font-size: .45em; margin-left: 4px; }
+.ye-pair-card--b .ye-pair-price { background: var(--ye-yellow); color: var(--ye-red-deep); }
+.ye-pair-price s {
+  font-family: var(--ye-num); font-size: 22px; font-weight: 700; color: var(--ye-sub);
+  text-decoration: line-through; text-decoration-color: var(--ye-red); text-decoration-thickness: 4px;
 }
-.ye-duo-price b.ye-pop { font-size: 46px; color: var(--ye-yellow); }
-.ye-duo-pass { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-bottom: 70px; color: var(--ye-red-deep); }
-.ye-duo-ticket {
-  padding: 6px 12px; border: 2px dashed var(--ye-red-deep); border-radius: 8px;
-  background: var(--ye-yellow); font-size: 15px; font-weight: 900; line-height: 1.3; text-align: center;
-  transform: rotate(-6deg); white-space: nowrap;
+.ye-pair-card--b .ye-pair-price b { font-size: 46px; color: var(--ye-red); text-shadow: 0 3px 0 rgba(142,27,27,.25); }
+/* 「0」要比「元」大(使用者 2026-11-22);數字字型本身比中文字矮,所以倍率要拉高 */
+.ye-pair-card--b .ye-pair-price b { display: inline-flex; align-items: baseline; }
+.ye-pair-price .ye-zero { font-size: 1.75em; line-height: .75; margin-right: 2px; }
+/* 中間的折價券:兩側半圓缺口 + 內圈虛線,疊在兩張照片之間 */
+.ye-pair-coupon {
+  position: absolute; left: 50%; top: 56%; z-index: 3; transform: translate(-50%, -50%) rotate(-6deg);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 12px 22px; border-radius: 12px; white-space: nowrap;
+  background: var(--ye-yellow); color: var(--ye-red-deep);
+  border: 3px solid var(--ye-red-deep); box-shadow: 0 6px 0 var(--ye-red-deep);
+  outline: 2px dashed rgba(142,27,27,.55); outline-offset: -9px;
 }
-.ye-duo-pass i { font-size: 30px; }
-.ye-duo-note { margin: 18px 0 0; font-size: 14px; line-height: 1.7; color: var(--ye-sub); text-align: center; }
+.ye-pair-coupon::before, .ye-pair-coupon::after {
+  content: ""; position: absolute; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%;
+  background: var(--ye-red); border: 3px solid var(--ye-red-deep);
+}
+.ye-pair-coupon::before { left: -11px; }
+.ye-pair-coupon::after { right: -11px; }
+.ye-pair-coupon small { font-size: 13px; font-weight: 900; letter-spacing: 2px; }
+.ye-pair-coupon b { font-family: var(--ye-num); font-size: 32px; font-weight: 900; line-height: 1.05; color: var(--ye-red); }
+.ye-pair-coupon span { font-size: 13px; font-weight: 900; }
 @media (prefers-reduced-motion: no-preference) {
-  .ye-duo-price b.ye-pop { display: inline-block; animation: yeZero 2.6s ease-in-out infinite; }
-  .ye-duo-pass i { animation: yeNudge 1.6s ease-in-out infinite; }
+  .ye-pair-coupon { animation: yeCoupon 3s ease-in-out infinite; }
 }
-@keyframes yeZero { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(1.18) rotate(-4deg); } 90% { transform: scale(.96); } }
-@keyframes yeNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+@keyframes yeCoupon {
+  0%, 100% { transform: translate(-50%, -50%) rotate(-6deg); }
+  50% { transform: translate(-46%, -54%) rotate(-3deg); }
+}
+/* 四個理由:一條白色資訊列 */
+.ye-why2 {
+  list-style: none; margin: 0 auto; padding: 0; max-width: 980px;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 22px; box-shadow: 0 7px 0 var(--ye-red-deep);
+}
+.ye-why2 li { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 22px 12px; text-align: center; }
+.ye-why2 li + li { border-left: 2px dashed rgba(142,27,27,.22); }
+.ye-why2 i {
+  display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 4px; border-radius: 50%;
+  background: var(--ye-red); color: #fff; font-size: 22px; border: 3px solid var(--ye-red-deep);
+}
+.ye-why2 b { font-size: 19px; font-weight: 900; color: var(--ye-red); letter-spacing: 1px; }
+.ye-why2 span { font-size: 14px; font-weight: 700; color: var(--ye-sub); line-height: 1.5; }
+@media (max-width: 1000px) {
+  .ye-why2 { grid-template-columns: repeat(2, 1fr); }
+  .ye-why2 li:nth-child(3) { border-left: 0; }
+  .ye-why2 li:nth-child(n+3) { border-top: 2px dashed rgba(142,27,27,.22); }
+}
+@media (max-width: 760px) {
+  .ye-pair { gap: 18px; margin-bottom: 40px; }
+  .ye-pair { margin-top: 22px; }
+  .ye-pair-card { border-radius: 16px; box-shadow: 0 7px 0 var(--ye-red-deep); }
+  .ye-pair-card img { border-radius: 13px 13px 0 0; }
+  .ye-pair-tag { top: -16px; padding: 4px 10px 5px; gap: 5px; border-radius: 9px; font-size: 18px; letter-spacing: 1px; box-shadow: 0 3px 0 var(--ye-red-deep); }
+  .ye-pair-tag em { font-size: 12px; }
+  /* 手機上價格是重點,放大(使用者 2026-11-22:兩張人物卡重點很不明顯) */
+  .ye-pair-price { min-height: 96px; padding: 10px 4px 12px; flex-direction: column; gap: 2px; border-radius: 0 0 13px 13px; }
+  .ye-pair-price small { font-size: 14px; font-weight: 900; }
+  .ye-pair-price b { font-size: 32px; }
+  .ye-pair-price s { font-size: 18px; text-decoration-thickness: 3px; }
+  /* 第二副:劃掉的 2,680 與 0元 並排,0元 再放大(使用者 2026-11-22) */
+  .ye-pair-card--b .ye-pair-price { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0 4px; }
+  .ye-pair-card--b .ye-pair-price small { flex-basis: 100%; text-align: center; }
+  .ye-pair-card--b .ye-pair-price s { font-size: 13px; }
+  .ye-pair-card--b .ye-pair-price b { font-size: 34px; line-height: 1; }
+  .ye-pair-coupon { top: 60%; padding: 6px 12px; border-width: 2px; outline-offset: -6px; outline-width: 1px; }
+  .ye-pair-coupon::before, .ye-pair-coupon::after { width: 12px; height: 12px; margin-top: -6px; border-width: 2px; }
+  .ye-pair-coupon::before { left: -8px; }
+  .ye-pair-coupon::after { right: -8px; }
+  .ye-pair-coupon small { font-size: 10px; letter-spacing: 1px; }
+  .ye-pair-coupon b { font-size: 20px; }
+  .ye-pair-coupon span { font-size: 10px; }
+  .ye-why2 li { padding: 16px 8px; }
+  .ye-why2 i { width: 44px; height: 44px; font-size: 18px; }
+  .ye-why2 b { font-size: 16px; }
+  .ye-why2 span { font-size: 12px; }
+}
 
 /* ---------- 手機固定按鈕 ---------- */
 .ye-dock { display: none; }
@@ -582,8 +701,6 @@ body.ye-chat-open { overflow: hidden; }
   .ye-track > * { flex-basis: calc((100% - 22px) / 2); }
   #stores .ye-track > * { flex-basis: calc((100% - 44px) / 3); }
   .ye-feats { grid-template-columns: repeat(2, 1fr); }
-  .ye-lead-g1 { left: -30px; top: -40px; width: 110px; height: 46px; }
-  .ye-lead-g2 { right: -30px; bottom: -50px; width: 110px; height: 46px; }
 }
 
 /* ---------- 手機 ---------- */
@@ -597,16 +714,18 @@ body.ye-chat-open { overflow: hidden; }
   .ye-hero-cta { width: 100%; }
   .ye-hero-cta .ye-btn { width: 100%; min-width: 0; }
   .ye-lead { margin-bottom: 48px; }
-  .ye-lead-title { font-size: 34px; }
+  .ye-lead-title { font-size: 34px; letter-spacing: 2px; }
   .ye-lead-sub { font-size: 16px; }
-  .ye-lead-g1 { left: -14px; top: -34px; width: 84px; height: 35px; }
-  .ye-lead-g2 { right: -14px; bottom: -40px; width: 84px; height: 35px; }
   .ye-head h2 { font-size: 28px; }
   .ye-steps { grid-template-columns: 1fr; }
   /* 手機一次看到一張多一點,露出下一張的邊,一看就知道可以滑 */
   .ye-track { gap: 14px; }
   .ye-track > *, #stores .ye-track > * { flex-basis: 80%; }
   .ye-scene h3 { font-size: 24px; }
+  .ye-vs-art { height: 260px; }
+  .ye-vs-side i { font-size: 44px; }
+  .ye-vs-side span { font-size: 13px; padding: 2px 10px; }
+  .ye-vs-mid { width: 46px; height: 46px; font-size: 30px; }
   .ye-feat-big { grid-template-columns: 1fr; }
   .ye-feat-big b { font-size: 54px; }
   .ye-chat { padding: 0; }
@@ -623,20 +742,6 @@ body.ye-chat-open { overflow: hidden; }
   .ye-book-stores { grid-template-columns: 1fr 1fr; }
   .ye-book-actions .ye-btn { width: 100%; font-size: 16px; letter-spacing: 1px; padding: 12px 16px; }
   .ye-rules ul { padding: 18px 18px 18px 38px; }
-  .ye-duo { padding: 20px 10px 16px; margin-bottom: 32px; }
-  .ye-duo-row { gap: 4px; }
-  .ye-duo-man { max-width: 110px; }
-  .ye-duo-who { font-size: 15px; letter-spacing: 1px; }
-  .ye-duo-tag { min-width: 0; padding: 6px 8px 8px; border-radius: 12px; }
-  .ye-duo-tag small { font-size: 11px; letter-spacing: 0; }
-  .ye-duo-price { flex-direction: column; gap: 0; }
-  .ye-duo-price b { font-size: 26px; }
-  .ye-duo-price s { font-size: 16px; text-decoration-thickness: 3px; }
-  .ye-duo-price b.ye-pop { font-size: 32px; }
-  .ye-duo-pass { padding-bottom: 56px; }
-  .ye-duo-ticket { font-size: 12px; padding: 4px 6px; }
-  .ye-duo-pass i { font-size: 22px; }
-  .ye-duo-note { font-size: 13px; text-align: left; padding: 0 6px; }
 
   .ye-dock {
     display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px;
