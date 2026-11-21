@@ -10,8 +10,8 @@
   "use strict";
 
   const CONFIG = {
-    /* Google Play 連結還沒有(2026-11-21 網路上只查得到 iPhone 版)。拿到後填進來,按鈕就會出現 */
-    appAndroid: "",
+    /* Google Play(使用者 2026-11-21 提供)。空字串 = 不顯示 Google Play 按鈕 */
+    appAndroid: "https://play.google.com/store/apps/details?id=com.lohasglasses.app&hl=zh_TW",
     /* 人氣數字:只填總部提供的真實數字,例如
        [{ num: "1,234", label: "人參與本次感謝祭" }, { num: "567", label: "張第二副折價券已兌換" }]
        null = 整區不顯示 */

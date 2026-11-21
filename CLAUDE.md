@@ -895,7 +895,8 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - **人氣數字、顧客故事只放真實資料**:填 `js/yearend.js` 的 `CONFIG.stats` / `CONFIG.stories`,`null` 時整區不顯示。
   口碑區用門市評價系統的真實評價(只取 5 星、姓名遮成「X○○」、同內容去重);門市照片用官網門市 API。
   ⚠ 門市清單的 `averageScore` 是空的,不能拿來篩評價。
-- APP:iPhone `apps.apple.com/tw/app/id1442745225`;**Google Play 連結還沒有**,拿到填 `CONFIG.appAndroid` 按鈕才會出現。
+- APP:iPhone `apps.apple.com/tw/app/id1442745225`;Android `play.google.com/store/apps/details?id=com.lohasglasses.app`
+  (`CONFIG.appAndroid`,Android 手機會把 Google Play 排在前面)。
 - 追蹤:按鈕都有 `data-ye-cta`,送 GA4 `yearend_cta`;頁面開啟送 `yearend_view`;廣告來源用網址 `utm_*`。
 
 ## 對外文件
