@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261121-1">
+  <link rel="stylesheet" href="css/yearend.css?v=20261121-kv">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -63,16 +63,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <main class="ye">
 
   <!-- ① 主視覺 -->
+  <!-- 主視覺用行銷的 banner 設計稿(Drive「2026感謝祭/banner」新官網輪播 1920×1080、手機輪播 800×1000);
+       圖上的字給讀不到圖的人與搜尋引擎:h1 + 下方的優惠說明 -->
   <section class="ye-hero" id="top">
-    <div class="ye-hero-burst" aria-hidden="true"></div>
-    <div class="ye-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <svg class="ye-g ye-g--orange ye-hero-g1" aria-hidden="true"><use href="#ye-glasses"/></svg>
-    <svg class="ye-g ye-g--teal ye-hero-g2" aria-hidden="true"><use href="#ye-glasses"/></svg>
-    <div class="ye-hero-disc">
-      <div class="ye-hero-brand"><span>2026 年終感謝祭</span><img src="images/lohas-logo.svg" alt="LOHAS 樂活眼鏡" width="90" height="28"></div>
-      <h1 class="ye-hero-title">配鏡<b>第二副</b><span class="ye-zero">0</span><span class="ye-yuan">元</span></h1>
-      <p class="ye-hero-gift">原價配鏡指定全方案<br><span class="ye-nowrap">贈 <b>$2,680</b> 配鏡折價券</span></p>
-      <p class="ye-hero-date">活動期間 2026/12/1 – 2027/1/31</p>
+    <h1 class="ye-sr">2026 年終感謝祭:配鏡第二副 0 元,原價配鏡指定全方案贈 2,680 元配鏡折價券</h1>
+    <picture class="ye-hero-kv">
+      <source media="(max-width: 760px)" srcset="images/yearend/kv-mobile.jpg" width="800" height="1000">
+      <img src="images/yearend/kv-1920.jpg" srcset="images/yearend/kv-1200.jpg 1200w, images/yearend/kv-1920.jpg 1920w" sizes="100vw"
+           alt="感謝祭 第二副 0 元,配鏡送 $2,680 配鏡券,活動期間 12/1 起" width="1920" height="1080" fetchpriority="high">
+    </picture>
+    <div class="ye-hero-bar">
+      <p class="ye-hero-gift">原價配鏡指定全方案,<br class="ye-sp"><span class="ye-nowrap">贈 <b>$2,680</b> 配鏡折價券</span><span class="ye-hero-date">活動期間 2026/12/1 – 2027/1/31</span></p>
       <div class="ye-hero-cta">
         <a class="ye-btn ye-btn--red" href="#book" data-ye-book data-ye-cta="book_hero">立即預約 <i class="fa-solid fa-calendar-check"></i></a>
         <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-cta="consult_hero"><i class="fa-brands fa-line"></i> 我想了解活動</a>
