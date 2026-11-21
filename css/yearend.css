@@ -386,14 +386,6 @@
 }
 .ye-rules li { font-size: 16px; line-height: 1.9; }
 .ye-rules li::marker { color: var(--ye-red); }
-.ye-links { margin-top: 30px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-.ye-links a {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 20px; border-radius: 999px; border: 2px solid var(--ye-red-deep);
-  background: #fff; color: var(--ye-red-deep); text-decoration: none; font-weight: 900;
-  box-shadow: 0 3px 0 var(--ye-red-deep);
-}
-.ye-links a:hover { background: var(--ye-yellow); }
 
 /* ---------- 預約彈窗也換成感謝祭的紅(只在這一頁) ---------- */
 #lohas-booking-modal {
