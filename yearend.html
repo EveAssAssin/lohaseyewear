@@ -27,14 +27,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta property="og:image" content="https://www.lohasglasses.com/images/yearend/og.jpg">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Rubik:wght@700;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/lohas-tokens.css">
   <link rel="stylesheet" href="css/lohas-base.css">
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261121-kv">
+  <link rel="stylesheet" href="css/yearend.css?v=20261121-kvstyle">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -73,7 +73,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
            alt="感謝祭 第二副 0 元,配鏡送 $2,680 配鏡券,活動期間 12/1 起" width="1920" height="1080" fetchpriority="high">
     </picture>
     <div class="ye-hero-bar">
-      <p class="ye-hero-gift">原價配鏡指定全方案,<br class="ye-sp"><span class="ye-nowrap">贈 <b>$2,680</b> 配鏡折價券</span><span class="ye-hero-date">活動期間 2026/12/1 – 2027/1/31</span></p>
+      <p class="ye-hero-gift">原價配鏡指定全方案,<br class="ye-sp"><span class="ye-nowrap">贈 <b class="ye-pop">$2,680</b> 配鏡折價券</span><span class="ye-hero-date">活動期間 2026/12/1 – 2027/1/31</span></p>
       <div class="ye-hero-cta">
         <a class="ye-btn ye-btn--red" href="#book" data-ye-book data-ye-cta="book_hero">立即預約 <i class="fa-solid fa-calendar-check"></i></a>
         <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-cta="consult_hero"><i class="fa-brands fa-line"></i> 我想了解活動</a>
@@ -82,17 +82,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- 主標 -->
-  <section class="ye-lead">
-    <p class="ye-lead-kicker">你的生活不只一種風格</p>
-    <h2 class="ye-lead-title">你的眼鏡,何必只有一副?</h2>
-    <p class="ye-lead-sub">這副也好看、那副也捨不得放下?這次不用二選一。</p>
-  </section>
-
-  <!-- ② 生活痛點 -->
-  <section class="ye-sec" id="why">
+  <!-- 主標 + ② 生活痛點 -->
+  <section class="ye-sec ye-sec--rays" id="why">
     <div class="ye-wrap">
-      <div class="ye-head"><span class="ye-tag">為什麼需要第二副</span><h2>一副工作,一副生活,剛剛好</h2></div>
+      <div class="ye-lead">
+        <svg class="ye-g ye-g--orange ye-lead-g1" aria-hidden="true"><use href="#ye-glasses"/></svg>
+        <svg class="ye-g ye-g--teal ye-lead-g2" aria-hidden="true"><use href="#ye-glasses"/></svg>
+        <p class="ye-lead-kicker">你的生活不只一種風格</p>
+        <h2 class="ye-lead-title">你的眼鏡,<br class="ye-sp">何必只有一副?</h2>
+        <p class="ye-lead-sub">這副也好看、那副也捨不得放下?<br class="ye-sp">這次不用二選一!</p>
+      </div>
+      <div class="ye-head"><span class="ye-tag">為什麼需要第二副</span><h2>一副工作,一副生活,<br class="ye-sp">剛剛好</h2></div>
       <div class="ye-pains">
         <article class="ye-pain">
           <div class="ye-pain-art ye-pain-art--style" aria-hidden="true">
@@ -132,9 +132,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
   <!-- ④ 活動優惠內容 -->
-  <section class="ye-sec" id="offer">
+  <section class="ye-sec ye-sec--cream" id="offer">
     <div class="ye-wrap">
-      <div class="ye-head"><span class="ye-tag">主活動</span><h2>配鏡第二副 0 元,怎麼用?</h2></div>
+      <div class="ye-head"><span class="ye-tag">主活動</span><h2><span class="ye-nowrap">配鏡第二副 0 元,</span><br class="ye-sp">怎麼用?</h2></div>
       <ol class="ye-steps">
         <li><b>1</b><h3>原價配鏡</h3><p>指定全方案原價配鏡</p></li>
         <li><b>2</b><h3>獲得折價券</h3><p>贈 <strong>2,680 元</strong>配鏡折價券一張</p></li>
@@ -155,13 +155,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
   <!-- ⑤ 人氣數據與顧客口碑(資料由 js/yearend.js 填;沒有真實資料的區塊不顯示) -->
-  <section class="ye-sec ye-sec--cream" id="voice" hidden>
+  <section class="ye-sec ye-sec--yellow" id="voice" hidden>
     <div class="ye-wrap">
-      <div class="ye-head"><span class="ye-tag">真實口碑</span><h2>他們已經在樂活配了不只一副</h2></div>
+      <div class="ye-head"><span class="ye-tag">真實口碑</span><h2>聽聽到店顧客怎麼說</h2></div>
       <div class="ye-stats" data-ye-stats hidden></div>
       <div class="ye-stories" data-ye-stories hidden></div>
       <div data-ye-reviews hidden>
-        <h3 class="ye-sub">門市顧客評價</h3>
         <div class="ye-reviews" data-ye-review-list></div>
         <p class="ye-src">評價來自樂活眼鏡門市評價系統,顧客姓名已部分隱藏。</p>
       </div>
@@ -178,9 +177,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
   <!-- ⑦ 社群分享抽現金券 -->
-  <section class="ye-sec ye-sec--yellow" id="social">
+  <section class="ye-sec ye-sec--red" id="social">
     <div class="ye-wrap ye-social">
-      <span class="ye-tag ye-tag--red">加碼活動</span>
+      <span class="ye-tag">加碼活動</span>
       <h2>社群分享指定貼文,<br class="ye-sp">加碼抽 <b>100～500 元</b>現金券!</h2>
       <p>活動期間 2026/12/1 – 2027/1/31。參加方式、使用限制及活動細節依總部正式活動規範,不得與其他優惠併用。</p>
       <div class="ye-posts" aria-hidden="true">
@@ -192,7 +191,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
   <!-- ⑧ APP 下載 + 芽芽(小型輔助元素) -->
-  <section class="ye-sec" id="app">
+  <section class="ye-sec ye-sec--yellow" id="app">
     <div class="ye-wrap ye-app">
       <div class="ye-app-text">
         <h2>下載樂活眼鏡 APP</h2>
@@ -224,7 +223,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
   <!-- ⑩ 活動規則與官網資訊 -->
-  <section class="ye-sec" id="rules">
+  <section class="ye-sec ye-sec--cream" id="rules">
     <div class="ye-wrap ye-rules">
       <div class="ye-head"><span class="ye-tag">活動規則</span><h2>活動辦法與注意事項</h2></div>
       <ul>
@@ -255,16 +254,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- 眼鏡插圖(主視覺的橘/藍眼鏡;顏色用 currentColor) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="ye-glasses" viewBox="0 0 120 48">
-    <path d="M6 10 Q6 6 10 6 H50 Q54 6 54 10 V26 Q54 40 40 40 H20 Q6 40 6 26 Z M66 10 Q66 6 70 6 H110 Q114 6 114 10 V26 Q114 40 100 40 H80 Q66 40 66 26 Z" fill="#fff" fill-opacity=".55" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
-    <path d="M54 14 Q60 9 66 14" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
-    <path d="M6 12 L1 8 M114 12 L119 8" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+  <!-- 先畫一層深紅粗線當描邊,再疊上彩色鏡框 —— 主視覺的眼鏡就是「彩色框 + 深紅外框」 -->
+  <symbol id="ye-glasses" viewBox="0 0 124 52">
+    <g transform="translate(2 2)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <g stroke="#8e1b1b" stroke-width="11">
+        <path d="M6 10 Q6 6 10 6 H50 Q54 6 54 10 V26 Q54 40 40 40 H20 Q6 40 6 26 Z M66 10 Q66 6 70 6 H110 Q114 6 114 10 V26 Q114 40 100 40 H80 Q66 40 66 26 Z"/>
+        <path d="M54 14 Q60 9 66 14 M6 11 L1 7 M114 11 L119 7"/>
+      </g>
+      <path d="M6 10 Q6 6 10 6 H50 Q54 6 54 10 V26 Q54 40 40 40 H20 Q6 40 6 26 Z M66 10 Q66 6 70 6 H110 Q114 6 114 10 V26 Q114 40 100 40 H80 Q66 40 66 26 Z" fill="#fff" fill-opacity=".7" stroke="currentColor" stroke-width="6"/>
+      <path d="M54 14 Q60 9 66 14 M6 11 L1 7 M114 11 L119 7" stroke="currentColor" stroke-width="6"/>
+    </g>
   </symbol>
-  <symbol id="ye-glasses-round" viewBox="0 0 120 48">
-    <circle cx="31" cy="24" r="19" fill="#fff" fill-opacity=".55" stroke="currentColor" stroke-width="6"/>
-    <circle cx="89" cy="24" r="19" fill="#fff" fill-opacity=".55" stroke="currentColor" stroke-width="6"/>
-    <path d="M50 20 Q60 13 70 20" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
-    <path d="M12 20 L3 15 M108 20 L117 15" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+  <symbol id="ye-glasses-round" viewBox="0 0 124 52">
+    <g transform="translate(2 2)" fill="none" stroke-linecap="round">
+      <g stroke="#8e1b1b" stroke-width="11">
+        <circle cx="31" cy="24" r="19"/><circle cx="89" cy="24" r="19"/>
+        <path d="M50 20 Q60 13 70 20 M12 20 L3 15 M108 20 L117 15"/>
+      </g>
+      <circle cx="31" cy="24" r="19" fill="#fff" fill-opacity=".7" stroke="currentColor" stroke-width="6"/>
+      <circle cx="89" cy="24" r="19" fill="#fff" fill-opacity=".7" stroke="currentColor" stroke-width="6"/>
+      <path d="M50 20 Q60 13 70 20 M12 20 L3 15 M108 20 L117 15" stroke="currentColor" stroke-width="6"/>
+    </g>
   </symbol>
 </svg>
 
@@ -276,6 +286,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-store.js?v=20260525-1000"></script>
 <script src="js/store-data.js?v=20261021-dadun"></script>
 <script src="js/booking-v2.js?v=20261121-preset"></script>
-<script src="js/yearend.js?v=20261121-play"></script>
+<script src="js/yearend.js?v=20261121-kvstyle"></script>
 </body>
 </html>

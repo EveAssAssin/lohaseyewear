@@ -83,7 +83,7 @@
     let any = false;
     if (Array.isArray(CONFIG.stats) && CONFIG.stats.length) {
       const el = $("[data-ye-stats]");
-      el.innerHTML = CONFIG.stats.map(s => `<div class="ye-stat"><b>${esc(s.num)}</b><span>${esc(s.label)}</span></div>`).join("");
+      el.innerHTML = CONFIG.stats.map(s => `<div class="ye-stat"><b class="ye-pop">${esc(s.num)}</b><span>${esc(s.label)}</span></div>`).join("");
       el.hidden = false; any = true;
     }
     if (Array.isArray(CONFIG.stories) && CONFIG.stories.length) {

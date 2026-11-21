@@ -1,207 +1,283 @@
 /* =============================================
    LOHAS · 2026 年終感謝祭一頁式活動頁(yearend.html)
-   主視覺:紅色圓盤 + 黃色放射 + 橘/藍眼鏡 + 彩帶(照 Drive「2026感謝祭」設計稿)
+   整頁照主視覺(Drive「2026感謝祭」banner)的語言:
+   - 黃色放射底 / 紅底撒彩帶,兩種底交替
+   - 字:粗黑體;數字用 Rubik;重點數字「黃字 + 深紅描邊 + 深紅落影」
+   - 卡片、按鈕:深紅粗框 + 深紅落影(不是黑色)
+   - 標籤像主視覺的「配鏡券」貼紙:白底紅字、微微歪一邊
+   - 眼鏡插圖:橘 / 藍框 + 深紅外框
+   2026-11-21 使用者要求「整體 UI 再符合主視覺」後改成這版。
    ============================================= */
 
 .ye {
   --ye-red: #c8202a;
   --ye-red-deep: #8e1b1b;
   --ye-yellow: #ffd23f;
+  --ye-yellow-2: #ffc928;
   --ye-yellow-soft: #fff3c4;
   --ye-orange: #f08a24;
   --ye-teal: #4fc1d6;
-  --ye-ink: #2b1d1a;
-  --ye-sub: #6b5a55;
-  --ye-cream: #fff8ec;
+  --ye-pink: #f6a6b8;
+  --ye-ink: #3a1512;
+  --ye-sub: #6e4b45;
+  --ye-cream: #fff8e6;
   --ye-line: #06c755;
+  --ye-num: "Rubik", "Noto Sans TC", sans-serif;
+  /* 彩帶:藍、黃、粉、橘、白、綠的點與紙條,鋪在紅底上 */
+  --ye-confetti: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Ccircle cx='22' cy='34' r='5' fill='%234fc1d6'/%3E%3Crect x='70' y='12' width='7' height='20' rx='2' fill='%23ffd23f' transform='rotate(25 73 22)'/%3E%3Ccircle cx='160' cy='40' r='4' fill='%23f6a6b8'/%3E%3Crect x='228' y='60' width='7' height='18' rx='2' fill='%23ffffff' transform='rotate(-30 231 69)'/%3E%3Ccircle cx='250' cy='160' r='6' fill='%23f08a24'/%3E%3Crect x='130' y='128' width='7' height='20' rx='2' fill='%234fc1d6' transform='rotate(60 133 138)'/%3E%3Ccircle cx='44' cy='180' r='4' fill='%23ffffff'/%3E%3Crect x='66' y='238' width='7' height='18' rx='2' fill='%2390d18f' transform='rotate(15 69 247)'/%3E%3Ccircle cx='196' cy='236' r='5' fill='%23ffd23f'/%3E%3Cpath d='M98 80 l9 -9 l3 10z' fill='%23f6a6b8'/%3E%3Cpath d='M206 110 l10 2 l-6 8z' fill='%2390d18f'/%3E%3C/svg%3E");
   color: var(--ye-ink);
   font-family: "Noto Sans TC", sans-serif;
   padding-top: 70px;            /* 全站 header 是 fixed 70px */
   overflow-x: hidden;
+  background: var(--ye-yellow);
 }
 .ye *, .ye *::before, .ye *::after { box-sizing: border-box; }
 .ye-sp { display: none; }
 .ye-nowrap { white-space: nowrap; }
-.ye-wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-.ye-center { text-align: center; margin-top: 32px; }
+.ye-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ye-wrap { position: relative; max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.ye-center { text-align: center; margin-top: 36px; }
+
+/* 主視覺式的大字:黃字 + 深紅描邊 + 深紅落影 */
+.ye-pop {
+  font-family: var(--ye-num); font-weight: 900; color: var(--ye-yellow);
+  -webkit-text-stroke: 3px var(--ye-red-deep); paint-order: stroke fill;
+  text-shadow: 0 4px 0 var(--ye-red-deep);
+}
 
 /* ---------- 眼鏡插圖 ---------- */
-.ye-g { display: block; width: 120px; height: 48px; }
+.ye-g { display: block; width: 124px; height: 52px; overflow: visible; }
 .ye-g--orange { color: var(--ye-orange); }
 .ye-g--teal { color: var(--ye-teal); }
 .ye-g--red { color: var(--ye-red); }
 
-/* ---------- 按鈕 ---------- */
+/* ---------- 按鈕:深紅粗框 + 深紅落影 ---------- */
 .ye-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  min-height: 52px; padding: 12px 26px;
-  border-radius: 999px; border: 3px solid var(--ye-ink);
-  font-size: 17px; font-weight: 900; letter-spacing: 2px; text-decoration: none;
-  box-shadow: 0 5px 0 var(--ye-ink);
+  min-height: 54px; padding: 12px 28px;
+  border-radius: 999px; border: 3px solid var(--ye-red-deep);
+  font-size: 18px; font-weight: 900; letter-spacing: 2px; text-decoration: none;
+  box-shadow: 0 5px 0 var(--ye-red-deep);
   transition: transform .12s, box-shadow .12s;
   cursor: pointer;
 }
-.ye-btn:hover { transform: translateY(3px); box-shadow: 0 2px 0 var(--ye-ink); }
+.ye-btn:hover { transform: translateY(3px); box-shadow: 0 2px 0 var(--ye-red-deep); }
 .ye-btn--red { background: var(--ye-red); color: #fff; }
-.ye-btn--yellow { background: var(--ye-yellow); color: var(--ye-ink); }
+.ye-btn--yellow { background: var(--ye-yellow); color: var(--ye-red-deep); }
 .ye-btn--line { background: var(--ye-line); color: #fff; }
 .ye-btn--line i { font-size: 22px; }
-.ye-btn--ghost { background: #fff; color: var(--ye-ink); }
+.ye-btn--ghost { background: #fff; color: var(--ye-red-deep); }
 .ye-link { color: #fff; font-weight: 700; text-decoration: underline; letter-spacing: 1px; }
 
+/* ---------- 區段底色:黃色放射 / 紅底彩帶 / 奶油 ---------- */
+.ye-sec { position: relative; padding: 80px 0; overflow: hidden; }
+.ye-sec--rays, .ye-sec--yellow { background-color: var(--ye-yellow); }
+.ye-sec--rays::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 260vmax; height: 260vmax; transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, var(--ye-yellow-2) 0deg 6deg, var(--ye-yellow) 6deg 12deg);
+  pointer-events: none;
+}
+.ye-sec--red { background: var(--ye-red) var(--ye-confetti); color: #fff; }
+.ye-sec--cream { background: var(--ye-cream); }
+.ye-sec > .ye-wrap { z-index: 1; }
+
+/* ---------- 區段標題 ---------- */
+.ye-head { text-align: center; margin-bottom: 44px; }
+.ye-head h2 {
+  margin: 16px 0 0; font-size: 38px; font-weight: 900; letter-spacing: 3px; line-height: 1.35;
+  color: var(--ye-red); text-wrap: balance;
+}
+.ye-sec--red .ye-head h2 { color: #fff; text-shadow: 0 4px 0 var(--ye-red-deep); }
+.ye-head p { margin: 12px 0 0; font-size: 17px; color: var(--ye-sub); letter-spacing: 1px; }
+.ye-sec--red .ye-head p { color: rgba(255,255,255,.9); }
+
+/* 標籤 = 主視覺的「配鏡券」貼紙 */
+.ye-tag {
+  display: inline-block; padding: 6px 18px;
+  border: 3px solid var(--ye-red-deep); border-radius: 8px;
+  background: #fff; color: var(--ye-red);
+  font-size: 16px; font-weight: 900; letter-spacing: 3px;
+  transform: rotate(-3deg);
+  box-shadow: 3px 3px 0 var(--ye-red-deep);
+}
+.ye-sec--red .ye-tag { background: var(--ye-yellow); color: var(--ye-red-deep); }
+
 /* ---------- ① 主視覺 ---------- */
-/* 2026-11-21 使用者指定改用行銷的 banner 圖(原本是 CSS 重做的版本) */
-.ye-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.ye-hero { position: relative; background: var(--ye-red); color: #fff; }
+.ye-hero { position: relative; background: var(--ye-red) var(--ye-confetti); color: #fff; }
 .ye-hero-kv { display: block; }
 /* 不裁切:banner 上有字,裁掉會少資訊 */
 .ye-hero-kv img { display: block; width: 100%; height: auto; }
 .ye-hero-bar {
   max-width: 1080px; margin: 0 auto;
-  padding: 22px 20px 26px;
+  padding: 24px 20px 28px;
   display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px 28px;
 }
-.ye-hero-gift { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px; line-height: 1.5; }
-.ye-hero-gift b { font-size: 30px; font-weight: 900; color: var(--ye-yellow); margin: 0 2px; }
-.ye-hero-gift .ye-hero-date { display: block; font-size: 15px; font-weight: 500; opacity: .9; }
+.ye-hero-gift { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: 1px; line-height: 1.5; }
+.ye-hero-gift b { font-size: 34px; margin: 0 4px; }
+.ye-hero-gift .ye-hero-date {
+  display: inline-block; margin-top: 8px; padding: 3px 16px;
+  border: 2px solid #fff; border-radius: 999px;
+  font-size: 15px; font-weight: 700; letter-spacing: 1px;
+}
 .ye-hero-cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
-.ye-hero-cta .ye-btn { border-color: #fff; box-shadow: 0 5px 0 var(--ye-red-deep); }
 .ye-hero-cta .ye-btn--red { background: var(--ye-yellow); color: var(--ye-red-deep); }
 .ye-fine { grid-column: 1 / -1; margin: 0; font-size: 12px; line-height: 1.6; opacity: .85; }
 .ye-fine a { color: #fff; text-decoration: underline; }
 
 /* ---------- 主標 ---------- */
-.ye-lead { text-align: center; padding: 56px 20px 8px; }
-.ye-lead-title, .ye-lead-sub, .ye-head h2 { text-wrap: balance; }
-.ye-lead-kicker { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 4px; color: var(--ye-red); }
-.ye-lead-title { margin: 8px 0 10px; font-size: 40px; font-weight: 900; letter-spacing: 3px; }
-.ye-lead-sub { margin: 0; font-size: 18px; color: var(--ye-sub); letter-spacing: 1px; }
-
-/* ---------- 區段 ---------- */
-.ye-sec { padding: 72px 0; }
-.ye-sec--red { background: var(--ye-red); color: #fff; }
-.ye-sec--cream { background: var(--ye-cream); }
-.ye-sec--yellow { background: var(--ye-yellow); }
-.ye-head { text-align: center; margin-bottom: 40px; }
-.ye-head h2 { margin: 12px 0 0; font-size: 34px; font-weight: 900; letter-spacing: 3px; line-height: 1.35; }
-.ye-head p { margin: 10px 0 0; font-size: 17px; color: var(--ye-sub); letter-spacing: 1px; }
-.ye-head--light p { color: rgba(255,255,255,.85); }
-.ye-tag {
-  display: inline-block; padding: 6px 18px; border-radius: 999px;
-  background: var(--ye-red); color: #fff;
-  font-size: 15px; font-weight: 700; letter-spacing: 3px;
+.ye-lead { position: relative; text-align: center; margin: -8px auto 64px; max-width: 760px; }
+.ye-lead-kicker { display: inline-block; margin: 0; padding: 6px 22px; border-radius: 999px; background: var(--ye-red); color: #fff; font-size: 18px; font-weight: 900; letter-spacing: 4px; }
+.ye-lead-title {
+  margin: 18px 0 12px; font-size: 52px; font-weight: 900; letter-spacing: 3px; line-height: 1.25;
+  color: var(--ye-red); text-shadow: 0 4px 0 rgba(142,27,27,.25); text-wrap: balance;
 }
-.ye-tag--yellow { background: var(--ye-yellow); color: var(--ye-red-deep); }
-.ye-tag--red { background: var(--ye-red); color: #fff; }
+.ye-lead-sub { margin: 0; font-size: 19px; font-weight: 700; color: var(--ye-red-deep); letter-spacing: 1px; text-wrap: balance; }
+.ye-lead-g1, .ye-lead-g2 { position: absolute; width: 150px; height: 63px; }
+.ye-lead-g1 { left: -120px; top: 6px; transform: rotate(-14deg); }
+.ye-lead-g2 { right: -120px; bottom: -4px; transform: rotate(12deg); }
+
+/* ---------- 卡片共用:白底 + 深紅框 + 深紅落影 ---------- */
+.ye-pain, .ye-steps li, .ye-review, .ye-stat, .ye-story, .ye-book {
+  background: #fff;
+  border: 3px solid var(--ye-red-deep);
+  border-radius: 22px;
+  box-shadow: 0 7px 0 var(--ye-red-deep);
+}
 
 /* ② 生活痛點 */
-.ye-pains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-.ye-pain {
-  background: #fff; border: 3px solid var(--ye-ink); border-radius: 20px;
-  padding: 26px 24px 28px;
-  box-shadow: 0 6px 0 var(--ye-ink);
-}
+.ye-pains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.ye-pain { padding: 22px 22px 28px; }
 .ye-pain-art {
-  height: 120px; margin: -6px -4px 16px; border-radius: 14px;
-  background: var(--ye-yellow-soft);
-  display: flex; align-items: center; justify-content: center; gap: 18px;
-  font-size: 48px; color: var(--ye-red);
+  height: 130px; margin-bottom: 18px; border-radius: 14px;
+  background: var(--ye-red) var(--ye-confetti); background-size: 200px;
+  display: flex; align-items: center; justify-content: center; gap: 22px;
+  font-size: 50px; color: var(--ye-yellow);
 }
-.ye-pain-art--style { gap: 6px; flex-wrap: wrap; padding: 10px; }
-.ye-pain-art--style .ye-g { width: 86px; height: 34px; }
-.ye-pain h3 { margin: 0 0 12px; font-size: 23px; font-weight: 900; line-height: 1.4; letter-spacing: 1px; }
+.ye-pain-art i { filter: drop-shadow(0 3px 0 var(--ye-red-deep)); }
+.ye-pain-art--style { gap: 4px; flex-wrap: wrap; padding: 10px; }
+.ye-pain-art--style .ye-g { width: 82px; height: 35px; }
+.ye-pain-art--style .ye-g--red { color: var(--ye-yellow); }
+.ye-pain h3 { margin: 0 0 12px; font-size: 24px; font-weight: 900; line-height: 1.4; letter-spacing: 1px; color: var(--ye-red); }
 .ye-pain p { margin: 0; font-size: 17px; line-height: 1.8; color: var(--ye-sub); }
-.ye-pain .ye-note { margin-top: 10px; font-size: 13px; line-height: 1.6; color: #9a8a85; }
+.ye-pain .ye-note { margin-top: 10px; font-size: 13px; line-height: 1.6; color: #a08680; }
 
 /* ③ 家人好友 */
-.ye-duo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.ye-duo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .ye-duo-card {
-  background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.45); border-radius: 20px;
+  background: var(--ye-yellow); color: var(--ye-red-deep);
+  border: 3px solid var(--ye-red-deep); border-radius: 22px;
+  box-shadow: 0 7px 0 var(--ye-red-deep);
   padding: 28px 22px; text-align: center;
 }
-.ye-duo-card i { font-size: 40px; color: var(--ye-yellow); }
-.ye-duo-card h3 { margin: 14px 0 8px; font-size: 24px; font-weight: 900; letter-spacing: 2px; }
-.ye-duo-card p { margin: 0; font-size: 17px; line-height: 1.8; opacity: .92; }
+.ye-duo-card:nth-child(2) { transform: rotate(1.5deg); }
+.ye-duo-card i {
+  width: 72px; height: 72px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--ye-red); color: #fff; font-size: 32px;
+  border: 3px solid var(--ye-red-deep);
+}
+.ye-duo-card h3 { margin: 14px 0 8px; font-size: 25px; font-weight: 900; letter-spacing: 2px; color: var(--ye-red); }
+.ye-duo-card p { margin: 0; font-size: 17px; line-height: 1.8; }
 .ye-duo-rule {
-  margin: 28px auto 0; max-width: 780px;
-  background: rgba(0,0,0,.18); border-radius: 12px;
-  padding: 14px 18px; font-size: 15px; line-height: 1.7;
+  margin: 34px auto 0; max-width: 800px;
+  background: rgba(142,27,27,.55); border-radius: 14px;
+  padding: 14px 20px; font-size: 15px; line-height: 1.7;
 }
 
 /* ④ 優惠內容 */
-.ye-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: none; }
-.ye-steps li {
-  position: relative; text-align: center;
-  background: var(--ye-cream); border: 3px solid var(--ye-red); border-radius: 20px;
-  padding: 34px 18px 24px;
-}
+.ye-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+.ye-steps li { position: relative; text-align: center; padding: 40px 18px 26px; }
 .ye-steps li:not(:last-child)::after {
   content: "\f054"; font-family: "Font Awesome 6 Free"; font-weight: 900;
-  position: absolute; right: -17px; top: 50%; transform: translateY(-50%);
-  color: var(--ye-red); font-size: 18px; z-index: 1;
+  position: absolute; right: -21px; top: 50%; transform: translateY(-50%);
+  color: var(--ye-red); font-size: 20px; z-index: 1;
 }
 .ye-steps b {
-  position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
-  width: 40px; height: 40px; border-radius: 50%;
-  background: var(--ye-red); color: #fff; font-size: 20px;
+  position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--ye-red); border: 3px solid var(--ye-red-deep);
   display: flex; align-items: center; justify-content: center;
+  font-family: var(--ye-num); font-size: 26px; font-weight: 900; color: var(--ye-yellow);
 }
-.ye-steps h3 { margin: 0 0 8px; font-size: 24px; font-weight: 900; color: var(--ye-red); letter-spacing: 2px; }
-.ye-steps p { margin: 0; font-size: 17px; line-height: 1.7; }
-.ye-steps strong { color: var(--ye-red); font-size: 22px; }
-.ye-points { list-style: none; margin: 32px auto 0; padding: 0; max-width: 760px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+.ye-steps h3 { margin: 0 0 8px; font-size: 26px; font-weight: 900; color: var(--ye-red); letter-spacing: 2px; }
+.ye-steps p { margin: 0; font-size: 17px; line-height: 1.7; color: var(--ye-sub); }
+.ye-steps strong { font-family: var(--ye-num); font-size: 26px; color: var(--ye-red); }
+.ye-points { list-style: none; margin: 40px auto 0; padding: 0; max-width: 780px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
 .ye-points li { display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 700; }
-.ye-points i { width: 36px; height: 36px; border-radius: 50%; background: var(--ye-yellow); color: var(--ye-red-deep); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.ye-dates { margin: 28px auto 0; max-width: 760px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.ye-dates div { background: var(--ye-yellow-soft); border-radius: 14px; padding: 14px 18px; text-align: center; }
-.ye-dates span { display: block; font-size: 14px; color: var(--ye-sub); letter-spacing: 1px; }
-.ye-dates b { font-size: 20px; letter-spacing: 1px; }
+.ye-points i {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: var(--ye-yellow); color: var(--ye-red-deep); border: 2px solid var(--ye-red-deep);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+/* 日期 = 主視覺的「活動期間 ▸ 12/1 起」紅色膠囊 */
+.ye-dates { margin: 32px auto 0; max-width: 780px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ye-dates div {
+  background: var(--ye-red); color: #fff; text-align: center;
+  border-radius: 999px; padding: 10px 18px;
+  box-shadow: inset 0 0 0 3px var(--ye-red), inset 0 0 0 5px #fff;
+}
+.ye-dates span { display: block; font-size: 13px; opacity: .9; letter-spacing: 1px; }
+.ye-dates b { font-family: var(--ye-num); font-size: 21px; letter-spacing: 1px; }
 
 /* ⑤ 口碑 */
-.ye-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 36px; }
-.ye-stat { background: #fff; border-radius: 18px; padding: 22px; text-align: center; border: 2px solid #f1dfc0; }
-.ye-stat b { display: block; font-size: 40px; font-weight: 900; color: var(--ye-red); }
-.ye-stat span { font-size: 16px; color: var(--ye-sub); }
-.ye-stories { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 36px; }
-.ye-story { background: #fff; border-radius: 18px; overflow: hidden; border: 2px solid #f1dfc0; }
-.ye-story img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.ye-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 40px; }
+.ye-stat { padding: 22px; text-align: center; }
+.ye-stat b { display: block; font-size: 44px; }
+.ye-stat span { font-size: 16px; font-weight: 700; color: var(--ye-red-deep); }
+.ye-stories { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 40px; }
+.ye-story { overflow: hidden; }
+.ye-story img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-bottom: 3px solid var(--ye-red-deep); }
 .ye-story div { padding: 18px; }
-.ye-story em { font-style: normal; font-size: 13px; font-weight: 700; color: #fff; background: var(--ye-orange); padding: 3px 10px; border-radius: 999px; }
-.ye-story h3 { margin: 10px 0 6px; font-size: 19px; }
+.ye-story em { font-style: normal; font-size: 13px; font-weight: 900; color: #fff; background: var(--ye-red); padding: 3px 12px; border-radius: 999px; }
+.ye-story h3 { margin: 10px 0 6px; font-size: 20px; color: var(--ye-red); }
 .ye-story p { margin: 0; font-size: 15px; line-height: 1.7; color: var(--ye-sub); }
-.ye-sub { margin: 0 0 18px; text-align: center; font-size: 22px; font-weight: 900; letter-spacing: 2px; }
-.ye-reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.ye-review { background: #fff; border-radius: 18px; padding: 20px 20px 18px; border: 2px solid #f1dfc0; display: flex; flex-direction: column; gap: 10px; }
-.ye-review-stars { color: #f5a623; font-size: 14px; letter-spacing: 2px; }
+.ye-sub { margin: 0 0 22px; text-align: center; font-size: 24px; font-weight: 900; letter-spacing: 2px; color: var(--ye-red); }
+.ye-reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.ye-review { position: relative; padding: 24px 22px 20px; display: flex; flex-direction: column; gap: 10px; }
+.ye-review::before {
+  content: "“"; position: absolute; top: -14px; left: 18px;
+  font-family: Georgia, serif; font-size: 70px; line-height: 1; color: var(--ye-red);
+}
+.ye-review-stars { color: var(--ye-orange); font-size: 15px; letter-spacing: 2px; }
 .ye-review p { margin: 0; font-size: 16px; line-height: 1.75; flex: 1; }
-.ye-review small { font-size: 13px; color: var(--ye-sub); }
-.ye-src { margin: 14px 0 0; text-align: center; font-size: 13px; color: #9a8a85; }
+.ye-review small { font-size: 13px; font-weight: 700; color: var(--ye-red-deep); }
+.ye-src { margin: 18px 0 0; text-align: center; font-size: 13px; color: var(--ye-red-deep); opacity: .75; }
 
 /* ⑥ 門市環境 */
-.ye-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.ye-shot { position: relative; margin: 0; border-radius: 14px; overflow: hidden; aspect-ratio: 4 / 3; background: #eee; }
+#stores { background: #fff; }
+.ye-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.ye-shot {
+  position: relative; margin: 0; border-radius: 16px; overflow: hidden; aspect-ratio: 4 / 3; background: #eee;
+  border: 3px solid var(--ye-red-deep); box-shadow: 0 5px 0 var(--ye-red-deep);
+}
 .ye-shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
 .ye-shot:hover img { transform: scale(1.04); }
 .ye-shot figcaption {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  padding: 18px 12px 8px; font-size: 14px; font-weight: 700; color: #fff;
-  background: linear-gradient(transparent, rgba(0,0,0,.6));
+  position: absolute; left: 10px; bottom: 10px;
+  padding: 3px 12px; border-radius: 999px;
+  background: var(--ye-red); color: #fff; font-size: 14px; font-weight: 900; letter-spacing: 1px;
 }
 .ye-shot--big { grid-column: span 2; grid-row: span 2; aspect-ratio: auto; }
 
 /* ⑦ 社群 */
 .ye-social { text-align: center; }
-.ye-social h2 { margin: 14px 0 12px; font-size: 32px; font-weight: 900; letter-spacing: 2px; line-height: 1.4; }
-.ye-social h2 b { color: var(--ye-red); }
-.ye-social p { margin: 0 auto; max-width: 640px; font-size: 15px; line-height: 1.7; color: var(--ye-red-deep); }
-.ye-posts { margin: 28px auto 0; max-width: 720px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.ye-posts img { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: 0 6px 0 rgba(142,27,27,.25); }
-.ye-posts img:nth-child(1) { transform: rotate(-3deg); }
-.ye-posts img:nth-child(3) { transform: rotate(3deg); }
+.ye-social h2 { margin: 18px 0 14px; font-size: 34px; font-weight: 900; letter-spacing: 2px; line-height: 1.45; text-shadow: 0 4px 0 var(--ye-red-deep); }
+.ye-social h2 b { font-family: var(--ye-num); font-size: 1.3em; color: var(--ye-yellow); -webkit-text-stroke: 3px var(--ye-red-deep); paint-order: stroke fill; }
+.ye-social p { margin: 0 auto; max-width: 640px; font-size: 15px; line-height: 1.7; opacity: .92; }
+.ye-posts { margin: 34px auto 0; max-width: 720px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.ye-posts img { display: block; width: 100%; height: auto; border-radius: 14px; border: 3px solid var(--ye-red-deep); box-shadow: 0 6px 0 var(--ye-red-deep); }
+.ye-posts img:nth-child(1) { transform: rotate(-4deg); }
+.ye-posts img:nth-child(3) { transform: rotate(4deg); }
 
 /* ⑧ APP */
-.ye-app { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-.ye-app h2 { margin: 0 0 6px; font-size: 28px; font-weight: 900; letter-spacing: 2px; }
+#app { padding: 56px 0; }
+.ye-app {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 22px; box-shadow: 0 7px 0 var(--ye-red-deep);
+  padding: 28px 32px;
+}
+.ye-app h2 { margin: 0 0 6px; font-size: 28px; font-weight: 900; letter-spacing: 2px; color: var(--ye-red); }
 .ye-app-text p { margin: 0 0 16px; font-size: 16px; color: var(--ye-sub); }
 .ye-app-btns { display: flex; gap: 12px; flex-wrap: wrap; }
 .ye-store-btn {
@@ -212,45 +288,60 @@
 .ye-store-btn i { font-size: 26px; }
 .ye-store-btn span { display: flex; flex-direction: column; font-size: 18px; font-weight: 700; line-height: 1.1; }
 .ye-store-btn small { font-size: 10px; font-weight: 500; letter-spacing: .5px; }
-.ye-yaya { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; color: var(--ye-sub); }
+.ye-yaya { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 700; color: var(--ye-red-deep); }
 .ye-yaya-pet { position: relative; width: 34px; height: 34px; flex-shrink: 0; }
 .ye-yaya-pet img { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 /* ⑨ 預約 */
-.ye-book { max-width: 860px; margin: 0 auto; background: #fff; color: var(--ye-ink); border-radius: 24px; padding: 28px; box-shadow: 0 10px 0 var(--ye-red-deep); }
-.ye-book-regions { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: thin; }
+.ye-book { max-width: 880px; margin: 0 auto; color: var(--ye-ink); padding: 30px; box-shadow: 0 10px 0 var(--ye-red-deep); }
+.ye-book-regions { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px; scrollbar-width: thin; }
 .ye-region {
-  flex-shrink: 0; padding: 8px 16px; border-radius: 999px;
-  border: 2px solid #ead8d5; background: #fff; color: var(--ye-sub);
-  font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
+  flex-shrink: 0; padding: 8px 18px; border-radius: 999px;
+  border: 2px solid var(--ye-red-deep); background: #fff; color: var(--ye-red-deep);
+  font-family: inherit; font-size: 15px; font-weight: 900; letter-spacing: 1px; cursor: pointer;
 }
-.ye-region.active { background: var(--ye-red); border-color: var(--ye-red); color: #fff; }
-.ye-book-stores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; min-height: 60px; }
+.ye-region:hover { background: var(--ye-yellow-soft); }
+.ye-region.active { background: var(--ye-red); color: #fff; }
+.ye-book-stores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; min-height: 60px; }
 .ye-store {
   display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
-  padding: 12px 14px; border-radius: 12px;
-  border: 2px solid #f1dfc0; background: var(--ye-cream);
-  font-family: inherit; text-align: left; cursor: pointer; transition: all .15s;
+  padding: 12px 14px; border-radius: 14px;
+  border: 2px solid var(--ye-red-deep); background: var(--ye-yellow-soft);
+  box-shadow: 0 3px 0 var(--ye-red-deep);
+  font-family: inherit; text-align: left; cursor: pointer; transition: transform .12s, box-shadow .12s, background .15s;
 }
-.ye-store:hover { border-color: var(--ye-red); background: #fff; }
-.ye-store b { font-size: 16px; color: var(--ye-red-deep); letter-spacing: 1px; }
+.ye-store:hover { background: var(--ye-yellow); transform: translateY(2px); box-shadow: 0 1px 0 var(--ye-red-deep); }
+.ye-store b { font-size: 17px; color: var(--ye-red); letter-spacing: 1px; }
 .ye-store small { font-size: 12px; color: var(--ye-sub); line-height: 1.4; }
 .ye-book-loading { grid-column: 1 / -1; text-align: center; color: var(--ye-sub); padding: 16px; }
-.ye-book-actions { margin-top: 22px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: center; }
+.ye-book-actions { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: center; }
 .ye-book-actions .ye-link { color: var(--ye-red-deep); }
-.ye-book-privacy { margin: 16px 0 0; text-align: center; font-size: 12px; color: #9a8a85; }
+.ye-book-privacy { margin: 16px 0 0; text-align: center; font-size: 12px; color: #a08680; }
 .ye-book-privacy a { color: inherit; }
 
 /* ⑩ 規則 */
-.ye-rules ul { margin: 0 auto; max-width: 780px; padding: 24px 28px 24px 48px; background: var(--ye-cream); border-radius: 18px; }
+.ye-rules ul {
+  margin: 0 auto; max-width: 800px; padding: 26px 30px 26px 50px;
+  background: #fff; border: 3px dashed var(--ye-red); border-radius: 20px;
+}
 .ye-rules li { font-size: 16px; line-height: 1.9; }
-.ye-links { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.ye-rules li::marker { color: var(--ye-red); }
+.ye-links { margin-top: 30px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .ye-links a {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 18px; border-radius: 999px; border: 2px solid #ead8d5;
-  color: var(--ye-ink); text-decoration: none; font-weight: 700;
+  padding: 10px 20px; border-radius: 999px; border: 2px solid var(--ye-red-deep);
+  background: #fff; color: var(--ye-red-deep); text-decoration: none; font-weight: 900;
+  box-shadow: 0 3px 0 var(--ye-red-deep);
 }
-.ye-links a:hover { border-color: var(--ye-red); color: var(--ye-red); }
+.ye-links a:hover { background: var(--ye-yellow); }
+
+/* ---------- 預約彈窗也換成感謝祭的紅(只在這一頁) ---------- */
+#lohas-booking-modal {
+  --lohas-brand: #c8202a;
+  --lohas-bd: #f1d9b8;
+  --lohas-light: #f6c7c3;
+  --bg-warm: #fff8e6;
+}
 
 /* ---------- 手機固定按鈕 ---------- */
 .ye-dock { display: none; }
@@ -259,47 +350,54 @@
 @media (max-width: 1000px) {
   .ye-gallery { grid-template-columns: repeat(3, 1fr); }
   .ye-shot--big { grid-column: span 1; grid-row: span 1; aspect-ratio: 4 / 3; }
+  .ye-lead-g1 { left: -30px; top: -40px; width: 110px; height: 46px; }
+  .ye-lead-g2 { right: -30px; bottom: -50px; width: 110px; height: 46px; }
 }
 
 /* ---------- 手機 ---------- */
 @media (max-width: 760px) {
-  .ye { padding-bottom: 72px; }          /* 讓出固定按鈕 */
+  .ye { padding-bottom: 76px; }          /* 讓出固定按鈕 */
   .ye-sp { display: inline; }
-  .ye-sec { padding: 52px 0; }
-  .ye-hero-bar { grid-template-columns: 1fr; text-align: center; padding: 18px 16px 22px; }
-  .ye-hero-gift { font-size: 17px; }
-  .ye-hero-gift b { font-size: 26px; }
-  .ye-hero-gift .ye-hero-date { font-size: 14px; }
+  .ye-sec { padding: 56px 0; }
+  .ye-hero-bar { grid-template-columns: 1fr; text-align: center; padding: 20px 16px 24px; }
+  .ye-hero-gift { font-size: 18px; }
+  .ye-hero-gift b { font-size: 28px; }
+  .ye-hero-gift .ye-hero-date { font-size: 13px; }
   .ye-hero-cta { justify-content: center; }
   .ye-hero-cta .ye-btn { width: 100%; }
-  .ye-lead { padding-top: 40px; }
-  .ye-lead-title { font-size: 28px; }
+  .ye-lead { margin-bottom: 48px; }
+  .ye-lead-title { font-size: 34px; }
   .ye-lead-sub { font-size: 16px; }
-  .ye-head h2 { font-size: 26px; }
+  .ye-lead-g1 { left: -14px; top: -34px; width: 84px; height: 35px; }
+  .ye-lead-g2 { right: -14px; bottom: -40px; width: 84px; height: 35px; }
+  .ye-head h2 { font-size: 28px; }
   .ye-pains, .ye-duo, .ye-steps, .ye-reviews { grid-template-columns: 1fr; }
-  .ye-steps { gap: 30px; }
-  .ye-steps li:not(:last-child)::after { content: "\f078"; right: auto; left: 50%; top: auto; bottom: -26px; transform: translateX(-50%); }
+  .ye-duo-card:nth-child(2) { transform: none; }
+  .ye-steps { gap: 44px; }
+  .ye-steps li:not(:last-child)::after { content: "\f078"; right: auto; left: 50%; top: auto; bottom: -38px; transform: translateX(-50%); }
   .ye-points, .ye-dates { grid-template-columns: 1fr; }
   .ye-gallery { grid-template-columns: 1fr 1fr; }
-  .ye-social h2 { font-size: 24px; }
-  .ye-app { flex-direction: column; align-items: flex-start; }
+  .ye-social h2 { font-size: 25px; }
+  .ye-posts { gap: 10px; }
+  .ye-app { flex-direction: column; align-items: flex-start; padding: 22px 20px; }
   .ye-book { padding: 20px 16px; }
   .ye-book-stores { grid-template-columns: 1fr 1fr; }
   .ye-book-actions .ye-btn { width: 100%; }
-  .ye-rules ul { padding: 18px 18px 18px 36px; }
+  .ye-rules ul { padding: 18px 18px 18px 38px; }
 
   .ye-dock {
     display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: rgba(255,255,255,.96); box-shadow: 0 -4px 16px rgba(0,0,0,.12);
+    background: var(--ye-yellow, #ffd23f); border-top: 3px solid #8e1b1b;
   }
   .ye-dock a {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     min-height: 48px; border-radius: 999px; text-decoration: none;
+    border: 3px solid #8e1b1b; box-shadow: 0 3px 0 #8e1b1b;
     font-size: 16px; font-weight: 900; letter-spacing: 1px; color: #fff;
   }
-  .ye-dock-line { background: var(--ye-line); }
+  .ye-dock-line { background: #06c755; }
   .ye-dock-line i { font-size: 20px; }
-  .ye-dock-book { background: var(--ye-red); }
+  .ye-dock-book { background: #c8202a; }
 }
