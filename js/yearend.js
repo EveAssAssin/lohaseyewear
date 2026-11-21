@@ -207,7 +207,8 @@
     const list = regionsOf().flatMap(r => r.stores);
     if (!list.length) return;
     $("[data-ye-gallery]").innerHTML = list.map(s => {
-      const photo = s.photos && s.photos[0];
+      /* 永和店的 photos 是空陣列、只有 coverimage(2026-11-21 實測),沒照片就退回封面圖 */
+      const photo = (s.photos && s.photos[0]) || s.coverimage;
       return `<article class="ye-shop">` +
           `<div class="ye-shop-photo">${photo ? `<img src="${esc(photo)}" alt="${esc(s.name)}門市" loading="lazy" onerror="this.remove()">` : ""}<i class="fa-solid fa-store" aria-hidden="true"></i>` +
             (s.region ? `<span>${esc(s.region.label)}</span>` : "") + `</div>` +
