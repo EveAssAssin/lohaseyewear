@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261121-yaya">
+  <link rel="stylesheet" href="css/yearend.css?v=20261121-mine">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -225,12 +225,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="ye-wrap">
       <div class="ye-head ye-head--light"><span class="ye-tag ye-tag--yellow">線上預約</span><h2>選好門市,現在就預約</h2><p>選門市 → 選時段 → 填姓名電話,一分鐘完成</p></div>
       <div class="ye-book">
+        <!-- 預約查詢放在卡片右上角,跟「新預約」的按鈕分開(使用者 2026-11-21:原本夾在兩顆按鈕旁邊) -->
+        <div class="ye-book-top">
+          <b><i class="fa-solid fa-store"></i> 選擇門市</b>
+          <a class="ye-mine-link" href="#mine" data-ye-mine data-ye-cta="mine"><i class="fa-solid fa-magnifying-glass"></i> 已經預約過?查詢/取消預約</a>
+        </div>
         <div class="ye-book-regions" data-ye-regions role="tablist"></div>
         <div class="ye-book-stores" data-ye-stores><div class="ye-book-loading"><i class="fa-solid fa-spinner fa-spin"></i> 載入門市中…</div></div>
         <div class="ye-book-actions">
           <a class="ye-btn ye-btn--yellow" href="allstore.html" data-ye-book data-ye-cta="book_section">還沒決定門市?開始預約 <i class="fa-solid fa-arrow-right"></i></a>
           <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-cta="consult_section"><i class="fa-brands fa-line"></i> LINE 詢問活動</a>
-          <a class="ye-link" href="#mine" data-ye-mine data-ye-cta="mine">預約查詢/取消</a>
         </div>
         <p class="ye-book-privacy">預約資料只用於門市安排與聯繫,詳見<a href="privacy.html">隱私權政策</a>。</p>
       </div>
