@@ -277,10 +277,6 @@
 .ye-social h2 { margin: 18px 0 14px; font-size: 34px; font-weight: 900; letter-spacing: 2px; line-height: 1.45; text-shadow: 0 4px 0 var(--ye-red-deep); }
 .ye-social h2 b { font-family: var(--ye-num); font-size: 1.3em; color: var(--ye-yellow); -webkit-text-stroke: 3px var(--ye-red-deep); paint-order: stroke fill; }
 .ye-social p { margin: 0 auto; max-width: 640px; font-size: 15px; line-height: 1.7; opacity: .92; }
-.ye-posts { margin: 34px auto 0; max-width: 720px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.ye-posts img { display: block; width: 100%; height: auto; border-radius: 14px; border: 3px solid var(--ye-red-deep); box-shadow: 0 6px 0 var(--ye-red-deep); }
-.ye-posts img:nth-child(1) { transform: rotate(-4deg); }
-.ye-posts img:nth-child(3) { transform: rotate(4deg); }
 
 /* ⑧ APP */
 #app { padding: 56px 0; }
@@ -428,7 +424,6 @@
   .ye-points, .ye-dates { grid-template-columns: 1fr; }
   .ye-gallery { grid-template-columns: 1fr 1fr; }
   .ye-social h2 { font-size: 25px; }
-  .ye-posts { gap: 10px; }
   .ye-app { flex-direction: column; align-items: stretch; padding: 22px 20px; }
   .ye-yaya { flex-direction: column; text-align: center; padding: 18px 16px 20px; flex-basis: auto; }
   .ye-yaya-text ul { justify-items: start; text-align: left; }
