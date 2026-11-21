@@ -883,6 +883,21 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - 「我的預約」`open({ mine: true })`:手機驗證後列出預約、可取消(`/mine`、`/bookings/{id}/cancel`)。
   學生頁的「預約查詢／取消」與預約完成畫面的「我的預約」都開這個。
 
+## 2026 年終感謝祭一頁式活動頁(`yearend.html`,2026-11-21 建,**先上線但關著**)
+
+- 需求書在桌面(`樂活眼鏡_2026年終感謝祭_一頁式行銷廣告製作需求.docx`),素材在行銷的 Drive「2026感謝祭」。
+- **目前 `noindex` 且沒有任何連結指過去**。12/1 開跑前:拿掉 `<meta name="robots">`、header 加連結、首頁放 banner。
+- 🚨 **活動規則一字不改**(需求書第十節):不寫虛構的限量/倒數/搶購;
+  「兩人各自配鏡即享第二副 0 元」是錯的說法,須先完成第一副原價配鏡取得折價券。
+- 預約走 `booking-v2.js` 的 **`preset: "yearend"`**(與學生頁同一套活動模式,`PRESETS` 加一組就能開新活動):
+  項目用「配鏡」,留言第一行加【2026 年終感謝祭】。來源只記在留言,`source` 照舊送 `web`(使用者決定)。
+  `sessionStorage.lohas_booking_source` 設成 `yearend-2026`,`booking_complete` 會帶上。
+- **人氣數字、顧客故事只放真實資料**:填 `js/yearend.js` 的 `CONFIG.stats` / `CONFIG.stories`,`null` 時整區不顯示。
+  口碑區用門市評價系統的真實評價(只取 5 星、姓名遮成「X○○」、同內容去重);門市照片用官網門市 API。
+  ⚠ 門市清單的 `averageScore` 是空的,不能拿來篩評價。
+- APP:iPhone `apps.apple.com/tw/app/id1442745225`;**Google Play 連結還沒有**,拿到填 `CONFIG.appAndroid` 按鈕才會出現。
+- 追蹤:按鈕都有 `data-ye-cta`,送 GA4 `yearend_cta`;頁面開啟送 `yearend_view`;廣告來源用網址 `utm_*`。
+
 ## 對外文件
 
 - `docs/串接現況.md` — 與商城共用的介面契約與現況,**公開**,雙方的工程與 AI 工具都會讀。

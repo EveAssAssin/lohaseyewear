@@ -13,11 +13,13 @@
 
    三種用法(同一套畫面):
    - 門市頁:open({ store, employees, preselectEmployeeErpId })
-   - 大學生專案(student.html):open({ student: true })
-       多一個「選門市」;項目固定為該店的「配鏡」,畫面顯示「學生配鏡」,
-       留言第一行自動加【大學生專案】讓門市知道。預約系統沒有「學生配鏡」項目,
-       2026-11-12 已請 Louis 加「學生配鏡」;加了的店/人員自動改用它(pickStudentSvc),不必改程式。
-       不收身分證字號(使用者 2026-11-12 決定):資格與一人一次由門市看學生證確認。
+   - 活動模式:open({ preset: "student" | "yearend" })(見下面的 PRESETS)
+       多一個「選門市」;項目固定為一個(學生配鏡 / 配鏡),
+       留言第一行自動加活動標記(【大學生專案】/【2026 年終感謝祭】)讓門市知道來源。
+       · 大學生專案(student.html):open({ student: true }) 是舊寫法,等同 preset: "student"。
+         2026-11-12 已請 Louis 加「學生配鏡」;加了的店/人員自動改用它(pickStudentSvc),不必改程式。
+         不收身分證字號(使用者 2026-11-12 決定):資格與一人一次由門市看學生證確認。
+       · 年終感謝祭(yearend.html,2026-11-21):項目用「配鏡」。來源只記在留言(使用者決定,不動 source)。
    - 我的預約:open({ mine: true })
 
    ⚠ 人員對應:官網的顧問資料(照片、職稱)用 erpid,預約系統用 app_number,
@@ -61,6 +63,35 @@
     arr.find(x => /^學生配鏡/.test(String(x.name || ""))) || arr.find(x => /^配鏡/.test(String(x.name || ""))) || null;
   const STUDENT_LABEL = "學生配鏡";
   const STUDENT_NOTE = "【大學生專案】學生配鏡(到店出示學生證或在學證明)";
+  const FIT_SVC = name => /^配鏡/.test(String(name || ""));
+
+  /* 活動模式:多一步選門市、項目固定一個、留言加活動標記。新活動在這裡加一組就好。
+     ⚠ tipSvc / tipForm / doneExtra 是 HTML,只放自己寫的固定字,不要塞外部資料。 */
+  const PRESETS = {
+    student: {
+      key: "student",
+      title: "大學生專案 · 線上預約", sub: "學生配鏡 $1700 起",
+      svcMatch: STUDENT_SVC, pickSvc: pickStudentSvc, label: STUDENT_LABEL, note: STUDENT_NOTE,
+      tipSvc: `<i class="fa-solid fa-graduation-cap"></i> 1700 元樂活配/2700 元任你配,到店請出示學生證或在學證明`,
+      tipForm: `<i class="fa-solid fa-id-card"></i> 到店請出示學生證或在學證明,學生方案一人一生限本人使用一次`,
+      doneExtra: `<br><b>到店請出示學生證或在學證明。</b>`,
+      noStore: "目前沒有開放學生配鏡線上預約的門市",
+      noStaff: "這間門市目前沒有開放學生配鏡的線上預約",
+      itemType: "學生方案"
+    },
+    yearend: {
+      key: "yearend",
+      title: "年終感謝祭 · 線上預約", sub: "配鏡第二副 0 元",
+      svcMatch: FIT_SVC, pickSvc: arr => arr.find(x => FIT_SVC(x.name)) || null, label: "配鏡",
+      note: "【2026 年終感謝祭】配鏡第二副 0 元",
+      tipSvc: `<i class="fa-solid fa-gift"></i> 原價配鏡指定全方案,贈 2,680 元配鏡折價券;憑券折抵第二副配鏡,符合方案條件可享第二副 0 元`,
+      tipForm: `<i class="fa-solid fa-circle-info"></i> 活動期間 2026/12/1–2027/1/31,折價券使用至 2027/2/28;不得與其他優惠併用,詳細規範以門市公告為準`,
+      doneExtra: "",
+      noStore: "目前沒有開放配鏡線上預約的門市",
+      noStaff: "這間門市目前沒有開放配鏡的線上預約",
+      itemType: "年終感謝祭"
+    }
+  };
 
   const STATUS = {
     booked: "已預約", arrived: "已到店", done: "已完成",
@@ -70,7 +101,7 @@
   const state = {
     open: false,
     mode: "book",         // book | mine
-    student: false,
+    preset: null,         // 活動模式(PRESETS 其中一組);null = 門市頁的一般預約
     step: 1,
     store: null,          // 官網的門市(門市頁傳入;學生模式選了才有)
     bkStore: null,        // 預約系統的門市(含門市層級項目)
@@ -184,7 +215,8 @@
     opts = opts || {};
     const seq = ++openSeq;
     Object.assign(state, {
-      open: true, mode: opts.mine ? "mine" : "book", student: !!opts.student,
+      open: true, mode: opts.mine ? "mine" : "book",
+      preset: PRESETS[opts.preset || (opts.student ? "student" : "")] || null,
       step: 1, store: opts.store || null, bkStore: null,
       employees: (opts.employees || []).filter(e => e && !e.isLeave && !e.isFreeze),
       staff: [], loading: true, staffLoading: false, loadErr: "", selStaff: null, selSvc: null,
@@ -207,14 +239,14 @@
       return render();
     }
 
-    try { if (root.lohasTrack) root.lohasTrack("booking_open", { store: (state.store && state.store.erpid) || (state.student ? "student" : "") }); } catch (_e) {}
+    try { if (root.lohasTrack) root.lohasTrack("booking_open", { store: (state.store && state.store.erpid) || (state.preset ? state.preset.key : "") }); } catch (_e) {}
 
     try {
       const [cfg, stores] = await Promise.all([
         api("GET", "/config"),
         api("GET", "/stores").catch(() => []),
         restoreToken(),
-        state.student ? loadSiteStores() : null
+        state.preset ? loadSiteStores() : null
       ]);
       if (seq !== openSeq) return;
       if (cfg && cfg.max_days_ahead) state.maxDays = cfg.max_days_ahead;
@@ -296,8 +328,9 @@
       ownMinutes: x.minutes,
       minutes: storeMin.has(x.name) ? storeMin.get(x.name) : x.minutes
     }));
-    const pick = arr => state.student
-      ? [pickStudentSvc(arr)].filter(Boolean).map(x => Object.assign({}, x, { label: STUDENT_LABEL }))
+    const P = state.preset;
+    const pick = arr => P
+      ? [P.pickSvc(arr)].filter(Boolean).map(x => Object.assign({}, x, { label: P.label }))
       : sortSvc(arr);
     let list = bkStaff.map(s => {
       const e = (s.erp && byErp.get(String(s.erp))) || byName.get(norm(s.name));
@@ -317,8 +350,8 @@
     if (state.bkStore && (state.bkStore.services || []).length) {
       list.push({ key: "any", any: true, name: "不指定店員", role: "(最快有空)", photo: "", honor: "", services: pick(state.bkStore.services) });
     }
-    /* 學生模式:沒有「配鏡」的人約不了學生方案,不列出來 */
-    if (state.student) list = list.filter(s => s.services.length);
+    /* 活動模式:沒有那個項目的人約不了,不列出來 */
+    if (P) list = list.filter(s => s.services.length);
     return list;
   }
   /* 一般項目在前、生日項目在後,各自保持原順序 */
@@ -331,7 +364,7 @@
     if (!state.selStaff || state.selStaff.key !== s.key) {
       state.selStaff = s;
       /* 換人:同名項目還在就保留(分鐘數換成這個人的),沒有就清掉。學生模式只有一個項目,直接選好 */
-      state.selSvc = state.student ? (s.services[0] || null)
+      state.selSvc = state.preset ? (s.services[0] || null)
         : state.selSvc ? (s.services.find(x => x.name === state.selSvc.name) || null) : null;
       state.days = null; state.selSlot = null;
     }
@@ -411,7 +444,7 @@
     const s = state.store;
     let title, sub = "";
     if (state.mode === "mine") { title = "我的預約"; sub = "用預約時的手機查詢、取消"; }
-    else if (state.student) { title = "大學生專案 · 線上預約"; sub = s ? s.name + (s.address ? "|" + s.address : "") : "學生配鏡 $1700 起"; }
+    else if (state.preset) { title = state.preset.title; sub = s ? s.name + (s.address ? "|" + s.address : "") : state.preset.sub; }
     else { title = s ? s.name + " · 線上預約" : "線上預約"; sub = (s && s.address) || ""; }
     return `<div class="bm-head"><div class="bm-head-info">` +
         `<span class="tag"><i class="fa-solid fa-bolt"></i> ${state.mode === "mine" ? "MY BOOKINGS" : "RESERVATION"}</span>` +
@@ -464,7 +497,7 @@
 
   function renderSteps() {
     if (state.done || state.mode === "mine") return "";
-    const steps = [state.student ? "選門市與顧問" : "選顧問與項目", "選時段", "確認資料"];
+    const steps = [state.preset ? "選門市與顧問" : "選顧問與項目", "選時段", "確認資料"];
     return `<div class="bm-steps">` + steps.map((t, i) => {
       const n = i + 1;
       const cls = state.step === n ? "active" : state.step > n ? "done" : "";
@@ -490,7 +523,7 @@
     /* 只列官網門市據點上有的店 —— 官網會隱藏已結束營業的店(store-data.js 的 HIDDEN_STORE_NAMES),
        而預約系統不一定關掉了(2026-11-12 高應大店 8/14 已歇業,預約系統裡還開著)。
        官網門市資料讀不到時才全部列出。 */
-    const list = state.bkStores.filter(s => (s.services || []).some(x => STUDENT_SVC(x.name)))
+    const list = state.bkStores.filter(s => (s.services || []).some(x => state.preset.svcMatch(x.name)))
       .filter(s => !state.siteStores.length || site.has(String(s.store_erpid))).map(s => {
       const w = site.get(String(s.store_erpid));
       return { erp: String(s.store_erpid), name: (w && w.name) || s.store_name, region: w && w.region };
@@ -516,7 +549,7 @@
 
     const regions = [...groups.entries()].sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]))
       .map(([k, arr]) => ({ key: k, label: k.split("|")[1], stores: arr.sort((a, b) => a.name.localeCompare(b.name, "zh-Hant")) }));
-    if (!regions.length) return `<div class="bm-sec">${title}<div class="bk2-hint">目前沒有開放學生配鏡線上預約的門市</div></div>`;
+    if (!regions.length) return `<div class="bm-sec">${title}<div class="bk2-hint">${esc(state.preset.noStore)}</div></div>`;
     const cur = regions.find(r => r.key === state.regionKey)
       || regions.find(r => r.stores.some(s => s.erp === sel)) || regions[0];
     state.regionKey = cur.key;
@@ -531,10 +564,11 @@
 
   /* 第 1 步:(學生模式先選門市)顧問(大頭像)+ 這位顧問的項目 */
   function renderStaffStep() {
-    const storePick = state.student ? renderStorePick() : "";
-    if (state.student && !state.store) return storePick + `<div class="bk2-hint">先選門市,就會列出可以預約的顧問</div>`;
+    const P = state.preset;
+    const storePick = P ? renderStorePick() : "";
+    if (P && !state.store) return storePick + `<div class="bk2-hint">先選門市,就會列出可以預約的顧問</div>`;
     if (state.staffLoading) return storePick + stateBox(`<div class="spinner"></div>`, "載入顧問中…");
-    if (!state.staff.length) return storePick + stateBox("", state.student ? "這間門市目前沒有開放學生配鏡的線上預約" : "這間門市尚未開放線上預約", "請選擇其他門市或致電門市預約");
+    if (!state.staff.length) return storePick + stateBox("", P ? esc(P.noStaff) : "這間門市尚未開放線上預約", "請選擇其他門市或致電門市預約");
     const cards = state.staff.map(s => {
       const active = state.selStaff && state.selStaff.key === s.key;
       const photo = s.photo
@@ -546,7 +580,7 @@
             `<div class="bm-staff-pick-name">${esc(s.name)}</div>` +
             (s.role ? `<div class="bm-staff-pick-role">${esc(s.role)}</div>` : "") +
             (s.honor ? `<div class="bm-staff-pick-honor"><i class="fa-solid fa-medal"></i> ${esc(s.honor)}</div>` : "") +
-            (state.student ? "" : `<div class="bk2-staff-count">可預約 ${s.services.length} 項服務</div>`) +
+            (P ? "" : `<div class="bk2-staff-count">可預約 ${s.services.length} 項服務</div>`) +
           `</div>` +
           `<div class="bm-staff-pick-check"><i class="fa-solid fa-check"></i></div>` +
         `</div>`;
@@ -559,7 +593,7 @@
     const s = state.selStaff;
     let inner;
     if (!s) {
-      inner = `<div class="bk2-hint">${state.student ? "先選一位顧問" : "先選一位顧問,就會列出他可以服務的項目"}</div>`;
+      inner = `<div class="bk2-hint">${state.preset ? "先選一位顧問" : "先選一位顧問,就會列出他可以服務的項目"}</div>`;
     } else {
       const normal = s.services.filter(x => !BIRTHDAY_RE.test(x.name));
       const bday = s.services.filter(x => BIRTHDAY_RE.test(x.name));
@@ -574,11 +608,11 @@
         (bday.length
           ? `<div class="bk2-svc-group"><i class="fa-solid fa-cake-candles"></i> 生日月專屬</div><div class="bm-svc-grid bk2-bday">${bday.map(chip).join("")}</div>`
           : "");
-      if (state.student) inner += `<div class="bk2-student-note"><i class="fa-solid fa-graduation-cap"></i> 1700 元樂活配/2700 元任你配,到店請出示學生證或在學證明</div>`;
+      if (state.preset && state.preset.tipSvc) inner += `<div class="bk2-student-note">${state.preset.tipSvc}</div>`;
       if (!s.services.length) inner = `<div class="bk2-hint">這位顧問目前沒有開放線上預約的項目</div>`;
     }
     return `<div class="bm-sec"><div class="bm-sec-title">預約服務項目 <span class="bm-required">*</span>` +
-      (s && !state.student ? `<span class="bk2-sec-sub">${esc(s.any ? "門市" : s.name)}可服務的項目</span>` : "") +
+      (s && !state.preset ? `<span class="bk2-sec-sub">${esc(s.any ? "門市" : s.name)}可服務的項目</span>` : "") +
       `</div>${inner}</div>`;
   }
 
@@ -596,7 +630,7 @@
         `<div class="bk2-week-range">${md(from)} – ${md(to)}</div>` +
         `<button type="button" class="bk2-week-btn" data-week="1" ${canNext ? "" : "disabled"}>下一週 <i class="fa-solid fa-chevron-right"></i></button>` +
       `</div>`;
-    const svcLine = `<div class="bk2-picked">${state.student && state.store ? esc(state.store.name) + " · " : ""}<b>${esc(state.selStaff.any ? ANY_LABEL : state.selStaff.name)}</b> · ${esc(svcName(state.selSvc))} · 約 ${state.selSvc.minutes} 分鐘</div>`;
+    const svcLine = `<div class="bk2-picked">${state.preset && state.store ? esc(state.store.name) + " · " : ""}<b>${esc(state.selStaff.any ? ANY_LABEL : state.selStaff.name)}</b> · ${esc(svcName(state.selSvc))} · 約 ${state.selSvc.minutes} 分鐘</div>`;
 
     if (state.daysLoading || !state.days) {
       return svcLine + `<div class="bm-sec"><div class="bm-sec-title">選擇日期</div>${nav}</div>` + stateBox(`<div class="spinner"></div>`, "載入可預約時段中");
@@ -638,7 +672,7 @@
         row("項目", `${esc(svcName(svc))} <span class="bk2-muted">約 ${svc.minutes} 分鐘</span>`) +
         row("時間", `<b>${fmtDay(state.selDay)} ${esc(slot.label)}</b>`) +
       `</div>` +
-      (state.student ? `<div class="bk2-student-note"><i class="fa-solid fa-id-card"></i> 到店請出示學生證或在學證明,學生方案一人一生限本人使用一次</div>` : "");
+      (state.preset && state.preset.tipForm ? `<div class="bk2-student-note">${state.preset.tipForm}</div>` : "");
 
     const m = state.member;
     let who;
@@ -697,11 +731,11 @@
       `<div class="bm-success-icon"><i class="fa-solid fa-check"></i></div>` +
       `<div class="bm-success-title">預約完成</div>` +
       `<div class="bm-success-msg">前一天會再傳簡訊提醒您。要改時間或取消,請到「我的預約」或致電門市。` +
-        (state.student ? `<br><b>到店請出示學生證或在學證明。</b>` : "") + `</div>` +
+        (state.preset ? state.preset.doneExtra : "") + `</div>` +
       `<div class="bm-success-detail">` +
         `<div>門市:<b>${esc(d.store_name || (state.store && state.store.name) || "")}</b></div>` +
         `<div>顧問:<b>${esc(state.selStaff.any ? ANY_LABEL : (d.staff_name || state.selStaff.name))}</b></div>` +
-        `<div>項目:<b>${esc(state.student ? STUDENT_LABEL : (d.service_name || state.selSvc.name))}</b>(約 ${state.selSvc.minutes} 分鐘)</div>` +
+        `<div>項目:<b>${esc(state.preset ? state.preset.label : (d.service_name || state.selSvc.name))}</b>(約 ${state.selSvc.minutes} 分鐘)</div>` +
         `<div>時間:<b>${fmtDay(state.selDay)} ${esc(state.selSlot.label)}</b></div>` +
       `</div></div>`;
   }
@@ -749,7 +783,7 @@
     if (state.loading || state.loadErr) return "";
     const ok = canNext();
     let hint;
-    if (state.step === 1) hint = state.student && !state.store ? "<b>請先選擇門市</b>"
+    if (state.step === 1) hint = state.preset && !state.store ? "<b>請先選擇門市</b>"
       : !state.selStaff ? "<b>請先選擇一位顧問</b>" : !state.selSvc ? "<b>請選擇預約服務項目</b>"
       : `<b>${esc(svcName(state.selSvc))}</b>約 ${state.selSvc.minutes} 分鐘・按「下一步」挑時段`;
     else if (state.step === 2) hint = state.selSlot ? `<b>${fmtDay(state.selDay)} ${esc(state.selSlot.label)}</b>${esc(svcName(state.selSvc))}・約 ${state.selSvc.minutes} 分鐘` : "<b>請選擇預約時段</b>可切換上一週 / 下一週";
@@ -911,7 +945,7 @@
     state.submitting = true; renderBody();
     try {
       const noteLines = [];
-      if (state.student) noteLines.push(STUDENT_NOTE);
+      if (state.preset) noteLines.push(state.preset.note);
       if (state.form.note.trim()) noteLines.push(state.form.note.trim());
       const body = { service_id: svc.id, start_at: state.selSlot.start, name: state.form.name.trim(), note: noteLines.join("\n").slice(0, 300), source: "web" };
       /* 會員編號有專用欄位了(Louis 2026-11-12):1~20 位數字,門市在預約詳情看得到。不再寫進 note */
@@ -949,7 +983,7 @@
         reservation_id: (res && res.id) || "",
         store_id: (state.store && state.store.erpid) || "",
         store_name: (state.store && state.store.name) || "",
-        item_type: state.student ? "學生方案" : state.selSvc.name,
+        item_type: state.preset ? state.preset.itemType : state.selSvc.name,
         source_news_id: src.news_id || "",
         source_news_title: src.news_title || "",
         source_cta_type: src.cta_type || ""
