@@ -300,9 +300,45 @@
 .ye-store-btn i { font-size: 26px; }
 .ye-store-btn span { display: flex; flex-direction: column; font-size: 18px; font-weight: 700; line-height: 1.1; }
 .ye-store-btn small { font-size: 10px; font-weight: 500; letter-spacing: .5px; }
-.ye-yaya { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 700; color: var(--ye-red-deep); }
-.ye-yaya-pet { position: relative; width: 34px; height: 34px; flex-shrink: 0; }
+/* 芽芽:右半邊的介紹卡(使用者 2026-11-21 要求強化) */
+.ye-app-text { flex: 1 1 340px; }
+.ye-yaya {
+  flex: 1 1 420px;
+  display: flex; align-items: center; gap: 20px;
+  background: var(--ye-yellow-soft); border-radius: 18px; padding: 18px 22px;
+}
+.ye-yaya-stage { position: relative; flex-shrink: 0; width: 150px; padding-top: 34px; }
+.ye-yaya-pet {
+  position: relative; display: block; width: 150px; height: 150px;
+  animation: yeBob 2.6s ease-in-out infinite;
+}
 .ye-yaya-pet img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ye-yaya-pet::after {      /* 地上的影子 */
+  content: ""; position: absolute; left: 22%; right: 22%; bottom: 10%; height: 8%;
+  border-radius: 50%; background: rgba(79,140,200,.18); z-index: -1;
+}
+.ye-yaya-bubble {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  white-space: nowrap; background: #fff; color: var(--ye-red-deep);
+  border: 2px solid var(--ye-red-deep); border-radius: 999px;
+  padding: 4px 14px; font-size: 14px; font-weight: 900;
+}
+.ye-yaya-bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%) rotate(45deg);
+  width: 10px; height: 10px; background: #fff;
+  border-right: 2px solid var(--ye-red-deep); border-bottom: 2px solid var(--ye-red-deep);
+}
+.ye-yaya-text h3 { margin: 0 0 10px; font-size: 21px; font-weight: 900; color: var(--ye-red-deep); line-height: 1.4; }
+.ye-yaya-text h3 b { color: #3d8fd6; }
+.ye-yaya-text ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ye-yaya-text li { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; color: var(--ye-ink); }
+.ye-yaya-text li i {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #cfe6fb; color: #3d8fd6; font-size: 13px;
+}
+@keyframes yeBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .ye-yaya-pet { animation: none; } }
 
 /* ⑨ 預約 */
 .ye-book { max-width: 880px; margin: 0 auto; color: var(--ye-ink); padding: 30px; box-shadow: 0 10px 0 var(--ye-red-deep); }
@@ -389,7 +425,9 @@
   .ye-gallery { grid-template-columns: 1fr 1fr; }
   .ye-social h2 { font-size: 25px; }
   .ye-posts { gap: 10px; }
-  .ye-app { flex-direction: column; align-items: flex-start; padding: 22px 20px; }
+  .ye-app { flex-direction: column; align-items: stretch; padding: 22px 20px; }
+  .ye-yaya { flex-direction: column; text-align: center; padding: 18px 16px 20px; flex-basis: auto; }
+  .ye-yaya-text ul { justify-items: start; text-align: left; }
   .ye-book { padding: 20px 16px; }
   .ye-book-stores { grid-template-columns: 1fr 1fr; }
   .ye-book-actions .ye-btn { width: 100%; }
