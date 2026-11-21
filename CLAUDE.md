@@ -892,7 +892,14 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - 預約走 `booking-v2.js` 的 **`preset: "yearend"`**(與學生頁同一套活動模式,`PRESETS` 加一組就能開新活動):
   項目用「配鏡」,留言第一行加【2026 年終感謝祭】。來源只記在留言,`source` 照舊送 `web`(使用者決定)。
   `sessionStorage.lohas_booking_source` 設成 `yearend-2026`,`booking_complete` 會帶上。
-- **人氣數字、顧客故事只放真實資料**:填 `js/yearend.js` 的 `CONFIG.stats` / `CONFIG.stories`,`null` 時整區不顯示。
+- **人氣數字、顧客故事只放真實資料**:`js/yearend.js` 的 `CONFIG.reviewStats`(門市評價系統把在職顧問評價全部加總的快照,
+  2026-11-21 = 52,715 則、5 星 52,182 則;要更新就重算並改日期)、`CONFIG.joined`(活動參加人數,等總部給,`null` 不顯示)、
+  `CONFIG.stories`。**不要在前端每次載入都去加總評價** —— 那要打四十幾支 API,廣告流量一進來會把代理打爆。
+- 「詢問活動」先開**芽芽小幫手預設問答**(`FAQ`),最後才導 LINE(使用者:一上來就加 LINE 大多會滑掉)。
+  🚨 答案只照活動規範寫;「配鏡要多久」「度數限制」沒有正式資料,目前是保守答案,有正式說法改 `FAQ`。
+- 好評浮窗只輪播**真實 5 星評價**(「X○○ 給 ○○店 ★★★★★」),**不寫時間、不編「誰剛配了」** —— 沒有那種資料。
+- 情境 / 家人好友 / 口碑 / 門市四區是輪播(`initSlider`,原生 scroll-snap + 自動播放);情境卡先用插畫,有真人照換 `.ye-scene-art`。
+- 「兩副只要 2,680 + 刪除線」**先擱著**:要先確認最便宜的指定方案是不是 2,680,不是的話那句話不成立。
   口碑區用門市評價系統的真實評價(只取 5 星、姓名遮成「X○○」、同內容去重);門市照片用官網門市 API。
   ⚠ 門市清單的 `averageScore` 是空的,不能拿來篩評價。
 - APP:iPhone `apps.apple.com/tw/app/id1442745225`;Android `play.google.com/store/apps/details?id=com.lohasglasses.app`

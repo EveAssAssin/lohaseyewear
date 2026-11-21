@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261121-norule">
+  <link rel="stylesheet" href="css/yearend.css?v=20261121-v2">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -78,7 +78,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p class="ye-hero-gift">原價配鏡指定全方案,<span class="ye-nowrap">贈 2,680 元配鏡折價券</span><i aria-hidden="true">|</i><br class="ye-sp"><span class="ye-nowrap">活動期間 2026/12/1 – 2027/1/31</span></p>
       <div class="ye-hero-cta">
         <a class="ye-btn ye-btn--red" href="#book" data-ye-book data-ye-cta="book_hero">立即預約 <i class="fa-solid fa-calendar-check"></i></a>
-        <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-cta="consult_hero"><i class="fa-brands fa-line"></i> 我想了解活動</a>
+        <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-chat data-ye-cta="consult_hero"><i class="fa-solid fa-comment-dots"></i> 我想了解活動</a>
       </div>
       <p class="ye-fine">須先完成第一副原價配鏡取得折價券,第二副依活動規範使用;不得與其他優惠併用。<a href="#rules">活動規則</a></p>
     </div>
@@ -94,29 +94,42 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <h2 class="ye-lead-title">你的眼鏡,<br class="ye-sp">何必只有一副?</h2>
         <p class="ye-lead-sub">這副也好看、那副也捨不得放下?<br class="ye-sp">這次不用二選一!</p>
       </div>
-      <div class="ye-head"><span class="ye-tag">為什麼需要第二副</span><h2>一副工作,一副生活,<br class="ye-sp">剛剛好</h2></div>
-      <div class="ye-pains">
-        <article class="ye-pain">
-          <div class="ye-pain-art ye-pain-art--style" aria-hidden="true">
-            <svg class="ye-g ye-g--red"><use href="#ye-glasses"/></svg>
-            <svg class="ye-g ye-g--teal"><use href="#ye-glasses-round"/></svg>
-            <svg class="ye-g ye-g--orange"><use href="#ye-glasses"/></svg>
-          </div>
-          <h3>衣服天天換,<br>眼鏡怎麼只有一副?</h3>
-          <p>今天知性,明天率性。眼鏡不只是視力工具,也是你的穿搭配件 —— 上班俐落款、假日休閒款、約會時尚款,隨心換風格。</p>
-        </article>
-        <article class="ye-pain">
-          <div class="ye-pain-art" aria-hidden="true"><i class="fa-solid fa-laptop"></i><i class="fa-solid fa-person-walking"></i></div>
-          <h3>電腦工作一副,<br>日常外出一副</h3>
-          <p>辦公專注一副,生活放鬆一副。上班、通勤、出遊,不同場合換一副更適合的眼鏡。</p>
-          <p class="ye-note">功能性鏡片需依個人驗光結果與實際用眼需求選擇,現場由驗光人員協助建議。</p>
-        </article>
-        <article class="ye-pain">
-          <div class="ye-pain-art" aria-hidden="true"><i class="fa-solid fa-shield-heart"></i></div>
-          <h3>多一副備用,<br>生活更安心</h3>
-          <p>眼鏡遺失、壓壞、出門忘了帶?備用眼鏡有準備,臨時狀況不狼狽。第二副不只是優惠,也是日常備援。</p>
-        </article>
+      <!-- 情境輪播(2026-11-21 使用者:字太多 → 情境卡左右滑、沒滑就自己輪播)。
+           先用插畫;有真人情境照時把 .ye-scene-art 換成 <img> 即可 -->
+      <div class="ye-slider" data-ye-slider>
+        <div class="ye-track">
+          <article class="ye-scene">
+            <div class="ye-scene-art ye-scene-art--style" aria-hidden="true">
+              <svg class="ye-g ye-g--red"><use href="#ye-glasses"/></svg>
+              <svg class="ye-g ye-g--teal"><use href="#ye-glasses-round"/></svg>
+              <svg class="ye-g ye-g--orange"><use href="#ye-glasses"/></svg>
+            </div>
+            <h3>衣服天天換,<br>眼鏡也跟著換</h3><p>眼鏡也是你的穿搭配件</p>
+          </article>
+          <article class="ye-scene">
+            <div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-laptop"></i><i class="fa-solid fa-mug-hot"></i></div>
+            <h3>上班一副,<br>下班一副</h3><p>辦公專注,生活放鬆</p>
+          </article>
+          <article class="ye-scene">
+            <div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-plane-departure"></i><i class="fa-solid fa-camera"></i></div>
+            <h3>出遊一副,<br>日常一副</h3><p>不同場合,換一副更適合的</p>
+          </article>
+          <article class="ye-scene">
+            <div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-shield-heart"></i></div>
+            <h3>多一副備用,<br>生活更安心</h3><p>忘了帶、壓壞了也不狼狽</p>
+          </article>
+          <article class="ye-scene">
+            <div class="ye-scene-art ye-scene-art--style" aria-hidden="true">
+              <svg class="ye-g ye-g--orange"><use href="#ye-glasses"/></svg>
+              <i class="fa-solid fa-heart"></i>
+              <svg class="ye-g ye-g--teal"><use href="#ye-glasses"/></svg>
+            </div>
+            <h3>這副也愛,<br>那副也愛</h3><p>這次不用二選一</p>
+          </article>
+        </div>
+        <div class="ye-dots" data-ye-dots></div>
       </div>
+      <p class="ye-scene-note">功能性鏡片依個人驗光結果與用眼需求選擇,現場由驗光人員協助建議。</p>
     </div>
   </section>
 
@@ -124,10 +137,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <section class="ye-sec ye-sec--red" id="together">
     <div class="ye-wrap">
       <div class="ye-head ye-head--light"><span class="ye-tag ye-tag--yellow">折價券不限本人使用</span><h2>一副給自己,另一副給重要的人</h2></div>
-      <div class="ye-duo">
-        <div class="ye-duo-card"><i class="fa-solid fa-heart"></i><h3>帶上另一半</h3><p>好看的眼鏡,當然要一起挑。兩個人一起換上新風格。</p></div>
-        <div class="ye-duo-card"><i class="fa-solid fa-user-group"></i><h3>好友一起挑</h3><p>一人一副剛剛好,互相給意見,挑到最適合的那一副。</p></div>
-        <div class="ye-duo-card"><i class="fa-solid fa-house-chimney-user"></i><h3>別忘了家人</h3><p>自己換新眼鏡,也把年終的好優惠分享給在乎的人。</p></div>
+      <div class="ye-slider" data-ye-slider>
+        <div class="ye-track">
+          <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-heart"></i></div><h3>帶上另一半</h3><p>兩個人一起換上新風格</p></article>
+          <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-user-group"></i></div><h3>好友一起挑</h3><p>互相給意見,挑到最對的那副</p></article>
+          <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-house-chimney-user"></i></div><h3>別忘了家人</h3><p>年終好優惠,分享給在乎的人</p></article>
+          <article class="ye-scene ye-scene--duo"><div class="ye-scene-art" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></div><h3>全台門市都能用</h3><p>折價券不限本人,哪間店都通</p></article>
+        </div>
+        <div class="ye-dots" data-ye-dots></div>
       </div>
     </div>
   </section>
@@ -162,7 +179,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="ye-stats" data-ye-stats hidden></div>
       <div class="ye-stories" data-ye-stories hidden></div>
       <div data-ye-reviews hidden>
-        <div class="ye-reviews" data-ye-review-list></div>
+        <div class="ye-slider" data-ye-slider>
+          <div class="ye-track" data-ye-review-list></div>
+          <div class="ye-dots" data-ye-dots></div>
+        </div>
         <p class="ye-src">評價來自樂活眼鏡門市評價系統,顧客姓名已部分隱藏。</p>
       </div>
     </div>
@@ -171,8 +191,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- ⑥ 門市環境(官網門市照片) -->
   <section class="ye-sec" id="stores" hidden>
     <div class="ye-wrap">
-      <div class="ye-head"><span class="ye-tag">到店看看</span><h2>專業驗光,舒適挑選</h2><p>全台門市,驗光設備、鏡框陳列一次看清楚</p></div>
-      <div class="ye-gallery" data-ye-gallery></div>
+      <div class="ye-head"><span class="ye-tag">到店看看</span><h2>全台門市,離你不遠</h2><p>滑滑看每一間店,看到喜歡的直接預約</p></div>
+      <div class="ye-slider" data-ye-slider>
+        <div class="ye-track" data-ye-gallery></div>
+        <div class="ye-dots" data-ye-dots></div>
+      </div>
       <div class="ye-center"><a class="ye-btn ye-btn--ghost" href="allstore.html" data-ye-cta="stores_all">查看全台門市 <i class="fa-solid fa-arrow-right"></i></a></div>
     </div>
   </section>
@@ -230,10 +253,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="ye-book-stores" data-ye-stores><div class="ye-book-loading"><i class="fa-solid fa-spinner fa-spin"></i> 載入門市中…</div></div>
         <div class="ye-book-actions">
           <a class="ye-btn ye-btn--yellow" href="allstore.html" data-ye-book data-ye-cta="book_section">還沒決定門市?開始預約 <i class="fa-solid fa-arrow-right"></i></a>
-          <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-cta="consult_section"><i class="fa-brands fa-line"></i> LINE 詢問活動</a>
+          <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-chat data-ye-cta="consult_section"><i class="fa-solid fa-comment-dots"></i> 詢問活動</a>
         </div>
         <p class="ye-book-privacy">預約資料只用於門市安排與聯繫,詳見<a href="privacy.html">隱私權政策</a>。</p>
       </div>
+    </div>
+  </section>
+
+  <!-- 門市特色(2026-11-21 使用者提供的文字) -->
+  <section class="ye-sec ye-sec--rays" id="features">
+    <div class="ye-wrap">
+      <div class="ye-head"><span class="ye-tag">為什麼選樂活</span><h2>全台最大眼鏡店</h2></div>
+      <div class="ye-feat-big">
+        <div><b class="ye-pop">2,000<small>+</small></b><span>全館眼鏡<br>2,000 支以上任你挑</span></div>
+        <div><b class="ye-pop">14</b><span>道流程<br>完整體驗配鏡</span></div>
+      </div>
+      <ul class="ye-feats">
+        <li><i class="fa-solid fa-microchip"></i><b>AI 數位驗光</b></li>
+        <li><i class="fa-solid fa-hot-tub-person"></i><b>驗光前熱敷</b></li>
+        <li><i class="fa-solid fa-mug-hot"></i><b>護眼紓壓茶</b></li>
+        <li><i class="fa-solid fa-passport"></i><b>APP 眼鏡護照</b><small>透明好安心</small></li>
+      </ul>
     </div>
   </section>
 
@@ -256,9 +296,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 </main>
 
+<!-- 詢問活動:先開「芽芽小幫手」預設問答,看完再導 LINE(2026-11-21 使用者:一上來就要加 LINE,大多會滑掉)。
+     問題與答案在 js/yearend.js 的 FAQ;🚨 答案只能照活動規範寫,不能多承諾 -->
+<div class="ye-chat" data-ye-chat-box hidden>
+  <div class="ye-chat-panel" role="dialog" aria-modal="true" aria-label="活動問答">
+    <div class="ye-chat-head">
+      <span class="ye-chat-avatar" aria-hidden="true"><img src="https://lohas-pet.onrender.com/art/body.png" alt=""><img src="https://lohas-pet.onrender.com/art/eyes_happy.svg" alt=""><img src="https://lohas-pet.onrender.com/art/mouth.svg" alt=""></span>
+      <div><b>芽芽小幫手</b><small>年終感謝祭常見問題</small></div>
+      <button type="button" class="ye-chat-x" data-ye-chat-close aria-label="關閉"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="ye-chat-log" data-ye-chat-log aria-live="polite"></div>
+    <div class="ye-chat-chips" data-ye-chat-chips></div>
+    <a class="ye-chat-line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-cta="consult_chat_line"><i class="fa-brands fa-line"></i> 還有問題?加 LINE 問真人</a>
+  </div>
+</div>
+
+<!-- 真實好評浮窗(第 8 點):只用門市評價系統的真實 5 星評價,不寫時間、不編「誰剛配了」 -->
+<div class="ye-toast" data-ye-toast hidden aria-live="polite"></div>
+
 <!-- 手機固定按鈕 -->
 <div class="ye-dock" data-ye-dock>
-  <a href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" class="ye-dock-line" data-ye-cta="consult_dock"><i class="fa-brands fa-line"></i> 詢問活動</a>
+  <a href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" class="ye-dock-line" data-ye-chat data-ye-cta="consult_dock"><i class="fa-solid fa-comment-dots"></i> 詢問活動</a>
   <a href="#book" class="ye-dock-book" data-ye-book data-ye-cta="book_dock"><i class="fa-solid fa-calendar-check"></i> 立即預約</a>
 </div>
 
@@ -296,6 +354,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-store.js?v=20260525-1000"></script>
 <script src="js/store-data.js?v=20261021-dadun"></script>
 <script src="js/booking-v2.js?v=20261121-preset"></script>
-<script src="js/yearend.js?v=20261121-party"></script>
+<script src="js/yearend.js?v=20261121-v2"></script>
 </body>
 </html>
