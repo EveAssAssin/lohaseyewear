@@ -205,11 +205,6 @@
 }
 .ye-duo-card h3 { margin: 14px 0 8px; font-size: 25px; font-weight: 900; letter-spacing: 2px; color: var(--ye-red); }
 .ye-duo-card p { margin: 0; font-size: 17px; line-height: 1.8; }
-.ye-duo-rule {
-  margin: 34px auto 0; max-width: 800px;
-  background: rgba(142,27,27,.55); border-radius: 14px;
-  padding: 14px 20px; font-size: 15px; line-height: 1.7;
-}
 
 /* ④ 優惠內容 */
 .ye-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
