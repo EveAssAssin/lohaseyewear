@@ -249,6 +249,8 @@
 .ye-vs-a .ye-vs-photo--left { left: -12%; width: 72%; }
 /* 稍微放大(情境 02「下班」,配合左邊那張的大小) */
 .ye-vs-b .ye-vs-photo--zoom { right: -6%; width: 70%; }
+/* 往上挪(情境 02「下班」新照片,使用者 2026-11-22):整張拉高再往上推,下緣仍蓋滿 */
+.ye-vs-photo--up { top: -10%; height: 110%; }
 .ye-vs--photo .ye-vs-side { justify-content: flex-end; padding-bottom: 12px; }
 .ye-vs--photo .ye-vs-side::before { display: none; }
 .ye-vs--photo .ye-vs-art::after {   /* 兩張照片底色相近,中間補一道白色斜線分開 */
