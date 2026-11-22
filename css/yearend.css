@@ -387,63 +387,60 @@
 .ye-social h2 b { font-family: var(--ye-num); font-size: 1.3em; color: var(--ye-yellow); -webkit-text-stroke: 3px var(--ye-red-deep); paint-order: stroke fill; }
 .ye-social p { margin: 0 auto; max-width: 640px; font-size: 15px; line-height: 1.7; opacity: .92; }
 
-/* ⑧ APP */
-#app { padding: 56px 0; }
-.ye-app {
-  display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
-  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 22px; box-shadow: 0 7px 0 var(--ye-red-deep);
-  padding: 28px 32px;
+/* ⑧ APP(2026-11-22 重做):左邊大芽芽站在白色舞台上,右邊標題、四個功能、下載鈕 */
+.ye-app2 { display: grid; grid-template-columns: 320px 1fr; gap: 48px; align-items: center; max-width: 960px; }
+.ye-app2-stage {
+  position: relative; display: grid; place-items: center; width: 320px; height: 320px; border-radius: 50%;
+  background: #fff; border: 5px solid var(--ye-red-deep); box-shadow: 0 10px 0 var(--ye-red-deep);
 }
-.ye-app h2 { margin: 0 0 6px; font-size: 28px; font-weight: 900; letter-spacing: 2px; color: var(--ye-red); }
-.ye-app-text p { margin: 0 0 16px; font-size: 16px; color: var(--ye-sub); }
+.ye-app2-stage::before {     /* 舞台裡的淡藍光圈 */
+  content: ""; position: absolute; inset: 22px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 60%, #dff0ff 0%, #eef7ff 55%, transparent 56%);
+}
+.ye-app2-pet { position: relative; display: block; width: 210px; height: 210px; margin-top: 30px; animation: yeBob 2.6s ease-in-out infinite; }
+.ye-app2-pet img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ye-app2-bubble {
+  position: absolute; top: 26px; left: 50%; transform: translateX(-50%); z-index: 1; white-space: nowrap;
+  padding: 7px 18px; border-radius: 999px; background: var(--ye-yellow); color: var(--ye-red-deep);
+  border: 3px solid var(--ye-red-deep); box-shadow: 0 4px 0 var(--ye-red-deep); font-size: 17px; font-weight: 900;
+}
+.ye-app2-bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -10px; width: 14px; height: 14px; margin-left: -7px;
+  background: var(--ye-yellow); border-right: 3px solid var(--ye-red-deep); border-bottom: 3px solid var(--ye-red-deep); transform: rotate(45deg);
+}
+.ye-app2-body h2 { margin: 14px 0 20px; font-size: 40px; font-weight: 900; line-height: 1.3; letter-spacing: 2px; color: var(--ye-red); }
+.ye-app2-body h2 b { color: #3d8fd6; }
+.ye-app2-feats { list-style: none; margin: 0 0 24px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ye-app2-feats li {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 14px; box-shadow: 0 4px 0 var(--ye-red-deep);
+  font-size: 15px; font-weight: 900; color: var(--ye-ink); line-height: 1.4;
+}
+.ye-app2-feats i {
+  display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--ye-red); color: #fff; font-size: 15px;
+}
 .ye-app-btns { display: flex; gap: 12px; flex-wrap: wrap; }
 .ye-store-btn {
   display: inline-flex; align-items: center; gap: 10px;
   background: #111; color: #fff; text-decoration: none;
-  border-radius: 12px; padding: 8px 18px; min-height: 52px;
+  border-radius: 12px; padding: 8px 20px; min-height: 56px; border: 3px solid #111; box-shadow: 0 4px 0 var(--ye-red-deep);
 }
-.ye-store-btn i { font-size: 26px; }
-.ye-store-btn span { display: flex; flex-direction: column; font-size: 18px; font-weight: 700; line-height: 1.1; }
+.ye-store-btn i { font-size: 28px; }
+.ye-store-btn span { display: flex; flex-direction: column; font-size: 19px; font-weight: 700; line-height: 1.1; }
 .ye-store-btn small { font-size: 10px; font-weight: 500; letter-spacing: .5px; }
-/* 芽芽:右半邊的介紹卡(使用者 2026-11-21 要求強化) */
-.ye-app-text { flex: 1 1 340px; }
-.ye-yaya {
-  flex: 1 1 420px;
-  display: flex; align-items: center; gap: 20px;
-  background: var(--ye-yellow-soft); border-radius: 18px; padding: 18px 22px;
+@keyframes yeBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@media (max-width: 760px) {
+  .ye-app2 { grid-template-columns: 1fr; gap: 28px; justify-items: center; text-align: center; }
+  .ye-app2-stage { width: 240px; height: 240px; border-width: 4px; box-shadow: 0 7px 0 var(--ye-red-deep); }
+  .ye-app2-pet { width: 150px; height: 150px; margin-top: 24px; }
+  .ye-app2-bubble { top: 16px; font-size: 15px; padding: 5px 14px; }
+  .ye-app2-body h2 { font-size: 28px; margin: 12px 0 16px; }
+  .ye-app2-feats { grid-template-columns: 1fr; text-align: left; }
+  .ye-app2-feats li { font-size: 14px; padding: 10px 12px; }
+  .ye-app-btns { justify-content: center; }
+  .ye-store-btn { flex: 1 1 140px; justify-content: center; padding: 8px 12px; }
 }
-.ye-yaya-stage { position: relative; flex-shrink: 0; width: 150px; padding-top: 34px; }
-.ye-yaya-pet {
-  position: relative; display: block; width: 150px; height: 150px;
-  animation: yeBob 2.6s ease-in-out infinite;
-}
-.ye-yaya-pet img { position: absolute; inset: 0; width: 100%; height: 100%; }
-.ye-yaya-pet::after {      /* 地上的影子 */
-  content: ""; position: absolute; left: 22%; right: 22%; bottom: 10%; height: 8%;
-  border-radius: 50%; background: rgba(79,140,200,.18); z-index: -1;
-}
-.ye-yaya-bubble {
-  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-  white-space: nowrap; background: #fff; color: var(--ye-red-deep);
-  border: 2px solid var(--ye-red-deep); border-radius: 999px;
-  padding: 4px 14px; font-size: 14px; font-weight: 900;
-}
-.ye-yaya-bubble::after {
-  content: ""; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%) rotate(45deg);
-  width: 10px; height: 10px; background: #fff;
-  border-right: 2px solid var(--ye-red-deep); border-bottom: 2px solid var(--ye-red-deep);
-}
-.ye-yaya-text h3 { margin: 0 0 10px; font-size: 21px; font-weight: 900; color: var(--ye-red-deep); line-height: 1.4; }
-.ye-yaya-text h3 b { color: #3d8fd6; }
-.ye-yaya-text ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.ye-yaya-text li { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; color: var(--ye-ink); }
-.ye-yaya-text li i {
-  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: #cfe6fb; color: #3d8fd6; font-size: 13px;
-}
-@keyframes yeBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-@media (prefers-reduced-motion: reduce) { .ye-yaya-pet { animation: none; } }
 
 /* ⑨ 預約 */
 .ye-book { max-width: 880px; margin: 0 auto; color: var(--ye-ink); padding: 30px; box-shadow: 0 10px 0 var(--ye-red-deep); }
@@ -584,6 +581,8 @@
 }
 .ye-feat-lbl q { display: block; margin: 6px 0 0; font-size: 14px; font-weight: 900; color: var(--ye-red-deep); line-height: 1.5; text-wrap: balance; }
 .ye-feat-lbl q::before { content: "「"; } .ye-feat-lbl q::after { content: "」"; }
+/* 「AI」強調(使用者 2026-11-22) */
+.ye-feat-lbl .ye-ai { display: inline-block; padding: 0 6px; border-radius: 5px; background: var(--ye-red); color: #fff; font-family: var(--ye-num); font-weight: 900; letter-spacing: 1px; }
 .ye-feat-lbl p { margin: 4px 0 0; padding: 0 4px; font-size: 14px; line-height: 1.55; color: var(--ye-sub); font-weight: 700; text-align: center; text-wrap: balance; }
 
 /* ---------- 芽芽小幫手(詢問活動的預設問答) ---------- */
@@ -784,6 +783,61 @@ body.ye-chat-open { overflow: hidden; }
   .ye-why2 span { font-size: 12px; }
 }
 
+/* ---------- 芽芽感謝祭(APP 限定,內容來自 Louis 的 yearend-yaya.html) ---------- */
+.ye-fest {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 28px; align-items: center;
+  max-width: 980px; margin: 0 auto; padding: 22px;
+  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 24px; box-shadow: 0 8px 0 var(--ye-red-deep);
+}
+.ye-fest-poster { display: block; width: 100%; height: auto; border-radius: 16px; border: 3px solid var(--ye-red-deep); }
+.ye-fest-badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px;
+  background: var(--ye-yellow); color: var(--ye-red-deep); border: 2px solid var(--ye-red-deep);
+  font-size: 14px; font-weight: 900; letter-spacing: 1px;
+}
+.ye-fest-story h3 { margin: 14px 0 10px; font-size: 30px; font-weight: 900; line-height: 1.35; color: var(--ye-red); }
+.ye-fest-story > p { margin: 0; font-size: 16px; line-height: 1.8; color: var(--ye-ink); }
+.ye-fest-story > p b { color: var(--ye-red); }
+.ye-fest-steps { list-style: none; counter-reset: fest; margin: 18px 0 0; padding: 0; display: grid; gap: 14px; }
+.ye-fest-steps li { position: relative; padding-left: 44px; counter-increment: fest; }
+.ye-fest-steps li::before {
+  content: counter(fest); position: absolute; left: 0; top: 0;
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--ye-red); color: #fff; border: 2px solid var(--ye-red-deep); font-family: var(--ye-num); font-weight: 900;
+}
+.ye-fest-steps b { display: block; font-size: 17px; font-weight: 900; color: var(--ye-red-deep); }
+.ye-fest-steps span { display: block; margin-top: 2px; font-size: 14px; line-height: 1.7; color: var(--ye-sub); }
+.ye-fest-sub { margin: 44px 0 22px; text-align: center; font-size: 26px; font-weight: 900; letter-spacing: 2px; color: var(--ye-red); }
+.ye-fest-games { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 980px; margin: 0 auto; }
+.ye-fest-games article {
+  display: flex; flex-direction: column; align-items: center; text-align: center; padding: 14px 16px 20px;
+  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 20px; box-shadow: 0 6px 0 var(--ye-red-deep);
+}
+.ye-fest-games img { display: block; width: 100%; height: 160px; object-fit: contain; border-radius: 12px; background: var(--ye-cream); }
+.ye-fest-coin {
+  display: grid; place-items: center; width: 110px; height: 110px; margin: 25px auto;
+  border: 5px double #c29b4e; border-radius: 50%; background: #f9df9c; color: #95651e;
+  font-size: 48px; font-weight: 900; box-shadow: 0 5px 0 #e6bd67;
+}
+.ye-fest-games h4 { margin: 14px 0 6px; font-size: 20px; font-weight: 900; color: var(--ye-red); }
+.ye-fest-games p { margin: 0; font-size: 14px; line-height: 1.7; color: var(--ye-sub); }
+.ye-fest-entry { margin: 30px 0 0; text-align: center; font-size: 17px; font-weight: 900; color: var(--ye-red-deep); }
+.ye-fest-entry i { color: var(--ye-red); margin-right: 4px; }
+.ye-fest-note { max-width: 760px; margin: 10px auto 0; text-align: center; font-size: 13px; line-height: 1.7; color: var(--ye-sub); }
+@media (max-width: 760px) {
+  .ye-fest { grid-template-columns: 1fr; gap: 18px; padding: 14px; border-radius: 18px; }
+  .ye-fest-story h3 { font-size: 24px; }
+  .ye-fest-sub { font-size: 22px; margin: 32px 0 16px; }
+  .ye-fest-games { grid-template-columns: 1fr; gap: 14px; }
+  .ye-fest-games article { display: grid; grid-template-columns: 110px 1fr; grid-template-rows: auto auto; column-gap: 14px; text-align: left; align-items: center; padding: 12px; }
+  .ye-fest-games img, .ye-fest-coin { grid-row: 1 / span 2; }
+  .ye-fest-games img { width: 110px; height: 90px; }
+  .ye-fest-coin { width: 76px; height: 76px; font-size: 32px; margin: 8px auto; }
+  .ye-fest-games h4 { margin: 0; align-self: end; font-size: 18px; }
+  .ye-fest-games p { align-self: start; font-size: 13px; }
+  .ye-fest-entry { font-size: 15px; }
+}
+
 /* ---------- 快捷:回到最上面 / 跳到最下面 ---------- */
 .ye-jump {
   position: fixed; right: 18px; bottom: calc(20px + var(--ye-cookie, 0px)); z-index: 1120;   /* 高於好評浮窗(1100),不會被蓋住 */
@@ -895,9 +949,6 @@ body.ye-chat-open .ye-jump { display: none; }
   .ye-steps li:not(:last-child)::after { content: "\f078"; right: auto; left: 50%; top: auto; bottom: -36px; transform: translateX(-50%); }
   .ye-points, .ye-dates { grid-template-columns: 1fr; }
   .ye-social h2 { font-size: 25px; }
-  .ye-app { flex-direction: column; align-items: stretch; padding: 22px 20px; }
-  .ye-yaya { flex-direction: column; text-align: center; padding: 18px 16px 20px; flex-basis: auto; }
-  .ye-yaya-text ul { justify-items: start; text-align: left; }
   .ye-book { padding: 20px 16px; }
   .ye-book-stores { grid-template-columns: 1fr 1fr; }
   .ye-book-actions .ye-btn { width: 100%; font-size: 16px; letter-spacing: 1px; padding: 12px 16px; }

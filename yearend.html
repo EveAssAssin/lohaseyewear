@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261122-v60">
+  <link rel="stylesheet" href="css/yearend.css?v=20261122-v63">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -232,33 +232,59 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </section>
 
-  <!-- ⑧ APP 下載 + 芽芽(小型輔助元素) -->
-  <section class="ye-sec ye-sec--yellow" id="app">
-    <div class="ye-wrap ye-app">
-      <div class="ye-app-text">
-        <h2>下載樂活眼鏡 APP</h2>
-        <p>點數、優惠、眼鏡保養紀錄,一支手機全部搞定。</p>
+  <!-- ⑧ APP 下載 + 芽芽(2026-11-22 使用者:重做 UI,放在芽芽祭典區上面)。
+       芽芽圖是樂活寵物服務 lohas-pet 的 /art/,與 App 內芽芽教學同一套。
+       ⚠ 只寫已知的功能(客人可取名、App 內教你用、帶你做客製、點數優惠保養紀錄),不要自己編芽芽會做什麼 -->
+  <section class="ye-sec ye-sec--rays" id="app">
+    <div class="ye-wrap ye-app2">
+      <div class="ye-app2-stage" aria-hidden="true">
+        <span class="ye-app2-bubble">嗨!我是芽芽～</span>
+        <span class="ye-app2-pet"><img src="https://lohas-pet.onrender.com/art/body.png" alt="" loading="lazy"><img src="https://lohas-pet.onrender.com/art/eyes_happy.svg" alt="" loading="lazy"><img src="https://lohas-pet.onrender.com/art/mouth.svg" alt="" loading="lazy"></span>
+      </div>
+      <div class="ye-app2-body">
+        <span class="ye-tag">樂活眼鏡 APP</span>
+        <h2>下載 APP,<br>帶眼鏡寵物<b>芽芽</b>回家!</h2>
+        <ul class="ye-app2-feats">
+          <li><i class="fa-solid fa-heart" aria-hidden="true"></i>幫芽芽取一個專屬的名字</li>
+          <li><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>陪你逛 APP,一步步教你怎麼用</li>
+          <li><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>帶你做客製眼鏡布、眼鏡盒</li>
+          <li><i class="fa-solid fa-coins" aria-hidden="true"></i>點數、優惠、保養紀錄一手掌握</li>
+        </ul>
         <div class="ye-app-btns" data-ye-app>
           <a class="ye-store-btn" data-ye-app-ios href="https://apps.apple.com/tw/app/id1442745225" target="_blank" rel="noopener" data-ye-cta="app_ios"><i class="fa-brands fa-apple"></i><span><small>Download on the</small>App Store</span></a>
           <a class="ye-store-btn" data-ye-app-android href="#" target="_blank" rel="noopener" data-ye-cta="app_android" hidden><i class="fa-brands fa-google-play"></i><span><small>GET IT ON</small>Google Play</span></a>
         </div>
       </div>
-      <!-- 芽芽(2026-11-21 使用者:右邊要強化介紹)。圖是樂活寵物服務 lohas-pet 的 /art/,與 App 內芽芽教學同一套。
-           ⚠ 只寫已知的功能(客人可取名、App 內教你用、帶你做客製),不要自己編芽芽會做什麼 -->
-      <div class="ye-yaya">
-        <div class="ye-yaya-stage" aria-hidden="true">
-          <span class="ye-yaya-bubble">嗨!我是芽芽～</span>
-          <span class="ye-yaya-pet"><img src="https://lohas-pet.onrender.com/art/body.png" alt="" loading="lazy"><img src="https://lohas-pet.onrender.com/art/eyes_happy.svg" alt="" loading="lazy"><img src="https://lohas-pet.onrender.com/art/mouth.svg" alt="" loading="lazy"></span>
-        </div>
-        <div class="ye-yaya-text">
-          <h3>下載 APP,解鎖眼鏡寵物<b>芽芽</b>!</h3>
-          <ul>
-            <li><i class="fa-solid fa-heart"></i>幫牠取一個專屬的名字</li>
-            <li><i class="fa-solid fa-hand-pointer"></i>在 App 裡陪你逛,一步步教你怎麼用</li>
-            <li><i class="fa-solid fa-wand-magic-sparkles"></i>帶你做客製眼鏡布、眼鏡盒</li>
-          </ul>
+    </div>
+  </section>
+
+  <!-- ⑦-2 芽芽感謝祭(APP 限定)。內容照 Louis 的 yearend-yaya.html(B 版・芽芽祭典,2026-11-22)搬過來,
+       圖片也是他放的 images/yearend/yaya/;版面改成本頁的卡片風格。
+       🚨 規則文字照 APP 實際活動寫,改之前先問 Louis(福引、小判、圖紙的條件以 APP 活動頁為準) -->
+  <section class="ye-sec ye-sec--cream" id="yaya-fest">
+    <div class="ye-wrap">
+      <div class="ye-head"><span class="ye-tag">樂活 APP 限定</span><h2>今年感謝祭,<br class="ye-sp">帶芽芽一起逛祭典</h2><p>2026/12/1 – 2027/1/31,配好新眼鏡,也陪你的小夥伴換上全新模樣</p></div>
+      <div class="ye-fest">
+        <img class="ye-fest-poster" src="images/yearend/yaya/goldfish-prize.webp" width="900" height="900" loading="lazy" alt="感謝祭限定大獎:金魚芽芽擬態圖紙">
+        <div class="ye-fest-story">
+          <span class="ye-fest-badge"><i class="fa-solid fa-trophy" aria-hidden="true"></i> 祭典福引全收集大獎</span>
+          <h3>把一整個祭典,<br>變成芽芽的新模樣</h3>
+          <p>收集<b>祭典福引全部獎品</b>,就能領取「金魚芽芽擬態圖紙」,讓芽芽化身搖曳尾鰭的小金魚。</p>
+          <ol class="ye-fest-steps">
+            <li><b>逛祭典、玩福引</b><span>在樂活 APP 開啟芽芽感謝祭,查看福引獎品與收集進度。</span></li>
+            <li><b>集滿獎品,領取圖紙</b><span>完成祭典福引全收集後領取;屋台兌換品不列入這項收集條件。</span></li>
+            <li><b>學會擬態,換上金魚外觀</b><span>讓已學會「擬態術」的芽芽使用圖紙,再到裝備區選擇金魚芽芽。</span></li>
+          </ol>
         </div>
       </div>
+      <h3 class="ye-fest-sub">不只大獎,還有整條祭典街</h3>
+      <div class="ye-fest-games">
+        <article><img src="images/yearend/yaya/kingyo.webp" alt="祭典撈金魚遊戲" width="600" height="400" loading="lazy"><h4>撈金魚</h4><p>等金魚游上紙網,抓準時機撈起來!小心,紙網泡太久會破。</p></article>
+        <article><img src="images/yearend/yaya/shateki.webp" alt="祭典射的遊戲" width="600" height="400" loading="lazy"><h4>射的挑戰</h4><p>瞄準移動的獎品,用軟木塞挑戰準度,替祭典留下好成績。</p></article>
+        <article><img src="images/yearend/yaya/koban.jpg" alt="芽芽收集小判,到屋台兌換祭典時裝" width="640" height="360" loading="lazy"><h4>收集小判,挑選禮物</h4><p>簽到、抽御神籤、玩小遊戲收集小判,到屋台兌換芽芽的祭典時裝與皮膚。</p></article>
+      </div>
+      <p class="ye-fest-entry"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> 活動開始後:開啟樂活 APP → 芽芽 → 感謝祭</p>
+      <p class="ye-fest-note">金魚圖紙為祭典福引全收集獎勵,每帳號限領一次;請於活動頁顯示的兌換期限內領取。下載 APP 或試穿不代表取得獎品。小判獎勵場次、兌換品項與福引抽取方式,以 APP 活動頁為準。</p>
     </div>
   </section>
 
@@ -309,7 +335,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
            說明文字照舊官網〈配眼鏡 14 流程〉的寫法(只留內文;使用者 2026-11-22 要求照之前網站重寫,引言與流程編號已刪)(流程一品茶、三珍存、四舒壓、五精驗;
            2026-01 存檔版 web.archive.org/web/20260121011208/https://www.lohasglasses.com/page/1/445),不另加效果承諾 -->
       <ul class="ye-feats">
-        <li><span class="ye-feat-img"><img src="images/yearend/feat-ai.jpg" alt="AI 數位驗光" width="640" height="853" loading="lazy" style="object-position: 50% 45%"></span><div class="ye-feat-lbl"><i class="fa-solid fa-microchip" aria-hidden="true"></i><b>AI 數位驗光</b><p>六合一驗光,一次了解多種眼睛狀況</p></div></li>
+        <li><span class="ye-feat-img"><img src="images/yearend/feat-ai-fit.jpg" alt="AI 科技定位" width="640" height="1136" loading="lazy" style="object-position: 50% 25%; transform: scale(1.4); transform-origin: 66% 32%"></span><div class="ye-feat-lbl"><i class="fa-solid fa-crosshairs" aria-hidden="true"></i><b>AI 科技定位</b><p>透過 <strong class="ye-ai">AI</strong> 精準測量度數,配出最清晰舒適的眼鏡</p></div></li>
         <li><span class="ye-feat-img"><img src="images/yearend/feat-heat.jpg" alt="驗光前熱敷" width="640" height="979" loading="lazy"></span><div class="ye-feat-lbl"><i class="fa-solid fa-hot-tub-person" aria-hidden="true"></i><b>驗光前熱敷</b><p>眼睛蒸氣熱敷,放鬆後再驗光</p></div></li>
         <li><span class="ye-feat-img"><img src="images/yearend/feat-tea.jpg" alt="護眼紓壓茶" width="640" height="853" loading="lazy"></span><div class="ye-feat-lbl"><i class="fa-solid fa-mug-hot" aria-hidden="true"></i><b>護眼紓壓茶</b><p>獨家配方護眼清爽茶,風靡十年</p></div></li>
         <li><span class="ye-feat-img"><img src="images/yearend/feat-app.jpg" alt="APP 眼鏡護照" width="640" height="993" loading="lazy"></span><div class="ye-feat-lbl"><i class="fa-solid fa-passport" aria-hidden="true"></i><b>APP 眼鏡護照</b><p>度數、方案、保養紀錄都在 APP</p></div></li>
@@ -417,6 +443,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-store.js?v=20260525-1000"></script>
 <script src="js/store-data.js?v=20261021-dadun"></script>
 <script src="js/booking-v2.js?v=20261121-preset"></script>
-<script src="js/yearend.js?v=20261122-v11"></script>
+<script src="js/yearend.js?v=20261122-v12"></script>
 </body>
 </html>
