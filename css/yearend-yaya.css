@@ -6,3 +6,7 @@
 .yf-download{display:grid;grid-template-columns:minmax(220px,0.9fr) minmax(0,1.3fr) auto;gap:24px}.yf-download-art{display:block;width:100%;height:auto;border-radius:12px}.yf-download h3{font-size:clamp(24px,2.4vw,30px)}
 @media(max-width:1000px){.yf-download{grid-template-columns:minmax(180px,1fr) minmax(0,1.4fr)}.yf-download .ye-app-btns{grid-column:1/-1;flex-direction:row;justify-content:center}}
 @media(max-width:760px){.yf-download{grid-template-columns:1fr}.yf-download-art{max-height:320px;object-fit:contain}.yf-download .ye-app-btns{grid-column:auto}}
+
+/* 說明區塊移除後，遊戲介紹與下載卡片仍保留獨立段落間距。 */
+.yf-games + .yf-download{margin-top:48px}
+@media(max-width:760px){.yf-games + .yf-download{margin-top:32px}}
