@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261122-v35">
+  <link rel="stylesheet" href="css/yearend.css?v=20261122-v59">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -204,12 +204,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="ye-head"><span class="ye-tag">真實口碑</span><h2>聽聽到店顧客怎麼說</h2></div>
       <div class="ye-stats" data-ye-stats hidden></div>
       <div class="ye-stories" data-ye-stories hidden></div>
+      <!-- 評價卡不輪播,固定幾格、內容隨機輪換(使用者 2026-11-22) -->
       <div data-ye-reviews hidden>
-        <div class="ye-slider" data-ye-slider>
-          <div class="ye-track" data-ye-review-list></div>
-          <div class="ye-dots" data-ye-dots></div>
-        </div>
-        <p class="ye-src">評價來自樂活眼鏡門市評價系統,顧客姓名已部分隱藏。</p>
+        <div class="ye-rv-grid" data-ye-review-list></div>
       </div>
     </div>
   </section>
@@ -290,15 +287,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <section class="ye-sec ye-sec--rays" id="features">
     <div class="ye-wrap">
       <div class="ye-head"><span class="ye-tag">為什麼選樂活</span><h2>全台最大眼鏡店</h2></div>
+      <!-- 2026-11-22 使用者提供影片(門市實景,原檔 服務廣告.mov 30MB → 壓成 720p 3.6MB):
+           2,000 支那格自動靜音循環播放;14 道流程那格點了開視窗播放(有聲音) -->
+      <!-- 2026-11-22 使用者:影片要放大強調 → 左邊大影片、右邊兩個數字 -->
       <div class="ye-feat-big">
-        <div><b class="ye-pop">2,000<small>+</small></b><span>全館眼鏡<br>2,000 支以上任你挑</span></div>
-        <div><b class="ye-pop">14</b><span>道流程<br>完整體驗配鏡</span></div>
+        <div class="ye-feat-video">
+          <video src="images/yearend/store-tour.mp4" poster="images/yearend/store-tour.jpg" muted loop playsinline preload="none" data-ye-autoplay aria-label="樂活眼鏡門市實景"></video>
+          <span class="ye-feat-vtag"><i class="fa-solid fa-store"></i> 門市實景</span>
+          <button type="button" class="ye-feat-sound" data-ye-video="images/yearend/store-tour.mp4" data-ye-cta="video_sound"><i class="fa-solid fa-volume-high"></i> 開聲音看完整影片</button>
+        </div>
+        <div class="ye-feat-nums">
+          <div class="ye-feat-card">
+            <div class="ye-feat-txt"><b class="ye-pop">2,000<small>+</small></b><span>全館眼鏡<br>2,000 支以上任你挑</span></div>
+          </div>
+          <button type="button" class="ye-feat-card ye-feat-card--play" data-ye-video="images/yearend/store-tour.mp4" data-ye-cta="video_14">
+            <div class="ye-feat-txt"><b class="ye-pop">14</b><span>道流程<br>完整體驗配鏡</span><em>點我看影片 <i class="fa-solid fa-circle-play"></i></em></div>
+          </button>
+        </div>
       </div>
+      <!-- 2026-11-22 使用者提供三張實景照(熱敷/紓壓茶/APP),改成照片卡;AI 數位驗光的照片 2026-11-22 補上。
+           說明文字照舊官網〈配眼鏡 14 流程〉的寫法(只留內文;使用者 2026-11-22 要求照之前網站重寫,引言與流程編號已刪)(流程一品茶、三珍存、四舒壓、五精驗;
+           2026-01 存檔版 web.archive.org/web/20260121011208/https://www.lohasglasses.com/page/1/445),不另加效果承諾 -->
       <ul class="ye-feats">
-        <li><i class="fa-solid fa-microchip"></i><b>AI 數位驗光</b></li>
-        <li><i class="fa-solid fa-hot-tub-person"></i><b>驗光前熱敷</b></li>
-        <li><i class="fa-solid fa-mug-hot"></i><b>護眼紓壓茶</b></li>
-        <li><i class="fa-solid fa-passport"></i><b>APP 眼鏡護照</b><small>透明好安心</small></li>
+        <li><span class="ye-feat-img"><img src="images/yearend/feat-ai.jpg" alt="AI 數位驗光" width="640" height="853" loading="lazy" style="object-position: 50% 45%"></span><div class="ye-feat-lbl"><i class="fa-solid fa-microchip" aria-hidden="true"></i><b>AI 數位驗光</b><p>六合一驗光,一次了解多種眼睛狀況</p></div></li>
+        <li><span class="ye-feat-img"><img src="images/yearend/feat-heat.jpg" alt="驗光前熱敷" width="640" height="979" loading="lazy"></span><div class="ye-feat-lbl"><i class="fa-solid fa-hot-tub-person" aria-hidden="true"></i><b>驗光前熱敷</b><p>眼睛蒸氣熱敷,放鬆後再驗光</p></div></li>
+        <li><span class="ye-feat-img"><img src="images/yearend/feat-tea.jpg" alt="護眼紓壓茶" width="640" height="853" loading="lazy"></span><div class="ye-feat-lbl"><i class="fa-solid fa-mug-hot" aria-hidden="true"></i><b>護眼紓壓茶</b><p>獨家配方護眼清爽茶,風靡十年</p></div></li>
+        <li><span class="ye-feat-img"><img src="images/yearend/feat-app.jpg" alt="APP 眼鏡護照" width="640" height="993" loading="lazy"></span><div class="ye-feat-lbl"><i class="fa-solid fa-passport" aria-hidden="true"></i><b>APP 眼鏡護照</b><p>度數、方案、保養紀錄都在 APP</p></div></li>
       </ul>
     </div>
   </section>
@@ -346,6 +360,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <a href="#book" class="ye-dock-book" data-ye-book data-ye-cta="book_dock"><i class="fa-solid fa-calendar-check"></i> 立即預約</a>
 </div>
 
+<!-- 影片視窗(14 道流程那格點了開這個) -->
+<div class="ye-vmodal" data-ye-vmodal hidden>
+  <div class="ye-vmodal-box" role="dialog" aria-modal="true" aria-label="門市影片">
+    <button type="button" class="ye-vmodal-x" data-ye-vmodal-x aria-label="關閉影片"><i class="fa-solid fa-xmark"></i></button>
+    <video controls playsinline preload="none" data-ye-vmodal-video></video>
+  </div>
+</div>
+
+<!-- 快捷:回到最上面 / 跳到最下面(2026-11-22 使用者) -->
+<div class="ye-jump" data-ye-jump-box>
+  <button type="button" data-ye-jump="top" aria-label="回到最上面"><i class="fa-solid fa-arrow-up"></i></button>
+  <button type="button" data-ye-jump="bottom" aria-label="跳到最下面"><i class="fa-solid fa-arrow-down"></i></button>
+</div>
+
+<!-- 芽芽在畫面上走來走去、會講話(2026-11-22 使用者:像 App 那樣)。點牠打開問答。
+     🚨 台詞只講活動規則與頁面上已有的事實,不編承諾 -->
+<div class="ye-walker" data-ye-walker hidden>
+  <div class="ye-walker-say" data-ye-walker-say aria-live="polite"><span data-ye-walker-text></span><button type="button" class="ye-walker-x" data-ye-walker-x aria-label="收起芽芽"><i class="fa-solid fa-xmark"></i></button></div>
+  <button type="button" class="ye-walker-pet" data-ye-walker-pet data-ye-cta="yaya_walker" aria-label="點芽芽問活動問題">
+    <span class="ye-walker-body"><img src="https://lohas-pet.onrender.com/art/body.png" alt=""><img src="https://lohas-pet.onrender.com/art/eyes_happy.svg" alt=""><img src="https://lohas-pet.onrender.com/art/mouth.svg" alt="" data-ye-walker-mouth></span>
+  </button>
+</div>
+
 <!-- 眼鏡插圖(主視覺的橘/藍眼鏡;顏色用 currentColor) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <!-- 先畫一層深紅粗線當描邊,再疊上彩色鏡框 —— 主視覺的眼鏡就是「彩色框 + 深紅外框」 -->
@@ -380,6 +417,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/api/api-store.js?v=20260525-1000"></script>
 <script src="js/store-data.js?v=20261021-dadun"></script>
 <script src="js/booking-v2.js?v=20261121-preset"></script>
-<script src="js/yearend.js?v=20261121-v5"></script>
+<script src="js/yearend.js?v=20261122-v11"></script>
 </body>
 </html>

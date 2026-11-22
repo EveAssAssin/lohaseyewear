@@ -129,27 +129,264 @@
 
   /* ---------- 人氣數字(只放真實資料) ---------- */
   function renderStats() {
+    /* 2026-11-22 使用者:只留「評價數」與「5 星比例」兩個數字(門市數、顧問數拿掉) */
     const list = [];
-    if (CONFIG.joined) list.push({ num: CONFIG.joined, label: "人參加本次感謝祭" });
     const r = CONFIG.reviewStats;
     if (r && r.total) {
-      list.push({ num: fmt(r.total), label: "則門市顧客評價" });
-      list.push({ num: Math.floor(r.five / r.total * 100) + "%", label: "給了 5 星好評" });
+      list.push({ to: r.total, label: "則門市顧客評價" });
+      list.push({ to: Math.floor(r.five / r.total * 100), suf: "%", label: "給了 5 星好評" });
     }
-    if (stores.length) list.push({ num: String(stores.length), label: "間門市全台服務" });
-    /* 第四個數字(使用者 2026-11-21:「感覺少一個指數」):在職顧問人數,從官網門市資料即時數,
-       條件與 loadReviews 挑評價的人相同(排除離職/凍結/「不指定」),同一人跨店只算一次 */
-    const staff = new Set();
-    stores.forEach(s => (s.employees || []).forEach(e => {
-      if (e && e.erpid && !e.isLeave && !e.isFreeze && !e.isUnspecify) staff.add(String(e.erpid));
-    }));
-    if (staff.size) list.push({ num: String(staff.size), label: "位專業配鏡顧問" });
     if (!list.length) return;
     const el = $("[data-ye-stats]");
     /* 出處小字已拿掉(使用者 2026-11-21:「不用寫」);asOf 仍留在 CONFIG 供日後更新時對照 */
-    el.innerHTML = list.map(s => `<div class="ye-stat"><b class="ye-pop">${esc(s.num)}</b><span>${esc(s.label)}</span></div>`).join("");
+    el.innerHTML = list.map(s =>
+      `<div class="ye-stat"><b class="ye-pop" data-to="${s.to}" data-suf="${esc(s.suf || "")}">${fmt(s.to)}${esc(s.suf || "")}</b><span>${esc(s.label)}</span></div>`).join("");
     el.hidden = false;
     $("#voice").hidden = false;
+    countUp(el);
+  }
+  /* 數字從 0 跳到真實數字(使用者 2026-11-22:數字要會跳)。每次捲進畫面都重跳一次。
+     🚨 終點一定是 CONFIG / 門市資料的真實數字,不做「一直往上加」的假即時計數 */
+  function countUp(box) {
+    const nums = $$("[data-to]", box);
+    function run() {
+      const t0 = performance.now(), dur = 1600;
+      (function frame(t) {
+        const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+        nums.forEach(n => { n.textContent = fmt(Math.round(Number(n.dataset.to) * e)) + n.dataset.suf; });
+        if (p < 1) requestAnimationFrame(frame);
+      })(t0);
+    }
+    if (!("IntersectionObserver" in root)) return;
+    let inView = false;
+    new IntersectionObserver(es => {
+      const now = es[0].isIntersecting;
+      if (now && !inView) run();
+      inView = now;
+    }, { threshold: 0.6 }).observe(box);
+  }
+
+  /* ---------- 全站 Cookie 提示條出現時,右下角按鈕、芽芽、好評浮窗一起往上讓 ----------
+     提示條(#cookie-banner,layout.js 插入,z-index 10001)固定在畫面底部,會蓋住這些東西 */
+  function syncCookieOffset() {
+    const set = () => {
+      const b = document.getElementById("cookie-banner");
+      const h = b && b.classList.contains("show") && getComputedStyle(b).display !== "none" ? b.offsetHeight : 0;
+      document.documentElement.style.setProperty("--ye-cookie", h + "px");
+    };
+    set();
+    if (!("MutationObserver" in root)) return;
+    /* 只盯提示條本身(芽芽每一格都在改 style,盯整個 body 會每一格都重算) */
+    const watch = b => new MutationObserver(set).observe(b, { attributes: true, attributeFilter: ["class", "style"] });
+    const b0 = document.getElementById("cookie-banner");
+    if (b0) watch(b0);
+    else {
+      const mo = new MutationObserver(() => {
+        const b = document.getElementById("cookie-banner");
+        if (b) { mo.disconnect(); watch(b); set(); }
+      });
+      mo.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => mo.disconnect(), 15000);
+    }
+    root.addEventListener("resize", set);
+  }
+
+  /* ---------- 門市影片(2026-11-22 使用者提供) ----------
+     [data-ye-autoplay]:捲到才下載、看得到才播(靜音循環),省廣告流量;
+     [data-ye-video]:點了開視窗播放(有聲音) */
+  function initVideos() {
+    const auto = $$("video[data-ye-autoplay]");
+    if ("IntersectionObserver" in root) {
+      const io = new IntersectionObserver(es => es.forEach(en => {
+        const v = en.target;
+        if (en.isIntersecting) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+        else v.pause();
+      }), { threshold: 0.3 });
+      auto.forEach(v => io.observe(v));
+    }
+    const modal = $("[data-ye-vmodal]");
+    if (!modal) return;
+    const mv = $("[data-ye-vmodal-video]", modal);
+    function close() {
+      mv.pause(); modal.hidden = true;
+      document.body.classList.remove("ye-chat-open");
+    }
+    document.addEventListener("click", e => {
+      const b = e.target.closest("[data-ye-video]");
+      if (b) {
+        e.preventDefault();
+        if (mv.getAttribute("src") !== b.getAttribute("data-ye-video")) mv.src = b.getAttribute("data-ye-video");
+        modal.hidden = false;
+        document.body.classList.add("ye-chat-open");   // 借用:芽芽、快捷鈕在開視窗時讓開
+        mv.currentTime = 0;
+        const p = mv.play(); if (p && p.catch) p.catch(() => {});
+        return;
+      }
+      if (!modal.hidden && (e.target === modal || e.target.closest("[data-ye-vmodal-x]"))) close();
+    });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !modal.hidden) close(); });
+  }
+
+  /* ---------- 快捷:回到最上面 / 跳到最下面 ---------- */
+  function initJump() {
+    const box = $("[data-ye-jump-box]");
+    if (!box) return;
+    const up = $('[data-ye-jump="top"]', box), down = $('[data-ye-jump="bottom"]', box);
+    box.addEventListener("click", e => {
+      const b = e.target.closest("[data-ye-jump]");
+      if (!b) return;
+      const top = b.getAttribute("data-ye-jump") === "top";
+      track("yearend_cta", { cta: top ? "jump_top" : "jump_bottom" });
+      root.scrollTo({ top: top ? 0 : document.documentElement.scrollHeight, behavior: "smooth" });
+    });
+    function sync() {
+      const y = root.scrollY, max = document.documentElement.scrollHeight - root.innerHeight;
+      up.classList.toggle("off", y < 400);
+      down.classList.toggle("off", y > max - 400);
+    }
+    root.addEventListener("scroll", sync, { passive: true });
+    root.addEventListener("resize", sync);
+    sync();
+  }
+
+  /* ---------- 芽芽在畫面上走來走去、會講話(2026-11-22 使用者:像 App 那樣) ----------
+     走到隨機位置 → 停一下 → 偶爾說一句(嘴巴開合)。點牠打開問答;× 收起(本次瀏覽不再出現)。
+     🚨 台詞只用活動規則與頁面上已寫的事實。
+     減少動態的裝置照樣走,只是走慢一點、不跳(同 heroParty 的考量:Windows 關動畫就會觸發) */
+  const WALKER_OFF = "ye_walker_off";
+  const YAYA_LINES = {
+    why: ["生活不只一種風格,<b>眼鏡也是</b>～"],
+    together: ["折價券<b>不限本人使用</b>,可以送給重要的人喔!"],
+    offer: ["先完成第一副原價配鏡,就拿到 <b>2,680 元</b>折價券!", "第二副憑券折抵,符合方案條件 <b>0 元</b>!"],
+    voice: ["這些都是門市顧客的<b>真實評價</b>喔～"],
+    stores: ["<b>全台門市</b>都能用折價券!"],
+    app: ["下載 APP,就能把我帶回家～"],
+    book: ["選好門市,<b>一分鐘</b>完成預約!"],
+    features: ["全館 <b>2,000 支以上</b>眼鏡任你挑!"],
+    rules: ["活動到 <b>2027/1/31</b>,第二副折價券用到 <b>2/28</b> 喔"],
+    _: ["有問題嗎?<b>點我</b>問活動～", "想知道第二副怎麼 0 元?<b>點我</b>!"]
+  };
+  function initWalker() {
+    const w = $("[data-ye-walker]");
+    if (!w) return;
+    try { if (sessionStorage.getItem(WALKER_OFF)) return; } catch (_e) {}
+    const say = $("[data-ye-walker-say]", w), text = $("[data-ye-walker-text]", w), mouth = $("[data-ye-walker-mouth]", w);
+    const MOUTH = "https://lohas-pet.onrender.com/art/mouth.svg", MOUTH_OPEN = "https://lohas-pet.onrender.com/art/mouth_open.svg";
+    new Image().src = MOUTH_OPEN;
+    const calm = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    /* x = 距離畫面左邊;y = 從「底線」往上抬多高(底線由 CSS 的 bottom 決定,已讓開手機按鈕列與 Cookie 條) */
+    let x = 0, y = 0, tx = 0, ty = 0, idleUntil = 0, last = 0, stops = 0, talkTimer = 0, section = "_", lastLine = "";
+
+    const size = () => w.offsetWidth || 96;
+    const base = () => parseFloat(getComputedStyle(w).bottom) || 14;
+    /* 2026-11-22 使用者:移動範圍變大 → 左右整個畫面、上下到畫面約一半高 */
+    const bounds = () => ({ x0: 8, x1: Math.max(8, root.innerWidth - size() - 8), y0: 0, y1: Math.max(0, root.innerHeight * 0.5 - base()) });
+    /* 芽芽在 (px,py) 時佔的畫面矩形 */
+    const rectAt = (px, py) => { const s = size(), top = root.innerHeight - base() - py - s; return { l: px, t: top, r: px + s, b: top + s }; };
+    const hit = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+    /* 要讓開的東西:好評浮窗(出現時)、右下角快捷鈕(使用者:不要被評價彈窗擋住) */
+    function obstacles() {
+      const out = [];
+      const pad = 10;
+      [$("[data-ye-toast]"), $("[data-ye-jump-box]")].forEach(el => {
+        if (!el || el.hidden) return;
+        if (el.matches("[data-ye-toast]") && !el.classList.contains("on")) return;
+        const r = el.getBoundingClientRect();
+        if (r.width) out.push({ l: r.left - pad, t: r.top - pad, r: r.right + pad, b: r.bottom + pad });
+      });
+      return out;
+    }
+    const blockedAt = (px, py) => { const me = rectAt(px, py); return obstacles().some(o => hit(me, o)); };
+    function pickTarget() {
+      const b = bounds();
+      for (let i = 0; i < 30; i++) {
+        const px = b.x0 + Math.random() * (b.x1 - b.x0);
+        /* 多數時間在下半部走,偶爾跑高一點 */
+        const py = b.y0 + Math.pow(Math.random(), 1.6) * (b.y1 - b.y0);
+        if (!blockedAt(px, py)) { tx = px; ty = py; return; }
+      }
+      tx = b.x1 * 0.5; ty = b.y1 * 0.6;
+    }
+
+    /* 目前看到哪一區,講那一區的話 */
+    if ("IntersectionObserver" in root) {
+      const io = new IntersectionObserver(es => {
+        es.forEach(en => { if (en.isIntersecting && YAYA_LINES[en.target.id]) section = en.target.id; });
+      }, { threshold: 0.35 });
+      Object.keys(YAYA_LINES).forEach(id => { const s = document.getElementById(id); if (s) io.observe(s); });
+    }
+
+    function talk() {
+      const pool = (YAYA_LINES[section] || []).concat(YAYA_LINES._);
+      let line = pool[(Math.random() * pool.length) | 0];
+      if (line === lastLine && pool.length > 1) line = pool.find(l => l !== lastLine);
+      lastLine = line;
+      text.innerHTML = line;
+      say.classList.add("on");
+      placeSay();
+      let open = false, n = 0;
+      clearInterval(talkTimer);
+      talkTimer = setInterval(() => {
+        open = !open; mouth.src = open ? MOUTH_OPEN : MOUTH;
+        if (++n > 12) { clearInterval(talkTimer); mouth.src = MOUTH; }
+      }, 170);
+      setTimeout(() => say.classList.remove("on"), 4800);
+    }
+    /* 對話框不超出畫面左右 */
+    function placeSay() {
+      const sw = say.offsetWidth, cx = x + size() / 2, vw = root.innerWidth;
+      const left = Math.min(Math.max(cx - sw / 2, 8), vw - sw - 8);
+      say.style.setProperty("--say-x", (left - x) + "px");
+      say.style.left = "0";
+    }
+    function blocked() {
+      return document.hidden || document.body.classList.contains("ye-chat-open") || document.body.style.overflow === "hidden";
+    }
+    function frame(t) {
+      const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
+      w.classList.toggle("gone", blocked());
+      if (!blocked()) {
+        /* 好評浮窗剛跳出來、壓到芽芽 → 馬上換地方走開 */
+        if (blockedAt(x, y) && blockedAt(tx, ty)) { pickTarget(); idleUntil = 0; }
+        if (t < idleUntil) {
+          w.classList.remove("walking");
+        } else {
+          const dx = tx - x, dy = ty - y, dist = Math.hypot(dx, dy), speed = calm ? 55 : 110;
+          if (dist < 2) {
+            idleUntil = t + 1500 + Math.random() * 2500;
+            pickTarget();
+            if (++stops % 2 === 1) talk();
+          } else {
+            const step = Math.min(dist, speed * dt);
+            x += dx / dist * step; y += dy / dist * step;
+            if (Math.abs(dx) > 1) w.classList.toggle("left", dx < 0);
+            w.classList.toggle("walking", !calm);
+          }
+        }
+        w.style.transform = `translate(${x}px, ${-y}px)`;
+        if (say.classList.contains("on")) placeSay();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    w.addEventListener("click", e => {
+      if (e.target.closest("[data-ye-walker-x]")) {
+        w.hidden = true;
+        try { sessionStorage.setItem(WALKER_OFF, "1"); } catch (_e) {}
+        track("yearend_cta", { cta: "yaya_walker_close" });
+        return;
+      }
+      if (e.target.closest("[data-ye-walker-pet]")) openChat("yaya_walker");
+    });
+    root.addEventListener("resize", () => {
+      const b = bounds();
+      x = Math.min(Math.max(x, b.x0), b.x1); y = Math.min(Math.max(y, b.y0), b.y1);
+      pickTarget();
+    });
+
+    /* 從畫面左邊走進來 */
+    x = -size(); y = 0; idleUntil = 0;
+    setTimeout(() => { w.hidden = false; pickTarget(); requestAnimationFrame(frame); setTimeout(talk, 1600); }, 2500);
   }
   function renderStories() {
     if (!Array.isArray(CONFIG.stories) || !CONFIG.stories.length) return;
@@ -253,13 +490,35 @@
       if (n >= 2 || out.length >= CONFIG.reviewCount) continue;
       perStore.set(v.store, n + 1); out.push(v);
     }
-    $("[data-ye-review-list]").innerHTML = out.map(v =>
-      `<article class="ye-review"><div class="ye-review-stars" aria-label="5 顆星">★★★★★</div>` +
-      `<p>${esc(v.content)}</p><small>${esc(maskName(v.memberName))} · ${esc(v.store)}</small></article>`).join("");
+    /* 2026-11-22 使用者:評價卡不用輪播,而是一直隨機變換 → 固定 4 格,每隔幾秒隨機換掉其中一格 */
+    const grid = $("[data-ye-review-list]");
+    const SLOTS = 4;
+    const cardHtml = v => `<div class="ye-review-stars" aria-label="5 顆星">★★★★★</div>` +
+      `<p>${esc(v.content)}</p><small>${esc(maskName(v.memberName))} · ${esc(v.store)}</small>`;
+    const shown = out.slice(0, SLOTS);
+    grid.innerHTML = shown.map(v => `<article class="ye-review">${cardHtml(v)}</article>`).join("");
     $("[data-ye-reviews]").hidden = false;
     $("#voice").hidden = false;
-    initSlider($("#voice [data-ye-slider]"));
     startToasts();
+
+    if (reviewPool.length > SLOTS) {
+      let visible = false, lastSlot = -1;
+      if ("IntersectionObserver" in root) new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { threshold: 0.3 }).observe(grid);
+      else visible = true;
+      setInterval(() => {
+        if (!visible || document.hidden) return;
+        let slot = Math.floor(Math.random() * SLOTS);
+        if (slot === lastSlot) slot = (slot + 1) % SLOTS;
+        lastSlot = slot;
+        const onScreen = new Set(shown.map(v => v.content));
+        const pick = shuffle(reviewPool.slice()).find(v => !onScreen.has(v.content));
+        const card = grid.children[slot];
+        if (!pick || !card) return;
+        shown[slot] = pick;
+        card.classList.add("out");
+        setTimeout(() => { card.innerHTML = cardHtml(pick); card.classList.remove("out"); }, 350);
+      }, 2600);
+    }
   }
   function maskName(n) {
     n = String(n || "").trim();
@@ -476,6 +735,10 @@
   initApp();
   initChat();
   initSliders();
+  syncCookieOffset();
+  initVideos();
+  initJump();
+  initWalker();
   renderStories();
   track("yearend_view", {});
   /* 網址帶 #book-now 直接打開預約、#ask 直接打開問答(廣告可以直接導到這兩個) */

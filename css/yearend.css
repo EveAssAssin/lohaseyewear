@@ -9,7 +9,8 @@
    2026-11-21 使用者要求「整體 UI 再符合主視覺」後改成這版。
    ============================================= */
 
-.ye {
+/* 色票也給 .ye 外面的浮動元件(快捷鈕、芽芽在 </main> 之後,吃不到 .ye 的變數) */
+.ye, .ye-jump, .ye-walker {
   --ye-red: #c8202a;
   --ye-red-deep: #8e1b1b;
   --ye-yellow: #ffd23f;
@@ -23,6 +24,8 @@
   --ye-cream: #fff8e6;
   --ye-line: #06c755;
   --ye-num: "Rubik", "Noto Sans TC", sans-serif;
+}
+.ye {
   /* 彩帶背景已拿掉(使用者 2026-11-21:「很亂」),紅底一律素色 */
   color: var(--ye-ink);
   font-family: "Noto Sans TC", sans-serif;
@@ -313,11 +316,18 @@
 .ye-dates span { font-size: 13px; color: var(--ye-sub); letter-spacing: 1px; }
 .ye-dates b { font-family: var(--ye-num); font-size: 20px; letter-spacing: 1px; color: var(--ye-red); white-space: nowrap; }
 
-/* ⑤ 口碑 */
-.ye-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 40px; }
-.ye-stat { padding: 22px; text-align: center; }
-.ye-stat b { display: block; font-size: 46px; line-height: 1.2; }
-.ye-stat span { font-size: 16px; font-weight: 700; color: var(--ye-red-deep); }
+/* ⑤ 口碑(2026-11-22 使用者:版面小一半、四個數字整合成一條、數字會跳) */
+#voice { padding: 56px 0; }
+#voice .ye-head { margin-bottom: 24px; }
+#voice .ye-head h2 { font-size: 30px; }
+.ye-stats {
+  display: flex; max-width: 460px; margin: 0 auto 26px;
+  background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 18px; box-shadow: 0 5px 0 var(--ye-red-deep);
+}
+.ye-stats .ye-stat { flex: 1; min-width: 0; padding: 12px 6px; text-align: center; background: none; border: 0; border-radius: 0; box-shadow: none; }
+.ye-stats .ye-stat + .ye-stat { border-left: 2px dashed rgba(142,27,27,.25); }
+.ye-stat b { display: block; font-size: 30px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.ye-stat span { display: block; font-size: 13px; font-weight: 700; color: var(--ye-red-deep); line-height: 1.4; }
 .ye-stat-note { grid-column: 1 / -1; margin: -4px 0 0; text-align: center; font-size: 12px; color: var(--ye-red-deep); opacity: .7; }
 .ye-stories { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 40px; }
 .ye-story { overflow: hidden; }
@@ -328,11 +338,18 @@
 .ye-story p { margin: 0; font-size: 15px; line-height: 1.7; color: var(--ye-sub); }
 .ye-sub { margin: 0 0 22px; text-align: center; font-size: 24px; font-weight: 900; letter-spacing: 2px; color: var(--ye-red); }
 /* 原本左上角壓一個大引號,會跟卡片外框疊在一起看起來像破圖(使用者 2026-11-21),已拿掉 */
-.ye-review { position: relative; padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 10px; }
-.ye-review-stars { color: var(--ye-orange); font-size: 15px; letter-spacing: 2px; }
-.ye-review p { margin: 0; font-size: 16px; line-height: 1.75; flex: 1; }
-.ye-review small { font-size: 13px; font-weight: 700; color: var(--ye-red-deep); }
-.ye-src { margin: 18px 0 0; text-align: center; font-size: 13px; color: var(--ye-red-deep); opacity: .75; }
+.ye-review { position: relative; padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 6px; border-radius: 16px; box-shadow: 0 5px 0 var(--ye-red-deep); }
+.ye-review-stars { color: var(--ye-orange); font-size: 13px; letter-spacing: 1px; }
+.ye-review p {
+  margin: 0; font-size: 14px; line-height: 1.6; flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ye-review small { font-size: 12px; font-weight: 700; color: var(--ye-red-deep); }
+/* 評價卡:固定 4 格、內容隨機輪換(使用者 2026-11-22:不用輪播) */
+.ye-rv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; perspective: 1200px; }
+/* 翻卡(使用者 2026-11-22):先翻到側面(90 度)→ 換內容 → 再翻回正面 */
+.ye-rv-grid .ye-review { min-height: 150px; transition: transform .33s cubic-bezier(.4, 0, .2, 1); transform-origin: 50% 50%; backface-visibility: hidden; }
+.ye-rv-grid .ye-review.out { transform: rotateY(90deg); transition-timing-function: cubic-bezier(.6, 0, 1, 1); }
 
 /* ⑥ 門市環境 */
 #stores { background: #fff; }
@@ -474,28 +491,98 @@
 .ye-rules li::marker { color: var(--ye-red); }
 
 /* ---------- 門市特色(全台最大眼鏡店) ---------- */
-.ye-feat-big { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 760px; margin: 0 auto 28px; }
-.ye-feat-big > div {
-  display: flex; align-items: center; justify-content: center; gap: 16px;
+/* 2026-11-22 使用者:影片要放大強調 → 左邊大直式影片、右邊兩個數字卡疊起來 */
+.ye-feat-big {
+  display: grid; grid-template-columns: 340px 1fr; gap: 28px; align-items: center;
+  max-width: 860px; margin: 0 auto 32px;
+}
+.ye-feat-video {
+  position: relative; aspect-ratio: 9 / 16; overflow: hidden;
+  border: 5px solid var(--ye-red-deep); border-radius: 26px; background: #3a1512;
+  box-shadow: 0 10px 0 var(--ye-red-deep), 0 18px 40px rgba(142,27,27,.25);
+  transform: rotate(-2deg);
+}
+.ye-feat-video video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ye-feat-vtag {
+  position: absolute; top: 14px; left: 14px; padding: 5px 12px; border-radius: 999px;
+  background: var(--ye-yellow); color: var(--ye-red-deep); border: 2px solid var(--ye-red-deep);
+  font-size: 14px; font-weight: 900; letter-spacing: 1px;
+}
+.ye-feat-sound {
+  position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); white-space: nowrap; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px;
+  background: var(--ye-red); color: #fff; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.35);
+  font: inherit; font-size: 15px; font-weight: 900; letter-spacing: 1px;
+}
+.ye-feat-nums { display: grid; gap: 20px; }
+.ye-feat-card {
+  display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; text-align: center; font: inherit; color: inherit;
   background: #fff; border: 3px solid var(--ye-red-deep); border-radius: 22px; box-shadow: 0 7px 0 var(--ye-red-deep);
-  padding: 20px 18px;
+  padding: 22px 20px;
 }
-.ye-feat-big b { font-size: 64px; line-height: 1; }
-.ye-feat-big b small { font-size: .55em; }
+/* 兩張數字卡一律置中對齊(使用者 2026-11-22:14 道流程那張靠左很怪) */
+.ye-feat-txt { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.ye-feat-txt b { white-space: nowrap; line-height: 1; }
+.ye-feat-card--play { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.ye-feat-card--play:hover { transform: translateY(3px); box-shadow: 0 4px 0 var(--ye-red-deep); }
+.ye-feat-card--play em {
+  align-self: center; margin-top: 4px; padding: 6px 14px; border-radius: 999px; font-style: normal; white-space: nowrap;
+  background: var(--ye-red); color: #fff; font-size: 15px; font-weight: 900; letter-spacing: 1px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ye-feat-sound { animation: yeSound 2s ease-in-out infinite; }
+}
+@keyframes yeSound { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.06); } }
+/* 影片視窗 */
+.ye-vmodal { position: fixed; inset: 0; z-index: 10060; display: grid; place-items: center; padding: 20px; background: rgba(30,10,8,.78); }
+/* ⚠ 一定要有:上面 display:grid 會蓋過 hidden 屬性,少了這行彈窗一開頁就出現、也關不掉(2026-11-22 踩到) */
+.ye-vmodal[hidden] { display: none; }
+.ye-vmodal-box { position: relative; height: min(86vh, 860px); aspect-ratio: 9 / 16; max-width: 100%; }
+.ye-vmodal-box video { display: block; width: 100%; height: 100%; border-radius: 18px; background: #000; border: 3px solid #fff; }
+.ye-vmodal-x {
+  position: absolute; top: -14px; right: -14px; z-index: 1; width: 40px; height: 40px; padding: 0; border-radius: 50%; cursor: pointer;
+  background: #fff; color: #8e1b1b; border: 3px solid #8e1b1b; font-size: 18px;
+}
+/* 數字超大(使用者 2026-11-22):維持主視覺的黃字紅描邊,只放大;紅色實心版使用者不要 */
+.ye-feat-big b { font-size: 92px; line-height: .95; letter-spacing: -2px; -webkit-text-stroke-width: 4px; text-shadow: 0 5px 0 var(--ye-red-deep); }
+.ye-feat-big b small { font-size: .5em; margin-left: 2px; vertical-align: top; }
 .ye-feat-big span { font-size: 17px; font-weight: 900; color: var(--ye-red-deep); line-height: 1.5; }
-.ye-feats { list-style: none; margin: 0 auto; padding: 0; max-width: 900px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+/* 門市特色四格:照片卡(使用者 2026-11-22 提供熱敷/紓壓茶/APP 三張實景照) */
+.ye-feats { list-style: none; margin: 0 auto; padding: 0; max-width: 980px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .ye-feats li {
-  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
-  background: var(--ye-red); color: #fff; border: 3px solid var(--ye-red-deep); border-radius: 18px;
-  padding: 18px 10px;
+  display: flex; flex-direction: column; overflow: hidden; text-align: center;
+  background: #fff; color: var(--ye-ink); border: 3px solid var(--ye-red-deep); border-radius: 20px;
+  box-shadow: 0 6px 0 var(--ye-red-deep);
+  padding: 12px 12px 0;   /* 不要滿版圖(使用者 2026-11-22):照片內縮在卡片裡、四邊留白 */
 }
-.ye-feats i {
-  width: 58px; height: 58px; border-radius: 50%; font-size: 26px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--ye-yellow); color: var(--ye-red-deep);
+.ye-feat-img { position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden; background: var(--ye-red); border: 3px solid var(--ye-red-deep); border-radius: 14px; }
+.ye-feat-img img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; transition: transform .4s; }
+.ye-feats li:hover .ye-feat-img img { transform: scale(1.05); }
+/* 還沒有照片的那格:紅底放射光 + 大圖示,跟照片卡同尺寸 */
+.ye-feat-img--icon {
+  display: grid; place-items: center;
+  background: repeating-conic-gradient(from 0deg, rgba(255,255,255,.08) 0deg 8deg, transparent 8deg 16deg), var(--ye-red);
 }
-.ye-feats b { font-size: 17px; letter-spacing: 1px; }
-.ye-feats small { font-size: 13px; opacity: .9; margin-top: -4px; }
+.ye-feat-img--icon i {
+  display: grid; place-items: center; width: 108px; height: 108px; border-radius: 50%; font-size: 48px;
+  background: var(--ye-yellow); color: var(--ye-red-deep); border: 4px solid var(--ye-red-deep); box-shadow: 0 5px 0 var(--ye-red-deep);
+}
+.ye-feat-lbl { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 30px 8px 14px; }
+.ye-feat-lbl i {
+  position: absolute; top: -24px; left: 50%; transform: translateX(-50%);
+  display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; font-size: 19px;
+  background: var(--ye-yellow); color: var(--ye-red-deep); border: 3px solid var(--ye-red-deep);
+}
+.ye-feat-lbl b { font-size: 18px; font-weight: 900; letter-spacing: 1px; color: var(--ye-red); }
+.ye-feat-lbl small { font-size: 13px; font-weight: 700; color: var(--ye-sub); }
+/* 照舊官網〈配眼鏡 14 流程〉的寫法:流程編號 → 標題 → 引言 → 內文 */
+.ye-feat-lbl em {
+  font-style: normal; font-size: 12px; font-weight: 900; letter-spacing: 2px; color: var(--ye-red-deep);
+  background: var(--ye-yellow-soft); padding: 2px 10px; border-radius: 6px; margin-bottom: 4px;
+}
+.ye-feat-lbl q { display: block; margin: 6px 0 0; font-size: 14px; font-weight: 900; color: var(--ye-red-deep); line-height: 1.5; text-wrap: balance; }
+.ye-feat-lbl q::before { content: "「"; } .ye-feat-lbl q::after { content: "」"; }
+.ye-feat-lbl p { margin: 4px 0 0; padding: 0 4px; font-size: 14px; line-height: 1.55; color: var(--ye-sub); font-weight: 700; text-align: center; text-wrap: balance; }
 
 /* ---------- 芽芽小幫手(詢問活動的預設問答) ---------- */
 .ye-chat {
@@ -551,7 +638,7 @@ body.ye-chat-open { overflow: hidden; }
 
 /* ---------- 真實好評浮窗 ---------- */
 .ye-toast {
-  position: fixed; left: 20px; bottom: 20px; z-index: 1100;
+  position: fixed; left: 20px; bottom: calc(20px + var(--ye-cookie, 0px)); z-index: 1100;
   width: 340px; max-width: calc(100vw - 40px);
   background: #fff; border: 3px solid #8e1b1b; border-radius: 16px; box-shadow: 0 6px 0 #8e1b1b;
   font-family: "Noto Sans TC", sans-serif; color: #3a1512;
@@ -695,6 +782,48 @@ body.ye-chat-open { overflow: hidden; }
   .ye-why2 span { font-size: 12px; }
 }
 
+/* ---------- 快捷:回到最上面 / 跳到最下面 ---------- */
+.ye-jump {
+  position: fixed; right: 18px; bottom: calc(20px + var(--ye-cookie, 0px)); z-index: 1120;   /* 高於好評浮窗(1100),不會被蓋住 */
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ye-jump button {
+  display: grid; place-items: center; width: 46px; height: 46px; padding: 0; border-radius: 50%; cursor: pointer;
+  background: #fff; color: var(--ye-red); border: 3px solid var(--ye-red-deep); box-shadow: 0 4px 0 var(--ye-red-deep);
+  font-size: 18px; transition: opacity .2s, transform .2s;
+}
+.ye-jump button:hover { transform: translateY(2px); box-shadow: 0 2px 0 var(--ye-red-deep); }
+.ye-jump button.off { opacity: 0; pointer-events: none; transform: scale(.6); }
+body.ye-chat-open .ye-jump { display: none; }
+
+/* ---------- 芽芽在畫面上走來走去(2026-11-22 使用者) ---------- */
+.ye-walker { position: fixed; left: 0; bottom: calc(14px + var(--ye-cookie, 0px)); z-index: 1150; width: 104px; height: 104px; pointer-events: none; will-change: transform; }
+.ye-walker.gone { opacity: 0; visibility: hidden; }
+.ye-walker-pet {
+  position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto;
+  filter: drop-shadow(0 4px 0 rgba(142,27,27,.35));
+}
+.ye-walker-body { position: absolute; inset: 0; display: block; transition: transform .2s; }
+.ye-walker-body img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ye-walker.left .ye-walker-body { transform: scaleX(-1); }
+.ye-walker.walking .ye-walker-pet { animation: yeHop .42s ease-in-out infinite; }
+.ye-walker:not(.walking) .ye-walker-pet { animation: yeBreath 2.4s ease-in-out infinite; }
+@keyframes yeHop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px) rotate(-3deg); } }
+@keyframes yeBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04, .97); } }
+.ye-walker-say {
+  position: absolute; bottom: calc(100% + 10px); left: 50%; width: max-content; max-width: 220px;
+  padding: 9px 30px 9px 12px; border-radius: 14px; pointer-events: auto;
+  background: #fff; color: var(--ye-ink); border: 3px solid var(--ye-red-deep); box-shadow: 0 4px 0 var(--ye-red-deep);
+  font-size: 14px; font-weight: 700; line-height: 1.45;
+  opacity: 0; transform: translate(var(--say-x, -50%), 6px) scale(.9); transition: opacity .2s, transform .2s;
+}
+.ye-walker-say.on { opacity: 1; transform: translate(var(--say-x, -50%), 0) scale(1); }
+.ye-walker-say b { color: var(--ye-red); }
+.ye-walker-x {
+  position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%;
+  background: none; color: var(--ye-sub); cursor: pointer; font-size: 13px;
+}
+
 /* ---------- 手機固定按鈕 ---------- */
 .ye-dock { display: none; }
 
@@ -702,7 +831,15 @@ body.ye-chat-open { overflow: hidden; }
 @media (max-width: 1000px) {
   .ye-track > * { flex-basis: calc((100% - 22px) / 2); }
   #stores .ye-track > * { flex-basis: calc((100% - 44px) / 3); }
-  .ye-feats { grid-template-columns: repeat(2, 1fr); }
+  .ye-rv-grid { grid-template-columns: repeat(2, 1fr); }
+  .ye-feats { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .ye-feats li { padding: 8px 8px 0; }
+  .ye-feat-img { border-radius: 10px; }
+  .ye-feat-img--icon i { width: 84px; height: 84px; font-size: 36px; }
+  .ye-feat-lbl b { font-size: 16px; }
+  .ye-feat-lbl p { font-size: 12px; padding: 0; }
+  .ye-feat-lbl q { font-size: 13px; }
+  .ye-feat-lbl em { font-size: 11px; letter-spacing: 1px; }
 }
 
 /* ---------- 手機 ---------- */
@@ -728,13 +865,32 @@ body.ye-chat-open { overflow: hidden; }
   .ye-vs-side i { font-size: 44px; }
   .ye-vs-side span { font-size: 13px; padding: 2px 10px; }
   .ye-vs-mid { width: 46px; height: 46px; font-size: 30px; }
-  .ye-feat-big { grid-template-columns: 1fr; }
-  .ye-feat-big b { font-size: 54px; }
+  .ye-feat-big { grid-template-columns: 1fr; gap: 26px; }
+  .ye-feat-video { width: min(78vw, 320px); margin: 0 auto; }
+  .ye-feat-nums { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .ye-feat-card { padding: 16px 6px; }
+  .ye-feat-big b { font-size: 46px; letter-spacing: -2px; -webkit-text-stroke-width: 3px; text-shadow: 0 4px 0 var(--ye-red-deep); }
+  .ye-feat-big span { font-size: 14px; }
+  .ye-feat-card--play em { font-size: 12px; padding: 5px 10px; }
+  .ye-vmodal-box { height: min(80vh, 720px); }
   .ye-chat { padding: 0; }
   .ye-chat-panel { width: 100%; height: 86vh; border-radius: 22px 22px 0 0; border-bottom: 0; box-shadow: none; }
-  .ye-toast { left: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); }
-  .ye-steps { gap: 44px; }
-  .ye-steps li:not(:last-child)::after { content: "\f078"; right: auto; left: 50%; top: auto; bottom: -38px; transform: translateX(-50%); }
+  .ye-toast { left: 12px; bottom: calc(84px + env(safe-area-inset-bottom) + var(--ye-cookie, 0px)); width: auto; max-width: none; right: 12px; }
+  /* 手機:上下箭頭整組移到好評浮窗上方,不再跟浮窗擠在同一排(使用者 2026-11-22:箭頭被蓋住) */
+  .ye-jump { right: 12px; bottom: calc(190px + env(safe-area-inset-bottom) + var(--ye-cookie, 0px)); gap: 8px; }
+  .ye-jump button { width: 40px; height: 40px; font-size: 15px; border-width: 2px; box-shadow: 0 3px 0 var(--ye-red-deep); }
+  .ye-walker { width: 84px; height: 84px; bottom: calc(80px + env(safe-area-inset-bottom) + var(--ye-cookie, 0px)); }
+  .ye-walker-say { font-size: 13px; max-width: 190px; }
+  #voice .ye-head h2 { font-size: 24px; }
+  .ye-stat b { font-size: 26px; }
+  .ye-stat span { font-size: 12px; white-space: nowrap; }
+  .ye-stats .ye-stat { padding: 10px 2px; }
+  .ye-rv-grid { gap: 10px; }
+  .ye-rv-grid .ye-review { min-height: 140px; padding: 12px 10px 10px; }
+  .ye-rv-grid .ye-review p { font-size: 13px; }
+  /* 間距加大:下一張卡的號碼圓圈會往上凸 26px,原本 44px 的間距把往下箭頭蓋住了(使用者 2026-11-22) */
+  .ye-steps { gap: 74px; }
+  .ye-steps li:not(:last-child)::after { content: "\f078"; right: auto; left: 50%; top: auto; bottom: -36px; transform: translateX(-50%); }
   .ye-points, .ye-dates { grid-template-columns: 1fr; }
   .ye-social h2 { font-size: 25px; }
   .ye-app { flex-direction: column; align-items: stretch; padding: 22px 20px; }
