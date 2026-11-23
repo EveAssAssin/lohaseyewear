@@ -1,5 +1,5 @@
 /*
- * LOHAS 樂活眼鏡 design tokens v1.0.0(2026-11-23)
+ * LOHAS 樂活眼鏡 design tokens v1.1.0(2026-11-24)
  * 由 design/build.mjs 從 design/tokens.json 產生,不要手改。說明:https://www.lohasglasses.com/design/
  *
  * 只有變數,不含 reset。字體請另外載入:
@@ -16,6 +16,7 @@
   --bg-warm: #F9F8F6;  /* 區塊底色 */
   --bg-soft: #F4F1EC;  /* 卡片內底、hover 底 */
   --bg-cream: #FAF7F2;  /* 米白底:表單區、提示區 */
+  --bg-white: #FFFFFF;  /* 白底:卡片、表格、輸入框、彈窗(白色當底色用這個,不要借 text-on-dark) */
 
   /* === 文字色 === */
   --text-main: #2F2A24;  /* 主文字 */
@@ -40,13 +41,20 @@
   /* === 狀態色 === */
   --ok: #5F7A5A;  /* 成功、完成 */
   --ok-bg: #EEF1EC;  /* 成功的淡底 */
-  --warn: #B58A42;  /* 警告、待處理 */
+  --ok-strong: #495E45;  /* 成功的深字:放在 ok-bg 上(對比 6.2) */
+  --warn: #B58A42;  /* 警告、待處理(白底上對比只有 3.1,用在圖示、邊框、大字) */
   --warn-bg: #F8F1E1;  /* 警告的淡底 */
+  --warn-strong: #785C2B;  /* 警告的深字:放在 warn-bg 上、或白底上的小字(對比 5.6) */
   --err: #A85A4A;  /* 錯誤訊息(柔和)、登出 */
   --err-bg: #F5E8E4;  /* 錯誤的淡底 */
+  --err-strong: #794035;  /* 錯誤的深字:放在 err-bg 上(對比 6.8) */
   --err-line: #E5C5C5;  /* 錯誤、駁回、刪除鈕的淡紅邊線 */
   --danger: #C0392B;  /* 刪除、無法復原的動作(按鈕、確認框) */
   --danger-bg: #FDEDEC;  /* 危險動作的淡底 */
+  --danger-strong: #8D2B20;  /* 危險的深字:放在 danger-bg 上(對比 7.4) */
+  --info: #4D6B89;  /* 資訊、說明、即將開始、處理中(柔和的藍,配合品牌暖色) */
+  --info-bg: #EBF0F4;  /* 資訊的淡底 */
+  --info-strong: #3B5268;  /* 資訊的深字:放在 info-bg 上(對比 7.1) */
   --favorite: #C85F5F;  /* 收藏、喜歡 */
   --notify: #E5484D;  /* 未讀紅點 */
 
@@ -55,6 +63,11 @@
   --gold-line: #E8D8A8;  /* 金色區塊的邊線、淡底 */
   --gold-star: #FFD86B;  /* 星星、皇冠圖示 */
 
+  /* === AI / 樂維斯 === */
+  --ai: #794E97;  /* AI 功能、樂維斯:按鈕、圖示、標籤(跟創作者紫刻意分開,比較偏藍紫、比較飽和) */
+  --ai-bg: #F3EEF7;  /* AI 的淡底:對話泡泡、提示區 */
+  --ai-strong: #5B3B72;  /* AI 的深字:放在 ai-bg 上(對比 8.0) */
+
   /* === 字體 === */
   --font-tc: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;  /* 全站字體。網頁請另外載入 Google Fonts 的 Noto Sans TC(400 / 500 / 700) */
 
@@ -62,8 +75,10 @@
   --fs-2xs: 12px;  /* 註記、法規小字(全站下限) */
   --fs-xs: 13px;  /* 標籤、次要資訊 */
   --fs-sm: 14px;  /* 後台內文、表格 */
+  --fs-15: 15px;  /* 介於 sm 與 md:按鈕字、清單項目、系統內文 */
   --fs-md: 16px;  /* 前台內文、手機輸入框 */
   --fs-lg: 18px;  /* 小標 */
+  --fs-20: 20px;  /* 介於 lg 與 xl:彈窗標題、區塊小標 */
   --fs-xl: 22px;  /* 卡片標題 */
   --fs-2xl: 28px;  /* 區塊標題 */
   --fs-3xl: clamp(30px, 4vw, 44px);  /* 頁面主標(隨螢幕寬縮放;App 用 30～44 之間的固定值) */
@@ -80,7 +95,10 @@
 
   /* === 圓角 === */
   --r-xs: 4px;  /* 輸入框、小標籤 */
+  --r-6: 6px;  /* 介於 xs 與 sm:輸入框、小按鈕 */
   --r-sm: 8px;  /* 按鈕(方)、小卡片 */
+  --r-10: 10px;  /* 介於 sm 與 md:按鈕、清單卡 */
+  --r-12: 12px;  /* 介於 sm 與 md:卡片、圖片 */
   --r-md: 14px;  /* 卡片 */
   --r-lg: 18px;  /* 彈窗、提示框 */
   --r-xl: 24px;  /* 大區塊 */

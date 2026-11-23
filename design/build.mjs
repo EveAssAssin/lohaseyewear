@@ -111,7 +111,10 @@ fs.writeFileSync(path.join(OUT, 'tokens.json'), JSON.stringify({
 
 /* ---------- v1/tailwind.preset.js ---------- */
 const pick = type => Object.fromEntries(all.filter(t => t.type === type).map(t => [t.name, t.value]));
-const byGroup = id => Object.fromEntries(all.filter(t => t.group === id).map(t => [t.name.replace(/^(fs|sp|r|sh)-/, ''), t.value]));
+/* 尺寸類一律加 lohas- 前綴(text-lohas-xl、p-lohas-5、rounded-lohas-md)。
+   不加的話會蓋掉 Tailwind 內建的同名值(p-5 是 20px、我們的 sp-5 是 24px;text-xl 20 → 22),
+   現有專案一接上 preset,沒改到的畫面就跟著變。顏色沒有撞名,維持原樣。 */
+const byGroup = id => Object.fromEntries(all.filter(t => t.group === id).map(t => ['lohas-' + t.name.replace(/^(fs|sp|r|sh|z)-/, ''), t.value]));
 fs.writeFileSync(path.join(OUT, 'tailwind.preset.js'),
   `${header('//')}// 用法:tailwind.config.js 裡 presets: [require('./tailwind.preset.js')]\n` +
   `module.exports = {\n  theme: {\n    extend: ${JSON.stringify({
@@ -121,7 +124,7 @@ fs.writeFileSync(path.join(OUT, 'tailwind.preset.js'),
     spacing: byGroup('space'),
     borderRadius: byGroup('radius'),
     boxShadow: byGroup('shadow'),
-    zIndex: Object.fromEntries(all.filter(t => t.group === 'z').map(t => [t.name.replace(/^z-/, ''), t.value])),
+    zIndex: byGroup('z'),
     screens: { mobile: src.breakpoints.mobile + 'px', tablet: src.breakpoints.tablet + 'px', laptop: src.breakpoints.laptop + 'px' }
   }, null, 2).replace(/\n/g, '\n    ')}\n  }\n};\n`);
 

@@ -125,7 +125,8 @@ module.exports = {
   presets: [require('./tailwind.preset.js')],
 };
 
-// 用法:bg-lohas-brand text-text-sub border-lohas-bd rounded-pill text-md shadow-card</pre>
+// 用法:bg-lohas-brand text-text-sub border-lohas-bd rounded-lohas-pill text-lohas-md shadow-lohas-card p-lohas-5
+// 尺寸類都有 lohas- 前綴,不會蓋掉 Tailwind 內建的 text-xl、p-5 這些</pre>
 <pre data-pane="js" hidden>// 下載 tokens.js 放進專案
 import { t, tokens } from './tokens.js';
 
@@ -133,11 +134,12 @@ const styles = { button: { backgroundColor: t.lohasBrand, borderRadius: 999 } };
 const border = tokens['lohas-bd'];                                                  // 與 CSS 同名</pre>
 <pre data-pane="app" hidden>// 任何語言都能讀:https://www.lohasglasses.com/design/v1/tokens.json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "tokens": { "lohas-brand": "#50422D", "text-main": "#2F2A24", "r-md": "14px", ... },
   "meta":   { "lohas-brand": { "group": "brand", "type": "color", "desc": "主色:…" }, ... }
 }
-// 建議:App 打包時讀一次轉成自己的常數(不要每次開 App 都從網路抓)</pre>
+// 建議:App 打包時讀一次轉成自己的常數(不要每次開 App 都從網路抓)
+// ⚠ 伺服器沒有開 CORS:別的網站在「瀏覽器裡」fetch 這支會被擋 —— 網頁請改用 tokens.css 或 tokens.js</pre>
 <pre data-pane="ui" hidden>&lt;!-- 網頁平台可以直接用官網的提示框(取代 alert / confirm),樣式會自動跟著載入 --&gt;
 &lt;script src="https://www.lohasglasses.com/design/v1/lohas-ui.js"&gt;&lt;/script&gt;
 
