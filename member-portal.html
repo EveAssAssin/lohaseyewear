@@ -21,9 +21,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
   <!-- LOHAS CSS · 載入順序: tokens → components → page -->
-  <link rel="stylesheet" href="css/lohas-tokens.css?v=20260510-1720">
+  <link rel="stylesheet" href="css/lohas-tokens.css?v=20261123-names">
   <link rel="stylesheet" href="css/lohas-components.css?v=20260510-1720">
-  <link rel="stylesheet" href="css/member-portal.css?v=20260903-coupons2">
+  <link rel="stylesheet" href="css/member-portal.css?v=20261123-3a">
 
   <!-- 上傳 modal 所需資源 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
@@ -164,7 +164,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <button class="nav-link" data-page="my-cloth"><i class="fa-solid fa-vector-square"></i><span>客製眼鏡布</span></button>
       <button class="nav-link" data-page="gifts"><i class="fa-solid fa-gift"></i><span>禮物中心</span></button>
 
-      <div class="nav-section-label creator-section-label" style="margin-top:10px">創 作 者</div>
+      <div class="nav-section-label creator-section-label mpu-mt-10">創 作 者</div>
       <button class="nav-link creator-only" data-page="creator-page"><i class="fa-regular fa-id-badge"></i><span>創作者個人頁</span></button>
       <button class="nav-link creator-only" data-page="analytics"><i class="fa-regular fa-chart-bar"></i><span>創作數據</span></button>
       <button class="nav-link creator-only" data-page="earnings"><i class="fa-solid fa-coins"></i><span>分潤紀錄</span></button>
@@ -185,7 +185,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a class="nav-link" id="sidebarAdminLink" href="admin-portal.html" style="display:none"><i class="fa-solid fa-shield-halved"></i><span>進入管理後台</span></a>
     </div>
 
-    <div class="nav-section" style="margin-top:auto">
+    <div class="nav-section mpu-mt-auto">
       <button class="nav-link" id="logout-btn-sidebar"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>登出</span></button>
     </div>
   </aside>
@@ -255,7 +255,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="stat-card"><div class="stat-label">設 計 被 使 用</div><div class="stat-value" data-stat="usedCount">--</div></div>
             <div class="stat-card"><div class="stat-label">已 上 架 設 計</div><div class="stat-value" data-stat="listedCount">--</div></div>
             <div class="stat-card"><div class="stat-label">個 人 頁 瀏 覽</div><div class="stat-value" data-stat="profileViews">--</div></div>
-            <div class="stat-card"><div class="stat-label">累 計 分 潤</div><div class="stat-value" data-stat="totalRoyalty" style="color:#9D7E3F">--</div></div>
+            <div class="stat-card"><div class="stat-label">累 計 分 潤</div><div class="stat-value mpu-c-gold" data-stat="totalRoyalty">--</div></div>
           </div>
         </div>
 
@@ -275,7 +275,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="content-page" data-page="inspo">
         <div class="section-title">
           <h2>我的靈感 <span class="meta" id="inspoCount"></span></h2>
-          <a href="gallery.html">到靈感分享牆看更多 <i class="fa-solid fa-arrow-right" style="font-size:9px"></i></a>
+          <a href="gallery.html">到靈感分享牆看更多 <i class="fa-solid fa-arrow-right mpu-fs-9"></i></a>
         </div>
         <p class="section-intro">看到別人眼鏡上的刻圖很喜歡?收藏起來,下次配自己眼鏡時可以拿來參考。</p>
         <div class="inspo-list" id="myFavoriteList">
@@ -287,7 +287,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="content-page" data-page="wishlist">
         <div class="section-title">
           <h2>我的最愛刻圖 <span class="meta" id="wishCount"></span></h2>
-          <a href="market.html">到創作者刻圖市集看更多 <i class="fa-solid fa-arrow-right" style="font-size:9px"></i></a>
+          <a href="market.html">到創作者刻圖市集看更多 <i class="fa-solid fa-arrow-right mpu-fs-9"></i></a>
         </div>
         <p class="section-intro">收藏喜歡的刻圖設計,下次來樂活配眼鏡或加值雷刻服務時,直接帶過來就能刻上去。</p>
         <div class="inspo-list" id="myWishList">
@@ -337,7 +337,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="md-notices" id="mdNotices"></div>
 
         <div class="design-list-block" id="myDesignsBlock">
-          <p class="section-intro">你上架到創作者市集的刻圖，設計每被使用一次,你會獲得 <b style="color:#9D7E3F">$100</b> 分潤。</p>
+          <p class="section-intro">你上架到創作者市集的刻圖，設計每被使用一次,你會獲得 <b class="mpu-c-gold">$100</b> 分潤。</p>
           <div class="design-list" id="myDesignList">
             <p class="empty-text">載入中...</p>
           </div>
@@ -397,14 +397,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <!-- ===== 創作者個人頁 (Creator only) ===== -->
       <div class="content-page" data-page="creator-page">
-        <div class="section-title"><h2>創作者個人頁</h2><a id="previewCreatorPage" style="cursor:pointer"><i class="fa-regular fa-eye"></i> 預覽 →</a></div>
+        <div class="section-title"><h2>創作者個人頁</h2><a id="previewCreatorPage" class="mpu-pointer"><i class="fa-regular fa-eye"></i> 預覽 →</a></div>
         <p class="section-intro">編輯你的創作者個人頁。別人在創作者市集點你的名字、會看到這個頁面。</p>
 
         <div class="editor-panel">
           <h3 class="editor-panel-h"><i class="fa-regular fa-id-badge"></i>基本資訊</h3>
           <div class="editor-row">
             <div class="editor-label">頭像</div>
-            <div style="display:flex;align-items:center;gap:14px">
+            <div class="mpu-ai-c mpu-gap-14" style="display:flex">
               <div class="creator-avatar-wrap">
                 <div class="ed-avatar" id="creatorAvatar">--</div>
                 <button class="ed-avatar-camera" id="creatorAvatarUploadBtn" type="button" aria-label="更換頭像">
@@ -422,7 +422,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="editor-label">短標籤</div>
             <div>
               <input class="editor-input" id="creatorTagline" placeholder="例如：插畫家"/>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在名字下方</div>
+              <div class="mp-note">顯示在名字下方</div>
             </div>
           </div>
           <div class="editor-row">
@@ -435,7 +435,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <h3 class="editor-panel-h"><i class="fa-regular fa-heart"></i>與樂活的緣分</h3>
           <div class="editor-row">
             <div class="editor-label">圖片</div>
-            <div class="img-upload-wrap" data-field="joining_photo" data-aspect="4:5" id="creatorJoiningPhotoWrap" style="max-width:200px">
+            <div class="img-upload-wrap mpu-mw-200" data-field="joining_photo" data-aspect="4:5" id="creatorJoiningPhotoWrap">
               <div class="img-upload-preview" id="creatorJoiningPhotoPreview">
                 <span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>
               </div>
@@ -450,8 +450,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="editor-row">
             <div class="editor-label">緣分故事</div>
             <div>
-              <textarea class="editor-area" id="creatorJoiningStory" placeholder="說說你怎麼成為樂活合作創作者的..." style="min-height:140px"></textarea>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">空一行 = 段落分隔。長文 (建議 200-400 字)</div>
+              <textarea class="editor-area mpu-minh-140" id="creatorJoiningStory" placeholder="說說你怎麼成為樂活合作創作者的..."></textarea>
+              <div class="mp-note">空一行 = 段落分隔。長文 (建議 200-400 字)</div>
             </div>
           </div>
         </div>
@@ -459,12 +459,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="editor-panel">
           <h3 class="editor-panel-h">
             <i class="fa-regular fa-rectangle-list"></i>自訂內容區塊
-            <button class="btn" id="addCustomBlockBtn" style="margin-left:auto;font-size:11px;padding:6px 12px">
+            <button class="btn mp-btn-addblock" id="addCustomBlockBtn">
               <i class="fa-solid fa-plus"></i>新增區塊
             </button>
           </h3>
           <div id="customBlocksList">
-            <p class="empty-text" style="padding:30px 20px;font-size:12px">點上方「新增區塊」加入自訂的圖文段落</p>
+            <p class="empty-text mp-empty-sm">點上方「新增區塊」加入自訂的圖文段落</p>
           </div>
         </div>
 
@@ -474,7 +474,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="editor-label">YouTube URL</div>
             <div>
               <input class="editor-input" id="creatorVideoUrl" placeholder="https://www.youtube.com/watch?v=..."/>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">支援 youtube.com/watch?v= 或 youtu.be/ 格式</div>
+              <div class="mp-note">支援 youtube.com/watch?v= 或 youtu.be/ 格式</div>
             </div>
           </div>
           <div class="editor-row">
@@ -504,12 +504,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="editor-row">
             <div class="editor-label"></div>
             <div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div class="mpu-gap-8 mpu-wrap" style="display:flex">
                 <button class="action-btn" id="saveCreatorInfo"><i class="fa-solid fa-floppy-disk"></i><span>儲存創作者資料</span></button>
                 <button class="btn" id="creatorResetBtn">清空表單</button>
                 <button class="btn" id="creatorCloseBtn">關閉</button>
               </div>
-              <div class="form-hint" id="creatorSaveHint" style="margin-top:10px"></div>
+              <div class="form-hint mpu-mt-10" id="creatorSaveHint"></div>
             </div>
           </div>
         </div>
@@ -524,13 +524,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="stat-card"><div class="stat-label">設 計 被 使 用</div><div class="stat-value" data-stat="usedCount">--</div></div>
           <div class="stat-card"><div class="stat-label">已 上 架 設 計</div><div class="stat-value" data-stat="listedCount">--</div></div>
           <div class="stat-card"><div class="stat-label">個 人 頁 瀏 覽</div><div class="stat-value" data-stat="profileViews">--</div></div>
-          <div class="stat-card"><div class="stat-label">累 計 分 潤</div><div class="stat-value" data-stat="totalRoyalty" style="color:#9D7E3F">--</div></div>
+          <div class="stat-card"><div class="stat-label">累 計 分 潤</div><div class="stat-value mpu-c-gold" data-stat="totalRoyalty">--</div></div>
         </div>
 
         <div class="panel">
           <h3 class="panel-h"><span><i class="fa-solid fa-chart-column"></i>設計使用量(每月)</span></h3>
           <div class="chart-area" id="analyticsChart">
-            <p class="empty-text" style="grid-column:1/-1">載入中...</p>
+            <p class="empty-text mpu-gc-full">載入中...</p>
           </div>
           <div class="chart-axis" id="analyticsAxis"></div>
         </div>
@@ -586,7 +586,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
             <div class="bank-info-row">
               <div class="bank-info-label"></div>
-              <div style="display:flex;gap:8px">
+              <div class="mpu-gap-8" style="display:flex">
                 <button class="btn secondary" id="bankSaveBtn"><i class="fa-solid fa-floppy-disk"></i>儲存</button>
                 <button class="btn" id="bankCancelBtn">取消</button>
               </div>
@@ -614,7 +614,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
         <!-- 2026-10-02 營運：資料有空白時提示到門市完成會員認證（生日／電話等以門市會員資料為準，官網不開放填） -->
-        <p id="profile-erp-note" hidden style="color:#c0392b;font-size:14px;margin:12px 4px 0;line-height:1.6;">詳細資料請到樂活眼鏡門市完成會員認證</p>
+        <p id="profile-erp-note" hidden class="mp-erp-note">詳細資料請到樂活眼鏡門市完成會員認證</p>
       </div>
 
     </div>
@@ -769,7 +769,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- ====== 裁切 Modal ====== -->
 <div id="cropModal" class="modal-overlay" aria-hidden="true">
-  <div class="modal-content" style="max-width:720px;">
+  <div class="modal-content mpu-mw-720">
     <div class="modal-header">
       <h2>調整圖片裁切</h2>
       <button id="closeCrop" class="close-btn" type="button">&times;</button>
@@ -792,6 +792,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- 刻圖上傳 (LohasUploadDesign) 依賴 -->
 <link rel="stylesheet" href="css/upload-design.css?v=20260825-nozoom">
+<!-- 原本寫在標籤上的 style="" 搬到這支(畫面零差異),必須最後載入 -->
+<link rel="stylesheet" href="css/member-portal-ui.css?v=20261123-3a">
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/jankovicsandras/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
 <script src="js/potrace-loader.js?v=20260903-native"></script>

@@ -929,6 +929,12 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 **第 3 階段 A(2026-11-23,畫面零差異)**:`admin-portal.html` 的 `style=""` 搬到 `css/admin-portal-ui.css`
 (只剩 `display` 留在標籤上 —— JS 靠它切換顯示);後台 CSS 的字級/圓角改用同值 token。
 - 新寫後台 HTML **不要再寫 `style=""`**,用 `admin-portal-ui.css` 的 `ad-*`(有名字的區塊)/ `adu-*`(單一屬性)。
+- 會員中心同樣做完:`member-portal-ui.css`(`mp-*` / `mpu-*`),`member-portal.css` 的同值色碼/字級/圓角改用 token。
+  GTM 的 iframe、裁切圖 `#cropImage` 與外框刻意沒搬。
+  有意義的顏色也取了名(值不變):金色系 `--gold*`、`--c-line*`、`--err-line`、`--notify`、`--text-disabled`
+  (全域),收藏愛心 `--mp-fav`(會員中心自己的)。**「和 token 差一點點」的 51 處刻意沒歸併** —— 那會變色,要做先列差異給使用者看。
+- ⚠ 換成 token 的 CSS 只能給**有載 `lohas-tokens.css` 的頁面**用,否則 `var(--fs-*)` 沒有值、字級直接失效。
+  目前 `admin-portal.css` / `member-portal.css` 都只有各自那一頁載入。
 - 那支檔案的選擇器是 `.x.x.x`、而且**必須最後載入**:原本行內樣式比任何規則都優先,權重不夠就會被既有規則蓋掉。
 - 驗證方法(要再做類似的搬移時照做):改前(`git show HEAD:`)與改後各做一份「去掉 script 的靜態頁」,
   同一個瀏覽器載入,逐一比對所有元素的 `getComputedStyle`;再另外查 `:hover/:focus` 規則 ——

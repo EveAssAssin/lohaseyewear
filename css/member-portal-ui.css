@@ -1,0 +1,26 @@
+/* =============================================
+   會員中心:原本寫在 member-portal.html 標籤上的 style="" 搬到這裡(2026-11-23,畫面零差異)
+   ---------------------------------------------
+   · 每一條都是原本行內樣式的原值;改前改後逐一比對過所有元素的計算樣式,差異為 0
+   · display 留在標籤上(JS 靠 el.style.display 切換);GTM 的 iframe、裁切圖(#cropImage)與外框不動
+   · 選擇器寫成 .x.x.x、而且這支要最後載入:原本行內樣式比任何規則都優先,權重不夠會被蓋掉
+   · mp-* = 有名字的區塊;mpu-* = 單一屬性的小工具
+   ============================================= */
+
+.mpu-mt-10.mpu-mt-10.mpu-mt-10 { margin-top: 10px; }
+.mpu-mt-auto.mpu-mt-auto.mpu-mt-auto { margin-top: auto; }
+.mpu-c-gold.mpu-c-gold.mpu-c-gold { color: #9D7E3F; }
+.mpu-fs-9.mpu-fs-9.mpu-fs-9 { font-size: 9px; }
+.mpu-pointer.mpu-pointer.mpu-pointer { cursor: pointer; }
+.mpu-ai-c.mpu-ai-c.mpu-ai-c { align-items: center; }
+.mpu-gap-14.mpu-gap-14.mpu-gap-14 { gap: 14px; }
+.mp-note.mp-note.mp-note { font-size: 11px; color: var(--lohas-mute); margin-top: 4px; letter-spacing: 0.3px; }
+.mpu-mw-200.mpu-mw-200.mpu-mw-200 { max-width: 200px; }
+.mpu-minh-140.mpu-minh-140.mpu-minh-140 { min-height: 140px; }
+.mp-btn-addblock.mp-btn-addblock.mp-btn-addblock { margin-left: auto; font-size: 11px; padding: 6px 12px; }
+.mp-empty-sm.mp-empty-sm.mp-empty-sm { padding: 30px 20px; font-size: var(--fs-2xs); }
+.mpu-gap-8.mpu-gap-8.mpu-gap-8 { gap: 8px; }
+.mpu-wrap.mpu-wrap.mpu-wrap { flex-wrap: wrap; }
+.mpu-gc-full.mpu-gc-full.mpu-gc-full { grid-column: 1/-1; }
+.mp-erp-note.mp-erp-note.mp-erp-note { color: #c0392b; font-size: var(--fs-sm); margin: 12px 4px 0; line-height: 1.6; }
+.mpu-mw-720.mpu-mw-720.mpu-mw-720 { max-width: 720px; }
