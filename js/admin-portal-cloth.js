@@ -341,7 +341,7 @@
   function downloadDxf(id, btn, mode) {
     var it = state.items.filter(function (x) { return String(x.id) === String(id); })[0];
     if (!it) return;
-    if (!window.LohasDxf) { alert('DXF 轉換工具沒有載入'); return; }
+    if (!window.LohasDxf) { LohasUI.alert('DXF 轉換工具沒有載入'); return; }
 
     var label = btn.innerHTML;
     btn.disabled = true;
@@ -366,7 +366,7 @@
         });
         /* ⚠ 轉不完整就要吵。理由見 cloth-lab.js 同一段。 */
         if (out.warnings && out.warnings.length) {
-          alert('⚠ 這張圖有轉不完整的地方:\n\n' + out.warnings.join('\n') +
+          LohasUI.alert('⚠ 這張圖有轉不完整的地方:\n\n' + out.warnings.join('\n') +
                 '\n\n檔案還是會下載,但刻之前請先跟原圖比對一下。');
         }
         /* 🚨 檔名只用英數字(2026-10-15):作品名稱有 Big5 沒有的字(例:「莅」)時,
@@ -381,7 +381,7 @@
         console.log('[cloth] DXF ' + out.paths + ' 條路徑,' +
           out.widthMm.toFixed(1) + ' × ' + out.heightMm.toFixed(1) + ' mm');
       })
-      .catch(function (e) { alert('轉換失敗:' + e.message); })
+      .catch(function (e) { LohasUI.alert('轉換失敗:' + e.message); })
       .finally(function () { btn.disabled = false; btn.innerHTML = label; });
   }
 
@@ -391,14 +391,14 @@
     var r = root(); if (!r || r.dataset.bound) return;
     r.dataset.bound = '1';
 
-    r.addEventListener('click', function (e) {
+    r.addEventListener('click', async function (e) {
       var dxf = e.target.closest('[data-dxf]');
       if (dxf) { downloadDxf(dxf.dataset.dxf, dxf, dxf.dataset.mode); return; }
 
       var hide = e.target.closest('[data-hide]');
       if (hide) {
         var toHidden = hide.dataset.to === '1';
-        if (!confirm(toHidden
+        if (!await LohasUI.confirm(toHidden
               ? '從分享牆隱藏這一件?\n\n客人在客製眼鏡布頁面就看不到它了。\n(不影響製作狀態,也不會退回未完成)'
               : '重新顯示在分享牆?')) return;
         hide.disabled = true;
@@ -409,7 +409,7 @@
         window.LohasAdminWrite('cloth_designs', 'update',
           { wall_hidden: toHidden }, hide.dataset.hide)
           .then(load)
-          .catch(function (err) { alert('操作失敗:' + err.message); hide.disabled = false; });
+          .catch(function (err) { LohasUI.alert('操作失敗:' + err.message); hide.disabled = false; });
         return;
       }
 
@@ -418,21 +418,21 @@
            按下去之後師傅就會開始刻,刻了就沒辦法退。 */
       var rel = e.target.closest('[data-release]');
       if (rel) {
-        if (!confirm('確定這一張訂單已付款、門市正確、數量是 1?\n\n放行之後師傅就會開始製作。')) return;
+        if (!await LohasUI.confirm('確定這一張訂單已付款、門市正確、數量是 1?\n\n放行之後師傅就會開始製作。')) return;
         rel.disabled = true;
         call({ action: 'set_status', id: rel.dataset.release, status: 'new' })
           .then(load)
-          .catch(function (err) { alert(err.message); rel.disabled = false; });
+          .catch(function (err) { LohasUI.alert(err.message); rel.disabled = false; });
         return;
       }
       var can = e.target.closest('[data-cancel]');
       if (can) {
-        if (!confirm('取消這一件?\n\n它會移到「已封存」,師傅不會看到。' +
+        if (!await LohasUI.confirm('取消這一件?\n\n它會移到「已封存」,師傅不會看到。' +
                      '(商城那邊的訂單要另外處理退款)')) return;
         can.disabled = true;
         call({ action: 'set_status', id: can.dataset.cancel, status: 'archived' })
           .then(load)
-          .catch(function (err) { alert(err.message); can.disabled = false; });
+          .catch(function (err) { LohasUI.alert(err.message); can.disabled = false; });
         return;
       }
 
@@ -441,7 +441,7 @@
         done.disabled = true;
         call({ action: 'set_status', id: done.dataset.done, status: 'done' })
           .then(load)
-          .catch(function (err) { alert(err.message); done.disabled = false; });
+          .catch(function (err) { LohasUI.alert(err.message); done.disabled = false; });
         return;
       }
     });

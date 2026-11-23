@@ -17,7 +17,7 @@
 .pega-admin-label {
   font-size: 15px;
   font-weight: 600;
-  color: #3D3026;
+  color: var(--text-main);
   margin-bottom: 6px;
 }
 
@@ -40,7 +40,7 @@
   border: 1px solid #ECE7DC;
   border-radius: 10px;
   overflow: hidden;
-  background: #FAF7F2;
+  background: var(--bg-cream);
   max-width: 480px;
 }
 

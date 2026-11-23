@@ -117,7 +117,7 @@
         setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存</span>'; }, 2000);
       }
     } catch (e) {
-      alert('儲存失敗:' + (e.message || '未知錯誤'));
+      await LohasUI.alert('儲存失敗:' + (e.message || '未知錯誤'));
       if (btn) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存</span>';

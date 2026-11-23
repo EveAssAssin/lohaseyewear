@@ -37,7 +37,7 @@
       state.mains = mains;
     } catch (err) {
       console.error('[categories] 載入失敗:', err);
-      alert('載入分類失敗:' + err.message);
+      await LohasUI.alert('載入分類失敗:' + err.message);
     } finally {
       state.loading = false; render();
     }
@@ -210,7 +210,7 @@
       }
     });
     try { if (updates.length) await Promise.all(updates); }
-    catch (err) { console.error('[categories] 排序儲存失敗:', err); alert('排序儲存失敗:' + err.message); load(); }
+    catch (err) { console.error('[categories] 排序儲存失敗:', err); await LohasUI.alert('排序儲存失敗:' + err.message); load(); }
   }
 
   async function handleRename(input) {
@@ -224,7 +224,7 @@
       })();
       if (error) throw error;
       input.dataset.old = newName; updateLocalName(id, newName);
-    } catch (err) { alert('改名失敗:' + err.message); input.value = oldName; }
+    } catch (err) { await LohasUI.alert('改名失敗:' + err.message); input.value = oldName; }
   }
 
   async function handleToggleActive(checkbox) {
@@ -237,11 +237,11 @@
       })();
       if (error) throw error;
       updateLocalActive(id, newActive); render();
-    } catch (err) { alert('操作失敗:' + err.message); checkbox.checked = !newActive; }
+    } catch (err) { await LohasUI.alert('操作失敗:' + err.message); checkbox.checked = !newActive; }
   }
 
   async function handleAddSub(parentId) {
-    const name = prompt('輸入新子分類名稱:');
+    const name = await LohasUI.prompt('輸入新子分類名稱:');
     if (!name || !name.trim()) return;
     const main = state.mains.find(m => m.id === parentId);
     if (!main) return;
@@ -251,7 +251,7 @@
       const d = await catWrite('insert',
         { parent_id: parentId, name: name.trim(), sort_order: nextOrder, is_active: true });
       main.subs.push(d.row); render();
-    } catch (err) { alert('新增失敗:' + err.message); }
+    } catch (err) { await LohasUI.alert('新增失敗:' + err.message); }
   }
 
   /* 後台寫入一律走 admin-write —— categories 的 anon 政策是無條件放行,
@@ -265,7 +265,7 @@
   }
 
   async function handleAddMain() {
-    const name = prompt('輸入新主分類名稱:');
+    const name = await LohasUI.prompt('輸入新主分類名稱:');
     if (!name || !name.trim()) return;
     const nextOrder = state.mains.length ? Math.max.apply(null, state.mains.map(m => m.sort_order || 0)) + 10 : 10;
     const sb = getSb();
@@ -273,7 +273,7 @@
       const d = await catWrite('insert',
         { parent_id: null, name: name.trim(), sort_order: nextOrder, is_active: true });
       state.mains.push({ ...d.row, subs: [] }); render();
-    } catch (err) { alert('新增失敗:' + err.message); }
+    } catch (err) { await LohasUI.alert('新增失敗:' + err.message); }
   }
 
   async function handleDelete(id, isMain) {
@@ -284,14 +284,14 @@
     const msg = isMain
       ? '確定刪除主分類「' + target.name + '」?\n\n· 連同 ' + (target.subs || []).length + ' 個子分類一起刪除\n· 已分類的作品不會被刪除,但會失去分類'
       : '確定刪除子分類「' + target.name + '」?\n\n· 已分類的作品不會被刪除,但會失去這個子分類';
-    if (!confirm(msg)) return;
+    if (!await LohasUI.confirm(msg)) return;
     const sb = getSb();
     try {
       await catWrite('delete', null, id);
       if (isMain) state.mains = state.mains.filter(m => m.id !== id);
       else state.mains.forEach(m => { m.subs = m.subs.filter(s => s.id !== id); });
       render();
-    } catch (err) { alert('刪除失敗:' + err.message); }
+    } catch (err) { await LohasUI.alert('刪除失敗:' + err.message); }
   }
 
   function updateLocalName(id, name) {
@@ -436,10 +436,10 @@
       const m = findMain(pmState.catId);
       if (m) m.designer_prompts = payload;
       closePromptsModal();
-      alert('已儲存');
+      LohasUI.toast('已儲存', 'ok');
     } catch (err) {
       console.error('[categories] 提示詞儲存失敗:', err);
-      alert('儲存失敗:' + err.message);
+      await LohasUI.alert('儲存失敗:' + err.message);
     } finally {
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
     }

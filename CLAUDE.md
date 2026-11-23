@@ -889,6 +889,8 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - **目前 `noindex` 且沒有任何連結指過去**。12/1 開跑前:拿掉 `<meta name="robots">`、header 加連結、首頁放 banner。
 - 🚨 **活動規則一字不改**(需求書第十節):不寫虛構的限量/倒數/搶購;
   「兩人各自配鏡即享第二副 0 元」是錯的說法,須先完成第一副原價配鏡取得折價券。
+  例外:2026-11-23 使用者指定把「原價配鏡指定全方案,贈 2,680 元配鏡折價券」全站改成
+  **「原價方案配鏡，贈 $2,680 配鏡折價券」**(含活動規則區第一條、步驟 1、問答、預約彈窗),不要改回需求書原文。
 - **中壢店、文化店、馬來西亞 SUBANG SS15 不參加這次活動**(使用者 2026-11-23):門市輪播、預約區選門市、問答門市清單、
   預約彈窗的選門市都不列。名單有兩份,改要一起改:`js/yearend.js` 的 `HIDE_STORE_ERPIDS`、`booking-v2.js` 的 `PRESETS.yearend.hideErpids`。
 - 預約走 `booking-v2.js` 的 **`preset: "yearend"`**(與學生頁同一套活動模式,`PRESETS` 加一組就能開新活動):
@@ -911,6 +913,18 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - APP:iPhone `apps.apple.com/tw/app/id1442745225`;Android `play.google.com/store/apps/details?id=com.lohasglasses.app`
   (`CONFIG.appAndroid`,Android 手機會把 Google Play 排在前面)。
 - 追蹤:按鈕都有 `data-ye-cta`,送 GA4 `yearend_cta`;頁面開啟送 `yearend_view`;廣告來源用網址 `utm_*`。
+
+## 設計 token 與 `LohasUI`(2026-11-23 起)
+
+規範在 `docs/設計規範.md`,盤點數據在 `docs/UI盤點報告_20261123.md`(gitignore,只在本機)。
+目前完成第 0～2 階段:`lohas-tokens.css` 補了字級/間距/動態/`--danger`/`--bg-cream`/`--z-dialog`;
+後台 5 支 CSS 改用全域 token;**後台(`admin-portal*.js`)已經沒有原生 `alert/confirm/prompt`**。
+
+- 後台新寫的提示一律用 `LohasUI`,不要再寫 `alert(` / `confirm(`。
+- 🚨 `LohasUI.confirm` 回傳 Promise,**一定要 `await`**:少了它「取消」也會照樣執行,不會報錯。
+  所在的函式要是 `async`;改既有的同步 handler 時,先確認 `e.preventDefault()` 之類的動作在第一個 `await` 之前。
+- 成功訊息用 `LohasUI.toast(…, 'ok')`;失敗與要人看清楚的訊息用 `LohasUI.alert`。
+- 其他頁面(會員中心、`cloth-lab`、`booking-v2`…)還是原生對話框,要換的話頁面先載 `js/lohas-ui.js`。
 
 ## 對外文件
 

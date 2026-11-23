@@ -67,6 +67,60 @@
 
   /* === Font === */
   --font-tc: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+
+  /* ---------------------------------------------
+     2026-11-23 補齊(盤點報告第三節)。只新增,不改上面既有的值。
+     用法與換算表見 docs/設計規範.md
+     --------------------------------------------- */
+
+  /* === 補充色 === */
+  --bg-cream: #FAF7F2;      /* 全站寫死 52 次的米白底 */
+  --danger: #C0392B;        /* 刪除、無法復原的動作(按鈕、確認框) */
+  --danger-bg: #FDEDEC;
+  --text-on-dark: #FFFFFF;
+
+  /* === 字級(全站下限 12px) === */
+  --fs-2xs: 12px;           /* 註記、法規小字 */
+  --fs-xs: 13px;            /* 標籤、次要資訊 */
+  --fs-sm: 14px;            /* 後台內文、表格 */
+  --fs-md: 16px;            /* 前台內文、輸入框(iOS 不放大的下限) */
+  --fs-lg: 18px;            /* 小標 */
+  --fs-xl: 22px;            /* 卡片標題 */
+  --fs-2xl: 28px;           /* 區塊標題 */
+  --fs-3xl: clamp(30px, 4vw, 44px); /* 頁面主標 */
+
+  /* === 間距(4 的倍數) === */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* === 圓角、陰影補充 === */
+  --r-xs: 4px;              /* 輸入框、小標籤 */
+  --sh-pop: 0 8px 24px rgba(80,66,45,0.16); /* 浮動按鈕、下拉選單 */
+
+  /* === 層級補充 === */
+  --z-fab: 9000;            /* 浮動按鈕、快捷鈕(sticky 之上、header 之下) */
+  --z-dialog: 100100;       /* LohasUI 提示/確認框:永遠在最上層(包含刻圖著作權聲明 100000 之上) */
+
+  /* === 動態 === */
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 400ms;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* 使用者在系統設定「減少動態」時,用到動態 token 的元件一律不播動畫 */
+@media (prefers-reduced-motion: reduce){
+  :root{
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
 }
 
 /* === Reset === */

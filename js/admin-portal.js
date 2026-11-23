@@ -191,7 +191,7 @@
     // 查 Supabase admins table
     const sb = getSb();
     if (!sb) {
-      alert('Supabase 設定錯誤,無法驗證 admin 身份');
+      await LohasUI.alert('Supabase 設定錯誤,無法驗證 admin 身份');
       return false;
     }
 
@@ -205,13 +205,13 @@
 
       if (error) {
         console.error('[admin 身份查詢失敗]', error);
-        alert('admin 身份驗證失敗');
+        await LohasUI.alert('admin 身份驗證失敗');
         return false;
       }
 
       if (!data) {
         // 不是 admin → 導回會員平台
-        alert('您沒有後台管理權限,即將返回會員中心');
+        await LohasUI.alert('您沒有後台管理權限,即將返回會員中心');
         window.location.href = 'member-portal.html';
         return false;
       }
@@ -222,7 +222,7 @@
 
     } catch (err) {
       console.error('[verifyAdmin 例外]', err);
-      alert('身份驗證過程出錯');
+      await LohasUI.alert('身份驗證過程出錯');
       return false;
     }
   }
@@ -1176,10 +1176,10 @@
       } catch(e){ console.warn('[ERP 查詢失敗,用 erpid 當名字]', e); }
     }
 
-    if (!confirm(`確定將「${realName}」升級為 Creator?\n\n升級後可以:\n· 上架刻圖設計\n· 享 $100/次 分潤\n· 編輯創作者個人頁`)) return;
+    if (!await LohasUI.confirm(`確定將「${realName}」升級為 Creator?\n\n升級後可以:\n· 上架刻圖設計\n· 享 $100/次 分潤\n· 編輯創作者個人頁`)) return;
 
     const sb = getSb();
-    if (!sb) return alert('Supabase 連線失敗');
+    if (!sb) return await LohasUI.alert('Supabase 連線失敗');
 
     try {
       const { error } = await (async () => {
@@ -1193,15 +1193,15 @@
 
       if (error) {
         console.error('[升級失敗]', error);
-        alert('升級失敗: ' + error.message);
+        await LohasUI.alert('升級失敗: ' + error.message);
         return;
       }
 
-      alert(`「${realName}」已升級為 Creator`);
+      LohasUI.toast(`「${realName}」已升級為 Creator`, 'ok');
       loadUsers(); // 重新載入
 
     } catch (err) {
-      alert('升級失敗: ' + err.message);
+      await LohasUI.alert('升級失敗: ' + err.message);
     }
   }
 
@@ -1471,7 +1471,7 @@
     const role = document.querySelector('input[name="uam_role"]:checked')?.value || 'member';
 
     const sb = getSb();
-    if(!sb) return alert('Supabase 連線失敗');
+    if(!sb) return await LohasUI.alert('Supabase 連線失敗');
 
     const saveBtn = document.getElementById('uam_saveBtn');
     saveBtn.disabled = true;
@@ -1494,7 +1494,7 @@
           showAddError('升級失敗:' + error.message);
           return;
         }
-        alert(`已將「${name}」升級為 Creator`);
+        LohasUI.toast(`已將「${name}」升級為 Creator`, 'ok');
       } else {
         try {
           await adminWrite('member_status', 'upsert', {
@@ -1507,7 +1507,7 @@
           showAddError('加入失敗:' + (err.message || err));
           return;
         }
-        alert(`已加入會員「${name}」`);
+        LohasUI.toast(`已加入會員「${name}」`, 'ok');
       }
 
       closeUserAddModal();
@@ -1577,9 +1577,9 @@
   });
 
   async function suspendUser(erpid, name) {
-    const reason = prompt(`停權「${name}」的原因:`);
+    const reason = await LohasUI.prompt(`停權「${name}」的原因:`);
     if (reason === null) return; // 取消
-    if (!reason.trim()) return alert('請輸入停權原因');
+    if (!reason.trim()) return await LohasUI.alert('請輸入停權原因');
 
     try {
       /* ⚠ 不再送 suspended_by —— 那是「誰停的」,由伺服器用驗過的
@@ -1592,23 +1592,23 @@
         suspended_at: new Date().toISOString(),
       });
 
-      alert(`「${name}」已停權`);
+      LohasUI.toast(`「${name}」已停權`, 'ok');
       loadUsers();
     } catch (err) {
-      alert('停權失敗: ' + (err.message || err));
+      await LohasUI.alert('停權失敗: ' + (err.message || err));
     }
   }
 
   async function restoreUser(erpid) {
-    if (!confirm('確定恢復這個帳號?')) return;
+    if (!await LohasUI.confirm('確定恢復這個帳號?')) return;
 
     try {
       await adminWrite('member_status', 'update', { status: 'active' }, erpid);
 
-      alert('已恢復');
+      LohasUI.toast('已恢復', 'ok');
       loadUsers();
     } catch (err) {
-      alert('恢復失敗: ' + err.message);
+      await LohasUI.alert('恢復失敗: ' + err.message);
     }
   }
 
@@ -1772,7 +1772,7 @@
       // 駁回模式: 重新開放 / 永久刪除
       grid.querySelectorAll('[data-act="reopen"]').forEach(b => {
         b.addEventListener('click', async () => {
-          if (!confirm('確定要把這筆刻圖重新開放審核?\n(狀態改回「待審核」,清空駁回原因)')) return;
+          if (!await LohasUI.confirm('確定要把這筆刻圖重新開放審核?\n(狀態改回「待審核」,清空駁回原因)')) return;
           const sb = getSb();
           if (!sb) return;
           try {
@@ -1784,20 +1784,20 @@
             loadDesignReview();
             refreshReviewCounts && refreshReviewCounts();
           } catch (err) {
-            alert('重新開放失敗:' + err.message);
+            await LohasUI.alert('重新開放失敗:' + err.message);
           }
         });
       });
       grid.querySelectorAll('[data-act="delete"]').forEach(b => {
         b.addEventListener('click', async () => {
-          if (!confirm(`確定要永久刪除「${b.dataset.name}」?\n\n⚠️ 無法復原`)) return;
+          if (!await LohasUI.confirm(`確定要永久刪除「${b.dataset.name}」?\n\n⚠️ 無法復原`)) return;
           const sb = getSb();
           if (!sb) return;
           try {
             await adminWrite('engraving_designs', 'delete', null, b.dataset.id);
             loadDesignReview();
           } catch (err) {
-            alert('刪除失敗:' + err.message);
+            await LohasUI.alert('刪除失敗:' + err.message);
           }
         });
       });
@@ -1846,7 +1846,7 @@
 
   async function bulkApproveDesigns(picked) {
     if (!picked.length) return;
-    if (!confirm('確定一次通過 ' + picked.length + ' 件刻圖?\n\n' +
+    if (!await LohasUI.confirm('確定一次通過 ' + picked.length + ' 件刻圖?\n\n' +
                  '· 每一件都會到 ERP 建檔、上架創作者市集、通知創作者\n' +
                  '· 售價沿用原價,沒有則 $' + BULK_DEFAULT_PRICE)) return;
 
@@ -1893,7 +1893,7 @@
       }
     }
 
-    alert('批次通過完成:成功 ' + ok.length + ' 件' +
+    await LohasUI.alert('批次通過完成:成功 ' + ok.length + ' 件' +
           (fail.length ? '、失敗 ' + fail.length + ' 件(留在待審核)\n\n' + fail.join('\n') : ''));
     document.getElementById('rdSelectAll').disabled = false;
     loadDesignReview();
@@ -1949,7 +1949,7 @@
         e.preventDefault();
         // 先開視窗再讀資料 —— await 之後才 window.open 會被瀏覽器當成彈出廣告擋掉
         const w = window.open('', '_blank', 'width=560,height=720');
-        if (!w) { alert('瀏覽器擋掉了視窗,請允許彈出視窗後再試'); return; }
+        if (!w) { await LohasUI.alert('瀏覽器擋掉了視窗,請允許彈出視窗後再試'); return; }
         w.document.write('<p style="font-family:sans-serif;padding:20px">讀取中…</p>');
         try {
           const d = await adminRead('design_agreements',
@@ -1985,7 +1985,7 @@
   async function openApproveModal({ id, name, category, creatorId }) {
     const modal = document.getElementById('approveDesignModal');
     if (!modal) {
-      alert('審核 Modal 未載入');
+      LohasUI.alert('審核 Modal 未載入');
       return;
     }
 
@@ -2377,7 +2377,7 @@
   async function bwHide(id, btn) {
     const it = bwState.items.find(function (x) { return String(x.id) === String(id); });
     if (!it) return;
-    if (!confirm('確定隱藏「' + (it.nickname || '這張') + '」?\n\n' +
+    if (!await LohasUI.confirm('確定隱藏「' + (it.nickname || '這張') + '」?\n\n' +
                  '隱藏後不會出現在生日禮頁面。\n' +
                  '⚠ 原始照片仍然在主後端,這裡只是不顯示 —— ' +
                  '要真正刪除請聯繫後端團隊。')) return;
@@ -2393,19 +2393,19 @@
       });
       await loadBdayWall();
     } catch (e) {
-      alert('隱藏失敗:' + e.message);
+      await LohasUI.alert('隱藏失敗:' + e.message);
       btn.disabled = false;
     }
   }
 
   async function bwShow(id, btn) {
-    if (!confirm('取消隱藏?這張會重新出現在生日禮頁面。')) return;
+    if (!await LohasUI.confirm('取消隱藏?這張會重新出現在生日禮頁面。')) return;
     btn.disabled = true;
     try {
       await adminWrite('bday_wall_hidden', 'delete', null, String(id));
       await loadBdayWall();
     } catch (e) {
-      alert('取消隱藏失敗:' + e.message);
+      await LohasUI.alert('取消隱藏失敗:' + e.message);
       btn.disabled = false;
     }
   }
@@ -2470,7 +2470,7 @@
       btn.addEventListener('click', function () {
         const did = btn.dataset.design;
         if (!did) {
-          alert('這是系統自動發出的通知,沒有對應的刻圖,無法從這裡回覆。');
+          LohasUI.alert('這是系統自動發出的通知,沒有對應的刻圖,無法從這裡回覆。');
           return;
         }
         openCsChat(btn.dataset.erpid, did, btn.dataset.name);
@@ -2487,8 +2487,8 @@
 
   // 開對話 (用會員平台同款 cs-chat-panel 氣泡框,右下角彈出)
   async function openCsChat(erpId, designId, designName) {
-    if (!erpId) { alert('此作品沒有對應的會員編號,無法對話'); return; }
-    if (!designId) { alert('找不到刻圖編號,無法對話'); return; }
+    if (!erpId) { await LohasUI.alert('此作品沒有對應的會員編號,無法對話'); return; }
+    if (!designId) { await LohasUI.alert('找不到刻圖編號,無法對話'); return; }
     csChat.erpId = String(erpId);
     csChat.designId = String(designId);
 
@@ -2615,7 +2615,7 @@
       });
       loadCsChatHistory();
     } catch (err) {
-      alert('送出失敗,請稍後再試');
+      await LohasUI.alert('送出失敗,請稍後再試');
       input.value = text;
     }
   }
@@ -2715,12 +2715,12 @@
     const category   = document.getElementById('apCategory').value.trim();
     const priceRaw   = document.getElementById('apPrice').value.trim();
 
-    if (!id) return alert('找不到設計 ID');
-    if (!name) return alert('名稱不可為空');
-    if (!priceRaw) return alert('請填寫 Price');
+    if (!id) return await LohasUI.alert('找不到設計 ID');
+    if (!name) return await LohasUI.alert('名稱不可為空');
+    if (!priceRaw) return await LohasUI.alert('請填寫 Price');
 
     const price = parseFloat(priceRaw);
-    if (isNaN(price) || price < 0) return alert('Price 必須是 >= 0 的數字');
+    if (isNaN(price) || price < 0) return await LohasUI.alert('Price 必須是 >= 0 的數字');
 
     const submitBtn = document.getElementById('apSubmit');
     submitBtn.disabled = true;
@@ -2732,7 +2732,7 @@
       const r = await autoCreateErp({ designId: id, name });
       erpNumber = r.bindingId;
     } catch (e) {
-      alert('ERP 自動建檔失敗,無法上架:\n' + e.message + '\n\n請稍後再試,或確認 ERP 設定 / 流量包額度。');
+      await LohasUI.alert('ERP 自動建檔失敗,無法上架:\n' + e.message + '\n\n請稍後再試,或確認 ERP 設定 / 流量包額度。');
       submitBtn.disabled = false;
       submitBtn.textContent = '完成審核';
       return;
@@ -2772,7 +2772,7 @@
         console.warn('[客服通知] 發送失敗(不影響審核):', notifyErr);
       }
 
-      alert('已通過審核');
+      LohasUI.toast('已通過審核', 'ok');
       closeApproveModal();
       loadDesignReview();
       loadDashboard();
@@ -2780,7 +2780,7 @@
 
     } catch (err) {
       console.error('[審核失敗]', err);
-      alert('審核失敗: ' + err.message);
+      await LohasUI.alert('審核失敗: ' + err.message);
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = '完成審核';
@@ -3065,7 +3065,7 @@
   }
 
   async function approveGalleryPost(id, typeFilter) {
-    if (!confirm('確定通過? 通過後將立即顯示在靈感牆')) return;
+    if (!await LohasUI.confirm('確定通過? 通過後將立即顯示在靈感牆')) return;
     const sb = getSb();
     if (!sb) return;
 
@@ -3073,7 +3073,7 @@
     try {
       await adminWrite('gallery_posts', 'update',
         { status: 'approved', reviewed_at: new Date().toISOString() }, id);
-    } catch (err) { return alert('通過失敗: ' + err.message); }
+    } catch (err) { return await LohasUI.alert('通過失敗: ' + err.message); }
 
     // 立刻從 DOM 移除這張卡
     removeReviewCardFromDOM(id);
@@ -3089,7 +3089,7 @@
   }
 
   async function revokeGalleryPost(id, typeFilter) {
-    if (!confirm('取消通過? 此貼文將從靈感牆消失,變回待審核')) return;
+    if (!await LohasUI.confirm('取消通過? 此貼文將從靈感牆消失,變回待審核')) return;
     const sb = getSb();
     if (!sb) return;
 
@@ -3097,7 +3097,7 @@
     try {
       await adminWrite('gallery_posts', 'update',
         { status: 'pending', reviewed_at: null }, id);
-    } catch (err) { return alert('取消失敗: ' + err.message); }
+    } catch (err) { return await LohasUI.alert('取消失敗: ' + err.message); }
 
     removeReviewCardFromDOM(id);
     setTimeout(() => {
@@ -3129,7 +3129,7 @@
   }
 
   async function quickApprove(type, id) {
-    if (!confirm('快速通過?')) return;
+    if (!await LohasUI.confirm('快速通過?')) return;
     const sb = getSb();
     if (!sb) return;
 
@@ -3148,8 +3148,8 @@
     try {
       await adminWrite(table, 'update',
         { status: 'approved', reviewed_at: new Date().toISOString() }, id);
-    } catch (err) { return alert('通過失敗: ' + err.message); }
-    alert('已通過');
+    } catch (err) { return await LohasUI.alert('通過失敗: ' + err.message); }
+    LohasUI.toast('已通過', 'ok');
     loadDashboard(); refreshReviewCounts?.();
   }
 
@@ -3181,7 +3181,7 @@
   async function confirmReject() {
     if (!currentRejectTarget) return;
     const reason = document.getElementById('reasonText').value.trim();
-    if (!reason) return alert('請輸入駁回原因');
+    if (!reason) return await LohasUI.alert('請輸入駁回原因');
 
     const sb = getSb();
     if (!sb) return;
@@ -3205,7 +3205,7 @@
         reject_reason: reason,
         reviewed_at: new Date().toISOString()
       }, targetId);
-    } catch (err) { return alert('駁回失敗: ' + err.message); }
+    } catch (err) { return await LohasUI.alert('駁回失敗: ' + err.message); }
 
     // 刻圖駁回 → 通知作者 (兩支:樂活訊息 + 客服對話),失敗不影響駁回
     if (targetType === 'design') {
@@ -3509,10 +3509,10 @@
         try { await adminWrite('banners', 'update', { is_active: active }, id); return {}; }
         catch (e) { return { error: e }; }
       })();
-      if (error) { alert('更新失敗: ' + error.message); return; }
+      if (error) { await LohasUI.alert('更新失敗: ' + error.message); return; }
       await loadBannerList(BannerState.currentPos);
     } catch (err) {
-      alert('更新失敗: ' + err.message);
+      await LohasUI.alert('更新失敗: ' + err.message);
     }
   }
 
@@ -3520,7 +3520,7 @@
   async function deleteBannerById(id) {
     const b = BannerState.list.find(x => String(x.id) === String(id));
     const label = b ? (b.title || '(未填標題)') : '';
-    if (!confirm('確定刪除「' + label + '」?\n\n此動作無法復原。')) return;
+    if (!await LohasUI.confirm('確定刪除「' + label + '」?\n\n此動作無法復原。')) return;
     const sb = getSb();
     if (!sb) return;
     try {
@@ -3528,10 +3528,10 @@
         try { await adminWrite('banners', 'delete', null, id); return {}; }
         catch (e) { return { error: e }; }
       })();
-      if (error) { alert('刪除失敗: ' + error.message); return; }
+      if (error) { await LohasUI.alert('刪除失敗: ' + error.message); return; }
       await loadBannerList(BannerState.currentPos);
     } catch (err) {
-      alert('刪除失敗: ' + err.message);
+      await LohasUI.alert('刪除失敗: ' + err.message);
     }
   }
 
@@ -3737,9 +3737,9 @@
 
       // 點叉叉移除手機版圖
       if(newClearM){
-        newClearM.addEventListener('click', (e) => {
+        newClearM.addEventListener('click', async (e) => {
           e.stopPropagation();
-          if(!confirm('確定移除手機版圖?移除後,手機版會用桌機版圖顯示。')) return;
+          if(!await LohasUI.confirm('確定移除手機版圖?移除後,手機版會用桌機版圖顯示。')) return;
           BannerState.imageMobileFile = null;
           BannerState.imageMobileBase64 = null;
           BannerState.removeMobileImage = true;
@@ -3878,13 +3878,13 @@
 
   async function deleteBanner() {
     if (!BannerState.editing) return;
-    if (!confirm('確定刪除這個 Banner?')) return;
+    if (!await LohasUI.confirm('確定刪除這個 Banner?')) return;
     const sb = window.LohasSupabase?.getClient?.();
     const { error } = await (async () => {
       try { await adminWrite('banners', 'delete', null, BannerState.editing.id); return {}; }
       catch (e) { return { error: e }; }
     })();
-    if (error) { alert('刪除失敗: ' + error.message); return; }
+    if (error) { await LohasUI.alert('刪除失敗: ' + error.message); return; }
     closeBannerModal();
     loadBannerList(BannerState.currentPos);
   }
@@ -3965,10 +3965,10 @@
         btn.addEventListener('click', () => deleteNews(btn.dataset.id));
       });
       tbody.querySelectorAll('[data-act="edit-news"]').forEach(btn => {
-        btn.addEventListener('click', () => alert('編輯消息 (待實作 modal)'));
+        btn.addEventListener('click', () => LohasUI.alert('編輯消息 (待實作 modal)'));
       });
       tbody.querySelectorAll('[data-act="view-news"]').forEach(btn => {
-        btn.addEventListener('click', () => alert('預覽消息 (待實作)'));
+        btn.addEventListener('click', () => LohasUI.alert('預覽消息 (待實作)'));
       });
 
     } catch (err) {
@@ -3977,21 +3977,21 @@
   }
 
   async function deleteNews(id) {
-    if (!confirm('確定刪除這則消息?')) return;
+    if (!await LohasUI.confirm('確定刪除這則消息?')) return;
     const sb = getSb();
     if (!sb) return;
       const { error } = await (async () => {
         try { await adminWrite('news', 'delete', null, id); return {}; }
         catch (e) { return { error: e }; }
       })();
-    if (error) return alert('刪除失敗: ' + error.message);
+    if (error) return await LohasUI.alert('刪除失敗: ' + error.message);
     loadNews();
   }
 
   async function createNews() {
-    const title = prompt('消息標題:');
+    const title = await LohasUI.prompt('消息標題:');
     if (!title) return;
-    const category = prompt('分類 (announcement / event / creator):', 'announcement');
+    const category = await LohasUI.prompt('分類 (announcement / event / creator):', 'announcement');
     if (!category) return;
 
     const sb = getSb();
@@ -4005,8 +4005,8 @@
         category: category.trim(),
         status: 'draft',
       });
-    } catch (e) { return alert('建立失敗: ' + (e.message || e)); }
-    alert('已建立草稿');
+    } catch (e) { return await LohasUI.alert('建立失敗: ' + (e.message || e)); }
+    LohasUI.toast('已建立草稿', 'ok');
     loadNews();
   }
 
@@ -4051,8 +4051,8 @@
      ============================================================= */
 
   function bindLogout() {
-    document.getElementById('logout-btn')?.addEventListener('click', () => {
-      if (!confirm('確定要登出?')) return;
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      if (!await LohasUI.confirm('確定要登出?')) return;
       Auth.logout();
     });
 
@@ -4169,8 +4169,8 @@
     drawerBody.innerHTML = html;
 
     // 綁登出事件
-    drawerBody.querySelector('[data-action="logout"]')?.addEventListener('click', () => {
-      if (!confirm('確定要登出?')) return;
+    drawerBody.querySelector('[data-action="logout"]')?.addEventListener('click', async () => {
+      if (!await LohasUI.confirm('確定要登出?')) return;
       if (window.LohasAuth?.logout) window.LohasAuth.logout();
       window.location.href = 'index.html';
     });
@@ -4360,7 +4360,7 @@
 
   async function adminUploadSubmit() {
     const sb = getSb();
-    if (!sb) return alert('Supabase 未連線');
+    if (!sb) return await LohasUI.alert('Supabase 未連線');
 
     const customer_name = document.getElementById('adminUploadName').value.trim() || 'LOHAS 企劃部';
     const title = document.getElementById('adminUploadTitle').value.trim();
@@ -4426,7 +4426,7 @@
       hint.textContent = `✓ 已上傳並自動通過 (${uploadedUrls.length} 張圖片 · 類型: ${type === 'story' ? '故事' : '照片'})`;
 
       adminUploadReset();
-      alert(`✓ 上傳成功!\n\n已上傳 ${uploadedUrls.length} 張圖片並自動通過審核。\n類型: ${type === 'story' ? '故事' : '照片'}`);
+      await LohasUI.alert(`✓ 上傳成功!\n\n已上傳 ${uploadedUrls.length} 張圖片並自動通過審核。\n類型: ${type === 'story' ? '故事' : '照片'}`);
 
     } catch (err) {
       hint.style.color = 'var(--status-rejected)';
@@ -4769,7 +4769,7 @@
 
   async function agSubmit() {
     const sb = getSb();
-    if (!sb) return alert('Supabase 未連線');
+    if (!sb) return await LohasUI.alert('Supabase 未連線');
 
     const display_name = document.getElementById('agDisplayName').value.trim();
     const tagline = document.getElementById('agTagline').value.trim();
@@ -4796,7 +4796,7 @@
     const confirmMsg = isEdit
       ? `確定要儲存對「${display_name}」的變更?`
       : `確定建立創作者「${display_name}」?`;
-    if (!confirm(confirmMsg)) return;
+    if (!await LohasUI.confirm(confirmMsg)) return;
 
     hint.style.color = 'var(--lohas-mute)';
     hint.textContent = '處理中...';
@@ -4910,7 +4910,7 @@
       const alertMsg = isEdit
         ? `已儲存對「${display_name}」的變更`
         : `已建立創作者「${display_name}」\n\n網址已顯示在下方,可複製或開啟`;
-      alert(alertMsg);
+      await LohasUI.alert(alertMsg);
       hint.innerHTML = `
         ${successPrefix}<b>${escapeHtml(display_name)}</b>」<br>
         <div class="ag-success-card">
@@ -4944,7 +4944,7 @@
           ta.select();
           try { document.execCommand('copy'); } catch (e) {}
           document.body.removeChild(ta);
-          alert('已複製: ' + url);
+          LohasUI.toast('已複製: ' + url, 'ok');
         });
       });
 
@@ -5036,7 +5036,7 @@
 
   function openFeaturedModal(creatorId) {
     const creator = (CreatorsState.items || []).find(c => c.member_id === creatorId);
-    if (!creator) return alert('找不到此創作者');
+    if (!creator) return LohasUI.alert('找不到此創作者');
 
     const isMarketFeatured = featuredCreatorId === creatorId;
     const isHpFeatured = creator.is_homepage_featured === true;
@@ -5171,7 +5171,7 @@
       if ((wantHomepage || wantExposure) && !newUrl) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存</span>';
-        return alert('勾選「首頁主打」或「首頁曝光」需要先填 IG 貼文 URL');
+        return await LohasUI.alert('勾選「首頁主打」或「首頁曝光」需要先填 IG 貼文 URL');
       }
 
       try {
@@ -5184,7 +5184,7 @@
         close();
         applyCreatorsFilter();
       } catch (e) {
-        alert('儲存失敗：' + (e.message || '未知錯誤'));
+        await LohasUI.alert('儲存失敗：' + (e.message || '未知錯誤'));
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存</span>';
       }
@@ -5281,20 +5281,20 @@
 
     // 如果已經是本月精選 → 取消
     if (featuredCreatorId === creatorId) {
-      if (!confirm(`取消本月精選「${creatorId}」?`)) return;
+      if (!await LohasUI.confirm(`取消本月精選「${creatorId}」?`)) return;
       try {
         await adminWrite('featured_creators', 'delete', null, month);
       } catch (e) {
-        return alert('取消失敗:' + (e.message || e));
+        return await LohasUI.alert('取消失敗:' + (e.message || e));
       }
       featuredCreatorId = null;
-      alert('已取消本月精選');
+      LohasUI.toast('已取消本月精選', 'ok');
       applyCreatorsFilter();
       return;
     }
 
     // 否則:設成本月精選(若該月已有人,先刪掉)
-    if (!confirm(`設定為本月 (${month}) 精選創作者?\n\n本月只能選一位,如已有其他精選會被取代`)) return;
+    if (!await LohasUI.confirm(`設定為本月 (${month}) 精選創作者?\n\n本月只能選一位,如已有其他精選會被取代`)) return;
 
     // 先刪除本月已有的(若存在)
     /* 走 admin-write。featured_by 由伺服器填,不再從 localStorage 取。 */
@@ -5305,11 +5305,11 @@
         featured_month: month,
       });
     } catch (e) {
-      return alert('設定失敗:' + (e.message || e));
+      return await LohasUI.alert('設定失敗:' + (e.message || e));
     }
 
     featuredCreatorId = creatorId;
-    alert('已設為本月精選,將出現在創作者市集首頁');
+    LohasUI.toast('已設為本月精選,將出現在創作者市集首頁', 'ok');
     applyCreatorsFilter();
   }
 
@@ -5416,7 +5416,7 @@
   }
 
   async function deleteCreator(memberId, name) {
-    if (!confirm(`確定要刪除創作者「${name || memberId}」?\n\n此操作無法復原。`)) return;
+    if (!await LohasUI.confirm(`確定要刪除創作者「${name || memberId}」?\n\n此操作無法復原。`)) return;
 
     const sb = getSb();
     if (!sb) return;
@@ -5429,15 +5429,15 @@
       } catch (e) { return { error: e }; }
     })();
 
-    if (error) return alert('刪除失敗: ' + error.message);
+    if (error) return await LohasUI.alert('刪除失敗: ' + error.message);
 
     // RLS 擋了會 silently 回 0 rows
     if (!data || data.length === 0) {
-      alert('刪除失敗: 沒有任何資料被刪除\n\n可能原因: Supabase RLS policy 沒給 DELETE 權限\n請聯繫管理員');
+      await LohasUI.alert('刪除失敗: 沒有任何資料被刪除\n\n可能原因: Supabase RLS policy 沒給 DELETE 權限\n請聯繫管理員');
       return;
     }
 
-    alert(`已刪除創作者「${name || memberId}」`);
+    LohasUI.toast(`已刪除創作者「${name || memberId}」`, 'ok');
 
     // 動畫消失
     const card = document.querySelector(`.creator-card[data-id="${memberId}"]`);
@@ -5458,14 +5458,14 @@
     const tip = isHiding
       ? '隱藏後創作者個人頁網址將自動導向刻圖市集'
       : '顯示後將恢復公開可見';
-    if (!confirm(`確定要${action}此創作者?\n\n${tip}`)) return;
+    if (!await LohasUI.confirm(`確定要${action}此創作者?\n\n${tip}`)) return;
 
     const sb = getSb();
     if (!sb) return;
 
     try {
       await adminWrite('creator_info', 'update', { status: newStatus }, memberId);
-    } catch (err) { return alert('更新失敗: ' + err.message); }
+    } catch (err) { return await LohasUI.alert('更新失敗: ' + err.message); }
 
     loadCreatorsList();
   }
@@ -5482,7 +5482,7 @@
         .single();
 
       if (error || !data) {
-        alert('載入失敗: ' + (error?.message || '找不到資料'));
+        await LohasUI.alert('載入失敗: ' + (error?.message || '找不到資料'));
         return;
       }
 
@@ -5491,7 +5491,7 @@
 
     } catch (err) {
       console.error('[編輯創作者失敗]', err);
-      alert('載入失敗: ' + (err.message || err));
+      await LohasUI.alert('載入失敗: ' + (err.message || err));
     }
   }
 
@@ -5551,10 +5551,10 @@
   // ============================================
   async function uploadPhotosForCreator(files) {
     const sb = window.LohasSupabase?.getClient?.();
-    if (!sb) { alert('Supabase 未連線'); return; }
+    if (!sb) { await LohasUI.alert('Supabase 未連線'); return; }
     const mid = AGState.editMemberId;
     const name = document.getElementById('agDisplayName').value.trim();
-    if (!mid) { alert('請先儲存創作者'); return; }
+    if (!mid) { await LohasUI.alert('請先儲存創作者'); return; }
 
     const SUPABASE_BUCKET = window.LohasSupabase?.CONFIG?.STORAGE_BUCKET || 'gallery-uploads';
 
@@ -5650,19 +5650,19 @@
   // + 方框點擊
   window.agTriggerPhotoUpload = function() {
     if (!AGState.editMemberId) {
-      alert('請先儲存創作者後再上傳照片');
+      LohasUI.alert('請先儲存創作者後再上傳照片');
       return;
     }
     document.getElementById('agPhotoInput')?.click();
   };
 
   window.agDeleteCreatorPhoto = async function(id) {
-    if (!confirm('確定要刪除這張照片?(從前台立即消失)')) return;
+    if (!await LohasUI.confirm('確定要刪除這張照片?(從前台立即消失)')) return;
     const sb = window.LohasSupabase?.getClient?.();
     if (!sb) return;
     try {
       await window.LohasAdminWrite('gallery_posts', 'delete', null, id);
-    } catch (err) { alert('刪除失敗: ' + err.message); return; }
+    } catch (err) { await LohasUI.alert('刪除失敗: ' + err.message); return; }
     loadCreatorPhotos(AGState.editMemberId);
   };
 
@@ -5804,8 +5804,8 @@
 
   function agBindCustomBlockEvents(blockEl) {
     // 刪除整個區塊
-    blockEl.querySelector('.custom-block-remove')?.addEventListener('click', () => {
-      if (confirm('確定要刪除此區塊?')) {
+    blockEl.querySelector('.custom-block-remove')?.addEventListener('click', async () => {
+      if (await LohasUI.confirm('確定要刪除此區塊?')) {
         blockEl.remove();
         agRenumberBlocks();
       }
@@ -6134,7 +6134,7 @@
   async function mdDownloadSvg(id) {
     const d = mdState.designs.find(x => String(x.id) === String(id));
     if (!d || !d.image_url_svg) {
-      alert('此刻圖沒有 SVG 檔');
+      await LohasUI.alert('此刻圖沒有 SVG 檔');
       return;
     }
     try {
@@ -6154,7 +6154,7 @@
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('[mdDownloadSvg]', err);
-      alert('下載失敗:' + (err.message || err));
+      await LohasUI.alert('下載失敗:' + (err.message || err));
     }
   }
 
@@ -6220,18 +6220,18 @@
     if (!d) return;
 
     const srcUrl = mdValidUrl(d.image_url_png) || mdValidUrl(d.image_url);
-    if (!srcUrl) { alert('這張刻圖沒有 PNG,沒有東西可以重描。'); return; }
+    if (!srcUrl) { await LohasUI.alert('這張刻圖沒有 PNG,沒有東西可以重描。'); return; }
     if (/\.svg(\?|$)/i.test(srcUrl)) {
-      alert('這張的來源本身就是 SVG(向量),重新描圖只會把它降成點陣再描一次,反而更差。');
+      await LohasUI.alert('這張的來源本身就是 SVG(向量),重新描圖只會把它降成點陣再描一次,反而更差。');
       return;
     }
     if (!window.LohasUploadDesign || !window.LohasUploadDesign.traceImage) {
-      alert('描圖模組沒有載入,請重新整理頁面再試。');
+      await LohasUI.alert('描圖模組沒有載入,請重新整理頁面再試。');
       return;
     }
 
     const sb = getSb();
-    if (!sb) { alert('資料庫連線失敗'); return; }
+    if (!sb) { await LohasUI.alert('資料庫連線失敗'); return; }
 
     const original = btn ? btn.innerHTML : '';
     const setBtn = (html, disabled) => {
@@ -6275,7 +6275,7 @@
         msg.push('⚠ 新的路徑數比舊的【少】,可能反而變差。', '建議先取消,把兩個 SVG 都下載下來看過再決定。', '');
       }
       msg.push('要用新的取代嗎?(舊檔案會保留,不會刪掉)');
-      if (!confirm(msg.join('\n'))) { setBtn(original, false); return; }
+      if (!await LohasUI.confirm(msg.join('\n'))) { setBtn(original, false); return; }
 
       setBtn('儲存中…', true);
 
@@ -6330,13 +6330,13 @@
       mdRememberRetrace(record);
 
       d.image_url_svg = newUrl;
-      alert('完成:' + (before ? before.paths + ' → ' : '') + after.paths + ' 條路徑。\n\n' +
+      await LohasUI.alert('完成:' + (before ? before.paths + ' → ' : '') + after.paths + ' 條路徑。\n\n' +
             '舊檔案沒有刪除。要還原的話,舊網址在 Console 與 localStorage 的 mdRetraceHistory 裡。');
       mdRenderTable();
 
     } catch (err) {
       console.error('[mdRetrace]', err);
-      alert('重新描圖失敗:' + (err.message || err));
+      await LohasUI.alert('重新描圖失敗:' + (err.message || err));
       setBtn(original, false);
     }
   }
@@ -6345,11 +6345,11 @@
   async function mdBulkUpdatePrice() {
     const targetCount = mdState.filtered.length;
     if (targetCount === 0) {
-      alert('目前篩選結果為 0 筆,無可改價的對象');
+      await LohasUI.alert('目前篩選結果為 0 筆,無可改價的對象');
       return;
     }
 
-    const input = prompt(
+    const input = await LohasUI.prompt(
       '批次修改售價\n\n' +
       '⚠️ 將套用到目前篩選結果共 ' + targetCount + ' 筆刻圖\n' +
       '(請先用上方的狀態 / 來源 / 搜尋篩出要改的範圍)\n\n' +
@@ -6361,14 +6361,14 @@
     if (input === null) return;
     const priceNum = parseInt(input.trim(), 10);
     if (isNaN(priceNum) || priceNum < 0) {
-      alert('請輸入有效的非負整數');
+      await LohasUI.alert('請輸入有效的非負整數');
       return;
     }
 
     const finalPrice = priceNum === 0 ? null : priceNum;
     const displayPrice = priceNum === 0 ? '未定價' : '$' + priceNum;
 
-    if (!confirm('確定要把這 ' + targetCount + ' 筆刻圖售價全部設成「' + displayPrice + '」?')) return;
+    if (!await LohasUI.confirm('確定要把這 ' + targetCount + ' 筆刻圖售價全部設成「' + displayPrice + '」?')) return;
 
     const sb = getSb();
     if (!sb) return;
@@ -6384,7 +6384,7 @@
       const res = await adminWrite('engraving_designs', 'update',
         { price: finalPrice }, null, ids);
       if (res && typeof res.affected === 'number' && res.affected !== ids.length) {
-        alert('注意:預期改 ' + ids.length + ' 筆,實際改到 ' + res.affected + ' 筆。\n請重新整理確認。');
+        await LohasUI.alert('注意:預期改 ' + ids.length + ' 筆,實際改到 ' + res.affected + ' 筆。\n請重新整理確認。');
       }
 
       // 同步本地
@@ -6392,12 +6392,12 @@
         if (ids.includes(d.id)) d.price = finalPrice;
       });
 
-      alert('已成功將 ' + targetCount + ' 筆刻圖售價設為「' + displayPrice + '」');
+      LohasUI.toast('已成功將 ' + targetCount + ' 筆刻圖售價設為「' + displayPrice + '」', 'ok');
       mdApplyFilters();
 
     } catch (err) {
       console.error('[mdBulkUpdatePrice]', err);
-      alert('批次改價失敗:' + (err.message || err));
+      await LohasUI.alert('批次改價失敗:' + (err.message || err));
     } finally {
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-tag"></i> 批次改價'; }
     }
@@ -6437,7 +6437,7 @@
 
     } catch (err) {
       console.error('[manage-designs] 切換上架失敗:', err);
-      alert('切換失敗:' + err.message);
+      await LohasUI.alert('切換失敗:' + err.message);
     }
   }
 
@@ -6492,7 +6492,7 @@
       };
 
       if (!payload.name) {
-        alert('名稱不可為空');
+        await LohasUI.alert('名稱不可為空');
         return;
       }
 
@@ -6504,13 +6504,13 @@
         Object.assign(mdState.designs[idx], payload);
       }
 
-      alert('已儲存');
+      LohasUI.toast('已儲存', 'ok');
       mdCloseEditModal();
       mdApplyFilters();
 
     } catch (err) {
       console.error('[manage-designs] 儲存失敗:', err);
-      alert('儲存失敗:' + err.message);
+      await LohasUI.alert('儲存失敗:' + err.message);
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = '儲存';
@@ -6522,7 +6522,7 @@
     const d = mdState.designs.find(x => String(x.id) === String(id));
     if (!d) return;
 
-    if (!confirm(`確定將「${d.name || '(未命名)'}」移至垃圾桶?\n\n· 會從市集下架\n· 可在「垃圾桶」篩選中找到\n· 資料與圖檔都保留`)) return;
+    if (!await LohasUI.confirm(`確定將「${d.name || '(未命名)'}」移至垃圾桶?\n\n· 會從市集下架\n· 可在「垃圾桶」篩選中找到\n· 資料與圖檔都保留`)) return;
 
     const sb = getSb();
     if (!sb) return;
@@ -6532,11 +6532,11 @@
 
       d.is_show = '垃圾桶';
       mdApplyFilters();
-      alert('已移至垃圾桶');
+      LohasUI.toast('已移至垃圾桶', 'ok');
 
     } catch (err) {
       console.error('[manage-designs] 移至垃圾桶失敗:', err);
-      alert('操作失敗:' + err.message);
+      await LohasUI.alert('操作失敗:' + err.message);
     }
   }
 
@@ -6545,7 +6545,7 @@
     const d = mdState.designs.find(x => String(x.id) === String(id));
     if (!d) return;
 
-    if (!confirm(`確定永久刪除「${d.name || '(未命名)'}」?\n\n⚠️ 這個動作會永久刪除:\n· 資料庫紀錄\n· Storage 內的圖檔(PNG + SVG)\n\n無法復原!`)) return;
+    if (!await LohasUI.confirm(`確定永久刪除「${d.name || '(未命名)'}」?\n\n⚠️ 這個動作會永久刪除:\n· 資料庫紀錄\n· Storage 內的圖檔(PNG + SVG)\n\n無法復原!`)) return;
 
     const sb = getSb();
     if (!sb) return;
@@ -6588,11 +6588,11 @@
       // 3. 同步本地狀態
       mdState.designs = mdState.designs.filter(x => String(x.id) !== String(id));
       mdApplyFilters();
-      alert('已永久刪除');
+      LohasUI.toast('已永久刪除', 'ok');
 
     } catch (err) {
       console.error('[manage-designs] 永久刪除失敗:', err);
-      alert('刪除失敗:' + err.message);
+      await LohasUI.alert('刪除失敗:' + err.message);
     }
   }
 
@@ -6772,20 +6772,20 @@
         carrier: document.getElementById('msEditCarrier').value.trim(),
       };
 
-      if (!payload.title) { alert('標題不可為空'); return; }
+      if (!payload.title) { await LohasUI.alert('標題不可為空'); return; }
 
       await adminWrite('gallery_posts', 'update', payload, msState.editId);
 
       const idx = msState.posts.findIndex(x => String(x.id) === String(msState.editId));
       if (idx >= 0) Object.assign(msState.posts[idx], payload);
 
-      alert('已儲存');
+      LohasUI.toast('已儲存', 'ok');
       msCloseEditModal();
       msApplyFilters();
 
     } catch (err) {
       console.error('[manage-shares] 儲存失敗:', err);
-      alert('儲存失敗:' + err.message);
+      await LohasUI.alert('儲存失敗:' + err.message);
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = '儲存';
@@ -6796,7 +6796,7 @@
     const p = msState.posts.find(x => String(x.id) === String(id));
     if (!p) return;
 
-    if (!confirm(`確定刪除「${p.title || '(未命名)'}」?\n\n⚠️ 這個動作會永久刪除:\n· 資料庫紀錄\n· Storage 內所有圖檔\n\n無法復原`)) return;
+    if (!await LohasUI.confirm(`確定刪除「${p.title || '(未命名)'}」?\n\n⚠️ 這個動作會永久刪除:\n· 資料庫紀錄\n· Storage 內所有圖檔\n\n無法復原`)) return;
 
     const sb = getSb();
     if (!sb) return;
@@ -6823,11 +6823,11 @@
 
       msState.posts = msState.posts.filter(x => String(x.id) !== String(id));
       msApplyFilters();
-      alert('已刪除');
+      LohasUI.toast('已刪除', 'ok');
 
     } catch (err) {
       console.error('[manage-shares] 刪除失敗:', err);
-      alert('刪除失敗:' + err.message);
+      await LohasUI.alert('刪除失敗:' + err.message);
     }
   }
 
@@ -6874,9 +6874,11 @@
     let allCollabs = [];
 
     // ====== 工具 ======
+    // 「已…」開頭的是成功訊息 → 右下角 toast,不擋流程;
+    // 其餘(失敗、必填、格式錯誤…)照舊跳框,要按確定才關,免得漏看
     function toast(msg){
-      if(window.toast) window.toast(msg);
-      else alert(msg);
+      if (/^(已|順序已)/.test(String(msg))) LohasUI.toast(msg, 'ok');
+      else LohasUI.alert(msg);
     }
     function esc(s){
       return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -7491,7 +7493,7 @@
       const photos = currentPhotos.filter(p => !p._deleted);
       const item = photos[idx];
       if(!item) return;
-      if(!confirm('確定刪除這張照片?分享牆上對應的照片也會一起刪除。')) return;
+      if(!await LohasUI.confirm('確定刪除這張照片?分享牆上對應的照片也會一起刪除。')) return;
 
       const client = sb();
       if(!client) return;
@@ -7502,7 +7504,7 @@
           try { await adminWrite('collab_customer_photos', 'delete', null, item.id); return {}; }
           catch (e) { return { error: e }; }
         })();
-        if(e1){ alert('刪除聯名照片失敗:' + e1.message); return; }
+        if(e1){ await LohasUI.alert('刪除聯名照片失敗:' + e1.message); return; }
       }
 
       /* 2. 同步刪 gallery_posts。
@@ -7803,7 +7805,7 @@
         toast('這是範例聯名,不能刪除');
         return;
       }
-      if(!confirm('確定刪除「' + currentCollab.brand_name + '」?\n所有套餐 / 設計 / 客人照都會一起刪除,無法復原。')) return;
+      if(!await LohasUI.confirm('確定刪除「' + currentCollab.brand_name + '」?\n所有套餐 / 設計 / 客人照都會一起刪除,無法復原。')) return;
 
       const client = sb();
       try {
@@ -7821,7 +7823,7 @@
 
     // 快速套公版: 抓 DINU 範例的所有欄位填到當前表單
     $('collabApplyTemplateBtn').addEventListener('click', async () => {
-      if(!confirm('將載入 DINU 範例內容,目前已填的內容會被覆蓋。要繼續嗎?')) return;
+      if(!await LohasUI.confirm('將載入 DINU 範例內容,目前已填的內容會被覆蓋。要繼續嗎?')) return;
       const client = sb();
       if(!client) return;
 
@@ -7997,7 +7999,7 @@
 
       // 必須先有 collabId 才能上傳
       if(!currentCollab?.id){
-        alert('請先「儲存」聯名後,才能上傳客人分享照片');
+        await LohasUI.alert('請先「儲存」聯名後,才能上傳客人分享照片');
         return;
       }
       const collabId = currentCollab.id;
@@ -8149,7 +8151,8 @@
       draft: '草稿', published: '已發佈', scheduled: '已排程', archived: '已下架'
     };
 
-    function toast(msg){ if(window.toast) window.toast(msg); else alert(msg); }
+    // 同上:「已…」開頭走 toast,其餘跳框
+    function toast(msg){ if (/^(已|順序已)/.test(String(msg))) LohasUI.toast(msg, 'ok'); else LohasUI.alert(msg); }
     function esc(s){
       return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
@@ -8380,7 +8383,7 @@
           e.stopPropagation();
           const id = btn.dataset.id;
           const title = btn.dataset.title || '';
-          if (!confirm(`確定要刪除消息「${title}」?\n\n此操作無法復原。`)) return;
+          if (!await LohasUI.confirm(`確定要刪除消息「${title}」?\n\n此操作無法復原。`)) return;
           const sb = window.LohasSupabase?.getClient?.();
           if (!sb) return;
       const { error } = await (async () => {
@@ -8799,7 +8802,7 @@
         const msg = future
           ? '狀態是「草稿」,時間到了也【不會】自動上架。\n\n要改成「發布」,在 ' + when.toLocaleString('zh-TW') + ' 自動上架嗎?\n(按「取消」= 維持草稿)'
           : '狀態是「草稿」,前台看不到。\n\n發布時間已經過了,要改成「發布」立即上架嗎?\n(按「取消」= 維持草稿)';
-        if(confirm(msg)){
+        if(await LohasUI.confirm(msg)){
           const sel = $('news_status');
           if(sel) sel.value = 'published';
           updateNewsStatusResult();
@@ -8901,7 +8904,7 @@
 
     async function deleteNews(){
       if(!currentNews) return;
-      if(!confirm('確定刪除「' + currentNews.title + '」?\n此操作無法復原。')) return;
+      if(!await LohasUI.confirm('確定刪除「' + currentNews.title + '」?\n此操作無法復原。')) return;
 
       const client = sb();
       const { error } = await (async () => {

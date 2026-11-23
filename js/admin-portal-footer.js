@@ -77,7 +77,7 @@
   async function save() {
     const sb = getSupabase();
     if (!sb) {
-      alert('Supabase 未連線');
+      await LohasUI.alert('Supabase 未連線');
       return false;
     }
     try {
@@ -90,7 +90,7 @@
       return true;
     } catch (e) {
       console.error('[cm-footer] save failed:', e);
-      alert('儲存失敗：' + (e.message || '未知錯誤'));
+      await LohasUI.alert('儲存失敗：' + (e.message || '未知錯誤'));
       return false;
     }
   }
@@ -412,7 +412,7 @@
 
     // 復原
     document.getElementById('cmFooterReset').onclick = async function () {
-      if (!confirm('確定要復原到資料庫最後一次儲存的內容嗎？目前未儲存的編輯將會消失。')) return;
+      if (!await LohasUI.confirm('確定要復原到資料庫最後一次儲存的內容嗎？目前未儲存的編輯將會消失。')) return;
       await load();
       render();
     };
@@ -461,7 +461,7 @@
     renderPreview();
   }
 
-  function onClick(e) {
+  async function onClick(e) {
     const t = e.target.closest('button, input[type="checkbox"]');
     if (!t) return;
 
@@ -483,7 +483,7 @@
     // 刪除欄位
     if (t.dataset.colDel != null) {
       const ci = +t.dataset.colDel;
-      if (!confirm(`確定刪除欄位「${state.columns[ci].title || '未命名'}」嗎？`)) return;
+      if (!await LohasUI.confirm(`確定刪除欄位「${state.columns[ci].title || '未命名'}」嗎？`)) return;
       state.columns.splice(ci, 1);
       renderColumns();
       renderPreview();

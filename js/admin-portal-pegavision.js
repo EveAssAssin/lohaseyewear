@@ -74,7 +74,7 @@
   // ===== 儲存 =====
   async function save() {
     const sb = getSb();
-    if (!sb) { alert('資料庫未連線'); return; }
+    if (!sb) { await LohasUI.alert('資料庫未連線'); return; }
 
     const btn = document.getElementById('pegaSaveBtn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>儲存中...</span>'; }
@@ -119,7 +119,7 @@
         setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存</span>'; }, 2000);
       }
     } catch (e) {
-      alert('儲存失敗：' + (e.message || '未知錯誤'));
+      await LohasUI.alert('儲存失敗：' + (e.message || '未知錯誤'));
       if (btn) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>儲存</span>';
@@ -143,7 +143,7 @@
       fileInput.addEventListener('change', (e) => {
         const f = e.target.files && e.target.files[0];
         if (!f) return;
-        if (!f.type.startsWith('image/')) { alert('請選擇圖片檔'); return; }
+        if (!f.type.startsWith('image/')) { LohasUI.alert('請選擇圖片檔'); return; }
         state.newFile = f;
         state.removed = false;
         renderPreview();

@@ -31,7 +31,7 @@
   gap: 10px;
   font-size: 14px;
   font-weight: 600;
-  color: #3D3026;
+  color: var(--text-main);
   margin: 0 0 14px;
   letter-spacing: 0.5px;
 }
@@ -53,7 +53,7 @@
   padding: 6px 12px;
   background: transparent;
   border: 1px dashed #C9BDA3;
-  color: #50422D;
+  color: var(--lohas-brand);
   font-size: 12px;
   font-weight: 500;
   border-radius: 6px;
@@ -63,8 +63,8 @@
 
 .cm-add-btn:hover,
 .cm-add-link-btn:hover {
-  background: #FAF7F2;
-  border-color: #50422D;
+  background: var(--bg-cream);
+  border-color: var(--lohas-brand);
 }
 
 .cm-add-link-btn {
@@ -82,14 +82,14 @@
   border-radius: 6px;
   font-size: 13px;
   font-family: inherit;
-  color: #3D3026;
+  color: var(--text-main);
   background: #fff;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .cm-input:focus {
   outline: 0;
-  border-color: #50422D;
+  border-color: var(--lohas-brand);
   box-shadow: 0 0 0 3px rgba(80, 66, 45, 0.1);
 }
 
@@ -109,7 +109,7 @@
 .cm-social-icon {
   width: 22px;
   text-align: center;
-  color: #50422D;
+  color: var(--lohas-brand);
   font-size: 14px;
 }
 
@@ -117,7 +117,7 @@
   width: 80px;
   font-size: 13px;
   font-weight: 500;
-  color: #3D3026;
+  color: var(--text-main);
 }
 
 .cm-social-url {
@@ -161,7 +161,7 @@
 }
 
 .cm-switch input:checked + .cm-switch-slider {
-  background: #50422D;
+  background: var(--lohas-brand);
 }
 
 .cm-switch input:checked + .cm-switch-slider::before {
@@ -170,7 +170,7 @@
 
 /* === 欄位區塊 === */
 .cm-col {
-  background: #FAF7F2;
+  background: var(--bg-cream);
   border: 1px solid #ECE7DC;
   border-radius: 10px;
   padding: 14px 16px;
@@ -198,7 +198,7 @@
 }
 .cm-drag-btn:active { cursor: grabbing; }
 .cm-col.cm-dragging { opacity: .4; }
-.cm-col.cm-drag-over { box-shadow: 0 0 0 2px var(--lohas-brown, #50422D) inset; border-radius: 10px; }
+.cm-col.cm-drag-over { box-shadow: 0 0 0 2px var(--lohas-brown, var(--lohas-brand)) inset; border-radius: 10px; }
 
 .cm-col-title {
   flex: 1;
@@ -223,7 +223,7 @@
 .cm-col-up:hover,
 .cm-col-down:hover {
   background: #fff;
-  color: #50422D;
+  color: var(--lohas-brand);
 }
 
 .cm-col-del:hover {
@@ -257,7 +257,7 @@
 
 .cm-link-row.cm-link-dragging { opacity: .4; }
 .cm-link-row.cm-link-drag-over {
-  box-shadow: 0 -2px 0 0 var(--lohas-brown, #50422D);
+  box-shadow: 0 -2px 0 0 var(--lohas-brown, var(--lohas-brand));
 }
 
 .cm-link-label {
@@ -295,7 +295,7 @@
   text-align: center;
   color: #9D8E7D;
   font-size: 13px;
-  background: #FAF7F2;
+  background: var(--bg-cream);
   border-radius: 8px;
 }
 
