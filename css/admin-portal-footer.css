@@ -228,8 +228,8 @@
 
 .cm-col-del:hover {
   background: #fff5f0;
-  border-color: #d85a30;
-  color: #d85a30;
+  border-color: var(--ad-alert);
+  color: var(--ad-alert);
 }
 
 .cm-col-up:disabled,
@@ -281,7 +281,7 @@
 
 .cm-link-del:hover {
   background: #fff5f0;
-  color: #d85a30;
+  color: var(--ad-alert);
 }
 
 /* === 法規連結 === */
@@ -327,7 +327,7 @@
 
 .cm-preview-tag {
   margin-left: auto;
-  background: #d85a30;
+  background: var(--ad-alert);
   color: #fff;
   font-size: 10px;
   font-weight: 600;

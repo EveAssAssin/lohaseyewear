@@ -104,7 +104,7 @@
 
 .featured-modal-label i {
   margin-right: 6px;
-  color: #d85a30;
+  color: var(--ad-alert);
 }
 
 .featured-modal-hint {

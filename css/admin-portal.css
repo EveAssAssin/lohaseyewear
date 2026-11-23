@@ -9,6 +9,29 @@
    樂活管理後台 · admin-portal.css
    ============================================================= */
 
+/* 後台專用的具名顏色(2026-11-23 取名,值都沒變)。
+   放在 :root 不放 .ad —— 有些彈窗直接掛在 body 底下,在 .ad 外面讀不到 .ad 的變數。
+   這支 CSS 只有 admin-portal.html 載入,所以 :root 等於只作用在後台。 */
+:root{
+  --ad-danger:#D05538;        /* 必填星號、刪除按鈕 */
+  --ad-alert:#D85A30;         /* 頁尾 / 精選彈窗的刪除 hover、預覽標籤 */
+  --ad-hint:#B8A584;          /* 欄位提示小字、圖片佔位文字 */
+  --ad-feat:#FBE07A;          /* 精選創作者:標籤底色 */
+  --ad-feat-line:#F0D87A;     /* 精選創作者:邊線 */
+  --ad-feat-bg:#FFFBEC;       /* 精選創作者:淡底 */
+  --ad-feat-ink:#1A1A1A;      /* 精選創作者:黃底上的字 */
+  --ad-m-line:#D8CCB9;        /* 會員彈窗:輸入框、按鈕邊線 */
+  --ad-m-text:#7A6B5C;        /* 會員彈窗:說明文字 */
+  --ad-m-err:#A04030;         /* 會員彈窗:錯誤訊息 */
+  --ad-m-err-bg:#FDEDE8;
+  --ad-switch-on:#3F7E6F;     /* 開關「開」 */
+  --ad-dash:#C9B98C;          /* 虛線新增框 */
+  --ad-hl-line:#ECD9B0;       /* 未讀 / hover 的高亮邊線 */
+  --ad-locked-bg:#F0EBE2;     /* 不能改的欄位、草稿標籤底色 */
+  --ad-readonly-bg:#F3F0EB;   /* 唯讀欄位底色 */
+  --ad-promote-hover:#5A4A73; /* 升級創作者按鈕 hover */
+}
+
 .ad{
   --lohas-brown:var(--lohas-brand);
   --lohas-light-brown:var(--lohas-light);
@@ -446,7 +469,7 @@
 }
 .ad .role-pill.member{ background:var(--m-bg); color:var(--m-text) }
 .ad .role-pill.creator{ background:var(--c-solid); color:#fff }
-.ad .role-pill.creator i{ color:#FFD86B; font-size:8px }
+.ad .role-pill.creator i{ color:var(--gold-star); font-size:8px }
 .ad .role-pill.ip{
   background:var(--collab-bg); color:#fff;
   border:1px solid var(--collab-gold);
@@ -698,11 +721,11 @@
 }
 .ad .rcard-actions .reject{
   background:#fff;
-  color:#A85A4A;
-  border:1.5px solid #A85A4A;
+  color:var(--err);
+  border:1.5px solid var(--err);
 }
 .ad .rcard-actions .reject:hover{
-  background:#A85A4A;
+  background:var(--err);
   color:#fff;
   transform:translateY(-1px);
 }
@@ -971,7 +994,7 @@
 }
 .ad .row-role-pill.member{ background:var(--m-bg); color:var(--m-text) }
 .ad .row-role-pill.creator{ background:var(--c-solid); color:#fff }
-.ad .row-role-pill.creator i{ color:#FFD86B; font-size:9px }
+.ad .row-role-pill.creator i{ color:var(--gold-star); font-size:9px }
 .ad .row-role-pill.ip{
   background:var(--collab-bg); color:#fff;
   border:1.5px solid var(--collab-gold);
@@ -1021,11 +1044,11 @@
   background:var(--c-solid);
 }
 .ad .row-actions .promote:hover{
-  background:#5a4a73;
-  border-color:#5a4a73;
+  background:var(--ad-promote-hover);
+  border-color:var(--ad-promote-hover);
   color:#fff;
 }
-.ad .row-actions .promote i{ color:#FFD86B; font-size:10px }
+.ad .row-actions .promote i{ color:var(--gold-star); font-size:10px }
 
 
 /* === 身份說明 (legend) === */
@@ -1695,7 +1718,7 @@
   border-radius:var(--r-sm);
   background:#fff;
   color:var(--status-rejected);
-  border:1px solid #E5C5C5;
+  border:1px solid var(--err-line);
   font-size:var(--fs-xs);
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
@@ -2667,7 +2690,7 @@
   color:var(--lohas-mute);
   transition:color .15s;
 }
-.ad .md-switch.on .md-switch-label{ color:#3F7E6F }
+.ad .md-switch.on .md-switch-label{ color:var(--ad-switch-on) }
 .ad .md-switch-track{
   position:relative;
   width:30px;
@@ -2687,7 +2710,7 @@
   box-shadow:0 1px 3px rgba(0,0,0,0.2);
   transition:left .2s;
 }
-.ad .md-switch.on .md-switch-track{ background:#3F7E6F }
+.ad .md-switch.on .md-switch-track{ background:var(--ad-switch-on) }
 .ad .md-switch.on .md-switch-thumb{ left:16px }
 .ad .md-switch:hover .md-switch-track{ filter:brightness(0.95) }
 .ad .md-switch.disabled{
@@ -2808,7 +2831,7 @@
 .ad .md-pill.s-approved{ background:var(--status-approved-bg); color:var(--status-approved) }
 .ad .md-pill.s-pending { background:var(--status-pending-bg);  color:var(--status-pending)  }
 .ad .md-pill.s-rejected{ background:var(--status-rejected-bg); color:var(--status-rejected) }
-.ad .md-pill.t-legacy  { background:#F0EBE2; color:var(--lohas-hover) }
+.ad .md-pill.t-legacy  { background:var(--ad-locked-bg); color:var(--lohas-hover) }
 .ad .md-pill.t-member  { background:var(--c-bg); color:var(--c-text) }
 
 
@@ -2995,13 +3018,13 @@
 
 /* === 本月精選 creator 視覺 (深紫香檳金) === */
 .ad .creator-card.is-featured{
-  border-color:#F0D87A;
+  border-color:var(--ad-feat-line);
   background:linear-gradient(180deg, #FFFBEC 0%, #fff 100%);
   box-shadow:0 4px 14px rgba(248, 219, 122, 0.18);
 }
 .ad .creator-card-tag.featured{
-  background:#FBE07A;
-  color:#1A1A1A;
+  background:var(--ad-feat);
+  color:var(--ad-feat-ink);
   font-weight:600;
   letter-spacing:0.5px;
 }
@@ -3012,9 +3035,9 @@
 
 /* 本月精選按鈕狀態 */
 .ad .btn.featured-on{
-  background:#FBE07A;
-  color:#1A1A1A;
-  border-color:#F0D87A;
+  background:var(--ad-feat);
+  color:var(--ad-feat-ink);
+  border-color:var(--ad-feat-line);
   font-weight:600;
 }
 .ad .btn.featured-on:hover{
@@ -3022,11 +3045,11 @@
 }
 .ad .btn.featured-off{
   border-style:dashed;
-  border-color:#F0D87A;
-  color:#1A1A1A;
+  border-color:var(--ad-feat-line);
+  color:var(--ad-feat-ink);
 }
 .ad .btn.featured-off:hover{
-  background:#FFFBEC;
+  background:var(--ad-feat-bg);
   border-style:solid;
 }
 
@@ -3103,7 +3126,7 @@
   letter-spacing: 1px;
   white-space: nowrap;
 }
-.cc-status-draft { background: #f0ebe2; color: #888; }
+.cc-status-draft { background: var(--ad-locked-bg); color: #888; }
 .cc-status-upcoming { background: #d4e9f7; color: #1e5a8a; }
 .cc-status-active { background: #d6efd9; color: #2d7a3e; }
 .cc-status-ended { background: #fbe5d6; color: #a04a1d; }
@@ -3124,7 +3147,7 @@
   margin-bottom: 16px;
   min-height: 18px;
 }
-.cc-meta i { margin-right: 4px; color: #b8a584; }
+.cc-meta i { margin-right: 4px; color: var(--ad-hint); }
 
 .cc-actions {
   display: flex;
@@ -3202,7 +3225,7 @@
   margin-bottom: 6px;
   font-weight: 500;
 }
-.form-row .req { color: #d05538; margin-left: 2px; }
+.form-row .req { color: var(--ad-danger); margin-left: 2px; }
 .form-row input[type="text"],
 .form-row input[type="number"],
 .form-row input[type="datetime-local"],
@@ -3343,8 +3366,8 @@
   flex-shrink: 0;
 }
 .st-del:hover {
-  border-color: #d05538;
-  color: #d05538;
+  border-color: var(--ad-danger);
+  color: var(--ad-danger);
 }
 
 /* Modal footer */
@@ -3447,7 +3470,7 @@
   border-radius: 50%;
 }
 .img-upload-placeholder {
-  color: #b8a584;
+  color: var(--ad-hint);
   font-size: var(--fs-xs);
   letter-spacing: 1px;
   display: flex;
@@ -3492,7 +3515,7 @@
 /* editor-hint (info text 下方) */
 .editor-hint {
   font-size: 11px;
-  color: #b8a584;
+  color: var(--ad-hint);
   margin: 6px 0 0;
   letter-spacing: 0.3px;
 }
@@ -3507,7 +3530,7 @@
 
 /* req 紅色星號 */
 .req {
-  color: #d05538;
+  color: var(--ad-danger);
   margin-left: 3px;
 }
 
@@ -3565,7 +3588,7 @@
 .subtable-empty {
   padding: 28px;
   text-align: center;
-  color: #b8a584;
+  color: var(--ad-hint);
   font-size: var(--fs-xs);
   background: var(--bg-cream);
   border-radius: var(--r-sm);
@@ -3623,7 +3646,7 @@
   left: 4px;
   right: 4px;
   font-size: 9px;
-  color: #b8a584;
+  color: var(--ad-hint);
   background: rgba(255,255,255,0.85);
   text-align: center;
   padding: 2px;
@@ -3662,8 +3685,8 @@
   flex-shrink: 0;
 }
 .subtable-row-v2 .st-del:hover {
-  border-color: #d05538;
-  color: #d05538;
+  border-color: var(--ad-danger);
+  color: var(--ad-danger);
 }
 
 /* ====== btn-mini (子表新增按鈕) ====== */
@@ -3685,11 +3708,11 @@
 
 /* ====== btn-danger (刪除聯名) ====== */
 .btn-danger {
-  color: #d05538 !important;
-  border-color: #d05538 !important;
+  color: var(--ad-danger) !important;
+  border-color: var(--ad-danger) !important;
 }
 .btn-danger:hover {
-  background: #d05538 !important;
+  background: var(--ad-danger) !important;
   color: #fff !important;
 }
 
@@ -3720,11 +3743,11 @@
   flex: 1;
 }
 .ag-modal-footer .btn-danger {
-  border-color: #d05538 !important;
-  color: #d05538 !important;
+  border-color: var(--ad-danger) !important;
+  color: var(--ad-danger) !important;
 }
 .ag-modal-footer .btn-danger:hover {
-  background: #d05538 !important;
+  background: var(--ad-danger) !important;
   color: #fff !important;
 }
 
@@ -3766,7 +3789,7 @@
 }
 .ad .ag-photo-add-tile {
   background: #fff;
-  border: 2px dashed #C9B98C;
+  border: 2px dashed var(--ad-dash);
   border-radius: var(--r-sm);
   aspect-ratio: 1;
   display: flex;
@@ -3820,7 +3843,7 @@
   font-weight: 600;
 }
 .ad .banner-tab .badge {
-  background: #FBE07A;
+  background: var(--ad-feat);
   color: var(--lohas-brand);
   font-size: 10px;
   padding: 2px 8px;
@@ -3844,7 +3867,7 @@
   padding: 30px 20px;
   text-align: center;
   background: var(--bg-cream);
-  border: 1px dashed #C9B98C;
+  border: 1px dashed var(--ad-dash);
   border-radius: var(--r-sm);
   color: var(--lohas-mute);
   font-size: 12.5px;
@@ -3862,7 +3885,7 @@
   transition: border-color .15s;
 }
 .ad .story-row:hover {
-  border-color: #C9B98C;
+  border-color: var(--ad-dash);
 }
 .ad .story-row-type {
   background: var(--bg-cream);
@@ -3926,8 +3949,8 @@
   cursor: not-allowed;
 }
 .ad .story-row-btn.danger:hover {
-  border-color: #d05538;
-  color: #d05538;
+  border-color: var(--ad-danger);
+  color: var(--ad-danger);
   background: #fff5f2;
 }
 .ad .story-builder-actions {
@@ -3959,7 +3982,7 @@
 .ad .md-btn-chat .cs-btn-dot{
   position:absolute; top:-6px; right:-6px;
   min-width:18px; height:18px; padding:0 5px;
-  background:#e5484d; color:#fff; border:2px solid #fff;
+  background:var(--notify); color:#fff; border:2px solid #fff;
   border-radius:9px; font-size:10.5px; font-weight:700; line-height:14px;
   display:flex; align-items:center; justify-content:center;
 }
@@ -4013,7 +4036,7 @@
   cursor:pointer; transition:border-color .15s, box-shadow .15s; font-family:inherit;
 }
 .ad .cs-inbox-item:hover{ border-color:var(--lohas-brand, #c89f5c); box-shadow:0 2px 12px rgba(0,0,0,.06) }
-.ad .cs-inbox-item.unread{ background:#fffdf8; border-color:#ecd9b0 }
+.ad .cs-inbox-item.unread{ background:#fffdf8; border-color:var(--ad-hl-line) }
 .ad .cs-inbox-avatar{
   flex-shrink:0; width:42px; height:42px; border-radius:50%;
   background:#f0ebe0; color:#b09a6e;
@@ -4027,7 +4050,7 @@
 .ad .cs-inbox-item.unread .cs-inbox-preview{ color:#555; font-weight:500 }
 .ad .cs-inbox-dot{
   flex-shrink:0; min-width:20px; height:20px; padding:0 6px;
-  background:#e5484d; color:#fff; border-radius:10px;
+  background:var(--notify); color:#fff; border-radius:10px;
   font-size:11px; font-weight:700; line-height:20px; text-align:center;
 }
 @media (max-width:600px){
@@ -4309,12 +4332,12 @@
   font:inherit; font-size:13.5px; color:#8a7c62; cursor:pointer;
   background:#fff; border:1px dashed var(--lohas-line, #e6e1d8); border-radius:10px;
 }
-.ad .cs-inbox-more:hover{ background:#fffdf8; border-color:#ecd9b0 }
+.ad .cs-inbox-more:hover{ background:#fffdf8; border-color:var(--ad-hl-line) }
 
 /* === 生日分享牆(後台) ===
    照片牆,一眼要看得出「哪些現在在前台、哪些被藏起來了」。
    已隱藏那一區刻意降低彩度 —— 不是壞掉,是「現在不在前台」。 */
-.ad .bw-msg{ font-size:var(--fs-xs); color:#8a8178; margin:0 0 14px }
+.ad .bw-msg{ font-size:var(--fs-xs); color:var(--text-disabled); margin:0 0 14px }
 .ad .bw-grid{
   display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
   gap:14px;
@@ -4347,7 +4370,7 @@
   cursor:pointer; border-radius:var(--r-sm); border:1px solid var(--lohas-line, #e6e1d8);
   background:#fff; color:#8a7c62;
 }
-.ad .bw-btn:hover{ background:#fffdf8; border-color:#ecd9b0 }
+.ad .bw-btn:hover{ background:#fffdf8; border-color:var(--ad-hl-line) }
 .ad .bw-btn:disabled{ opacity:.5; cursor:default }
 
 /* 已隱藏:降彩度,一眼分得出來。
