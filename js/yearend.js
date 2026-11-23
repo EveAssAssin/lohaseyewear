@@ -32,6 +32,9 @@
   const track = (name, params) => { try { if (root.lohasTrack) root.lohasTrack(name, params || {}); } catch (_e) {} };
   const fmt = n => Number(n).toLocaleString("en-US");
 
+  /* 不參加這次活動的門市(使用者 2026-11-23):中壢店 120056、文化店 120057、馬來西亞 SUBANG SS15 120069。
+     門市輪播、預約區選門市、問答的門市清單都不列。與 booking-v2.js PRESETS.yearend.hideErpids 同一份 */
+  const HIDE_STORE_ERPIDS = new Set(["120056", "120057", "120069"]);
   let stores = [];        // 官網門市(正規化後)
   let regionKey = null;
   let reviewPool = [];    // 真實 5 星評價(浮窗用)
@@ -405,7 +408,7 @@
     if (!A || !D) { renderStats(); return failStores(); }
     try {
       const raw = await A.getAllStores();
-      stores = (raw || []).map(D.normalizeStore).filter(s => s && !s.isOverseas && s.erpid);
+      stores = (raw || []).map(D.normalizeStore).filter(s => s && !s.isOverseas && s.erpid && !HIDE_STORE_ERPIDS.has(String(s.erpid)));
     } catch (_e) { stores = []; }
     renderStats();
     if (!stores.length) return failStores();

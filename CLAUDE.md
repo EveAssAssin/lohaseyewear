@@ -889,6 +889,8 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - **目前 `noindex` 且沒有任何連結指過去**。12/1 開跑前:拿掉 `<meta name="robots">`、header 加連結、首頁放 banner。
 - 🚨 **活動規則一字不改**(需求書第十節):不寫虛構的限量/倒數/搶購;
   「兩人各自配鏡即享第二副 0 元」是錯的說法,須先完成第一副原價配鏡取得折價券。
+- **中壢店、文化店、馬來西亞 SUBANG SS15 不參加這次活動**(使用者 2026-11-23):門市輪播、預約區選門市、問答門市清單、
+  預約彈窗的選門市都不列。名單有兩份,改要一起改:`js/yearend.js` 的 `HIDE_STORE_ERPIDS`、`booking-v2.js` 的 `PRESETS.yearend.hideErpids`。
 - 預約走 `booking-v2.js` 的 **`preset: "yearend"`**(與學生頁同一套活動模式,`PRESETS` 加一組就能開新活動):
   項目用「配鏡」,留言第一行加【2026 年終感謝祭】。來源只記在留言,`source` 照舊送 `web`(使用者決定)。
   `sessionStorage.lohas_booking_source` 設成 `yearend-2026`,`booking_complete` 會帶上。

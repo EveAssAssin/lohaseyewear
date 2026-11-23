@@ -89,7 +89,10 @@
       doneExtra: "",
       noStore: "目前沒有開放配鏡線上預約的門市",
       noStaff: "這間門市目前沒有開放配鏡的線上預約",
-      itemType: "年終感謝祭"
+      itemType: "年終感謝祭",
+      /* 不參加這次活動的門市(使用者 2026-11-23):中壢店、文化店、馬來西亞 SUBANG SS15。
+         與 js/yearend.js 的 HIDE_STORE_ERPIDS 同一份,改要兩邊一起改 */
+      hideErpids: ["120056", "120057", "120069"]
     }
   };
 
@@ -523,7 +526,9 @@
     /* 只列官網門市據點上有的店 —— 官網會隱藏已結束營業的店(store-data.js 的 HIDDEN_STORE_NAMES),
        而預約系統不一定關掉了(2026-11-12 高應大店 8/14 已歇業,預約系統裡還開著)。
        官網門市資料讀不到時才全部列出。 */
+    const hide = new Set((state.preset.hideErpids || []).map(String));   // 活動不適用的門市
     const list = state.bkStores.filter(s => (s.services || []).some(x => state.preset.svcMatch(x.name)))
+      .filter(s => !hide.has(String(s.store_erpid)))
       .filter(s => !state.siteStores.length || site.has(String(s.store_erpid))).map(s => {
       const w = site.get(String(s.store_erpid));
       return { erp: String(s.store_erpid), name: (w && w.name) || s.store_name, region: w && w.region };
