@@ -73,6 +73,19 @@
 
   var SOURCE = { market: '刻圖市集', draw: '手繪' };
   var STATUS = { new: '待製作', done: '已完成', archived: '已封存', rejected: '已退件', withdrawn: '客人已撤回' };
+
+  /* 「改回待製作」只在完成後這段時間內出現(誤按通常當天就會發現)。
+     ⚠ 只是介面限制,cloth-admin 本身不擋 —— 那支函式要通行碼才打得到。 */
+  var UNDO_DONE_HOURS = 24;
+  var UNDO_DONE_MSG = '把這一件改回「待製作」?\n\n' +
+    '· 給誤按「完成製作」時用\n' +
+    '· 當時印出的製作單請收回,免得被當成已出貨\n' +
+    '· App 若已經抓到「已完成」,不會跟著撤回,請另外通知 App 端';
+  function canUndoDone(it) {
+    if (it.status !== 'done' || !it.done_at) return false;
+    var t = Date.parse(it.done_at);
+    return !isNaN(t) && Date.now() - t < UNDO_DONE_HOURS * 3600 * 1000;
+  }
   var PRODUCT = { cloth: '眼鏡布', case: '眼鏡盒' };
 
   /* 眼鏡盒的可雕刻範圍(mm)。盒蓋 16 × 7 cm(2026-10-04 營運更正,原以 16 × 6.5 抓):
@@ -444,7 +457,14 @@
               ? /* 補印：師傅按完成時若沒印到（印表機沒開、紙用完），
                    沒有補印就只能整張單重來。 */
                 '<button type="button" class="lab-file" data-print="' + esc(it.id) + '">' +
-                  '<i class="fa-solid fa-print"></i>補印製作單</button>'
+                  '<i class="fa-solid fa-print"></i>補印製作單</button>' +
+                /* 改回待製作(2026-11-23):誤按「完成製作」時用。只在完成後 UNDO_DONE_HOURS 內給,
+                   放太久的「已完成」多半是真的出貨了,不該讓人隨手改回去。 */
+                (canUndoDone(it)
+                  ? '<button type="button" class="lab-file" data-undo-done="' + esc(it.id) + '" ' +
+                      'style="color:#b45309;border-color:#f3c98b">' +
+                      '<i class="fa-solid fa-rotate-left"></i>改回待製作</button>'
+                  : '')
               : '') +
             (it.status === 'rejected'
               ? '<span style="color:#b4232a;font-size:13px">已退件' +
@@ -1501,6 +1521,18 @@
          他只會原封不動再送一次，兩邊都白做。 */
       var pr = e.target.closest('[data-print]');
       if (pr) { printSlip(pr.dataset.print); return; }
+
+      /* 改回待製作:cloth-admin 的 set_status 改成 new 時會一併清掉 done_at,
+         統計的製作天數與 cloth-feed 的增量游標都不會被這筆汙染。 */
+      var und = e.target.closest('[data-undo-done]');
+      if (und) {
+        if (!confirm(UNDO_DONE_MSG)) return;
+        und.disabled = true;
+        call({ action: 'set_status', id: und.dataset.undoDone, status: 'new' })
+          .then(function () { return load(); })
+          .catch(function (err) { alert('改回失敗:' + err.message); und.disabled = false; });
+        return;
+      }
 
       var rej = e.target.closest('[data-reject]');
       if (rej) { openRejectForm(rej); return; }

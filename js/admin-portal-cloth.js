@@ -42,6 +42,19 @@
 
   var state = { items: [], total: 0, loading: false, status: 'new', q: '' };
 
+  /* 「改回待製作」只在完成後 24 小時內出現(同 cloth-lab.js)。
+     cloth-admin 改回 new 時會清掉 done_at。 */
+  var UNDO_DONE_HOURS = 24;
+  var UNDO_DONE_MSG = '把這一件改回「待製作」?\n\n' +
+    '· 給誤按「完成製作」時用\n' +
+    '· 當時印出的製作單請收回,免得被當成已出貨\n' +
+    '· App 若已經抓到「已完成」,不會跟著撤回,請另外通知 App 端';
+  function canUndoDone(it) {
+    if (it.status !== 'done' || !it.done_at) return false;
+    var t = Date.parse(it.done_at);
+    return !isNaN(t) && Date.now() - t < UNDO_DONE_HOURS * 3600 * 1000;
+  }
+
   function root() {
     return document.querySelector('.content-page[data-page="' + page + '"]');
   }
@@ -288,6 +301,11 @@
                       : '<i class="fa-solid fa-eye-slash"></i> 從分享牆隱藏') +
                   '</button>'
                 : '') +
+              (canUndoDone(it)
+                ? '<button type="button" class="cloth-btn" data-undo-done="' + esc(it.id) + '" ' +
+                    'style="color:#b45309;border-color:#f3c98b">' +
+                    '<i class="fa-solid fa-rotate-left"></i> 改回待製作</button>'
+                : '') +
             '</div>' +
           '</div>' +
         '</div>';
@@ -442,6 +460,17 @@
         call({ action: 'set_status', id: done.dataset.done, status: 'done' })
           .then(load)
           .catch(function (err) { LohasUI.alert(err.message); done.disabled = false; });
+        return;
+      }
+
+      /* 改回待製作(2026-11-23,同 cloth-lab.js):誤按完成時用 */
+      var und = e.target.closest('[data-undo-done]');
+      if (und) {
+        if (!(await LohasUI.confirm(UNDO_DONE_MSG, { title: '改回待製作' }))) return;
+        und.disabled = true;
+        call({ action: 'set_status', id: und.dataset.undoDone, status: 'new' })
+          .then(load)
+          .catch(function (err) { LohasUI.alert('改回失敗:' + err.message); und.disabled = false; });
         return;
       }
     });
