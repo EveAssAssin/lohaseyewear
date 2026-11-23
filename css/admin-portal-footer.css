@@ -29,7 +29,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text-main);
   margin: 0 0 14px;
@@ -54,7 +54,7 @@
   background: transparent;
   border: 1px dashed #C9BDA3;
   color: var(--lohas-brand);
-  font-size: 12px;
+  font-size: var(--fs-2xs);
   font-weight: 500;
   border-radius: 6px;
   cursor: pointer;
@@ -80,7 +80,7 @@
   padding: 7px 11px;
   border: 1px solid #E5DCC8;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: var(--fs-xs);
   font-family: inherit;
   color: var(--text-main);
   background: #fff;
@@ -110,12 +110,12 @@
   width: 22px;
   text-align: center;
   color: var(--lohas-brand);
-  font-size: 14px;
+  font-size: var(--fs-sm);
 }
 
 .cm-social-label {
   width: 80px;
-  font-size: 13px;
+  font-size: var(--fs-xs);
   font-weight: 500;
   color: var(--text-main);
 }
@@ -143,7 +143,7 @@
   position: absolute;
   inset: 0;
   background: #C9BDA3;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -194,7 +194,7 @@
   color: #C9BDA3;
   cursor: grab;
   padding: 4px 6px;
-  font-size: 14px;
+  font-size: var(--fs-sm);
 }
 .cm-drag-btn:active { cursor: grabbing; }
 .cm-col.cm-dragging { opacity: .4; }
@@ -203,7 +203,7 @@
 .cm-col-title {
   flex: 1;
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--fs-sm);
 }
 
 .cm-col-up,
@@ -216,7 +216,7 @@
   height: 30px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--fs-2xs);
   transition: background 0.15s, color 0.15s;
 }
 
@@ -248,7 +248,7 @@
 
 .cm-link-grip {
   color: #C9BDA3;
-  font-size: 12px;
+  font-size: var(--fs-2xs);
   cursor: grab;
   width: 14px;
   text-align: center;
@@ -272,10 +272,10 @@
   background: transparent;
   border: 0;
   color: #C9BDA3;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   cursor: pointer;
   padding: 4px 6px;
-  border-radius: 4px;
+  border-radius: var(--r-xs);
   transition: background 0.15s, color 0.15s;
 }
 
@@ -294,9 +294,9 @@
   padding: 24px;
   text-align: center;
   color: #9D8E7D;
-  font-size: 13px;
+  font-size: var(--fs-xs);
   background: var(--bg-cream);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
 }
 
 /* ============================================================
@@ -318,7 +318,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   color: #6B5E4F;
   margin-bottom: 10px;
@@ -332,7 +332,7 @@
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   letter-spacing: 0.05em;
 }
 
@@ -445,7 +445,7 @@
   .cm-card-h {
     flex-wrap: wrap;
     gap: 8px;
-    font-size: 13px;
+    font-size: var(--fs-xs);
   }
 
   .cm-card-h .cm-add-btn {
@@ -464,13 +464,13 @@
     width: auto;
     flex: 1;
     min-width: 0;
-    font-size: 12px;
+    font-size: var(--fs-2xs);
   }
 
   .cm-social-url {
     flex: 1 1 100%;
     min-width: 0;
-    font-size: 12px;
+    font-size: var(--fs-2xs);
   }
 
   /* === 欄位卡片 === */
@@ -516,7 +516,7 @@
   .cm-link-url {
     flex: 1 1 100%;
     min-width: 0;
-    font-size: 12px;
+    font-size: var(--fs-2xs);
     padding: 8px 10px;
   }
 
@@ -540,7 +540,7 @@
 
   /* Input 統一 */
   .cm-input {
-    font-size: 12px;
+    font-size: var(--fs-2xs);
     padding: 8px 10px;
   }
 

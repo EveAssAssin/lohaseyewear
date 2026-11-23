@@ -22,7 +22,7 @@
 }
 
 .pega-admin-hint {
-  font-size: 12px;
+  font-size: var(--fs-2xs);
   color: #9D8E7D;
   line-height: 1.7;
   margin-bottom: 16px;

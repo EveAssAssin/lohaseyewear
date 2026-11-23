@@ -12,13 +12,13 @@
 }
 
 .ad .cat-list { display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px; margin-top: 20px; }
-.ad .cat-loading, .ad .cat-empty { text-align: center; color: var(--lohas-mute, var(--text-muted)); padding: 60px 20px; font-size: 14px; }
+.ad .cat-loading, .ad .cat-empty { text-align: center; color: var(--lohas-mute, var(--text-muted)); padding: 60px 20px; font-size: var(--fs-sm); }
 
 /* === 主分類卡 (對齊 editor-panel) === */
 .ad .cat-block {
   background: #fff;
   border: 1px solid var(--lohas-line, var(--lohas-bd));
-  border-radius: 14px;
+  border-radius: var(--r-md);
   overflow: hidden;
   transition: box-shadow .2s, opacity .2s;
 }
@@ -35,7 +35,7 @@
 /* drag handle */
 .ad .cat-drag {
   cursor: grab; color: var(--lohas-mute, var(--text-muted));
-  padding: 4px 2px; font-size: 13px;
+  padding: 4px 2px; font-size: var(--fs-xs);
   flex-shrink: 0; transition: color .15s;
 }
 .ad .cat-drag:hover { color: var(--lohas-sub, var(--text-sub)); }
@@ -67,7 +67,7 @@
 
 .ad .cat-meta {
   font-size: 11px; color: var(--lohas-sub, var(--text-sub)); white-space: nowrap;
-  background: var(--lohas-tip, #F4EEE3); padding: 4px 11px; border-radius: 999px;
+  background: var(--lohas-tip, #F4EEE3); padding: 4px 11px; border-radius: var(--r-pill);
 }
 
 .ad .cat-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: auto; }
@@ -76,7 +76,7 @@
 .ad .cat-prompt-btn {
   height: 32px; padding: 0 13px;
   border: 1px solid var(--lohas-line, var(--lohas-bd)); background: #fff;
-  border-radius: 8px; cursor: pointer;
+  border-radius: var(--r-sm); cursor: pointer;
   color: var(--lohas-brown, var(--lohas-brand)); font-size: 12.5px; font-weight: 600;
   font-family: inherit; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
@@ -105,7 +105,7 @@
 
 .ad .cat-sub-row {
   display: flex; align-items: center; gap: 10px;
-  padding: 7px 10px; border-radius: 8px;
+  padding: 7px 10px; border-radius: var(--r-sm);
   transition: background .15s, opacity .2s, box-shadow .15s;
 }
 .ad .cat-sub-row:hover { background: var(--lohas-soft, var(--bg-cream)); }
@@ -121,7 +121,7 @@
 .ad .cat-add-sub {
   display: inline-flex; align-items: center; gap: 6px;
   background: transparent; border: 1px dashed var(--lohas-light-brown, var(--lohas-light)); color: var(--lohas-sub, var(--text-sub));
-  padding: 8px 15px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  padding: 8px 15px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 600;
   cursor: pointer; align-self: flex-start; margin-top: 8px; font-family: inherit;
   transition: all .15s;
 }
@@ -129,7 +129,7 @@
 
 @media (max-width: 720px) {
   .ad .cat-subs { padding-left: 22px; }
-  .ad .cat-name-main { max-width: 160px; font-size: 14px; }
+  .ad .cat-name-main { max-width: 160px; font-size: var(--fs-sm); }
   .ad .cat-sub-row .cat-name-input { max-width: 140px; }
   .ad .cat-meta { display: none; }
 }
@@ -153,7 +153,7 @@
   padding:18px 22px; background:var(--lohas-brand); color:#fff; flex-shrink:0;
 }
 .cpm-head h2{ font-size:15px; font-weight:600; margin:0; display:flex; align-items:center; gap:8px; letter-spacing:0.5px }
-.cpm-close{ background:transparent; border:0; color:#fff; font-size:18px; cursor:pointer; opacity:.85 }
+.cpm-close{ background:transparent; border:0; color:#fff; font-size:var(--fs-lg); cursor:pointer; opacity:.85 }
 .cpm-close:hover{ opacity:1 }
 .cpm-body{ padding:20px 22px; overflow-y:auto; flex:1 }
 .cpm-hint{
@@ -161,21 +161,21 @@
   padding:11px 14px; background:var(--bg-cream); border:1px solid var(--lohas-bd); border-radius:10px;
 }
 .cpm-route{ margin-bottom:22px }
-.cpm-route-title{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:var(--text-main); margin-bottom:12px }
-.cpm-badge{ width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff }
+.cpm-route-title{ display:flex; align-items:center; gap:8px; font-size:var(--fs-sm); font-weight:700; color:var(--text-main); margin-bottom:12px }
+.cpm-badge{ width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:var(--fs-2xs); font-weight:800; color:#fff }
 .cpm-badge.a{ background:var(--lohas-brand) }
 .cpm-badge.b{ background:var(--lohas-hover) }
 .cpm-list{ display:flex; flex-direction:column; gap:14px }
 .cpm-style{ border:1px solid var(--lohas-bd); border-radius:12px; padding:14px; background:var(--bg-cream) }
 .cpm-style-head{ display:flex; gap:10px; margin-bottom:10px }
-.cpm-name{ flex:1; padding:8px 12px; border:1px solid var(--lohas-bd); border-radius:8px; font-family:inherit; font-size:14px; font-weight:600; background:#fff }
-.cpm-style-del{ width:36px; border:1px solid #E8C9C9; background:#fff; color:#B05050; border-radius:8px; cursor:pointer }
+.cpm-name{ flex:1; padding:8px 12px; border:1px solid var(--lohas-bd); border-radius:var(--r-sm); font-family:inherit; font-size:var(--fs-sm); font-weight:600; background:#fff }
+.cpm-style-del{ width:36px; border:1px solid #E8C9C9; background:#fff; color:#B05050; border-radius:var(--r-sm); cursor:pointer }
 .cpm-style-del:hover{ background:#FBEEEE }
 .cpm-field{ margin-bottom:10px }
-.cpm-field label{ display:block; font-size:12px; font-weight:600; color:var(--text-sub); margin-bottom:4px; letter-spacing:0.3px }
+.cpm-field label{ display:block; font-size:var(--fs-2xs); font-weight:600; color:var(--text-sub); margin-bottom:4px; letter-spacing:0.3px }
 .cpm-field input, .cpm-field textarea{
   width:100%; box-sizing:border-box; padding:8px 12px; border:1px solid var(--lohas-bd);
-  border-radius:8px; font-family:inherit; font-size:13.5px; resize:vertical; background:#fff;
+  border-radius:var(--r-sm); font-family:inherit; font-size:13.5px; resize:vertical; background:#fff;
 }
 .cpm-field input:focus, .cpm-field textarea:focus{ outline:none; border-color:var(--lohas-brand) }
 .cpm-add{
@@ -184,7 +184,7 @@
 }
 .cpm-add:hover{ background:var(--bg-cream) }
 .cpm-foot{ display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid var(--lohas-bd); flex-shrink:0 }
-.cpm-btn-cancel, .cpm-btn-save{ padding:10px 24px; border-radius:9px; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600 }
+.cpm-btn-cancel, .cpm-btn-save{ padding:10px 24px; border-radius:9px; cursor:pointer; font-family:inherit; font-size:var(--fs-sm); font-weight:600 }
 .cpm-btn-cancel{ background:#fff; border:1px solid var(--lohas-bd); color:var(--text-sub) }
 .cpm-btn-cancel:hover{ background:var(--bg-cream) }
 .cpm-btn-save{ background:var(--lohas-brand); border:0; color:#fff }

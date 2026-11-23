@@ -26,13 +26,15 @@
   <link rel="stylesheet" href="css/lohas-tokens.css?v=20261123-ui">
   <link rel="stylesheet" href="css/lohas-components.css?v=20261123-ui">
   <link rel="stylesheet" href="css/upload.css?v=20260510-1720">
-  <link rel="stylesheet" href="css/admin-portal.css?v=20261123-ui">
+  <link rel="stylesheet" href="css/admin-portal.css?v=20261123-3a">
   <!-- 禮物中心加工管理與門市查刻圖共用同一組樣式與程式 -->
   <link rel="stylesheet" href="css/store-lookup.css?v=20260820-midclaim">
-  <link rel="stylesheet" href="css/admin-portal-footer.css?v=20261123-ui">
-  <link rel="stylesheet" href="css/admin-portal-pegavision.css?v=20261123-ui">
-  <link rel="stylesheet" href="css/admin-portal-categories.css?v=20261123-ui">
-  <link rel="stylesheet" href="css/admin-portal-featured-modal.css?v=20261123-ui">
+  <link rel="stylesheet" href="css/admin-portal-footer.css?v=20261123-3a">
+  <link rel="stylesheet" href="css/admin-portal-pegavision.css?v=20261123-3a">
+  <link rel="stylesheet" href="css/admin-portal-categories.css?v=20261123-3a">
+  <link rel="stylesheet" href="css/admin-portal-featured-modal.css?v=20261123-3a">
+  <!-- 原本寫在標籤上的 style="" 搬到這支(畫面零差異),必須最後載入 -->
+  <link rel="stylesheet" href="css/admin-portal-ui.css?v=20261123-3a">
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -153,7 +155,7 @@
   </div>
 
   <div class="sidebar-footer">
-    <a class="nav-link" href="member-portal.html" style="margin-bottom:12px">
+    <a class="nav-link adu-mb-12" href="member-portal.html">
       <i class="fa-solid fa-arrow-left"></i><span>回到會員區</span>
     </a>
     <div class="admin-user">
@@ -228,7 +230,7 @@
             <h3 class="dash-panel-h">優先處理 · 待審核</h3>
           </div>
           <div class="review-list">
-            <p class="empty-text" style="text-align:center;padding:40px 0;color:var(--lohas-mute);font-size:12px">載入中...</p>
+            <p class="empty-text ad-empty-sm">載入中...</p>
           </div>
         </div>
 
@@ -237,7 +239,7 @@
             <h3 class="dash-panel-h">最近活動</h3>
           </div>
           <div class="activity-list" id="activityList">
-            <p class="empty-text" style="text-align:center;padding:40px 0;color:var(--lohas-mute);font-size:12px">載入中...</p>
+            <p class="empty-text ad-empty-sm">載入中...</p>
           </div>
         </div>
       </div>
@@ -270,13 +272,13 @@
       <!-- 批次通過(2026-10-22)。只在「待審核」顯示;由 js/admin-portal.js 的 bindDesignBulk 控制。
            每一件做的事與單件「完成審核」相同:ERP 建檔 → 上架 → 通知。 -->
       <div id="reviewDesignsBulk"
-           style="display:none;align-items:center;gap:14px;flex-wrap:wrap;background:#FAF7F2;border:1px solid var(--lohas-line);border-radius:10px;padding:10px 14px;margin:0 0 14px">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
-          <input type="checkbox" id="rdSelectAll" style="width:16px;height:16px"> 全選
+           class="ad-bulkbar" style="display:none">
+        <label class="ad-checklabel" style="display:flex">
+          <input type="checkbox" id="rdSelectAll" class="adu-w-16 adu-h-16"> 全選
         </label>
-        <span id="rdSelCount" style="font-size:13px;color:var(--lohas-mute)">已選 0 件</span>
-        <span style="flex:1"></span>
-        <span style="font-size:12px;color:var(--lohas-mute)">售價沿用作品原價,沒有則 $1000;名稱、分類照客人填的</span>
+        <span id="rdSelCount" class="adu-fs-13 adu-c-mute">已選 0 件</span>
+        <span class="adu-flex-1"></span>
+        <span class="adu-fs-12 adu-c-mute">售價沿用作品原價,沒有則 $1000;名稱、分類照客人填的</span>
         <button type="button" class="action-btn-solid" id="rdBulkApprove" disabled>
           <i class="fa-solid fa-check-double"></i><span>一次通過</span>
         </button>
@@ -284,7 +286,7 @@
 
       <div class="review-grid">
         <div class="rcard">
-          <div class="rcard-img"><span class="rcard-pill"><i class="fa-solid fa-star" style="color:#9D7E3F"></i>Creator</span>想 你 想 到 睡 不 著</div>
+          <div class="rcard-img"><span class="rcard-pill"><i class="fa-solid fa-star adu-c-gold"></i>Creator</span>想 你 想 到 睡 不 著</div>
           <div class="rcard-info">
             <div class="rcard-title">想你想到睡不著</div>
             <div class="rcard-by">by <b>EMO Bonnie</b> <span class="role-pill creator"><i class="fa-solid fa-star"></i>Creator</span></div>
@@ -298,7 +300,7 @@
           </div>
         </div>
         <div class="rcard">
-          <div class="rcard-img g2"><span class="rcard-pill"><i class="fa-solid fa-crown" style="color:#9D7E3F"></i>Collab</span>D I N U 狗 狗</div>
+          <div class="rcard-img g2"><span class="rcard-pill"><i class="fa-solid fa-crown adu-c-gold"></i>Collab</span>D I N U 狗 狗</div>
           <div class="rcard-info">
             <div class="rcard-title">DINU 狗狗</div>
             <div class="rcard-by">by <b>DTTO FRIENDS</b> <span class="role-pill ip"><i class="fa-solid fa-crown"></i>Collab</span></div>
@@ -339,7 +341,7 @@
 
       <!-- 篩選列 (對齊創作者管理) -->
       <div class="filter-row">
-        <input class="editor-input" id="newsSearchInput" placeholder="搜尋標題 / Slug..." style="max-width:280px"/>
+        <input class="editor-input adu-mw-280" id="newsSearchInput" placeholder="搜尋標題 / Slug..."/>
         <div class="filter-group">
           <label>狀態</label>
           <select id="newsFilterStatus">
@@ -368,7 +370,7 @@
 
       <!-- 列表 (用 creator-card 樣式) -->
       <div class="creators-list" id="newsList">
-        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
+        <p class="empty-text ad-empty-lg">載入中...</p>
       </div>
     </div>
 
@@ -390,7 +392,7 @@
 
             <div class="editor-row">
               <label class="editor-label">Slug (URL ID,系統自動生成)</label>
-              <input type="text" class="editor-input" id="news_slug" placeholder="儲存後自動產生" readonly style="background:#f0ebe2;color:#888;cursor:not-allowed" />
+              <input type="text" class="editor-input ad-input-locked" id="news_slug" placeholder="儲存後自動產生" readonly />
               <p class="editor-hint">前台連結將是 news-detail.html?id=<span id="news_slug_preview">xxx</span></p>
             </div>
 
@@ -405,7 +407,7 @@
                   <option value="published">發布(依下方發布時間)</option>
                   <option value="archived">已下架</option>
                 </select>
-                <p class="editor-hint" id="news_status_result" style="font-weight:600"></p>
+                <p class="editor-hint adu-fw-600" id="news_status_result"></p>
               </div>
               <div class="editor-row">
                 <label class="editor-label">分類<span class="req">*</span></label>
@@ -461,7 +463,7 @@
           <!-- 首頁曝光 -->
           <div class="editor-panel">
             <div class="editor-panel-head">
-              <h3 class="editor-panel-title" style="margin:0">首頁曝光 (首頁輪播小卡)</h3>
+              <h3 class="editor-panel-title adu-m-0">首頁曝光 (首頁輪播小卡)</h3>
             </div>
 
             <div class="editor-row-2col">
@@ -490,10 +492,10 @@
 
             <div class="editor-row">
               <label class="editor-label">
-                <input type="checkbox" id="news_homepage_text_hidden" style="margin-right:6px;vertical-align:middle"/>
+                <input type="checkbox" id="news_homepage_text_hidden" class="adu-mr-6 adu-va-mid"/>
                 電腦版隱藏首頁卡片上的文字與按鈕(只顯示圖片)
               </label>
-              <p class="editor-hint" style="margin-left:24px">勾選後,首頁輪播小卡在「電腦版」只會顯示大圖,不顯示 Tag / 副標 / VIEW MORE 按鈕。手機版維持顯示文字與按鈕。</p>
+              <p class="editor-hint adu-ml-24">勾選後,首頁輪播小卡在「電腦版」只會顯示大圖,不顯示 Tag / 副標 / VIEW MORE 按鈕。手機版維持顯示文字與按鈕。</p>
             </div>
 
             <div class="editor-row-2col">
@@ -516,20 +518,20 @@
           <!-- CTA 按鈕管理 (顯示在文章底部) -->
           <div class="editor-panel">
             <h3 class="editor-panel-title">文章底部 CTA 按鈕</h3>
-            <p class="editor-hint" style="margin:-4px 0 12px">顯示在分享按鈕下方的「想親自看看刻圖效果?」區塊,可選 0~2 個。自訂按鈕在下面「內文」之後設定。</p>
+            <p class="editor-hint adu-m-n4-0-12">顯示在分享按鈕下方的「想親自看看刻圖效果?」區塊,可選 0~2 個。自訂按鈕在下面「內文」之後設定。</p>
             <div class="editor-row">
               <label class="editor-label">
-                <input type="checkbox" id="news_cta_store" checked style="margin-right:6px;vertical-align:middle"/>
+                <input type="checkbox" id="news_cta_store" checked class="adu-mr-6 adu-va-mid"/>
                 門市預約
               </label>
-              <p class="editor-hint" style="margin-left:24px">連結:allstore.html</p>
+              <p class="editor-hint adu-ml-24">連結:allstore.html</p>
             </div>
             <div class="editor-row">
               <label class="editor-label">
-                <input type="checkbox" id="news_cta_student" style="margin-right:6px;vertical-align:middle"/>
+                <input type="checkbox" id="news_cta_student" class="adu-mr-6 adu-va-mid"/>
                 學生預約
               </label>
-              <p class="editor-hint" style="margin-left:24px">連結:https://student.lohasglasses.com/</p>
+              <p class="editor-hint adu-ml-24">連結:https://student.lohasglasses.com/</p>
             </div>
           </div>
 
@@ -546,13 +548,13 @@
           <!-- 內文下方的自訂按鈕(文章頁緊接在內文下面,所以編輯器也放在內文之後) -->
           <div class="editor-panel">
             <h3 class="editor-panel-title">內文下方的自訂按鈕</h3>
-            <p class="editor-hint" style="margin:-4px 0 12px">按鈕會緊接在文章內文下面。自己填按鈕文字和連結。</p>
+            <p class="editor-hint adu-m-n4-0-12">按鈕會緊接在文章內文下面。自己填按鈕文字和連結。</p>
             <!-- 自訂按鈕(2026-10-06):存在同一個 cta_buttons 陣列,每顆一段 JSON 文字。
                  讀寫邏輯在 admin-portal.js 的 newsCta*,文章頁在 news-detail.js 的 renderCta。 -->
             <div class="editor-row">
               <label class="editor-label">自訂按鈕</label>
-              <div id="news_cta_custom_list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
-              <button type="button" class="btn" id="news_cta_custom_add" style="align-self:flex-start">＋ 新增自訂按鈕</button>
+              <div id="news_cta_custom_list" class="adu-dir-col adu-gap-8 adu-mb-8" style="display:flex"></div>
+              <button type="button" class="btn adu-as-start" id="news_cta_custom_add">＋ 新增自訂按鈕</button>
               <p class="editor-hint">最多 3 顆。按鈕文字最多 20 字;連結填站內頁面(例:cloth.html)或完整網址(https://…),也可用 tel: / mailto:。</p>
             </div>
           </div>
@@ -560,7 +562,7 @@
         </div>
 
         <div class="ag-modal-footer">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div class="adu-gap-8 adu-wrap adu-ai-c" style="display:flex">
             <button class="action-btn-solid" id="newsSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
             <button class="btn" id="newsCancelBtn">關閉</button>
             <div class="spacer"></div>
@@ -579,7 +581,7 @@
           <h1 class="page-title">會員列表</h1>
           <div class="page-sub">所有註冊會員,可篩選身份、停權帳號、手動升級為 Creator</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+        <div class="adu-gap-8 adu-ai-c adu-ml-auto" style="display:flex">
           <button class="action-btn-solid" id="usersAddBtn" type="button">
             <i class="fa-solid fa-user-plus"></i>新增 / 升級會員
           </button>
@@ -672,11 +674,11 @@
         <table class="users-table" id="usersTable">
           <thead>
             <tr>
-              <th style="width:36%">會員</th>
+              <th class="adu-w-36p">會員</th>
               <th>身份</th>
               <th>狀態</th>
               <th>累積上傳</th>
-              <th style="text-align:right;width:24%">操作</th>
+              <th class="adu-ta-r adu-w-24p">操作</th>
             </tr>
           </thead>
           <tbody id="usersTbody">
@@ -688,7 +690,7 @@
 
     <!-- ============= 新增 / 升級會員 Modal ============= -->
     <div class="ag-modal-overlay" id="userAddModal" style="display:none">
-      <div class="ag-modal" style="max-width:520px">
+      <div class="ag-modal adu-mw-520">
         <div class="ag-modal-header">
           <h2 class="ag-modal-title">查詢會員 / 升級身份</h2>
           <button class="ag-modal-close" id="userAddClose" type="button" aria-label="關閉">
@@ -696,40 +698,40 @@
           </button>
         </div>
 
-        <div class="ag-modal-body" style="padding:24px">
+        <div class="ag-modal-body adu-p-24">
 
-          <p style="color:#7A6B5C;font-size:13px;line-height:1.7;margin-bottom:20px">
+          <p class="ad-m-lead">
             輸入會員手機號碼或會員編號搜尋,從樂活 ERP 取得會員資料後,可選擇加入會員列表或升級為 Creator。
           </p>
 
           <!-- 搜尋區 -->
-          <div style="margin-bottom:18px">
-            <label class="editor-label" style="display:block;margin-bottom:6px">會員手機號碼</label>
-            <div style="display:flex;gap:8px">
-              <input type="tel" class="editor-input" id="uam_mobile" placeholder="例:0910768736" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff" />
-              <button type="button" id="uam_searchBtn" style="height:40px;padding:0 18px;background:#50422D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;letter-spacing:1px">
+          <div class="adu-mb-18">
+            <label class="editor-label adu-mb-6" style="display:block">會員手機號碼</label>
+            <div class="adu-gap-8" style="display:flex">
+              <input type="tel" class="editor-input ad-m-input" id="uam_mobile" placeholder="例:0910768736" autocomplete="off" />
+              <button type="button" id="uam_searchBtn" class="ad-m-btn-search">
                 <i class="fa-solid fa-magnifying-glass"></i> 查詢
               </button>
             </div>
           </div>
 
           <!-- 或用會員編號 -->
-          <div style="margin-bottom:18px">
-            <label class="editor-label" style="display:block;margin-bottom:6px">或用 會員編號 (ERP ID)</label>
-            <div style="display:flex;gap:8px">
-              <input type="text" class="editor-input" id="uam_erpid" placeholder="例:28211088" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff;font-family:monospace" />
-              <button type="button" id="uam_searchErpBtn" style="height:40px;padding:0 18px;background:#50422D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;letter-spacing:1px">
+          <div class="adu-mb-18">
+            <label class="editor-label adu-mb-6" style="display:block">或用 會員編號 (ERP ID)</label>
+            <div class="adu-gap-8" style="display:flex">
+              <input type="text" class="editor-input ad-m-input adu-mono" id="uam_erpid" placeholder="例:28211088" autocomplete="off" />
+              <button type="button" id="uam_searchErpBtn" class="ad-m-btn-search">
                 <i class="fa-solid fa-magnifying-glass"></i> 查詢
               </button>
             </div>
           </div>
 
           <!-- 或用名字 -->
-          <div style="margin-bottom:18px">
-            <label class="editor-label" style="display:block;margin-bottom:6px">或用 會員名字</label>
-            <div style="display:flex;gap:8px">
-              <input type="text" class="editor-input" id="uam_name" placeholder="例:王小明 (支援部分字串模糊比對)" autocomplete="off" style="flex:1;height:40px;padding:8px 12px;border:1px solid #D8CCB9;border-radius:6px;font-size:14px;background:#fff" />
-              <button type="button" id="uam_searchNameBtn" style="height:40px;padding:0 18px;background:#50422D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;letter-spacing:1px">
+          <div class="adu-mb-18">
+            <label class="editor-label adu-mb-6" style="display:block">或用 會員名字</label>
+            <div class="adu-gap-8" style="display:flex">
+              <input type="text" class="editor-input ad-m-input" id="uam_name" placeholder="例:王小明 (支援部分字串模糊比對)" autocomplete="off" />
+              <button type="button" id="uam_searchNameBtn" class="ad-m-btn-search">
                 <i class="fa-solid fa-magnifying-glass"></i> 查詢
               </button>
             </div>
@@ -737,20 +739,20 @@
 
           <!-- 查詢結果區 -->
           <div id="uam_result" style="display:none">
-            <div style="padding:14px 16px;background:#FAF7F2;border:1px solid #E8DED1;border-radius:8px;margin-bottom:18px">
-              <div style="font-size:16px;font-weight:600;color:#50422D;margin-bottom:6px" id="uam_resultName">—</div>
-              <div style="font-size:12px;color:#7A6B5C;margin-bottom:2px">手機:<span id="uam_resultMobile">—</span></div>
-              <div style="font-size:12px;color:#7A6B5C">ERP ID:<span id="uam_resultErpid" style="font-family:monospace">—</span></div>
+            <div class="ad-m-result">
+              <div class="ad-m-result-name" id="uam_resultName">—</div>
+              <div class="ad-m-meta adu-mb-2">手機:<span id="uam_resultMobile">—</span></div>
+              <div class="ad-m-meta">ERP ID:<span id="uam_resultErpid" class="adu-mono">—</span></div>
             </div>
 
             <!-- 升級選項 -->
-            <label class="editor-label" style="display:block;margin-bottom:8px">設定身份</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;flex:1">
+            <label class="editor-label adu-mb-8" style="display:block">設定身份</label>
+            <div class="adu-gap-8 adu-wrap" style="display:flex">
+              <label class="ad-m-option" style="display:flex">
                 <input type="radio" name="uam_role" value="member" checked>
                 <span>加入會員列表</span>
               </label>
-              <label style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;flex:1">
+              <label class="ad-m-option" style="display:flex">
                 <input type="radio" name="uam_role" value="creator">
                 <span>⭐ 升級為 Creator</span>
               </label>
@@ -758,13 +760,13 @@
           </div>
 
           <!-- 錯誤訊息 -->
-          <div id="uam_error" style="display:none;margin-top:14px;padding:10px 14px;background:#FDEDE8;border-left:3px solid #A04030;border-radius:4px;color:#A04030;font-size:13px"></div>
+          <div id="uam_error" class="ad-m-error" style="display:none"></div>
 
         </div>
 
-        <div class="ag-modal-footer" style="padding:16px 24px;border-top:1px solid #E8DED1;display:flex;gap:8px;justify-content:flex-end">
-          <button type="button" id="uam_cancelBtn" style="padding:9px 18px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;color:#50422D">取消</button>
-          <button type="button" id="uam_saveBtn" disabled style="padding:9px 18px;background:#9D7E3F;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;opacity:0.5">
+        <div class="ag-modal-footer ad-m-footer" style="display:flex">
+          <button type="button" id="uam_cancelBtn" class="ad-m-btn-ghost">取消</button>
+          <button type="button" id="uam_saveBtn" disabled class="ad-m-btn-gold">
             <i class="fa-solid fa-check"></i> 確認加入
           </button>
         </div>
@@ -773,7 +775,7 @@
 
     <!-- ============= 查看會員 Modal ============= -->
     <div class="ag-modal-overlay" id="userViewModal" style="display:none">
-      <div class="ag-modal" style="max-width:520px">
+      <div class="ag-modal adu-mw-520">
         <div class="ag-modal-header">
           <h2 class="ag-modal-title">會員詳細資料</h2>
           <button class="ag-modal-close" id="userViewClose" type="button" aria-label="關閉">
@@ -781,17 +783,17 @@
           </button>
         </div>
 
-        <div class="ag-modal-body" style="padding:24px" id="uvm_body">
-          <div id="uvm_loading" style="text-align:center;padding:30px;color:#7A6B5C">
+        <div class="ag-modal-body adu-p-24" id="uvm_body">
+          <div id="uvm_loading" class="ad-m-loading">
             <i class="fa-solid fa-spinner fa-spin"></i> 載入中...
           </div>
 
           <div id="uvm_content" style="display:none">
             <!-- 基本資料 -->
-            <div style="padding:18px;background:#FAF7F2;border:1px solid #E8DED1;border-radius:8px;margin-bottom:18px">
-              <div style="font-size:20px;font-weight:600;color:#50422D;margin-bottom:8px" id="uvm_name">—</div>
-              <div style="display:grid;grid-template-columns:60px 1fr;gap:6px 12px;font-size:13px;color:#7A6B5C">
-                <div>ERP ID</div><div style="font-family:monospace" id="uvm_erpid">—</div>
+            <div class="ad-m-profile">
+              <div class="ad-m-profile-name" id="uvm_name">—</div>
+              <div class="ad-m-kv" style="display:grid">
+                <div>ERP ID</div><div class="adu-mono" id="uvm_erpid">—</div>
                 <div>手機</div><div id="uvm_mobile">—</div>
                 <div>Email</div><div id="uvm_email">—</div>
                 <div>生日</div><div id="uvm_birthday">—</div>
@@ -799,36 +801,36 @@
             </div>
 
             <!-- 身份 / 狀態 -->
-            <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+            <div class="adu-gap-8 adu-mb-18 adu-wrap" style="display:flex">
               <div id="uvm_role">—</div>
               <div id="uvm_status">—</div>
             </div>
 
             <!-- 統計 -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-              <div style="padding:12px;background:#fff;border:1px solid #E8DED1;border-radius:6px;text-align:center">
-                <div style="font-size:24px;font-weight:600;color:#50422D" id="uvm_photoCount">0</div>
-                <div style="font-size:12px;color:#7A6B5C">上傳照片</div>
+            <div class="ad-m-stats" style="display:grid">
+              <div class="ad-m-stat">
+                <div class="ad-m-stat-num" id="uvm_photoCount">0</div>
+                <div class="ad-m-meta">上傳照片</div>
               </div>
-              <div style="padding:12px;background:#fff;border:1px solid #E8DED1;border-radius:6px;text-align:center">
-                <div style="font-size:24px;font-weight:600;color:#50422D" id="uvm_designCount">0</div>
-                <div style="font-size:12px;color:#7A6B5C">刻圖設計</div>
+              <div class="ad-m-stat">
+                <div class="ad-m-stat-num" id="uvm_designCount">0</div>
+                <div class="ad-m-meta">刻圖設計</div>
               </div>
             </div>
 
             <!-- 創作者頁連結 -->
             <div id="uvm_creatorLinkBlock" style="display:none">
-              <a id="uvm_creatorLink" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;text-decoration:none;color:#50422D;font-size:13px">
+              <a id="uvm_creatorLink" target="_blank" rel="noopener" class="ad-m-link" style="display:inline-flex">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟創作者個人頁
               </a>
             </div>
           </div>
 
-          <div id="uvm_error" style="display:none;margin-top:14px;padding:10px 14px;background:#FDEDE8;border-left:3px solid #A04030;border-radius:4px;color:#A04030;font-size:13px"></div>
+          <div id="uvm_error" class="ad-m-error" style="display:none"></div>
         </div>
 
-        <div class="ag-modal-footer" style="padding:16px 24px;border-top:1px solid #E8DED1;display:flex;gap:8px;justify-content:flex-end">
-          <button type="button" id="uvm_closeBtn" style="padding:9px 18px;background:#fff;border:1px solid #D8CCB9;border-radius:6px;cursor:pointer;font-size:13px;color:#50422D">關閉</button>
+        <div class="ag-modal-footer ad-m-footer" style="display:flex">
+          <button type="button" id="uvm_closeBtn" class="ad-m-btn-ghost">關閉</button>
         </div>
       </div>
     </div>
@@ -888,7 +890,7 @@
           <option value="photo">只有照片</option>
           <option value="story">有故事 (≥50字)</option>
         </select>
-        <label style="margin-left:14px">狀態</label>
+        <label class="adu-ml-14">狀態</label>
         <select id="reviewUploadsStatus">
           <option value="pending">待審核</option>
           <option value="rejected">已駁回</option>
@@ -897,7 +899,7 @@
       </div>
 
       <div class="review-grid" id="reviewUploadsGrid">
-        <div class="empty-page" style="grid-column:1/-1">
+        <div class="empty-page adu-gc-full">
           <i class="fa-regular fa-image"></i>
           <div class="empty-page-title">載入中...</div>
         </div>
@@ -912,7 +914,7 @@
       </div>
 
       <!-- 5 個位置 tab -->
-      <div class="banner-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin:18px 0;border-bottom:1px solid var(--lohas-line);padding-bottom:0">
+      <div class="banner-tabs ad-tabbar" style="display:flex">
         <button class="banner-tab on" data-pos="home_main">
           <i class="fa-solid fa-bullhorn"></i>首頁主打
           <span class="badge">輪播</span>
@@ -932,7 +934,7 @@
       </div>
 
       <!-- 當前位置 banner 列表 + 新增按鈕 -->
-      <div id="bannerListWrap" style="margin-top:14px"></div>
+      <div id="bannerListWrap" class="adu-mt-14"></div>
 
       <!-- Banner 編輯 Modal (採最新消息 modal 樣式) -->
       <div class="ag-modal-overlay" id="bannerEditModal" style="display:none">
@@ -995,14 +997,14 @@
                   <input type="checkbox" id="bmSchedOn">
                   設定上架時間(到時間自動顯示、自動下架)
                 </label>
-                <div id="bmSchedFields" hidden style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
-                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--lohas-mute)">
+                <div id="bmSchedFields" hidden class="adu-gap-14 adu-wrap adu-mt-10" style="display:flex">
+                  <label class="ad-field-sm" style="display:flex">
                     開始時間
-                    <input type="datetime-local" class="editor-input" id="bmStartAt" style="max-width:240px">
+                    <input type="datetime-local" class="editor-input adu-mw-240" id="bmStartAt">
                   </label>
-                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--lohas-mute)">
+                  <label class="ad-field-sm" style="display:flex">
                     結束時間
-                    <input type="datetime-local" class="editor-input" id="bmEndAt" style="max-width:240px">
+                    <input type="datetime-local" class="editor-input adu-mw-240" id="bmEndAt">
                   </label>
                 </div>
                 <p class="editor-hint" id="bmSchedHint" hidden>
@@ -1013,7 +1015,7 @@
 
               <div class="editor-row" id="bmSortRow" style="display:none">
                 <label class="editor-label">輪播順序</label>
-                <input type="number" class="editor-input" id="bmSortOrder" placeholder="0" style="max-width:160px"/>
+                <input type="number" class="editor-input adu-mw-160" id="bmSortOrder" placeholder="0"/>
                 <p class="editor-hint">數字越小越前面</p>
               </div>
             </div>
@@ -1059,7 +1061,7 @@
 
               <div class="editor-row">
                 <label class="editor-label">按鈕文字</label>
-                <input type="text" class="editor-input" id="bmCtaText" placeholder="例如:立即預訂" style="max-width:340px"/>
+                <input type="text" class="editor-input adu-mw-340" id="bmCtaText" placeholder="例如:立即預訂"/>
                 <p class="editor-hint">留空就不顯示按鈕。按鈕要連到哪裡,填在上面的「Banner 連結」。</p>
               </div>
             </div>
@@ -1067,7 +1069,7 @@
 
           <!-- footer (固定底部) -->
           <div class="ag-modal-footer">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div class="adu-gap-8 adu-wrap adu-ai-c" style="display:flex">
               <button class="action-btn-solid" id="bmSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
               <button class="btn" id="bmCancelBtn">關閉</button>
               <div class="spacer"></div>
@@ -1075,7 +1077,7 @@
                 <i class="fa-solid fa-trash"></i>刪除 Banner
               </button>
             </div>
-            <div class="form-hint" id="bmHint" style="width:100%;margin-top:8px;text-align:right"></div>
+            <div class="form-hint ad-hint-right" id="bmHint"></div>
           </div>
         </div>
       </div>
@@ -1090,7 +1092,7 @@
       </div>
 
       <div class="filter-row">
-        <input class="editor-input" id="creatorsSearchInput" placeholder="搜尋名稱 / member_id..." style="max-width:280px"/>
+        <input class="editor-input adu-mw-280" id="creatorsSearchInput" placeholder="搜尋名稱 / member_id..."/>
         <div class="filter-group">
           <label>類型</label>
           <select id="creatorsFilterType">
@@ -1112,7 +1114,7 @@
       </div>
 
       <div id="creatorsList">
-        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
+        <p class="empty-text ad-empty-lg">載入中...</p>
       </div>
     </div>
 
@@ -1177,18 +1179,18 @@
         </div>
       </div>
 
-      <div style="max-width:720px;display:flex;flex-direction:column;gap:12px">
+      <div class="adu-mw-720 adu-dir-col adu-gap-12" style="display:flex">
         <div id="clothShareCurrent" class="page-sub"></div>
         <label class="pega-admin-label" for="clothShareInput">Threads 活動貼文網址</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input class="editor-input" id="clothShareInput" style="flex:1;min-width:260px"
+        <div class="adu-gap-8 adu-wrap" style="display:flex">
+          <input class="editor-input adu-flex-1 adu-minw-260" id="clothShareInput"
                  placeholder="https://www.threads.com/@lohas_eyewears/post/貼文代碼">
           <a class="btn" id="clothShareTest" target="_blank" rel="noopener">
             <i class="fa-solid fa-arrow-up-right-from-square"></i> 打開看看
           </a>
         </div>
-        <p id="clothShareMsg" style="margin:0;font-size:13px;line-height:1.6"></p>
-        <div class="pega-admin-hint" style="line-height:1.7">
+        <p id="clothShareMsg" class="adu-m-0 adu-fs-13 adu-lh-1_6"></p>
+        <div class="pega-admin-hint adu-lh-1_7">
           ⚠ 要貼貼文的<b>完整網址</b>,不要貼「分享」按出來的短連結(threads.com/share/…)——
           客人手機有裝 Threads 時,短連結常常只會打開 App 首頁,找不到那篇貼文。<br>
           取得完整網址:用<b>電腦瀏覽器</b>打開短連結,等網址列變成
@@ -1236,7 +1238,7 @@
 
       <!-- 篩選列 (對齊最新消息 / 創作者管理) -->
       <div class="filter-row">
-        <input class="editor-input" id="clothSearch" placeholder="搜尋會員編號 / 姓名..." style="max-width:280px"/>
+        <input class="editor-input adu-mw-280" id="clothSearch" placeholder="搜尋會員編號 / 姓名..."/>
         <div class="filter-group">
           <label>狀態</label>
           <select id="clothStatus">
@@ -1279,7 +1281,7 @@
       </div>
 
       <div class="filter-row">
-        <input class="editor-input" id="clothCaseSearch" placeholder="搜尋會員編號 / 姓名..." style="max-width:280px"/>
+        <input class="editor-input adu-mw-280" id="clothCaseSearch" placeholder="搜尋會員編號 / 姓名..."/>
         <div class="filter-group">
           <label>狀態</label>
           <select id="clothCaseStatus">
@@ -1349,7 +1351,7 @@
 
       <!-- 篩選列 (對齊創作者管理) -->
       <div class="filter-row">
-        <input class="editor-input" id="collabSearchInput" placeholder="搜尋品牌名 / Slug..." style="max-width:280px"/>
+        <input class="editor-input adu-mw-280" id="collabSearchInput" placeholder="搜尋品牌名 / Slug..."/>
         <div class="filter-group">
           <label>狀態</label>
           <select id="collabFilterStatus">
@@ -1376,7 +1378,7 @@
 
       <!-- 列表 (用 creator-card 樣式) -->
       <div class="creators-list" id="collabList">
-        <p class="empty-text" style="text-align:center;padding:60px;color:var(--lohas-mute)">載入中...</p>
+        <p class="empty-text ad-empty-lg">載入中...</p>
       </div>
     </div>
 
@@ -1385,7 +1387,7 @@
       <div class="ag-modal">
         <div class="ag-modal-header">
           <h2 class="ag-modal-title" id="collabModalTitle">編輯聯名</h2>
-          <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+          <div class="adu-gap-8 adu-ai-c adu-ml-auto" style="display:flex">
             <button class="btn" id="collabApplyTemplateBtn" type="button" style="display:none">
               <i class="fa-solid fa-wand-magic-sparkles"></i> 快速套公版
             </button>
@@ -1403,7 +1405,7 @@
 
             <div class="editor-row">
               <label class="editor-label">Slug (URL ID,系統自動生成)</label>
-              <input type="text" class="editor-input" id="cm_slug" placeholder="儲存後自動產生" readonly style="background:#f0ebe2;color:#888;cursor:not-allowed" />
+              <input type="text" class="editor-input ad-input-locked" id="cm_slug" placeholder="儲存後自動產生" readonly />
               <p class="editor-hint">前台連結將是 collab.html?id=<span id="cm_slug_preview">xxx</span></p>
             </div>
 
@@ -1459,7 +1461,7 @@
             <div class="editor-row">
               <label class="editor-label">主視覺大圖</label>
               <div class="img-upload-wrap" data-field="hero_image_url" data-aspect="4:3">
-                <div class="img-upload-preview" id="cm_hero_image_preview" style="aspect-ratio:4/3">
+                <div class="img-upload-preview adu-ar-4-3" id="cm_hero_image_preview">
                   <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
@@ -1640,7 +1642,7 @@
             <div class="editor-row">
               <label class="editor-label">套餐合照 (全家福)</label>
               <div class="img-upload-wrap" data-field="packages_group_photo_url" data-aspect="16:9">
-                <div class="img-upload-preview" id="cm_packages_group_photo_preview" style="aspect-ratio:16/9">
+                <div class="img-upload-preview adu-ar-16-9" id="cm_packages_group_photo_preview">
                   <span class="img-upload-placeholder"><i class="fa-solid fa-image"></i> 點擊上傳</span>
                 </div>
                 <input type="file" accept="image/*" class="img-upload-input">
@@ -1673,7 +1675,7 @@
         </div>
 
         <div class="ag-modal-footer">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div class="adu-gap-8 adu-wrap adu-ai-c" style="display:flex">
             <button class="action-btn-solid" id="collabSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>儲存</span></button>
             <button class="btn" id="collabCancelBtn">關閉</button>
             <div class="spacer"></div>
@@ -1773,13 +1775,13 @@
 
         <div class="form-row">
           <label></label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="adu-gap-8 adu-wrap" style="display:flex">
             <button class="btn primary" id="adminUploadSubmit">
               <i class="fa-solid fa-upload"></i>上傳並自動通過
             </button>
             <button class="btn" id="adminUploadReset">清空</button>
           </div>
-          <div class="form-hint" id="adminUploadHint" style="margin-top:10px"></div>
+          <div class="form-hint adu-mt-10" id="adminUploadHint"></div>
         </div>
       </div>
     </div>
@@ -1878,7 +1880,7 @@
           </div>
           <div class="md-form-row">
             <label>故事內容</label>
-            <textarea id="msEditStory" rows="4" maxlength="500" style="width:100%;padding:10px 12px;background:#FAF7F2;border:1px solid var(--lohas-line);border-radius:8px;font-size:13px;color:var(--lohas-text);font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+            <textarea id="msEditStory" rows="4" maxlength="500" class="ad-textarea-soft"></textarea>
           </div>
           <div class="md-form-row">
             <label>主題</label>
@@ -1974,7 +1976,7 @@
           </div>
           <div class="md-form-row">
             <label>會員 erpid(分潤收款人,唯讀)</label>
-            <input type="text" id="mdEditCreator" readonly placeholder="未綁定" style="background:#f3f0eb;color:#6F665D;cursor:not-allowed">
+            <input type="text" id="mdEditCreator" readonly placeholder="未綁定" class="ad-input-readonly">
           </div>
           <div class="md-form-row">
             <label>售價(元)</label>
@@ -2003,7 +2005,7 @@
           <h3 class="editor-panel-h"><i class="fa-regular fa-id-badge"></i>基本資訊</h3>
           <div class="editor-row">
             <div class="editor-label">頭像</div>
-            <div style="display:flex;align-items:center;gap:14px">
+            <div class="adu-ai-c adu-gap-14" style="display:flex">
               <div class="creator-avatar-wrap">
                 <div class="ed-avatar" id="agAvatar">LO</div>
                 <button class="ed-avatar-camera" id="agAvatarUploadBtn" type="button" aria-label="更換頭像">
@@ -2011,7 +2013,7 @@
                 </button>
                 <input type="file" id="agAvatarInput" class="visually-hidden" accept="image/*">
               </div>
-              <p class="editor-hint" style="margin:0">建議比例 1:1 · 建議尺寸 400 × 400 px</p>
+              <p class="editor-hint adu-m-0">建議比例 1:1 · 建議尺寸 400 × 400 px</p>
             </div>
           </div>
           <div class="editor-row">
@@ -2022,7 +2024,7 @@
             <div class="editor-label">短標籤</div>
             <div>
               <input class="editor-input" id="agTagline" placeholder="例如:插畫家 / 平面設計師 / 工作室"/>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在名字下方</div>
+              <div class="ad-note">顯示在名字下方</div>
             </div>
           </div>
           <div class="editor-row">
@@ -2035,7 +2037,7 @@
           <h3 class="editor-panel-h"><i class="fa-regular fa-heart"></i>我的刻圖故事</h3>
           <div class="editor-row">
             <div class="editor-label">我的故事照片</div>
-            <div class="img-upload-wrap" data-field="joining_photo" data-aspect="4:5" id="agJoiningPhotoWrap" style="max-width:200px">
+            <div class="img-upload-wrap adu-mw-200" data-field="joining_photo" data-aspect="4:5" id="agJoiningPhotoWrap">
               <div class="img-upload-preview" id="agJoiningPhotoPreview">
                 <span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>
               </div>
@@ -2050,8 +2052,8 @@
           <div class="editor-row">
             <div class="editor-label">故事內容</div>
             <div>
-              <textarea class="editor-area" id="agJoiningStory" placeholder="這位創作者跟樂活如何開始合作?說個小故事吧(空一行 = 段落分隔)" style="min-height:140px"></textarea>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">空一行 = 段落分隔</div>
+              <textarea class="editor-area adu-minh-140" id="agJoiningStory" placeholder="這位創作者跟樂活如何開始合作?說個小故事吧(空一行 = 段落分隔)"></textarea>
+              <div class="ad-note">空一行 = 段落分隔</div>
             </div>
           </div>
         </div>
@@ -2061,10 +2063,10 @@
             <i class="fa-regular fa-rectangle-list"></i>自訂內容區塊
           </h3>
           <div id="agCustomBlocksList">
-            <p class="empty-text" style="padding:30px 20px;font-size:12px">點下方「新增區塊」加入自訂的圖文段落</p>
+            <p class="empty-text adu-p-30-20 adu-fs-12">點下方「新增區塊」加入自訂的圖文段落</p>
           </div>
-          <div style="display:flex;justify-content:flex-end;padding:8px 4px 0">
-            <button class="btn" id="agAddCustomBlockBtn" type="button" style="font-size:12px;padding:8px 16px">
+          <div class="adu-jc-end adu-p-8-4-0" style="display:flex">
+            <button class="btn adu-fs-12 adu-p-8-16" id="agAddCustomBlockBtn" type="button">
               <i class="fa-solid fa-plus"></i>新增區塊
             </button>
           </div>
@@ -2074,7 +2076,7 @@
           <h3 class="editor-panel-h"><i class="fa-regular fa-image"></i>KOL 配鏡分享</h3>
           <div class="editor-row">
             <div class="editor-label">主圖</div>
-            <div class="img-upload-wrap" data-field="kol_main_image" data-aspect="4:5" id="agKolMainWrap" style="max-width:200px">
+            <div class="img-upload-wrap adu-mw-200" data-field="kol_main_image" data-aspect="4:5" id="agKolMainWrap">
               <div class="img-upload-preview" id="agKolMainPreview">
                 <span class="img-upload-placeholder"><i class="fa-regular fa-image"></i> 點擊上傳 (4:5)</span>
               </div>
@@ -2090,7 +2092,7 @@
             <div class="editor-label">想跟大家說的話</div>
             <div>
               <input class="editor-input" id="agEngravingQuote" placeholder="例如:第一次知道眼鏡可以雷雕客製,把心意刻進鏡片裡,變成最特別的禮物。"/>
-              <div style="font-size:11px;color:var(--lohas-mute);margin-top:4px;letter-spacing:0.3px">顯示在雷刻頁的 KOL 配鏡分享區小卡</div>
+              <div class="ad-note">顯示在雷刻頁的 KOL 配鏡分享區小卡</div>
             </div>
           </div>
         </div>
@@ -2100,7 +2102,7 @@
           <h3 class="editor-panel-h">
             <i class="fa-regular fa-images"></i>分享照片
           </h3>
-          <div style="padding:0 4px 12px;font-size:11.5px;color:var(--lohas-mute);letter-spacing:0.3px">
+          <div class="ad-note-block">
             上傳的照片會出現在創作者公開頁的「分享照片」區與分享牆,直接通過審核。
           </div>
           <div id="agPhotosList"></div>
@@ -2130,11 +2132,11 @@
           <div class="editor-row">
             <div class="editor-label">
               IG 精選貼文
-              <div style="font-size:11px;color:#9D8E7D;font-weight:400;margin-top:2px">首頁主打／曝光用</div>
+              <div class="ad-note-tan">首頁主打／曝光用</div>
             </div>
             <div>
               <input class="editor-input" id="agFeaturedIgUrl" placeholder="https://www.instagram.com/p/XXXXXXX/"/>
-              <div class="form-hint" style="margin-top:4px;font-size:11px;color:#9D8E7D">
+              <div class="form-hint ad-note-tan2">
                 當「首頁主打」或「首頁曝光」勾選時，會嵌入這則貼文。<br>
                 支援 /p/ 與 /reel/ 兩種 URL。
               </div>
@@ -2156,14 +2158,14 @@
             <div class="editor-label">Email</div>
             <div><input class="editor-input" id="agEmail" placeholder="hello@example.com"/></div>
           </div>
-          <div class="editor-row" style="padding-top:18px;margin-top:6px">
+          <div class="editor-row adu-pt-18 adu-mt-6">
             <div class="editor-label"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div class="adu-gap-8 adu-wrap" style="display:flex">
               <button class="action-btn-solid" id="agSaveBtn"><i class="fa-solid fa-floppy-disk"></i><span>建立創作者</span></button>
               <button class="btn" id="agResetBtn">清空表單</button>
               <button class="btn" id="agModalCloseBottom">關閉</button>
             </div>
-            <div class="form-hint" id="agHint" style="margin-top:10px"></div>
+            <div class="form-hint adu-mt-10" id="agHint"></div>
           </div>
         </div>
 

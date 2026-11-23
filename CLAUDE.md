@@ -926,6 +926,14 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - 成功訊息用 `LohasUI.toast(…, 'ok')`;失敗與要人看清楚的訊息用 `LohasUI.alert`。
 - 其他頁面(會員中心、`cloth-lab`、`booking-v2`…)還是原生對話框,要換的話頁面先載 `js/lohas-ui.js`。
 
+**第 3 階段 A(2026-11-23,畫面零差異)**:`admin-portal.html` 的 `style=""` 搬到 `css/admin-portal-ui.css`
+(只剩 `display` 留在標籤上 —— JS 靠它切換顯示);後台 CSS 的字級/圓角改用同值 token。
+- 新寫後台 HTML **不要再寫 `style=""`**,用 `admin-portal-ui.css` 的 `ad-*`(有名字的區塊)/ `adu-*`(單一屬性)。
+- 那支檔案的選擇器是 `.x.x.x`、而且**必須最後載入**:原本行內樣式比任何規則都優先,權重不夠就會被既有規則蓋掉。
+- 驗證方法(要再做類似的搬移時照做):改前(`git show HEAD:`)與改後各做一份「去掉 script 的靜態頁」,
+  同一個瀏覽器載入,逐一比對所有元素的 `getComputedStyle`;再另外查 `:hover/:focus` 規則 ——
+  靜態比對抓不到狀態樣式(這次就抓到 `mdEditCreator` 點進去會變白底)。
+
 ## 對外文件
 
 - `docs/串接現況.md` — 與商城共用的介面契約與現況,**公開**,雙方的工程與 AI 工具都會讀。

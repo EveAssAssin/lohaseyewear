@@ -1,0 +1,102 @@
+/* =============================================
+   後台:原本寫在 admin-portal.html 標籤上的 style="" 搬到這裡(2026-11-23,盤點報告第 3 階段 A)
+   ---------------------------------------------
+   🚨 目標是【畫面零差異】:每一條都是原本行內樣式的原值,只是換地方放。
+      改前改後逐一比對過所有元素的計算樣式,差異為 0。
+   · display 刻意留在標籤上 —— JS 靠 el.style.display 切換顯示/隱藏
+   · 選擇器寫成 .x.x.x(class 重複三次):原本行內樣式比任何 CSS 規則都優先,
+     搬出來之後要靠較高的權重 + 這支最後載入,才不會被既有規則蓋掉
+   · ad-*  = 有名字的區塊(彈窗輸入框、按鈕、提示…)
+     adu-* = 單一屬性的小工具(間距、寬度、字級…)
+   ============================================= */
+
+.adu-mb-12.adu-mb-12.adu-mb-12 { margin-bottom: 12px; }
+.ad-empty-sm.ad-empty-sm.ad-empty-sm { text-align: center; padding: 40px 0; color: var(--lohas-mute); font-size: var(--fs-2xs); }
+.ad-bulkbar.ad-bulkbar.ad-bulkbar { align-items: center; gap: 14px; flex-wrap: wrap; background: var(--bg-cream); border: 1px solid var(--lohas-line); border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; }
+.ad-checklabel.ad-checklabel.ad-checklabel { align-items: center; gap: 6px; cursor: pointer; font-size: var(--fs-xs); }
+.adu-w-16.adu-w-16.adu-w-16 { width: 16px; }
+.adu-h-16.adu-h-16.adu-h-16 { height: 16px; }
+.adu-fs-13.adu-fs-13.adu-fs-13 { font-size: var(--fs-xs); }
+.adu-c-mute.adu-c-mute.adu-c-mute { color: var(--lohas-mute); }
+.adu-flex-1.adu-flex-1.adu-flex-1 { flex: 1; }
+.adu-fs-12.adu-fs-12.adu-fs-12 { font-size: var(--fs-2xs); }
+.adu-c-gold.adu-c-gold.adu-c-gold { color: #9D7E3F; }
+.adu-mw-280.adu-mw-280.adu-mw-280 { max-width: 280px; }
+.ad-empty-lg.ad-empty-lg.ad-empty-lg { text-align: center; padding: 60px; color: var(--lohas-mute); }
+.ad-input-locked.ad-input-locked.ad-input-locked { background: #f0ebe2; color: #888; cursor: not-allowed; }
+.adu-fw-600.adu-fw-600.adu-fw-600 { font-weight: 600; }
+.adu-m-0.adu-m-0.adu-m-0 { margin: 0; }
+.adu-mr-6.adu-mr-6.adu-mr-6 { margin-right: 6px; }
+.adu-va-mid.adu-va-mid.adu-va-mid { vertical-align: middle; }
+.adu-ml-24.adu-ml-24.adu-ml-24 { margin-left: 24px; }
+.adu-m-n4-0-12.adu-m-n4-0-12.adu-m-n4-0-12 { margin: -4px 0 12px; }
+.adu-dir-col.adu-dir-col.adu-dir-col { flex-direction: column; }
+.adu-gap-8.adu-gap-8.adu-gap-8 { gap: 8px; }
+.adu-mb-8.adu-mb-8.adu-mb-8 { margin-bottom: 8px; }
+.adu-as-start.adu-as-start.adu-as-start { align-self: flex-start; }
+.adu-wrap.adu-wrap.adu-wrap { flex-wrap: wrap; }
+.adu-ai-c.adu-ai-c.adu-ai-c { align-items: center; }
+.adu-ml-auto.adu-ml-auto.adu-ml-auto { margin-left: auto; }
+.adu-w-36p.adu-w-36p.adu-w-36p { width: 36%; }
+.adu-ta-r.adu-ta-r.adu-ta-r { text-align: right; }
+.adu-w-24p.adu-w-24p.adu-w-24p { width: 24%; }
+.adu-mw-520.adu-mw-520.adu-mw-520 { max-width: 520px; }
+.adu-p-24.adu-p-24.adu-p-24 { padding: 24px; }
+.ad-m-lead.ad-m-lead.ad-m-lead { color: #7A6B5C; font-size: var(--fs-xs); line-height: 1.7; margin-bottom: 20px; }
+.adu-mb-18.adu-mb-18.adu-mb-18 { margin-bottom: 18px; }
+.adu-mb-6.adu-mb-6.adu-mb-6 { margin-bottom: 6px; }
+.ad-m-input.ad-m-input.ad-m-input { flex: 1; height: 40px; padding: 8px 12px; border: 1px solid #D8CCB9; border-radius: 6px; font-size: var(--fs-sm); background: #fff; }
+.ad-m-btn-search.ad-m-btn-search.ad-m-btn-search { height: 40px; padding: 0 18px; background: var(--lohas-brand); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: var(--fs-xs); letter-spacing: 1px; }
+.adu-mono.adu-mono.adu-mono { font-family: monospace; }
+.ad-m-result.ad-m-result.ad-m-result { padding: 14px 16px; background: var(--bg-cream); border: 1px solid var(--lohas-bd); border-radius: var(--r-sm); margin-bottom: 18px; }
+.ad-m-result-name.ad-m-result-name.ad-m-result-name { font-size: var(--fs-md); font-weight: 600; color: var(--lohas-brand); margin-bottom: 6px; }
+.ad-m-meta.ad-m-meta.ad-m-meta { font-size: var(--fs-2xs); color: #7A6B5C; }
+.adu-mb-2.adu-mb-2.adu-mb-2 { margin-bottom: 2px; }
+.ad-m-option.ad-m-option.ad-m-option { align-items: center; gap: 6px; padding: 10px 14px; background: #fff; border: 1px solid #D8CCB9; border-radius: 6px; cursor: pointer; font-size: var(--fs-xs); flex: 1; }
+.ad-m-error.ad-m-error.ad-m-error { margin-top: 14px; padding: 10px 14px; background: #FDEDE8; border-left: 3px solid #A04030; border-radius: var(--r-xs); color: #A04030; font-size: var(--fs-xs); }
+.ad-m-footer.ad-m-footer.ad-m-footer { padding: 16px 24px; border-top: 1px solid var(--lohas-bd); gap: 8px; justify-content: flex-end; }
+.ad-m-btn-ghost.ad-m-btn-ghost.ad-m-btn-ghost { padding: 9px 18px; background: #fff; border: 1px solid #D8CCB9; border-radius: 6px; cursor: pointer; font-size: var(--fs-xs); color: var(--lohas-brand); }
+.ad-m-btn-gold.ad-m-btn-gold.ad-m-btn-gold { padding: 9px 18px; background: #9D7E3F; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: var(--fs-xs); opacity: 0.5; }
+.ad-m-loading.ad-m-loading.ad-m-loading { text-align: center; padding: 30px; color: #7A6B5C; }
+.ad-m-profile.ad-m-profile.ad-m-profile { padding: 18px; background: var(--bg-cream); border: 1px solid var(--lohas-bd); border-radius: var(--r-sm); margin-bottom: 18px; }
+.ad-m-profile-name.ad-m-profile-name.ad-m-profile-name { font-size: 20px; font-weight: 600; color: var(--lohas-brand); margin-bottom: 8px; }
+.ad-m-kv.ad-m-kv.ad-m-kv { grid-template-columns: 60px 1fr; gap: 6px 12px; font-size: var(--fs-xs); color: #7A6B5C; }
+.ad-m-stats.ad-m-stats.ad-m-stats { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.ad-m-stat.ad-m-stat.ad-m-stat { padding: 12px; background: #fff; border: 1px solid var(--lohas-bd); border-radius: 6px; text-align: center; }
+.ad-m-stat-num.ad-m-stat-num.ad-m-stat-num { font-size: 24px; font-weight: 600; color: var(--lohas-brand); }
+.ad-m-link.ad-m-link.ad-m-link { align-items: center; gap: 6px; padding: 8px 14px; background: #fff; border: 1px solid #D8CCB9; border-radius: 6px; text-decoration: none; color: var(--lohas-brand); font-size: var(--fs-xs); }
+.adu-ml-14.adu-ml-14.adu-ml-14 { margin-left: 14px; }
+.adu-gc-full.adu-gc-full.adu-gc-full { grid-column: 1/-1; }
+.ad-tabbar.ad-tabbar.ad-tabbar { gap: 6px; flex-wrap: wrap; margin: 18px 0; border-bottom: 1px solid var(--lohas-line); padding-bottom: 0; }
+.adu-mt-14.adu-mt-14.adu-mt-14 { margin-top: 14px; }
+.adu-gap-14.adu-gap-14.adu-gap-14 { gap: 14px; }
+.adu-mt-10.adu-mt-10.adu-mt-10 { margin-top: 10px; }
+.ad-field-sm.ad-field-sm.ad-field-sm { flex-direction: column; gap: 4px; font-size: var(--fs-2xs); color: var(--lohas-mute); }
+.adu-mw-240.adu-mw-240.adu-mw-240 { max-width: 240px; }
+.adu-mw-160.adu-mw-160.adu-mw-160 { max-width: 160px; }
+.adu-mw-340.adu-mw-340.adu-mw-340 { max-width: 340px; }
+.ad-hint-right.ad-hint-right.ad-hint-right { width: 100%; margin-top: 8px; text-align: right; }
+.adu-mw-720.adu-mw-720.adu-mw-720 { max-width: 720px; }
+.adu-gap-12.adu-gap-12.adu-gap-12 { gap: 12px; }
+.adu-minw-260.adu-minw-260.adu-minw-260 { min-width: 260px; }
+.adu-lh-1_6.adu-lh-1_6.adu-lh-1_6 { line-height: 1.6; }
+.adu-lh-1_7.adu-lh-1_7.adu-lh-1_7 { line-height: 1.7; }
+.adu-ar-4-3.adu-ar-4-3.adu-ar-4-3 { aspect-ratio: 4/3; }
+.adu-ar-16-9.adu-ar-16-9.adu-ar-16-9 { aspect-ratio: 16/9; }
+.ad-textarea-soft.ad-textarea-soft.ad-textarea-soft { width: 100%; padding: 10px 12px; background: var(--bg-cream); border: 1px solid var(--lohas-line); border-radius: var(--r-sm); font-size: var(--fs-xs); color: var(--lohas-text); font-family: inherit; resize: vertical; box-sizing: border-box; }
+.ad-input-readonly.ad-input-readonly.ad-input-readonly { background: #f3f0eb; color: var(--text-sub); cursor: not-allowed; }
+/* 原本行內的底色連 focus 都蓋得過;admin-portal.css 的 .ad .md-form-row input:focus(權重較高)
+   會在點進去時把底色換成白色 —— 補這一條,維持「唯讀欄位點了也還是灰底」 */
+.ad-input-readonly.ad-input-readonly.ad-input-readonly:focus { background: #f3f0eb; }
+.ad-note.ad-note.ad-note { font-size: 11px; color: var(--lohas-mute); margin-top: 4px; letter-spacing: 0.3px; }
+.adu-mw-200.adu-mw-200.adu-mw-200 { max-width: 200px; }
+.adu-minh-140.adu-minh-140.adu-minh-140 { min-height: 140px; }
+.adu-p-30-20.adu-p-30-20.adu-p-30-20 { padding: 30px 20px; }
+.adu-jc-end.adu-jc-end.adu-jc-end { justify-content: flex-end; }
+.adu-p-8-4-0.adu-p-8-4-0.adu-p-8-4-0 { padding: 8px 4px 0; }
+.adu-p-8-16.adu-p-8-16.adu-p-8-16 { padding: 8px 16px; }
+.ad-note-block.ad-note-block.ad-note-block { padding: 0 4px 12px; font-size: 11.5px; color: var(--lohas-mute); letter-spacing: 0.3px; }
+.ad-note-tan.ad-note-tan.ad-note-tan { font-size: 11px; color: #9D8E7D; font-weight: 400; margin-top: 2px; }
+.ad-note-tan2.ad-note-tan2.ad-note-tan2 { margin-top: 4px; font-size: 11px; color: #9D8E7D; }
+.adu-pt-18.adu-pt-18.adu-pt-18 { padding-top: 18px; }
+.adu-mt-6.adu-mt-6.adu-mt-6 { margin-top: 6px; }
