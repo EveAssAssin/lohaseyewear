@@ -684,7 +684,9 @@ body.ye-chat-open { overflow: hidden; }
   position: absolute; top: -22px; left: 50%; z-index: 2;
   display: flex; align-items: baseline; gap: 8px; padding: 6px 18px 7px; border-radius: 12px; white-space: nowrap;
   background: #fff; color: var(--ye-red); border: 3px solid var(--ye-red-deep);
-  box-shadow: 0 5px 0 var(--ye-red-deep); transform: translateX(-50%) rotate(-3deg);
+  /* 標籤跟著卡片傾斜(不另外轉)。原本另轉 -3°,疊上卡片的 ∓2.5° 變成左歪 5.5°、右只歪 0.5°,
+     兩張看起來不一致(使用者 2026-11-23) */
+  box-shadow: 0 5px 0 var(--ye-red-deep); transform: translateX(-50%);
   font-size: 26px; font-weight: 900; line-height: 1.1; letter-spacing: 2px;
 }
 .ye-pair-tag em { font-style: normal; font-size: 15px; font-weight: 900; letter-spacing: 1px; color: var(--ye-red-deep); }
@@ -777,6 +779,23 @@ body.ye-chat-open { overflow: hidden; }
   .ye-pair-coupon small { font-size: 10px; letter-spacing: 1px; }
   .ye-pair-coupon b { font-size: 20px; }
   .ye-pair-coupon span { font-size: 10px; }
+  /* 兩張卡統一(使用者 2026-11-23:手機板這區 UI 不一致):
+     ① 標籤同寬、置中,窄手機也不會凸出卡片
+     ② 價格帶同一個排法:小標固定在上、金額在下,兩邊小標對齊同一條線
+     ③ 金額字級跟著螢幕寬縮,320 寬時「$2,680起」不會比卡片寬 */
+  .ye-pair-tag { width: 88%; justify-content: center; padding: 4px 6px 5px; font-size: clamp(14px, 4.4vw, 18px); }
+  .ye-pair-tag em { font-size: clamp(10px, 3vw, 12px); }
+  .ye-pair-price,
+  .ye-pair-card--b .ye-pair-price {
+    display: grid; grid-template-columns: auto; justify-content: center; justify-items: center;
+    align-content: start; row-gap: 4px; padding: 14px 4px 12px;
+  }
+  .ye-pair-card--b .ye-pair-price { grid-template-columns: auto auto; column-gap: 4px; align-items: center; }
+  .ye-pair-price small,
+  .ye-pair-card--b .ye-pair-price small { grid-column: 1 / -1; font-size: 14px; line-height: 18px; }
+  .ye-pair-price b { font-size: clamp(24px, 8vw, 32px); line-height: 44px; }
+  .ye-pair-card--b .ye-pair-price b { font-size: clamp(26px, 8.6vw, 34px); line-height: 44px; height: 44px; }
+  .ye-pair-card--b .ye-pair-price s { font-size: clamp(11px, 3.4vw, 13px); }
   .ye-why2 li { padding: 16px 8px; }
   .ye-why2 i { width: 44px; height: 44px; font-size: 18px; }
   .ye-why2 b { font-size: 16px; }
@@ -862,6 +881,10 @@ body.ye-chat-open .ye-jump { display: none; }
 .ye-walker-body { position: absolute; inset: 0; display: block; transition: transform .2s; }
 .ye-walker-body img { position: absolute; inset: 0; width: 100%; height: 100%; }
 .ye-walker.left .ye-walker-body { transform: scaleX(-1); }
+/* 可以按住拖曳(2026-11-23);touch-action: none 讓手指拖芽芽時不會變成捲動頁面 */
+.ye-walker-pet { cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
+.ye-walker-pet img { -webkit-user-drag: none; pointer-events: none; }
+.ye-walker.dragging .ye-walker-pet { cursor: grabbing; animation: none; transform: scale(1.1) rotate(-6deg); }
 .ye-walker.walking .ye-walker-pet { animation: yeHop .42s ease-in-out infinite; }
 .ye-walker:not(.walking) .ye-walker-pet { animation: yeBreath 2.4s ease-in-out infinite; }
 @keyframes yeHop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px) rotate(-3deg); } }
@@ -948,6 +971,10 @@ body.ye-chat-open .ye-jump { display: none; }
   .ye-steps { gap: 74px; }
   .ye-steps li:not(:last-child)::after { content: "\f078"; right: auto; left: 50%; top: auto; bottom: -36px; transform: translateX(-50%); }
   .ye-points, .ye-dates { grid-template-columns: 1fr; }
+  /* 日期不換行,窄手機(320～360)會撐出虛線框(使用者 2026-11-23:虛線框超出畫面)→ 字級跟著螢幕寬縮 */
+  .ye-dates div { padding: 12px 14px; column-gap: 10px; min-width: 0; }
+  .ye-dates div::before { font-size: 22px; }
+  .ye-dates b { font-size: clamp(15px, 4.6vw, 20px); letter-spacing: .5px; }
   .ye-social h2 { font-size: 25px; }
   .ye-book { padding: 20px 16px; }
   .ye-book-stores { grid-template-columns: 1fr 1fr; }

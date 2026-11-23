@@ -84,7 +84,7 @@
       title: "年終感謝祭 · 線上預約", sub: "配鏡第二副 0 元",
       svcMatch: FIT_SVC, pickSvc: arr => arr.find(x => FIT_SVC(x.name)) || null, label: "配鏡",
       note: "【2026 年終感謝祭】配鏡第二副 0 元",
-      tipSvc: `<i class="fa-solid fa-gift"></i> 原價配鏡指定全方案,贈 2,680 元配鏡折價券;憑券折抵第二副配鏡,符合方案條件可享第二副 0 元`,
+      tipSvc: `<i class="fa-solid fa-gift"></i> 原價方案配鏡，贈 $2,680 配鏡折價券;憑券折抵第二副配鏡,符合方案條件可享第二副 0 元`,
       tipForm: `<i class="fa-solid fa-circle-info"></i> 活動期間 2026/12/1–2027/1/31,折價券使用至 2027/2/28;不得與其他優惠併用,詳細規範以門市公告為準`,
       doneExtra: "",
       noStore: "目前沒有開放配鏡線上預約的門市",

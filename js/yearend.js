@@ -280,6 +280,8 @@
     const calm = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
     /* x = 距離畫面左邊;y = 從「底線」往上抬多高(底線由 CSS 的 bottom 決定,已讓開手機按鈕列與 Cookie 條) */
     let x = 0, y = 0, tx = 0, ty = 0, idleUntil = 0, last = 0, stops = 0, talkTimer = 0, section = "_", lastLine = "";
+    /* 拖曳中的狀態(2026-11-23 使用者:芽芽改成滑鼠點了可以移動) */
+    let drag = null, justDragged = false;
 
     const size = () => w.offsetWidth || 96;
     const base = () => parseFloat(getComputedStyle(w).bottom) || 14;
@@ -350,9 +352,11 @@
       const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
       w.classList.toggle("gone", blocked());
       if (!blocked()) {
-        /* 好評浮窗剛跳出來、壓到芽芽 → 馬上換地方走開 */
-        if (blockedAt(x, y) && blockedAt(tx, ty)) { pickTarget(); idleUntil = 0; }
-        if (t < idleUntil) {
+        /* 好評浮窗剛跳出來、壓到芽芽 → 馬上換地方走開(拖曳中、剛放下時不走開,讓客人放在想放的地方) */
+        if (!drag && t >= idleUntil && blockedAt(x, y) && blockedAt(tx, ty)) { pickTarget(); idleUntil = 0; }
+        if (drag) {
+          w.classList.remove("walking");
+        } else if (t < idleUntil) {
           w.classList.remove("walking");
         } else {
           const dx = tx - x, dy = ty - y, dist = Math.hypot(dx, dy), speed = calm ? 55 : 110;
@@ -373,6 +377,48 @@
       requestAnimationFrame(frame);
     }
 
+    /* 拖曳:按住芽芽拖到哪就停在哪,休息一下再從那裡繼續走。
+       只點一下(移動不到 6px)不算拖曳,照舊打開問答。
+       拖曳範圍是整個畫面(漫步範圍只有下半部,放到上面的話牠之後會自己走下來) */
+    const pet = $("[data-ye-walker-pet]", w);
+    const dragBounds = () => ({ x0: 0, x1: Math.max(0, root.innerWidth - size()), y0: 0, y1: Math.max(0, root.innerHeight - base() - size() - 8) });
+    pet.addEventListener("pointerdown", e => {
+      if (e.button !== 0) return;
+      drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, x0: x, y0: y, moved: false };
+      try { pet.setPointerCapture(e.pointerId); } catch (_e) {}
+    });
+    pet.addEventListener("pointermove", e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+      if (!drag.moved) {
+        if (Math.hypot(dx, dy) < 6) return;
+        drag.moved = true;
+        w.classList.add("dragging");
+        say.classList.remove("on");
+      }
+      const b = dragBounds();
+      x = Math.min(Math.max(drag.x0 + dx, b.x0), b.x1);
+      y = Math.min(Math.max(drag.y0 - dy, b.y0), b.y1);   /* y 是往上抬的高度,和螢幕座標相反 */
+      if (e.movementX) w.classList.toggle("left", e.movementX < 0);   /* 面向拖的方向 */
+      w.style.transform = `translate(${x}px, ${-y}px)`;
+      e.preventDefault();
+    });
+    function endDrag(e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      const moved = drag.moved;
+      drag = null;
+      w.classList.remove("dragging");
+      try { pet.releasePointerCapture(e.pointerId); } catch (_e) {}
+      if (!moved) return;
+      justDragged = true;                 /* 放開時瀏覽器還會送一次 click,不要因此打開問答 */
+      setTimeout(() => { justDragged = false; }, 0);
+      tx = x; ty = y;
+      idleUntil = performance.now() + 6000;   /* 在放下的地方待 6 秒 */
+      track("yearend_cta", { cta: "yaya_walker_drag" });
+    }
+    pet.addEventListener("pointerup", endDrag);
+    pet.addEventListener("pointercancel", endDrag);
+
     w.addEventListener("click", e => {
       if (e.target.closest("[data-ye-walker-x]")) {
         w.hidden = true;
@@ -380,6 +426,7 @@
         track("yearend_cta", { cta: "yaya_walker_close" });
         return;
       }
+      if (justDragged) return;
       if (e.target.closest("[data-ye-walker-pet]")) openChat("yaya_walker");
     });
     root.addEventListener("resize", () => {
@@ -578,9 +625,9 @@
      「配鏡要多久」「度數限制」沒有正式資料,先寫保守答案(使用者決定),有正式說法再改這裡。 */
   const FAQ = [
     { q: "可以兩個人一起配嗎?", a: () =>
-      `可以!折價券<b>不限本人使用</b>。<br>先由一人完成第一副原價配鏡(指定全方案),就會拿到 2,680 元配鏡折價券,第二副可以給另一半、家人或朋友用,符合方案條件第二副 0 元。` },
+      `可以!折價券<b>不限本人使用</b>。<br>先由一人完成第一副原價方案配鏡,就會拿到 $2,680 配鏡折價券,第二副可以給另一半、家人或朋友用,符合方案條件第二副 0 元。` },
     { q: "優惠是 2,680 就能拿到兩副嗎?", a: () =>
-      `原價配鏡指定全方案,就送 <b>2,680 元配鏡折價券</b>;第二副憑券折抵,符合方案條件就是 0 元。<br>實際金額依你挑的方案而定,到店時顧問會幫你算清楚。` },
+      `原價方案配鏡，就送 <b>$2,680 配鏡折價券</b>;第二副憑券折抵,符合方案條件就是 0 元。<br>實際金額依你挑的方案而定,到店時顧問會幫你算清楚。` },
     { q: "第二副真的只要 0 元嗎?", a: () =>
       `符合方案條件就是 <b>0 元</b>!第二副全館鏡框任選(加價框除外);想升級鏡框、鏡片或方案,補差額就可以。` },
     { q: "可以升級功能嗎?", a: () =>
