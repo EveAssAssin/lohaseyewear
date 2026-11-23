@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOHAS 設計規範 v1 · 樂活眼鏡</title>
+<meta name="description" content="LOHAS 樂活眼鏡的顏色、字級、間距、圓角、元件規格,給官網、商城、App 與各系統共用。">
+<!-- 給合作夥伴看的內部規範頁,不讓搜尋引擎收錄 -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="v1/tokens.css">
+<!--
+  這一頁的內容(色票、字級、間距…)全部是讀 v1/tokens.json 畫出來的,
+  改 token 只要改 design/tokens.json 再跑 node design/build.mjs,這頁會自己跟著變。
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-tc);color:var(--text-main);background:var(--bg-warm);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--lohas-brand)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:0 var(--sp-4)}
+header.top{background:var(--lohas-brand);color:#fff;padding:var(--sp-7) 0 var(--sp-6)}
+header.top h1{font-size:var(--fs-3xl);line-height:1.25;letter-spacing:1px}
+header.top p{opacity:.85;margin-top:var(--sp-2);font-size:var(--fs-md)}
+.ver{display:inline-block;margin-top:var(--sp-4);padding:4px 12px;border-radius:var(--r-pill);background:rgba(255,255,255,.15);font-size:var(--fs-xs)}
+nav.toc{position:sticky;top:0;z-index:var(--z-sticky);background:#fff;border-bottom:1px solid var(--lohas-bd)}
+nav.toc .wrap{display:flex;gap:var(--sp-4);overflow-x:auto;padding-top:10px;padding-bottom:10px;font-size:var(--fs-sm);white-space:nowrap}
+nav.toc a{text-decoration:none;color:var(--text-sub)}
+nav.toc a:hover{color:var(--lohas-brand)}
+section{padding:var(--sp-7) 0 0}
+section>h2{font-size:var(--fs-2xl);margin-bottom:var(--sp-2)}
+section>.lead{color:var(--text-sub);margin-bottom:var(--sp-5);max-width:760px}
+h3{font-size:var(--fs-lg);margin:var(--sp-6) 0 var(--sp-3)}
+.card{background:#fff;border:1px solid var(--lohas-bd);border-radius:var(--r-md);padding:var(--sp-5)}
+.grid{display:grid;gap:var(--sp-3);grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.sw{background:#fff;border:1px solid var(--lohas-bd);border-radius:var(--r-md);overflow:hidden;cursor:pointer;text-align:left;font:inherit;color:inherit;padding:0}
+.sw:hover{box-shadow:var(--sh-card)}
+.sw-chip{height:72px;border-bottom:1px solid var(--lohas-bd)}
+.sw-body{padding:10px 12px 12px}
+.sw-name{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:var(--fs-xs);color:var(--text-main);font-weight:700}
+.sw-val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:var(--fs-2xs);color:var(--text-muted)}
+.sw-desc{font-size:var(--fs-xs);color:var(--text-sub);margin-top:4px;line-height:1.5}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--lohas-bd);border-radius:var(--r-md);overflow:hidden;font-size:var(--fs-sm)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--lohas-bd);text-align:left;vertical-align:middle}
+th{background:var(--bg-soft);color:var(--text-sub);font-weight:500;font-size:var(--fs-xs)}
+tr:last-child td{border-bottom:0}
+td code{font-size:var(--fs-xs);color:var(--lohas-brand);cursor:pointer}
+.bar{height:14px;background:var(--lohas-light);border-radius:3px}
+.rad{width:64px;height:48px;background:var(--bg-soft);border:2px solid var(--lohas-brand)}
+.shd{width:120px;height:64px;background:#fff;border-radius:var(--r-md)}
+pre{background:var(--collab-bg-2);color:#F4EEE3;padding:var(--sp-4);border-radius:var(--r-sm);overflow-x:auto;font-size:var(--fs-xs);line-height:1.7}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--sp-3)}
+.tabs button{font:inherit;font-size:var(--fs-xs);padding:6px 14px;border-radius:var(--r-pill);border:1px solid var(--lohas-bd);background:#fff;color:var(--text-sub);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--lohas-brand);border-color:var(--lohas-brand);color:#fff}
+.files{display:grid;gap:var(--sp-2);grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.files a{display:block;padding:12px 14px;background:#fff;border:1px solid var(--lohas-bd);border-radius:var(--r-sm);text-decoration:none}
+.files a b{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:var(--fs-xs)}
+.files a span{font-size:var(--fs-xs);color:var(--text-sub)}
+ul.rules{list-style:none;display:grid;gap:var(--sp-2)}
+ul.rules li{background:#fff;border:1px solid var(--lohas-bd);border-left:4px solid var(--lohas-brand);border-radius:0;padding:10px 14px;font-size:var(--fs-sm)}
+.demo-row{display:flex;flex-wrap:wrap;gap:var(--sp-3);align-items:center}
+/* 元件示範:照官網 lohas-base.css / lohas-components.css 的實際規格 */
+.btn-primary{display:inline-block;background:var(--lohas-brand);color:#fff;padding:10px 24px;border-radius:50px;font-size:16px;text-decoration:none;border:0;cursor:pointer;font-family:inherit;transition:background-color .3s}
+.btn-primary:hover{background:var(--lohas-hover)}
+.btn-pill-outline,.btn-pill-ghost{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 28px;border-radius:var(--r-pill);font-family:inherit;cursor:pointer;transition:all .2s}
+.btn-pill-outline{background:#fff;color:var(--lohas-brand);border:1px solid var(--lohas-brand);font-size:14px;letter-spacing:1px;font-weight:600}
+.btn-pill-outline:hover{background:var(--lohas-brand);color:#fff}
+.btn-pill-ghost{background:transparent;color:var(--text-main);border:1px solid var(--text-light);font-size:13px;letter-spacing:.8px;font-weight:500}
+.btn-pill-ghost:hover{border-color:var(--lohas-brand)}
+.btn-pill-sm{height:38px;padding:0 22px;font-size:13px;letter-spacing:.5px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:var(--r-pill);font-weight:600;letter-spacing:.5px}
+.pill.member{background:var(--m-bg);color:var(--m-text)}
+.pill.creator{background:var(--c-solid);color:#fff}
+.pill.collab{background:var(--collab-bg);color:#fff;border:1px solid var(--collab-gold);padding:2px 9px}
+.spec{font-size:var(--fs-xs);color:var(--text-sub);margin-top:var(--sp-2)}
+.copied{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text-main);color:#fff;padding:8px 16px;border-radius:var(--r-pill);font-size:var(--fs-xs);opacity:0;transition:opacity .2s;pointer-events:none;z-index:var(--z-toast)}
+.copied.on{opacity:1}
+footer{padding:var(--sp-7) 0;color:var(--text-muted);font-size:var(--fs-xs)}
+@media (max-width:768px){ th:nth-child(3),td:nth-child(3){display:none} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <h1>LOHAS 設計規範</h1>
+    <p>樂活眼鏡的顏色、字級、間距與元件規格。官網、商城、App 與各系統共用同一套,讓客人在任何地方看到的都是同一個 LOHAS。</p>
+    <span class="ver" id="ver">載入中…</span>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#use">怎麼引用</a><a href="#rules">使用原則</a><a href="#color">顏色</a><a href="#type">字級</a>
+  <a href="#space">間距</a><a href="#radius">圓角與陰影</a><a href="#z">層級與動態</a><a href="#comp">元件</a><a href="#files">檔案下載</a>
+</div></nav>
+
+<main class="wrap">
+
+  <section id="use">
+    <h2>怎麼引用</h2>
+    <p class="lead">請引用<b>固定版本</b>的網址(<code>/design/v1/</code>)。v1 只會新增 token、不會改動既有的值,所以引用之後畫面不會被我們這邊的修改突然改變。要改既有的值會出 v2,並事先通知。</p>
+    <div class="tabs" role="tablist" id="useTabs">
+      <button role="tab" aria-selected="true" data-tab="web">網頁(CSS)</button>
+      <button role="tab" aria-selected="false" data-tab="scss">SCSS</button>
+      <button role="tab" aria-selected="false" data-tab="tw">Tailwind</button>
+      <button role="tab" aria-selected="false" data-tab="js">JS / React Native</button>
+      <button role="tab" aria-selected="false" data-tab="app">App(讀 JSON)</button>
+      <button role="tab" aria-selected="false" data-tab="ui">提示框元件</button>
+    </div>
+<pre data-pane="web">&lt;!-- 字體 --&gt;
+&lt;link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap"&gt;
+&lt;!-- 變數 --&gt;
+&lt;link rel="stylesheet" href="https://www.lohasglasses.com/design/v1/tokens.css"&gt;
+
+.btn { background: var(--lohas-brand); color: var(--text-on-dark); border-radius: var(--r-pill); }
+.card { border: 1px solid var(--lohas-bd); border-radius: var(--r-md); box-shadow: var(--sh-soft); }</pre>
+<pre data-pane="scss" hidden>// 下載 tokens.scss 放進專案
+@use 'tokens' as *;
+
+.btn { background: $lohas-brand; border-radius: $r-pill; }
+.note { color: map-get($lohas-tokens, 'text-muted'); }</pre>
+<pre data-pane="tw" hidden>// tailwind.config.js(下載 tailwind.preset.js 放進專案)
+module.exports = {
+  presets: [require('./tailwind.preset.js')],
+};
+
+// 用法:bg-lohas-brand text-text-sub border-lohas-bd rounded-pill text-md shadow-card</pre>
+<pre data-pane="js" hidden>// 下載 tokens.js 放進專案
+import { t, tokens } from './tokens.js';
+
+const styles = { button: { backgroundColor: t.lohasBrand, borderRadius: 999 } };  // 駝峰
+const border = tokens['lohas-bd'];                                                  // 與 CSS 同名</pre>
+<pre data-pane="app" hidden>// 任何語言都能讀:https://www.lohasglasses.com/design/v1/tokens.json
+{
+  "version": "1.0.0",
+  "tokens": { "lohas-brand": "#50422D", "text-main": "#2F2A24", "r-md": "14px", ... },
+  "meta":   { "lohas-brand": { "group": "brand", "type": "color", "desc": "主色:…" }, ... }
+}
+// 建議:App 打包時讀一次轉成自己的常數(不要每次開 App 都從網路抓)</pre>
+<pre data-pane="ui" hidden>&lt;!-- 網頁平台可以直接用官網的提示框(取代 alert / confirm),樣式會自動跟著載入 --&gt;
+&lt;script src="https://www.lohasglasses.com/design/v1/lohas-ui.js"&gt;&lt;/script&gt;
+
+await LohasUI.alert('儲存失敗');
+if (!(await LohasUI.confirm('確定刪除?\n\n無法復原'))) return;   // ⚠ 一定要 await
+LohasUI.toast('已儲存', 'ok');</pre>
+  </section>
+
+  <section id="rules">
+    <h2>使用原則</h2>
+    <ul class="rules" id="rulesList"></ul>
+  </section>
+
+  <section id="color">
+    <h2>顏色</h2>
+    <p class="lead">點色票可以複製變數名稱。</p>
+    <div id="colors"></div>
+  </section>
+
+  <section id="type">
+    <h2>字級</h2>
+    <p class="lead">字體:Noto Sans TC(400 / 500 / 700)。全站最小 12px;手機上的輸入框至少 16px。</p>
+    <table id="typeTable"><thead><tr><th>變數</th><th>範例</th><th>用途</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section id="space">
+    <h2>間距</h2>
+    <p class="lead">一律用 4 的倍數。</p>
+    <table id="spaceTable"><thead><tr><th>變數</th><th>長度</th><th>用途</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section id="radius">
+    <h2>圓角與陰影</h2>
+    <table id="radiusTable"><thead><tr><th>變數</th><th>樣子</th><th>用途</th></tr></thead><tbody></tbody></table>
+    <h3>陰影</h3>
+    <table id="shadowTable"><thead><tr><th>變數</th><th>樣子</th><th>用途</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section id="z">
+    <h2>層級與動態</h2>
+    <p class="lead">層級由低到高排列,不要自己寫大數字。斷點是約定:<span id="bps"></span>。</p>
+    <table id="zTable"><thead><tr><th>變數</th><th>值</th><th>用途</th></tr></thead><tbody></tbody></table>
+    <h3>動態</h3>
+    <p class="lead">使用者在系統設定「減少動態」時,三個時間會變成 0。</p>
+    <table id="motionTable"><thead><tr><th>變數</th><th>值</th><th>用途</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section id="comp">
+    <h2>元件</h2>
+    <p class="lead">以下是官網實際在用的規格。App 請照規格刻;網頁平台可以照抄 CSS。</p>
+
+    <h3>按鈕</h3>
+    <div class="card">
+      <div class="demo-row">
+        <button class="btn-primary" type="button">預約到店配鏡</button>
+        <button class="btn-pill-outline" type="button">了解更多</button>
+        <button class="btn-pill-ghost" type="button">稍後再說</button>
+        <button class="btn-pill-outline btn-pill-sm" type="button">小尺寸</button>
+      </div>
+      <p class="spec">主要按鈕:底 <code>lohas-brand</code> / hover <code>lohas-hover</code>、白字 16px、padding 10 × 24、圓角 50px。<br>
+        膠囊外框:高 48(小 38)、左右 28(小 22)、1px <code>lohas-brand</code> 外框、14px 粗 600、字距 1px;hover 變實心。<br>
+        膠囊淡框:透明底、1px <code>text-light</code> 外框、<code>text-main</code> 字 13px。</p>
+    </div>
+
+    <h3>身份標籤</h3>
+    <div class="card">
+      <div class="demo-row">
+        <span class="pill member">會員</span><span class="pill creator">創作者</span><span class="pill collab">聯名</span>
+      </div>
+      <p class="spec">11px、粗 600、padding 3 × 10、膠囊圓角。會員 <code>m-bg</code> + <code>m-text</code>;創作者 <code>c-solid</code> 底白字;聯名 <code>collab-bg</code> 底白字 + <code>collab-gold</code> 1px 邊。</p>
+    </div>
+
+    <h3>提示框、確認框、Toast</h3>
+    <div class="card">
+      <div class="demo-row">
+        <button class="btn-pill-ghost btn-pill-sm" type="button" data-demo="alert">提示</button>
+        <button class="btn-pill-ghost btn-pill-sm" type="button" data-demo="confirm">確認</button>
+        <button class="btn-pill-ghost btn-pill-sm" type="button" data-demo="danger">危險動作確認</button>
+        <button class="btn-pill-ghost btn-pill-sm" type="button" data-demo="prompt">輸入</button>
+        <button class="btn-pill-ghost btn-pill-sm" type="button" data-demo="toast">成功 Toast</button>
+      </div>
+      <p class="spec" id="demoOut">取代瀏覽器原生的 alert / confirm / prompt。白底、圓角 <code>r-lg</code>、陰影 <code>sh-modal</code>、層級 <code>z-dialog</code>;
+        危險動作(刪除、無法復原)確定鍵用 <code>danger</code>,而且預設焦點在「取消」。手機(≤480px)從底部彈出、按鈕上下排滿寬。</p>
+    </div>
+  </section>
+
+  <section id="files">
+    <h2>檔案下載</h2>
+    <p class="lead">所有檔案由同一份正本產生,內容一致。</p>
+    <div class="files">
+      <a href="v1/tokens.css"><b>tokens.css</b><span>網頁:CSS 變數</span></a>
+      <a href="v1/tokens.scss"><b>tokens.scss</b><span>SCSS 變數與 map</span></a>
+      <a href="v1/tailwind.preset.js"><b>tailwind.preset.js</b><span>Tailwind 設定</span></a>
+      <a href="v1/tokens.js"><b>tokens.js</b><span>JS / TS / React Native</span></a>
+      <a href="v1/tokens.json"><b>tokens.json</b><span>App 或任何程式讀取</span></a>
+      <a href="v1/lohas-ui.js"><b>lohas-ui.js</b><span>提示框元件(樣式自動載入)</span></a>
+      <a href="CHANGELOG.md"><b>CHANGELOG.md</b><span>更新紀錄</span></a>
+    </div>
+  </section>
+
+</main>
+
+<footer><div class="wrap">LOHAS 樂活眼鏡 · <a href="https://www.lohasglasses.com/">www.lohasglasses.com</a> · 規範有問題請聯絡官網負責人</div></footer>
+<div class="copied" id="copied" role="status" aria-live="polite"></div>
+
+<script src="v1/lohas-ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var copiedTimer;
+  function copy(text) {
+    function done() { var c = $('#copied'); c.textContent = '已複製 ' + text; c.classList.add('on'); clearTimeout(copiedTimer); copiedTimer = setTimeout(function () { c.classList.remove('on'); }, 1400); }
+    try { navigator.clipboard.writeText(text).then(done, done); } catch (e) { done(); }
+  }
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest('[data-copy]'); if (c) copy(c.getAttribute('data-copy'));
+    var t = e.target.closest('#useTabs [data-tab]');
+    if (t) {
+      document.querySelectorAll('#useTabs [data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b === t)); });
+      document.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.getAttribute('data-pane') !== t.getAttribute('data-tab'); });
+    }
+  });
+
+  fetch('v1/tokens.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
+    $('#ver').textContent = 'v' + d.version + '  ·  更新 ' + d.updated + '  ·  共 ' + Object.keys(d.tokens).length + ' 個 token';
+    $('#rulesList').innerHTML = d.rules.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('');
+    $('#bps').textContent = '手機 ≤' + d.breakpoints.mobile + 'px、平板 ≤' + d.breakpoints.tablet + 'px、小筆電 ≤' + d.breakpoints.laptop + 'px';
+    var groups = d.groups, meta = d.meta, tk = d.tokens;
+    var v = function (n) { return '<code data-copy="var(--' + n + ')" title="點一下複製">--' + esc(n) + '</code>'; };
+    var row = function (n, mid) { return '<tr><td>' + v(n) + '</td><td>' + mid + '</td><td>' + esc(meta[n].desc) + '</td></tr>'; };
+
+    $('#colors').innerHTML = groups.filter(function (g) { return g.type === 'color'; }).map(function (g) {
+      return '<h3>' + esc(g.title) + '</h3><div class="grid">' + g.names.map(function (n) {
+        return '<button type="button" class="sw" data-copy="var(--' + n + ')"><div class="sw-chip" style="background:' + esc(tk[n]) + '"></div>' +
+          '<div class="sw-body"><div class="sw-name">--' + esc(n) + '</div><div class="sw-val">' + esc(tk[n]) + '</div>' +
+          '<div class="sw-desc">' + esc(meta[n].desc) + '</div></div></button>';
+      }).join('') + '</div>';
+    }).join('');
+
+    var g = function (id) { return groups.filter(function (x) { return x.id === id; })[0].names; };
+    $('#typeTable tbody').innerHTML = g('fontSize').map(function (n) { return row(n, '<span style="font-size:var(--' + n + ');line-height:1.3">樂活眼鏡 LOHAS <small style="font-size:12px;color:var(--text-muted)">' + esc(tk[n]) + '</small></span>'); }).join('');
+    $('#spaceTable tbody').innerHTML = g('space').map(function (n) { return row(n, '<div style="display:flex;align-items:center;gap:10px"><div class="bar" style="width:var(--' + n + ')"></div><span style="font-size:12px;color:var(--text-muted)">' + esc(tk[n]) + '</span></div>'); }).join('');
+    $('#radiusTable tbody').innerHTML = g('radius').map(function (n) { return row(n, '<div style="display:flex;align-items:center;gap:10px"><div class="rad" style="border-radius:var(--' + n + ')"></div><span style="font-size:12px;color:var(--text-muted)">' + esc(tk[n]) + '</span></div>'); }).join('');
+    $('#shadowTable tbody').innerHTML = g('shadow').map(function (n) { return row(n, '<div class="shd" style="box-shadow:var(--' + n + ')"></div>'); }).join('');
+    $('#zTable tbody').innerHTML = g('z').map(function (n) { return row(n, esc(tk[n])); }).join('');
+    $('#motionTable tbody').innerHTML = g('motion').map(function (n) { return row(n, '<code>' + esc(tk[n]) + '</code>'); }).join('');
+  }).catch(function () { $('#ver').textContent = 'tokens.json 載入失敗,請重新整理'; });
+
+  /* 元件示範 */
+  document.addEventListener('click', async function (e) {
+    var b = e.target.closest('[data-demo]'); if (!b || !window.LohasUI) return;
+    var out = $('#demoOut'), k = b.getAttribute('data-demo'), r;
+    if (k === 'alert') { await LohasUI.alert('儲存失敗:網路連線中斷,請稍後再試。'); }
+    if (k === 'confirm') { r = await LohasUI.confirm('確定送出預約?\n\n送出後門市會收到通知。'); LohasUI.toast(r ? '你按了「確定」' : '你按了「取消」'); }
+    if (k === 'danger') { r = await LohasUI.confirm('確定永久刪除這件作品?\n\n此動作無法復原。'); LohasUI.toast(r ? '你按了「確定」' : '你按了「取消」(預設焦點在這裡)'); }
+    if (k === 'prompt') { r = await LohasUI.prompt('輸入作品名稱:', '我的設計'); LohasUI.toast(r === null ? '你按了「取消」' : '你輸入了:' + r); }
+    if (k === 'toast') { LohasUI.toast('已儲存', 'ok'); }
+  });
+})();
+</script>
+</body>
+</html>

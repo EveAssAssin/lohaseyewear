@@ -1,0 +1,160 @@
+// LOHAS 樂活眼鏡 design tokens v1.0.0(2026-11-23)
+// 由 design/build.mjs 從 design/tokens.json 產生,不要手改。說明:https://www.lohasglasses.com/design/
+
+$lohas-brand: #50422D; // 主色:主要按鈕、標題強調、連結
+$lohas-hover: #765F4A; // 主色 hover / 按下
+$lohas-light: #CDBEA2; // 淡棕:虛線框、次要裝飾
+$lohas-bd: #E8DED1; // 所有邊框、分隔線
+$bg-warm: #F9F8F6; // 區塊底色
+$bg-soft: #F4F1EC; // 卡片內底、hover 底
+$bg-cream: #FAF7F2; // 米白底:表單區、提示區
+$text-main: #2F2A24; // 主文字
+$text-sub: #6F665D; // 次要文字、欄位標籤
+$text-muted: #9B9186; // 註記、placeholder
+$text-light: #CDBEA2; // 很淡的文字、停用的圖示
+$text-disabled: #8A8178; // 已使用 / 已過期這類「不能再用」的文字
+$text-on-dark: #FFFFFF; // 深色底上的字
+$m-bg: #E8E5E0; // 會員標籤底色(灰米)
+$m-text: #3D3D3D; // 會員標籤文字
+$c-bg: #EFE9F5; // 創作者淡紫底
+$c-text: #6B5887; // 創作者紫字
+$c-solid: #6B5887; // 創作者實色(標籤底)
+$c-line: #D5C7E5; // 創作者紫的邊線
+$c-line-strong: #C5B5DC; // 創作者紫的強調邊線(虛線框)
+$collab-bg: #3D2F2C; // 聯名深棕底
+$collab-bg-2: #2D2520; // 聯名更深的棕(漸層另一端)
+$collab-gold: #D4B068; // 聯名金邊
+$ok: #5F7A5A; // 成功、完成
+$ok-bg: #EEF1EC; // 成功的淡底
+$warn: #B58A42; // 警告、待處理
+$warn-bg: #F8F1E1; // 警告的淡底
+$err: #A85A4A; // 錯誤訊息(柔和)、登出
+$err-bg: #F5E8E4; // 錯誤的淡底
+$err-line: #E5C5C5; // 錯誤、駁回、刪除鈕的淡紅邊線
+$danger: #C0392B; // 刪除、無法復原的動作(按鈕、確認框)
+$danger-bg: #FDEDEC; // 危險動作的淡底
+$favorite: #C85F5F; // 收藏、喜歡
+$notify: #E5484D; // 未讀紅點
+$gold: #9D7E3F; // 金額、重點字
+$gold-line: #E8D8A8; // 金色區塊的邊線、淡底
+$gold-star: #FFD86B; // 星星、皇冠圖示
+$font-tc: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; // 全站字體。網頁請另外載入 Google Fonts 的 Noto Sans TC(400 / 500 / 700)
+$fs-2xs: 12px; // 註記、法規小字(全站下限)
+$fs-xs: 13px; // 標籤、次要資訊
+$fs-sm: 14px; // 後台內文、表格
+$fs-md: 16px; // 前台內文、手機輸入框
+$fs-lg: 18px; // 小標
+$fs-xl: 22px; // 卡片標題
+$fs-2xl: 28px; // 區塊標題
+$fs-3xl: clamp(30px, 4vw, 44px); // 頁面主標(隨螢幕寬縮放;App 用 30～44 之間的固定值)
+$sp-1: 4px;
+$sp-2: 8px;
+$sp-3: 12px;
+$sp-4: 16px; // 手機版左右邊界
+$sp-5: 24px;
+$sp-6: 32px;
+$sp-7: 48px;
+$sp-8: 64px; // 區塊之間
+$r-xs: 4px; // 輸入框、小標籤
+$r-sm: 8px; // 按鈕(方)、小卡片
+$r-md: 14px; // 卡片
+$r-lg: 18px; // 彈窗、提示框
+$r-xl: 24px; // 大區塊
+$r-pill: 999px; // 膠囊按鈕、身份標籤
+$sh-soft: 0 12px 28px rgba(80,66,45,0.05); // 卡片靜止
+$sh-card: 0 18px 38px rgba(80,66,45,0.09); // 卡片 hover
+$sh-pop: 0 8px 24px rgba(80,66,45,0.16); // 浮動按鈕、下拉選單
+$sh-modal: 0 24px 80px rgba(80,66,45,0.28); // 彈窗
+$z-sticky: 80; // 黏在頂端的列
+$z-dropdown: 200; // 下拉選單
+$z-fab: 9000; // 浮動按鈕、快捷鈕
+$z-header: 9999; // 網站 header
+$z-modal: 10000; // 彈窗
+$z-cookie: 10001; // Cookie 提示列
+$z-toast: 10002; // toast
+$z-dialog: 100100; // 提示 / 確認框:永遠最上層
+$dur-fast: 150ms; // hover、按下
+$dur-base: 250ms; // 彈窗、展開
+$dur-slow: 400ms; // 大區塊進場
+$ease-out: cubic-bezier(.2, .8, .2, 1); // 一般進場曲線
+
+$lohas-tokens: (
+  'lohas-brand': #50422D,
+  'lohas-hover': #765F4A,
+  'lohas-light': #CDBEA2,
+  'lohas-bd': #E8DED1,
+  'bg-warm': #F9F8F6,
+  'bg-soft': #F4F1EC,
+  'bg-cream': #FAF7F2,
+  'text-main': #2F2A24,
+  'text-sub': #6F665D,
+  'text-muted': #9B9186,
+  'text-light': #CDBEA2,
+  'text-disabled': #8A8178,
+  'text-on-dark': #FFFFFF,
+  'm-bg': #E8E5E0,
+  'm-text': #3D3D3D,
+  'c-bg': #EFE9F5,
+  'c-text': #6B5887,
+  'c-solid': #6B5887,
+  'c-line': #D5C7E5,
+  'c-line-strong': #C5B5DC,
+  'collab-bg': #3D2F2C,
+  'collab-bg-2': #2D2520,
+  'collab-gold': #D4B068,
+  'ok': #5F7A5A,
+  'ok-bg': #EEF1EC,
+  'warn': #B58A42,
+  'warn-bg': #F8F1E1,
+  'err': #A85A4A,
+  'err-bg': #F5E8E4,
+  'err-line': #E5C5C5,
+  'danger': #C0392B,
+  'danger-bg': #FDEDEC,
+  'favorite': #C85F5F,
+  'notify': #E5484D,
+  'gold': #9D7E3F,
+  'gold-line': #E8D8A8,
+  'gold-star': #FFD86B,
+  'font-tc': "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif,
+  'fs-2xs': 12px,
+  'fs-xs': 13px,
+  'fs-sm': 14px,
+  'fs-md': 16px,
+  'fs-lg': 18px,
+  'fs-xl': 22px,
+  'fs-2xl': 28px,
+  'fs-3xl': clamp(30px, 4vw, 44px),
+  'sp-1': 4px,
+  'sp-2': 8px,
+  'sp-3': 12px,
+  'sp-4': 16px,
+  'sp-5': 24px,
+  'sp-6': 32px,
+  'sp-7': 48px,
+  'sp-8': 64px,
+  'r-xs': 4px,
+  'r-sm': 8px,
+  'r-md': 14px,
+  'r-lg': 18px,
+  'r-xl': 24px,
+  'r-pill': 999px,
+  'sh-soft': 0 12px 28px rgba(80,66,45,0.05),
+  'sh-card': 0 18px 38px rgba(80,66,45,0.09),
+  'sh-pop': 0 8px 24px rgba(80,66,45,0.16),
+  'sh-modal': 0 24px 80px rgba(80,66,45,0.28),
+  'z-sticky': 80,
+  'z-dropdown': 200,
+  'z-fab': 9000,
+  'z-header': 9999,
+  'z-modal': 10000,
+  'z-cookie': 10001,
+  'z-toast': 10002,
+  'z-dialog': 100100,
+  'dur-fast': 150ms,
+  'dur-base': 250ms,
+  'dur-slow': 400ms,
+  'ease-out': cubic-bezier(.2, .8, .2, 1),
+);
+
+$lohas-breakpoints: (mobile: 480px, tablet: 768px, laptop: 1024px);

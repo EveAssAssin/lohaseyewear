@@ -23,12 +23,17 @@
   'use strict';
   if (window.LohasUI) return;
 
-  /* 自動載入樣式:js/lohas-ui.js?v=X → css/lohas-ui.css?v=X(跟著 JS 的版號,換版不會拿到舊快取) */
+  /* 自動載入樣式(跟著 JS 的版號,換版不會拿到舊快取):
+       官網      /js/lohas-ui.js?v=X        → /css/lohas-ui.css?v=X
+       對外版本  /design/v1/lohas-ui.js     → /design/v1/lohas-ui.css(同一個資料夾)
+     ⚠ 其他網域引用時一定要寫完整網址,樣式才會跟著從 www.lohasglasses.com 載入 */
   (function loadCss() {
     if (document.querySelector('link[data-lohas-ui]')) return;
     var me = document.currentScript;
     var src = me && me.src ? me.src : '';
-    var href = src ? src.replace(/js\/lohas-ui\.js/, 'css/lohas-ui.css') : 'css/lohas-ui.css';
+    var href = !src ? 'css/lohas-ui.css'
+      : /\/js\/lohas-ui\.js/.test(src) ? src.replace(/\/js\/lohas-ui\.js/, '/css/lohas-ui.css')
+      : src.replace(/lohas-ui\.js/, 'lohas-ui.css');
     var link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = href;

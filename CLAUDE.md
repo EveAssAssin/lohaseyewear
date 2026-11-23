@@ -914,6 +914,16 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
   (`CONFIG.appAndroid`,Android 手機會把 Google Play 排在前面)。
 - 追蹤:按鈕都有 `data-ye-cta`,送 GA4 `yearend_cta`;頁面開啟送 `yearend_view`;廣告來源用網址 `utm_*`。
 
+## 🚨 token 的正本是 `design/tokens.json`(2026-11-23 起,對外共用)
+
+`css/lohas-tokens.css` 的 `:root` 變數區塊(`@tokens:start` ~ `@tokens:end` 之間)是**產生出來的**,不要手改。
+要加或改 token:改 `design/tokens.json` → `node design/build.mjs` → 同時更新官網那支與 `design/v1/` 的各平台檔案。
+
+- `design/v1/` 是**給商城 / App / 預約系統引用的固定版本**(說明頁 `https://www.lohasglasses.com/design/`)。
+  **v1 只能新增 token**,改值或刪除會讓已經引用的平台畫面突然變掉 —— `build.mjs` 會擋下來,要改就出 v2。
+- `design/v1/lohas-ui.js` / `.css` 是從 `js/`、`css/` 複製的;改了提示框要重跑 build,對外版本才會跟上。
+- 對外約定寫在 `docs/串接現況.md` 第十節(雙方都會讀)。
+
 ## 設計 token 與 `LohasUI`(2026-11-23 起)
 
 規範在 `docs/設計規範.md`,盤點數據在 `docs/UI盤點報告_20261123.md`(gitignore,只在本機)。
