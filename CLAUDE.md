@@ -932,7 +932,14 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - 會員中心同樣做完:`member-portal-ui.css`(`mp-*` / `mpu-*`),`member-portal.css` 的同值色碼/字級/圓角改用 token。
   GTM 的 iframe、裁切圖 `#cropImage` 與外框刻意沒搬。
   有意義的顏色也取了名(值不變):金色系 `--gold*`、`--c-line*`、`--err-line`、`--notify`、`--text-disabled`
-  (全域),收藏愛心 `--mp-fav`(會員中心自己的)。**「和 token 差一點點」的 51 處刻意沒歸併** —— 那會變色,要做先列差異給使用者看。
+  (全域),收藏愛心 `--mp-fav`(會員中心自己的)。
+  會員中心的 `--lohas-line/text/sub/mute` 已接上全域 token(和後台一致,使用者 2026-11-23 同意,文字會略灰)。
+  **其餘近似色刻意不歸併**:漸層 24 處是佔位圖配色;「即將付款」淡黃底、刪除 hover 淡粉紅是有意思的提示色,拉齊會失去意思。
+- 後台也取了名:`admin-portal.css` 開頭的 `:root` 有 `--ad-*`(刪除紅、精選黃、會員彈窗、提示字…),
+  共 72 處改用具名 token。⚠ 後台的 `--status-*` / `--lohas-tip` 定義在 `.ad` 上,**`.ad` 外面(掛在 body 的彈窗)讀不到**,
+  所以只換了選擇器以 `.ad` 開頭的規則;`--ad-*` 因此刻意放 `:root`。
+- 比對 hover 的可靠方法:把 `:hover` 規則複製成 `.__h` 插回同一支 CSS,給測試元素加 `__h` 再比計算值。
+  讀規則文字比對不可靠(`var()` 寫的簡寫屬性拆開後是空值)。
 - ⚠ 換成 token 的 CSS 只能給**有載 `lohas-tokens.css` 的頁面**用,否則 `var(--fs-*)` 沒有值、字級直接失效。
   目前 `admin-portal.css` / `member-portal.css` 都只有各自那一頁載入。
 - 那支檔案的選擇器是 `.x.x.x`、而且**必須最後載入**:原本行內樣式比任何規則都優先,權重不夠就會被既有規則蓋掉。

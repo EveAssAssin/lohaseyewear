@@ -26,10 +26,12 @@ body {
   --lohas-brown:var(--lohas-brand);
   --lohas-light-brown:var(--lohas-light);
   --lohas-soft:var(--bg-warm);
-  --lohas-line:#E8DFD0;
-  --lohas-text:#3D3026;
-  --lohas-sub:#7A6B5C;
-  --lohas-mute:#A8927A;
+  /* 2026-11-23 接上全域 token(和後台一致)。原值:line #E8DFD0 / text #3D3026 / sub #7A6B5C / mute #A8927A
+     —— 覺得文字變太灰要還原的話,把這四行改回原值即可 */
+  --lohas-line:var(--lohas-bd);
+  --lohas-text:var(--text-main);
+  --lohas-sub:var(--text-sub);
+  --lohas-mute:var(--text-muted);
   --lohas-tip:#F4EEE3;
 
   --c-grad:linear-gradient(135deg,#8B7BA8,#5A4A6F);
