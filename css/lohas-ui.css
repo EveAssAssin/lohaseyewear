@@ -1,0 +1,114 @@
+/* =============================================
+   LohasUI · 提示 / 確認 / 輸入框 / Toast 的樣式
+   ---------------------------------------------
+   由 js/lohas-ui.js 自動載入,頁面不必自己加 <link>。
+   每個變數都帶備用值:沒載 lohas-tokens.css 的頁面(例如 Louis 的 B 版頁)也長得一樣。
+   2026-11-23 從 lohas-components.css 搬出來。
+   ============================================= */
+.lohas-dlg-ovl{
+  position:fixed;inset:0;
+  z-index:var(--z-dialog, 100100);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  background:rgba(45,37,32,.5);
+  opacity:0;
+  transition:opacity var(--dur-base, 250ms) var(--ease-out, cubic-bezier(.2,.8,.2,1));
+  font-family:var(--font-tc, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif);
+}
+.lohas-dlg-ovl.show{opacity:1}
+.lohas-dlg-ovl:not(.show){pointer-events:none}  /* 淡出那 0.25 秒不要擋住後面的點擊 */
+.lohas-dlg{
+  box-sizing:border-box;
+  width:100%;max-width:420px;
+  max-height:calc(100vh - 32px);
+  display:flex;flex-direction:column;
+  background:#fff;
+  border-radius:var(--r-lg, 18px);
+  box-shadow:var(--sh-modal, 0 24px 80px rgba(80,66,45,0.28));
+  color:var(--text-main, #2F2A24);
+  text-align:left;
+  transform:translateY(12px) scale(.98);
+  transition:transform var(--dur-base, 250ms) var(--ease-out, cubic-bezier(.2,.8,.2,1));
+  outline:none;
+}
+.lohas-dlg *{box-sizing:border-box}
+.lohas-dlg-ovl.show .lohas-dlg{transform:none}
+.lohas-dlg-body{padding:24px 24px 16px;overflow:auto}
+.lohas-dlg-title{
+  display:flex;align-items:center;gap:8px;
+  margin:0 0 8px;
+  font-size:18px;font-weight:700;line-height:1.4;letter-spacing:0;
+  color:var(--text-main, #2F2A24);
+}
+.lohas-dlg-title i{
+  display:inline-grid;place-items:center;
+  width:28px;height:28px;flex-shrink:0;
+  border-radius:50%;
+  font-size:13px;font-style:normal;font-weight:700;
+  background:var(--bg-soft, #F4F1EC);color:var(--lohas-brand, #50422D);
+}
+.lohas-dlg--danger .lohas-dlg-title i{background:var(--danger-bg, #FDEDEC);color:var(--danger, #C0392B)}
+.lohas-dlg--ok .lohas-dlg-title i{background:var(--ok-bg, #EEF1EC);color:var(--ok, #5F7A5A)}
+.lohas-dlg-msg{
+  margin:0;
+  font-size:14px;line-height:1.75;font-weight:400;
+  color:var(--text-sub, #6F665D);
+  white-space:pre-line;           /* 保留原本訊息裡的 \n 換行 */
+  overflow-wrap:anywhere;         /* 長網址、錯誤訊息不撐破框 */
+}
+.lohas-dlg-input{
+  display:block;width:100%;
+  margin-top:12px;
+  padding:10px 12px;
+  border:1px solid var(--lohas-bd, #E8DED1);
+  border-radius:var(--r-sm, 8px);
+  font:inherit;font-size:16px;
+  color:var(--text-main, #2F2A24);background:#fff;
+}
+.lohas-dlg-input:focus{outline:none;border-color:var(--lohas-brand, #50422D);box-shadow:0 0 0 3px rgba(80,66,45,.12)}
+.lohas-dlg-actions{
+  display:flex;justify-content:flex-end;gap:8px;
+  padding:12px 24px 24px;
+}
+.lohas-dlg-btn{
+  min-width:88px;
+  margin:0;
+  padding:10px 18px;
+  border:1px solid transparent;
+  border-radius:999px;
+  font:inherit;font-size:14px;font-weight:600;line-height:1.4;
+  cursor:pointer;
+  transition:background var(--dur-fast, 150ms),border-color var(--dur-fast, 150ms),color var(--dur-fast, 150ms);
+}
+.lohas-dlg-btn--pri{background:var(--lohas-brand, #50422D);color:#fff}
+.lohas-dlg-btn--pri:hover{background:var(--lohas-hover, #765F4A)}
+.lohas-dlg-btn--danger{background:var(--danger, #C0392B);color:#fff}
+.lohas-dlg-btn--danger:hover{background:#A93226}
+.lohas-dlg-btn--ghost{background:#fff;border-color:var(--lohas-bd, #E8DED1);color:var(--text-sub, #6F665D)}
+.lohas-dlg-btn--ghost:hover{border-color:var(--lohas-light, #CDBEA2);color:var(--text-main, #2F2A24)}
+.lohas-dlg-btn:focus-visible{outline:3px solid rgba(80,66,45,.35);outline-offset:2px}
+@media (max-width:480px){
+  .lohas-dlg-ovl{align-items:flex-end;padding:12px}
+  .lohas-dlg-actions{flex-direction:column-reverse}
+  .lohas-dlg-btn{width:100%;padding:12px 18px;font-size:16px}
+}
+
+/* Toast:自己一套 class,不依賴 lohas-components.css 的 .lohas-toast */
+.lohas-ui-toast{
+  position:fixed;left:50%;bottom:32px;
+  z-index:var(--z-dialog, 100100);
+  max-width:calc(100vw - 32px);
+  padding:12px 22px;
+  border-radius:var(--r-md, 14px);
+  background:var(--lohas-brand, #50422D);color:#fff;
+  box-shadow:0 8px 24px rgba(80,66,45,.3);
+  font-family:var(--font-tc, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif);
+  font-size:14px;font-weight:500;line-height:1.6;letter-spacing:.5px;
+  white-space:pre-line;text-align:left;
+  opacity:0;transform:translateX(-50%) translateY(20px);
+  transition:opacity .3s ease,transform .3s ease;
+  pointer-events:none;
+}
+.lohas-ui-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.lohas-ui-toast.toast-ok{background:var(--ok, #5F7A5A)}
+.lohas-ui-toast.toast-error{background:var(--err, #A85A4A)}

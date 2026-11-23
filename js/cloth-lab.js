@@ -216,16 +216,16 @@
 
   function printSlip(id) {
     if (typeof window.QRCode !== 'function') {
-      alert('條碼元件沒有載入成功，現在列印會印出一張沒有 QR 的單子。\n請重新整理這一頁再試一次。');
+      LohasUI.alert('條碼元件沒有載入成功，現在列印會印出一張沒有 QR 的單子。\n請重新整理這一頁再試一次。');
       return;
     }
     call({ action: 'print', id: id })
       .then(function (d) {
         var qr = qrDataUrl(PRINT_PREFIX + d.id);
-        if (!qr) { alert('QR 產生失敗，請重新整理後再試。'); return; }
+        if (!qr) { LohasUI.alert('QR 產生失敗，請重新整理後再試。'); return; }
 
         var w = window.open('', '_blank', 'width=380,height=640');
-        if (!w) { alert('瀏覽器擋掉了列印視窗，請允許彈出視窗後再試。'); return; }
+        if (!w) { LohasUI.alert('瀏覽器擋掉了列印視窗，請允許彈出視窗後再試。'); return; }
 
         var esc2 = function (x) { return esc(x == null ? '' : x); };
         /* 80mm 熱感應：可列印寬度約 72mm。
@@ -275,7 +275,7 @@
            印出來會是一個空白方塊 —— 而那要到門市掃不動才會發現。 */
         w.onload = function () { w.focus(); w.print(); };
       })
-      .catch(function (err) { alert(err.message); });
+      .catch(function (err) { LohasUI.alert(err.message); });
   }
 
   /* 產線分流:客人選的取貨門市在哪一區,這件就歸哪一條線。
@@ -757,7 +757,7 @@
         document.body.style.overflow = 'hidden';
         drawSim();
       })
-      .catch(function (e) { alert('模擬失敗:' + e.message); })
+      .catch(function (e) { LohasUI.alert('模擬失敗:' + e.message); })
       .finally(function () { btn.disabled = false; btn.innerHTML = label; });
   }
 
@@ -795,7 +795,7 @@
     return call({ action: 'start', id: it.id })
       .then(function (d) {
         if (d && d.svg_url && d.svg_url !== it.svg_url) {
-          alert('⚠ 客人剛剛修改了這一件的設計,已換成最新的圖檔。\n請以這次下載的檔案為準。');
+          LohasUI.alert('⚠ 客人剛剛修改了這一件的設計,已換成最新的圖檔。\n請以這次下載的檔案為準。');
           it.svg_url = d.svg_url;
           if (d.preview_url) it.preview_url = d.preview_url;
           if (d.placement) it.placement = d.placement;
@@ -806,7 +806,7 @@
       })
       .catch(function (e) {
         console.warn('[cloth-lab] 開始製作標記失敗', e);
-        alert('提醒:沒辦法通知系統「已開始製作」,客人可能還能修改。\n刻之前請重新整理確認圖檔沒變。');
+        LohasUI.alert('提醒:沒辦法通知系統「已開始製作」,客人可能還能修改。\n刻之前請重新整理確認圖檔沒變。');
         return it;
       });
   }
@@ -838,7 +838,7 @@
            2026-09-03 之前這種情況是靜默的,結果 Q 指令壞了兩個月 ——
            檔案照樣下載得到、看起來也像那張圖,只是形狀不對。 */
         if (out.warnings && out.warnings.length) {
-          alert('⚠ 這張圖有轉不完整的地方:\n\n' + out.warnings.join('\n') +
+          LohasUI.alert('⚠ 這張圖有轉不完整的地方:\n\n' + out.warnings.join('\n') +
                 '\n\n檔案還是會下載,但刻之前請先跟原圖比對一下。');
         }
         var blob = new Blob([out.dxf], { type: 'application/dxf' });
@@ -858,7 +858,7 @@
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
       })
-      .catch(function (e) { alert('轉換失敗:' + e.message); })
+      .catch(function (e) { LohasUI.alert('轉換失敗:' + e.message); })
       .finally(function () { btn.disabled = false; btn.innerHTML = label; });
   }
 
@@ -1216,9 +1216,9 @@
   }
 
   function dashXlsx() {
-    if (!Dash.rows) { alert('資料還沒載入完成,請稍候'); return; }
+    if (!Dash.rows) { LohasUI.alert('資料還沒載入完成,請稍候'); return; }
     var rows = dashRowsNow();
-    if (!rows.length) { alert('這個期間沒有資料'); return; }
+    if (!rows.length) { LohasUI.alert('這個期間沒有資料'); return; }
 
     var btn = $('dashXlsx');
     if (btn) { btn.disabled = true; btn.textContent = '產生中…'; }
@@ -1268,7 +1268,7 @@
 
       XLSX.writeFile(wb, '眼鏡布製作紀錄_' + rangeStamp() + '.xlsx');
     }).catch(function (err) {
-      alert(err.message || 'Excel 匯出失敗');
+      LohasUI.alert(err.message || 'Excel 匯出失敗');
     }).then(function () {
       if (btn) { btn.disabled = false; btn.textContent = '匯出 Excel'; }
     });
@@ -1287,9 +1287,9 @@
   }
 
   function dashCsv() {
-    if (!Dash.rows) { alert('資料還沒載入完成,請稍候'); return; }
+    if (!Dash.rows) { LohasUI.alert('資料還沒載入完成,請稍候'); return; }
     var rows = Dash.rows.filter(dashInRange);
-    if (!rows.length) { alert('這個期間沒有資料'); return; }
+    if (!rows.length) { LohasUI.alert('這個期間沒有資料'); return; }
 
     var cols = detailCols();
     var lines = [cols.map(function (c) { return csvCell(c[0]); }).join(',')];
@@ -1477,7 +1477,7 @@
       } catch (err) { /* 無痕 */ }
     }
 
-    el.list.addEventListener('click', function (e) {
+    el.list.addEventListener('click', async function (e) {
       var dxf = e.target.closest('[data-dxf]');
       if (dxf) { downloadDxf(dxf.dataset.dxf, dxf, dxf.dataset.mode); return; }
 
@@ -1512,7 +1512,7 @@
             printSlip(doneId);
             return load();
           })
-          .catch(function (err) { alert(err.message); done.disabled = false; });
+          .catch(function (err) { LohasUI.alert(err.message); done.disabled = false; });
         return;
       }
 
@@ -1526,11 +1526,11 @@
          統計的製作天數與 cloth-feed 的增量游標都不會被這筆汙染。 */
       var und = e.target.closest('[data-undo-done]');
       if (und) {
-        if (!confirm(UNDO_DONE_MSG)) return;
+        if (!await LohasUI.confirm(UNDO_DONE_MSG)) return;
         und.disabled = true;
         call({ action: 'set_status', id: und.dataset.undoDone, status: 'new' })
           .then(function () { return load(); })
-          .catch(function (err) { alert('改回失敗:' + err.message); und.disabled = false; });
+          .catch(function (err) { LohasUI.alert('改回失敗:' + err.message); und.disabled = false; });
         return;
       }
 
@@ -1573,14 +1573,14 @@
         var code = box.querySelector('[data-r-code]').value;
         var text = box.querySelector('[data-r-text]').value.trim();
         if (code === 'other' && text === '') {
-          alert('選擇「其他」時請填寫說明，否則客人不知道要改什麼。');
+          LohasUI.alert('選擇「其他」時請填寫說明，否則客人不知道要改什麼。');
           return;
         }
         ev.target.disabled = true;
         call({ action: 'set_status', id: id, status: 'rejected',
                reject_code: code, reject_reason: text })
           .then(load)
-          .catch(function (err) { alert(err.message); ev.target.disabled = false; });
+          .catch(function (err) { LohasUI.alert(err.message); ev.target.disabled = false; });
       });
     }
 

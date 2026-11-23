@@ -2,8 +2,8 @@
    LohasUI · 提示 / 確認 / 輸入框 / Toast
    --------------------------------------------
    取代瀏覽器原生的 alert / confirm / prompt。
-   樣式:css/lohas-components.css 的 .lohas-dlg-* 與 .lohas-toast
-   依賴:lohas-tokens.css(顏色、圓角、層級)
+   樣式:css/lohas-ui.css —— 這支載入時會自動加上 <link>(同一個 ?v=),頁面不必自己載。
+   依賴:無。有載 lohas-tokens.css 就用 token,沒有就用 CSS 裡的備用值。
 
    用法(全部回傳 Promise):
      await LohasUI.alert('儲存失敗:' + err.message);
@@ -22,6 +22,19 @@
 (function () {
   'use strict';
   if (window.LohasUI) return;
+
+  /* 自動載入樣式:js/lohas-ui.js?v=X → css/lohas-ui.css?v=X(跟著 JS 的版號,換版不會拿到舊快取) */
+  (function loadCss() {
+    if (document.querySelector('link[data-lohas-ui]')) return;
+    var me = document.currentScript;
+    var src = me && me.src ? me.src : '';
+    var href = src ? src.replace(/js\/lohas-ui\.js/, 'css/lohas-ui.css') : 'css/lohas-ui.css';
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.setAttribute('data-lohas-ui', '');
+    (document.head || document.documentElement).appendChild(link);
+  })();
 
   // 訊息裡有這些字就當成「危險動作」,確定鈕變紅色
   var DANGER_RE = /刪除|無法復原|永久|停權|移至垃圾桶|覆蓋/;
@@ -171,7 +184,7 @@
   function toast(message, type, ms) {
     var t = document.getElementById('lohasUiToast');
     if (!t) {
-      t = el('div', 'lohas-toast lohas-toast--ui');
+      t = el('div', 'lohas-ui-toast');
       t.id = 'lohasUiToast';
       t.setAttribute('role', 'status');
       t.setAttribute('aria-live', 'polite');

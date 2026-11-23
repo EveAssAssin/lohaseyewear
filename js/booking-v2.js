@@ -38,6 +38,16 @@
 (function (root) {
   "use strict";
 
+  /* 提示框(2026-11-23):頁面有載 js/lohas-ui.js 就用 LohasUI 的提示框;
+     沒載的頁面(例如 yearend-yaya.html)退回瀏覽器原生視窗,行為不變。
+     ⚠ 回傳都是 Promise,confirm 一定要 await。 */
+  const NATIVE_UI = {
+    alert: m => { root.alert(m); return Promise.resolve(); },
+    confirm: m => Promise.resolve(root.confirm(m)),
+    toast: m => { root.alert(m); }
+  };
+  const ui = () => root.LohasUI || NATIVE_UI;
+
   /* 預覽用:本機會被對方的 CORS 擋,預覽伺服器在 /mbk 轉接 */
   const API = root.LOHAS_BK_API || "https://market-backend-0544.onrender.com/api/booking/public";
   /* 預覽模式:驗證碼、送出、取消都是假的,不會真的建立預約、不會發簡訊 */
@@ -426,13 +436,13 @@
   async function cancelBooking(id) {
     const b = (state.mine.list || []).find(x => String(x.id) === String(id));
     if (!b) return;
-    if (!confirm(`確定取消這筆預約?\n\n${b.store_name || ""} ${fmtAt(b.start_at)}\n${b.service_name || ""}`)) return;
+    if (!await ui().confirm(`確定取消這筆預約?\n\n${b.store_name || ""} ${fmtAt(b.start_at)}\n${b.service_name || ""}`)) return;
     try {
       if (PREVIEW) b.status = "cancelled";
       else await api("POST", "/bookings/" + encodeURIComponent(id) + "/cancel", {});
       if (!PREVIEW) return loadMine();
       renderBody();
-    } catch (e) { alert(e.message || "取消失敗,請再試一次或致電門市"); if (!PREVIEW) loadMine(); }
+    } catch (e) { await ui().alert(e.message || "取消失敗,請再試一次或致電門市"); if (!PREVIEW) loadMine(); }
   }
 
   /* ---------- 渲染 ---------- */
@@ -902,7 +912,7 @@
   /* ---------- 手機驗證 ---------- */
   async function sendOtp() {
     const phone = state.form.phone.replace(/\D/g, "");
-    if (!/^09\d{8}$/.test(phone)) return alert("請輸入手機號碼(09 開頭 10 碼)");
+    if (!/^09\d{8}$/.test(phone)) return await ui().alert("請輸入手機號碼(09 開頭 10 碼)");
     state.otp.busy = true; renderBody();
     try {
       if (PREVIEW) {
@@ -913,14 +923,14 @@
       }
     } catch (e) {
       state.otp.busy = false;
-      alert(e.message || "驗證碼寄送失敗");
+      await ui().alert(e.message || "驗證碼寄送失敗");
     }
     renderBody();
   }
   async function verifyOtp() {
     const phone = state.form.phone.replace(/\D/g, "");
     const code = state.form.code.trim();
-    if (!/^\d{4,6}$/.test(code)) return alert("請輸入簡訊裡的驗證碼");
+    if (!/^\d{4,6}$/.test(code)) return await ui().alert("請輸入簡訊裡的驗證碼");
     try {
       if (PREVIEW) {
         state.verifiedPhone = phone;
@@ -932,7 +942,7 @@
       }
       if (state.mode === "mine") return loadMine();
       renderBody();
-    } catch (e) { alert(e.message || "驗證失敗"); }
+    } catch (e) { await ui().alert(e.message || "驗證失敗"); }
   }
 
   /* ---------- 送出 ---------- */
@@ -944,7 +954,7 @@
     if (!PREVIEW && !readToken()) {
       state.verifiedPhone = "";
       state.memberExchangeFailed = true;   // 退回手機驗證畫面,不假裝成功
-      alert("請先完成手機驗證");
+      await ui().alert("請先完成手機驗證");
       return renderBody();
     }
     state.submitting = true; renderBody();
@@ -967,7 +977,7 @@
       state.done = res || {};
       track(res);
     } catch (e) {
-      alert(e.message || "預約失敗,請再試一次");
+      await ui().alert(e.message || "預約失敗,請再試一次");
       if (e.status === 409) { state.step = 2; state.submitting = false; return loadWeek(state.weekFrom); }
       if (e.status === 401) { saveToken(""); state.verifiedPhone = ""; }
     }

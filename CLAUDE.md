@@ -924,7 +924,10 @@ check (store_erpid is not null or created_at < '2026-09-14 12:00:00+08')
 - 🚨 `LohasUI.confirm` 回傳 Promise,**一定要 `await`**:少了它「取消」也會照樣執行,不會報錯。
   所在的函式要是 `async`;改既有的同步 handler 時,先確認 `e.preventDefault()` 之類的動作在第一個 `await` 之前。
 - 成功訊息用 `LohasUI.toast(…, 'ok')`;失敗與要人看清楚的訊息用 `LohasUI.alert`。
-- 其他頁面(會員中心、`cloth-lab`、`booking-v2`…)還是原生對話框,要換的話頁面先載 `js/lohas-ui.js`。
+- 2026-11-23 起**會員中心、加工中心(`cloth-lab`)、預約彈窗(`booking-v2`)也換掉了**。
+  提示框樣式在獨立的 `css/lohas-ui.css`,由 `lohas-ui.js` 自動載入(跟著 JS 的 `?v=`),頁面只要載那支 JS。
+  `booking-v2.js` 用 `ui()`:頁面沒載 `lohas-ui.js` 時退回原生視窗(`yearend-yaya.html` 就是這樣,刻意沒動)。
+  還沒換的:`upload.js`、`upload-design.js`(被市集、眼鏡布等 6 頁共用)。
 
 **第 3 階段 A(2026-11-23,畫面零差異)**:`admin-portal.html` 的 `style=""` 搬到 `css/admin-portal-ui.css`
 (只剩 `display` 留在標籤上 —— JS 靠它切換顯示);後台 CSS 的字級/圓角改用同值 token。
