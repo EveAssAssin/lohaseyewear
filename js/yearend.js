@@ -4,7 +4,7 @@
    - 預約:js/booking-v2.js 的 preset:"yearend"(頁內彈窗,不跳頁)
    - 門市照片、顧客評價:官網既有 API 的真實資料;讀不到整區隱藏
    - 人氣數字、顧客故事:🚨 只放真實資料(需求書要求不可虛構),填在下面 CONFIG
-   - 詢問活動:先開「芽芽小幫手」預設問答(FAQ),看完再導 LINE
+   - 詢問活動:先開「芽芽小幫手」預設問答(FAQ),看完再導 FB 粉專私訊小編
    - 好評浮窗:只輪播門市評價系統的真實 5 星評價,不寫時間、不編「誰剛配了」
    - 追蹤:每個 [data-ye-cta] 點擊送 GA4 事件 yearend_cta
    ============================================= */
@@ -23,7 +23,8 @@
     /* 顧客故事:只放取得同意的真實顧客,null = 不顯示 */
     stories: null,
     reviewCount: 10,
-    line: "https://line.me/R/ti/p/@585ryopc"
+    /* 真人詢問:2026-11-26 使用者指定由 LINE 改成 FB 粉專私訊小編 */
+    fb: "https://www.facebook.com/lohas.eyewear.tw/"
   };
 
   const $ = (s, el) => (el || document).querySelector(s);
@@ -620,7 +621,7 @@
   }
 
   /* ---------- 詢問活動:芽芽小幫手預設問答 ----------
-     2026-11-21 使用者:「一上來就要加 LINE,大多會滑掉」→ 先讓客人點問題看答案,最後再導 LINE。
+     2026-11-21 使用者:「一上來就要加 LINE,大多會滑掉」→ 先讓客人點問題看答案,最後再導真人(2026-11-26 起是 FB 粉專私訊小編)。
      🚨 答案只照活動規範寫(需求書第三、十節),不承諾規範以外的事;
      「配鏡要多久」「度數限制」沒有正式資料,先寫保守答案(使用者決定),有正式說法再改這裡。 */
   const FAQ = [
@@ -638,7 +639,7 @@
     { q: "配鏡要多久?", a: () =>
       `線上預約的配鏡時段約 <b>60 分鐘</b>(預約系統的配鏡項目)。<br>取件時間依鏡片與度數不同,驗光師會現場告訴你。建議先線上預約,到店不用等。` },
     { q: "度數有限制嗎?", a: () =>
-      `能配哪種鏡片、適用哪個方案,要看驗光結果,到店由驗光師說明。<br>不確定的話,可以先加 LINE 問問看喔!` },
+      `能配哪種鏡片、適用哪個方案,要看驗光結果,到店由驗光師說明。<br>不確定的話,可以先到 FB 私訊詢問小編喔!` },
     { q: "活動到什麼時候?", a: () =>
       `活動期間 <b>2026/12/1 – 2027/1/31</b>;第二副折價券可以用到 <b>2027/2/28</b>。不得與其他優惠併用。` }
   ];
@@ -676,7 +677,7 @@
     setTimeout(() => {
       typing.innerHTML = f.a();
       if (chatAsked.size === 2) {
-        setTimeout(() => chatBubble(`還想知道更多?下面可以直接<b>預約到店</b>,或<b>加 LINE</b> 問真人顧問喔!`, "bot"), 500);
+        setTimeout(() => chatBubble(`還想知道更多?下面可以直接<b>預約到店</b>,或<b>到 FB 私訊詢問小編</b>喔!`, "bot"), 500);
       }
       chatChips();
       const log = $("[data-ye-chat-log]"); log.scrollTop = log.scrollHeight;
@@ -684,7 +685,7 @@
   }
   function openChat(from) {
     const box = $("[data-ye-chat-box]");
-    if (!box) return root.open(CONFIG.line, "_blank", "noopener");
+    if (!box) return root.open(CONFIG.fb, "_blank", "noopener");
     box.hidden = false;
     document.body.classList.add("ye-chat-open");
     requestAnimationFrame(() => box.classList.add("on"));

@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="stylesheet" href="css/lohas-components.css">
   <link rel="stylesheet" href="css/booking-modal.css?v=20260525-1000">
   <link rel="stylesheet" href="css/booking-v2.css?v=20261112-storepick">
-  <link rel="stylesheet" href="css/yearend.css?v=20261123-v64">
+  <link rel="stylesheet" href="css/yearend.css?v=20261126-fb2">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -78,7 +78,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p class="ye-hero-gift">原價方案配鏡，<span class="ye-nowrap">贈 $2,680 配鏡折價券</span><i aria-hidden="true">|</i><br class="ye-sp"><span class="ye-nowrap">活動期間 2026/12/1 – 2027/1/31</span></p>
       <div class="ye-hero-cta">
         <a class="ye-btn ye-btn--red" href="#book" data-ye-book data-ye-cta="book_hero">立即預約 <i class="fa-solid fa-calendar-check"></i></a>
-        <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-chat data-ye-cta="consult_hero"><i class="fa-solid fa-comment-dots"></i> 我想了解活動</a>
+        <a class="ye-btn ye-btn--line" href="https://www.facebook.com/lohas.eyewear.tw/" target="_blank" rel="noopener" data-ye-chat data-ye-cta="consult_hero"><i class="fa-solid fa-comment-dots"></i> 我想了解活動</a>
       </div>
       <p class="ye-fine">須先完成第一副原價配鏡取得折價券,第二副依活動規範使用;不得與其他優惠併用。<a href="#rules">活動規則</a></p>
     </div>
@@ -302,7 +302,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="ye-book-stores" data-ye-stores><div class="ye-book-loading"><i class="fa-solid fa-spinner fa-spin"></i> 載入門市中…</div></div>
         <div class="ye-book-actions">
           <a class="ye-btn ye-btn--yellow" href="allstore.html" data-ye-book data-ye-cta="book_section">還沒決定門市?開始預約 <i class="fa-solid fa-arrow-right"></i></a>
-          <a class="ye-btn ye-btn--line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-chat data-ye-cta="consult_section"><i class="fa-solid fa-comment-dots"></i> 詢問活動</a>
+          <a class="ye-btn ye-btn--line" href="https://www.facebook.com/lohas.eyewear.tw/" target="_blank" rel="noopener" data-ye-chat data-ye-cta="consult_section"><i class="fa-solid fa-comment-dots"></i> 詢問活動</a>
         </div>
         <p class="ye-book-privacy">預約資料只用於門市安排與聯繫,詳見<a href="privacy.html">隱私權政策</a>。</p>
       </div>
@@ -362,7 +362,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 </main>
 
-<!-- 詢問活動:先開「芽芽小幫手」預設問答,看完再導 LINE(2026-11-21 使用者:一上來就要加 LINE,大多會滑掉)。
+<!-- 詢問活動:先開「芽芽小幫手」預設問答,看完再導 FB 私訊小編(2026-11-21 使用者:一上來就要加 LINE,大多會滑掉;
+     2026-11-26 使用者:真人詢問從 LINE 改成 FB 粉專私訊)。
      問題與答案在 js/yearend.js 的 FAQ;🚨 答案只能照活動規範寫,不能多承諾 -->
 <div class="ye-chat" data-ye-chat-box hidden>
   <div class="ye-chat-panel" role="dialog" aria-modal="true" aria-label="活動問答">
@@ -373,7 +374,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
     <div class="ye-chat-log" data-ye-chat-log aria-live="polite"></div>
     <div class="ye-chat-chips" data-ye-chat-chips></div>
-    <a class="ye-chat-line" href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" data-ye-cta="consult_chat_line"><i class="fa-brands fa-line"></i> 還有問題?加 LINE 問真人</a>
+    <a class="ye-chat-line" href="https://www.facebook.com/lohas.eyewear.tw/" target="_blank" rel="noopener" data-ye-cta="consult_chat_fb"><i class="fa-brands fa-facebook-messenger"></i> 還有問題?到 FB 私訊詢問小編</a>
   </div>
 </div>
 
@@ -382,7 +383,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- 手機固定按鈕 -->
 <div class="ye-dock" data-ye-dock>
-  <a href="https://line.me/R/ti/p/@585ryopc" target="_blank" rel="noopener" class="ye-dock-line" data-ye-chat data-ye-cta="consult_dock"><i class="fa-solid fa-comment-dots"></i> 詢問活動</a>
+  <a href="https://www.facebook.com/lohas.eyewear.tw/" target="_blank" rel="noopener" class="ye-dock-line" data-ye-chat data-ye-cta="consult_dock"><i class="fa-solid fa-comment-dots"></i> 詢問活動</a>
   <a href="#book" class="ye-dock-book" data-ye-book data-ye-cta="book_dock"><i class="fa-solid fa-calendar-check"></i> 立即預約</a>
 </div>
 
@@ -445,6 +446,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- 提示/確認框(取代原生 alert/confirm),會自動載入 css/lohas-ui.css,必須在用到它的 JS 之前 -->
 <script src="js/lohas-ui.js?v=20261123-uifile"></script>
 <script src="js/booking-v2.js?v=20261123-uifile"></script>
-<script src="js/yearend.js?v=20261123-v15"></script>
+<script src="js/yearend.js?v=20261126-fb"></script>
 </body>
 </html>

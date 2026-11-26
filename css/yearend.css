@@ -10,7 +10,7 @@
    ============================================= */
 
 /* 色票也給 .ye 外面的浮動元件(快捷鈕、芽芽在 </main> 之後,吃不到 .ye 的變數) */
-.ye, .ye-jump, .ye-walker {
+.ye, .ye-jump, .ye-walker, .ye-chat, .ye-dock {
   --ye-red: #c8202a;
   --ye-red-deep: #8e1b1b;
   --ye-yellow: #ffd23f;
@@ -22,7 +22,7 @@
   --ye-ink: #3a1512;
   --ye-sub: #6e4b45;
   --ye-cream: #fff8e6;
-  --ye-line: #06c755;
+  --ye-line: #1877f2;  /* 真人詢問按鈕(2026-11-26 起是 FB 藍;class 名稱沿用 line) */
   --ye-num: "Rubik", "Noto Sans TC", sans-serif;
 }
 .ye {
@@ -633,7 +633,7 @@ body.ye-chat-open { overflow: hidden; }
 .ye-chat-line {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   margin: 0 14px 14px; padding: 12px; border-radius: 999px;
-  background: #06c755; color: #fff; font-weight: 900; font-size: 16px; text-decoration: none;
+  background: var(--ye-line); color: #fff; font-weight: 900; font-size: 16px; text-decoration: none;
 }
 .ye-chat-line i { font-size: 22px; }
 
@@ -993,7 +993,7 @@ body.ye-chat-open .ye-jump { display: none; }
     border: 3px solid #8e1b1b; box-shadow: 0 3px 0 #8e1b1b;
     font-size: 16px; font-weight: 900; letter-spacing: 1px; color: #fff;
   }
-  .ye-dock-line { background: #06c755; }
+  .ye-dock-line { background: var(--ye-line); }
   .ye-dock-line i { font-size: 20px; }
   .ye-dock-book { background: #c8202a; }
 }
