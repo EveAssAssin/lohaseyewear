@@ -334,14 +334,15 @@
 
   /* 縮圖走 Supabase 的圖片縮放,不要載原圖 ——
      製作端常常在手機或工廠的網路下開這一頁。 */
-  function thumbUrl(u) {
+  function thumbUrl(u, px) {
     if (!u || u.indexOf('/storage/v1/object/public/') < 0) return u;
+    px = px || 320;
     /* ⚠ width、height、resize 三個都要給。
        只給 width 的話 Supabase【不會等比縮放】—— 實測 926x926 的圖
        只給 width=320 會回 320x926,變成一條窄長的東西。
        resize=contain 才會把整張圖放進指定的方框裡。 */
     return u.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') +
-           '?width=320&height=320&resize=contain&quality=70';
+           '?width=' + px + '&height=' + px + '&resize=contain&quality=70';
   }
 
   /* ---------- 呈現 ---------- */
@@ -1158,28 +1159,47 @@
        沒有理由讓每個人開頁就多背一個函式庫。
        CDN 只用 cdnjs(這一頁的 qrcodejs 也是從那裡來的)。 */
   var XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-  var xlsxLoading = null;
+  /* 含縮圖的版本用 ExcelJS(2026-11-27):SheetJS 免費版只能寫文字與數字,放不了圖片。
+     一樣【按下去才載】,約 1MB。 */
+  var EXCELJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+  var libLoading = {};
 
-  function loadXlsx() {
-    if (window.XLSX) return Promise.resolve(window.XLSX);
-    if (xlsxLoading) return xlsxLoading;
-    xlsxLoading = new Promise(function (resolve, reject) {
+  function loadLib(url, globalName) {
+    if (window[globalName]) return Promise.resolve(window[globalName]);
+    if (libLoading[url]) return libLoading[url];
+    libLoading[url] = new Promise(function (resolve, reject) {
       var s = document.createElement('script');
-      s.src = XLSX_URL;
+      s.src = url;
       s.onload = function () {
-        if (window.XLSX) resolve(window.XLSX);
-        else reject(new Error('Excel 元件載入失敗'));
+        if (window[globalName]) resolve(window[globalName]);
+        else { libLoading[url] = null; reject(new Error('Excel 元件載入失敗')); }
       };
       /* 載不到要講清楚是「載不到元件」,不是「匯出壞了」——
          公司網路擋 CDN 是很常見的情況,而那時 CSV 仍然可用。 */
       s.onerror = function () {
-        xlsxLoading = null;
-        reject(new Error('Excel 元件載入失敗(可能是網路擋掉了 CDN)。\n請改用「匯出 CSV」,內容一樣。'));
+        libLoading[url] = null;
+        reject(new Error('Excel 元件載入失敗(可能是網路擋掉了 CDN)。\n請改用「匯出 CSV」,內容一樣(CSV 沒有縮圖,只有圖片連結)。'));
       };
       document.head.appendChild(s);
     });
-    return xlsxLoading;
+    return libLoading[url];
   }
+  function loadXlsx()    { return loadLib(XLSX_URL, 'XLSX'); }
+  function loadExcelJS() { return loadLib(EXCELJS_URL, 'ExcelJS'); }
+
+  function downloadBlob(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  /* 連結只收 https —— 網址最後會變成 Excel 裡可以點的超連結 */
+  function safeLink(u) { return /^https:\/\//.test(u || '') ? u : ''; }
 
   function dashStamp() {
     var d = new Date();
@@ -1207,7 +1227,40 @@
            CSV 那一側會再轉成文字。 */
         return d === null ? '' : Number(d.toFixed(2));
       }],
-      ['編號',     function (r) { return r.id || ''; }]
+      ['編號',     function (r) { return r.id || ''; }],
+      /* 第三格 'link':兩種 Excel 都顯示成可以點的「開啟」,CSV 放網址本身 */
+      ['預覽圖',   function (r) { return safeLink(r.preview_url); }, 'link']
+    ];
+  }
+  /* 明細欄寬,順序跟 detailCols() 一樣 —— 加欄位時這裡也要加 */
+  var DETAIL_WIDTHS = [12, 10, 16, 10, 10, 20, 9, 14, 14, 10, 38, 10];
+  var STAT_WIDTHS = [20, 8, 9, 9, 14];
+
+  /* 五張統計,兩種 Excel 共用。avg 給數字,讓 Excel 可以再排序 */
+  function dashStatSheets(rows) {
+    function sheet(name, keyTitle, groups) {
+      var a = [[keyTitle, '件數', '已完成', '待製作', '平均製作天數']];
+      groups.forEach(function (g) {
+        var avg = dashAvg(g.days);
+        a.push([g.label || g.key, g.n, g.done, g.wait,
+                avg === null ? '' : Number(avg.toFixed(2))]);
+      });
+      return { name: name, aoa: a };
+    }
+    return [
+      sheet('依門市', '門市', dashGroup(rows,
+        function (it) { return it.store_erpid || it.store_name || '(未選門市)'; },
+        function (it) { return it.store_name || it.store_erpid || '(未選門市)'; })),
+      sheet('依縣市', '縣市', dashGroup(rows,
+        function (it) { return it.store_city || '(未填)'; })),
+      sheet('依月份', '月份', dashGroup(rows,
+        function (it) { return dashMonth(it.created_at); })
+        .sort(function (a, b) { return a.key < b.key ? 1 : -1; })),
+      sheet('依來源', '來源', dashGroup(rows,
+        function (it) { return it.source || '(未知)'; },
+        function (it) { return SRC_LABEL[it.source] || it.source || '(未知)'; })),
+      sheet('依會員', '會員編號', dashGroup(rows,
+        function (it) { return it.erpid || it.mid || '(無編號)'; }))
     ];
   }
 
@@ -1233,44 +1286,174 @@
         aoa.push(cols.map(function (c) { return c[1](r); }));
       });
       var wsDetail = XLSX.utils.aoa_to_sheet(aoa);
-      wsDetail['!cols'] = [
-        { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 10 }, { wch: 10 },
-        { wch: 20 }, { wch: 9 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 38 }
-      ];
+      wsDetail['!cols'] = DETAIL_WIDTHS.map(function (w) { return { wch: w }; });
+      // 連結欄:顯示「開啟」,點了開圖(網址本身太長,排產的人用不到)
+      cols.forEach(function (c, ci) {
+        if (c[2] !== 'link') return;
+        rows.forEach(function (r, ri) {
+          var url = c[1](r);
+          if (!url) return;
+          wsDetail[XLSX.utils.encode_cell({ r: ri + 1, c: ci })] =
+            { t: 's', v: '開啟', l: { Target: url } };
+        });
+      });
       XLSX.utils.book_append_sheet(wb, wsDetail, '明細');
 
-      // 五張統計。avg 給數字,讓 Excel 可以再排序
-      function statSheet(name, groups, keyTitle) {
-        var a = [[keyTitle, '件數', '已完成', '待製作', '平均製作天數']];
-        groups.forEach(function (g) {
-          var avg = dashAvg(g.days);
-          a.push([g.label || g.key, g.n, g.done, g.wait,
-                  avg === null ? '' : Number(avg.toFixed(2))]);
-        });
-        var ws = XLSX.utils.aoa_to_sheet(a);
-        ws['!cols'] = [{ wch: 20 }, { wch: 8 }, { wch: 9 }, { wch: 9 }, { wch: 14 }];
-        XLSX.utils.book_append_sheet(wb, ws, name);
-      }
-
-      statSheet('依門市', dashGroup(rows,
-        function (it) { return it.store_erpid || it.store_name || '(未選門市)'; },
-        function (it) { return it.store_name || it.store_erpid || '(未選門市)'; }), '門市');
-      statSheet('依縣市', dashGroup(rows,
-        function (it) { return it.store_city || '(未填)'; }), '縣市');
-      statSheet('依月份', dashGroup(rows,
-        function (it) { return dashMonth(it.created_at); })
-        .sort(function (a, b) { return a.key < b.key ? 1 : -1; }), '月份');
-      statSheet('依來源', dashGroup(rows,
-        function (it) { return it.source || '(未知)'; },
-        function (it) { return SRC_LABEL[it.source] || it.source || '(未知)'; }), '來源');
-      statSheet('依會員', dashGroup(rows,
-        function (it) { return it.erpid || it.mid || '(無編號)'; }), '會員編號');
+      dashStatSheets(rows).forEach(function (s) {
+        var ws = XLSX.utils.aoa_to_sheet(s.aoa);
+        ws['!cols'] = STAT_WIDTHS.map(function (w) { return { wch: w }; });
+        XLSX.utils.book_append_sheet(wb, ws, s.name);
+      });
 
       XLSX.writeFile(wb, '眼鏡布製作紀錄_' + rangeStamp() + '.xlsx');
     }).catch(function (err) {
       LohasUI.alert(err.message || 'Excel 匯出失敗');
     }).then(function () {
       if (btn) { btn.disabled = false; btn.textContent = '匯出 Excel'; }
+    });
+  }
+
+  /* ===== 匯出 Excel(含縮圖)=====
+     每一列第一格放一張 80×80 的合成圖縮圖,給要印出來或傳給別人看的時候用。
+     ⚠ 每張圖都要先下載、畫成 JPEG 才放得進去 —— 件數多時會慢、檔案也大,
+       所以超過 THUMB_WARN 件先問一聲。只要資料的話「匯出 Excel」快得多。
+     ⚠ 圖讀不到(網路、圖被刪)那一格寫「(讀不到)」,不要讓整份匯出失敗;
+       旁邊的「預覽圖」連結照樣可以點。 */
+  var THUMB_PX = 160;      // 實際畫進 Excel 是 80×80,給兩倍免得高解析螢幕上糊掉
+  var THUMB_SHOW = 80;
+  var THUMB_WARN = 150;
+  var THUMB_PARALLEL = 6;
+
+  function thumbJpeg(url) {
+    return new Promise(function (resolve) {
+      if (!url) { resolve(null); return; }
+      var img = new Image();
+      var timer = setTimeout(function () { resolve(null); }, 20000);
+      /* 要畫進 canvas 再取出來,圖片必須允許跨網域(Supabase 回 Access-Control-Allow-Origin: *)。
+         沒有 crossOrigin 的話 toDataURL 會丟 SecurityError。 */
+      img.crossOrigin = 'anonymous';
+      img.onload = function () {
+        clearTimeout(timer);
+        try {
+          var c = document.createElement('canvas');
+          c.width = c.height = THUMB_PX;
+          var g = c.getContext('2d');
+          g.fillStyle = '#fff';          // JPEG 沒有透明,先鋪白底
+          g.fillRect(0, 0, THUMB_PX, THUMB_PX);
+          var s = Math.min(THUMB_PX / img.naturalWidth, THUMB_PX / img.naturalHeight);
+          var w = img.naturalWidth * s, h = img.naturalHeight * s;
+          g.drawImage(img, (THUMB_PX - w) / 2, (THUMB_PX - h) / 2, w, h);
+          resolve(c.toDataURL('image/jpeg', 0.85));
+        } catch (e) { resolve(null); }
+      };
+      img.onerror = function () { clearTimeout(timer); resolve(null); };
+      img.src = thumbUrl(url, THUMB_PX);
+    });
+  }
+
+  /* 同時最多抓 n 張。一次全部丟出去的話,幾百個請求會把瀏覽器與 Supabase 一起塞住 */
+  function mapLimit(list, n, fn) {
+    var out = new Array(list.length), i = 0, workers = [];
+    function worker() {
+      if (i >= list.length) return Promise.resolve();
+      var k = i++;
+      return fn(list[k], k).then(function (v) { out[k] = v; return worker(); });
+    }
+    for (var w = 0; w < Math.min(n, list.length); w++) workers.push(worker());
+    return Promise.all(workers).then(function () { return out; });
+  }
+
+  function dashXlsxImg() {
+    if (!Dash.rows) { LohasUI.alert('資料還沒載入完成,請稍候'); return; }
+    var rows = dashRowsNow();
+    if (!rows.length) { LohasUI.alert('這個期間沒有資料'); return; }
+
+    var btn = $('dashXlsxImg');
+    var label = '匯出 Excel(含縮圖)';
+    var ask = rows.length <= THUMB_WARN ? Promise.resolve(true) :
+      LohasUI.confirm('這個期間有 ' + rows.length + ' 件。\n\n' +
+        '含縮圖要把每一張圖下載下來放進檔案,幾百件大約要一兩分鐘,檔案也會比較大。\n' +
+        '只要資料的話,用「匯出 Excel」比較快。\n\n要繼續嗎?');
+
+    ask.then(function (ok) {
+      if (!ok) return;
+      if (btn) { btn.disabled = true; btn.textContent = '載入元件…'; }
+      return loadExcelJS().then(function (ExcelJS) {
+        var done = 0;
+        return mapLimit(rows, THUMB_PARALLEL, function (r) {
+          return thumbJpeg(r.preview_url).then(function (d) {
+            done++;
+            if (btn) btn.textContent = '縮圖 ' + done + ' / ' + rows.length;
+            return d;
+          });
+        }).then(function (thumbs) {
+          if (btn) btn.textContent = '產生檔案…';
+          return buildImgBook(ExcelJS, rows, thumbs);
+        });
+      }).then(function (failed) {
+        if (failed) {
+          LohasUI.alert('已匯出。其中 ' + failed + ' 張縮圖讀不到,那幾格寫著「(讀不到)」,' +
+                        '旁邊的「預覽圖」連結還是可以點。');
+        } else {
+          LohasUI.toast('已匯出 ' + rows.length + ' 件(含縮圖)', 'ok');
+        }
+      });
+    }).catch(function (err) {
+      LohasUI.alert(err.message || 'Excel 匯出失敗');
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    });
+  }
+
+  function buildImgBook(ExcelJS, rows, thumbs) {
+    var wb = new ExcelJS.Workbook();
+    var cols = detailCols();
+    var ws = wb.addWorksheet('明細', { views: [{ state: 'frozen', ySplit: 1 }] });
+    ws.columns = [{ header: '縮圖', width: 13 }].concat(cols.map(function (c, i) {
+      return { header: c[0], width: DETAIL_WIDTHS[i] || 12 };
+    }));
+    ws.getRow(1).font = { bold: true };
+
+    var failed = 0;
+    rows.forEach(function (r, ri) {
+      var row = ws.addRow([''].concat(cols.map(function (c) {
+        var v = c[1](r);
+        if (c[2] === 'link') return v ? { text: '開啟', hyperlink: v } : '';
+        return v;
+      })));
+      row.height = 64;   // 單位是 pt;80px 約 60pt,上下留一點
+      row.alignment = { vertical: 'middle' };
+      cols.forEach(function (c, ci) {
+        if (c[2] === 'link' && c[1](r)) {
+          row.getCell(ci + 2).font = { color: { argb: 'FF0563C1' }, underline: true };
+        }
+      });
+      var d = thumbs[ri];
+      if (d) {
+        var id = wb.addImage({ base64: d, extension: 'jpeg' });
+        ws.addImage(id, {
+          tl: { col: 0.1, row: ri + 1.05 },     // 0 起算;第 0 列是標題
+          ext: { width: THUMB_SHOW, height: THUMB_SHOW },
+          editAs: 'oneCell'
+        });
+      } else if (r.preview_url) {
+        row.getCell(1).value = '(讀不到)';
+        failed++;
+      }
+    });
+
+    dashStatSheets(rows).forEach(function (s) {
+      var w = wb.addWorksheet(s.name);
+      w.columns = STAT_WIDTHS.map(function (x) { return { width: x }; });
+      s.aoa.forEach(function (a) { w.addRow(a); });
+      w.getRow(1).font = { bold: true };
+    });
+
+    return wb.xlsx.writeBuffer().then(function (buf) {
+      downloadBlob(new Blob([buf], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }), '眼鏡布製作紀錄_含縮圖_' + rangeStamp() + '.xlsx');
+      return failed;
     });
   }
 
@@ -1302,14 +1485,7 @@
        而清掉之後唯一的症狀是「Excel 開起來中文變亂碼」。 */
     var blob = new Blob(['\uFEFF' + lines.join('\r\n')],
                         { type: 'text/csv;charset=utf-8;' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = '眼鏡布製作紀錄_' + rangeStamp() + '.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    downloadBlob(blob, '眼鏡布製作紀錄_' + rangeStamp() + '.csv');
   }
 
   function loadDash(force) {
@@ -1431,6 +1607,8 @@
     if (dcsv) dcsv.addEventListener('click', dashCsv);
     var dxls = $('dashXlsx');
     if (dxls) dxls.addEventListener('click', dashXlsx);
+    var dxlsImg = $('dashXlsxImg');
+    if (dxlsImg) dxlsImg.addEventListener('click', dashXlsxImg);
     el.code.addEventListener('keydown', function (e) { if (e.key === 'Enter') enter(); });
     el.out.addEventListener('click', forget);
 
